@@ -466,19 +466,28 @@
   #game-container {
     display: none;
     border-radius: var(--radius);
-    overflow: hidden;
+    overflow: visible;
     border: 2px solid rgba(127,255,110,0.3);
     box-shadow: 0 0 60px rgba(127,255,110,0.1), 0 0 120px rgba(0,0,0,0.4);
     position: relative;
     background: #0a1a0a;
     outline: none;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
   }
   #game-container.visible { display: block; }
+  #game-wrapper {
+    width: 800px;
+    height: 480px;
+    position: relative;
+    transform-origin: top left;
+    flex-shrink: 0;
+  }
   #gameCanvas {
     display: block;
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
+    width: 800px;
+    height: 480px;
     cursor: default;
     outline: none;
   }
@@ -976,6 +985,7 @@
     </div>
 
     <div id="game-container">
+      <div id="game-wrapper">
       <canvas id="gameCanvas" width="800" height="480" tabindex="0"></canvas>
       <!-- DEBUG: World selector (temporary) -->
       <div id="world-selector" style="display:none; gap:6px; padding:6px 0; flex-wrap:wrap; align-items:center;">
@@ -1003,7 +1013,8 @@
         <div class="dialog-question" id="dialog-question" style="display:none"></div>
         <div class="dialog-answers" id="dialog-answers"></div>
         <div class="dialog-continue" id="dialog-continue" style="display:none" data-no="Trykk E for å fortsette..." data-en="Press E to continue...">Trykk E for å fortsette...</div>
-      </div>
+      </div><!-- /game-wrapper -->
+      </div><!-- /game-wrapper-outer -->
       <div class="game-ui-bar">
         <div class="dpad">
           <!-- row 1 -->
@@ -4232,10 +4243,31 @@ function showEnding() {
   gameRunning = true;
 }
 
+
+// ── RESPONSIVE SCALING ──
+function scaleGame() {
+  const wrapper = document.getElementById('game-wrapper');
+  if (!wrapper) return;
+  const section = wrapper.closest('section') || document.body;
+  const availW = Math.min(window.innerWidth, section.clientWidth || window.innerWidth) - 32;
+  const availH = window.innerHeight - 160; // leave room for UI bar and page chrome
+  const scaleX = availW / 800;
+  const scaleY = availH / 480;
+  const scale  = Math.min(scaleX, scaleY, 1); // never scale up beyond 1
+  wrapper.style.transform = 'scale(' + scale + ')';
+  wrapper.style.transformOrigin = 'top left';
+  wrapper.style.marginBottom = ((480 * scale) - 480) + 'px';
+  // Shrink container to match scaled width
+  const container = document.getElementById('game-container');
+  if (container) container.style.width = (800 * scale) + 'px';
+}
+window.addEventListener('resize', scaleGame);
+
 function startGame() {
   canvas = document.getElementById('gameCanvas');
   ctx = canvas.getContext('2d');
   document.getElementById('game-container').classList.add('visible');
+  scaleGame();
   document.getElementById('game-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
   // Show world selector for testing
   document.getElementById('world-selector').style.display = 'flex';
