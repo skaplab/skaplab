@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab Matte – Mengdetrening</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #07090f;
+    --surface: #0e1220;
+    --card:    #141928;
+    --border:  rgba(255,255,255,.07);
+    --mild:    #22c55e;
+    --medium:  #eab308;
+    --spicy:   #f97316;
+    --hot:     #ef4444;
+    --accent:  #818cf8;
+    --text:    #f1f5f9;
+    --dim:     #64748b;
+    --font-h:  'Fredoka One', cursive;
+    --font-b:  'Nunito', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-b);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BAKGRUNNSEFFEKT ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(129,140,248,.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(34,197,94,.05) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,9,15,.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .site-header a { color: var(--text); text-decoration: none; font-family: var(--font-h); font-size: 1.1rem; }
+  .site-header a:hover { color: var(--accent); }
+  .header-sep { color: var(--dim); }
+  .header-title { font-family: var(--font-h); font-size: 1rem; color: var(--accent); }
+
+  /* Høyreside av header */
+  .header-stats {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .stat-pill {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .82rem; font-weight: 800;
+    padding: 4px 12px; border-radius: 99px;
+    border: 1.5px solid var(--border);
+    background: rgba(255,255,255,.04);
+  }
+  .stat-pill.xp   { border-color: rgba(129,140,248,.4); color: var(--accent); }
+  .stat-pill.streak { border-color: rgba(249,115,22,.4); color: var(--spicy); }
+
+  /* ── VELG-MODUS-SKJERM ── */
+  #velgSkjerm {
+    position: relative; z-index: 1;
+    max-width: 800px; margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+  .hero-tittel {
+    font-family: var(--font-h);
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    text-align: center;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .hero-tittel span { color: var(--accent); }
+  .hero-sub {
+    text-align: center; color: var(--dim);
+    font-size: 1rem; margin-bottom: 48px;
+  }
+
+  /* ── SØK & FILTER ── */
+  .sok-filter {
+    max-width: 800px; margin: 0 auto 28px; padding: 0 0px;
+  }
+  .sok-wrapper {
+    position: relative; display: flex; align-items: center;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 0 14px;
+    transition: border-color .2s;
+    margin-bottom: 14px;
+  }
+  .sok-wrapper:focus-within { border-color: var(--accent); }
+  .sok-ikon { font-size: 1rem; color: var(--dim); margin-right: 10px; pointer-events: none; }
+  .sok-input {
+    flex: 1; background: none; border: none; outline: none;
+    font-family: var(--font-b); font-size: .95rem; color: var(--text);
+    padding: 13px 0;
+  }
+  .sok-input::placeholder { color: var(--dim); }
+  .sok-clear {
+    background: none; border: none; color: var(--dim); cursor: pointer;
+    font-size: .9rem; padding: 4px 8px; border-radius: 6px;
+    transition: color .15s;
+  }
+  .sok-clear:hover { color: var(--text); }
+  .gruppe-filter {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .gruppe-btn {
+    font-family: var(--font-b); font-size: .8rem;
+    padding: 5px 14px; border-radius: 99px;
+    border: 1.5px solid var(--border);
+    background: none; color: var(--dim); cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .gruppe-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .gruppe-btn.active { background: rgba(129,140,248,.12); border-color: var(--accent); color: var(--accent); }
+  .sok-antall {
+    font-size: .82rem; color: var(--dim);
+    margin: 0 0 16px; text-align: center;
+  }
+
+  /* Emner-grid */
+  .emne-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .emne-kort {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .emne-kort::before {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0; transition: opacity .2s;
+    background: var(--emne-c, rgba(129,140,248,.08));
+  }
+  .emne-kort:hover { transform: translateY(-3px); border-color: var(--emne-c, var(--accent)); }
+  .emne-kort:hover::before { opacity: 1; }
+  .emne-ikon { font-size: 2rem; margin-bottom: 10px; display: block; }
+  .emne-navn { font-family: var(--font-h); font-size: 1.1rem; margin-bottom: 4px; }
+  .emne-info { font-size: .78rem; color: var(--dim); }
+  .emne-progress {
+    margin-top: 12px;
+    height: 4px; border-radius: 99px;
+    background: rgba(255,255,255,.06);
+    overflow: hidden;
+  }
+  .emne-progress-bar {
+    height: 100%; border-radius: 99px;
+    background: var(--emne-c, var(--accent));
+    transition: width .4s ease;
+  }
+
+  /* ── NIVÅVELGER ── */
+  #nivaaSkjerm {
+    position: relative; z-index: 1;
+    max-width: 600px; margin: 0 auto;
+    padding: 40px 20px 80px;
+    display: none;
+  }
+  .tilbake-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--dim); font-family: var(--font-b); font-size: .9rem;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 28px; padding: 0;
+    transition: color .15s;
+  }
+  .tilbake-btn:hover { color: var(--text); }
+  .nivaa-tittel {
+    font-family: var(--font-h); font-size: 1.8rem;
+    margin-bottom: 6px;
+  }
+  .nivaa-sub { color: var(--dim); font-size: .9rem; margin-bottom: 32px; }
+
+  .nivaa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .nivaa-kort {
+    border-radius: 14px;
+    padding: 22px;
+    cursor: pointer;
+    transition: all .2s;
+    border: 2px solid transparent;
+    position: relative; overflow: hidden;
+  }
+  .nivaa-kort:hover { transform: scale(1.03); }
+  .nivaa-kort.mild    { background: rgba(34,197,94,.1);  border-color: rgba(34,197,94,.3); }
+  .nivaa-kort.medium  { background: rgba(234,179,8,.1);  border-color: rgba(234,179,8,.3); }
+  .nivaa-kort.spicy   { background: rgba(249,115,22,.1); border-color: rgba(249,115,22,.3); }
+  .nivaa-kort.hot     { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3); }
+  .nivaa-kort:hover.mild    { border-color: var(--mild); }
+  .nivaa-kort:hover.medium  { border-color: var(--medium); }
+  .nivaa-kort:hover.spicy   { border-color: var(--spicy); }
+  .nivaa-kort:hover.hot     { border-color: var(--hot); }
+  .nivaa-ikon { font-size: 2rem; margin-bottom: 8px; display: block; }
+  .nivaa-navn { font-family: var(--font-h); font-size: 1.3rem; margin-bottom: 3px; }
+  .nivaa-mild   .nivaa-navn { color: var(--mild); }
+  .nivaa-medium .nivaa-navn { color: var(--medium); }
+  .nivaa-spicy  .nivaa-navn { color: var(--spicy); }
+  .nivaa-hot    .nivaa-navn { color: var(--hot); }
+  .nivaa-desc { font-size: .78rem; color: var(--dim); line-height: 1.4; }
+
+  /* ── TRENINGS-SKJERM ── */
+  #treningSkjerm {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto;
+    padding: 28px 20px 80px;
+    display: none;
+  }
+
+  /* Topplinje under header */
+  .trening-topbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .trening-emne-label {
+    font-family: var(--font-h); font-size: 1rem;
+    color: var(--accent);
+  }
+  .trening-nivaa-badge {
+    font-size: .75rem; font-weight: 800; padding: 3px 10px;
+    border-radius: 99px;
+  }
+  .trening-fremgang {
+    margin-left: auto;
+    font-size: .82rem; color: var(--dim); font-weight: 700;
+  }
+
+  /* Fremgangsbar */
+  .fremgang-bar {
+    height: 6px; border-radius: 99px;
+    background: rgba(255,255,255,.06);
+    margin-bottom: 28px; overflow: hidden;
+  }
+  .fremgang-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), #c084fc);
+    transition: width .3s ease;
+  }
+
+  /* Oppgave-kort */
+  .oppgave-kort {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .oppgave-kort.riktig  { border-color: var(--mild); animation: flashGreen .4s ease; }
+  .oppgave-kort.feil    { border-color: var(--hot);  animation: flashRed   .4s ease; }
+
+  @keyframes flashGreen {
+    0%   { background: rgba(34,197,94,.2); }
+    100% { background: var(--card); }
+  }
+  @keyframes flashRed {
+    0%   { background: rgba(239,68,68,.2); }
+    100% { background: var(--card); }
+  }
+
+  .oppgave-nummer {
+    font-size: .75rem; font-weight: 800;
+    color: var(--dim); text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 16px;
+  }
+  .oppgave-tekst {
+    font-family: var(--font-h);
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    letter-spacing: .02em;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+  .oppgave-hint {
+    font-size: .82rem; color: var(--dim);
+    min-height: 20px; margin-bottom: 4px;
+  }
+
+  /* Input */
+  .svar-wrapper {
+    display: flex; gap: 10px;
+    justify-content: center;
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+  .svar-input {
+    font-family: var(--font-h);
+    font-size: 1.8rem;
+    background: rgba(255,255,255,.05);
+    border: 2px solid rgba(255,255,255,.12);
+    border-radius: 12px;
+    color: var(--text);
+    text-align: center;
+    padding: 12px 20px;
+    width: 160px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .svar-input:focus { border-color: var(--accent); }
+  .svar-input.riktig { border-color: var(--mild); color: var(--mild); }
+  .svar-input.feil   { border-color: var(--hot);  color: var(--hot); }
+
+  .svar-btn {
+    font-family: var(--font-h); font-size: 1.1rem;
+    padding: 12px 28px; border-radius: 12px;
+    border: none; cursor: pointer;
+    background: var(--accent);
+    color: #fff;
+    transition: all .15s;
+  }
+  .svar-btn:hover { transform: scale(1.04); filter: brightness(1.15); }
+  .svar-btn:active { transform: scale(.97); }
+
+  /* Feedback */
+  .feedback-rad {
+    display: flex; justify-content: center; align-items: center; gap: 10px;
+    min-height: 32px; margin-bottom: 8px;
+  }
+  .feedback-tekst {
+    font-family: var(--font-h); font-size: 1.1rem;
+    opacity: 0; transition: opacity .2s;
+  }
+  .feedback-tekst.vis { opacity: 1; }
+  .feedback-tekst.riktig { color: var(--mild); }
+  .feedback-tekst.feil   { color: var(--hot); }
+
+  /* Hoppover */
+  .hopp-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--dim); font-size: .82rem; font-family: var(--font-b);
+    text-decoration: underline; transition: color .15s;
+  }
+  .hopp-btn:hover { color: var(--text); }
+
+  /* Poeng-rad */
+  .poeng-rad {
+    display: flex; justify-content: center; gap: 24px;
+    margin-bottom: 24px;
+  }
+  .mini-stat {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .mini-stat-verdi {
+    font-family: var(--font-h); font-size: 1.4rem;
+  }
+  .mini-stat-label { font-size: .7rem; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Stjerner */
+  .stjerne-rad {
+    display: flex; justify-content: center; gap: 6px;
+    margin-bottom: 20px;
+  }
+  .stjerne {
+    font-size: 1.6rem;
+    filter: grayscale(1) opacity(.3);
+    transition: all .3s;
+  }
+  .stjerne.aktiv {
+    filter: none;
+    animation: stjernePop .4s ease;
+  }
+  @keyframes stjernePop {
+    0%   { transform: scale(0); }
+    60%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── RESULTAT-SKJERM ── */
+  #resultatSkjerm {
+    position: relative; z-index: 1;
+    max-width: 520px; margin: 0 auto;
+    padding: 48px 20px 80px;
+    display: none; text-align: center;
+  }
+  .resultat-emoji { font-size: 5rem; margin-bottom: 16px; display: block; }
+  .resultat-tittel {
+    font-family: var(--font-h); font-size: 2.4rem;
+    margin-bottom: 8px;
+  }
+  .resultat-sub { color: var(--dim); margin-bottom: 32px; }
+  .resultat-stats {
+    display: flex; justify-content: center; gap: 20px;
+    margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .res-boks {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 16px 24px;
+    min-width: 110px;
+  }
+  .res-tall { font-family: var(--font-h); font-size: 2rem; margin-bottom: 2px; }
+  .res-label { font-size: .72rem; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; }
+  .resultat-stjerner {
+    display: flex; justify-content: center; gap: 8px;
+    font-size: 2.5rem; margin-bottom: 32px;
+  }
+  .resultat-btns {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .res-btn {
+    font-family: var(--font-h); font-size: 1rem;
+    padding: 12px 28px; border-radius: 12px; border: none; cursor: pointer;
+    transition: all .15s;
+  }
+  .res-btn:hover { transform: scale(1.04); }
+  .res-btn.primær { background: var(--accent); color: #fff; }
+  .res-btn.sekundær {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+  }
+
+  /* XP-popup */
+  .xp-popup {
+    position: fixed; bottom: 30px; right: 24px;
+    font-family: var(--font-h); font-size: 1.1rem;
+    background: var(--card); border: 1.5px solid rgba(129,140,248,.4);
+    color: var(--accent); padding: 10px 20px; border-radius: 12px;
+    opacity: 0; transform: translateY(20px);
+    transition: all .3s; pointer-events: none; z-index: 200;
+  }
+  .xp-popup.vis {
+    opacity: 1; transform: translateY(0);
+  }
+
+  /* Responisv */
+  @keyframes pulseBtn {
+    0%,100% { box-shadow: 0 0 0 0 rgba(129,140,248,.5); }
+    50%      { box-shadow: 0 0 0 10px rgba(129,140,248,0); }
+  }
+  @media (max-width: 520px) {
+    .nivaa-grid { grid-template-columns: 1fr; }
+    .oppgave-tekst { font-size: 2rem; }
+    .svar-input { width: 120px; font-size: 1.4rem; }
+    .header-stats { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="skaplab.html">🚀 SkapLab</a>
+  <span class="header-sep">/</span>
+  <span class="header-title">➕ Matte</span>
+  <div class="header-stats">
+    <div class="stat-pill xp">⚡ <span id="xpVis">0</span> XP</div>
+    <div class="stat-pill streak">🔥 <span id="streakVis">0</span></div>
+  </div>
+</header>
+
+<!-- ══ VELG EMNE ══ -->
+<div id="velgSkjerm">
+  <h1 class="hero-tittel">Øv på <span>matte</span> 🧮</h1>
+  <p class="hero-sub">Velg et emne og et nivå – og sett i gang!</p>
+
+  <div class="sok-filter" id="sokFilter">
+    <div class="sok-wrapper">
+      <span class="sok-ikon">🔍</span>
+      <input type="text" id="sokInput" class="sok-input"
+        placeholder="Søk på emne, f.eks. «brøk» eller «algebra»…"
+        oninput="filtrer()" autocomplete="off">
+      <button class="sok-clear" id="sokClear" onclick="tømmSok()" style="display:none;">✕</button>
+    </div>
+    <div class="gruppe-filter" id="gruppeFilter">
+      <button class="gruppe-btn active" data-gruppe="alle" onclick="velgGruppe(this)">Alle</button>
+    </div>
+  </div>
+
+  <div id="sokResultat" style="display:none;">
+    <p class="sok-antall" id="sokAntall"></p>
+    <div class="emne-grid" id="sokGrid"></div>
+    <div style="text-align:center;margin-top:8px;">
+      <button onclick="tømmSok()" style="background:none;border:1.5px solid var(--border);color:var(--dim);font-family:var(--font-b);font-size:.85rem;padding:6px 18px;border-radius:9px;cursor:pointer;">✕ Tøm søk</button>
+    </div>
+  </div>
+
+  <div id="emneGridWrapper">
+    <div class="emne-grid" id="emneGrid"></div>
+  </div>
+</div>
+
+<!-- ══ VELG NIVÅ ══ -->
+<div id="nivaaSkjerm">
+  <button class="tilbake-btn" onclick="gaaTilEmner()">← Tilbake</button>
+  <div id="nivaaEmneIkon" style="font-size:3rem;margin-bottom:12px;"></div>
+  <h2 class="nivaa-tittel" id="niveauTittel"></h2>
+  <p class="nivaa-sub">Velg vanskelighetsgrad</p>
+  <div class="nivaa-grid">
+    <div class="nivaa-kort mild" onclick="startTrening('mild')">
+      <span class="nivaa-ikon">🟢</span>
+      <div class="nivaa-navn">Mild</div>
+      <div class="nivaa-desc">Enkle tall, én operasjon. Perfekt for å bygge flyt.</div>
+    </div>
+    <div class="nivaa-kort medium" onclick="startTrening('medium')">
+      <span class="nivaa-ikon">🟡</span>
+      <div class="nivaa-navn">Medium</div>
+      <div class="nivaa-desc">To-tre operasjoner, litt større tall.</div>
+    </div>
+    <div class="nivaa-kort spicy" onclick="startTrening('spicy')">
+      <span class="nivaa-ikon">🌶️</span>
+      <div class="nivaa-navn">Spicy</div>
+      <div class="nivaa-desc">Større tall, flere steg, krever konsentrasjon.</div>
+    </div>
+    <div class="nivaa-kort hot" onclick="startTrening('hot')">
+      <span class="nivaa-ikon">🔥</span>
+      <div class="nivaa-navn">Hot</div>
+      <div class="nivaa-desc">Maks vanskelighetsgrad. Klarer du alle 15?</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRENING ══ -->
+<div id="treningSkjerm">
+  <div class="trening-topbar">
+    <button class="tilbake-btn" style="margin-bottom:0;" onclick="gaaTilNivaa()">← Avslutt</button>
+    <span class="trening-emne-label" id="treningEmneLabel"></span>
+    <span class="trening-nivaa-badge" id="treningNivaaBadge"></span>
+    <span class="trening-fremgang" id="treningFremgang">0 / 15</span>
+  </div>
+
+  <div class="fremgang-bar">
+    <div class="fremgang-fill" id="fremgangFill" style="width:0%"></div>
+  </div>
+
+  <div class="stjerne-rad" id="stjerneRad">
+    <span class="stjerne" id="s1">⭐</span>
+    <span class="stjerne" id="s2">⭐</span>
+    <span class="stjerne" id="s3">⭐</span>
+    <span class="stjerne" id="s4">⭐</span>
+    <span class="stjerne" id="s5">⭐</span>
+  </div>
+
+  <div class="oppgave-kort" id="oppgaveKort">
+    <div class="oppgave-nummer" id="oppgaveNr">Oppgave 1 av 15</div>
+    <div class="oppgave-tekst" id="oppgaveTekst"></div>
+    <div class="oppgave-hint" id="oppgaveHint"></div>
+  </div>
+
+  <div class="svar-wrapper">
+    <input type="text" inputmode="decimal" class="svar-input" id="svarInput"
+      placeholder="?" autocomplete="off"
+      onkeydown="if(event.key==='Enter') sjekkSvar()">
+    <button class="svar-btn" onclick="sjekkSvar()">✓</button>
+  </div>
+
+  <div class="feedback-rad">
+    <span class="feedback-tekst" id="feedbackTekst"></span>
+  </div>
+
+  <div style="text-align:center;">
+    <button class="hopp-btn" onclick="hoppOver()">Hopp over →</button>
+  </div>
+
+  <div class="poeng-rad" style="margin-top:24px;">
+    <div class="mini-stat">
+      <div class="mini-stat-verdi" id="riktigTeller" style="color:var(--mild)">0</div>
+      <div class="mini-stat-label">Riktig</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-verdi" id="feilTeller" style="color:var(--hot)">0</div>
+      <div class="mini-stat-label">Feil</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-verdi" id="poengTeller" style="color:var(--accent)">0</div>
+      <div class="mini-stat-label">Poeng</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTAT ══ -->
+<div id="resultatSkjerm">
+  <span class="resultat-emoji" id="resultatEmoji"></span>
+  <h2 class="resultat-tittel" id="resultatTittel"></h2>
+  <p class="resultat-sub" id="resultatSub"></p>
+  <div class="resultat-stjerner" id="resultatStjerner"></div>
+  <div class="resultat-stats">
+    <div class="res-boks">
+      <div class="res-tall" id="resRiktig" style="color:var(--mild)"></div>
+      <div class="res-label">Riktig</div>
+    </div>
+    <div class="res-boks">
+      <div class="res-tall" id="resFeil" style="color:var(--hot)"></div>
+      <div class="res-label">Feil</div>
+    </div>
+    <div class="res-boks">
+      <div class="res-tall" id="resPoeng" style="color:var(--accent)"></div>
+      <div class="res-label">Poeng</div>
+    </div>
+    <div class="res-boks">
+      <div class="res-tall" id="resXP" style="color:#c084fc)"></div>
+      <div class="res-label">XP opptjent</div>
+    </div>
+  </div>
+  <div class="resultat-btns">
+    <button class="res-btn primær" onclick="startSammeIgjen()">🔄 Prøv igjen</button>
+    <button class="res-btn sekundær" id="nesteNivaaBtn" onclick="startNesteNivaa()" style="display:none;">⬆️ Neste nivå</button>
+    <button class="res-btn sekundær" onclick="gaaTilEmner()">📚 Velg emne</button>
+  </div>
+</div>
+
+<div class="xp-popup" id="xpPopup"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  HJELPE-FUNKSJONER
+// ══════════════════════════════════════════
+function ri(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
+function rd(hMin, hMax, desimaler) {
+  const h = ri(hMin, hMax);
+  const f = Math.pow(10, desimaler);
+  const d = ri(1, f-1);
+  return Math.round((h + d/f) * f) / f;
+}
+function frac(t, n) { return { num: t, den: n }; }
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+function forenkle(t, n) { const g = gcd(Math.abs(t), Math.abs(n)); return [t/g, n/g]; }
+function fracStr(t, n) {
+  const [ft, fn] = forenkle(t, n);
+  if (fn === 1) return `${ft}`;
+  return `${ft}/${fn}`;
+}
+
+// ══════════════════════════════════════════
+//  EMNER og OPPGAVEGENERATORER
+// ══════════════════════════════════════════
+const EMNER = [
+  // ── Regneartene ──
+  {
+    id: 'add-heltall', ikon: '➕', navn: 'Addisjon', info: 'Heltall',
+    farge: 'rgba(129,140,248,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=ri(10,90),   b=ri(5,50);      return { t:`${a} + ${b}`, s:a+b }; },
+      medium: () => { const a=ri(20,90),   b=ri(20,90);     return { t:`${a} + ${b}`, s:a+b }; },
+      spicy:  () => { const a=ri(100,900), b=ri(100,600);   return { t:`${a} + ${b}`, s:a+b }; },
+      hot:    () => { const a=ri(1000,9000),b=ri(100,999);  return { t:`${a} + ${b}`, s:a+b }; },
+    }
+  },
+  {
+    id: 'sub-heltall', ikon: '➖', navn: 'Subtraksjon', info: 'Heltall',
+    farge: 'rgba(251,113,133,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const b=ri(5,40),    a=ri(b,90);       return { t:`${a} − ${b}`, s:a-b }; },
+      medium: () => { const b=ri(10,80),   a=ri(b,150);      return { t:`${a} − ${b}`, s:a-b }; },
+      spicy:  () => { const b=ri(50,400),  a=ri(b+50,900);   return { t:`${a} − ${b}`, s:a-b }; },
+      hot:    () => { const b=ri(100,5000),a=ri(b+100,9999); return { t:`${a} − ${b}`, s:a-b }; },
+    }
+  },
+  {
+    id: 'mul-smaa', ikon: '✖️', navn: 'Multiplikasjon', info: 'Gangetabellen',
+    farge: 'rgba(34,197,94,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=ri(1,9),b=ri(1,9); return { t:`${a} · ${b}`, s:a*b }; },
+      medium: () => { const a=ri(1,9),b=ri(1,9),c=ri(1,9); return { t:`${a} · ${b} · ${c}`, s:a*b*c }; },
+      spicy:  () => { const v=[ri(1,9),ri(1,9),ri(1,9),ri(1,9)]; return { t:v.join(' · '), s:v.reduce((x,y)=>x*y,1) }; },
+      hot:    () => { const v=[ri(1,9),ri(1,9),ri(1,9),ri(1,9),ri(1,9)]; return { t:v.join(' · '), s:v.reduce((x,y)=>x*y,1) }; },
+    }
+  },
+  {
+    id: 'mul-store', ikon: '🔢', navn: 'Store tall', info: 'Multiplikasjon',
+    farge: 'rgba(234,179,8,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=ri(10,30),  b=ri(2,9);   return { t:`${a} · ${b}`, s:a*b }; },
+      medium: () => { const a=ri(10,50),  b=ri(10,30); return { t:`${a} · ${b}`, s:a*b }; },
+      spicy:  () => { const a=ri(50,200), b=ri(10,50); return { t:`${a} · ${b}`, s:a*b }; },
+      hot:    () => { const a=ri(100,500),b=ri(20,99); return { t:`${a} · ${b}`, s:a*b }; },
+    }
+  },
+  {
+    id: 'mul-des', ikon: '🔀', navn: 'Multiplikasjon', info: 'Desimaltall',
+    farge: 'rgba(234,179,8,.7)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=rd(1,9,1), b=ri(2,9); return { t:`${a.toFixed(1)} · ${b}`, s:Math.round(a*b*10)/10 }; },
+      medium: () => { const a=rd(1,9,1), b=rd(1,9,1); return { t:`${a.toFixed(1)} · ${b.toFixed(1)}`, s:Math.round(a*b*100)/100 }; },
+      spicy:  () => { const a=rd(1,9,2), b=ri(2,9); return { t:`${a.toFixed(2)} · ${b}`, s:Math.round(a*b*100)/100 }; },
+      hot:    () => { const a=rd(1,9,2), b=rd(1,9,1); return { t:`${a.toFixed(2)} · ${b.toFixed(1)}`, s:Math.round(a*b*1000)/1000 }; },
+    }
+  },
+  {
+    id: 'div-smaa', ikon: '➗', navn: 'Divisjon', info: 'Enkle tall',
+    farge: 'rgba(249,115,22,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const b=ri(2,9),  s=ri(1,9);  return { t:`${b*s} : ${b}`, s }; },
+      medium: () => { const b=ri(2,9),  s=ri(5,20); return { t:`${b*s} : ${b}`, s }; },
+      spicy:  () => { const b=ri(3,12), s=ri(10,40);return { t:`${b*s} : ${b}`, s }; },
+      hot:    () => { const b=ri(4,15), s=ri(20,80);return { t:`${b*s} : ${b}`, s }; },
+    }
+  },
+  {
+    id: 'add-des', ikon: '🔡', navn: 'Desimaltall', info: 'Addisjon & subtraksjon',
+    farge: 'rgba(129,140,248,.6)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=rd(1,9,1), b=rd(1,9,1); return { t:`${a.toFixed(1)} + ${b.toFixed(1)}`, s:Math.round((a+b)*10)/10 }; },
+      medium: () => { const a=rd(1,9,2), b=rd(1,9,2); return { t:`${a.toFixed(2)} + ${b.toFixed(2)}`, s:Math.round((a+b)*100)/100 }; },
+      spicy:  () => { const a=rd(1,9,2), b=rd(1,9,2); return { t:`${a.toFixed(2)} − ${b.toFixed(2)}`, s:Math.round((a-b)*100)/100 }; },
+      hot:    () => { const a=rd(1,9,2), b=rd(1,9,2), c=rd(1,9,1); const r=Math.round((a+b-c)*1000)/1000; return { t:`${a.toFixed(2)} + ${b.toFixed(2)} − ${c.toFixed(1)}`, s:r }; },
+    }
+  },
+  {
+    id: 'neg-tall', ikon: '🌡️', navn: 'Negative tall', info: 'Addisjon & subtraksjon',
+    farge: 'rgba(96,165,250,1)', gruppe: 'Regneartene',
+    gen: {
+      mild:   () => { const a=ri(-20,20), b=ri(1,20);  return { t:`${a} + ${b}`, s:a+b }; },
+      medium: () => { const a=ri(-30,30), b=ri(-20,20);return { t:`${a} + (${b})`, s:a+b }; },
+      spicy:  () => { const a=ri(-50,50), b=ri(-40,40);return { t:`${a} − (${b})`, s:a-b }; },
+      hot:    () => { const a=ri(-50,50), b=ri(-40,40), c=ri(-30,30); return { t:`${a} + ${b} − (${c})`, s:a+b-c }; },
+    }
+  },
+
+  // ── Faktorisering ──
+  {
+    id: 'faktor', ikon: '🧩', navn: 'Faktorisering', info: 'Finn faktorer',
+    farge: 'rgba(168,85,247,1)', gruppe: 'Faktorisering',
+    gen: {
+      mild:   () => {
+        const n = [6,8,10,12,15,16,20,25,33,49][ri(0,9)];
+        const faktorer = [];
+        for(let i=2; i<=n; i++) if(n%i===0) faktorer.push(`${i} · ${n/i}`);
+        return { t:`${n} = ? · ?`, s: n, svarTekst: faktorer[0], hint:'Skriv produktet, f.eks. faktorer som gir tallet' };
+      },
+      medium: () => {
+        const n = [22,26,44,46,62,74,86,88][ri(0,7)];
+        const faktorer = [];
+        for(let i=2; i<n; i++) if(n%i===0) faktorer.push(i);
+        return { t:`Finn en faktor av ${n} (annet enn 1 og ${n})`, s: faktorer[0] };
+      },
+      spicy:  () => {
+        const n = [369,742,684,852,469,247,695,357][ri(0,7)];
+        const faktorer = [];
+        for(let i=2; i<n; i++) if(n%i===0) { faktorer.push(i); break; }
+        return { t:`Minste faktor av ${n} (> 1)`, s: faktorer[0] };
+      },
+      hot:    () => {
+        const n = [2489,3484,8405,2300,3357,7533,9535][ri(0,6)];
+        const faktorer = [];
+        for(let i=2; i<1000; i++) if(n%i===0) { faktorer.push(i); break; }
+        return { t:`Minste faktor av ${n} (> 1)`, s: faktorer[0] };
+      },
+    }
+  },
+
+  // ── Brøkregning ──
+  {
+    id: 'brok-like', ikon: '½', navn: 'Brøk', info: 'Like nevnere',
+    farge: 'rgba(52,211,153,1)', gruppe: 'Brøkregning',
+    gen: {
+      mild:   () => {
+        const n=ri(3,9), a=ri(1,n-1), b=ri(1,n-a);
+        const [rt,rn]=forenkle(a+b,n);
+        return { t:`${a}/${n} + ${b}/${n}`, s: rn===1 ? rt : parseFloat(`${rt}.${rn}`.replace('/','')), svarTekst: fracStr(a+b,n) };
+      },
+      medium: () => {
+        const n=ri(4,12), a=ri(2,n), b=ri(1,a-1);
+        const [rt,rn]=forenkle(a-b,n);
+        return { t:`${a}/${n} − ${b}/${n}`, svarTekst: fracStr(a-b,n), s: (a-b)/n };
+      },
+      spicy:  () => {
+        const n=ri(5,15), a=ri(n,n*2), b=ri(1,n-1);
+        const sum=a+b; const [rt,rn]=forenkle(sum,n);
+        return { t:`${a}/${n} + ${b}/${n}`, svarTekst: fracStr(sum,n), s: sum/n };
+      },
+      hot:    () => {
+        const n=ri(6,20), a=ri(n,n*3), b=ri(n,n*2);
+        const diff=a-b; const [rt,rn]=forenkle(diff,n);
+        return { t:`${a}/${n} − ${b}/${n}`, svarTekst: fracStr(diff,n), s: diff/n };
+      },
+    }
+  },
+  {
+    id: 'brok-ulike', ikon: '⅔', navn: 'Brøk', info: 'Ulike nevnere',
+    farge: 'rgba(52,211,153,.7)', gruppe: 'Brøkregning',
+    gen: {
+      mild:   () => {
+        const n1=ri(3,6), n2=ri(3,8); if(n1===n2) n2++;
+        const a=ri(1,n1-1), b=ri(1,n2-1);
+        const lcm = n1*n2/gcd(n1,n2);
+        const sum = a*(lcm/n1) + b*(lcm/n2);
+        return { t:`${a}/${n1} + ${b}/${n2}`, svarTekst: fracStr(sum,lcm), s: sum/lcm };
+      },
+      medium: () => {
+        const n1=ri(4,9), n2=ri(3,8); const lcm=n1*n2/gcd(n1,n2);
+        const a=ri(2,n1), b=ri(1,n2-1);
+        const diff = a*(lcm/n1) - b*(lcm/n2);
+        return { t:`${a}/${n1} − ${b}/${n2}`, svarTekst: fracStr(diff,lcm), s: diff/lcm };
+      },
+      spicy:  () => {
+        const n1=ri(5,12), n2=ri(4,10); const lcm=n1*n2/gcd(n1,n2);
+        const a=ri(3,n1+5), b=ri(2,n2);
+        const sum = a*(lcm/n1) + b*(lcm/n2);
+        return { t:`${a}/${n1} + ${b}/${n2}`, svarTekst: fracStr(sum,lcm), s: sum/lcm };
+      },
+      hot:    () => {
+        const n1=ri(6,15), n2=ri(5,12); const lcm=n1*n2/gcd(n1,n2);
+        const a=ri(4,n1+8), b=ri(3,n2+5);
+        const diff = a*(lcm/n1) - b*(lcm/n2);
+        return { t:`${a}/${n1} − ${b}/${n2}`, svarTekst: fracStr(diff,lcm), s: diff/lcm };
+      },
+    }
+  },
+  {
+    id: 'brok-mul', ikon: '🗂️', navn: 'Brøk', info: 'Multiplikasjon',
+    farge: 'rgba(52,211,153,.5)', gruppe: 'Brøkregning',
+    gen: {
+      mild:   () => {
+        const [a,b,c,d]=[ri(1,4),ri(2,6),ri(1,4),ri(2,6)];
+        const [rt,rn]=forenkle(a*c,b*d);
+        return { t:`${a}/${b} · ${c}/${d}`, svarTekst: fracStr(a*c,b*d), s:(a*c)/(b*d) };
+      },
+      medium: () => {
+        const [a,b,c,d]=[ri(2,7),ri(3,9),ri(2,6),ri(3,8)];
+        return { t:`${a}/${b} · ${c}/${d}`, svarTekst: fracStr(a*c,b*d), s:(a*c)/(b*d) };
+      },
+      spicy:  () => {
+        const neg=ri(0,1)?'-':''; const [a,b,c,d]=[ri(2,8),ri(3,10),ri(2,7),ri(3,9)];
+        const s=(a*c)/(b*d)*(neg?-1:1);
+        return { t:`${neg}${a}/${b} · ${c}/${d}`, svarTekst: `${neg}${fracStr(a*c,b*d)}`, s };
+      },
+      hot:    () => {
+        const neg=ri(0,1)?'-':''; const [a,b,c,d]=[ri(3,11),ri(4,12),ri(3,10),ri(4,11)];
+        const s=(a*c)/(b*d)*(neg?-1:1);
+        return { t:`${neg}${a}/${b} · ${c}/${d}`, svarTekst: `${neg}${fracStr(a*c,b*d)}`, s };
+      },
+    }
+  },
+  {
+    id: 'brok-div', ikon: '📐', navn: 'Brøk', info: 'Divisjon',
+    farge: 'rgba(52,211,153,.35)', gruppe: 'Brøkregning',
+    gen: {
+      mild:   () => {
+        const [a,b,c,d]=[ri(1,4),ri(2,6),ri(1,4),ri(2,6)];
+        return { t:`${a}/${b} : ${c}/${d}`, svarTekst: fracStr(a*d,b*c), s:(a*d)/(b*c) };
+      },
+      medium: () => {
+        const [a,b,c,d]=[ri(2,7),ri(3,9),ri(2,6),ri(3,8)];
+        return { t:`${a}/${b} : ${c}/${d}`, svarTekst: fracStr(a*d,b*c), s:(a*d)/(b*c) };
+      },
+      spicy:  () => {
+        const neg=ri(0,1)?'-':''; const [a,b,c,d]=[ri(2,9),ri(3,11),ri(2,8),ri(3,10)];
+        const s=(a*d)/(b*c)*(neg?-1:1);
+        return { t:`${neg}${a}/${b} : ${c}/${d}`, svarTekst:`${neg}${fracStr(a*d,b*c)}`, s };
+      },
+      hot:    () => {
+        const neg=ri(0,1)?'-':''; const [a,b,c,d]=[ri(3,12),ri(5,14),ri(3,11),ri(4,13)];
+        const s=(a*d)/(b*c)*(neg?-1:1);
+        return { t:`${neg}${a}/${b} : ${c}/${d}`, svarTekst:`${neg}${fracStr(a*d,b*c)}`, s };
+      },
+    }
+  },
+
+  // ── Prosentregning ──
+  {
+    id: 'prosent', ikon: '💯', navn: 'Prosent', info: 'Finn verdien',
+    farge: 'rgba(167,243,208,1)', gruppe: 'Prosentregning',
+    gen: {
+      mild:   () => { const p=[10,20,25,50][ri(0,3)], h=ri(1,10)*100; return { t:`${p}% av ${h}`, s:Math.round(p*h/100) }; },
+      medium: () => { const p=[5,10,15,20,25,50][ri(0,5)], h=ri(2,20)*10; return { t:`${p}% av ${h}`, s:Math.round(p*h/100) }; },
+      spicy:  () => { const p=ri(1,19)*5, h=ri(10,200); return { t:`${p}% av ${h}`, s:Math.round(p*h/100*100)/100 }; },
+      hot:    () => { const h=ri(50,500), del=ri(10,h); return { t:`Hva er ${del} av ${h} i %?`, s:Math.round(del/h*100) }; },
+    }
+  },
+  {
+    id: 'prosent-vekst', ikon: '📈', navn: 'Vekstfaktor', info: 'Prosentregning',
+    farge: 'rgba(167,243,208,.6)', gruppe: 'Prosentregning',
+    gen: {
+      mild:   () => {
+        const p=[10,20,25,50][ri(0,3)], retning=ri(0,1)?'økning':'reduksjon';
+        const vf = retning==='økning' ? 1+p/100 : 1-p/100;
+        return { t:`Vekstfaktor for ${p}% ${retning}`, svarTekst:`${vf}`, s:vf };
+      },
+      medium: () => {
+        const vf = Math.round((1 + ri(1,9)*0.1)*100)/100;
+        const p = Math.round((vf-1)*100);
+        return { t:`${vf} som prosentvis endring`, svarTekst:`${p}%`, s:p };
+      },
+      spicy:  () => {
+        const start=ri(100,500), vf=Math.round((1+ri(1,6)*0.1)*10)/10;
+        const slutt=Math.round(start*vf);
+        return { t:`${start} · ${vf} = ?`, s: slutt };
+      },
+      hot:    () => {
+        const start=ri(200,800), p=ri(5,40), r=ri(0,1);
+        const vf = r ? 1+p/100 : 1-p/100;
+        const slutt=Math.round(start*vf*100)/100;
+        return { t:`${start} kr ${r?'øker':'synker'} med ${p}%`, s: slutt };
+      },
+    }
+  },
+  {
+    id: 'prosent-andel', ikon: '🥧', navn: 'Prosentandel', info: 'Prosentregning',
+    farge: 'rgba(167,243,208,.35)', gruppe: 'Prosentregning',
+    gen: {
+      mild:   () => { const t=ri(2,10)*10, d=ri(1,t); return { t:`${d} av ${t} i %?`, s:Math.round(d/t*100) }; },
+      medium: () => { const t=ri(20,200), d=ri(1,t); return { t:`${d} av ${t} i %?`, s:Math.round(d/t*100) }; },
+      spicy:  () => {
+        const t=ri(50,400), d=ri(1,t), p=ri(5,50);
+        return { t:`Hva er ${p}% av ${t}?`, s:Math.round(t*p/100) };
+      },
+      hot:    () => {
+        const slutt=ri(50,500), p=ri(10,90);
+        const start=Math.round(slutt*100/p);
+        return { t:`${p}% av et tall er ${slutt}. Hva er tallet?`, s:start };
+      },
+    }
+  },
+
+  // ── Omgjøring ──
+  {
+    id: 'omg-vekt', ikon: '⚖️', navn: 'Omgjøring', info: 'Vekt',
+    farge: 'rgba(251,191,36,1)', gruppe: 'Omgjøring',
+    gen: {
+      mild:   () => { const k=ri(1,9); return { t:`${k} kg = ? g`, s:k*1000 }; },
+      medium: () => { const k=rd(1,9,1); return { t:`${k.toFixed(1)} kg = ? g`, s:Math.round(k*1000) }; },
+      spicy:  () => { const g=ri(1,9)*100; return { t:`${g} g = ? kg`, svarTekst:`${g/1000}`, s:g/1000 }; },
+      hot:    () => {
+        const typer=[['mg','g',1000],['g','kg',1000],['kg','tonn',1000]];
+        const [fra,til,f]=typer[ri(0,2)];
+        const v=ri(1,9)*(fra==='mg'?100:fra==='g'?1:1);
+        return { t:`${v} ${fra} = ? ${til}`, svarTekst:`${v/f}`, s:v/f };
+      },
+    }
+  },
+  {
+    id: 'omg-tid', ikon: '⏱️', navn: 'Omgjøring', info: 'Tid',
+    farge: 'rgba(251,191,36,.7)', gruppe: 'Omgjøring',
+    gen: {
+      mild:   () => { const t=ri(1,9); return { t:`${t} timer = ? min`, s:t*60 }; },
+      medium: () => { const m=ri(10,59)*2; return { t:`${m} min = ? sek`, s:m*60 }; },
+      spicy:  () => {
+        const m=[12,15,18,20,24,30,36,45,48][ri(0,8)];
+        const desimal = Math.round(m/60*100)/100;
+        return { t:`${m} min = ? timer (desimal)`, s:desimal, svarTekst:`${desimal}` };
+      },
+      hot:    () => {
+        const m=ri(61,299);
+        const t=Math.floor(m/60), r=m%60;
+        return { t:`${m} min = ? t og ? min  (skriv f.eks. 2t 15min)`, svarTekst:`${t}t ${r}min`, s:null, tTimer:t, tMin:r };
+      },
+    }
+  },
+  {
+    id: 'omg-lengde', ikon: '📏', navn: 'Omgjøring', info: 'Lengde',
+    farge: 'rgba(251,191,36,.45)', gruppe: 'Omgjøring',
+    gen: {
+      mild:   () => { const k=ri(1,10); return { t:`${k} km = ? m`, s:k*1000 }; },
+      medium: () => { const k=rd(1,9,1); return { t:`${k.toFixed(1)} km = ? m`, s:Math.round(k*1000) }; },
+      spicy:  () => {
+        const typer=[['m','cm',100],['cm','mm',10],['dm','cm',10]];
+        const [fra,til,f]=typer[ri(0,2)];
+        const v=ri(1,9)*10;
+        return { t:`${v} ${fra} = ? ${til}`, s:v*f };
+      },
+      hot:    () => {
+        const typer=[['km','dm',10000],['m','mm',1000],['km','cm',100000]];
+        const [fra,til,f]=typer[ri(0,2)];
+        const v=ri(1,5);
+        return { t:`${v} ${fra} = ? ${til}`, s:v*f };
+      },
+    }
+  },
+  {
+    id: 'omg-volum', ikon: '🧴', navn: 'Omgjøring', info: 'Volum',
+    farge: 'rgba(251,191,36,.25)', gruppe: 'Omgjøring',
+    gen: {
+      mild:   () => { const l=ri(10,99); return { t:`${l} L = ? dL`, s:l*10 }; },
+      medium: () => { const l=ri(10,99); return { t:`${l} L = ? cL`, s:l*100 }; },
+      spicy:  () => { const d=ri(10,99); return { t:`${d} dm³ = ? L`, s:d }; },
+      hot:    () => { const m=ri(5,50); return { t:`${m} m³ = ? dm³`, s:m*1000 }; },
+    }
+  },
+
+  // ── Potensregning ──
+  {
+    id: 'potens', ikon: '🚀', navn: 'Potenser', info: 'Regn ut',
+    farge: 'rgba(239,68,68,1)', gruppe: 'Potensregning',
+    gen: {
+      mild:   () => { const a=ri(0,10),e=2; return { t:`${a}² = ?`, s:Math.pow(a,e) }; },
+      medium: () => { const a=ri(0,13),e=3; return { t:`${a}³ = ?`, s:Math.pow(a,e) }; },
+      spicy:  () => {
+        const a=ri(0,5), e=ri(2,5);
+        return { t:`${a}^${e} = ?`, s:Math.pow(a,e) };
+      },
+      hot:    () => {
+        const a=ri(0,4), e1=ri(2,4), e2=ri(2,4);
+        return { t:`${a}^${e1} + ${a}^${e2} = ?`, s:Math.pow(a,e1)+Math.pow(a,e2) };
+      },
+    }
+  },
+  {
+    id: 'potens-regler', ikon: '📊', navn: 'Potensregler', info: 'Likt grunntall',
+    farge: 'rgba(239,68,68,.65)', gruppe: 'Potensregning',
+    gen: {
+      mild:   () => {
+        const a=ri(2,99), e1=ri(1,5), e2=ri(1,5);
+        return { t:`${a}^${e1} · ${a}^${e2} = ${a}^?`, s:e1+e2 };
+      },
+      medium: () => {
+        const a=ri(2,50), e1=ri(3,8), e2=ri(1,e1-1);
+        return { t:`${a}^${e1} : ${a}^${e2} = ${a}^?`, s:e1-e2 };
+      },
+      spicy:  () => {
+        const a=ri(2,30), e1=ri(2,6), e2=ri(1,4);
+        const op=ri(0,1);
+        return op
+          ? { t:`${a}^${e1} · ${a}^${e2} = ${a}^?`, s:e1+e2 }
+          : { t:`${a}^${e1} : ${a}^${e2} = ${a}^?`, s:e1-e2 };
+      },
+      hot:    () => {
+        const a=ri(2,20), e1=ri(4,9), e2=ri(2,e1-1), e3=ri(1,3);
+        return { t:`(${a}^${e1} · ${a}^${e3}) : ${a}^${e2} = ${a}^?`, s:e1+e3-e2 };
+      },
+    }
+  },
+
+  // ── Røtter ──
+  {
+    id: 'kvadratrøtter', ikon: '√', navn: 'Kvadratrøtter', info: 'Røtter',
+    farge: 'rgba(16,185,129,1)', gruppe: 'Røtter',
+    gen: {
+      mild:   () => { const s=[1,2,3,4,5,6,7,8,9,10,11,15][ri(0,11)]; return { t:`√${s*s} = ?`, s }; },
+      medium: () => { const s=[10,20,30,40,50,60,70,80,90,100][ri(0,9)]; return { t:`√${s*s} = ?`, s }; },
+      spicy:  () => {
+        const s=[1,2,3,4,5,6,7,8,9,10,11,12,15][ri(0,12)], k=ri(2,5)*10;
+        return { t:`√${s*s*k*k} = ?`, s:s*k };
+      },
+      hot:    () => {
+        const s=ri(2,12), e=ri(2,4);
+        return { t:`√(${s}^${e*2}) = ?`, s:Math.pow(s,e) };
+      },
+    }
+  },
+  {
+    id: 'kubikkrøtter', ikon: '∛', navn: 'Kubikkrøtter', info: 'Røtter',
+    farge: 'rgba(16,185,129,.65)', gruppe: 'Røtter',
+    gen: {
+      mild:   () => { const s=[1,2,3,4,5,6,7,8,9,10][ri(0,9)]; return { t:`∛${s*s*s} = ?`, s }; },
+      medium: () => { const s=[10,20,30,40,50,60,70,80,90,100][ri(0,9)]; return { t:`∛${s*s*s} = ?`, s }; },
+      spicy:  () => {
+        const s=ri(2,10), k=ri(2,5);
+        return { t:`∛${s*s*s*k*k*k} = ?`, s:s*k };
+      },
+      hot:    () => {
+        const s=ri(2,8);
+        return { t:`∛(${s}^9) = ?`, s:Math.pow(s,3) };
+      },
+    }
+  },
+
+  // ── Parenteser ──
+  {
+    id: 'paren1', ikon: '( )', navn: 'Parenteser', info: 'Grunnleggende',
+    farge: 'rgba(244,114,182,1)', gruppe: 'Parenteser',
+    gen: {
+      mild:   () => {
+        const [a,b,c,d]=[ri(0,9),ri(0,9),ri(0,9),ri(0,9)];
+        return { t:`(${a} + ${b}) + (${c} + ${d}) = ?`, s:a+b+c+d };
+      },
+      medium: () => {
+        const [a,b,c,d]=[ri(0,9),ri(0,9),ri(0,9),ri(0,9)];
+        return { t:`(${a} + ${b}) + (${c} − ${d}) = ?`, s:a+b+c-d };
+      },
+      spicy:  () => {
+        const [a,b,c,d]=[ri(1,9),ri(1,9),ri(2,9),ri(1,9)];
+        return { t:`(${a} + ${b}) · (${c} − ${d}) = ?`, s:(a+b)*(c-d) };
+      },
+      hot:    () => {
+        const [a,b,c,d,e]=[ri(1,9),ri(1,9),ri(1,9),ri(2,9),ri(1,9)];
+        return { t:`(${a} + ${b}) · (${c} + ${d}) − ${e} = ?`, s:(a+b)*(c+d)-e };
+      },
+    }
+  },
+  {
+    id: 'paren2', ikon: '(x)', navn: 'Kvadratsetninger', info: 'Algebra',
+    farge: 'rgba(244,114,182,.65)', gruppe: 'Parenteser',
+    gen: {
+      mild:   () => {
+        const [a,b]=[ri(1,9),ri(1,9)];
+        return { t:`(${a} + ${b})² = ?`, s:(a+b)*(a+b) };
+      },
+      medium: () => {
+        const [a,b]=[ri(2,12),ri(1,8)];
+        return { t:`(${a} − ${b})² = ?`, s:(a-b)*(a-b) };
+      },
+      spicy:  () => {
+        const [a,b]=[ri(3,15),ri(2,10)];
+        return { t:`(${a} + ${b})(${a} − ${b}) = ?`, s:a*a-b*b };
+      },
+      hot:    () => {
+        const [a,b,c]=[ri(2,8),ri(1,6),ri(1,5)];
+        return { t:`(${a} + ${b})² − ${c}² = ?`, s:(a+b)*(a+b)-c*c };
+      },
+    }
+  },
+
+  // ── Algebra ──
+  {
+    id: 'alg-addsub', ikon: '🔤', navn: 'Algebra', info: 'Addisjon & subtraksjon',
+    farge: 'rgba(99,102,241,1)', gruppe: 'Algebra',
+    gen: {
+      mild:   () => {
+        const a=ri(2,9), b=ri(1,8);
+        return { t:`${a}a + ${b}a = ?a`, s:a+b };
+      },
+      medium: () => {
+        const a=ri(3,12), b=ri(1,9), c=ri(1,6);
+        return { t:`${a}a − ${b}a + ${c}a = ?a`, s:a-b+c };
+      },
+      spicy:  () => {
+        const a=ri(5,15), b=ri(2,10), c=ri(3,8), d=ri(1,5);
+        return { t:`${a}a + ${b}b − ${c}a − ${d}b = ?`, svarTekst:`${a-c}a + ${b-d}b`, s:a-c+b-d };
+      },
+      hot:    () => {
+        const a=ri(4,12), b=ri(2,8), c=ri(1,6);
+        const r1=ri(2,9), r2=ri(2,9);
+        return { t:`${a}a + ${b} − ${c}a − ${r1} + ${r2} = ?a + ?`, svarTekst:`${a-c}a + ${b-r1+r2}`, s:a-c };
+      },
+    }
+  },
+  {
+    id: 'alg-mul', ikon: '🔣', navn: 'Algebra', info: 'Multiplikasjon',
+    farge: 'rgba(99,102,241,.65)', gruppe: 'Algebra',
+    gen: {
+      mild:   () => { return { t:`a · a = a^?`, s:2 }; },
+      medium: () => {
+        const e1=ri(1,3), e2=ri(1,3);
+        return { t:`a^${e1} · a^${e2} = a^?`, s:e1+e2 };
+      },
+      spicy:  () => {
+        const k1=ri(2,9), k2=ri(2,9), e1=ri(1,3), e2=ri(1,3);
+        return { t:`${k1}a^${e1} · ${k2}a^${e2} = ?a^?`, svarTekst:`${k1*k2}a^${e1+e2}`, s:k1*k2 };
+      },
+      hot:    () => {
+        const k1=ri(2,8), k2=ri(2,8), e1=ri(2,4), e2=ri(2,4);
+        return { t:`${k1}a^${e1} · ${k2}a^${e2} = ?`, svarTekst:`${k1*k2}a^${e1+e2}`, s:k1*k2*(e1+e2) };
+      },
+    }
+  },
+  {
+    id: 'alg-div', ikon: '🔃', navn: 'Algebra', info: 'Divisjon',
+    farge: 'rgba(99,102,241,.4)', gruppe: 'Algebra',
+    gen: {
+      mild:   () => {
+        const k=ri(2,9)*[2,3,4,5][ri(0,3)], d=[2,3,4,5][ri(0,3)];
+        if(k%d!==0){const kn=d*ri(2,8); return {t:`${kn}a : ${d} = ?a`, s:kn/d};}
+        return { t:`${k}a : ${d} = ?a`, s:k/d };
+      },
+      medium: () => {
+        const d=ri(2,9), s=ri(2,12);
+        return { t:`${d*s}a : ${d} = ?a`, s };
+      },
+      spicy:  () => {
+        const k=ri(2,9), d=ri(2,5), e1=ri(3,6), e2=ri(1,e1-1);
+        return { t:`${k}a^${e1} : a^${e2} = ${k}a^?`, s:e1-e2 };
+      },
+      hot:    () => {
+        const k1=ri(2,9)*3, k2=ri(2,5), e1=ri(3,7), e2=ri(1,e1-1);
+        const ks = k1/k2===Math.floor(k1/k2) ? k1 : k2*ri(2,8);
+        return { t:`${ks}a^${e1} : ${k2}a^${e2} = ?a^?`, svarTekst:`${ks/k2}a^${e1-e2}`, s:ks/k2 };
+      },
+    }
+  },
+];
+
+// ══════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════
+let totXP        = parseInt(localStorage.getItem('matte_xp')     || '0');
+let totStreak    = parseInt(localStorage.getItem('matte_streak') || '0');
+let emneProgress = JSON.parse(localStorage.getItem('matte_prog') || '{}');
+
+let aktivtEmne  = null;
+let aktivtNivaa = null;
+let oppgaver    = [];
+let oppgaveIdx  = 0;
+let riktig      = 0;
+let feil        = 0;
+let poeng       = 0;
+
+const NIVAA_REKKE = ['mild','medium','spicy','hot'];
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+function init() {
+  oppdaterHeaderStats();
+  byggGruppeFilter();
+  byggEmneGrid();
+}
+
+function oppdaterHeaderStats() {
+  document.getElementById('xpVis').textContent     = totXP;
+  document.getElementById('streakVis').textContent = totStreak;
+}
+
+function byggEmneGrid() {
+  const grid = document.getElementById('emneGrid');
+  grid.innerHTML = '';
+
+  // Grupper emner
+  const grupper = {};
+  EMNER.forEach(e => {
+    if (!grupper[e.gruppe]) grupper[e.gruppe] = [];
+    grupper[e.gruppe].push(e);
+  });
+
+  Object.entries(grupper).forEach(([gruppeNavn, emner]) => {
+    const label = document.createElement('div');
+    label.style.cssText = 'grid-column:1/-1;font-family:var(--font-h);font-size:.85rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:12px;padding-bottom:4px;border-bottom:1px solid var(--border);';
+    label.textContent = gruppeNavn;
+    grid.appendChild(label);
+
+    emner.forEach(emne => {
+      const prog = emneProgress[emne.id] || 0;
+      const div = document.createElement('div');
+      div.className = 'emne-kort';
+      div.style.setProperty('--emne-c', emne.farge);
+      div.innerHTML = `
+        <span class="emne-ikon">${emne.ikon}</span>
+        <div class="emne-navn">${emne.navn}</div>
+        <div class="emne-info">${emne.info}</div>
+        <div class="emne-progress">
+          <div class="emne-progress-bar" style="width:${prog}%;background:${emne.farge};"></div>
+        </div>`;
+      div.onclick = () => velgEmne(emne);
+      grid.appendChild(div);
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+//  SØK & FILTER
+// ══════════════════════════════════════════
+let aktivGruppe = 'alle';
+
+function byggGruppeFilter() {
+  const grupper = [...new Set(EMNER.map(e => e.gruppe))];
+  const container = document.getElementById('gruppeFilter');
+  // Behold "Alle"-knappen, legg til resten
+  grupper.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'gruppe-btn';
+    btn.dataset.gruppe = g;
+    btn.textContent = g;
+    btn.onclick = () => velgGruppe(btn);
+    container.appendChild(btn);
+  });
+}
+
+function velgGruppe(btn) {
+  document.querySelectorAll('.gruppe-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aktivGruppe = btn.dataset.gruppe;
+  filtrer();
+}
+
+function filtrer() {
+  const q = document.getElementById('sokInput').value.trim().toLowerCase();
+  const clearBtn = document.getElementById('sokClear');
+  clearBtn.style.display = q ? 'block' : 'none';
+
+  if (!q && aktivGruppe === 'alle') {
+    document.getElementById('sokResultat').style.display = 'none';
+    document.getElementById('emneGridWrapper').style.display = 'block';
+    return;
+  }
+
+  // Filtrer EMNER-arrayen
+  const treff = EMNER.filter(emne => {
+    if (aktivGruppe !== 'alle' && emne.gruppe !== aktivGruppe) return false;
+    if (q) {
+      const tekst = [emne.navn, emne.info, emne.gruppe].join(' ').toLowerCase();
+      return tekst.includes(q);
+    }
+    return true;
+  });
+
+  // Bygg sokGrid med emne-kort
+  const grid = document.getElementById('sokGrid');
+  grid.innerHTML = '';
+  if (treff.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--dim);">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🔭</div>
+      <h3 style="font-family:var(--font-h);margin-bottom:8px;">Ingen emner funnet</h3>
+      <p style="font-size:.9rem;">Prøv et annet søkeord eller velg en annen gruppe.</p>
+    </div>`;
+  } else {
+    treff.forEach(emne => {
+      const prog = emneProgress[emne.id] || 0;
+      const div = document.createElement('div');
+      div.className = 'emne-kort';
+      div.style.setProperty('--emne-c', emne.farge);
+      div.innerHTML = `
+        <span class="emne-ikon">${emne.ikon}</span>
+        <div class="emne-navn">${emne.navn}</div>
+        <div class="emne-info">${emne.info}</div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:3px;opacity:.7;">${emne.gruppe}</div>
+        <div class="emne-progress">
+          <div class="emne-progress-bar" style="width:${prog}%;background:${emne.farge};"></div>
+        </div>`;
+      div.onclick = () => velgEmne(emne);
+      grid.appendChild(div);
+    });
+  }
+
+  const antall = treff.length;
+  document.getElementById('sokAntall').textContent =
+    antall === 0 ? 'Ingen treff' :
+    antall === 1 ? '1 emne funnet' : `${antall} emner funnet`;
+
+  document.getElementById('sokResultat').style.display = 'block';
+  document.getElementById('emneGridWrapper').style.display = 'none';
+}
+
+function tømmSok() {
+  document.getElementById('sokInput').value = '';
+  document.getElementById('sokClear').style.display = 'none';
+  aktivGruppe = 'alle';
+  document.querySelectorAll('.gruppe-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.gruppe === 'alle'));
+  document.getElementById('sokResultat').style.display = 'none';
+  document.getElementById('emneGridWrapper').style.display = 'block';
+}
+
+// ══════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════
+function vis(id) {
+  ['velgSkjerm','nivaaSkjerm','treningSkjerm','resultatSkjerm'].forEach(s =>
+    document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function velgEmne(emne) {
+  aktivtEmne = emne;
+  document.getElementById('nivaaEmneIkon').textContent = emne.ikon;
+  document.getElementById('niveauTittel').textContent  = emne.navn + ' – ' + emne.info;
+  vis('nivaaSkjerm');
+}
+
+function gaaTilEmner() {
+  tømmSok();
+  byggEmneGrid();
+  vis('velgSkjerm');
+}
+
+function gaaTilNivaa() {
+  vis('nivaaSkjerm');
+}
+
+function startTrening(nivaa) {
+  aktivtNivaa = nivaa;
+  oppgaveIdx = 0;
+  riktig = 0; feil = 0; poeng = 0;
+
+  oppgaver = [];
+  for (let i = 0; i < 15; i++) {
+    oppgaver.push(aktivtEmne.gen[nivaa]());
+  }
+
+  document.getElementById('riktigTeller').textContent = '0';
+  document.getElementById('feilTeller').textContent   = '0';
+  document.getElementById('poengTeller').textContent  = '0';
+  document.querySelectorAll('.stjerne').forEach(s => s.classList.remove('aktiv'));
+
+  const nivaaFarger = { mild:'var(--mild)', medium:'var(--medium)', spicy:'var(--spicy)', hot:'var(--hot)' };
+  const nivaaNavn   = { mild:'🟢 Mild', medium:'🟡 Medium', spicy:'🌶️ Spicy', hot:'🔥 Hot' };
+  document.getElementById('treningEmneLabel').textContent = aktivtEmne.navn + ' – ' + aktivtEmne.info;
+  const badge = document.getElementById('treningNivaaBadge');
+  badge.textContent = nivaaNavn[nivaa];
+  badge.style.background = nivaaFarger[nivaa] + '22';
+  badge.style.color  = nivaaFarger[nivaa];
+  badge.style.border = `1.5px solid ${nivaaFarger[nivaa]}55`;
+
+  vis('treningSkjerm');
+  visOppgave();
+}
+
+function startSammeIgjen() { startTrening(aktivtNivaa); }
+
+function startNesteNivaa() {
+  const idx = NIVAA_REKKE.indexOf(aktivtNivaa);
+  if (idx < NIVAA_REKKE.length - 1) {
+    startTrening(NIVAA_REKKE[idx + 1]);
+  }
+}
+
+// ══════════════════════════════════════════
+//  OPPGAVE-LOGIKK
+// ══════════════════════════════════════════
+function visOppgave() {
+  if (oppgaveIdx >= oppgaver.length) { visResultat(); return; }
+  const opp = oppgaver[oppgaveIdx];
+  document.getElementById('oppgaveNr').textContent    = `Oppgave ${oppgaveIdx+1} av ${oppgaver.length}`;
+  document.getElementById('oppgaveTekst').textContent = opp.t;
+  document.getElementById('oppgaveHint').textContent  = opp.hint || '';
+  document.getElementById('svarInput').value          = '';
+  document.getElementById('svarInput').className      = 'svar-input';
+  document.getElementById('svarInput').disabled       = false;
+
+  const fb = document.getElementById('feedbackTekst');
+  fb.textContent = ''; fb.className = 'feedback-tekst';
+  document.getElementById('oppgaveKort').className = 'oppgave-kort';
+
+  const pct = (oppgaveIdx / oppgaver.length) * 100;
+  document.getElementById('fremgangFill').style.width     = pct + '%';
+  document.getElementById('treningFremgang').textContent  = `${oppgaveIdx} / ${oppgaver.length}`;
+
+  setTimeout(() => document.getElementById('svarInput').focus(), 50);
+}
+
+function sjekkSvar() {
+  const input = document.getElementById('svarInput');
+  if (input.disabled) { neste(); return; }
+
+  const raaverdi = input.value.replace(',','.').trim();
+  if (!raaverdi) return;
+
+  const opp = oppgaver[oppgaveIdx];
+  const fb  = document.getElementById('feedbackTekst');
+  const kort = document.getElementById('oppgaveKort');
+
+  let erRiktig = false;
+
+  // Spesialtilfelle: tid på formen "Xt Ymin"
+  if (opp.tTimer !== undefined) {
+    // Normaliser input: fjern mellomrom, godta varianter som "2t15min", "2t 15min", "2t15", "2:15", "2,15"
+    const norm = raaverdi.toLowerCase().replace(/\s+/g,'');
+    // Prøv mønster: tall + t + tall + (min)?
+    const m1 = norm.match(/^(\d+)t(\d+)(min)?$/);
+    const m2 = norm.match(/^(\d+)[:\-](\d+)$/);
+    if (m1) {
+      erRiktig = parseInt(m1[1]) === opp.tTimer && parseInt(m1[2]) === opp.tMin;
+    } else if (m2) {
+      erRiktig = parseInt(m2[1]) === opp.tTimer && parseInt(m2[2]) === opp.tMin;
+    }
+  } else {
+    // Støtte for brøk-svar som "3/4"
+    let svar;
+    if (raaverdi.includes('/')) {
+      const [t,n] = raaverdi.split('/').map(Number);
+      svar = t/n;
+    } else {
+      svar = parseFloat(raaverdi);
+    }
+    erRiktig = Math.abs(svar - opp.s) < 0.011;
+  }
+
+  input.disabled = true;
+
+  if (erRiktig) {
+    riktig++;
+    poeng += poengForNivaa(aktivtNivaa);
+    totStreak++;
+    input.className = 'svar-input riktig';
+    kort.className  = 'oppgave-kort riktig';
+    fb.textContent  = ['Riktig! 🎉','Supert! ⭐','Perfekt! 🔥','Bra! 💪'][ri(0,3)];
+    fb.className    = 'feedback-tekst vis riktig';
+    oppdaterStjerner();
+    visXpPopup(`+${poengForNivaa(aktivtNivaa)} XP`);
+  } else {
+    feil++;
+    totStreak = 0;
+    input.className = 'svar-input feil';
+    kort.className  = 'oppgave-kort feil';
+    const fasit = opp.svarTekst || opp.s;
+    fb.textContent  = `Feil. Svaret er ${fasit}`;
+    fb.className    = 'feedback-tekst vis feil';
+  }
+
+  document.getElementById('riktigTeller').textContent = riktig;
+  document.getElementById('feilTeller').textContent   = feil;
+  document.getElementById('poengTeller').textContent  = poeng;
+  oppdaterHeaderStats();
+  lagreProgress();
+
+  setTimeout(neste, 1200);
+}
+
+function neste() {
+  oppgaveIdx++;
+  visOppgave();
+}
+
+function hoppOver() {
+  feil++;
+  totStreak = 0;
+  document.getElementById('feilTeller').textContent = feil;
+  oppdaterHeaderStats();
+  oppgaveIdx++;
+  visOppgave();
+}
+
+function poengForNivaa(n) {
+  return { mild:5, medium:10, spicy:15, hot:25 }[n] || 10;
+}
+
+function oppdaterStjerner() {
+  const antall = Math.min(5, Math.floor(riktig / 3));
+  for (let i = 1; i <= antall; i++) {
+    const s = document.getElementById('s'+i);
+    if (s && !s.classList.contains('aktiv')) s.classList.add('aktiv');
+  }
+}
+
+// ══════════════════════════════════════════
+//  RESULTAT
+// ══════════════════════════════════════════
+function visResultat() {
+  document.getElementById('fremgangFill').style.width     = '100%';
+  document.getElementById('treningFremgang').textContent  = `${oppgaver.length} / ${oppgaver.length}`;
+
+  const prosent    = Math.round((riktig / oppgaver.length) * 100);
+  const xpOpptjent = poeng;
+  totXP += xpOpptjent;
+  lagreProgress();
+
+  // Full pott?
+  const fullPott  = riktig === oppgaver.length;
+  const nesteIdx  = NIVAA_REKKE.indexOf(aktivtNivaa) + 1;
+  const harNeste  = nesteIdx < NIVAA_REKKE.length;
+  const nesteNavn = harNeste ? { mild:'Medium 🟡', medium:'Spicy 🌶️', spicy:'Hot 🔥', hot:null }[aktivtNivaa] : null;
+
+  let emoji, tittel, sub;
+  if (fullPott && harNeste) {
+    emoji  = '🏆';
+    tittel = 'Perfekt! Alle riktige!';
+    sub    = `Fantastisk! Du er klar for ${nesteNavn}!`;
+  } else if (fullPott) {
+    emoji  = '👑';
+    tittel = 'Uslåelig! Topp karakter!';
+    sub    = 'Du mestrer dette emnet på høyeste nivå!';
+  } else if (prosent >= 80) {
+    emoji  = '🌟'; tittel = 'Veldig bra!';  sub = `${prosent}% riktige – imponerende!`;
+  } else if (prosent >= 60) {
+    emoji  = '👍'; tittel = 'Bra jobbet!';  sub = `${prosent}% riktige. Fortsett å øve!`;
+  } else if (prosent >= 40) {
+    emoji  = '💪'; tittel = 'Fortsett!';    sub = `${prosent}% riktige. Du blir bedre!`;
+  } else {
+    emoji  = '📚'; tittel = 'Øv mer!';      sub = `${prosent}% riktige. Ta det igjen!`;
+  }
+
+  document.getElementById('resultatEmoji').textContent  = emoji;
+  document.getElementById('resultatTittel').textContent = tittel;
+  document.getElementById('resultatSub').textContent    = sub;
+  document.getElementById('resRiktig').textContent  = riktig;
+  document.getElementById('resFeil').textContent    = feil;
+  document.getElementById('resPoeng').textContent   = poeng;
+  document.getElementById('resXP').textContent      = '+' + xpOpptjent;
+
+  const stjerner = Math.max(1, Math.round(prosent / 20));
+  const starDiv  = document.getElementById('resultatStjerner');
+  starDiv.innerHTML = '';
+  for (let i = 0; i < 5; i++) starDiv.innerHTML += i < stjerner ? '⭐' : '☆';
+
+  // Vis "neste nivå"-knapp kun ved full pott og det finnes et neste nivå
+  const nesteBtn = document.getElementById('nesteNivaaBtn');
+  if (fullPott && harNeste) {
+    nesteBtn.style.display = 'inline-flex';
+    nesteBtn.textContent   = `⬆️ Gå videre til ${nesteNavn}`;
+    nesteBtn.style.background     = 'linear-gradient(135deg,#818cf8,#c084fc)';
+    nesteBtn.style.color          = '#fff';
+    nesteBtn.style.border         = 'none';
+    nesteBtn.style.animation      = 'pulseBtn 1.5s ease infinite';
+  } else {
+    nesteBtn.style.display = 'none';
+  }
+
+  // Lagre best progress
+  const gammelProg = emneProgress[aktivtEmne.id] || 0;
+  emneProgress[aktivtEmne.id] = Math.max(gammelProg, prosent);
+  localStorage.setItem('matte_prog', JSON.stringify(emneProgress));
+
+  vis('resultatSkjerm');
+}
+
+// ══════════════════════════════════════════
+//  LAGRING & POPUP
+// ══════════════════════════════════════════
+function lagreProgress() {
+  localStorage.setItem('matte_xp',     totXP);
+  localStorage.setItem('matte_streak', totStreak);
+  oppdaterHeaderStats();
+}
+
+let xpTimer = null;
+function visXpPopup(tekst) {
+  const el = document.getElementById('xpPopup');
+  el.textContent = tekst;
+  el.classList.add('vis');
+  if (xpTimer) clearTimeout(xpTimer);
+  xpTimer = setTimeout(() => el.classList.remove('vis'), 1500);
+}
+
+init();
+</script>
+</body>
+</html>

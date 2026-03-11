@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Sannsynlighet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #07090f;
+    --surface: #0e1220;
+    --card:    #141928;
+    --border:  rgba(255,255,255,.07);
+    --mild:    #22c55e;
+    --medium:  #eab308;
+    --spicy:   #f97316;
+    --hot:     #ef4444;
+    --accent:  #a78bfa;
+    --accent2: #34d399;
+    --text:    #f1f5f9;
+    --dim:     #64748b;
+    --font-h:  'Fredoka One', cursive;
+    --font-b:  'Nunito', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-b); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 40% at 12% 12%, rgba(167,139,250,.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 35% at 88% 80%, rgba(52,211,153,.06) 0%, transparent 60%);
+  }
+
+  /* ── HEADER ── */
+  .site-header { position:sticky; top:0; z-index:100; background:rgba(7,9,15,.9); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; gap:10px; }
+  .site-header a { color:var(--text); text-decoration:none; font-family:var(--font-h); font-size:1.1rem; }
+  .site-header a:hover { color:var(--accent); }
+  .header-sep { color:var(--dim); }
+  .header-title { font-family:var(--font-h); font-size:1rem; color:var(--accent); }
+  .header-stats { margin-left:auto; display:flex; align-items:center; gap:16px; }
+  .stat-pill { display:flex; align-items:center; gap:6px; font-size:.82rem; font-weight:800; padding:4px 12px; border-radius:99px; border:1.5px solid var(--border); background:rgba(255,255,255,.04); }
+  .stat-pill.xp     { border-color:rgba(167,139,250,.4); color:var(--accent); }
+  .stat-pill.streak { border-color:rgba(249,115,22,.4);  color:var(--spicy); }
+
+  /* ── VELG-SKJERM ── */
+  #velgSkjerm { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:48px 20px 80px; }
+  .hero-tittel { font-family:var(--font-h); font-size:clamp(1.9rem,5vw,3.2rem); text-align:center; margin-bottom:8px; }
+  .hero-tittel span { color:var(--accent); }
+  .hero-sub { text-align:center; color:var(--dim); font-size:1rem; margin-bottom:36px; }
+
+  /* SØK & FILTER */
+  .sok-filter { margin:0 auto 28px; }
+  .sok-wrapper { display:flex; align-items:center; background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:0 14px; transition:border-color .2s; margin-bottom:14px; }
+  .sok-wrapper:focus-within { border-color:var(--accent); }
+  .sok-ikon { font-size:1rem; color:var(--dim); margin-right:10px; pointer-events:none; }
+  .sok-input { flex:1; background:none; border:none; outline:none; font-family:var(--font-b); font-size:.95rem; color:var(--text); padding:13px 0; }
+  .sok-input::placeholder { color:var(--dim); }
+  .sok-clear { background:none; border:none; color:var(--dim); cursor:pointer; font-size:.9rem; padding:4px 8px; border-radius:6px; transition:color .15s; }
+  .sok-clear:hover { color:var(--text); }
+  .gruppe-filter { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .gruppe-btn { font-family:var(--font-b); font-size:.8rem; padding:5px 14px; border-radius:99px; border:1.5px solid var(--border); background:none; color:var(--dim); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .gruppe-btn:hover  { border-color:var(--accent); color:var(--accent); }
+  .gruppe-btn.active { background:rgba(167,139,250,.12); border-color:var(--accent); color:var(--accent); }
+  .sok-antall { font-size:.82rem; color:var(--dim); margin:0 0 16px; text-align:center; }
+
+  /* EMNE-GRID */
+  .emne-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:13px; }
+  .emne-grid-label { grid-column:1/-1; font-family:var(--font-h); font-size:.82rem; color:var(--dim); text-transform:uppercase; letter-spacing:.08em; margin-top:14px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+  .emne-kort { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:16px; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
+  .emne-kort::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity .2s; background:var(--emne-bg,rgba(167,139,250,.07)); }
+  .emne-kort:hover { transform:translateY(-3px); border-color:var(--emne-c,var(--accent)); }
+  .emne-kort:hover::before { opacity:1; }
+  .emne-svg { width:100%; height:56px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; overflow:hidden; }
+  .emne-svg svg { max-height:52px; }
+  .emne-navn { font-family:var(--font-h); font-size:1rem; margin-bottom:3px; }
+  .emne-info { font-size:.74rem; color:var(--dim); }
+  .emne-progress { margin-top:10px; height:4px; border-radius:99px; background:rgba(255,255,255,.06); overflow:hidden; }
+  .emne-progress-bar { height:100%; border-radius:99px; transition:width .4s ease; }
+
+  /* ── NIVÅ-SKJERM ── */
+  #nivaaSkjerm { display:none; position:relative; z-index:1; max-width:600px; margin:0 auto; padding:40px 20px 80px; }
+  .tilbake-btn { background:none; border:none; cursor:pointer; color:var(--dim); font-family:var(--font-b); font-size:.9rem; display:flex; align-items:center; gap:6px; margin-bottom:28px; padding:0; transition:color .15s; }
+  .tilbake-btn:hover { color:var(--text); }
+  .nivaa-preview { width:100%; max-height:80px; display:flex; justify-content:center; margin-bottom:14px; overflow:hidden; }
+  .nivaa-tittel { font-family:var(--font-h); font-size:1.5rem; text-align:center; margin-bottom:6px; }
+  .nivaa-sub    { text-align:center; color:var(--dim); font-size:.9rem; margin-bottom:32px; }
+  .nivaa-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .nivaa-kort { background:var(--card); border:1.5px solid var(--border); border-radius:16px; padding:20px; cursor:pointer; transition:all .2s; text-align:center; }
+  .nivaa-kort:hover { transform:translateY(-2px); }
+  .nivaa-kort.mild   { border-color:rgba(34,197,94,.25);  } .nivaa-kort.mild:hover   { border-color:var(--mild);   background:rgba(34,197,94,.06); }
+  .nivaa-kort.medium { border-color:rgba(234,179,8,.25);  } .nivaa-kort.medium:hover { border-color:var(--medium); background:rgba(234,179,8,.06); }
+  .nivaa-kort.spicy  { border-color:rgba(249,115,22,.25); } .nivaa-kort.spicy:hover  { border-color:var(--spicy);  background:rgba(249,115,22,.06); }
+  .nivaa-kort.hot    { border-color:rgba(239,68,68,.25);  } .nivaa-kort.hot:hover    { border-color:var(--hot);    background:rgba(239,68,68,.06); }
+  .nivaa-ikon { font-size:1.8rem; display:block; margin-bottom:8px; }
+  .nivaa-navn { font-family:var(--font-h); font-size:1.05rem; margin-bottom:4px; }
+  .nivaa-desc { font-size:.75rem; color:var(--dim); line-height:1.4; }
+
+  /* ── TRENING-SKJERM ── */
+  #treningSkjerm { display:none; position:relative; z-index:1; max-width:700px; margin:0 auto; padding:28px 20px 80px; }
+  .trening-topbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .trening-emne-label { font-family:var(--font-h); font-size:.9rem; color:var(--dim); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .trening-nivaa-badge { font-family:var(--font-h); font-size:.8rem; padding:3px 12px; border-radius:99px; }
+  .trening-fremgang { font-family:var(--font-h); font-size:.85rem; color:var(--dim); }
+  .fremgang-bar { height:5px; background:rgba(255,255,255,.06); border-radius:99px; margin-bottom:20px; overflow:hidden; }
+  .fremgang-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .4s ease; }
+  .stjerne-rad { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
+  .stjerne { font-size:1.6rem; opacity:.2; transition:all .3s; }
+  .stjerne.aktiv { opacity:1; transform:scale(1.2); }
+
+  /* Oppgave-kort */
+  .oppgave-kort { background:var(--card); border:2px solid var(--border); border-radius:20px; padding:22px 20px; display:flex; flex-direction:column; align-items:center; gap:14px; transition:border-color .3s,box-shadow .3s; margin-bottom:16px; }
+  .oppgave-kort.riktig { border-color:var(--mild);  box-shadow:0 0 20px rgba(34,197,94,.15); }
+  .oppgave-kort.feil   { border-color:var(--hot);   box-shadow:0 0 20px rgba(239,68,68,.15); }
+
+  /* Visuell boks */
+  .visuell-boks { width:100%; background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:12px 10px 8px; overflow:hidden; }
+  .visuell-boks svg { width:100%; height:auto; display:block; }
+  .visuell-tittel { font-size:.72rem; color:var(--dim); text-align:center; margin-bottom:6px; text-transform:uppercase; letter-spacing:.06em; }
+
+  /* Kontekst-boks */
+  .kontekst-boks { width:100%; background:rgba(167,139,250,.07); border:1px solid rgba(167,139,250,.2); border-radius:12px; padding:12px 16px; font-size:.92rem; line-height:1.75; }
+  .kontekst-boks .var { font-family:var(--font-h); color:var(--accent); }
+
+  /* Kuler-visning */
+  .kuler-rad { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; padding:8px 0; }
+  .kule { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-h); font-size:.85rem; border:2px solid; transition:all .2s; }
+
+  /* Spørsmål og hint */
+  .oppgave-spm  { font-family:var(--font-h); font-size:1.2rem; text-align:center; line-height:1.45; }
+  .oppgave-hint { font-size:.8rem; color:var(--dim); text-align:center; }
+
+  /* Svar */
+  .svar-rad { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .svar-input { width:130px; background:var(--surface); border:2px solid var(--border); border-radius:12px; color:var(--text); font-family:var(--font-h); font-size:1.5rem; text-align:center; padding:10px; outline:none; transition:border-color .2s; }
+  .svar-input:focus  { border-color:var(--accent); }
+  .svar-input.riktig { border-color:var(--mild); background:rgba(34,197,94,.08); }
+  .svar-input.feil   { border-color:var(--hot);  background:rgba(239,68,68,.08); }
+  .svar-enhet { font-family:var(--font-h); font-size:1rem; color:var(--dim); }
+  .svar-btn { font-family:var(--font-h); font-size:1rem; padding:12px 24px; border-radius:12px; border:none; cursor:pointer; background:var(--accent); color:#07090f; font-weight:800; transition:all .15s; }
+  .svar-btn:hover { transform:scale(1.04); opacity:.9; }
+  .hopp-btn { font-family:var(--font-b); font-size:.8rem; background:none; border:1.5px solid var(--border); color:var(--dim); padding:8px 16px; border-radius:10px; cursor:pointer; transition:all .15s; }
+  .hopp-btn:hover { color:var(--text); border-color:var(--dim); }
+  .feedback-tekst { font-family:var(--font-h); font-size:1rem; text-align:center; opacity:0; transition:opacity .2s; }
+  .feedback-tekst.vis { opacity:1; }
+  .feedback-tekst.riktig { color:var(--mild); }
+  .feedback-tekst.feil   { color:var(--hot);  }
+
+  /* Teller-rad */
+  .teller-rad { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .teller-boks { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:7px 18px; text-align:center; min-width:72px; }
+  .teller-tall  { font-family:var(--font-h); font-size:1.35rem; }
+  .teller-label { font-size:.67rem; color:var(--dim); text-transform:uppercase; letter-spacing:.07em; }
+
+  /* ── RESULTAT ── */
+  #resultatSkjerm { display:none; position:relative; z-index:1; max-width:500px; margin:0 auto; padding:48px 20px 80px; text-align:center; }
+  .res-emoji  { font-size:4rem; margin-bottom:12px; }
+  .res-tittel { font-family:var(--font-h); font-size:1.8rem; margin-bottom:8px; }
+  .res-sub    { color:var(--dim); font-size:.95rem; margin-bottom:28px; }
+  .res-rad    { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:28px; }
+  .res-boks   { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:14px 22px; min-width:90px; }
+  .res-tall   { font-family:var(--font-h); font-size:1.8rem; margin-bottom:2px; }
+  .res-label  { font-size:.7rem; color:var(--dim); text-transform:uppercase; letter-spacing:.07em; }
+  .resultat-stjerner { display:flex; justify-content:center; gap:8px; font-size:2.2rem; margin-bottom:28px; }
+  .resultat-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .res-btn { font-family:var(--font-h); font-size:1rem; padding:12px 24px; border-radius:12px; border:none; cursor:pointer; transition:all .15s; }
+  .res-btn:hover { transform:scale(1.04); }
+  .res-btn.prim { background:var(--accent); color:#07090f; font-weight:800; }
+  .res-btn.sek  { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+
+  .xp-popup { position:fixed; bottom:30px; right:24px; font-family:var(--font-h); font-size:1.1rem; background:var(--card); border:1.5px solid rgba(167,139,250,.4); color:var(--accent); padding:10px 20px; border-radius:12px; opacity:0; transform:translateY(20px); transition:all .3s; pointer-events:none; z-index:200; }
+  .xp-popup.vis { opacity:1; transform:translateY(0); }
+  @keyframes pulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(167,139,250,.5);}50%{box-shadow:0 0 0 10px rgba(167,139,250,0);} }
+  @media (max-width:520px) { .nivaa-grid{grid-template-columns:1fr;} .svar-input{width:110px;font-size:1.3rem;} }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="skaplab.html">🚀 SkapLab</a>
+  <span class="header-sep">/</span>
+  <span class="header-title">🎲 Sannsynlighet</span>
+  <div class="header-stats">
+    <div class="stat-pill xp">⚡ <span id="xpVis">0</span> XP</div>
+    <div class="stat-pill streak">🔥 <span id="streakVis">0</span></div>
+  </div>
+</header>
+
+<!-- ══ VELG EMNE ══ -->
+<div id="velgSkjerm">
+  <h1 class="hero-tittel">Sannsynlighet <span>🎲</span></h1>
+  <p class="hero-sub">Fra enkle utfall til avansert kombinatorikk – velg emne og nivå!</p>
+  <div class="sok-filter">
+    <div class="sok-wrapper">
+      <span class="sok-ikon">🔍</span>
+      <input type="text" id="sokInput" class="sok-input"
+        placeholder="Søk, f.eks. «komplement», «tre»…"
+        oninput="filtrer()" autocomplete="off">
+      <button class="sok-clear" id="sokClear" onclick="tømmSok()" style="display:none;">✕</button>
+    </div>
+    <div class="gruppe-filter" id="gruppeFilter">
+      <button class="gruppe-btn active" data-gruppe="alle" onclick="velgGruppe(this)">Alle</button>
+    </div>
+  </div>
+  <div id="sokResultat" style="display:none;">
+    <p class="sok-antall" id="sokAntall"></p>
+    <div class="emne-grid" id="sokGrid"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <button onclick="tømmSok()" style="background:none;border:1.5px solid var(--border);color:var(--dim);font-family:var(--font-b);font-size:.85rem;padding:6px 18px;border-radius:9px;cursor:pointer;">✕ Tøm søk</button>
+    </div>
+  </div>
+  <div id="emneGridWrapper">
+    <div class="emne-grid" id="emneGrid"></div>
+  </div>
+</div>
+
+<!-- ══ VELG NIVÅ ══ -->
+<div id="nivaaSkjerm">
+  <button class="tilbake-btn" onclick="gaaTilEmner()">← Tilbake</button>
+  <div class="nivaa-preview" id="nivaaPreview"></div>
+  <h2 class="nivaa-tittel" id="nivaaTittel"></h2>
+  <p class="nivaa-sub">Velg vanskelighetsgrad</p>
+  <div class="nivaa-grid">
+    <div class="nivaa-kort mild"   onclick="startTrening('mild')">  <span class="nivaa-ikon">🟢</span><div class="nivaa-navn">Mild</div>  <div class="nivaa-desc">Enkle situasjoner, tydelige tall.</div></div>
+    <div class="nivaa-kort medium" onclick="startTrening('medium')"><span class="nivaa-ikon">🟡</span><div class="nivaa-navn">Medium</div><div class="nivaa-desc">Litt mer å tenke på.</div></div>
+    <div class="nivaa-kort spicy"  onclick="startTrening('spicy')"> <span class="nivaa-ikon">🌶️</span><div class="nivaa-navn">Spicy</div> <div class="nivaa-desc">Kombinerte trinn og formler.</div></div>
+    <div class="nivaa-kort hot"    onclick="startTrening('hot')">   <span class="nivaa-ikon">🔥</span><div class="nivaa-navn">Hot</div>   <div class="nivaa-desc">Maks utfordring – klarer du alle 15?</div></div>
+  </div>
+</div>
+
+<!-- ══ TRENING ══ -->
+<div id="treningSkjerm">
+  <div class="trening-topbar">
+    <button class="tilbake-btn" style="margin-bottom:0;" onclick="gaaTilNivaa()">← Avslutt</button>
+    <span class="trening-emne-label" id="treningLabel"></span>
+    <span class="trening-nivaa-badge" id="treningBadge"></span>
+    <span class="trening-fremgang" id="treningFremgang">0 / 15</span>
+  </div>
+  <div class="fremgang-bar"><div class="fremgang-fill" id="fremgangFill" style="width:0%"></div></div>
+  <div class="stjerne-rad">
+    <span class="stjerne" id="s1">⭐</span><span class="stjerne" id="s2">⭐</span>
+    <span class="stjerne" id="s3">⭐</span><span class="stjerne" id="s4">⭐</span>
+    <span class="stjerne" id="s5">⭐</span>
+  </div>
+  <div class="oppgave-kort" id="oppgaveKort">
+    <div id="visuellOmraade" style="width:100%;display:none;"></div>
+    <div class="kontekst-boks" id="kontekstBoks" style="display:none;"></div>
+    <div class="oppgave-spm"  id="oppgaveSpm"></div>
+    <div class="oppgave-hint" id="oppgaveHint"></div>
+    <div class="svar-rad">
+      <input type="text" id="svarInput" class="svar-input" placeholder="?"
+        autocomplete="off" onkeydown="if(event.key==='Enter')sjekkSvar()">
+      <span class="svar-enhet" id="svarEnhet"></span>
+      <button class="svar-btn" onclick="sjekkSvar()">Sjekk</button>
+    </div>
+    <div class="feedback-tekst" id="feedbackTekst"></div>
+    <div class="teller-rad">
+      <div class="teller-boks"><div class="teller-tall" id="riktigTeller" style="color:var(--mild)">0</div><div class="teller-label">Riktig</div></div>
+      <div class="teller-boks"><div class="teller-tall" id="feilTeller"   style="color:var(--hot)">0</div><div class="teller-label">Feil</div></div>
+      <div class="teller-boks"><div class="teller-tall" id="poengTeller"  style="color:var(--accent)">0</div><div class="teller-label">Poeng</div></div>
+    </div>
+    <button class="hopp-btn" onclick="hoppOver()">Hopp over</button>
+  </div>
+</div>
+
+<!-- ══ RESULTAT ══ -->
+<div id="resultatSkjerm">
+  <div class="res-emoji"  id="resEmoji"></div>
+  <h2 class="res-tittel" id="resTittel"></h2>
+  <p  class="res-sub"    id="resSub"></p>
+  <div class="resultat-stjerner" id="resStjerner"></div>
+  <div class="res-rad">
+    <div class="res-boks"><div class="res-tall" id="resRiktig" style="color:var(--mild)"></div><div class="res-label">Riktig</div></div>
+    <div class="res-boks"><div class="res-tall" id="resFeil"   style="color:var(--hot)"></div> <div class="res-label">Feil</div></div>
+    <div class="res-boks"><div class="res-tall" id="resPoeng"  style="color:var(--accent)"></div><div class="res-label">Poeng</div></div>
+    <div class="res-boks"><div class="res-tall" id="resXP"     style="color:#c084fc"></div><div class="res-label">XP</div></div>
+  </div>
+  <div class="resultat-btns">
+    <button class="res-btn prim" onclick="startSammeIgjen()">🔄 Prøv igjen</button>
+    <button class="res-btn sek"  id="nesteNivaaBtn" onclick="startNesteNivaa()" style="display:none;">⬆️ Neste nivå</button>
+    <button class="res-btn sek"  onclick="gaaTilEmner()">📚 Velg emne</button>
+  </div>
+</div>
+<div class="xp-popup" id="xpPopup"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  MATTE-HJELPERE
+// ══════════════════════════════════════════════════════
+const ri  = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const r2d = v => Math.round(v*10000)/10000;  // 4 des for sannsynligheter
+const r2  = v => Math.round(v*100)/100;
+const sum = arr => arr.reduce((s,v)=>s+v,0);
+
+function gcd(a,b){ return b===0?a:gcd(b,a%b); }
+function forkort(t,n){ const g=gcd(Math.abs(t),Math.abs(n)); return [t/g,n/g]; }
+function brokStr(t,n){ const [a,b]=forkort(t,n); return b===1?`${a}`:`${a}/${b}`; }
+function binom(n,k){ if(k<0||k>n)return 0; let r=1; for(let i=0;i<k;i++){r=r*(n-i)/(i+1);} return Math.round(r); }
+function fak(n){ let f=1; for(let i=2;i<=n;i++) f*=i; return f; }
+
+// Sjekk svar: aksepterer desimal, brøk (t/n) og hele tall
+// Toleranse ±0.001 for sannsynligheter
+function erRiktigSvar(input, fasitVerdi, tol=0.001) {
+  const raw = input.replace(',','.').trim();
+  let v;
+  if(raw.includes('/')) { const [t,n]=raw.split('/').map(Number); v=t/n; }
+  else v=parseFloat(raw);
+  return !isNaN(v) && Math.abs(v-fasitVerdi) <= tol;
+}
+
+// ══════════════════════════════════════════════════════
+//  SVG-BYGGERE
+// ══════════════════════════════════════════════════════
+
+// ─── Kuler i pose ──────────────────────────────────
+function kulerHTML(røde, blå, grønne=0, gule=0) {
+  const farger = [
+    {farge:'#ef4444', kant:'#dc2626', navn:'R'},
+    {farge:'#3b82f6', kant:'#2563eb', navn:'B'},
+    {farge:'#22c55e', kant:'#16a34a', navn:'G'},
+    {farge:'#eab308', kant:'#ca8a04', navn:'G'},
+  ];
+  const tall = [røde, blå, grønne, gule];
+  let html = '<div class="kuler-rad">';
+  tall.forEach((ant, ci) => {
+    for(let i=0;i<ant;i++){
+      html+=`<div class="kule" style="background:${farger[ci].farge}33;border-color:${farger[ci].kant};color:${farger[ci].farge}">${farger[ci].navn}</div>`;
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+// ─── Sannsynlighetstre SVG ──────────────────────────
+function treSVG(grener, W=320, H=200) {
+  // grener = [{label, p, barn:[{label,p}]}]  (2 nivåer)
+  const nGren = grener.length;
+  const rot = {x:30, y:H/2};
+  const mellomX = W*0.42;
+  const slutX   = W-18;
+  let s = '';
+
+  grener.forEach((g, gi) => {
+    const gy = H/(nGren+1)*(gi+1);
+    // Linje fra rot
+    s += `<line x1="${rot.x}" y1="${rot.y}" x2="${mellomX}" y2="${gy}" stroke="rgba(255,255,255,.18)" stroke-width="1.4"/>`;
+    // Midtnode
+    s += `<circle cx="${mellomX}" cy="${gy}" r="20" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1.5"/>`;
+    s += `<text x="${mellomX}" y="${gy+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="11" fill="#a78bfa">${g.label}</text>`;
+    // Sannsynlighet på grenen
+    const lpx=(rot.x+mellomX)/2, lpy=(rot.y+gy)/2-7;
+    s += `<text x="${lpx}" y="${lpy}" text-anchor="middle" font-family="Nunito,sans-serif" font-size="10" fill="#94a3b8">${g.p}</text>`;
+
+    if(g.barn) {
+      const nBarn=g.barn.length;
+      g.barn.forEach((b,bi) => {
+        const spread = Math.min(50, H/nGren/2);
+        const by = gy + (bi-(nBarn-1)/2)*spread;
+        s += `<line x1="${mellomX}" y1="${gy}" x2="${slutX}" y2="${by}" stroke="rgba(255,255,255,.14)" stroke-width="1.2"/>`;
+        s += `<circle cx="${slutX}" cy="${by}" r="16" fill="rgba(52,211,153,.12)" stroke="#34d399" stroke-width="1.4"/>`;
+        s += `<text x="${slutX}" y="${by+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="10" fill="#34d399">${b.label}</text>`;
+        const bp=(mellomX+slutX)/2, bpy=(gy+by)/2-6;
+        s += `<text x="${bp}" y="${bpy}" text-anchor="middle" font-family="Nunito,sans-serif" font-size="10" fill="#94a3b8">${b.p}</text>`;
+      });
+    }
+  });
+  // Rotnode
+  s += `<circle cx="${rot.x}" cy="${rot.y}" r="14" fill="rgba(251,191,36,.2)" stroke="#fbbf24" stroke-width="1.8"/>`;
+  s += `<text x="${rot.x}" y="${rot.y+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="11" fill="#fbbf24">S</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// ─── Venn-diagram SVG ───────────────────────────────
+function vennSVG(KunA, AB, KunB, Ingen, labelA='A', labelB='B', W=300, H=140) {
+  const cx1=95, cx2=175, cy=H/2, r=52;
+  let s='';
+  // Sirkler
+  s+=`<circle cx="${cx1}" cy="${cy}" r="${r}" fill="rgba(167,139,250,.12)" stroke="#a78bfa" stroke-width="1.8"/>`;
+  s+=`<circle cx="${cx2}" cy="${cy}" r="${r}" fill="rgba(52,211,153,.12)" stroke="#34d399" stroke-width="1.8"/>`;
+  // Labels for sirklene
+  s+=`<text x="${cx1-22}" y="18" text-anchor="middle" font-family="Fredoka One,cursive" font-size="13" fill="#a78bfa">${labelA}</text>`;
+  s+=`<text x="${cx2+22}" y="18" text-anchor="middle" font-family="Fredoka One,cursive" font-size="13" fill="#34d399">${labelB}</text>`;
+  // Tall i seksjonene
+  s+=`<text x="${cx1-24}" y="${cy+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="18" fill="#a78bfa">${KunA}</text>`;
+  s+=`<text x="${(cx1+cx2)/2}" y="${cy+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="18" fill="#fbbf24">${AB}</text>`;
+  s+=`<text x="${cx2+24}" y="${cy+5}" text-anchor="middle" font-family="Fredoka One,cursive" font-size="18" fill="#34d399">${KunB}</text>`;
+  if(Ingen>0) s+=`<text x="${W-14}" y="${cy+5}" text-anchor="middle" font-family="Nunito,sans-serif" font-size="11" fill="#475569">${Ingen}</text>`;
+  s+=`<text x="${W/2}" y="${H-4}" text-anchor="middle" font-family="Nunito,sans-serif" font-size="10" fill="#475569">Totalt: ${KunA+AB+KunB+Ingen}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// ─── Terningkast SVG ────────────────────────────────
+function terningCSS(verdi, farge='#a78bfa') {
+  const dots = {
+    1:[[50,50]],
+    2:[[25,25],[75,75]],
+    3:[[25,25],[50,50],[75,75]],
+    4:[[25,25],[75,25],[25,75],[75,75]],
+    5:[[25,25],[75,25],[50,50],[25,75],[75,75]],
+    6:[[25,25],[75,25],[25,50],[75,50],[25,75],[75,75]],
+  };
+  let s=`<rect x="2" y="2" width="56" height="56" rx="10" fill="${farge}20" stroke="${farge}" stroke-width="2"/>`;
+  (dots[verdi]||[]).forEach(([dx,dy])=>{
+    s+=`<circle cx="${dx*0.6}" cy="${dy*0.6}" r="4" fill="${farge}"/>`;
+  });
+  return `<svg viewBox="0 0 60 60" width="52" height="52">${s}</svg>`;
+}
+
+// Mini-SVG for emne-kort
+const miniUtfall = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  ${[1,2,3,4,5,6].map((v,i)=>`<rect x="${4+i*26}" y="6" width="22" height="22" rx="5" fill="rgba(167,139,250,.2)" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="${15+i*26}" y="22" text-anchor="middle" font-family="Fredoka One,cursive" font-size="12" fill="#a78bfa">${v}</text>`).join('')}
+  <text x="80" y="48" text-anchor="middle" font-family="Nunito,sans-serif" font-size="10" fill="#475569">Utfallsrom {1,2,3,4,5,6}</text>
+</svg>`;
+
+const miniKule = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  ${['#ef4444','#ef4444','#ef4444','#3b82f6','#3b82f6','#22c55e'].map((c,i)=>`<circle cx="${16+i*24}" cy="26" r="11" fill="${c}30" stroke="${c}" stroke-width="1.8"/>`).join('')}
+</svg>`;
+
+const miniTre = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  <circle cx="14" cy="26" r="9" fill="rgba(251,191,36,.25)" stroke="#fbbf24" stroke-width="1.5"/>
+  <line x1="23" y1="22" x2="60" y2="12" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>
+  <line x1="23" y1="30" x2="60" y2="40" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>
+  <circle cx="68" cy="12" r="9" fill="rgba(167,139,250,.2)" stroke="#a78bfa" stroke-width="1.5"/>
+  <circle cx="68" cy="40" r="9" fill="rgba(52,211,153,.2)" stroke="#34d399" stroke-width="1.5"/>
+  <line x1="77" y1="10" x2="108" y2="5" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+  <line x1="77" y1="14" x2="108" y2="19" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+  <line x1="77" y1="38" x2="108" y2="33" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+  <line x1="77" y1="42" x2="108" y2="47" stroke="rgba(255,255,255,.15)" stroke-width="1"/>
+  ${[5,19,33,47].map(y=>`<circle cx="114" cy="${y}" r="7" fill="rgba(251,191,36,.2)" stroke="#fbbf24" stroke-width="1.2"/>`).join('')}
+</svg>`;
+
+const miniVenn = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  <circle cx="62" cy="26" r="26" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1.5"/>
+  <circle cx="98" cy="26" r="26" fill="rgba(52,211,153,.15)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="47" y="30" text-anchor="middle" font-family="Fredoka One,cursive" font-size="12" fill="#a78bfa">A</text>
+  <text x="113" y="30" text-anchor="middle" font-family="Fredoka One,cursive" font-size="12" fill="#34d399">B</text>
+  <text x="80" y="30" text-anchor="middle" font-family="Fredoka One,cursive" font-size="11" fill="#fbbf24">∩</text>
+</svg>`;
+
+const miniKombinatorikk = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  <text x="80" y="22" text-anchor="middle" font-family="Fredoka One,cursive" font-size="18" fill="#a78bfa">n!</text>
+  <text x="44" y="44" text-anchor="middle" font-family="Fredoka One,cursive" font-size="13" fill="#34d399">P(n,k)</text>
+  <text x="116" y="44" text-anchor="middle" font-family="Fredoka One,cursive" font-size="13" fill="#fbbf24">C(n,k)</text>
+</svg>`;
+
+const miniBinom = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  ${[3,8,14,20,14,8,3].map((h,i)=>`<rect x="${4+i*22}" y="${52-h*2}" width="16" height="${h*2}" rx="2" fill="rgba(167,139,250,.3)" stroke="#a78bfa" stroke-width="1.2"/>`).join('')}
+</svg>`;
+
+const miniBetinget = () => `<svg viewBox="0 0 160 52" style="width:100%;max-height:50px;">
+  <text x="80" y="30" text-anchor="middle" font-family="Fredoka One,cursive" font-size="22" fill="#a78bfa">P(A|B)</text>
+  <text x="80" y="48" text-anchor="middle" font-family="Nunito,sans-serif" font-size="10" fill="#475569">P(A∩B) / P(B)</text>
+</svg>`;
+
+// ══════════════════════════════════════════════════════
+//  EMNER
+// ══════════════════════════════════════════════════════
+const EMNER = [
+
+  // ════════════════════════════════
+  //  GRUPPE: Grunnleggende
+  // ════════════════════════════════
+  {
+    id:'enkel', navn:'Enkel sannsynlighet', info:'P(A) = gunstige / mulige',
+    gruppe:'Grunnleggende', farge:'rgba(167,139,250,1)', miniSvg: miniKule,
+    gen:{
+      mild: ()=>{
+        const n=ri(5,12), g=ri(1,n-1);
+        const svar=r2(g/n);
+        return {
+          visuell: kulerHTML(g, n-g),
+          kontekst: `Pose med <span class="var">${g} røde</span> og <span class="var">${n-g} blå</span> kuler.`,
+          spm:'Hva er sannsynligheten for å trekke en rød kule? (desimaltall)',
+          hint:'P(A) = gunstige utfall / mulige utfall', enhet:'', svar, fasit:`${g}/${n} ≈ ${svar}`
+        };
+      },
+      medium: ()=>{
+        const sider=6, val=ri(1,4);
+        const svar=r2(val/6);
+        return {
+          visuell: `<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">${Array.from({length:val},(_,i)=>terningCSS(i+1)).join('')}</div>`,
+          kontekst: `Du kaster en vanlig terning (6 sider).`,
+          spm:`Hva er P(terningen viser ≤ ${val})? (desimaltall)`,
+          hint:'P(A) = gunstige utfall / mulige utfall', enhet:'', svar, fasit:`${val}/6 ≈ ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const n=ri(15,30), r=ri(3,n-5), b=ri(2,n-r-2), g_=n-r-b;
+        if(g_<1) return EMNER[0].gen.spicy();
+        const svar=r2(r/n);
+        return {
+          visuell: kulerHTML(r, b, g_),
+          kontekst: `Pose med <span class="var">${r} røde</span>, <span class="var">${b} blå</span> og <span class="var">${g_} grønne</span> kuler (totalt ${n}).`,
+          spm:'Hva er P(rød)? (desimaltall)',
+          hint:'P(A) = gunstige utfall / totalt antall', enhet:'', svar, fasit:`${r}/${n} ≈ ${svar}`
+        };
+      },
+      hot: ()=>{
+        // Omvendt: finn antall gunstige gitt P
+        const n=ri(10,20), g=ri(2,n-2);
+        const p=r2(g/n);
+        return {
+          kontekst: `En pose inneholder <span class="var">${n} kuler</span>.`,
+          spm:`P(rød) = ${p}. Hvor mange røde kuler er det?`,
+          hint:'gunstige = P(A) × totalt antall', enhet:'', svar:g, fasit:`${g}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'komplement', navn:'Komplementsannsynlighet', info:'P(Aᶜ) = 1 − P(A)',
+    gruppe:'Grunnleggende', farge:'rgba(167,139,250,.65)', miniSvg: miniUtfall,
+    gen:{
+      mild: ()=>{
+        const g=ri(1,7), n=ri(g+2,12);
+        const svar=r2((n-g)/n);
+        return {
+          kontekst: `Pose med <span class="var">${g} røde</span> og <span class="var">${n-g} ikke-røde</span> kuler.`,
+          spm:`P(rød) = ${r2(g/n)}. Hva er P(ikke rød)?`,
+          hint:'P(Aᶜ) = 1 − P(A)', enhet:'', svar, fasit:`${r2(g/n)} + svar = 1 → ${svar}`
+        };
+      },
+      medium: ()=>{
+        const p=ri(1,8)/10;
+        const svar=r2(1-p);
+        return {
+          kontekst: `Sannsynligheten for regn er <span class="var">P(regn) = ${p}</span>.`,
+          spm:'Hva er P(ikke regn)?',
+          hint:'P(Aᶜ) = 1 − P(A)', enhet:'', svar, fasit:`${svar}`
+        };
+      },
+      spicy: ()=>{
+        const pc=ri(1,7)/10;
+        const p=r2(1-pc);
+        return {
+          kontekst: `<span class="var">P(Aᶜ) = ${pc}</span>.`,
+          spm:'Hva er P(A)?',
+          hint:'P(A) = 1 − P(Aᶜ)', enhet:'', svar:p, fasit:`${p}`
+        };
+      },
+      hot: ()=>{
+        // P(minst én) via komplement ved gjentatte kast
+        const k=ri(2,4);
+        const svar=r2d(1-Math.pow(5/6,k));
+        const svarR=r2(1-Math.pow(5/6,k));
+        return {
+          kontekst: `Du kaster en terning <span class="var">${k} ganger</span>.`,
+          spm:`Hva er P(minst én sekser)? (desimaltall, 2 sifer)`,
+          hint:'P(minst én) = 1 − P(ingen) = 1 − (5/6)ⁿ', enhet:'', svar:svarR, fasit:`1−(5/6)^${k} ≈ ${svarR}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'utfallsrom', navn:'Utfall og utfallsrom', info:'Telle mulige utfall',
+    gruppe:'Grunnleggende', farge:'rgba(167,139,250,.35)', miniSvg: miniUtfall,
+    gen:{
+      mild: ()=>{
+        const sider=ri(4,8);
+        return {
+          kontekst: `En <span class="var">${sider}-sidet terning</span> kastes én gang.`,
+          spm:'Hvor mange mulige utfall finnes i utfallsrommet?',
+          hint:'Utfallsrom = {1, 2, …, n}', enhet:'', svar:sider, fasit:`${sider}`
+        };
+      },
+      medium: ()=>{
+        const n1=ri(3,6), n2=ri(3,6);
+        return {
+          kontekst: `To terninger kastes: én <span class="var">${n1}-sidet</span> og én <span class="var">${n2}-sidet</span>.`,
+          spm:'Hvor mange mulige utfall er det totalt?',
+          hint:'Multiplikasjonsprinsippet: antall utfall = n₁ · n₂', enhet:'', svar:n1*n2, fasit:`${n1}·${n2}=${n1*n2}`
+        };
+      },
+      spicy: ()=>{
+        const k=ri(3,5);
+        return {
+          kontekst: `En mynt kastes <span class="var">${k} ganger</span>. (Kron eller mynt)`,
+          spm:'Hvor mange mulige utfall finnes?',
+          hint:'Mynt har 2 utfall. Multiplikasjonsprinsippet: 2ⁿ', enhet:'', svar:Math.pow(2,k), fasit:`2^${k}=${Math.pow(2,k)}`
+        };
+      },
+      hot: ()=>{
+        const farger=ri(3,5), str=ri(2,4), mod=ri(2,3);
+        return {
+          kontekst: `En genser finnes i <span class="var">${farger} farger</span>, <span class="var">${str} størrelser</span> og <span class="var">${mod} modeller</span>.`,
+          spm:'Hvor mange ulike kombinasjoner finnes?',
+          hint:'Multiplikasjonsprinsippet: antall₁ · antall₂ · antall₃', enhet:'', svar:farger*str*mod, fasit:`${farger}·${str}·${mod}=${farger*str*mod}`
+        };
+      }
+    }
+  },
+
+  // ════════════════════════════════
+  //  GRUPPE: Sammensatte hendelser
+  // ════════════════════════════════
+  {
+    id:'med-tilbake', navn:'Med tilbakelegging', info:'Uavhengige trekninger',
+    gruppe:'Sammensatte hendelser', farge:'rgba(52,211,153,1)', miniSvg: miniKule,
+    gen:{
+      mild: ()=>{
+        const r=ri(2,5), b=ri(2,5), n=r+b;
+        const pRR=r2(r/n*r/n);
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span> kuler. To trekninger <span class="var">MED</span> tilbakelegging.`,
+          spm:'Hva er P(rød, deretter rød)?',
+          hint:'Med tilbakelegging: P(R,R) = P(R) · P(R)', enhet:'', svar:pRR, fasit:`(${r}/${n})² = ${pRR}`
+        };
+      },
+      medium: ()=>{
+        const r=ri(2,5), b=ri(2,4), n=r+b;
+        const pRB=r2(r/n*b/n);
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. To trekninger <span class="var">MED</span> tilbakelegging.`,
+          spm:'Hva er P(rød, deretter blå)?',
+          hint:'Med tilbakelegging er trekkene uavhengige: P(R,B) = P(R) · P(B)', enhet:'', svar:pRB, fasit:`${r}/${n}·${b}/${n} = ${pRB}`
+        };
+      },
+      spicy: ()=>{
+        const r=ri(2,5), b=ri(2,4), n=r+b, k=ri(2,3);
+        const pRk=r2(Math.pow(r/n,k));
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. ${k} trekninger <span class="var">MED</span> tilbakelegging.`,
+          spm:`Hva er P(alle ${k} er røde)?`,
+          hint:'P(R) samme hver gang – gang P(R) med seg selv k ganger', enhet:'', svar:pRk, fasit:`(${r}/${n})^${k} = ${pRk}`
+        };
+      },
+      hot: ()=>{
+        // Minst én rød via komplement
+        const r=ri(2,5), b=ri(2,5), n=r+b, k=ri(2,3);
+        const pIngenR=Math.pow(b/n,k);
+        const svar=r2(1-pIngenR);
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. ${k} trekninger <span class="var">MED</span> tilbakelegging.`,
+          spm:`Hva er P(minst én rød)?`,
+          hint:'P(minst én rød) = 1 − P(ingen røde). P(ingen røde) = P(blå)ᵏ', enhet:'', svar, fasit:`1−(${b}/${n})^${k} = ${svar}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'uten-tilbake', navn:'Uten tilbakelegging', info:'Avhengige trekninger',
+    gruppe:'Sammensatte hendelser', farge:'rgba(52,211,153,.65)', miniSvg: miniKule,
+    gen:{
+      mild: ()=>{
+        const r=ri(3,6), b=ri(2,5), n=r+b;
+        const svar=r2(r/n*(r-1)/(n-1));
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. To trekninger <span class="var">UTEN</span> tilbakelegging.`,
+          spm:'Hva er P(begge røde)?',
+          hint:'Uten tilbakelegging: etter første trekk er én kule borte', enhet:'', svar, fasit:`${r}/${n}·${r-1}/${n-1} = ${svar}`
+        };
+      },
+      medium: ()=>{
+        const r=ri(3,6), b=ri(3,5), n=r+b;
+        const svar=r2(r/n*b/(n-1));
+        return {
+          visuell: kulerHTML(r,b),
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. To trekninger <span class="var">UTEN</span> tilbakelegging.`,
+          spm:'Hva er P(første rød, andre blå)?',
+          hint:'Uten tilbakelegging: andre trekk har én færre kule totalt', enhet:'', svar, fasit:`${r}/${n}·${b}/${n-1} = ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const n=ri(10,15), r=ri(3,6);
+        const svar=r2(r/n*(r-1)/(n-1)*(r-2)/(n-2));
+        return {
+          kontekst: `Pose med <span class="var">${r} røde</span> av totalt <span class="var">${n} kuler</span>. Tre trekninger uten tilbakelegging.`,
+          spm:'Hva er P(alle tre røde)?',
+          hint:'Multipliser tre brøker: P(R₁) · P(R₂|R₁) · P(R₃|R₁R₂)', enhet:'', svar, fasit:`≈ ${svar}`
+        };
+      },
+      hot: ()=>{
+        // Kombinatorisk tilnærming: C(r,2)/C(n,2)
+        const r=ri(4,7), b=ri(3,6), n=r+b;
+        const cr2=binom(r,2), cn2=binom(n,2);
+        const svar=r2(cr2/cn2);
+        return {
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. Du trekker 2 uten tilbakelegging.`,
+          spm:'Hva er P(begge røde)? (C-metode)',
+          hint:'C-metode: P(begge røde) = C(r,2) / C(n,2)', enhet:'', svar, fasit:`${cr2}/${cn2} = ${svar}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'addisjon', navn:'Addisjonsprinsippet', info:'P(A ∪ B) = P(A)+P(B)−P(A∩B)',
+    gruppe:'Sammensatte hendelser', farge:'rgba(52,211,153,.35)', miniSvg: miniVenn,
+    gen:{
+      mild: ()=>{
+        const n=6;
+        const A=ri(1,3), B=ri(1,3); // antall utfall i A og B, gjensidig utelukkende
+        const svar=r2((A+B)/n);
+        return {
+          kontekst: `Terning med 6 sider. <span class="var">A = {${Array.from({length:A},(_,i)=>i+1).join(',')}}</span>, <span class="var">B = {${Array.from({length:B},(_,i)=>i+A+1).join(',')}}</span>. A og B er gjensidig utelukkende.`,
+          spm:'Hva er P(A ∪ B)?',
+          hint:'Gjensidig utelukkende: P(A∪B) = P(A) + P(B)', enhet:'', svar, fasit:`${A+B}/6 = ${svar}`
+        };
+      },
+      medium: ()=>{
+        const n=ri(20,40), pA=ri(5,12), pB=ri(4,10), pAB=ri(1,Math.min(pA,pB)-1);
+        const svar=r2((pA+pB-pAB)/n);
+        return {
+          kontekst: `Av ${n} elever er <span class="var">${pA} med i fotball</span>, <span class="var">${pB} i svømming</span>, og <span class="var">${pAB} i begge</span>.`,
+          spm:'Hva er P(minst én av aktivitetene)?',
+          hint:'P(A∪B) = P(A) + P(B) − P(A∩B)', enhet:'', svar, fasit:`(${pA}+${pB}−${pAB})/${n} = ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const pA=ri(2,6)/10, pB=ri(2,5)/10, pAB=ri(1,Math.min(Math.floor(pA*10),Math.floor(pB*10))-1)/10;
+        const svar=r2(pA+pB-pAB);
+        return {
+          kontekst: `<span class="var">P(A) = ${pA}</span>, <span class="var">P(B) = ${pB}</span>, <span class="var">P(A∩B) = ${pAB}</span>.`,
+          spm:'Hva er P(A ∪ B)?',
+          hint:'P(A∪B) = P(A)+P(B)−P(A∩B)', enhet:'', svar, fasit:`${pA}+${pB}−${pAB} = ${svar}`
+        };
+      },
+      hot: ()=>{
+        // Gjensidig utelukkende: finn P(B) gitt P(A∪B) og P(A)
+        const pA=ri(2,4)/10, pB=ri(2,4)/10;
+        const pAB_=r2(pA+pB);
+        return {
+          kontekst: `A og B er <span class="var">gjensidig utelukkende</span>. <span class="var">P(A) = ${pA}</span>, <span class="var">P(A∪B) = ${pAB_}</span>.`,
+          spm:'Hva er P(B)?',
+          hint:'Gjensidig utelukkende: P(A∪B) = P(A)+P(B)', enhet:'', svar:pB, fasit:`${pAB_}−${pA} = ${pB}`
+        };
+      }
+    }
+  },
+
+  // ════════════════════════════════
+  //  GRUPPE: Diagramverktøy
+  // ════════════════════════════════
+  {
+    id:'sann-tre', navn:'Sannsynlighetstre', info:'Grener og produktregel',
+    gruppe:'Diagramverktøy', farge:'rgba(251,191,36,1)', miniSvg: miniTre,
+    gen:{
+      mild: ()=>{
+        const r=ri(2,4), b=ri(2,4), n=r+b;
+        const pR=r2(r/n), pB=r2(b/n);
+        const grener=[
+          {label:`R (${r}/${n})`, p:pR, barn:[{label:'R',p:r2((r-1)/(n-1))},{label:'B',p:r2(b/(n-1))}]},
+          {label:`B (${b}/${n})`, p:pB, barn:[{label:'R',p:r2(r/(n-1))},{label:'B',p:r2((b-1)/(n-1))}]},
+        ];
+        const svar=r2(r/n*(r-1)/(n-1));
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Sannsynlighetstre (uten tilbakelegging)</div>${treSVG(grener,320,180)}</div>`,
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. To trekninger uten tilbakelegging.`,
+          spm:'Les av treet. Hva er P(R, R)?',
+          hint:`Multipliser langs grenen: P(R)·P(R|første R)`, enhet:'', svar, fasit:`${r}/${n}·${r-1}/${n-1} = ${svar}`
+        };
+      },
+      medium: ()=>{
+        const p1=ri(2,6)/10, q1=r2(1-p1);
+        const p2=ri(2,6)/10, q2=r2(1-p2);
+        const svar=r2(p1*p2);
+        return {
+          kontekst: `<span class="var">P(A) = ${p1}</span>, <span class="var">P(B) = ${p2}</span>. A og B er uavhengige.`,
+          spm:'Hva er P(A og B)?',
+          hint:'Uavhengige hendelser: P(A∩B) = P(A) · P(B)', enhet:'', svar, fasit:`${p1}·${p2} = ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const r=ri(2,4), b=ri(2,4), n=r+b;
+        const pRtR=r2(r/n*(r-1)/(n-1));
+        const pBtB=r2(b/n*(b-1)/(n-1));
+        const pLike=r2(pRtR+pBtB);
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Sannsynlighetstre</div>${treSVG([
+            {label:`R`,p:`${r}/${n}`,barn:[{label:'R',p:`${r-1}/${n-1}`},{label:'B',p:`${b}/${n-1}`}]},
+            {label:`B`,p:`${b}/${n}`,barn:[{label:'R',p:`${r}/${n-1}`},{label:'B',p:`${b-1}/${n-1}`}]},
+          ],320,180)}</div>`,
+          kontekst: `Pose: <span class="var">${r} røde</span> og <span class="var">${b} blå</span>. To trekninger uten tilbakelegging.`,
+          spm:'Hva er P(begge kuler har samme farge)?',
+          hint:'Samme farge: P(RR) + P(BB) – summer to grener i treet', enhet:'', svar:pLike, fasit:`${pRtR}+${pBtB} = ${pLike}`
+        };
+      },
+      hot: ()=>{
+        const pA=ri(2,5)/10, pBgittA=ri(5,8)/10, pBgittAc=ri(1,4)/10;
+        const pB=r2(pA*pBgittA+(1-pA)*pBgittAc);
+        return {
+          kontekst: `<span class="var">P(A) = ${pA}</span>, <span class="var">P(B|A) = ${pBgittA}</span>, <span class="var">P(B|Aᶜ) = ${pBgittAc}</span>.`,
+          spm:'Hva er P(B)? (totalfordelingssatsen)',
+          hint:'Totalfordelingssatsen: P(B) = P(A)·P(B|A) + P(Aᶜ)·P(B|Aᶜ)', enhet:'', svar:pB,
+          fasit:`${pA}·${pBgittA}+${r2(1-pA)}·${pBgittAc} = ${pB}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'venn', navn:'Venn-diagram', info:'Mengder og sannsynlighet',
+    gruppe:'Diagramverktøy', farge:'rgba(251,191,36,.6)', miniSvg: miniVenn,
+    gen:{
+      mild: ()=>{
+        const tot=ri(30,60), A=ri(8,18), B=ri(6,14), AB=ri(2,Math.min(A,B)-2);
+        const KunA=A-AB, KunB=B-AB, Ingen=tot-A-B+AB;
+        if(Ingen<0) return EMNER[7].gen.mild();
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Venn-diagram (totalt ${tot})</div>${vennSVG(KunA,AB,KunB,Ingen)}</div>`,
+          kontekst: `Se Venn-diagrammet. Totalt <span class="var">${tot} elever</span>. <span class="var">|A| = ${A}</span>, <span class="var">|B| = ${B}</span>, <span class="var">|A∩B| = ${AB}</span>.`,
+          spm:'Hvor mange er i A ∪ B?',
+          hint:'|A∪B| = |A|+|B|−|A∩B|', enhet:'', svar:A+B-AB, fasit:`${A}+${B}−${AB}=${A+B-AB}`
+        };
+      },
+      medium: ()=>{
+        const tot=ri(40,80), A=ri(10,22), B=ri(8,18), AB=ri(3,Math.min(A,B)-2);
+        const KunA=A-AB, KunB=B-AB, Ingen=tot-A-B+AB;
+        if(Ingen<0) return EMNER[7].gen.medium();
+        const svar=r2(AB/tot);
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Venn-diagram (totalt ${tot})</div>${vennSVG(KunA,AB,KunB,Ingen)}</div>`,
+          kontekst: `Se diagrammet. Totalt <span class="var">${tot}</span>.`,
+          spm:'Hva er P(A ∩ B)? (desimaltall)',
+          hint:'P(A∩B) = |A∩B| / totalt antall', enhet:'', svar, fasit:`${AB}/${tot} = ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const tot=ri(50,100), A=ri(15,28), B=ri(12,22), AB=ri(4,Math.min(A,B)-3);
+        const KunA=A-AB, KunB=B-AB, Ingen=tot-A-B+AB;
+        if(Ingen<0) return EMNER[7].gen.spicy();
+        const svar=r2(Ingen/tot);
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Venn-diagram</div>${vennSVG(KunA,AB,KunB,Ingen)}</div>`,
+          kontekst: `Se diagrammet. Totalt <span class="var">${tot}</span>.`,
+          spm:'Hva er P(verken A eller B)?',
+          hint:'Ingen av dem = total − |A∪B|, der |A∪B| = |A|+|B|−|A∩B|', enhet:'', svar, fasit:`${Ingen}/${tot} = ${svar}`
+        };
+      },
+      hot: ()=>{
+        // Finn P(kun A)
+        const tot=ri(60,120), A=ri(18,35), B=ri(12,25), AB=ri(5,Math.min(A,B)-4);
+        const KunA=A-AB, KunB=B-AB, Ingen=tot-A-B+AB;
+        if(Ingen<0) return EMNER[7].gen.hot();
+        const svar=r2(KunA/tot);
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Venn-diagram</div>${vennSVG(KunA,AB,KunB,Ingen)}</div>`,
+          kontekst: `Se diagrammet. Totalt <span class="var">${tot}</span>.`,
+          spm:'Hva er P(kun A – ikke i B)?',
+          hint:'Kun A = |A| − |A∩B|  (de som er i A men ikke i B)', enhet:'', svar, fasit:`${KunA}/${tot} = ${svar}`
+        };
+      }
+    }
+  },
+
+  // ════════════════════════════════
+  //  GRUPPE: Kombinatorikk
+  // ════════════════════════════════
+  {
+    id:'permutasjon', navn:'Permutasjon', info:'Ordnet utvalg – rekkefølge teller',
+    gruppe:'Kombinatorikk', farge:'rgba(251,113,133,1)', miniSvg: miniKombinatorikk,
+    gen:{
+      mild: ()=>{
+        const n=ri(3,5);
+        return {
+          kontekst: `<span class="var">${n} personer</span> skal stå i en kø.`,
+          spm:`På hvor mange måter kan de stå? (${n}!)`,
+          hint:'n! = n · (n−1) · (n−2) · … · 1', enhet:'', svar:fak(n), fasit:`${n}! = ${fak(n)}`
+        };
+      },
+      medium: ()=>{
+        const n=ri(5,8), k=ri(2,3);
+        let pnk=1; for(let i=0;i<k;i++) pnk*=(n-i);
+        return {
+          kontekst: `Du skal velge <span class="var">${k} av ${n} personer</span> til en podium (1., 2., 3. plass – rekkefølge teller).`,
+          spm:`Hvor mange ordnede utvalg finnes? P(${n},${k})`,
+          hint:'P(n,k) = n · (n−1) · … · (n−k+1)', enhet:'', svar:pnk, fasit:`${pnk}`
+        };
+      },
+      spicy: ()=>{
+        const n=ri(4,7);
+        const ant=fak(n)/fak(n-3); // P(n,3)
+        return {
+          kontekst: `<span class="var">${n} bøker</span> settes i en hylle. Bare de 3 første plassene brukes.`,
+          spm:`Hvor mange ulike rekkefølger finnes? P(${n},3)`,
+          hint:`P(n,3) = n·(n−1)·(n−2)`, enhet:'', svar:ant, fasit:`${n}·${n-1}·${n-2}=${ant}`
+        };
+      },
+      hot: ()=>{
+        const n=ri(6,9), k=ri(2,4);
+        let pnk=1; for(let i=0;i<k;i++) pnk*=(n-i);
+        const cn=binom(n,k);
+        const sann=r2(1/pnk);
+        return {
+          kontekst: `Du velger tilfeldig <span class="var">${k} av ${n}</span> i ordnet rekkefølge.`,
+          spm:`Hva er sannsynligheten for én bestemt ordnet rekkefølge? (desimaltall)`,
+          hint:'P = 1 / P(n,k)  – én av alle mulige rekkefølger', enhet:'', svar:sann, fasit:`1/${pnk} ≈ ${sann}`
+        };
+      }
+    }
+  },
+
+  {
+    id:'kombinasjon', navn:'Kombinasjon', info:'Uordnet utvalg – C(n,k)',
+    gruppe:'Kombinatorikk', farge:'rgba(251,113,133,.6)', miniSvg: miniKombinatorikk,
+    gen:{
+      mild: ()=>{
+        const n=ri(4,7), k=ri(2,3);
+        const c=binom(n,k);
+        return {
+          kontekst: `Du velger <span class="var">${k} av ${n} elever</span> til en gruppe (rekkefølge spiller ingen rolle).`,
+          spm:`Hvor mange ulike grupper kan du lage? C(${n},${k})`,
+          hint:`C(n,k) = n! / (k!·(n−k)!)`, enhet:'', svar:c, fasit:`C(${n},${k}) = ${c}`
+        };
+      },
+      medium: ()=>{
+        const n=ri(6,10), k=ri(2,4);
+        const c=binom(n,k);
+        return {
+          kontekst: `En komité på <span class="var">${k} personer</span> velges fra <span class="var">${n} kandidater</span>.`,
+          spm:`Hvor mange ulike komitéer er mulige? C(${n},${k})`,
+          hint:'C(n,k) = n! / (k! · (n−k)!)', enhet:'', svar:c, fasit:`C(${n},${k}) = ${c}`
+        };
+      },
+      spicy: ()=>{
+        const n=ri(8,12), k=ri(3,5);
+        const c=binom(n,k);
+        const sann=r2(1/c);
+        return {
+          kontekst: `Du trekker tilfeldig <span class="var">${k} av ${n} kort</span>.`,
+          spm:`Hva er sannsynligheten for én bestemt kombinasjon? (desimaltall)`,
+          hint:'P = 1 / C(n,k)  – én av alle mulige kombinasjoner', enhet:'', svar:sann, fasit:`1/C(${n},${k})=1/${c}≈${sann}`
+        };
+      },
+      hot: ()=>{
+        // Sannsynlighet for spesifikk kombo i lotteri
+        const n=ri(15,20), k=3, r=ri(2,3);
+        const cn=binom(n,k);
+        const cGunstig=binom(r,r)*binom(n-r,k-r);
+        const sann=r2(cGunstig/cn);
+        return {
+          kontekst: `Lotteri: trekk <span class="var">${k} av ${n} tall</span>. Du vil ha minst <span class="var">${r} av dine valgte tall</span> med.`,
+          spm:`P(minst ${r} riktige) med ${r} forhåndsvalgte tall?`,
+          hint:'Teller = C(r,r)·C(n−r, k−r),  nevner = C(n,k)',
+          enhet:'', svar:sann, fasit:`${cGunstig}/${cn} ≈ ${sann}`
+        };
+      }
+    }
+  },
+
+  // ════════════════════════════════
+  //  GRUPPE: Avansert
+  // ════════════════════════════════
+  {
+    id:'betinget', navn:'Betinget sannsynlighet', info:'P(A|B) = P(A∩B) / P(B)',
+    gruppe:'Avansert', farge:'rgba(167,139,250,.5)', miniSvg: miniBetinget,
+    gen:{
+      mild: ()=>{
+        const tot=ri(30,60), B=ri(10,20), AB=ri(3,B-2);
+        const svar=r2(AB/B);
+        return {
+          visuell: `<div class="visuell-boks"><div class="visuell-tittel">Venn-diagram</div>${vennSVG(B-AB+ri(3,8),AB,ri(3,8),ri(2,6))}</div>`,
+          kontekst: `<span class="var">|B| = ${B}</span>, <span class="var">|A∩B| = ${AB}</span>.`,
+          spm:'Hva er P(A|B)? (desimaltall)',
+          hint:'P(A|B) = P(A∩B) / P(B) = |A∩B| / |B|', enhet:'', svar, fasit:`${AB}/${B} = ${svar}`
+        };
+      },
+      medium: ()=>{
+        const pB=ri(3,7)/10, pAB=ri(1,Math.floor(pB*10)-1)/10;
+        if(pAB>=pB) return EMNER[11].gen.medium();
+        const svar=r2(pAB/pB);
+        return {
+          kontekst: `<span class="var">P(B) = ${pB}</span>, <span class="var">P(A∩B) = ${pAB}</span>.`,
+          spm:'Hva er P(A|B)?',
+          hint:'P(A|B) = P(A∩B) / P(B)', enhet:'', svar, fasit:`${pAB}/${pB} = ${svar}`
+        };
+      },
+      spicy: ()=>{
+        const tot=ri(60,120), svommer=ri(20,40), loeper=ri(15,30), begge=ri(5,Math.min(svommer,loeper)-4);
+        const svar=r2(begge/svommer);
+        return {
+          visuell: `<div class="visuell-boks">${vennSVG(svommer-begge,begge,loeper-begge,tot-svommer-loeper+begge,'Svøm','Løp')}</div>`,
+          kontekst: `Av <span class="var">${tot} elever</span> kan <span class="var">${svommer} svømme</span> og <span class="var">${loeper} løpe</span>. <span class="var">${begge} kan begge</span>.`,
+          spm:'Hva er P(løper | svømmer)? (desimaltall)',
+          hint:'P(B|A) = P(A∩B) / P(A)  – del på den betingede mengden', enhet:'', svar, fasit:`${begge}/${svommer} = ${svar}`
+        };
+      },
+      hot: ()=>{
+        // Bayes' teorem
+        const pA=ri(1,4)/10;
+        const pBgA=ri(6,9)/10;
+        const pBgAc=ri(1,3)/10;
+        const pB=r2(pA*pBgA+(1-pA)*pBgAc);
+        const svar=r2(pA*pBgA/pB);
+        return {
+          kontekst: `<span class="var">P(A) = ${pA}</span>, <span class="var">P(B|A) = ${pBgA}</span>, <span class="var">P(B|Aᶜ) = ${pBgAc}</span>.`,
+          spm:'Bruk Bayes: hva er P(A|B)?',
+          hint:'Bayes: P(A|B) = P(A)·P(B|A) / P(B),  P(B) via totalfordelingssatsen', enhet:'', svar,
+          fasit:`${pA}·${pBgA}/${pB} = ${svar}`
+        };
+      }
+    }
+  },
+
+];
+
+// ══════════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════════
+let totXP=parseInt(localStorage.getItem('sann_xp')||'0');
+let totStreak=parseInt(localStorage.getItem('sann_streak')||'0');
+let emneProgress=JSON.parse(localStorage.getItem('sann_prog')||'{}');
+let aktivtEmne=null, aktivtNivaa=null, oppgaver=[], oppgaveIdx=0, riktig=0, feil=0, poeng=0;
+const NIVAA_REKKE=['mild','medium','spicy','hot'];
+
+// ══════════════════════════════════════════════════════
+//  SØK & FILTER
+// ══════════════════════════════════════════════════════
+let aktivGruppe='alle';
+
+function byggGruppeFilter() {
+  const grupper=[...new Set(EMNER.map(e=>e.gruppe))];
+  const container=document.getElementById('gruppeFilter');
+  grupper.forEach(g=>{
+    const btn=document.createElement('button');
+    btn.className='gruppe-btn'; btn.dataset.gruppe=g; btn.textContent=g;
+    btn.onclick=()=>velgGruppe(btn); container.appendChild(btn);
+  });
+}
+function velgGruppe(btn) {
+  document.querySelectorAll('.gruppe-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); aktivGruppe=btn.dataset.gruppe; filtrer();
+}
+function filtrer() {
+  const q=document.getElementById('sokInput').value.trim().toLowerCase();
+  document.getElementById('sokClear').style.display=q?'block':'none';
+  if(!q&&aktivGruppe==='alle'){
+    document.getElementById('sokResultat').style.display='none';
+    document.getElementById('emneGridWrapper').style.display='block'; return;
+  }
+  const treff=EMNER.filter(e=>{
+    if(aktivGruppe!=='alle'&&e.gruppe!==aktivGruppe) return false;
+    if(q) return [e.navn,e.info,e.gruppe].join(' ').toLowerCase().includes(q);
+    return true;
+  });
+  const grid=document.getElementById('sokGrid'); grid.innerHTML='';
+  if(!treff.length){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);"><div style="font-size:2.5rem;margin-bottom:10px;">🔭</div><h3 style="font-family:var(--font-h);">Ingen emner funnet</h3></div>`;
+  } else { treff.forEach(e=>byggEmneKort(grid,e)); }
+  document.getElementById('sokAntall').textContent=treff.length===0?'Ingen treff':treff.length===1?'1 emne funnet':`${treff.length} emner funnet`;
+  document.getElementById('sokResultat').style.display='block';
+  document.getElementById('emneGridWrapper').style.display='none';
+}
+function tømmSok() {
+  document.getElementById('sokInput').value='';
+  document.getElementById('sokClear').style.display='none';
+  aktivGruppe='alle';
+  document.querySelectorAll('.gruppe-btn').forEach(b=>b.classList.toggle('active',b.dataset.gruppe==='alle'));
+  document.getElementById('sokResultat').style.display='none';
+  document.getElementById('emneGridWrapper').style.display='block';
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT & GRID
+// ══════════════════════════════════════════════════════
+function init() { oppdaterHeaderStats(); byggGruppeFilter(); byggEmneGrid(); }
+function oppdaterHeaderStats() {
+  document.getElementById('xpVis').textContent=totXP;
+  document.getElementById('streakVis').textContent=totStreak;
+}
+function byggEmneGrid() {
+  const grid=document.getElementById('emneGrid'); grid.innerHTML='';
+  const grupper={};
+  EMNER.forEach(e=>{ if(!grupper[e.gruppe]) grupper[e.gruppe]=[]; grupper[e.gruppe].push(e); });
+  Object.entries(grupper).forEach(([g,emner])=>{
+    const lbl=document.createElement('div'); lbl.className='emne-grid-label'; lbl.textContent=g;
+    grid.appendChild(lbl);
+    emner.forEach(e=>byggEmneKort(grid,e));
+  });
+}
+function byggEmneKort(grid,emne) {
+  const prog=emneProgress[emne.id]||0;
+  const div=document.createElement('div'); div.className='emne-kort';
+  div.style.setProperty('--emne-c',emne.farge);
+  div.style.setProperty('--emne-bg',emne.farge.replace(/[\d.]+\)$/,'0.07)'));
+  div.innerHTML=`
+    <div class="emne-svg">${emne.miniSvg()}</div>
+    <div class="emne-navn">${emne.navn}</div>
+    <div class="emne-info">${emne.info}</div>
+    <div class="emne-progress"><div class="emne-progress-bar" style="width:${prog}%;background:${emne.farge};"></div></div>`;
+  div.onclick=()=>velgEmne(emne); grid.appendChild(div);
+}
+
+// ══════════════════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════════════════
+function vis(id) {
+  ['velgSkjerm','nivaaSkjerm','treningSkjerm','resultatSkjerm'].forEach(s=>document.getElementById(s).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function velgEmne(emne) {
+  aktivtEmne=emne;
+  document.getElementById('nivaaTittel').textContent=emne.navn+' – '+emne.info;
+  try{document.getElementById('nivaaPreview').innerHTML=emne.miniSvg();}catch(e){}
+  vis('nivaaSkjerm');
+}
+function gaaTilEmner() { tømmSok(); byggEmneGrid(); vis('velgSkjerm'); }
+function gaaTilNivaa() { vis('nivaaSkjerm'); }
+
+function startTrening(nivaa) {
+  aktivtNivaa=nivaa; oppgaveIdx=riktig=feil=poeng=0; oppgaver=[];
+  for(let i=0;i<15;i++){ try{oppgaver.push(aktivtEmne.gen[nivaa]());}catch(e){console.warn(e);oppgaver.push(aktivtEmne.gen.mild());} }
+  document.getElementById('riktigTeller').textContent='0';
+  document.getElementById('feilTeller').textContent='0';
+  document.getElementById('poengTeller').textContent='0';
+  document.querySelectorAll('.stjerne').forEach(s=>s.classList.remove('aktiv'));
+  const fC={mild:'var(--mild)',medium:'var(--medium)',spicy:'var(--spicy)',hot:'var(--hot)'};
+  const fN={mild:'🟢 Mild',medium:'🟡 Medium',spicy:'🌶️ Spicy',hot:'🔥 Hot'};
+  document.getElementById('treningLabel').textContent=aktivtEmne.navn+' – '+aktivtEmne.info;
+  const badge=document.getElementById('treningBadge');
+  badge.textContent=fN[nivaa];
+  badge.style.cssText=`background:${fC[nivaa]}22;color:${fC[nivaa]};border:1.5px solid ${fC[nivaa]}55;padding:3px 12px;border-radius:99px;`;
+  vis('treningSkjerm'); visOppgave();
+}
+function startSammeIgjen() { startTrening(aktivtNivaa); }
+function startNesteNivaa() { const idx=NIVAA_REKKE.indexOf(aktivtNivaa); if(idx<NIVAA_REKKE.length-1) startTrening(NIVAA_REKKE[idx+1]); }
+
+// ══════════════════════════════════════════════════════
+//  OPPGAVE-LOGIKK
+// ══════════════════════════════════════════════════════
+function visOppgave() {
+  if(oppgaveIdx>=oppgaver.length){visResultat();return;}
+  const opp=oppgaver[oppgaveIdx];
+  // Visuell
+  const vO=document.getElementById('visuellOmraade');
+  if(opp.visuell){vO.innerHTML=opp.visuell;vO.style.display='block';}
+  else{vO.innerHTML='';vO.style.display='none';}
+  // Kontekst
+  const kB=document.getElementById('kontekstBoks');
+  if(opp.kontekst){kB.innerHTML=opp.kontekst;kB.style.display='block';}
+  else{kB.style.display='none';}
+  document.getElementById('oppgaveSpm').textContent=opp.spm||'';
+  document.getElementById('oppgaveHint').textContent=opp.hint||'';
+  document.getElementById('svarEnhet').textContent=opp.enhet||'';
+  const inp=document.getElementById('svarInput');
+  inp.value='';inp.className='svar-input';inp.disabled=false;
+  const fb=document.getElementById('feedbackTekst');
+  fb.textContent='';fb.className='feedback-tekst';
+  document.getElementById('oppgaveKort').className='oppgave-kort';
+  document.getElementById('fremgangFill').style.width=(oppgaveIdx/oppgaver.length*100)+'%';
+  document.getElementById('treningFremgang').textContent=`${oppgaveIdx} / ${oppgaver.length}`;
+  setTimeout(()=>document.getElementById('svarInput').focus(),50);
+}
+
+function sjekkSvar() {
+  const inp=document.getElementById('svarInput');
+  if(inp.disabled){neste();return;}
+  const raw=inp.value.replace(',','.').trim();
+  if(!raw) return;
+  const opp=oppgaver[oppgaveIdx];
+  const erR=erRiktigSvar(raw, opp.svar, opp.tol||0.011);
+  inp.disabled=true;
+  const fb=document.getElementById('feedbackTekst');
+  const kort=document.getElementById('oppgaveKort');
+  if(erR){
+    riktig++;poeng+=pxp(aktivtNivaa);totStreak++;
+    inp.className='svar-input riktig';kort.className='oppgave-kort riktig';
+    fb.textContent=['Riktig! 🎉','Supert! ⭐','Perfekt! 🔥','Bra jobba! 💪'][ri(0,3)];
+    fb.className='feedback-tekst vis riktig';
+    oppdaterStjerner();visXpPopup(`+${pxp(aktivtNivaa)} XP`);
+  } else {
+    feil++;totStreak=0;
+    inp.className='svar-input feil';kort.className='oppgave-kort feil';
+    fb.textContent=`Feil. Svaret er ${opp.fasit||opp.svar}`;
+    fb.className='feedback-tekst vis feil';
+  }
+  document.getElementById('riktigTeller').textContent=riktig;
+  document.getElementById('feilTeller').textContent=feil;
+  document.getElementById('poengTeller').textContent=poeng;
+  oppdaterHeaderStats();lagreProgress();
+  setTimeout(neste,1500);
+}
+function neste(){oppgaveIdx++;visOppgave();}
+function hoppOver(){feil++;totStreak=0;document.getElementById('feilTeller').textContent=feil;oppdaterHeaderStats();oppgaveIdx++;visOppgave();}
+function pxp(n){return{mild:5,medium:10,spicy:15,hot:25}[n]||10;}
+function oppdaterStjerner(){const ant=Math.min(5,Math.floor(riktig/3));for(let i=1;i<=ant;i++){const s=document.getElementById('s'+i);if(s&&!s.classList.contains('aktiv'))s.classList.add('aktiv');}}
+
+// ══════════════════════════════════════════════════════
+//  RESULTAT
+// ══════════════════════════════════════════════════════
+function visResultat() {
+  document.getElementById('fremgangFill').style.width='100%';
+  document.getElementById('treningFremgang').textContent=`${oppgaver.length} / ${oppgaver.length}`;
+  const prosent=Math.round(riktig/oppgaver.length*100);
+  totXP+=poeng;lagreProgress();
+  emneProgress[aktivtEmne.id]=Math.max(emneProgress[aktivtEmne.id]||0,prosent);
+  localStorage.setItem('sann_prog',JSON.stringify(emneProgress));
+  const fullPott=riktig===oppgaver.length,nesteIdx=NIVAA_REKKE.indexOf(aktivtNivaa)+1,harNeste=nesteIdx<NIVAA_REKKE.length;
+  const nesteNavn={mild:'Medium 🟡',medium:'Spicy 🌶️',spicy:'Hot 🔥',hot:null}[aktivtNivaa];
+  let emoji,tittel,sub;
+  if(fullPott&&harNeste){emoji='🏆';tittel='Perfekt!';sub=`Klar for ${nesteNavn}!`;}
+  else if(fullPott){emoji='👑';tittel='Uslåelig!';sub='Mester-nivå!';}
+  else if(prosent>=80){emoji='🌟';tittel='Veldig bra!';sub=`${prosent}% riktig!`;}
+  else if(prosent>=60){emoji='👍';tittel='Bra jobbet!';sub=`${prosent}% riktig.`;}
+  else if(prosent>=40){emoji='💪';tittel='Fortsett!';sub=`${prosent}% riktig.`;}
+  else{emoji='📚';tittel='Øv mer!';sub=`${prosent}% riktig.`;}
+  document.getElementById('resEmoji').textContent=emoji;
+  document.getElementById('resTittel').textContent=tittel;
+  document.getElementById('resSub').textContent=sub;
+  document.getElementById('resRiktig').textContent=riktig;
+  document.getElementById('resFeil').textContent=feil;
+  document.getElementById('resPoeng').textContent=poeng;
+  document.getElementById('resXP').textContent='+'+poeng;
+  const stj=Math.max(1,Math.round(prosent/20));
+  document.getElementById('resStjerner').innerHTML=[...Array(5)].map((_,i)=>i<stj?'⭐':'☆').join('');
+  const nb=document.getElementById('nesteNivaaBtn');
+  if(fullPott&&harNeste){
+    nb.style.display='inline-flex';nb.textContent=`⬆️ Gå videre til ${nesteNavn}`;
+    nb.style.cssText+=';background:linear-gradient(135deg,#a78bfa,#34d399);color:#07090f;font-weight:800;border:none;animation:pulseBtn 1.5s ease infinite;';
+  } else{nb.style.display='none';}
+  vis('resultatSkjerm');
+}
+
+// ══════════════════════════════════════════════════════
+//  LAGRING & XP-POPUP
+// ══════════════════════════════════════════════════════
+function lagreProgress(){localStorage.setItem('sann_xp',totXP);localStorage.setItem('sann_streak',totStreak);oppdaterHeaderStats();}
+let xpTimer=null;
+function visXpPopup(tekst){const el=document.getElementById('xpPopup');el.textContent=tekst;el.classList.add('vis');if(xpTimer)clearTimeout(xpTimer);xpTimer=setTimeout(()=>el.classList.remove('vis'),1500);}
+
+init();
+</script>
+</body>
+</html>

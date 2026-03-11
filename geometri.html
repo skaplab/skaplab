@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab Geometri</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #07090f;
+    --surface: #0e1220;
+    --card:    #141928;
+    --border:  rgba(255,255,255,.07);
+    --mild:    #22c55e;
+    --medium:  #eab308;
+    --spicy:   #f97316;
+    --hot:     #ef4444;
+    --accent:  #818cf8;
+    --text:    #f1f5f9;
+    --dim:     #64748b;
+    --font-h:  'Fredoka One', cursive;
+    --font-b:  'Nunito', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-b); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(129,140,248,.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 80%, rgba(52,211,153,.05) 0%, transparent 60%);
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,9,15,.9); backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; gap: 10px;
+  }
+  .site-header a { color: var(--text); text-decoration: none; font-family: var(--font-h); font-size: 1.1rem; }
+  .site-header a:hover { color: var(--accent); }
+  .header-sep { color: var(--dim); }
+  .header-title { font-family: var(--font-h); font-size: 1rem; color: var(--accent); }
+  .header-stats { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .stat-pill { display: flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 800; padding: 4px 12px; border-radius: 99px; border: 1.5px solid var(--border); background: rgba(255,255,255,.04); }
+  .stat-pill.xp     { border-color: rgba(129,140,248,.4); color: var(--accent); }
+  .stat-pill.streak { border-color: rgba(249,115,22,.4);  color: var(--spicy); }
+
+  /* ── VELG-SKJERM ── */
+  #velgSkjerm { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 48px 20px 80px; }
+  .hero-tittel { font-family: var(--font-h); font-size: clamp(1.9rem, 5vw, 3.2rem); text-align: center; margin-bottom: 8px; line-height: 1.1; }
+  .hero-tittel span { color: var(--accent); }
+  .hero-sub { text-align: center; color: var(--dim); font-size: 1rem; margin-bottom: 36px; }
+
+  /* SØK & FILTER */
+  .sok-filter { max-width: 860px; margin: 0 auto 28px; }
+  .sok-wrapper { position: relative; display: flex; align-items: center; background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; padding: 0 14px; transition: border-color .2s; margin-bottom: 14px; }
+  .sok-wrapper:focus-within { border-color: var(--accent); }
+  .sok-ikon { font-size: 1rem; color: var(--dim); margin-right: 10px; pointer-events: none; }
+  .sok-input { flex: 1; background: none; border: none; outline: none; font-family: var(--font-b); font-size: .95rem; color: var(--text); padding: 13px 0; }
+  .sok-input::placeholder { color: var(--dim); }
+  .sok-clear { background: none; border: none; color: var(--dim); cursor: pointer; font-size: .9rem; padding: 4px 8px; border-radius: 6px; transition: color .15s; }
+  .sok-clear:hover { color: var(--text); }
+  .gruppe-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .gruppe-btn { font-family: var(--font-b); font-size: .8rem; padding: 5px 14px; border-radius: 99px; border: 1.5px solid var(--border); background: none; color: var(--dim); cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .gruppe-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .gruppe-btn.active { background: rgba(129,140,248,.12); border-color: var(--accent); color: var(--accent); }
+  .sok-antall { font-size: .82rem; color: var(--dim); margin: 0 0 16px; text-align: center; }
+
+  /* EMNE-GRID */
+  .emne-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .emne-grid-label { grid-column: 1/-1; font-family: var(--font-h); font-size: .82rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .emne-kort { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 18px; cursor: pointer; transition: all .2s; position: relative; overflow: hidden; }
+  .emne-kort::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .2s; background: var(--emne-c, rgba(129,140,248,.08)); }
+  .emne-kort:hover { transform: translateY(-3px); border-color: var(--emne-c, var(--accent)); }
+  .emne-kort:hover::before { opacity: 1; }
+  .emne-svg { width: 100%; height: 64px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .emne-svg svg { max-height: 56px; }
+  .emne-navn { font-family: var(--font-h); font-size: 1rem; margin-bottom: 3px; }
+  .emne-info { font-size: .75rem; color: var(--dim); }
+  .emne-progress { margin-top: 10px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .emne-progress-bar { height: 100%; border-radius: 99px; transition: width .4s ease; }
+
+  /* ── NIVÅ-SKJERM ── */
+  #nivaaSkjerm { display: none; position: relative; z-index: 1; max-width: 600px; margin: 0 auto; padding: 40px 20px 80px; }
+  .tilbake-btn { background: none; border: none; cursor: pointer; color: var(--dim); font-family: var(--font-b); font-size: .9rem; display: flex; align-items: center; gap: 6px; margin-bottom: 28px; padding: 0; transition: color .15s; }
+  .tilbake-btn:hover { color: var(--text); }
+  .nivaa-emne-preview { width: 100%; max-height: 100px; display: flex; justify-content: center; margin-bottom: 16px; }
+  .nivaa-tittel { font-family: var(--font-h); font-size: 1.5rem; text-align: center; margin-bottom: 6px; }
+  .nivaa-sub    { text-align: center; color: var(--dim); font-size: .9rem; margin-bottom: 32px; }
+  .nivaa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .nivaa-kort { background: var(--card); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px; cursor: pointer; transition: all .2s; text-align: center; }
+  .nivaa-kort:hover { transform: translateY(-2px); }
+  .nivaa-kort.mild   { border-color: rgba(34,197,94,.25); }   .nivaa-kort.mild:hover   { border-color: var(--mild);   background: rgba(34,197,94,.06); }
+  .nivaa-kort.medium { border-color: rgba(234,179,8,.25); }   .nivaa-kort.medium:hover { border-color: var(--medium); background: rgba(234,179,8,.06); }
+  .nivaa-kort.spicy  { border-color: rgba(249,115,22,.25); }  .nivaa-kort.spicy:hover  { border-color: var(--spicy);  background: rgba(249,115,22,.06); }
+  .nivaa-kort.hot    { border-color: rgba(239,68,68,.25); }   .nivaa-kort.hot:hover    { border-color: var(--hot);    background: rgba(239,68,68,.06); }
+  .nivaa-ikon { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+  .nivaa-navn { font-family: var(--font-h); font-size: 1.05rem; margin-bottom: 4px; }
+  .nivaa-desc { font-size: .75rem; color: var(--dim); line-height: 1.4; }
+
+  /* ── TRENING-SKJERM ── */
+  #treningSkjerm { display: none; position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 28px 20px 80px; }
+  .trening-topbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .trening-emne-label { font-family: var(--font-h); font-size: .9rem; color: var(--dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trening-nivaa-badge { font-family: var(--font-h); font-size: .8rem; padding: 3px 12px; border-radius: 99px; }
+  .trening-fremgang { font-family: var(--font-h); font-size: .85rem; color: var(--dim); }
+  .fremgang-bar { height: 5px; background: rgba(255,255,255,.06); border-radius: 99px; margin-bottom: 20px; overflow: hidden; }
+  .fremgang-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), #c084fc); transition: width .4s ease; }
+  .stjerne-rad { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+  .stjerne { font-size: 1.6rem; opacity: .2; transition: all .3s; }
+  .stjerne.aktiv { opacity: 1; transform: scale(1.2); }
+
+  /* Oppgave-kort */
+  .oppgave-kort {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 20px; padding: 28px 24px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 16px; transition: border-color .3s, box-shadow .3s;
+    margin-bottom: 16px;
+  }
+  .oppgave-kort.riktig { border-color: var(--mild);   box-shadow: 0 0 20px rgba(34,197,94,.15); }
+  .oppgave-kort.feil   { border-color: var(--hot);    box-shadow: 0 0 20px rgba(239,68,68,.15); }
+
+  /* SVG-figur i oppgaven */
+  .figur-container {
+    width: 100%; max-width: 320px;
+    background: rgba(255,255,255,.03);
+    border-radius: 14px; padding: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .figur-container svg { max-width: 100%; height: auto; }
+
+  /* Info-boks med mål */
+  .info-boks {
+    width: 100%; background: rgba(129,140,248,.07);
+    border: 1px solid rgba(129,140,248,.2);
+    border-radius: 12px; padding: 12px 16px;
+    font-size: .9rem; line-height: 1.8;
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+  }
+  .info-boks span { white-space: nowrap; }
+  .info-boks .var { font-weight: 800; color: var(--accent); }
+  .oppgave-sporsmaal {
+    font-family: var(--font-h); font-size: 1.3rem;
+    text-align: center; color: var(--text);
+  }
+  .oppgave-hint { font-size: .8rem; color: var(--dim); text-align: center; }
+
+  /* Svar-rad */
+  .svar-rad { display: flex; align-items: center; gap: 10px; }
+  .svar-input {
+    width: 130px; background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; color: var(--text); font-family: var(--font-h);
+    font-size: 1.5rem; text-align: center; padding: 10px; outline: none;
+    transition: border-color .2s;
+  }
+  .svar-input:focus { border-color: var(--accent); }
+  .svar-input.riktig { border-color: var(--mild); background: rgba(34,197,94,.08); }
+  .svar-input.feil   { border-color: var(--hot);  background: rgba(239,68,68,.08); }
+  .svar-enhet { font-family: var(--font-h); font-size: 1.1rem; color: var(--dim); }
+  .svar-btn {
+    font-family: var(--font-h); font-size: 1rem;
+    padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer;
+    background: var(--accent); color: #fff; transition: all .15s;
+  }
+  .svar-btn:hover { transform: scale(1.04); }
+  .hopp-btn {
+    font-family: var(--font-b); font-size: .8rem;
+    background: none; border: 1.5px solid var(--border);
+    color: var(--dim); padding: 8px 16px; border-radius: 10px; cursor: pointer;
+    transition: all .15s;
+  }
+  .hopp-btn:hover { color: var(--text); border-color: var(--dim); }
+  .feedback-tekst { font-family: var(--font-h); font-size: 1rem; text-align: center; opacity: 0; transition: opacity .2s; }
+  .feedback-tekst.vis { opacity: 1; }
+  .feedback-tekst.riktig { color: var(--mild); }
+  .feedback-tekst.feil   { color: var(--hot); }
+
+  /* Teller-rad */
+  .teller-rad { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .teller-boks { background: var(--card); border: 1.5px solid var(--border); border-radius: 12px; padding: 8px 20px; text-align: center; min-width: 80px; }
+  .teller-tall  { font-family: var(--font-h); font-size: 1.4rem; }
+  .teller-label { font-size: .68rem; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; }
+
+  /* ── RESULTAT-SKJERM ── */
+  #resultatSkjerm { display: none; position: relative; z-index: 1; max-width: 500px; margin: 0 auto; padding: 48px 20px 80px; text-align: center; }
+  .res-emoji  { font-size: 4rem; margin-bottom: 12px; }
+  .res-tittel { font-family: var(--font-h); font-size: 1.8rem; margin-bottom: 8px; }
+  .res-sub    { color: var(--dim); font-size: .95rem; margin-bottom: 28px; }
+  .res-rad    { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+  .res-boks   { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; padding: 14px 22px; min-width: 100px; }
+  .res-tall   { font-family: var(--font-h); font-size: 1.8rem; margin-bottom: 2px; }
+  .res-label  { font-size: .7rem; color: var(--dim); text-transform: uppercase; letter-spacing: .07em; }
+  .resultat-stjerner { display: flex; justify-content: center; gap: 8px; font-size: 2.2rem; margin-bottom: 28px; }
+  .resultat-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .res-btn { font-family: var(--font-h); font-size: 1rem; padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer; transition: all .15s; }
+  .res-btn:hover { transform: scale(1.04); }
+  .res-btn.primær   { background: var(--accent); color: #fff; }
+  .res-btn.sekundær { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+
+  /* XP-popup */
+  .xp-popup { position: fixed; bottom: 30px; right: 24px; font-family: var(--font-h); font-size: 1.1rem; background: var(--card); border: 1.5px solid rgba(129,140,248,.4); color: var(--accent); padding: 10px 20px; border-radius: 12px; opacity: 0; transform: translateY(20px); transition: all .3s; pointer-events: none; z-index: 200; }
+  .xp-popup.vis { opacity: 1; transform: translateY(0); }
+
+  /* SVG felles stiler */
+  .fig-fill   { fill: rgba(129,140,248,.18); }
+  .fig-stroke { fill: none; stroke: rgba(129,140,248,.8); stroke-width: 2; stroke-linejoin: round; }
+  .fig-dim    { fill: none; stroke: rgba(255,255,255,.18); stroke-width: 1.2; stroke-dasharray: 4,3; }
+  .fig-text   { font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800; fill: #f1f5f9; }
+  .fig-text-sm{ font-family: 'Nunito', sans-serif; font-size: 9.5px; font-weight: 700; fill: #94a3b8; }
+  .fig-accent { fill: rgba(52,211,153,.2); stroke: rgba(52,211,153,.7); stroke-width: 2; }
+  .fig-right  { fill: none; stroke: rgba(129,140,248,.6); stroke-width: 1.5; }
+
+  @keyframes pulseBtn {
+    0%,100% { box-shadow: 0 0 0 0 rgba(129,140,248,.5); }
+    50%      { box-shadow: 0 0 0 10px rgba(129,140,248,0); }
+  }
+  @media (max-width: 520px) {
+    .nivaa-grid { grid-template-columns: 1fr; }
+    .svar-input { width: 110px; font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="skaplab.html">🚀 SkapLab</a>
+  <span class="header-sep">/</span>
+  <span class="header-title">📐 Geometri</span>
+  <div class="header-stats">
+    <div class="stat-pill xp">⚡ <span id="xpVis">0</span> XP</div>
+    <div class="stat-pill streak">🔥 <span id="streakVis">0</span></div>
+  </div>
+</header>
+
+<!-- ══ VELG EMNE ══ -->
+<div id="velgSkjerm">
+  <h1 class="hero-tittel">Geometri <span>📐</span></h1>
+  <p class="hero-sub">Figurer, mål og formler – velg emne og nivå og sett i gang!</p>
+
+  <div class="sok-filter">
+    <div class="sok-wrapper">
+      <span class="sok-ikon">🔍</span>
+      <input type="text" id="sokInput" class="sok-input"
+        placeholder="Søk på emne, f.eks. «areal», «Pytagoras»…"
+        oninput="filtrer()" autocomplete="off">
+      <button class="sok-clear" id="sokClear" onclick="tømmSok()" style="display:none;">✕</button>
+    </div>
+    <div class="gruppe-filter" id="gruppeFilter">
+      <button class="gruppe-btn active" data-gruppe="alle" onclick="velgGruppe(this)">Alle</button>
+    </div>
+  </div>
+
+  <div id="sokResultat" style="display:none;">
+    <p class="sok-antall" id="sokAntall"></p>
+    <div class="emne-grid" id="sokGrid"></div>
+    <div style="text-align:center;margin-top:12px;">
+      <button onclick="tømmSok()" style="background:none;border:1.5px solid var(--border);color:var(--dim);font-family:var(--font-b);font-size:.85rem;padding:6px 18px;border-radius:9px;cursor:pointer;">✕ Tøm søk</button>
+    </div>
+  </div>
+  <div id="emneGridWrapper">
+    <div class="emne-grid" id="emneGrid"></div>
+  </div>
+</div>
+
+<!-- ══ VELG NIVÅ ══ -->
+<div id="nivaaSkjerm">
+  <button class="tilbake-btn" onclick="gaaTilEmner()">← Tilbake</button>
+  <div class="nivaa-emne-preview" id="nivaaPreview"></div>
+  <h2 class="nivaa-tittel" id="nivaaTittel"></h2>
+  <p class="nivaa-sub">Velg vanskelighetsgrad</p>
+  <div class="nivaa-grid">
+    <div class="nivaa-kort mild"   onclick="startTrening('mild')">  <span class="nivaa-ikon">🟢</span><div class="nivaa-navn">Mild</div>  <div class="nivaa-desc">Enkle tall og én figur. Bygg forståelse.</div></div>
+    <div class="nivaa-kort medium" onclick="startTrening('medium')"><span class="nivaa-ikon">🟡</span><div class="nivaa-navn">Medium</div><div class="nivaa-desc">Litt større tall, noen steg.</div></div>
+    <div class="nivaa-kort spicy"  onclick="startTrening('spicy')"> <span class="nivaa-ikon">🌶️</span><div class="nivaa-navn">Spicy</div> <div class="nivaa-desc">Større tall, kombinerte formler.</div></div>
+    <div class="nivaa-kort hot"    onclick="startTrening('hot')">   <span class="nivaa-ikon">🔥</span><div class="nivaa-navn">Hot</div>   <div class="nivaa-desc">Maks utfordring – klarer du alle 15?</div></div>
+  </div>
+</div>
+
+<!-- ══ TRENING ══ -->
+<div id="treningSkjerm">
+  <div class="trening-topbar">
+    <button class="tilbake-btn" style="margin-bottom:0;" onclick="gaaTilNivaa()">← Avslutt</button>
+    <span class="trening-emne-label" id="treningLabel"></span>
+    <span class="trening-nivaa-badge" id="treningBadge"></span>
+    <span class="trening-fremgang" id="treningFremgang">0 / 15</span>
+  </div>
+  <div class="fremgang-bar"><div class="fremgang-fill" id="fremgangFill" style="width:0%"></div></div>
+  <div class="stjerne-rad">
+    <span class="stjerne" id="s1">⭐</span><span class="stjerne" id="s2">⭐</span>
+    <span class="stjerne" id="s3">⭐</span><span class="stjerne" id="s4">⭐</span>
+    <span class="stjerne" id="s5">⭐</span>
+  </div>
+
+  <div class="oppgave-kort" id="oppgaveKort">
+    <div class="figur-container" id="figurContainer"></div>
+    <div class="info-boks" id="infoBoks" style="display:none;"></div>
+    <div class="oppgave-sporsmaal" id="oppgaveSpm"></div>
+    <div class="oppgave-hint" id="oppgaveHint"></div>
+    <div class="svar-rad">
+      <input type="text" id="svarInput" class="svar-input" placeholder="?" autocomplete="off"
+        onkeydown="if(event.key==='Enter')sjekkSvar()">
+      <span class="svar-enhet" id="svarEnhet"></span>
+      <button class="svar-btn" onclick="sjekkSvar()">Sjekk</button>
+    </div>
+    <div class="feedback-tekst" id="feedbackTekst"></div>
+    <div class="teller-rad">
+      <div class="teller-boks"><div class="teller-tall" id="riktigTeller" style="color:var(--mild)">0</div><div class="teller-label">Riktig</div></div>
+      <div class="teller-boks"><div class="teller-tall" id="feilTeller"   style="color:var(--hot)">0</div><div class="teller-label">Feil</div></div>
+      <div class="teller-boks"><div class="teller-tall" id="poengTeller"  style="color:var(--accent)">0</div><div class="teller-label">Poeng</div></div>
+    </div>
+    <button class="hopp-btn" onclick="hoppOver()">Hopp over</button>
+  </div>
+</div>
+
+<!-- ══ RESULTAT ══ -->
+<div id="resultatSkjerm">
+  <div class="res-emoji"  id="resEmoji"></div>
+  <h2 class="res-tittel" id="resTittel"></h2>
+  <p class="res-sub"      id="resSub"></p>
+  <div class="resultat-stjerner" id="resStjerner"></div>
+  <div class="res-rad">
+    <div class="res-boks"><div class="res-tall" id="resRiktig" style="color:var(--mild)"></div><div class="res-label">Riktig</div></div>
+    <div class="res-boks"><div class="res-tall" id="resFeil"   style="color:var(--hot)"></div> <div class="res-label">Feil</div></div>
+    <div class="res-boks"><div class="res-tall" id="resPoeng"  style="color:var(--accent)"></div><div class="res-label">Poeng</div></div>
+    <div class="res-boks"><div class="res-tall" id="resXP"     style="color:#c084fc"></div><div class="res-label">XP</div></div>
+  </div>
+  <div class="resultat-btns">
+    <button class="res-btn primær"    onclick="startSammeIgjen()">🔄 Prøv igjen</button>
+    <button class="res-btn sekundær"  id="nesteNivaaBtn" onclick="startNesteNivaa()" style="display:none;">⬆️ Neste nivå</button>
+    <button class="res-btn sekundær"  onclick="gaaTilEmner()">📚 Velg emne</button>
+  </div>
+</div>
+
+<div class="xp-popup" id="xpPopup"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  HJELPEFUNKSJONER
+// ══════════════════════════════════════════════════════════
+const ri  = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const rp  = (a,b) => Math.round((Math.random()*(b-a)+a)*10)/10; // desimal
+const pi  = 3.14;
+const r2d = v => Math.round(v*100)/100;   // 2 desimaler
+const r1d = v => Math.round(v*10)/10;
+
+// SVG-tegning-funksjoner returnerer { svgHTML, infoHTML, spørsmål, enhet, svar, hint }
+// Alle SVG-er bruker viewBox="0 0 240 160" som standard
+
+// ── SVG BYGGERE ──────────────────────────────────────────
+function svgWrap(innhold, vb='0 0 240 160') {
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:160px;">${innhold}</svg>`;
+}
+
+function maalLabel(x, y, tekst, farge='#f1f5f9') {
+  return `<text x="${x}" y="${y}" class="fig-text" text-anchor="middle" fill="${farge}">${tekst}</text>`;
+}
+
+function rettvinkelmrk(x, y, sz=10) {
+  return `<polyline points="${x},${y+sz} ${x+sz},${y+sz} ${x+sz},${y}" class="fig-right"/>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  EMNE-DEFINISIONER
+// ══════════════════════════════════════════════════════════
+const EMNER = [
+
+  // ╔══════════════════════╗
+  // ║   AREAL – POLYGONER  ║
+  // ╚══════════════════════╝
+  {
+    id:'areal-kvadrat', navn:'Areal', info:'Kvadrat', gruppe:'Areal – polygoner',
+    farge:'rgba(129,140,248,1)',
+    miniSvg: () => svgWrap(`<rect x="60" y="30" width="80" height="80" class="fig-fill fig-stroke"/><text x="100" y="80" class="fig-text" text-anchor="middle">s</text>`),
+    gen: {
+      mild:   () => { const s=ri(2,12); return oppg('kvadrat', {s}, 'A', s*s, 'cm²', `A = s²`); },
+      medium: () => { const s=ri(5,20); return oppg('kvadrat', {s}, 'A', s*s, 'cm²'); },
+      spicy:  () => { const A=ri(4,144); const s=Math.sqrt(A); if(s!==Math.floor(s)) return EMNER.find(e=>e.id==='areal-kvadrat').gen.spicy(); return oppg('kvadrat-omvendt', {A}, 's', s, 'cm', `Finn sidelengden når arealet er oppgitt.`); },
+      hot:    () => { const s=ri(10,50); return oppg('kvadrat', {s}, 'A', s*s, 'dm²', `s i dm`); },
+    }
+  },
+  {
+    id:'areal-rektangel', navn:'Areal', info:'Rektangel', gruppe:'Areal – polygoner',
+    farge:'rgba(129,140,248,.8)',
+    miniSvg: () => svgWrap(`<rect x="30" y="45" width="140" height="70" class="fig-fill fig-stroke"/><text x="100" y="88" class="fig-text" text-anchor="middle">l</text><text x="175" y="84" class="fig-text" text-anchor="middle">b</text>`),
+    gen: {
+      mild:   () => { const l=ri(3,12),b=ri(2,8); return oppg('rektangel',{l,b},'A',l*b,'cm²','A = l · b'); },
+      medium: () => { const l=ri(5,25),b=ri(3,15); return oppg('rektangel',{l,b},'A',l*b,'cm²'); },
+      spicy:  () => { const l=ri(10,40),b=ri(5,20); return oppg('rektangel',{l,b},'A',l*b,'m²','l og b i meter'); },
+      hot:    () => { const A=ri(12,200),l=ri(3,20),b=Math.round(A/l); return oppg('rektangel-omv',{A,l},'b',b,'cm','Finn bredden'); },
+    }
+  },
+  {
+    id:'areal-trekant', navn:'Areal', info:'Trekant', gruppe:'Areal – polygoner',
+    farge:'rgba(129,140,248,.6)',
+    miniSvg: () => svgWrap(`<polygon points="100,20 20,140 180,140" class="fig-fill fig-stroke"/><line x1="100" y1="20" x2="100" y2="140" class="fig-dim"/>`),
+    gen: {
+      mild:   () => { const g=ri(4,16),h=ri(3,12); return oppg('trekant',{g,h},'A',g*h/2,'cm²','A = (g · h) / 2'); },
+      medium: () => { const g=ri(6,24),h=ri(4,18); return oppg('trekant',{g,h},'A',g*h/2,'cm²'); },
+      spicy:  () => { const g=ri(8,30),h=ri(5,25); return oppg('trekant',{g,h},'A',g*h/2,'m²','g og h i meter'); },
+      hot:    () => { const A=ri(10,120),g=ri(4,20),h=2*A/g; return oppg('trekant-omv',{A,g},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'areal-parallellogram', navn:'Areal', info:'Parallellogram', gruppe:'Areal – polygoner',
+    farge:'rgba(129,140,248,.45)',
+    miniSvg: () => svgWrap(`<polygon points="50,140 30,40 190,40 210,140" class="fig-fill fig-stroke"/>`),
+    gen: {
+      mild:   () => { const g=ri(4,15),h=ri(3,10); return oppg('parallellogram',{g,h},'A',g*h,'cm²','A = g · h'); },
+      medium: () => { const g=ri(8,25),h=ri(4,15); return oppg('parallellogram',{g,h},'A',g*h,'cm²'); },
+      spicy:  () => { const g=ri(10,30),h=ri(6,20); return oppg('parallellogram',{g,h},'A',g*h,'m²'); },
+      hot:    () => { const A=ri(20,300),g=ri(5,25),h=Math.round(A/g); return oppg('parallellogram-omv',{A,g},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'areal-rombe', navn:'Areal', info:'Rombe', gruppe:'Areal – polygoner',
+    farge:'rgba(129,140,248,.3)',
+    miniSvg: () => svgWrap(`<polygon points="120,20 200,80 120,140 40,80" class="fig-fill fig-stroke"/><line x1="40" y1="80" x2="200" y2="80" class="fig-dim"/><line x1="120" y1="20" x2="120" y2="140" class="fig-dim"/>`),
+    gen: {
+      mild:   () => { const d1=ri(4,14)*2,d2=ri(3,10)*2; return oppg('rombe',{d1,d2},'A',d1*d2/2,'cm²','A = (d₁ · d₂) / 2'); },
+      medium: () => { const d1=ri(8,20)*2,d2=ri(4,12)*2; return oppg('rombe',{d1,d2},'A',d1*d2/2,'cm²'); },
+      spicy:  () => { const d1=ri(10,30)*2,d2=ri(6,20)*2; return oppg('rombe',{d1,d2},'A',d1*d2/2,'dm²'); },
+      hot:    () => { const A=ri(20,400),d1=ri(4,20)*2,d2=Math.round(2*A/d1); return oppg('rombe-omv',{A,d1},'d2',d2,'cm','Finn d₂'); },
+    }
+  },
+  {
+    id:'areal-trapes', navn:'Areal', info:'Trapes', gruppe:'Areal – polygoner',
+    farge:'rgba(96,165,250,1)',
+    miniSvg: () => svgWrap(`<polygon points="60,40 180,40 210,140 30,140" class="fig-fill fig-stroke"/>`),
+    gen: {
+      mild:   () => { const a=ri(4,12),b=ri(6,16),h=ri(3,10); return oppg('trapes',{a,b,h},'A',(a+b)*h/2,'cm²','A = (a + b) · h / 2'); },
+      medium: () => { const a=ri(5,15),b=ri(8,20),h=ri(4,14); return oppg('trapes',{a,b,h},'A',(a+b)*h/2,'cm²'); },
+      spicy:  () => { const a=ri(8,20),b=ri(12,30),h=ri(6,18); return oppg('trapes',{a,b,h},'A',(a+b)*h/2,'m²'); },
+      hot:    () => { const A=ri(30,300),a=ri(5,15),b=ri(10,20),h=Math.round(2*A/(a+b)); return oppg('trapes-omv',{A,a,b},'h',h,'cm','Finn høyden'); },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║  OMKRETS – POLYGONER ║
+  // ╚══════════════════════╝
+  {
+    id:'omkrets-kvadrat', navn:'Omkrets', info:'Kvadrat', gruppe:'Omkrets – polygoner',
+    farge:'rgba(234,179,8,1)',
+    miniSvg: () => svgWrap(`<rect x="60" y="30" width="80" height="80" class="fig-fill" style="fill:rgba(234,179,8,.18)"/><rect x="60" y="30" width="80" height="80" style="fill:none;stroke:rgba(234,179,8,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const s=ri(2,12); return oppg('kvadrat',{s},'O',4*s,'cm','O = 4 · s'); },
+      medium: () => { const s=ri(5,25); return oppg('kvadrat',{s},'O',4*s,'cm'); },
+      spicy:  () => { const O=ri(20,100); if(O%4!==0) return EMNER.find(e=>e.id==='omkrets-kvadrat').gen.spicy(); return oppg('kvadrat-omv',{O},'s',O/4,'cm','Finn sidelengden'); },
+      hot:    () => { const s=ri(8,40); return oppg('kvadrat',{s},'O',4*s,'mm'); },
+    }
+  },
+  {
+    id:'omkrets-rektangel', navn:'Omkrets', info:'Rektangel', gruppe:'Omkrets – polygoner',
+    farge:'rgba(234,179,8,.7)',
+    miniSvg: () => svgWrap(`<rect x="30" y="45" width="140" height="70" style="fill:rgba(234,179,8,.15);stroke:rgba(234,179,8,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const l=ri(4,15),b=ri(2,10); return oppg('rektangel',{l,b},'O',2*(l+b),'cm','O = 2·(l + b)'); },
+      medium: () => { const l=ri(6,25),b=ri(4,15); return oppg('rektangel',{l,b},'O',2*(l+b),'cm'); },
+      spicy:  () => { const O=ri(20,120),l=ri(4,20),b=(O/2-l); return b>0 ? oppg('rektangel-omv',{O,l},'b',b,'cm','Finn bredden') : EMNER.find(e=>e.id==='omkrets-rektangel').gen.spicy(); },
+      hot:    () => { const l=ri(10,50),b=ri(5,30); return oppg('rektangel',{l,b},'O',2*(l+b),'m'); },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║   SIRKEL             ║
+  // ╚══════════════════════╝
+  {
+    id:'sirkel-areal', navn:'Areal', info:'Sirkel', gruppe:'Sirkel',
+    farge:'rgba(52,211,153,1)',
+    miniSvg: () => svgWrap(`<circle cx="120" cy="80" r="60" class="fig-fill fig-stroke" style="fill:rgba(52,211,153,.18);stroke:rgba(52,211,153,.8)"/><line x1="120" y1="80" x2="180" y2="80" style="stroke:rgba(52,211,153,.8);stroke-width:2"/><text x="150" y="73" class="fig-text" fill="rgba(52,211,153,.9)">r</text>`),
+    gen: {
+      mild:   () => { const r=ri(2,10); return oppg('sirkel',{r},'A',r2d(pi*r*r),'cm²','A = π · r²'); },
+      medium: () => { const r=ri(3,15); return oppg('sirkel',{r},'A',r2d(pi*r*r),'cm²'); },
+      spicy:  () => { const d=ri(4,20)*2; return oppg('sirkel-d',{d},'A',r2d(pi*(d/2)**2),'cm²','Husk: r = d/2'); },
+      hot:    () => { const A=ri(5,30)*10; const r=Math.sqrt(A/pi); return oppg('sirkel-omv',{A},'r',r2d(r),'cm','Finn radiusen'); },
+    }
+  },
+  {
+    id:'sirkel-omkrets', navn:'Omkrets', info:'Sirkel', gruppe:'Sirkel',
+    farge:'rgba(52,211,153,.65)',
+    miniSvg: () => svgWrap(`<circle cx="120" cy="80" r="60" style="fill:none;stroke:rgba(52,211,153,.8);stroke-width:3"/><line x1="120" y1="80" x2="180" y2="80" style="stroke:rgba(52,211,153,.5);stroke-width:1.5;stroke-dasharray:4,3"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,10); return oppg('sirkel',{r},'O',r2d(2*pi*r),'cm','O = 2 · π · r'); },
+      medium: () => { const d=ri(4,20)*2; return oppg('sirkel-d',{d},'O',r2d(pi*d),'cm','O = π · d'); },
+      spicy:  () => { const O=ri(20,120); const r=O/(2*pi); return oppg('sirkel-omv',{O},'r',r2d(r),'cm','Finn radiusen'); },
+      hot:    () => { const r=ri(5,25); return oppg('sirkel',{r},'O',r2d(2*pi*r),'m'); },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║   VOLUM – ROMFIGURER ║
+  // ╚══════════════════════╝
+  {
+    id:'volum-kube', navn:'Volum', info:'Kube', gruppe:'Volum – romfigurer',
+    farge:'rgba(249,115,22,1)',
+    miniSvg: () => svgWrap(`<polygon points="40,100 40,40 100,20 160,40 160,100 100,120" style="fill:rgba(249,115,22,.15);stroke:rgba(249,115,22,.8);stroke-width:2"/><polygon points="100,20 160,40 160,100 100,120" style="fill:rgba(249,115,22,.08);stroke:rgba(249,115,22,.5);stroke-width:1.5"/><polygon points="100,60 40,40 40,100 100,120 160,100 160,40 100,60" style="fill:rgba(249,115,22,.08)"/><line x1="40" y1="40" x2="100" y2="60" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/><line x1="100" y1="60" x2="160" y2="40" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/><line x1="100" y1="60" x2="100" y2="120" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/>`),
+    gen: {
+      mild:   () => { const s=ri(2,8);  return oppg('kube',{s},'V',s**3,'cm³','V = s³'); },
+      medium: () => { const s=ri(3,12); return oppg('kube',{s},'V',s**3,'cm³'); },
+      spicy:  () => { const V=ri(1,10)**3; const s=Math.cbrt(V); return oppg('kube-omv',{V},'s',s,'cm','Finn sidelengden'); },
+      hot:    () => { const s=ri(5,20); return oppg('kube',{s},'V',s**3,'dm³'); },
+    }
+  },
+  {
+    id:'volum-prisme', navn:'Volum', info:'Rett prisme', gruppe:'Volum – romfigurer',
+    farge:'rgba(249,115,22,.7)',
+    miniSvg: () => svgWrap(`<polygon points="30,110 90,80 150,110 150,50 90,20 30,50" style="fill:rgba(249,115,22,.15);stroke:rgba(249,115,22,.8);stroke-width:2"/><line x1="30" y1="50" x2="30" y2="110" style="stroke:rgba(249,115,22,.8);stroke-width:2"/><line x1="90" y1="20" x2="90" y2="80" style="stroke:rgba(249,115,22,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const l=ri(3,12),b=ri(2,8),h=ri(3,10); return oppg('prisme',{A:l*b,h},'V',l*b*h,'cm³','V = grunnflate · h'); },
+      medium: () => { const g=ri(3,10),hT=ri(2,8),h=ri(4,14); return oppg('prisme-trekant',{g,hT,h},'V',r2d(g*hT/2*h),'cm³','Grunnflate er trekant: A = g·h/2'); },
+      spicy:  () => { const l=ri(5,20),b=ri(4,14),h=ri(6,20); return oppg('prisme',{A:l*b,h},'V',l*b*h,'dm³'); },
+      hot:    () => { const V=ri(100,1000),A=ri(10,50),h=Math.round(V/A); return oppg('prisme-omv',{V,A},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'volum-sylinder', navn:'Volum', info:'Sylinder', gruppe:'Volum – romfigurer',
+    farge:'rgba(249,115,22,.45)',
+    miniSvg: () => svgWrap(`<ellipse cx="120" cy="130" rx="60" ry="18" style="fill:rgba(249,115,22,.15);stroke:rgba(249,115,22,.8);stroke-width:2"/><ellipse cx="120" cy="40" rx="60" ry="18" style="fill:rgba(249,115,22,.2);stroke:rgba(249,115,22,.8);stroke-width:2"/><line x1="60" y1="40" x2="60" y2="130" style="stroke:rgba(249,115,22,.8);stroke-width:2"/><line x1="180" y1="40" x2="180" y2="130" style="stroke:rgba(249,115,22,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,8),h=ri(3,12); return oppg('sylinder',{r,h},'V',r2d(pi*r*r*h),'cm³','V = π · r² · h'); },
+      medium: () => { const r=ri(3,12),h=ri(5,20); return oppg('sylinder',{r,h},'V',r2d(pi*r*r*h),'cm³'); },
+      spicy:  () => { const d=ri(4,16)*2,h=ri(5,25); return oppg('sylinder-d',{d,h},'V',r2d(pi*(d/2)**2*h),'cm³','r = d/2'); },
+      hot:    () => { const V=ri(200,2000),r=ri(3,10),h=Math.round(V/(pi*r*r)); return oppg('sylinder-omv',{V,r},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'volum-pyramide', navn:'Volum', info:'Pyramide', gruppe:'Volum – romfigurer',
+    farge:'rgba(167,243,208,1)',
+    miniSvg: () => svgWrap(`<polygon points="120,15 30,130 210,130" style="fill:rgba(167,243,208,.18);stroke:rgba(167,243,208,.8);stroke-width:2"/><polygon points="120,15 30,130 100,145 170,130" style="fill:rgba(167,243,208,.08);stroke:rgba(167,243,208,.5);stroke-width:1.5"/><line x1="120" y1="15" x2="120" y2="130" style="stroke:rgba(167,243,208,.4);stroke-width:1.5;stroke-dasharray:4,3"/>`),
+    gen: {
+      mild:   () => { const s=ri(3,10),h=ri(4,12); return oppg('pyramide',{s,h},'V',r2d(s*s*h/3),'cm³','V = (s² · h) / 3'); },
+      medium: () => { const s=ri(5,16),h=ri(6,20); return oppg('pyramide',{s,h},'V',r2d(s*s*h/3),'cm³'); },
+      spicy:  () => { const l=ri(4,14),b=ri(3,10),h=ri(5,18); return oppg('pyramide-rekt',{l,b,h},'V',r2d(l*b*h/3),'dm³','Grunnflate er rektangel: V = l·b·h/3'); },
+      hot:    () => { const V=ri(50,500),s=ri(4,12),h=Math.round(3*V/(s*s)); return oppg('pyramide-omv',{V,s},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'volum-kjegle', navn:'Volum', info:'Kjegle', gruppe:'Volum – romfigurer',
+    farge:'rgba(167,243,208,.65)',
+    miniSvg: () => svgWrap(`<polygon points="120,15 50,140 190,140" style="fill:rgba(167,243,208,.18);stroke:rgba(167,243,208,.8);stroke-width:2"/><ellipse cx="120" cy="140" rx="70" ry="14" style="fill:rgba(167,243,208,.15);stroke:rgba(167,243,208,.8);stroke-width:2"/><line x1="120" y1="15" x2="120" y2="140" style="stroke:rgba(167,243,208,.4);stroke-width:1.5;stroke-dasharray:4,3"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,8),h=ri(4,12); return oppg('kjegle',{r,h},'V',r2d(pi*r*r*h/3),'cm³','V = (π · r² · h) / 3'); },
+      medium: () => { const r=ri(3,12),h=ri(5,20); return oppg('kjegle',{r,h},'V',r2d(pi*r*r*h/3),'cm³'); },
+      spicy:  () => { const d=ri(4,16)*2,h=ri(6,24); return oppg('kjegle-d',{d,h},'V',r2d(pi*(d/2)**2*h/3),'cm³','r = d/2'); },
+      hot:    () => { const V=ri(100,1000),r=ri(3,10),h=Math.round(3*V/(pi*r*r)); return oppg('kjegle-omv',{V,r},'h',h,'cm','Finn høyden'); },
+    }
+  },
+  {
+    id:'volum-kule', navn:'Volum', info:'Kule', gruppe:'Volum – romfigurer',
+    farge:'rgba(167,243,208,.35)',
+    miniSvg: () => svgWrap(`<circle cx="120" cy="80" r="65" style="fill:rgba(167,243,208,.18);stroke:rgba(167,243,208,.8);stroke-width:2"/><ellipse cx="120" cy="80" rx="65" ry="20" style="fill:none;stroke:rgba(167,243,208,.35);stroke-width:1.5;stroke-dasharray:5,3"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,8);  return oppg('kule',{r},'V',r2d(4/3*pi*r**3),'cm³','V = (4/3) · π · r³'); },
+      medium: () => { const r=ri(3,12); return oppg('kule',{r},'V',r2d(4/3*pi*r**3),'cm³'); },
+      spicy:  () => { const d=ri(2,8)*2; return oppg('kule-d',{d},'V',r2d(4/3*pi*(d/2)**3),'cm³','r = d/2'); },
+      hot:    () => { const r=ri(4,15); return oppg('kule',{r},'V',r2d(4/3*pi*r**3),'dm³'); },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║  OVERFLATE           ║
+  // ╚══════════════════════╝
+  {
+    id:'overflate-kube', navn:'Overflate', info:'Kube', gruppe:'Overflate – romfigurer',
+    farge:'rgba(251,113,133,1)',
+    miniSvg: () => svgWrap(`<polygon points="40,100 40,40 100,20 160,40 160,100 100,120" style="fill:rgba(251,113,133,.15);stroke:rgba(251,113,133,.8);stroke-width:2"/><line x1="40" y1="40" x2="100" y2="60" style="stroke:rgba(251,113,133,.5);stroke-width:1.5"/><line x1="100" y1="60" x2="160" y2="40" style="stroke:rgba(251,113,133,.5);stroke-width:1.5"/><line x1="100" y1="60" x2="100" y2="120" style="stroke:rgba(251,113,133,.5);stroke-width:1.5"/>`),
+    gen: {
+      mild:   () => { const s=ri(2,8);  return oppg('kube',{s},'OF',6*s*s,'cm²','OF = 6 · s²'); },
+      medium: () => { const s=ri(4,15); return oppg('kube',{s},'OF',6*s*s,'cm²'); },
+      spicy:  () => { const OF=ri(1,10)**2*6; const s=Math.sqrt(OF/6); return oppg('kube-omv',{OF},'s',s,'cm','Finn sidelengden'); },
+      hot:    () => { const s=ri(5,20); return oppg('kube',{s},'OF',6*s*s,'dm²'); },
+    }
+  },
+  {
+    id:'overflate-prisme', navn:'Overflate', info:'Rett prisme (kvader)', gruppe:'Overflate – romfigurer',
+    farge:'rgba(251,113,133,.7)',
+    miniSvg: () => svgWrap(`<polygon points="30,110 90,80 150,110 150,50 90,20 30,50" style="fill:rgba(251,113,133,.15);stroke:rgba(251,113,133,.8);stroke-width:2"/><line x1="30" y1="50" x2="30" y2="110" style="stroke:rgba(251,113,133,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const l=ri(3,10),b=ri(2,8),h=ri(3,10); return oppg('kvader',{l,b,h},'OF',2*(l*b+l*h+b*h),'cm²','OF = 2·(l·b + l·h + b·h)'); },
+      medium: () => { const l=ri(4,15),b=ri(3,10),h=ri(4,14); return oppg('kvader',{l,b,h},'OF',2*(l*b+l*h+b*h),'cm²'); },
+      spicy:  () => { const l=ri(5,20),b=ri(4,15),h=ri(6,20); return oppg('kvader',{l,b,h},'OF',2*(l*b+l*h+b*h),'dm²'); },
+      hot:    () => { const s=ri(3,10),h=ri(5,20); const l=s,b=s; return oppg('kvader-kv-bunn',{l,b,h},'OF',2*(l*b+l*h+b*h),'cm²','Kvadratisk bunn'); },
+    }
+  },
+  {
+    id:'overflate-sylinder', navn:'Overflate', info:'Sylinder', gruppe:'Overflate – romfigurer',
+    farge:'rgba(251,113,133,.45)',
+    miniSvg: () => svgWrap(`<ellipse cx="120" cy="130" rx="60" ry="18" style="fill:rgba(251,113,133,.15);stroke:rgba(251,113,133,.8);stroke-width:2"/><ellipse cx="120" cy="40" rx="60" ry="18" style="fill:rgba(251,113,133,.2);stroke:rgba(251,113,133,.8);stroke-width:2"/><line x1="60" y1="40" x2="60" y2="130" style="stroke:rgba(251,113,133,.8);stroke-width:2"/><line x1="180" y1="40" x2="180" y2="130" style="stroke:rgba(251,113,133,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,8),h=ri(3,12); return oppg('sylinder',{r,h},'OF',r2d(2*pi*r*(r+h)),'cm²','OF = 2·π·r·(r + h)'); },
+      medium: () => { const r=ri(3,12),h=ri(5,20); return oppg('sylinder',{r,h},'OF',r2d(2*pi*r*(r+h)),'cm²'); },
+      spicy:  () => { const d=ri(4,16)*2,h=ri(6,24); return oppg('sylinder-d',{d,h},'OF',r2d(2*pi*(d/2)*((d/2)+h)),'cm²','r = d/2'); },
+      hot:    () => { const r=ri(3,10),h=ri(8,25); return oppg('sylinder',{r,h},'OF',r2d(2*pi*r*(r+h)),'dm²'); },
+    }
+  },
+  {
+    id:'overflate-kule', navn:'Overflate', info:'Kule', gruppe:'Overflate – romfigurer',
+    farge:'rgba(251,113,133,.25)',
+    miniSvg: () => svgWrap(`<circle cx="120" cy="80" r="65" style="fill:rgba(251,113,133,.15);stroke:rgba(251,113,133,.8);stroke-width:2"/>`),
+    gen: {
+      mild:   () => { const r=ri(2,8);  return oppg('kule',{r},'OF',r2d(4*pi*r*r),'cm²','OF = 4 · π · r²'); },
+      medium: () => { const r=ri(3,12); return oppg('kule',{r},'OF',r2d(4*pi*r*r),'cm²'); },
+      spicy:  () => { const d=ri(2,8)*2; return oppg('kule-d',{d},'OF',r2d(4*pi*(d/2)**2),'cm²','r = d/2'); },
+      hot:    () => { const OF=ri(5,20)**2*4; const r=Math.sqrt(OF/(4*pi)); return oppg('kule-omv',{OF},'r',r2d(r),'cm','Finn radiusen'); },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║   PYTAGORAS          ║
+  // ╚══════════════════════╝
+  {
+    id:'pytagoras-hyp', navn:'Pytagoras', info:'Finn hypotenusen', gruppe:'Pytagoras',
+    farge:'rgba(199,125,255,1)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(199,125,255,.18);stroke:rgba(199,125,255,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(199,125,255,.6);stroke-width:1.5"/><text x="25" y="90" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">b</text><text x="100" y="155" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">a</text><text x="115" y="80" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">c</text>`),
+    gen: {
+      mild:   () => { const [a,b,c]=pytTripel(); return oppg('pytagoras',{a,b},'c',c,'cm','c² = a² + b²  →  c = √(a² + b²)'); },
+      medium: () => { const [a,b,c]=pytTripel(true); return oppg('pytagoras',{a,b},'c',c,'cm'); },
+      spicy:  () => {
+        const a=ri(5,15)*2, b=ri(3,12)*2;
+        const c=r2d(Math.sqrt(a*a+b*b));
+        return oppg('pytagoras',{a,b},'c',c,'cm');
+      },
+      hot:    () => {
+        const a=ri(6,20), b=ri(5,18);
+        const c=r2d(Math.sqrt(a*a+b*b));
+        return oppg('pytagoras',{a,b},'c',c,'cm');
+      },
+    }
+  },
+  {
+    id:'pytagoras-katet', navn:'Pytagoras', info:'Finn en katet', gruppe:'Pytagoras',
+    farge:'rgba(199,125,255,.7)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(199,125,255,.18);stroke:rgba(199,125,255,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(199,125,255,.6);stroke-width:1.5"/><text x="25" y="90" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">b=?</text><text x="100" y="155" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">a</text><text x="112" y="78" class="fig-text" text-anchor="middle" fill="rgba(199,125,255,.9)">c</text>`),
+    gen: {
+      mild:   () => { const [a,b,c]=pytTripel(); return oppg('pytagoras-katet',{a,c},'b',b,'cm','b = √(c² − a²)'); },
+      medium: () => { const [a,b,c]=pytTripel(true); return oppg('pytagoras-katet',{a,c},'b',b,'cm'); },
+      spicy:  () => {
+        const [a,,c]=pytTripel(true);
+        const b=r2d(Math.sqrt(c*c-a*a));
+        return oppg('pytagoras-katet',{a,c},'b',b,'cm');
+      },
+      hot:    () => {
+        const c=ri(10,30), a=ri(5,c-1);
+        const b=r2d(Math.sqrt(c*c-a*a));
+        return oppg('pytagoras-katet',{a,c},'b',b,'cm');
+      },
+    }
+  },
+  {
+    id:'pytagoras-likebeint', navn:'Pytagoras', info:'Likebeint trekant', gruppe:'Pytagoras',
+    farge:'rgba(199,125,255,.45)',
+    miniSvg: () => svgWrap(`<polygon points="120,20 30,140 210,140" style="fill:rgba(199,125,255,.18);stroke:rgba(199,125,255,.8);stroke-width:2"/><line x1="120" y1="20" x2="120" y2="140" style="stroke:rgba(199,125,255,.5);stroke-width:1.5;stroke-dasharray:4,3"/><polyline points="120,125 135,125 135,140" style="fill:none;stroke:rgba(199,125,255,.6);stroke-width:1.5"/>`),
+    gen: {
+      mild:   () => {
+        const s=ri(5,15), h=ri(4,12);
+        const hyp=r2d(Math.sqrt((s/2)**2+h*h));
+        return oppg('likebeint',{s,h},'c',hyp,'cm','Trekant med lik. sider. Halvér grunnen og bruk Pytagoras.');
+      },
+      medium: () => {
+        const c=ri(8,20), s=ri(4,c-1)*2;
+        const h=r2d(Math.sqrt(c*c-(s/2)**2));
+        return oppg('likebeint-h',{c,s},'h',h,'cm','Finn høyden i likebeint trekant');
+      },
+      spicy:  () => {
+        const s=ri(6,20), h=ri(5,18);
+        const hyp=r2d(Math.sqrt((s/2)**2+h*h));
+        return oppg('likebeint',{s,h},'c',hyp,'cm');
+      },
+      hot:    () => {
+        const c=ri(10,25), h=ri(6,20);
+        const s=r2d(2*Math.sqrt(c*c-h*h));
+        return oppg('likebeint-s',{c,h},'s',s,'cm','Finn grunnen (s) i likebeint trekant');
+      },
+    }
+  },
+  {
+    id:'pytagoras-306090', navn:'Pytagoras', info:'30-60-90-trekant', gruppe:'Pytagoras',
+    farge:'rgba(199,125,255,.25)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(199,125,255,.18);stroke:rgba(199,125,255,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(199,125,255,.6);stroke-width:1.5"/><text x="30" y="25" class="fig-text-sm" fill="rgba(199,125,255,.8)">60°</text><text x="155" y="135" class="fig-text-sm" fill="rgba(199,125,255,.8)">30°</text><text x="35" y="155" class="fig-text-sm" fill="rgba(199,125,255,.8)">90°</text>`),
+    gen: {
+      mild:   () => {
+        const a=ri(2,8)*2; // kort katet (mot 30°)
+        const b=r2d(a*Math.sqrt(3));
+        const c=a*2;
+        return oppg('306090',{a},'c',c,'cm','Kort katet a. c = 2a,  b = a√3');
+      },
+      medium: () => {
+        const c=ri(4,16)*2;
+        const a=c/2, b=r2d(c/2*Math.sqrt(3));
+        return oppg('306090-c',{c},'a',a,'cm','Fra hypotenusen: a = c/2');
+      },
+      spicy:  () => {
+        const a=ri(3,12)*2;
+        const b=r2d(a*Math.sqrt(3)), c=a*2;
+        return oppg('306090-all',{a},'b',b,'cm','Finn lang katet b = a√3');
+      },
+      hot:    () => {
+        const b=ri(3,10)*2; // lang katet (mot 60°)
+        const a=r2d(b/Math.sqrt(3)), c=r2d(2*b/Math.sqrt(3));
+        return oppg('306090-b',{b},'c',r2d(c),'cm','Fra lang katet: c = 2b/√3');
+      },
+    }
+  },
+
+  // ╔══════════════════════╗
+  // ║   TRIGONOMETRI       ║
+  // ╚══════════════════════╝
+  {
+    id:'trig-sin', navn:'Trigonometri', info:'Sinus', gruppe:'Trigonometri',
+    farge:'rgba(251,191,36,1)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(251,191,36,.15);stroke:rgba(251,191,36,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(251,191,36,.6);stroke-width:1.5"/><text x="152" y="132" class="fig-text-sm" fill="rgba(251,191,36,.9)">θ</text>`),
+    gen: {
+      mild:   () => {
+        const deg=[30,45,60][ri(0,2)], hyp=ri(4,16)*2;
+        const mot=r2d(hyp*Math.sin(deg*pi/180));
+        return oppg('trig',{deg,hyp},'mot',mot,'cm','sin(θ) = mot/hyp  →  mot = hyp · sin(θ)');
+      },
+      medium: () => {
+        const deg=[30,45,60][ri(0,2)], mot=ri(4,20);
+        const hyp=r2d(mot/Math.sin(deg*pi/180));
+        return oppg('trig-omv',{deg,mot},'hyp',hyp,'cm','hyp = mot / sin(θ)');
+      },
+      spicy:  () => {
+        const deg=ri(20,70), hyp=ri(6,24);
+        const mot=r2d(hyp*Math.sin(deg*pi/180));
+        return oppg('trig',{deg,hyp},'mot',mot,'cm');
+      },
+      hot:    () => {
+        const mot=ri(5,20), hyp=ri(mot+2,40);
+        const deg=r2d(Math.asin(mot/hyp)*180/pi);
+        return oppg('trig-vinkel',{mot,hyp},'deg',deg,'°','Finn vinkelen θ = arcsin(mot/hyp)');
+      },
+    }
+  },
+  {
+    id:'trig-cos', navn:'Trigonometri', info:'Cosinus', gruppe:'Trigonometri',
+    farge:'rgba(251,191,36,.65)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(251,191,36,.12);stroke:rgba(251,191,36,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(251,191,36,.6);stroke-width:1.5"/><text x="152" y="132" class="fig-text-sm" fill="rgba(251,191,36,.9)">θ</text>`),
+    gen: {
+      mild:   () => {
+        const deg=[30,45,60][ri(0,2)], hyp=ri(4,16)*2;
+        const hos=r2d(hyp*Math.cos(deg*pi/180));
+        return oppg('trig',{deg,hyp},'hos',hos,'cm','cos(θ) = hos/hyp  →  hos = hyp · cos(θ)');
+      },
+      medium: () => {
+        const deg=[30,45,60][ri(0,2)], hos=ri(4,20);
+        const hyp=r2d(hos/Math.cos(deg*pi/180));
+        return oppg('trig-omv',{deg,hos},'hyp',hyp,'cm','hyp = hos / cos(θ)');
+      },
+      spicy:  () => {
+        const deg=ri(20,70), hyp=ri(6,24);
+        const hos=r2d(hyp*Math.cos(deg*pi/180));
+        return oppg('trig',{deg,hyp},'hos',hos,'cm');
+      },
+      hot:    () => {
+        const hos=ri(5,20), hyp=ri(hos+2,40);
+        const deg=r2d(Math.acos(hos/hyp)*180/pi);
+        return oppg('trig-vinkel',{hos,hyp},'deg',deg,'°','Finn vinkelen θ = arccos(hos/hyp)');
+      },
+    }
+  },
+  {
+    id:'trig-tan', navn:'Trigonometri', info:'Tangens', gruppe:'Trigonometri',
+    farge:'rgba(251,191,36,.35)',
+    miniSvg: () => svgWrap(`<polygon points="30,140 30,30 170,140" style="fill:rgba(251,191,36,.1);stroke:rgba(251,191,36,.8);stroke-width:2"/><polyline points="30,120 50,120 50,140" style="fill:none;stroke:rgba(251,191,36,.6);stroke-width:1.5"/><text x="152" y="132" class="fig-text-sm" fill="rgba(251,191,36,.9)">θ</text>`),
+    gen: {
+      mild:   () => {
+        const deg=[30,45,60][ri(0,2)], hos=ri(4,16)*2;
+        const mot=r2d(hos*Math.tan(deg*pi/180));
+        return oppg('trig',{deg,hos},'mot',mot,'cm','tan(θ) = mot/hos  →  mot = hos · tan(θ)');
+      },
+      medium: () => {
+        const deg=[30,45,60][ri(0,2)], mot=ri(4,20);
+        const hos=r2d(mot/Math.tan(deg*pi/180));
+        return oppg('trig-omv',{deg,mot},'hos',hos,'cm','hos = mot / tan(θ)');
+      },
+      spicy:  () => {
+        const deg=ri(20,70), hos=ri(4,20);
+        const mot=r2d(hos*Math.tan(deg*pi/180));
+        return oppg('trig',{deg,hos},'mot',mot,'cm');
+      },
+      hot:    () => {
+        const mot=ri(4,20), hos=ri(3,20);
+        const deg=r2d(Math.atan(mot/hos)*180/pi);
+        return oppg('trig-vinkel',{mot,hos},'deg',deg,'°','Finn vinkelen θ = arctan(mot/hos)');
+      },
+    }
+  },
+];
+
+// ══════════════════════════════════════════════════════════
+//  PYTAGOREISKE TRIPLER
+// ══════════════════════════════════════════════════════════
+const TRIPLER = [[3,4,5],[5,12,13],[8,15,17],[7,24,25],[6,8,10],[9,12,15],[5,12,13],[8,6,10],[20,21,29],[9,40,41]];
+function pytTripel(scale=false) {
+  const [a,b,c] = TRIPLER[ri(0,TRIPLER.length-1)];
+  const k = scale ? ri(1,4) : 1;
+  return [a*k, b*k, c*k];
+}
+
+// ══════════════════════════════════════════════════════════
+//  OPPGAVE-BUILDER – lager SVG + info-tekst dynamisk
+// ══════════════════════════════════════════════════════════
+function oppg(type, maal, spørmål, svar, enhet, hint='') {
+  let svgHTML = '', infoDeler = [], spm = '';
+
+  const v = (n,e='cm') => `<span><span class="var">${n}</span> = ${maal[n] ?? '?'} ${e}</span>`;
+
+  // SVG og info per figurtype
+  const C = 120, M = 160; // senter x, maks y
+  switch(type) {
+
+    case 'kvadrat': case 'kvadrat-omvendt': {
+      const s = maal.s ?? '?', A = maal.A ?? '';
+      const px = 60, W = 120;
+      svgHTML = svgWrap(`
+        <rect x="${px}" y="20" width="${W}" height="${W}" class="fig-fill fig-stroke"/>
+        ${maalLabel(px+W/2, 22+W/2+6, A ? `A = ${A}` : '')}
+        ${maalLabel(px+W/2, 155, `s = ${s} cm`)}
+        ${maalLabel(px-14, 20+W/2+5, `s`)}
+      `);
+      infoDeler = type==='kvadrat-omvendt'
+        ? [`<span>Areal <span class="var">A</span> = ${maal.A} cm²</span>`]
+        : [`<span>Side <span class="var">s</span> = ${s} cm</span>`];
+      spm = spørmål === 'A' ? 'Hva er arealet?' : 'Hva er sidelengden?';
+      break;
+    }
+
+    case 'rektangel': case 'rektangel-omv': {
+      const l=maal.l??'?', b=maal.b??'?', A=maal.A??'';
+      const W=150, H=90, px=45, py=40;
+      svgHTML = svgWrap(`
+        <rect x="${px}" y="${py}" width="${W}" height="${H}" class="fig-fill fig-stroke"/>
+        ${maalLabel(px+W/2, py+H/2+5, A?`A=${A}`:'', '#94a3b8')}
+        ${maalLabel(px+W/2, py+H+15, `l = ${l} cm`)}
+        ${maalLabel(px-18, py+H/2+5, `b = ${b}`)}
+      `);
+      infoDeler = type==='rektangel-omv'
+        ? [`<span>Areal <span class="var">A</span> = ${A} cm²</span>`,`<span>Lengde <span class="var">l</span> = ${l} cm</span>`]
+        : [`<span>l = ${l} cm</span>`,`<span>b = ${b} cm</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : 'Hva er bredden b?';
+      break;
+    }
+
+    case 'trekant': case 'trekant-omv': {
+      const g=maal.g??'?', h=maal.h??'?', A=maal.A??'';
+      svgHTML = svgWrap(`
+        <polygon points="30,140 210,140 150,30" class="fig-fill fig-stroke"/>
+        <line x1="150" y1="30" x2="150" y2="140" class="fig-dim"/>
+        ${rettvinkelmrk(140,130,10)}
+        ${maalLabel(120, 155, `g = ${g} cm`)}
+        ${maalLabel(162, 90, `h = ${h} cm`)}
+        ${A ? maalLabel(100, 100, `A = ${A}`, '#94a3b8') : ''}
+      `);
+      infoDeler = type==='trekant-omv'
+        ? [`<span>A = ${A} cm²</span>`,`<span>g = ${g} cm</span>`]
+        : [`<span>g = ${g} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : `Hva er høyden h?`;
+      break;
+    }
+
+    case 'parallellogram': case 'parallellogram-omv': {
+      const g=maal.g??'?', h=maal.h??'?', A=maal.A??'';
+      svgHTML = svgWrap(`
+        <polygon points="50,140 30,50 190,50 210,140" class="fig-fill fig-stroke"/>
+        <line x1="50" y1="50" x2="50" y2="140" class="fig-dim"/>
+        ${rettvinkelmrk(40,130,10)}
+        ${maalLabel(120, 155, `g = ${g} cm`)}
+        ${maalLabel(30, 100, `h = ${h}`)}
+      `);
+      infoDeler = type==='parallellogram-omv'
+        ? [`<span>A = ${A} cm²</span>`,`<span>g = ${g} cm</span>`]
+        : [`<span>g = ${g} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'rombe': case 'rombe-omv': {
+      const d1=maal.d1??'?', d2=maal.d2??'?', A=maal.A??'';
+      svgHTML = svgWrap(`
+        <polygon points="120,20 210,80 120,140 30,80" class="fig-fill fig-stroke"/>
+        <line x1="30" y1="80" x2="210" y2="80" class="fig-dim"/>
+        <line x1="120" y1="20" x2="120" y2="140" class="fig-dim"/>
+        ${maalLabel(120, 155, `d₁ = ${d1} cm`)}
+        ${maalLabel(220, 84, `d₂ = ${d2}`)}
+      `);
+      infoDeler = type==='rombe-omv'
+        ? [`<span>A = ${A} cm²</span>`,`<span>d₁ = ${d1} cm</span>`]
+        : [`<span>d₁ = ${d1} cm</span>`,`<span>d₂ = ${d2} cm</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : 'Hva er d₂?';
+      break;
+    }
+
+    case 'trapes': case 'trapes-omv': {
+      const a=maal.a??'?', b=maal.b??'?', h=maal.h??'?', A=maal.A??'';
+      svgHTML = svgWrap(`
+        <polygon points="60,40 180,40 210,140 30,140" class="fig-fill fig-stroke"/>
+        <line x1="60" y1="40" x2="60" y2="140" class="fig-dim"/>
+        ${rettvinkelmrk(50,130,10)}
+        ${maalLabel(120, 33, `a = ${a} cm`)}
+        ${maalLabel(120, 155, `b = ${b} cm`)}
+        ${maalLabel(42, 92, `h = ${h}`)}
+      `);
+      infoDeler = type==='trapes-omv'
+        ? [`<span>A = ${A} cm²</span>`,`<span>a = ${a} cm</span>`,`<span>b = ${b} cm</span>`]
+        : [`<span>a = ${a} cm</span>`,`<span>b = ${b} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'sirkel': case 'sirkel-d': case 'sirkel-omv': {
+      const r=maal.r??'?', d=maal.d??'?';
+      const clr = 'rgba(52,211,153,.8)';
+      svgHTML = svgWrap(`
+        <circle cx="120" cy="85" r="65" style="fill:rgba(52,211,153,.15);stroke:${clr};stroke-width:2"/>
+        <line x1="120" y1="85" x2="185" y2="85" style="stroke:${clr};stroke-width:2"/>
+        ${maalLabel(155, 79, maal.d ? `d = ${d} cm` : `r = ${r} cm`, 'rgba(52,211,153,.9)')}
+      `);
+      infoDeler = maal.d
+        ? [`<span>d = ${d} cm</span>`]
+        : maal.r ? [`<span>r = ${r} cm</span>`]
+        : [`<span>Areal A = ${maal.A ?? '?'} cm²</span>`];
+      spm = spørmål==='A' ? 'Hva er arealet?' : spørmål==='O' ? 'Hva er omkretsen?' : 'Hva er radiusen r?';
+      break;
+    }
+
+    case 'kube': case 'kube-omv': {
+      const s=maal.s??'?';
+      const clr='rgba(249,115,22,.8)';
+      svgHTML = svgWrap(`
+        <polygon points="40,110 40,45 100,20 160,45 160,110 100,135" style="fill:rgba(249,115,22,.12);stroke:${clr};stroke-width:2"/>
+        <polygon points="100,60 40,45 40,110 100,135 160,110 160,45 100,60" style="fill:none"/>
+        <line x1="40" y1="45" x2="100" y2="60" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/>
+        <line x1="100" y1="60" x2="160" y2="45" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/>
+        <line x1="100" y1="60" x2="100" y2="135" style="stroke:rgba(249,115,22,.5);stroke-width:1.5"/>
+        ${maalLabel(170, 80, `s = ${s}`, 'rgba(249,115,22,.9)')}
+      `);
+      infoDeler = type==='kube-omv'
+        ? [`<span>Volum V = ${maal.V ?? maal.OF} cm³</span>`]
+        : [`<span>s = ${s} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : spørmål==='OF' ? 'Hva er overflaten?' : 'Hva er sidelengden s?';
+      break;
+    }
+
+    case 'prisme': case 'prisme-omv': {
+      const A=maal.A??'?', h=maal.h??'?';
+      const clr='rgba(249,115,22,.7)';
+      svgHTML = svgWrap(`
+        <polygon points="30,120 80,90 140,120 140,50 80,20 30,50" style="fill:rgba(249,115,22,.12);stroke:${clr};stroke-width:2"/>
+        <line x1="30" y1="50" x2="30" y2="120" style="stroke:${clr};stroke-width:2"/>
+        <line x1="80" y1="20" x2="80" y2="90" style="stroke:${clr};stroke-width:2"/>
+        ${maalLabel(85, 160, `h = ${h} cm`, 'rgba(249,115,22,.9)')}
+        ${maalLabel(20, 40, `A`, 'rgba(249,115,22,.9)')}
+      `);
+      infoDeler = type==='prisme-omv'
+        ? [`<span>V = ${maal.V} cm³</span>`,`<span>Grunnflate A = ${A} cm²</span>`]
+        : [`<span>Grunnflate A = ${A} cm²</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'prisme-trekant': {
+      const g=maal.g, hT=maal.hT, h=maal.h;
+      svgHTML = svgWrap(`
+        <polygon points="30,130 80,110 130,130 130,60 80,40 30,60" style="fill:rgba(249,115,22,.12);stroke:rgba(249,115,22,.7);stroke-width:2"/>
+        <line x1="30" y1="60" x2="30" y2="130" style="stroke:rgba(249,115,22,.7);stroke-width:2"/>
+        ${maalLabel(80, 160, `h (lengde) = ${h} cm`)}
+        ${maalLabel(20, 45, `g=${g}`)}
+      `);
+      infoDeler = [`<span>g = ${g} cm</span>`,`<span>h (trekant) = ${hT} cm</span>`,`<span>h (prisme) = ${h} cm</span>`];
+      spm = 'Hva er volumet?';
+      break;
+    }
+
+    case 'sylinder': case 'sylinder-d': case 'sylinder-omv': {
+      const r=maal.r??'?', d=maal.d??'?', h=maal.h??'?';
+      const clr='rgba(249,115,22,.65)';
+      svgHTML = svgWrap(`
+        <ellipse cx="120" cy="130" rx="70" ry="18" style="fill:rgba(249,115,22,.12);stroke:${clr};stroke-width:2"/>
+        <ellipse cx="120" cy="35" rx="70" ry="18" style="fill:rgba(249,115,22,.18);stroke:${clr};stroke-width:2"/>
+        <line x1="50" y1="35" x2="50" y2="130" style="stroke:${clr};stroke-width:2"/>
+        <line x1="190" y1="35" x2="190" y2="130" style="stroke:${clr};stroke-width:2"/>
+        <line x1="120" y1="35" x2="190" y2="35" style="stroke:${clr};stroke-width:1.5;stroke-dasharray:4,3"/>
+        ${maalLabel(158, 29, maal.d ? `r=d/2=${maal.d/2}` : `r = ${r}`, 'rgba(249,115,22,.9)')}
+        ${maalLabel(32, 83, `h = ${h}`, 'rgba(249,115,22,.9)')}
+      `);
+      infoDeler = type==='sylinder-omv'
+        ? [`<span>V = ${maal.V} cm³</span>`,`<span>r = ${r} cm</span>`]
+        : maal.d
+          ? [`<span>d = ${d} cm → r = ${d/2} cm</span>`,`<span>h = ${h} cm</span>`]
+          : [`<span>r = ${r} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : spørmål==='OF' ? 'Hva er overflaten?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'pyramide': case 'pyramide-omv': {
+      const s=maal.s??'?', h=maal.h??'?';
+      const clr='rgba(167,243,208,.8)';
+      svgHTML = svgWrap(`
+        <polygon points="120,15 30,135 210,135" style="fill:rgba(167,243,208,.15);stroke:${clr};stroke-width:2"/>
+        <polygon points="120,15 30,135 90,150 170,135" style="fill:rgba(167,243,208,.08);stroke:rgba(167,243,208,.45);stroke-width:1.5"/>
+        <line x1="120" y1="15" x2="120" y2="135" style="stroke:rgba(167,243,208,.4);stroke-width:1.5;stroke-dasharray:4,3"/>
+        ${maalLabel(120, 155, `s = ${s} cm`, clr)}
+        ${maalLabel(133, 78, `h = ${h}`, clr)}
+      `);
+      infoDeler = type==='pyramide-omv'
+        ? [`<span>V = ${maal.V} cm³</span>`,`<span>s = ${s} cm</span>`]
+        : [`<span>s = ${s} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'pyramide-rekt': {
+      const {l,b,h}=maal;
+      svgHTML = svgWrap(`
+        <polygon points="120,15 30,135 210,135" style="fill:rgba(167,243,208,.15);stroke:rgba(167,243,208,.8);stroke-width:2"/>
+        ${maalLabel(120, 155, `${l} × ${b} cm`)}
+        ${maalLabel(138, 80, `h = ${h}`)}
+      `);
+      infoDeler = [`<span>l = ${l} cm</span>`,`<span>b = ${b} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = 'Hva er volumet?';
+      break;
+    }
+
+    case 'kjegle': case 'kjegle-d': case 'kjegle-omv': {
+      const r=maal.r??'?', d=maal.d??'?', h=maal.h??'?';
+      const clr='rgba(167,243,208,.65)';
+      svgHTML = svgWrap(`
+        <polygon points="120,15 50,140 190,140" style="fill:rgba(167,243,208,.15);stroke:${clr};stroke-width:2"/>
+        <ellipse cx="120" cy="140" rx="70" ry="14" style="fill:rgba(167,243,208,.12);stroke:${clr};stroke-width:2"/>
+        <line x1="120" y1="15" x2="120" y2="140" style="stroke:rgba(167,243,208,.4);stroke-width:1.5;stroke-dasharray:4,3"/>
+        ${maalLabel(120, 160, maal.d ? `d = ${d} cm` : `r = ${r} cm`, clr)}
+        ${maalLabel(135, 80, `h = ${h}`, clr)}
+      `);
+      infoDeler = type==='kjegle-omv'
+        ? [`<span>V = ${maal.V} cm³</span>`,`<span>r = ${r} cm</span>`]
+        : maal.d
+          ? [`<span>d = ${d} cm</span>`,`<span>h = ${h} cm</span>`]
+          : [`<span>r = ${r} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : 'Hva er høyden h?';
+      break;
+    }
+
+    case 'kule': case 'kule-d': case 'kule-omv': {
+      const r=maal.r??'?', d=maal.d??'?';
+      const clr='rgba(167,243,208,.45)';
+      svgHTML = svgWrap(`
+        <circle cx="120" cy="80" r="68" style="fill:rgba(167,243,208,.12);stroke:${clr};stroke-width:2"/>
+        <ellipse cx="120" cy="80" rx="68" ry="20" style="fill:none;stroke:rgba(167,243,208,.3);stroke-width:1.5;stroke-dasharray:5,3"/>
+        <line x1="120" y1="80" x2="188" y2="80" style="stroke:${clr};stroke-width:1.5"/>
+        ${maalLabel(158, 74, maal.d ? `d = ${d}` : `r = ${r}`, clr)}
+      `);
+      infoDeler = type==='kule-omv'
+        ? [`<span>OF = ${maal.OF} cm²</span>`]
+        : maal.d
+          ? [`<span>d = ${d} cm</span>`]
+          : [`<span>r = ${r} cm</span>`];
+      spm = spørmål==='V' ? 'Hva er volumet?' : spørmål==='OF' ? 'Hva er overflaten?' : 'Hva er radiusen r?';
+      break;
+    }
+
+    case 'kvader': case 'kvader-kv-bunn': {
+      const {l,b,h}=maal;
+      const clr='rgba(251,113,133,.7)';
+      svgHTML = svgWrap(`
+        <polygon points="40,110 40,45 100,20 160,45 160,110 100,135" style="fill:rgba(251,113,133,.12);stroke:${clr};stroke-width:2"/>
+        <line x1="40" y1="45" x2="100" y2="60" style="stroke:rgba(251,113,133,.45);stroke-width:1.5"/>
+        <line x1="100" y1="60" x2="160" y2="45" style="stroke:rgba(251,113,133,.45);stroke-width:1.5"/>
+        <line x1="100" y1="60" x2="100" y2="135" style="stroke:rgba(251,113,133,.45);stroke-width:1.5"/>
+        ${maalLabel(170, 80, `h=${h}`, clr)}
+        ${maalLabel(100, 155, `l=${l}, b=${b}`, clr)}
+      `);
+      infoDeler = [`<span>l = ${l} cm</span>`,`<span>b = ${b} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = spørmål==='OF' ? 'Hva er overflaten?' : 'Hva er høyden?';
+      break;
+    }
+
+    case 'pytagoras': {
+      const {a,b}=maal;
+      svgHTML = svgWrap(`
+        <polygon points="30,145 30,25 175,145" style="fill:rgba(199,125,255,.15);stroke:rgba(199,125,255,.8);stroke-width:2"/>
+        ${rettvinkelmrk(20,135,12)}
+        ${maalLabel(25, 88, `b = ${b}`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(105, 158, `a = ${a}`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(122, 78, `c = ?`, 'rgba(199,125,255,.9)')}
+      `);
+      infoDeler = [`<span>a = ${a} cm</span>`,`<span>b = ${b} cm</span>`];
+      spm = 'Hva er hypotenusen c?';
+      break;
+    }
+
+    case 'pytagoras-katet': {
+      const {a,c}=maal;
+      svgHTML = svgWrap(`
+        <polygon points="30,145 30,25 175,145" style="fill:rgba(199,125,255,.15);stroke:rgba(199,125,255,.8);stroke-width:2"/>
+        ${rettvinkelmrk(20,135,12)}
+        ${maalLabel(25, 88, `b = ?`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(105, 158, `a = ${a}`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(118, 78, `c = ${c}`, 'rgba(199,125,255,.9)')}
+      `);
+      infoDeler = [`<span>a = ${a} cm</span>`,`<span>c = ${c} cm</span>`];
+      spm = 'Hva er kateten b?';
+      break;
+    }
+
+    case 'likebeint': case 'likebeint-h': case 'likebeint-s': {
+      const s=maal.s??'?', h=maal.h??'?', c=maal.c??'?';
+      svgHTML = svgWrap(`
+        <polygon points="120,20 30,145 210,145" style="fill:rgba(199,125,255,.15);stroke:rgba(199,125,255,.8);stroke-width:2"/>
+        <line x1="120" y1="20" x2="120" y2="145" style="stroke:rgba(199,125,255,.5);stroke-width:1.5;stroke-dasharray:4,3"/>
+        ${rettvinkelmrk(110,135,10)}
+        ${maalLabel(120, 158, `s = ${s} cm`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(136, 88, `h = ${h}`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(65, 75, `c = ${c}`, 'rgba(199,125,255,.9)')}
+      `);
+      infoDeler = type==='likebeint'
+        ? [`<span>s (grunn) = ${s} cm</span>`,`<span>h = ${h} cm</span>`]
+        : type==='likebeint-h'
+          ? [`<span>c = ${c} cm</span>`,`<span>s (grunn) = ${s} cm</span>`]
+          : [`<span>c = ${c} cm</span>`,`<span>h = ${h} cm</span>`];
+      spm = type==='likebeint' ? 'Hva er hypotenusen c?' : type==='likebeint-h' ? 'Hva er høyden h?' : 'Hva er grunnen s?';
+      break;
+    }
+
+    case '306090': case '306090-c': case '306090-all': case '306090-b': {
+      const a=maal.a??'?', b_=maal.b??'?', c_=maal.c??'?';
+      svgHTML = svgWrap(`
+        <polygon points="30,145 30,25 175,145" style="fill:rgba(199,125,255,.15);stroke:rgba(199,125,255,.8);stroke-width:2"/>
+        ${rettvinkelmrk(20,135,12)}
+        <text x="35" y="38" class="fig-text-sm" fill="rgba(199,125,255,.85)">60°</text>
+        <text x="148" y="140" class="fig-text-sm" fill="rgba(199,125,255,.85)">30°</text>
+        ${maalLabel(25, 88, `b`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(105, 158, `a`, 'rgba(199,125,255,.9)')}
+        ${maalLabel(120, 78, `c`, 'rgba(199,125,255,.9)')}
+      `);
+      infoDeler = Object.entries(maal).map(([k,v]) => `<span>${k} = ${v} cm</span>`);
+      spm = `Finn ${spørmål}`;
+      break;
+    }
+
+    case 'trig': case 'trig-omv': case 'trig-vinkel': {
+      const {deg,hyp,mot,hos}=maal;
+      const clr='rgba(251,191,36,.8)';
+      svgHTML = svgWrap(`
+        <polygon points="30,145 30,25 175,145" style="fill:rgba(251,191,36,.12);stroke:${clr};stroke-width:2"/>
+        ${rettvinkelmrk(20,135,12)}
+        <text x="158" y="138" class="fig-text" fill="${clr}">θ${deg?`=${deg}°`:''}</text>
+        ${mot!==undefined ? maalLabel(25, 88, `mot = ${mot}`, clr) : ''}
+        ${hos!==undefined ? maalLabel(105, 158, `hos = ${hos}`, clr) : ''}
+        ${hyp!==undefined ? maalLabel(116, 78, `hyp = ${hyp}`, clr) : ''}
+      `);
+      infoDeler = Object.entries(maal).map(([k,v]) => `<span>${k === 'deg' ? 'θ' : k} = ${v}${k==='deg'?'°':' cm'}</span>`);
+      spm = spørmål==='deg' ? 'Finn vinkelen θ (i grader)' : `Finn ${spørmål}`;
+      break;
+    }
+
+    // Fallback for ulike sammensatte typer
+    default: {
+      svgHTML = svgWrap(`<text x="120" y="85" class="fig-text" text-anchor="middle">📐</text>`);
+      infoDeler = Object.entries(maal).map(([k,v]) => `<span><span class="var">${k}</span> = ${v}</span>`);
+      spm = `Finn ${spørmål}`;
+    }
+  }
+
+  return { svgHTML, infoHTML: infoDeler.join(''), spm: spm || hint, enhet, svar, hint };
+}
+
+// ══════════════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════════════
+let totXP        = parseInt(localStorage.getItem('geo_xp')     || '0');
+let totStreak    = parseInt(localStorage.getItem('geo_streak') || '0');
+let emneProgress = JSON.parse(localStorage.getItem('geo_prog') || '{}');
+
+let aktivtEmne  = null;
+let aktivtNivaa = null;
+let oppgaver    = [];
+let oppgaveIdx  = 0;
+let riktig      = 0;
+let feil        = 0;
+let poeng       = 0;
+
+const NIVAA_REKKE = ['mild','medium','spicy','hot'];
+
+// ══════════════════════════════════════════════════════════
+//  SØK & FILTER
+// ══════════════════════════════════════════════════════════
+let aktivGruppe = 'alle';
+
+function byggGruppeFilter() {
+  const grupper = [...new Set(EMNER.map(e => e.gruppe))];
+  const container = document.getElementById('gruppeFilter');
+  grupper.forEach(g => {
+    const btn = document.createElement('button');
+    btn.className = 'gruppe-btn'; btn.dataset.gruppe = g; btn.textContent = g;
+    btn.onclick = () => velgGruppe(btn);
+    container.appendChild(btn);
+  });
+}
+
+function velgGruppe(btn) {
+  document.querySelectorAll('.gruppe-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aktivGruppe = btn.dataset.gruppe;
+  filtrer();
+}
+
+function filtrer() {
+  const q = document.getElementById('sokInput').value.trim().toLowerCase();
+  document.getElementById('sokClear').style.display = q ? 'block' : 'none';
+  if (!q && aktivGruppe === 'alle') {
+    document.getElementById('sokResultat').style.display = 'none';
+    document.getElementById('emneGridWrapper').style.display = 'block';
+    return;
+  }
+  const treff = EMNER.filter(e => {
+    if (aktivGruppe !== 'alle' && e.gruppe !== aktivGruppe) return false;
+    if (q) return [e.navn,e.info,e.gruppe].join(' ').toLowerCase().includes(q);
+    return true;
+  });
+  const grid = document.getElementById('sokGrid');
+  grid.innerHTML = '';
+  if (!treff.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);"><div style="font-size:2.5rem;margin-bottom:10px;">🔭</div><h3 style="font-family:var(--font-h);">Ingen emner funnet</h3></div>`;
+  } else {
+    treff.forEach(emne => byggEmneKort(grid, emne));
+  }
+  document.getElementById('sokAntall').textContent = treff.length === 0 ? 'Ingen treff' : treff.length === 1 ? '1 emne funnet' : `${treff.length} emner funnet`;
+  document.getElementById('sokResultat').style.display = 'block';
+  document.getElementById('emneGridWrapper').style.display = 'none';
+}
+
+function tømmSok() {
+  document.getElementById('sokInput').value = '';
+  document.getElementById('sokClear').style.display = 'none';
+  aktivGruppe = 'alle';
+  document.querySelectorAll('.gruppe-btn').forEach(b => b.classList.toggle('active', b.dataset.gruppe === 'alle'));
+  document.getElementById('sokResultat').style.display = 'none';
+  document.getElementById('emneGridWrapper').style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════
+function init() {
+  oppdaterHeaderStats();
+  byggGruppeFilter();
+  byggEmneGrid();
+}
+
+function oppdaterHeaderStats() {
+  document.getElementById('xpVis').textContent     = totXP;
+  document.getElementById('streakVis').textContent = totStreak;
+}
+
+function byggEmneGrid() {
+  const grid = document.getElementById('emneGrid');
+  grid.innerHTML = '';
+  const grupper = {};
+  EMNER.forEach(e => { if (!grupper[e.gruppe]) grupper[e.gruppe]=[]; grupper[e.gruppe].push(e); });
+  Object.entries(grupper).forEach(([gruppeNavn, emner]) => {
+    const label = document.createElement('div');
+    label.className = 'emne-grid-label'; label.textContent = gruppeNavn;
+    grid.appendChild(label);
+    emner.forEach(emne => byggEmneKort(grid, emne));
+  });
+}
+
+function byggEmneKort(grid, emne) {
+  const prog = emneProgress[emne.id] || 0;
+  const div = document.createElement('div');
+  div.className = 'emne-kort';
+  div.style.setProperty('--emne-c', emne.farge);
+  div.innerHTML = `
+    <div class="emne-svg">${emne.miniSvg()}</div>
+    <div class="emne-navn">${emne.navn}</div>
+    <div class="emne-info">${emne.info}</div>
+    <div class="emne-progress"><div class="emne-progress-bar" style="width:${prog}%;background:${emne.farge};"></div></div>`;
+  div.onclick = () => velgEmne(emne);
+  grid.appendChild(div);
+}
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════════════════════
+function vis(id) {
+  ['velgSkjerm','nivaaSkjerm','treningSkjerm','resultatSkjerm'].forEach(s =>
+    document.getElementById(s).style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function velgEmne(emne) {
+  aktivtEmne = emne;
+  document.getElementById('nivaaTittel').textContent = emne.navn + ' – ' + emne.info;
+  // Vis eksempel-SVG i forhåndsvisning
+  try { document.getElementById('nivaaPreview').innerHTML = emne.miniSvg(); } catch(e){}
+  vis('nivaaSkjerm');
+}
+
+function gaaTilEmner() {
+  tømmSok(); byggEmneGrid(); vis('velgSkjerm');
+}
+function gaaTilNivaa() { vis('nivaaSkjerm'); }
+
+function startTrening(nivaa) {
+  aktivtNivaa = nivaa;
+  oppgaveIdx = riktig = feil = poeng = 0;
+  oppgaver = [];
+  for (let i = 0; i < 15; i++) {
+    try { oppgaver.push(aktivtEmne.gen[nivaa]()); }
+    catch(e) { oppgaver.push(aktivtEmne.gen.mild()); }
+  }
+  document.getElementById('riktigTeller').textContent = '0';
+  document.getElementById('feilTeller').textContent   = '0';
+  document.getElementById('poengTeller').textContent  = '0';
+  document.querySelectorAll('.stjerne').forEach(s => s.classList.remove('aktiv'));
+
+  const fClr = { mild:'var(--mild)', medium:'var(--medium)', spicy:'var(--spicy)', hot:'var(--hot)' };
+  const fNavn= { mild:'🟢 Mild', medium:'🟡 Medium', spicy:'🌶️ Spicy', hot:'🔥 Hot' };
+  document.getElementById('treningLabel').textContent = aktivtEmne.navn + ' – ' + aktivtEmne.info;
+  const badge = document.getElementById('treningBadge');
+  badge.textContent = fNavn[nivaa];
+  badge.style.cssText = `background:${fClr[nivaa]}22;color:${fClr[nivaa]};border:1.5px solid ${fClr[nivaa]}55;padding:3px 12px;border-radius:99px;`;
+
+  vis('treningSkjerm');
+  visOppgave();
+}
+
+function startSammeIgjen() { startTrening(aktivtNivaa); }
+function startNesteNivaa() {
+  const idx = NIVAA_REKKE.indexOf(aktivtNivaa);
+  if (idx < NIVAA_REKKE.length - 1) startTrening(NIVAA_REKKE[idx+1]);
+}
+
+// ══════════════════════════════════════════════════════════
+//  OPPGAVE-LOGIKK
+// ══════════════════════════════════════════════════════════
+function visOppgave() {
+  if (oppgaveIdx >= oppgaver.length) { visResultat(); return; }
+  const opp = oppgaver[oppgaveIdx];
+
+  document.getElementById('figurContainer').innerHTML = opp.svgHTML;
+
+  const ib = document.getElementById('infoBoks');
+  if (opp.infoHTML) { ib.innerHTML = opp.infoHTML; ib.style.display = 'flex'; }
+  else { ib.style.display = 'none'; }
+
+  document.getElementById('oppgaveSpm').textContent  = opp.spm || '?';
+  document.getElementById('oppgaveHint').textContent = opp.hint || '';
+  document.getElementById('svarEnhet').textContent   = opp.enhet || '';
+  document.getElementById('svarInput').value = '';
+  document.getElementById('svarInput').className = 'svar-input';
+  document.getElementById('svarInput').disabled = false;
+
+  const fb = document.getElementById('feedbackTekst');
+  fb.textContent = ''; fb.className = 'feedback-tekst';
+  document.getElementById('oppgaveKort').className = 'oppgave-kort';
+
+  const pct = oppgaveIdx / oppgaver.length * 100;
+  document.getElementById('fremgangFill').style.width    = pct + '%';
+  document.getElementById('treningFremgang').textContent = `${oppgaveIdx} / ${oppgaver.length}`;
+
+  setTimeout(() => document.getElementById('svarInput').focus(), 50);
+}
+
+function sjekkSvar() {
+  const input = document.getElementById('svarInput');
+  if (input.disabled) { neste(); return; }
+  const raaverdi = input.value.replace(',','.').trim();
+  if (!raaverdi) return;
+
+  const opp = oppgaver[oppgaveIdx];
+  const svar = parseFloat(raaverdi);
+  const erRiktig = Math.abs(svar - opp.svar) < 0.051;  // 0.05 toleranse
+
+  input.disabled = true;
+  const fb   = document.getElementById('feedbackTekst');
+  const kort = document.getElementById('oppgaveKort');
+
+  if (erRiktig) {
+    riktig++; poeng += pxp(aktivtNivaa); totStreak++;
+    input.className = 'svar-input riktig';
+    kort.className  = 'oppgave-kort riktig';
+    fb.textContent  = ['Riktig! 🎉','Supert! ⭐','Perfekt! 🔥','Bra jobba! 💪'][ri(0,3)];
+    fb.className    = 'feedback-tekst vis riktig';
+    oppdaterStjerner();
+    visXpPopup(`+${pxp(aktivtNivaa)} XP`);
+  } else {
+    feil++; totStreak = 0;
+    input.className = 'svar-input feil';
+    kort.className  = 'oppgave-kort feil';
+    fb.textContent  = `Feil. Svaret er ${opp.svar} ${opp.enhet}`;
+    fb.className    = 'feedback-tekst vis feil';
+  }
+
+  document.getElementById('riktigTeller').textContent = riktig;
+  document.getElementById('feilTeller').textContent   = feil;
+  document.getElementById('poengTeller').textContent  = poeng;
+  oppdaterHeaderStats();
+  lagreProgress();
+  setTimeout(neste, 1400);
+}
+
+function neste()     { oppgaveIdx++; visOppgave(); }
+function hoppOver()  { feil++; totStreak=0; document.getElementById('feilTeller').textContent=feil; oppdaterHeaderStats(); oppgaveIdx++; visOppgave(); }
+function pxp(n)      { return {mild:5,medium:10,spicy:15,hot:25}[n]||10; }
+
+function oppdaterStjerner() {
+  const antall = Math.min(5, Math.floor(riktig/3));
+  for (let i=1; i<=antall; i++) {
+    const s = document.getElementById('s'+i);
+    if (s && !s.classList.contains('aktiv')) s.classList.add('aktiv');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  RESULTAT
+// ══════════════════════════════════════════════════════════
+function visResultat() {
+  document.getElementById('fremgangFill').style.width = '100%';
+  document.getElementById('treningFremgang').textContent = `${oppgaver.length} / ${oppgaver.length}`;
+
+  const prosent = Math.round(riktig / oppgaver.length * 100);
+  totXP += poeng;
+  lagreProgress();
+
+  const fullPott = riktig === oppgaver.length;
+  const nesteIdx = NIVAA_REKKE.indexOf(aktivtNivaa) + 1;
+  const harNeste = nesteIdx < NIVAA_REKKE.length;
+  const nesteNavn= { mild:'Medium 🟡', medium:'Spicy 🌶️', spicy:'Hot 🔥', hot:null }[aktivtNivaa];
+
+  let emoji, tittel, sub;
+  if (fullPott && harNeste) { emoji='🏆'; tittel='Perfekt! Alle riktige!'; sub=`Fantastisk! Du er klar for ${nesteNavn}!`; }
+  else if (fullPott)        { emoji='👑'; tittel='Uslåelig!'; sub='Du mestrer dette emnet på høyeste nivå!'; }
+  else if (prosent>=80)     { emoji='🌟'; tittel='Veldig bra!'; sub=`${prosent}% riktig – imponerende!`; }
+  else if (prosent>=60)     { emoji='👍'; tittel='Bra jobbet!'; sub=`${prosent}% riktig. Fortsett!`; }
+  else if (prosent>=40)     { emoji='💪'; tittel='Fortsett!'; sub=`${prosent}% riktig. Du blir bedre!`; }
+  else                      { emoji='📚'; tittel='Øv mer!'; sub=`${prosent}% riktig. Prøv igjen!`; }
+
+  document.getElementById('resEmoji').textContent  = emoji;
+  document.getElementById('resTittel').textContent = tittel;
+  document.getElementById('resSub').textContent    = sub;
+  document.getElementById('resRiktig').textContent = riktig;
+  document.getElementById('resFeil').textContent   = feil;
+  document.getElementById('resPoeng').textContent  = poeng;
+  document.getElementById('resXP').textContent     = '+' + poeng;
+
+  const stj = Math.max(1, Math.round(prosent/20));
+  document.getElementById('resStjerner').innerHTML = [...Array(5)].map((_,i) => i<stj?'⭐':'☆').join('');
+
+  const nesteBtn = document.getElementById('nesteNivaaBtn');
+  if (fullPott && harNeste) {
+    nesteBtn.style.display = 'inline-flex';
+    nesteBtn.textContent   = `⬆️ Gå videre til ${nesteNavn}`;
+    nesteBtn.style.background = 'linear-gradient(135deg,#818cf8,#c084fc)';
+    nesteBtn.style.color = '#fff'; nesteBtn.style.border='none';
+    nesteBtn.style.animation = 'pulseBtn 1.5s ease infinite';
+  } else { nesteBtn.style.display = 'none'; }
+
+  emneProgress[aktivtEmne.id] = Math.max(emneProgress[aktivtEmne.id]||0, prosent);
+  localStorage.setItem('geo_prog', JSON.stringify(emneProgress));
+  vis('resultatSkjerm');
+}
+
+// ══════════════════════════════════════════════════════════
+//  LAGRING & XP-POPUP
+// ══════════════════════════════════════════════════════════
+function lagreProgress() {
+  localStorage.setItem('geo_xp',     totXP);
+  localStorage.setItem('geo_streak', totStreak);
+  oppdaterHeaderStats();
+}
+let xpTimer = null;
+function visXpPopup(tekst) {
+  const el = document.getElementById('xpPopup');
+  el.textContent = tekst; el.classList.add('vis');
+  if (xpTimer) clearTimeout(xpTimer);
+  xpTimer = setTimeout(() => el.classList.remove('vis'), 1500);
+}
+
+init();
+</script>
+</body>
+</html>

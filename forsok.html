@@ -1,0 +1,2194 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkapLab – Forsøkshefte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --space:#0a0e1a; --deep:#0d1b3e; --mid:#1a2f6b;
+      --accent1:#00e5ff; --accent2:#ff6b35; --accent3:#ffe135;
+      --accent4:#7fff6e; --accent5:#c77dff;
+      --text:#e8f4fd; --textdim:#8bafc8;
+      --card:rgba(255,255,255,0.06); --cardborder:rgba(0,229,255,0.18);
+      --radius:18px;
+      --font-head:'Fredoka One',cursive; --font-body:'Nunito',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-body);background:var(--space);color:var(--text);min-height:100vh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;
+      background-image:
+        radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.6) 0%,transparent 100%),
+        radial-gradient(1px 1px at 45% 60%,rgba(255,255,255,.4) 0%,transparent 100%),
+        radial-gradient(1.5px 1.5px at 70% 10%,rgba(255,255,255,.7) 0%,transparent 100%),
+        radial-gradient(1px 1px at 85% 45%,rgba(255,255,255,.3) 0%,transparent 100%),
+        radial-gradient(1px 1px at 30% 80%,rgba(255,255,255,.5) 0%,transparent 100%),
+        radial-gradient(1px 1px at 60% 90%,rgba(255,255,255,.4) 0%,transparent 100%),
+        radial-gradient(1.5px 1.5px at 10% 55%,rgba(255,255,255,.6) 0%,transparent 100%),
+        radial-gradient(1px 1px at 92% 72%,rgba(255,255,255,.5) 0%,transparent 100%);
+      pointer-events:none;z-index:0;}
+
+    /* HEADER */
+    .site-header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.92);
+      backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,229,255,.15);
+      padding:14px 28px;display:flex;align-items:center;gap:16px;}
+    .site-header a{font-family:var(--font-head);font-size:1.4rem;color:var(--accent1);
+      text-decoration:none;display:flex;align-items:center;gap:8px;}
+    .site-header a:hover{opacity:.8;}
+    .header-sep{color:var(--textdim);font-size:1.2rem;}
+    .header-title{font-family:var(--font-head);font-size:1.3rem;color:var(--text);}
+
+    /* HERO */
+    .hero{position:relative;z-index:1;text-align:center;padding:64px 24px 40px;}
+    .hero-badge{display:inline-block;font-family:var(--font-head);font-size:.85rem;
+      letter-spacing:.12em;color:var(--accent3);border:1px solid rgba(255,225,53,.35);
+      border-radius:999px;padding:4px 16px;margin-bottom:18px;text-transform:uppercase;}
+    .hero h1{font-family:var(--font-head);font-size:clamp(2.2rem,6vw,4rem);
+      color:var(--text);line-height:1.1;margin-bottom:14px;}
+    .hero h1 span{color:var(--accent1);}
+    .hero p{font-size:1.1rem;color:var(--textdim);max-width:560px;margin:0 auto 32px;line-height:1.6;}
+
+    /* CAT NAV */
+    .cat-nav{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:10px;
+      justify-content:center;padding:0 24px 40px;}
+    .cat-btn{font-family:var(--font-head);font-size:.95rem;padding:8px 20px;
+      border-radius:999px;border:1.5px solid rgba(0,229,255,.25);background:var(--card);
+      color:var(--textdim);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .cat-btn:hover{border-color:var(--accent1);color:var(--accent1);}
+    .cat-btn.active{background:rgba(0,229,255,.12);border-color:var(--accent1);color:var(--accent1);}
+    .cat-count{font-size:.72rem;background:rgba(0,229,255,.15);border-radius:999px;
+      padding:1px 7px;font-family:var(--font-body);font-weight:700;}
+
+    /* MAIN */
+    .main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 80px;}
+    .cat-section{display:none;}
+    .cat-section.visible{display:block;}
+
+    .cat-header{display:flex;align-items:center;gap:14px;margin-bottom:32px;padding:0 4px;}
+    .cat-icon{font-size:2.4rem;filter:drop-shadow(0 0 10px rgba(0,229,255,.4));}
+    .cat-header h2{font-family:var(--font-head);font-size:2rem;color:var(--text);}
+    .cat-header p{font-size:.95rem;color:var(--textdim);margin-top:2px;}
+    .cat-line{flex:1;height:1px;background:linear-gradient(to right,rgba(0,229,255,.3),transparent);}
+
+    /* FORSØK GRID */
+    .forsok-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px;}
+
+    /* FORSØK KORT */
+    .forsok-kort{background:rgba(255,255,255,.055);border:1.5px solid var(--cardborder);
+      border-radius:20px;overflow:hidden;transition:transform .2s,border-color .2s;}
+    .forsok-kort:hover{transform:translateY(-3px);border-color:rgba(0,229,255,.35);}
+
+    .kort-header{padding:20px 22px 14px;display:flex;justify-content:space-between;
+      align-items:flex-start;border-bottom:1px solid rgba(255,255,255,.07);}
+    .kort-tittel{font-family:var(--font-head);font-size:1.3rem;color:var(--text);line-height:1.2;}
+    .kort-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+    .kort-tid{font-size:.78rem;color:var(--accent3);background:rgba(255,225,53,.1);
+      border:1px solid rgba(255,225,53,.25);border-radius:999px;padding:3px 10px;
+      white-space:nowrap;font-weight:700;}
+    .kort-trinn{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+    .trinn-tag{font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 8px;}
+    .trinn-tag.t2 {background:rgba(127,255,110,.12);color:var(--accent4);border:1px solid rgba(127,255,110,.25);}
+    .trinn-tag.t4 {background:rgba(0,229,255,.10); color:var(--accent1);border:1px solid rgba(0,229,255,.22);}
+    .trinn-tag.t7 {background:rgba(255,107,53,.10); color:var(--accent2);border:1px solid rgba(255,107,53,.25);}
+    .trinn-tag.t10{background:rgba(199,125,255,.10);color:var(--accent5);border:1px solid rgba(199,125,255,.25);}
+
+    .kort-body{padding:16px 22px 20px;}
+
+    /* TABS */
+    .kort-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+    .ktab{font-family:var(--font-body);font-size:.8rem;font-weight:700;padding:5px 13px;
+      border-radius:999px;border:1.5px solid rgba(0,229,255,.2);background:transparent;
+      color:var(--textdim);cursor:pointer;transition:all .15s;}
+    .ktab.active{background:rgba(0,229,255,.12);border-color:var(--accent1);color:var(--accent1);}
+    .ktab.laerer-tab.active{background:rgba(199,125,255,.12);border-color:var(--accent5);color:var(--accent5);}
+    .ktab-panel{display:none;}
+    .ktab-panel.active{display:block;}
+
+    /* PDF-knapp */
+    .pdf-btn{font-family:var(--font-body);font-size:.75rem;font-weight:700;
+      padding:5px 12px;border-radius:999px;
+      border:1.5px solid rgba(255,225,53,.3);background:rgba(255,225,53,.07);
+      color:var(--accent3);cursor:pointer;transition:all .15s;
+      display:flex;align-items:center;gap:5px;margin-left:auto;}
+    .pdf-btn:hover{background:rgba(255,225,53,.15);border-color:rgba(255,225,53,.6);}
+
+    /* INNHOLD */
+    .seksjons-tittel{font-family:var(--font-head);font-size:.92rem;color:var(--accent1);
+      margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+    .utstyr-liste{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+    .utstyr-liste li{font-size:.82rem;background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:4px 10px;
+      color:var(--textdim);}
+
+    .steg-liste{list-style:none;}
+    .steg-liste li{display:flex;gap:10px;margin-bottom:9px;font-size:.87rem;
+      color:var(--textdim);line-height:1.55;}
+    .steg-nr{min-width:24px;height:24px;border-radius:50%;
+      background:rgba(0,229,255,.12);border:1.5px solid rgba(0,229,255,.3);
+      color:var(--accent1);font-size:.72rem;font-weight:800;
+      display:flex;align-items:center;justify-content:center;margin-top:1px;flex-shrink:0;}
+
+    .refleksjon-boks{margin-top:12px;background:rgba(255,225,53,.05);
+      border:1px solid rgba(255,225,53,.2);border-radius:12px;padding:12px 14px;}
+    .refleksjon-tittel{font-family:var(--font-head);font-size:.87rem;color:var(--accent3);
+      margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .refleksjon-boks ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+    .refleksjon-boks ul li{font-size:.82rem;color:var(--textdim);padding-left:16px;
+      position:relative;line-height:1.5;}
+    .refleksjon-boks ul li::before{content:'?';position:absolute;left:0;
+      color:var(--accent3);font-weight:800;font-size:.78rem;}
+
+    .laerer-panel{background:rgba(199,125,255,.06);border-radius:12px;padding:14px;}
+    .laerer-teori{font-size:.85rem;color:var(--textdim);line-height:1.65;margin-bottom:14px;}
+    .km-tittel{font-family:var(--font-head);font-size:.87rem;color:var(--accent5);
+      margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .km-liste{list-style:none;display:flex;flex-direction:column;gap:7px;}
+    .km-item{font-size:.79rem;padding:6px 10px;border-radius:8px;color:var(--textdim);line-height:1.45;}
+    .km-item.t2 {background:rgba(127,255,110,.06);border-left:2px solid var(--accent4);}
+    .km-item.t4 {background:rgba(0,229,255,.06);  border-left:2px solid var(--accent1);}
+    .km-item.t7 {background:rgba(255,107,53,.06); border-left:2px solid var(--accent2);}
+    .km-item.t10{background:rgba(199,125,255,.06);border-left:2px solid var(--accent5);}
+    .km-trinn{font-weight:800;font-size:.71rem;display:block;margin-bottom:2px;opacity:.8;}
+
+    /* ADVARSEL */
+    .advarsel{background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.3);
+      border-radius:10px;padding:8px 12px;font-size:.8rem;color:var(--accent2);
+      margin-bottom:12px;display:flex;align-items:flex-start;gap:7px;line-height:1.5;}
+
+    /* EMPTY */
+    .empty-state{text-align:center;padding:60px 20px;color:var(--textdim);}
+    .empty-state .emoji{font-size:3rem;margin-bottom:16px;}
+    .empty-state h3{font-family:var(--font-head);font-size:1.4rem;color:var(--text);margin-bottom:8px;}
+
+
+
+    /* SØK + FILTER */
+    .sok-filter{position:relative;z-index:2;max-width:700px;margin:0 auto 32px;padding:0 20px;}
+    .sok-wrapper{display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.07);border:1.5px solid rgba(0,229,255,.25);
+      border-radius:14px;padding:10px 16px;margin-bottom:14px;
+      transition:border-color .2s;}
+    .sok-wrapper:focus-within{border-color:var(--accent1);background:rgba(0,229,255,.06);}
+    .sok-ikon{font-size:1.1rem;flex-shrink:0;}
+    .sok-input{flex:1;background:transparent;border:none;outline:none;
+      font-family:var(--font-body);font-size:1rem;color:var(--text);
+      caret-color:var(--accent1);}
+    .sok-input::placeholder{color:var(--textdim);}
+    .sok-clear{background:none;border:none;color:var(--textdim);cursor:pointer;
+      font-size:1rem;padding:2px 6px;border-radius:6px;transition:color .15s;}
+    .sok-clear:hover{color:var(--accent2);}
+    .trinn-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .filter-label{font-size:.82rem;color:var(--textdim);font-weight:700;}
+    .trinn-btn{font-family:var(--font-head);font-size:.82rem;padding:5px 14px;
+      border-radius:99px;border:1.5px solid rgba(0,229,255,.2);background:transparent;
+      color:var(--textdim);cursor:pointer;transition:all .15s;}
+    .trinn-btn:hover{border-color:var(--accent1);color:var(--accent1);}
+    .trinn-btn.active{background:rgba(0,229,255,.12);border-color:var(--accent1);color:var(--accent1);}
+    .sok-header{display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:20px;padding:0 4px;}
+    .ingen-treff{text-align:center;padding:48px 20px;color:var(--textdim);}
+    .ingen-treff .emoji{font-size:2.5rem;margin-bottom:12px;}
+    .ingen-treff h3{font-family:var(--font-head);font-size:1.3rem;color:var(--text);margin-bottom:6px;}
+
+    @media(max-width:600px){
+      .forsok-grid{grid-template-columns:1fr;}
+      .hero h1{font-size:2rem;}
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="skaplab.html">🚀 SkapLab</a>
+  <span class="header-sep">/</span>
+  <span class="header-title">🔬 Forsøk</span>
+</header>
+
+<section class="hero">
+  <div class="hero-badge">🔭 Naturfag · Grunnskolen</div>
+  <h1>SkapLab <span>forsøk</span></h1>
+  <p>Utforsk, eksperimenter og oppdag. Søk, filtrer på trinn eller velg en kategori – og klikk «PDF» for å skrive ut.</p>
+</section>
+
+<!-- SØK + FILTER -->
+<div class="sok-filter" id="sokFilter">
+  <div class="sok-wrapper">
+    <span class="sok-ikon">🔍</span>
+    <input type="text" id="sokInput" class="sok-input" placeholder="Søk etter forsøk, utstyr eller tema..."
+      oninput="filtrer()" autocomplete="off">
+    <button class="sok-clear" id="sokClear" onclick="tømmSok()" style="display:none;">✕</button>
+  </div>
+  <div class="trinn-filter">
+    <span class="filter-label">Trinn:</span>
+    <button class="trinn-btn active" data-trinn="alle" onclick="velgTrinn(this)">Alle</button>
+    <button class="trinn-btn" data-trinn="2" onclick="velgTrinn(this)">1.–2.</button>
+    <button class="trinn-btn" data-trinn="4" onclick="velgTrinn(this)">3.–4.</button>
+    <button class="trinn-btn" data-trinn="7" onclick="velgTrinn(this)">5.–7.</button>
+    <button class="trinn-btn" data-trinn="10" onclick="velgTrinn(this)">8.–10.</button>
+  </div>
+</div>
+
+<!-- SØKERESULTAT-BEHOLDER -->
+<div id="sokResultat" class="main" style="display:none;">
+  <div class="sok-header">
+    <span id="sokAntall" style="font-family:var(--font-head);color:var(--accent1);font-size:1.1rem;"></span>
+    <button onclick="tømmSok()" style="font-family:var(--font-head);font-size:.85rem;padding:5px 14px;
+      border-radius:99px;border:1.5px solid rgba(0,229,255,.3);background:transparent;
+      color:var(--textdim);cursor:pointer;">Vis alle kategorier</button>
+  </div>
+  <div id="sokGrid" class="forsok-grid"></div>
+</div>
+
+<nav class="cat-nav">
+  <button class="cat-btn active" onclick="visCat('undring',this)">💡 Undring <span class="cat-count">6</span></button>
+  <button class="cat-btn" onclick="visCat('naturen',this)">🌿 Naturen <span class="cat-count">3</span></button>
+  <button class="cat-btn" onclick="visCat('celler',this)">🔬 Celler <span class="cat-count">6</span></button>
+  <button class="cat-btn" onclick="visCat('kraft',this)">⚡ Kraft og trykk <span class="cat-count">7</span></button>
+  <button class="cat-btn" onclick="visCat('gass',this)">💨 Gassutvikling <span class="cat-count">6</span></button>
+  <button class="cat-btn" onclick="visCat('pavisning',this)">🧪 Påvisning <span class="cat-count">7</span></button>
+  <button class="cat-btn" onclick="visCat('teknologi',this)">🤖 Teknologi <span class="cat-count">4</span></button>
+  <button class="cat-btn" onclick="visCat('spiselig',this)">🍦 Spiselig <span class="cat-count">2</span></button>
+</nav>
+
+<main class="main" id="mainContent">
+
+
+  <section class="cat-section visible" id="cat-undring">
+    <div class="cat-header">
+      <span class="cat-icon">💡</span>
+      <div>
+        <h2>Undring</h2>
+        <p>Forsøk som vekker nysgjerrighet og undring – enkle å gjennomføre, vanskelige å forklare!</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🍇 Magiske rosiner</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f1','Magiske rosiner')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Glass</li><li>Rosiner</li><li>Kullsyreholdig vann</li><li>Datamaskin med internett</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Lag en hypotese – hva tror du vil skje når du legger rosiner i kullsyreholdig vann?</span></li><li><span class="steg-nr">2</span><span>Fyll glasset halvfullt med kullsyreholdig vann.</span></li><li><span class="steg-nr">3</span><span>Slipp en liten neve rosiner (5–10 stk) ned i glasset.</span></li><li><span class="steg-nr">4</span><span>Observer nøye hva som skjer med rosinene over tid.</span></li><li><span class="steg-nr">5</span><span>Bruk internett til å finne en forklaring på det du observerer.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med rosinene? Beveger de seg opp og ned, eller bare ned?</li><li>Hva er det som fester seg på rosinene, og hvorfor slippes det løs igjen?</li><li>Stemte hypotesen din? Hva var overraskende?</li><li>Hva tror du ville skje om du brukte vann uten kullsyre?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Kullsyreholdig vann inneholder bobler med CO₂-gass. Overflaten til en rosin er skrukkete med hulrom der boblene kan feste seg. Rosinen synker til bunns (massetetthet &gt; vann), og boblene løfter den opp. Ved overflaten løsner boblene, og rosinen synker igjen. Prosessen gjentar seg til kullsyren er borte – et fint eksempel på oppdrift og massetetthet.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Undre seg, utforske og lage spørsmål, og knytte dette til egne eller andres erfaringer</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Undre seg, stille spørsmål og lage hypoteser og utforske disse for å finne svar</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Stille spørsmål og lage hypoteser om naturlige fenomener, identifisere variabler og samle inn data</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Stille spørsmål og lage hypoteser om naturfaglige fenomener, identifisere avhengige og uavhengige variabler</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🔥 Lycopodium</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f2','Lycopodium')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Lycopodium (heksemel)</li><li>Lighter / gassflamme</li><li>Begerglass 1000 mL</li><li>Vann</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Dryss heksemel over en åpen flamme – observer hva som skjer.</span></li><li><span class="steg-nr">2</span><span>Fyll et stort begerglass med vann og dryss heksemel over til du har et 4–5 mm tykt lag på toppen.</span></li><li><span class="steg-nr">3</span><span>Stikk hånden ned i glasset. Hva observerer du når du trekker den ut?</span></li><li><span class="steg-nr">4</span><span>Hell vann og heksemel i en stålvask (utendørs) og prøv å tenne på det mens det helles. Hva skjer?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer når heksemel møter en flamme? Hva er forklaringen?</li><li>Hånden din kommer ut tørr – hvordan er det mulig?</li><li>Hva betyr ordet «hydrofobt»?</li><li>Kan du finne andre stoffer i naturen som er hydrofobe?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Lycopodium er sporer fra kråkefotfamilien med ca. 50 % olje. Oljen gjør pulveret hydrofobt (frastøter vann) og lett antennelig. Det flyter på vannskorpen og frastøter vann fra hånden. Siden lycopodium ikke blander seg med vann, antenner sporene fremdeles når vannet helles ut – ser ut som flytende ild. Tidligere brukt i fyrverkeri og som fingeravtrykkspulver.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer og sortere etter egenskaper</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes med andre stoffer</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gi eksempler på hvordan tradisjonell kunnskap har bidratt til naturvitenskapelig kunnskap</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for energibevaring og utforske ulike måter å omdanne og lagre energi på</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌊 Oobleck</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f3','Oobleck')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Maisennamel</li><li>Vann</li><li>Bolle</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Mål opp 2 dL maisennamel og ha det i bollen.</span></li><li><span class="steg-nr">2</span><span>Spe på litt og litt vann mens du elter, til du har en lett flytende deig (skal se ut som yoghurt).</span></li><li><span class="steg-nr">3</span><span>Stikk fingeren langsomt ned i deigen. Observer hva som skjer.</span></li><li><span class="steg-nr">4</span><span>Trekk ut fingeren og prøv igjen med mer kraft – nesten som om du slår deigen. Hva skjer nå?</span></li><li><span class="steg-nr">5</span><span>Hell deigen i hånden og klem den til en kule. Hva skjer når du slapper av?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er forskjellen mellom å stikke sakte og raskt ned i deigen?</li><li>Er Oobleck en væske eller et fast stoff? Begrunn svaret.</li><li>Hva tror du snowboardklær og beskyttelsesdrakter har felles med Oobleck?</li><li>Hva ville skje om du fylte et badekar med Oobleck og prøvde å løpe over det?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f3-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Oobleck er en ikke-newtonsk væske. I motsetning til newtonske væsker (som vann) endres viskositeten med bevegelsesenergi. Oobleck blir tyktflytende ved kraftig påvirkning – man kan løpe over et basseng fylt med det, men synker om man stopper. Brukes i moderne beskyttelsesklær (snowboard, militær). Kan videreføres med eggfall-utfordring: legg Oobleck i plastpose og slipp fra stor høyde.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer og sortere etter egenskaper</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Reflektere over hvordan teknologi kan løse utfordringer, skape muligheter og føre til nye dilemmaer</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for energibevaring og utforske ulike måter å omdanne og lagre energi på</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌈 Diffusjon</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f4','Diffusjon')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Skittles / M&amp;M</li><li>2 dype tallerkener</li><li>Vannkoker</li><li>Vann</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Legg sukkertøy i en sirkel langs ytterkanten av begge tallerkenene.</span></li><li><span class="steg-nr">2</span><span>Hell kokende vann forsiktig i midten av den første tallerkenen – til vannet dekker sukkertøyene.</span></li><li><span class="steg-nr">3</span><span>Gjør det samme med kaldt vann i den andre tallerkenen.</span></li><li><span class="steg-nr">4</span><span>Observer og noter hva som skjer i begge tallerkenene. Lag gjerne tegning eller ta bilde.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med fargestoffet fra sukkertøyene?</li><li>Er det forskjell mellom tallerkenen med varmt og kaldt vann?</li><li>Hva er diffusjon? Finn en definisjon og forklar med egne ord.</li><li>Hva ville skje om du rørte i vannet?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f4-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Diffusjon er utjevning av stoffer fra høy til lav konsentrasjon. Sukkeret løses opp, men fargestoffene forblir synlige og danner spiralmønstre mot midten. Varmt vann gir raskere diffusjon fordi vannmolekylene beveger seg raskere. Mønsteret forklares ved konsentrasjonsgradienter – et sentralt begrep i cellebiologi og kjemi.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer og sortere etter egenskaper</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Skille mellom observasjoner og slutninger, bruke årsak–virkning-argumenter, vurdere feilkilder</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Bruke atommodeller og periodesystemet til å gjøre rede for egenskaper til kjemiske forbindelser</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌈 Lage regnbue</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f5-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f5-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f5','Lage regnbue')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f5-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Stor gjennomsiktig beholder</li><li>Vann</li><li>Lommelykt</li><li>Speil</li><li>Hvitt ark</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Fyll beholderen med vann.</span></li><li><span class="steg-nr">2</span><span>Sett speilet i beholderen slik at det står på skrå (ca. 45°).</span></li><li><span class="steg-nr">3</span><span>Lys med lommelykten på speilet gjennom vannet slik at lyset reflekteres over på det hvite arket.</span></li><li><span class="steg-nr">4</span><span>Beskriv hva du observerer. Tips: det er lettest å se i et mørkt rom!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilke farger kan du se? Kjenner du igjen rekkefølgen?</li><li>Hvitt lys inneholder egentlig alle fargene – hva separerer dem?</li><li>Hva tror du skjer med lyset når det går fra luft til vann?</li><li>Hvordan dannes en naturlig regnbue på himmelen?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f5-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Hvitt lys inneholder alle fargene i det synlige elektromagnetiske spekteret. Lyset brytes når det passerer fra ett medium til et annet. Ulike bølgelengder brytes ulikt og separerer til regnbuens farger (ROGGBLIF). Rødt har lengst bølgelengde og brytes minst, fiolett kortest og brytes mest. Samme prinsipp som i en naturlig regnbue der vanndråper i atmosfæren fungerer som prisme.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Planlegge og gjennomføre undersøkelser av himmelfenomener og sammenligne observasjoner</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske observerbare størrelser som fart og temperatur og knytte dem til energi</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Skille mellom observasjoner og slutninger, bruke årsak–virkning-argumenter, presentere funn</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Bruke og lage modeller for å forutsi naturfaglige prosesser og gjøre rede for modellenes begrensninger</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🥚 Egg i eddiksyre</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 1–3 dager</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'f6-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'f6-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('f6','Egg i eddiksyre')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="f6-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Glass</li><li>Eddik</li><li>Rått egg</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Legg egget forsiktig i glasset.</span></li><li><span class="steg-nr">2</span><span>Fyll glasset med eddik slik at egget er helt dekket. Legg noe oppå om egget flyter.</span></li><li><span class="steg-nr">3</span><span>La glasset stå i 24–72 timer. Observer boblene som dannes på skallet.</span></li><li><span class="steg-nr">4</span><span>Tøm eddiken i vasken og undersøk egget nøye. Hvor stort er det blitt?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjedde med skallet? Hva er det som er igjen?</li><li>Egget er blitt større – hva er forklaringen på det?</li><li>Du kan se boblene på skallet – hva er det for en gass?</li><li>Prøv å slippe egget forsiktig fra lav høyde – hva skjer?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="f6-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Eggeskallet inneholder kalk (kalsiumkarbonat) som løses opp av eddiksyren. Reaksjonen frigir CO₂ (boblene). Eggehinnen blir igjen. Egget vokser gjennom osmose: hinnen er halvgjennomtrengelig og slipper inn mer vann enn det slipper ut. Del 2: legg det nakne egget i saltvannsløsning – osmosen reverseres og egget krymper. Flott to-trinns forsøk!</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer og sortere etter egenskaper</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Utforske faseoverganger og kjemiske reaksjoner og beskrive hva som kjennetegner dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Utforske kjemiske reaksjoner, forklare massebevaring og gjøre rede for forbrenningsreaksjoner</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-naturen">
+    <div class="cat-header">
+      <span class="cat-icon">🌿</span>
+      <div>
+        <h2>Naturen</h2>
+        <p>Gå ut og utforsk! Disse forsøkene kobler klasserommet til den virkelige verden.</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🪨 Steiner</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ Ekskursjon</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'n1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'n1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('n1','Steiner')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="n1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Nett/bok om bergarter</li><li>Pensel / tann­børste</li><li>Vannflaske</li><li>Plastpose</li><li>Lupe</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Gå ut og samle 10–15 ulike steiner fra omgivelsene.</span></li><li><span class="steg-nr">2</span><span>Rens steinene forsiktig med pensel og vann.</span></li><li><span class="steg-nr">3</span><span>Sorter steinene i grupper basert på utseende (farge, glans, korn­størrelse).</span></li><li><span class="steg-nr">4</span><span>Bruk nett eller bok til å identifisere steinene: er de magmatiske, metamorfe eller sedimentære?</span></li><li><span class="steg-nr">5</span><span>Lag en oversikt over funnene med tegning eller foto.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilke av de tre bergarts­typene fant du flest av?</li><li>Hva forteller steinen om miljøet den ble dannet i?</li><li>Hvordan tror du en stein kan gå fra én type til en annen over tid?</li><li>Kan du finne fossilrester i noen av steinene?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="n1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Bergarter deles i magmatiske (størknet magma, f.eks. granitt), sedimentære (avleiring, f.eks. sandstein) og metamorfe (omdannet under trykk/varme, f.eks. marmor). Steinenes opprinnelse forteller om geologisk historie. Kretsløpet for bergarter (the rock cycle) er et sentralt naturfaglig begrep – steinene er i konstant, men svært langsom forandring.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og sortere naturmaterialer og beskrive egenskapene deres</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive sammenhenger mellom jord, vann, luft og levende organismer</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for geologiske prosesser som former landskap og bidrar til endringer i naturmiljøet</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for utvikling av landskap og jordsmonnet og forklare sammenhengen mellom geologi og livsvilkår</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌱 Nedbryting</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ Flere uker</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'n2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'n2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('n2','Nedbryting')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="n2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>4 plastflasker (2 L)</li><li>Jord</li><li>Meitemark (fra hagen)</li><li>Organisk avfall (matrest, blader)</li><li>Ikke-organisk avfall (plastbit, metallbit)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Klipp toppen av fire plastflasker og fyll dem med jord.</span></li><li><span class="steg-nr">2</span><span>Flaske 1: bare jord (kontroll). Flaske 2: jord + organisk avfall. Flaske 3: jord + organisk avfall + meitemark. Flaske 4: jord + ikke-organisk avfall.</span></li><li><span class="steg-nr">3</span><span>Plasser flaskene på et lyst sted og vann dem forsiktig annenhver dag.</span></li><li><span class="steg-nr">4</span><span>Observer og dokumenter ukentlig i 4–6 uker. Hva skjer i hver flaske?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken flaske viste tydeligst nedbryting?</li><li>Hva er meitemarken sin rolle i jorda?</li><li>Hva skjedde med den ikke-organiske avfallet? Hva betyr det for miljøet?</li><li>Hva tror du skjer med CO₂ og næringsstoffer under nedbryting?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="n2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Nedbryting er prosessen der organisk materiale brytes ned av mikroorganismer, sopp og dyr (f.eks. meitemark). Prosessen frigjør næringsstoffer til jorda og CO₂ til lufta – et sentralt ledd i karbonkretsløpet. Ikke-organisk avfall brytes ikke ned biologisk, noe som er en viktig miljøfaglig lærdom om forsøpling.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive sammenhenger mellom jord, vann, luft og levende organismer</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for fotosyntese og celleånding og forklare kretsløp av karbon og oksygen</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kretsløp av karbon, nitrogen og oksygen og forklare sammenhengen med klima og energibalanse</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌍 Jordundersøkelser</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'n3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'n3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('n3','Jordundersøkelser')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="n3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>pH-papir</li><li>Vann</li><li>Begerglass</li><li>Plastpose</li><li>Linjal</li><li>Kopp</li><li>Stopp­klokke</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Samle jord fra 3 ulike steder (f.eks. hage, skog, sandkasse).</span></li><li><span class="steg-nr">2</span><span>pH: løs opp litt jord i vann og mål pH med pH-papir.</span></li><li><span class="steg-nr">3</span><span>Tekstur: rull litt fuktig jord mellom fingrene – er den sandig, siltig eller leir­holdig?</span></li><li><span class="steg-nr">4</span><span>Vanngjennomstrøm­ning: stikk hull i bunnen av en kopp, fyll med jord og hell 1 dL vann over. Mål hvor lang tid det tar til vannet begynner å renne ut.</span></li><li><span class="steg-nr">5</span><span>Sammenlign resultatene fra de tre prøvene.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken av jordprøvene har best evne til å holde på vann?</li><li>Hva er fordeler og ulemper med leirholdig jord kontra sandjord?</li><li>Hvilken pH er best for plantevekst? Finn svaret på nett.</li><li>Hva kan landbruk og hagebruk gjøre for å forbedre jord­kvaliteten?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="n3-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Jord består av mineraler, organisk materiale, vann og luft. Teksturen (sand/silt/leire) bestemmer vanngjennomstrøm­ning og næringsevne. pH påvirker hvilke planter som trives og hvilke næringsstoffer som er tilgjengelige. Bruk resultatene til å diskutere bærekraftig landbruk og matproduksjon.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive sammenhenger mellom jord, vann, luft og levende organismer</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for geologiske prosesser som former landskap og bidrar til endringer i naturmiljøet</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for utvikling av landskap og jordsmonnet og forklare sammenhengen mellom geologi og livsvilkår</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-celler">
+    <div class="cat-header">
+      <span class="cat-icon">🔬</span>
+      <div>
+        <h2>Celler</h2>
+        <p>Se inn i livets minste byggesteiner – med og uten mikroskop.</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🧅 Planteceller</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c1','Planteceller')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Løk</li><li>Jodløsning</li><li>Kniv</li><li>Pinsett</li><li>Objektglass</li><li>Dekkglass</li><li>Mikroskop</li><li>Fargeblyanter</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Skrell av et tynt lag av løken (det innerste, gjennomsiktige «skinnet»).</span></li><li><span class="steg-nr">2</span><span>Legg det på objektglasset og tilsett en dråpe jodløsning.</span></li><li><span class="steg-nr">3</span><span>Legg forsiktig dekkglasset over uten luftbobler.</span></li><li><span class="steg-nr">4</span><span>Studer preparatet i mikroskopet – start med laveste forstørrelse, juster så opp.</span></li><li><span class="steg-nr">5</span><span>Tegn det du ser og merk cellene: cellevegg, cellemembran, cellesaft, kjerne.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er forskjellen mellom cellevegg og cellemembran?</li><li>Hva farger jodløsningen? Hva forteller det om innholdet i cellen?</li><li>Kan du se alle celleorganeller? Hvorfor / hvorfor ikke?</li><li>Hva tror du er annerledes i en celle fra et blad sammenlignet med løkcellen?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Løkhudceller er enkle å preparere og har tydelige cellevegger og kerner. Jod reagerer med stivelse og gir brun/blå farge – her farges kjernen og cytoplasmaet. Planteceller skiller seg fra dyreceller ved celleveggen (cellulose) og vakuolen. Kloroplaster finnes ikke i løkceller (ikke fotosynteserende), noe som kan gi god diskusjon.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Beskrive oppbygningen av plante- og dyreceller og forklare forskjellen mellom dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for celleånding og forklare energiomsetning i levende organismer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🦷 Dyreceller</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c2','Dyreceller')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Bomullspinne</li><li>Blå­bær eller metylblå farge</li><li>Objektglass</li><li>Dekkglass</li><li>Mikroskop</li><li>Fargeblyanter</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Stryk bomullspinnen forsiktig inni kinnet ditt (munnhulen).</span></li><li><span class="steg-nr">2</span><span>Smør prøven utover på objektglasset.</span></li><li><span class="steg-nr">3</span><span>Tilsett en dråpe blåbærjuice eller metylblå fargeløsning.</span></li><li><span class="steg-nr">4</span><span>Legg dekkglasset over og studer i mikroskopet.</span></li><li><span class="steg-nr">5</span><span>Tegn det du ser og merk: cellemembran, kjerne, cytoplasma.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er likt og hva er ulikt mellom løkcellene og munnhulecellene?</li><li>Har munnhulecellene cellevegg? Hva forteller det om dyreceller generelt?</li><li>Hva er vakuol? Finner du den her?</li><li>Kroppen din skifter ut munnhuleceller hele tiden – hva tror du skjer med de gamle cellene?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Munnhuleceller (epitelceller) er flate og enkle å preparere. De har cellemembran, kjerne og cytoplasma, men mangler cellevegg og kloroplaster. Sammenligning med planteceller er kjernen i dette forsøket. Metylblå farger kjerner og membranstrukturer godt. Cellene kan variere mye i utseende – en god anledning til å snakke om cellens plastisitet.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Beskrive oppbygningen av plante- og dyreceller og forklare forskjellen mellom dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for celleånding og forklare energiomsetning i levende organismer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🦠 Bakteriedyrking</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ Flere dager</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c3','Bakteriedyrking')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Agarskåler (petriskåler)</li><li>Q-tips / bomullspinner</li><li>Tape</li><li>Varmeskap (37 °C) eller romtemperatur</li><li>Tusj</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Merk undersiden av petriskålene med navn, dato og prøvested.</span></li><li><span class="steg-nr">2</span><span>Prøv 1: trykk fingeren forsiktig mot agaren (ikke press for hardt).</span></li><li><span class="steg-nr">3</span><span>Prøv 2: stryk Q-tip over et overflate (tastatur, dørhandtak, gulv) og stryk det forsiktig over agaren.</span></li><li><span class="steg-nr">4</span><span>Prøv 3: kontroll – åpne skålen i 1 minutt uten å berøre.</span></li><li><span class="steg-nr">5</span><span>Tape igjen skålene og sett dem i varmeskap eller et lunt sted i 48–72 timer. Observer daglig.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken prøve viste mest bakterievekst?</li><li>Hva ser koloniene ut som? Beskriv form, farge og størrelse.</li><li>Hva tror du er den viktigste grunnen til at vi vasker hender?</li><li>Er alle bakterier farlige? Hva brukes bakterier til i matproduksjon?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c3-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt: Ikke åpne skålene etter inkubering. Deaktiver med kokende vann eller autoklav. Bruk hansker ved håndtering.</div>
+              <p class="laerer-teori">Agarskåler inneholder næringsstoffer bakterier trenger. Kolonier som vokser er synlig bakterievekst – én koloni = én original bakterie (Colony Forming Unit). Forsøket viser at bakterier er overalt, og gir anledning til å snakke om hygiene, antibiotika og fordeler og ulemper ved bakterier.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for celledeling og forklare sammenhengen mellom arv og miljø</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for evolusjon og naturlig utvalg og forklare biologisk mangfold</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🥝 DNA i kiwi</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c4','DNA i kiwi')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Kiwi</li><li>Zalo</li><li>Isopropanol (iskald)</li><li>Saltløsning</li><li>Kaffefilter</li><li>Glass</li><li>Skje</li><li>Pinsett</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Mos halvparten av en kiwi med en gaffel.</span></li><li><span class="steg-nr">2</span><span>Bland inn 1 ts salt og 1 ss zalo. Rør forsiktig (ikke lag skum).</span></li><li><span class="steg-nr">3</span><span>Sil blandingen gjennom et kaffefilter ned i et glass.</span></li><li><span class="steg-nr">4</span><span>Hell sakte iskald isopropanol ned langs glasskanten til du har et like tykt lag oppå kiwiblandingen.</span></li><li><span class="steg-nr">5</span><span>Vent 2–3 minutter og observer hva som dukker opp i grensesjiktet. Bruk pinsett til å trekke ut DNA-trådene.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er det hvite/gjennomsiktige du ser i grensesjiktet?</li><li>Hva er funksjonen til salt og zalo i dette forsøket?</li><li>Hvorfor bruker vi iskald alkohol?</li><li>Hva er DNA og hva brukes DNA-analyse til i virkeligheten?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c4-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Celleveggene brytes ned av zalo (detergent løser opp lipidmembranen). Salt klumper sammen DNA ved å nøytralisere de negativt ladede fosfatgruppene. Isopropanol feller ut DNA fordi DNA ikke løses i alkohol. Det utfelte materialet er faktisk millioner av DNA-tråder klumpet sammen, synlig for det blotte øye.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for celledeling og forklare sammenhengen mellom arv og miljø</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for DNA, arv og evolusjon og forklare sammenhengen mellom genotype og fenotype</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🧅 Osmose i løk</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c5-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c5-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c5','Osmose i løk')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c5-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Rødløk</li><li>Saltløsning (sterk)</li><li>Vann</li><li>Mikroskop</li><li>Objektglass</li><li>Dekkglass</li><li>Pipette</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Lag to preparater av rødløk (se fremgangsmåte fra plantecelle-forsøket).</span></li><li><span class="steg-nr">2</span><span>Preparat 1: tilsett vanlig vann.</span></li><li><span class="steg-nr">3</span><span>Preparat 2: tilsett en dråpe sterk saltløsning.</span></li><li><span class="steg-nr">4</span><span>Studer begge preparatene i mikroskopet. Tegn hva du ser i begge.</span></li><li><span class="steg-nr">5</span><span>Skift ut saltvannet i preparat 2 med vanlig vann. Hva skjer?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med celleminneholdet når salt tilsettes?</li><li>Hva er osmose? Forklar med egne ord.</li><li>Hva tror du skjer med celler i kroppen hvis vi drikker altfor mye saltvann?</li><li>Kan du se cellemembranen trekke seg unna celleveggen? Hva kalles dette?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c5-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Osmose er diffusjon av vann gjennom en halvgjennomtrengelig membran. I sterk saltløsning er konsentrasjonen av vann lavere utenfor cellen – vann trekkes ut og cellen plasmolyseres (cellemembranen trekker seg fra celleveggen). Dette er reversibelt ved å tilsette rent vann. Rødløk er perfekt fordi fargestoffet (antocyanin) gjør prosessen synlig.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Beskrive oppbygningen av plante- og dyreceller og forklare forskjellen mellom dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for transport av stoffer inn og ut av celler og forklare sammenhengen med energiomsetning</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">👁️ Disseksjon av griseøye</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'c6-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'c6-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('c6','Disseksjon av griseøye')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="c6-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Griseøye (bestilles fra slakteri)</li><li>Skalpell</li><li>Saks</li><li>Pinsett</li><li>Gummihansker</li><li>Disseksjonsbrett</li><li>Bilde av øyets anatomi</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Sett på hansker. Studer øyet utenfra – identifiser hornhinne, iris og senesystem.</span></li><li><span class="steg-nr">2</span><span>Klipp forsiktig rundt øyet for å fjerne fettvev.</span></li><li><span class="steg-nr">3</span><span>Stikk skalpellen inn i glasskroppen og klipp øyet i to deler (fremre og bakre halvdel).</span></li><li><span class="steg-nr">4</span><span>Undersøk glasskroppen (geléaktig), linsen (gjennomsiktig?), og netthinnen.</span></li><li><span class="steg-nr">5</span><span>Sammenlign med bilde av øyets anatomi og identifiser alle delene.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er glasskroppens funksjon?</li><li>Linsen er gjennomsiktig – prøv å legge den over tekst. Hva skjer?</li><li>Hva er det mørke belegget innerst i øyet, og hva er dens funksjon?</li><li>Hva er forskjellen mellom et griseøye og et menneskeøye?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="c6-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt: Bruk alltid hansker og verneutstyr. Organisk materiale kastes i restavfall.</div>
+              <p class="laerer-teori">Griseøyet ligner mye på menneskeøyet og er lett tilgjengelig fra slakteri. Viktige strukturer: hornhinne (beskytter og bryter lys), linse (fokuserer lys, kan forstørre), glasskropp (holder form), netthinne (lyssensitiv), tapetum lucidum (reflekterende lag – griser og mange dyr har dette, mennesker ikke).</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Beskrive oppbygningen av sanseorganer og forklare sammenhengen mellom sans og nervesystem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for evolusjonen og biologisk mangfold og forklare sammenhengen mellom struktur og funksjon</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-kraft">
+    <div class="cat-header">
+      <span class="cat-icon">⚡</span>
+      <div>
+        <h2>Kraft og trykk</h2>
+        <p>Fra trykkforskjeller til magneter – Newtons lover i praksis!</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🎈 Trykk i en ballong</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k1','Trykk i en ballong')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Ballonger</li><li>Termometer</li><li>Linjal / målebånd</li><li>Iskaldt vann</li><li>Varmt vann</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Blås opp en ballong og bind den igjen. Mål omkretsen med målebåndet.</span></li><li><span class="steg-nr">2</span><span>Legg ballongen i iskaldt vann i 5 minutter. Mål omkretsen igjen.</span></li><li><span class="steg-nr">3</span><span>Legg ballongen i varmt vann (ikke kokende) i 5 minutter. Mål omkretsen igjen.</span></li><li><span class="steg-nr">4</span><span>Skriv ned alle målinger og beregn forskjellen.</span></li><li><span class="steg-nr">5</span><span>Gjennomfør forsøket utendørs på en kald dag og innendørs – noter temperatur og målinger.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med ballongen i kaldt og varmt vann?</li><li>Hva er sammenhengen mellom temperatur og gassens volum?</li><li>Hva heter loven som beskriver dette forholdet?</li><li>Hva har dette å si for bildekk om vinteren?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Charles&#x27; lov beskriver forholdet mellom temperatur og volum for en gass ved konstant trykk: V₁/T₁ = V₂/T₂. Økt temperatur → økt kinetisk energi → mer sammenstøt med ballongveggen → økt volum. Redusert temperatur → motsatt effekt. Praktisk konsekvens: bildekk mister trykk om vinteren og kan overinflere om sommeren.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske observerbare størrelser som fart og temperatur og knytte dem til energi</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for trykk og forklare sammenhengen mellom kraft, areal og trykk</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for energibevaring og utforske ulike måter å omdanne energi på</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🥚 Egg og kakelys</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k2','Egg og kakelys')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Erlenmeyerkolbe (500 mL)</li><li>Hardkokt egg (skallet av)</li><li>Kakelys</li><li>Lighter</li><li>Litt vann</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Hell litt varmt vann i kolben og svirp det rundt – tøm det ut igjen.</span></li><li><span class="steg-nr">2</span><span>Tenn kakelyset og hold det ned i kolben i 5–10 sekunder, slipp det ned.</span></li><li><span class="steg-nr">3</span><span>Legg egget med den spisse enden ned på åpningen til kolben med én gang.</span></li><li><span class="steg-nr">4</span><span>Observer hva som skjer med egget. Legg gjerne til litt mer vann inne i kolben for dramatisk effekt.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvorfor blir egget sugd ned i kolben?</li><li>Hva er forskjellen på lufttrykket inne og ute i kolben?</li><li>Kan du forklare hva som skjer ved hjelp av begrepet «trykk»?</li><li>Hvordan kan du få egget ut igjen uten å ødelegge det?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Flammen varmer luften i kolben, som ekspanderer og delvis slipper ut. Når flammen slukker og luften avkjøles, synker trykket inni kolben under atmosfæretrykket utenfor. Trykkforskjellen presser egget inn. Egget kan fjernes ved å snu kolben og blåse hardt inn – trykket inni økes og presser egget ut.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for trykk og forklare sammenhengen mellom kraft, areal og trykk</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for gasslovene og forklare fenomener knyttet til trykk og temperatur</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">💥 Implosjon</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k3','Implosjon')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Tom aluminiumsboks (brusboks)</li><li>Gassbrenner / komfyr</li><li>Stor bolle med kaldt vann</li><li>Tang</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Ha ca. 1 ss vann i brusboksen.</span></li><li><span class="steg-nr">2</span><span>Varm opp bunnen av brusboksen over gass­brenner til du kan se at vannet koker og damp stiger ut av åpningen.</span></li><li><span class="steg-nr">3</span><span>Bruk tangen til raskt å snu boksen opp ned og dyppe den i det kalde vannet.</span></li><li><span class="steg-nr">4</span><span>Observer hva som skjer!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjedde med boksen?</li><li>Hva er forskjellen mellom en eksplosjon og en implosjon?</li><li>Hva er kondens, og hva har det å si for trykket inne i boksen?</li><li>Kan du beregne omtrent hvor stor kraftforskjell det er? (1 atm = 101 325 Pa)</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k3-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt demonstrasjon. Bruk tang og vett – dampvarme er farlig.</div>
+              <p class="laerer-teori">Kokende vann fyller boksen med vanndamp som erstatter luften. Rask avkjøling i kaldt vann kondenserer dampen til flytende vann (volumreduksjon ~1700:1). Trykket inne i boksen faller dramatisk under atmosfæretrykket, og boksen knuses av det ytre lufttrykket. Et spektakulært eksempel på trykkforskjell og faseover­ganger.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for trykk og forklare sammenhengen mellom kraft, areal og trykk</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for gasslovene og forklare fenomener knyttet til trykk og temperatur</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">⚖️ Tyngdens akselerasjon</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k4','Tyngdens akselerasjon')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Kraftmåler (newtonmeter)</li><li>Ulike gjenstander</li><li>Vekt</li><li>Kalkulator</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Heng gjenstanden i kraftmåleren og les av vekten i Newton (tyngdekraften F = G).</span></li><li><span class="steg-nr">2</span><span>Vei gjenstanden på en vekt og noter massen i kg.</span></li><li><span class="steg-nr">3</span><span>Beregn g = F / m for hver gjenstand.</span></li><li><span class="steg-nr">4</span><span>Gjennomfør målinger for minst 5 ulike gjenstander og beregn gjennomsnittet.</span></li><li><span class="steg-nr">5</span><span>Sammenlign målt g med den teoretiske verdien (9,81 m/s²). Hva er feilprosenten?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er forskjellen mellom masse og vekt?</li><li>Hvorfor er g litt ulik på ulike steder på jorda?</li><li>Hva ville g være på månen? Hva ville det bety for kraftmåleren din?</li><li>Hva er den største feilkilden i dette forsøket?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k4-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">F = m·g er Newtons 2. lov for tyngdekraft. g ≈ 9,81 m/s² ved jordoverflaten, men varierer litt med geografisk bredde (litt mer ved polene, litt mindre ved ekvator) og høyde over havet. Masse er en absolutt størrelse, mens vekt avhenger av det gravitasjonsfelt man befinner seg i. Forsøket gir konkret erfaring med disse begrepene.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for Newtons bevegelseslover og bruke dem til å forklare bevegelse</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kraft og bevegelse og bruke Newtons lover til å forklare fenomener</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">📚 Friksjon</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 15 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k5-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k5-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k5','Friksjon')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k5-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>To identiske kladdebøker med mange sider</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Flett sidene i de to kladdebøkene grundig inn i hverandre (veksle side for side).</span></li><li><span class="steg-nr">2</span><span>Prøv å dra kladdebøkene fra hverandre med hendene. Klarer du det?</span></li><li><span class="steg-nr">3</span><span>Prøv å henge en person i de to bøkene. Holder de?</span></li><li><span class="steg-nr">4</span><span>Diskuter: hva skaper friksjonen?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er friksjon?</li><li>Hvorfor er det så vanskelig å dra de to bøkene fra hverandre?</li><li>Hva ville skje om du brukte bøker med glatt papir?</li><li>Kan du beregne omtrent hvor mye friksjon det er totalt i bøkene?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k5-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Hvert sidepar i bøkene bidrar med liten friksjonskraft, men summen av tusenvis av sider er enorm. Med 500 sider i hver bok og ca. 0,5 N friksjon per sidepar er total friksjonskraft opp mot 250 N – nok til å holde en person. Mybusters gjennomførte forsøket med to tankbiler. Fremragende for å snakke om addisjon av krefter og friksjonskoeffisient.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive kraft og bevegelse i enkle situasjoner</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for Newtons bevegelseslover og bruke dem til å forklare bevegelse</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kraft og bevegelse og bruke Newtons lover til å forklare fenomener</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🧲 Magiske magneter</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 15 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k6-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k6-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k6','Magiske magneter')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k6-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Neodymmagnet</li><li>Kobberrør (ca. 30 cm)</li><li>Aluminiumsrør (ca. 30 cm)</li><li>Vanlig magnet for sammenligning</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Slipp en vanlig magnet gjennom kobberrøret. Mål fallet med stoppeklokke.</span></li><li><span class="steg-nr">2</span><span>Slipp neodymmagneten gjennom kobberrøret. Mål fallet.</span></li><li><span class="steg-nr">3</span><span>Sammenlign fallene. Hva observerer du?</span></li><li><span class="steg-nr">4</span><span>Gjenta med aluminiumsrøret og et ikke-magnetisk stykke metall av lik størrelse.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Kobber er ikke magnetisk – men hva skjer likevel?</li><li>Hva er induksjon?</li><li>Hva ville skje om du brukte et glasrør i stedet for kopper?</li><li>Hvor brukes elektromagnetisk induksjon i hverdagen?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k6-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Neodymmagneten faller sakte fordi det bevegelige magnetfeltet induserer sirkulære strømmer (virvelstrømmer) i kobber. Disse strømmene skaper et eget magnetfelt som motvirker bevegelsen (Lenz&#x27; lov). Kobber er ikke ferromagnetisk, men er elektrisk leder – det er nøkkelen. Prinsippet brukes i bremsesystemer, magnetiske dempers og induktiv lading.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for elektrisitet og magnetisme og forklare sammenhengen mellom dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for elektromagnetisk induksjon og forklare prinsippet i generatorer og transformatorer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🔌 Elektromagnet</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'k7-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'k7-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('k7','Elektromagnet')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="k7-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Jernspiker (stor)</li><li>Tynn kobbertråd (ca. 1 m)</li><li>9V batteri</li><li>Binders</li><li>Stoppeklokke</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Vikle kobbertråden tett og jevnt rundt spikeren (jo flere viklinger, jo sterkere magnet).</span></li><li><span class="steg-nr">2</span><span>Koble endene til et 9V batteri (batteripolene).</span></li><li><span class="steg-nr">3</span><span>Test hvor mange binders elektromagneten kan løfte.</span></li><li><span class="steg-nr">4</span><span>Prøv å endre antall viklinger eller bruke to batterier i serie – hva skjer?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er forskjellen mellom en vanlig magnet og en elektromagnet?</li><li>Hva skjer med magnetstyrken når du kobler fra batteriet?</li><li>Hvilke faktorer påvirker styrken på elektromagneten?</li><li>Hvor brukes elektromagneter i hverdagslivet?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="k7-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">En strømførende leder skaper et magnetfelt rundt seg (Ørsteds oppdagelse). Jernspikeren fungerer som ferromagnetisk kjerne og forsterker feltet kraftig. Feltets styrke er proporsjonal med antall viklinger og strøm­styrken. Elektromagneter brukes i motorer, høyttalere, MR-maskiner og brekkjern. Gir utmerket grunnlag for å diskutere elektromotorer.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Gjøre enkle undersøkelser av elektriske kretser og magnetisme</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for elektrisitet og magnetisme og forklare sammenhengen mellom dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for elektromagnetisk induksjon og forklare prinsippet i generatorer og transformatorer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-gass">
+    <div class="cat-header">
+      <span class="cat-icon">💨</span>
+      <div>
+        <h2>Gassutvikling</h2>
+        <p>Bobler, skum, eksplosiver og raketter – kjemi som synes og høres!</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🕯️ Fremstilling av CO₂</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 10 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g1','Fremstilling av CO₂')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Begerglass</li><li>Eddik</li><li>Natron</li><li>Telys</li><li>Lighter</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Tenn telyset og plasser det på bunnen av begerglasset.</span></li><li><span class="steg-nr">2</span><span>Bland 2 ss eddik og 1 ts natron i et annet glass – la det boble.</span></li><li><span class="steg-nr">3</span><span>Hell forsiktig den usynlige gassen (uten væsken) ned i begerglasset med telyset.</span></li><li><span class="steg-nr">4</span><span>Observer hva som skjer med flammen.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er det som slukker flammen?</li><li>Hva kalles gassen som dannes?</li><li>Er CO₂ tyngre eller lettere enn luft? Hva forteller forsøket om det?</li><li>Hva brukes CO₂ til i brannslukningsapparater?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Reaksjonen: CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂. CO₂ er tyngre enn luft (molekylvekt 44 vs. 29 for luft) og vil «helle» ned i glasset. CO₂ kveler flammen ved å fortrenge oksygen. Prinsippet brukes i brannslukningsapparater og CO₂-baser. Et sikkert og enkelt forsøk som gir mye wow-effekt.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Utforske faseoverganger og kjemiske reaksjoner og beskrive hva som kjennetegner dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Utforske kjemiske reaksjoner og forklare massebevaring og energiendringer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🦷 Elefanttannkrem</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 15 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g2','Elefanttannkrem')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>H₂O₂ (30% – kun lærer)</li><li>Kaliumjodid (KI)</li><li>Zalo</li><li>Destillert vann</li><li>Høy sylindrisk beholder</li><li>Fargestoff (valgfritt)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Bland H₂O₂ med litt zalo og fargestoff i beholderen.</span></li><li><span class="steg-nr">2</span><span>Bland KI med destillert vann i et eget glass.</span></li><li><span class="steg-nr">3</span><span>Hell KI-løsningen raskt ned i beholderen med H₂O₂.</span></li><li><span class="steg-nr">4</span><span>Observer reaksjonen!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er det som strømmer ut av sylinderen?</li><li>Hva er oksygen, og hva gjør det med fuktig zalo?</li><li>Er reaksjonen eksotermisk eller endotermisk? Rør ved skummet!</li><li>Hva er KI&#x27;s rolle i reaksjonen (katalysator)?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g2-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt demonstrasjon. 30% H₂O₂ er etsende – bruk verneutstyr, hansker og øyevern. Gjennomføres i avtrekkskap eller utendørs.</div>
+              <p class="laerer-teori">H₂O₂ brytes ned til H₂O og O₂ i nærvær av KI (katalysator). O₂ fanges av zaloskummet og skaper den karakteristiske skumstøtten. Reaksjonen er eksotermisk – skummet er varmt. Kan gjøres sikrere med 3% apotek-H₂O₂ og tørrgjær som katalysator (blander gjær + varmt vann + sukker, hell i beholder med H₂O₂ + zalo).</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Utforske faseoverganger og kjemiske reaksjoner og beskrive hva som kjennetegner dem</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Utforske kjemiske reaksjoner og gjøre rede for aktiveringsenergi, katalysator og energiendringer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌋 Vulkanutbrudd</div>
+            <div class="kort-trinn"><span class="trinn-tag t2">2. trinn</span><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g3','Vulkanutbrudd')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Plastelina / leire</li><li>Eddik</li><li>Natron</li><li>Zalo</li><li>Rød fargestoff</li><li>Liten plastkopp</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Form en vulkan rundt en liten plastkopp med plastelina eller leire.</span></li><li><span class="steg-nr">2</span><span>Fyll plastkoppen med eddik, rød fargestoff og noen dråper zalo.</span></li><li><span class="steg-nr">3</span><span>Ha 2–3 ts natron i en papirbrette klar.</span></li><li><span class="steg-nr">4</span><span>Hell natronet ned i koppen og observer «lavaen» som strømmer ned.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva lager boblene i «lavaen»?</li><li>Hva er forskjellen mellom en vulkan i virkeligheten og din modell?</li><li>Hva er forskjellen mellom en eksplosiv og en effusiv vulkan?</li><li>Hvilke vulkaner finnes i Norge?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g3-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Syrebasereaksjonen mellom eddik og natron er rask og trygg. Zalo gjør reaksjonen mer dramatisk ved å fange CO₂-boblene. Flott inngang til å diskutere virkelige vulkanutbrudd og den geologiske prosessen. Kan kombineres med undervisning om jordas indre og platetektonikk.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t2"><span class="km-trinn">2. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer</li><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan noen stoffer kan endre seg når de blandes</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for geologiske prosesser og vulkanisme</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for platetektonikk og vulkanisme og forklare sammenhengen</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">💥 Eksploderende såpebobler</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g4','Eksploderende såpebobler')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Sink (pulver eller granulat)</li><li>Saltsyre (utvannet HCl, 10%)</li><li>Zalo</li><li>Begerglass</li><li>Trepinne med bomullsdott</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Hell litt utvannet saltsyre i begerglasset.</span></li><li><span class="steg-nr">2</span><span>Tilsett et par skjeer sinkpulver – observer hva som skjer.</span></li><li><span class="steg-nr">3</span><span>Hold en brennende trepinne over glasset for å teste gassen.</span></li><li><span class="steg-nr">4</span><span>Bland noen dråper zalo med vann i en kopp. Dypp en halm i blandingen og hold den over begerglasset med sink + syre. Pust forsiktig ut bobler. Tenn på boblen!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er gassen som dannes?</li><li>Er gassen tyngre eller lettere enn luft?</li><li>Hva heter reaksjonen som frigjør hydrogen fra syren?</li><li>Hva brukes hydrogen til som drivstoff?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g4-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt. Bruk hansker og øyevern. Gjennomføres i avtrekkskap. Ikke bruk for mye sink – kun kontrollert mengde.</div>
+              <p class="laerer-teori">Zn + 2HCl → ZnCl₂ + H₂↑. Hydrogen er lettere enn luft og brennbart. Boblene flyter opp og antennes med et karakteristisk «pip». Forsøket er spektakulært og pedagogisk for å illustrere metaller og syre, hydrogen som energibærer og fremtidig drivstoff. Bruk alltid utvannet syre.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kjemiske reaksjoner og forklare betydningen av hydrogen som energibærer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🚀 Tørrisrakett</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g5-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g5-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g5','Tørrisrakett')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g5-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Tørris (CO₂ i fast form)</li><li>Filmrull­beholder / lite rør med lokk</li><li>Vann</li><li>Hansker for tørris</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>TA PÅ HANSKER – tørris er -78 °C og brenner huden.</span></li><li><span class="steg-nr">2</span><span>Ha et lite stykke tørris og noen dråper vann i filmrullbeholderen.</span></li><li><span class="steg-nr">3</span><span>Lukk lokket raskt og legg beholderen på gulvet med lokket ned.</span></li><li><span class="steg-nr">4</span><span>Gå litt unna og observer hva som skjer!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er sublimering?</li><li>Hva er det som «skyter» lokket av?</li><li>Hvilken av Newtons lover er dette et eksempel på?</li><li>Hva er tørris, og hva brukes det til i hverdagen?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g5-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt. Tørris er -78 °C – bruk alltid isolerende hansker. Beholderen kan fly langt – hold god avstand.</div>
+              <p class="laerer-teori">Tørris sublimerer direkte fra fast til gassform (CO₂), noe som gir enorm volumøkning (~700:1). Trykket inne i beholderen øker til lokket spretter av med kraft. Newtons 3. lov: gasstrykket dytter lokket ned og beholderen opp. Morsomme utvidelser: filmrullraketter på bane, rakettkraft­beregning.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for trykk og Newtons 3. lov og forklare fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for gasslovene og forklare fenomener knyttet til trykk og volum</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">⏱️ Jodklokke</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'g6-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'g6-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('g6','Jodklokke')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="g6-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>H₂SO₄ (utvannet)</li><li>Natriumjodat</li><li>Natriumbisulfitt</li><li>Stivelsesløsning</li><li>Destillert vann</li><li>3 begerglass</li><li>Magnetrører</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Forbered løsning A: natriumjodat i vann.</span></li><li><span class="steg-nr">2</span><span>Forbered løsning B: natriumbisulfitt + stivelse i vann + noen dråper utvannet H₂SO₄.</span></li><li><span class="steg-nr">3</span><span>Hell løsning A i løsning B under omrøring.</span></li><li><span class="steg-nr">4</span><span>Observer hva som skjer med fargen. Variér konsentrasjoner for å endre hastigheten.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med fargen? Hva skaper denne endringen?</li><li>Hva er en oscillerende reaksjon?</li><li>Hvilken faktor påvirker mest hastigheten på fargebyttet?</li><li>Hva er en reaksjonsmekanisme?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="g6-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt demonstrasjon. Bruk hansker og øyevern. Gjennomføres i avtrekkskap.</div>
+              <p class="laerer-teori">Jodklokkereaksjonen er en klassisk oscillerende kjemisk reaksjon. Iodat oksiderer bisulfitt, og når bisulfitt er oppbrukt, dannes jod som reagerer med stivelse og gir den karakteristiske mørkeblå fargen. Perfekt for å diskutere reaksjonshastighet, konsentrasjon og kjemisk kinetikk på avansert nivå.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kjemiske reaksjoner og forklare sammenhengen mellom konsentrasjon, temperatur og reaksjonshastighet</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-pavisning">
+    <div class="cat-header">
+      <span class="cat-icon">🧪</span>
+      <div>
+        <h2>Påvisning</h2>
+        <p>Kjemi handler om å identifisere og forstå stoffer – her er verktøykassen!</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌡️ pH-papir</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p1','pH-papir')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>pH-papir</li><li>Eddik</li><li>Sitron</li><li>Melk</li><li>Håndsåpe</li><li>Vann</li><li>Bakepulver­løsning</li><li>Kaffe</li><li>Diverse hverdagsvæsker</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Lag en tabell i notatboken med kolonnene: Stoff, Forventet pH, Målt pH, Surt/nøytralt/basisk.</span></li><li><span class="steg-nr">2</span><span>Dypp pH-papiret i hvert stoff og les av fargen mot skalaen.</span></li><li><span class="steg-nr">3</span><span>Fyll ut tabellen og diskuter resultatene.</span></li><li><span class="steg-nr">4</span><span>Lag en rangert liste fra mest surt til mest basisk.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilke stoffer var sure? Hvilke var basiske?</li><li>Hva er pH-skalaen, og hva betyr pH 7?</li><li>Hva betyr det for kroppen at magesaft er veldig sur (pH 1–2)?</li><li>Hva skjer med pH hvis du blander en syre og en base?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">pH-skalaen går fra 0 til 14, der 7 er nøytralt, &lt; 7 er surt og &gt; 7 er basisk. pH er en logaritmisk skala: pH 5 er 10× surere enn pH 6. Hverdagseksempler: magesyre (pH 1–2), eddik (pH 2–3), kaffe (pH 5), rent vann (pH 7), håndsåpe (pH 8–10), natriumhydroksid (pH 14). Forsøket gir konkret erfaring med et av kjemiens grunnleggende begreper.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer og sortere etter egenskaper</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Bruke surhet og basiskhet til å beskrive løsninger og forklare hverdagslige fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for syrer og baser og forklare pH ved hjelp av proton­overføring</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🫐 Indikatorer</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 2 dager</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p2','Indikatorer')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Rødkål</li><li>Rødløk</li><li>Blåbær</li><li>Te (sort)</li><li>BTB (bromotymolblå)</li><li>Vann</li><li>Gryter</li><li>Sil</li><li>Begerglass</li><li>Syrer og baser for testing</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Dag 1: Lag ekstrakter av rødkål, rødløk, blåbær og te ved å koke dem i vann og sile av.</span></li><li><span class="steg-nr">2</span><span>La ekstraktene avkjøle seg.</span></li><li><span class="steg-nr">3</span><span>Dag 2: Hell litt av hvert ekstrakt i separate glass.</span></li><li><span class="steg-nr">4</span><span>Tilsett litt eddik (syre) og litt bakepulverløsning (base) og observer fargeendringen for hvert ekstrakt.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilke ekstrakter fungerte best som indikatorer?</li><li>Hva er det i rødkål som gjør at den endrer farge?</li><li>Hva er BTB og hvorfor brukes det i kjemi-laboratorier?</li><li>Kan du lage en pH-skala med rødkålekstraktet?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Rødkål inneholder antocyaniner som endrer farge i surt (rødt/rosa) og basisk (grønt/gult) miljø. Rødkålekstrakt kan gi en gradert fargeskala for pH 1–14. BTB er en syntetisk indikator som er gul i surt og blått i basisk miljø. Forsøket viser at naturen inneholder mange pH-sensitive pigmenter.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Bruke surhet og basiskhet til å beskrive løsninger og forklare hverdagslige fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for syrer og baser og forklare pH ved hjelp av protonoverføring</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">⚗️ Nøytralisering av syre</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p3','Nøytralisering av syre')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>HCl (0,1 M)</li><li>NaOH (0,1 M)</li><li>BTB-løsning</li><li>Begerglass</li><li>Pipette</li><li>Målesylinder</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Fyll et begerglass med 50 mL HCl og tilsett noen dråper BTB (løsningen er gul).</span></li><li><span class="steg-nr">2</span><span>Tilsett NaOH dråpe for dråpe mens du rører.</span></li><li><span class="steg-nr">3</span><span>Observer fargeendringen. Stopp når fargen er grønn (nøytral).</span></li><li><span class="steg-nr">4</span><span>Mål nøyaktig hvor mye NaOH du brukte og beregn molare mengder.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva skjer med syren og basen når de blandes?</li><li>Hva dannes ved nøytralisering?</li><li>Hva er bruk­sområdet til NaOH? Og til HCl?</li><li>Hva er titreringsanalyse og hva brukes det til?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p3-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Nøytralisering: HCl + NaOH → NaCl + H₂O. BTB (bromotymolblå) er gul i surt, grønt i nøytralt og blått i basisk. Forsøket er en introduksjon til titrering – en av de viktigste kvantitative teknikkene i kjemi. Molare mengder: n = c·V. Praktisk anvendelse: regulering av pH i drikkevann, behandling av sur jord.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Bruke surhet og basiskhet til å beskrive løsninger og forklare hverdagslige fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for syrer og baser og forklare pH ved hjelp av protonoverføring</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🍬 Sukker til kull</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 15 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p4','Sukker til kull')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Sukker</li><li>Konsentrert H₂SO₄</li><li>Høyt begerglass</li><li>Hansker</li><li>Vernebriller</li><li>Avtrekkskap</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Ha 2 ss sukker i begerglasset.</span></li><li><span class="steg-nr">2</span><span>Læreren heller forsiktig litt konsentrert H₂SO₄ over sukkeret.</span></li><li><span class="steg-nr">3</span><span>Observer hva som skjer i løpet av de neste minuttene.</span></li><li><span class="steg-nr">4</span><span>Diskuter hva som har skjedd.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva ser du skje med sukkeret?</li><li>H₂SO₄ er en vannelskende syre – hva trekker den ut av sukkeret?</li><li>Hva er det mørke materialet som vokser opp?</li><li>Hva er temperaturendringen et tegn på (eksotermisk eller endotermisk)?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p4-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Kun lærerdemo i avtrekkskap. Konsentrert H₂SO₄ er sterkt etsende. Reaksjonen produserer varme og SO₂-gass.</div>
+              <p class="laerer-teori">Konsentrert H₂SO₄ er en sterk dehydratisator – den trekker ut vannet fra sukrose (C₁₂H₂₂O₁₁). Det som gjenstår er karbon (kull) som vokser opp som en søyle. Reaksjonen er eksotermisk og produserer SO₂ og vanndamp. Et dramatisk eksempel på karbons evne til å bli igjen etter dehydrering.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kjemiske reaksjoner og forklare massebevaring og energiendringer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🧉 Alkoholer</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p5-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p5-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p5','Alkoholer')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p5-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Metanol</li><li>Etanol</li><li>Glykol (frostvæske)</li><li>Glyserol</li><li>Begerglass</li><li>pH-papir</li><li>Brenner (for flammefarge)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Studer de fire alkoholene: lukt, konsistens, farge.</span></li><li><span class="steg-nr">2</span><span>Mål pH for alle fire (løst i vann).</span></li><li><span class="steg-nr">3</span><span>Brenn en liten mengde av metanol og etanol i en keramisk skål og observer flammefargen.</span></li><li><span class="steg-nr">4</span><span>Sammenlign brenn­barheten: ikke la etanol og metanol komme nær flamme ukontrollert.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er likheten og forskjellene mellom de fire alkoholene?</li><li>Hvorfor er metanol livsfarlig å drikke?</li><li>Glykol brukes som frostvæske – hva er egenskapen som gjør det egnet?</li><li>Hva er forskjellen mellom etanol i sprit og i drikkevarer?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p5-laerer">
+            <div class="laerer-panel">
+              <div class="advarsel">⚠️ Lærerstyrt. Metanol er giftig – ikke innåndes og ikke drikk. Bruk hansker og øyevern.</div>
+              <p class="laerer-teori">Alkoholer er organiske forbindelser med OH-gruppe. Metanol (CH₃OH) er giftig – metaboliseres til maursyre som skader synsnerven. Etanol (C₂H₅OH) er drikkebarealkoholen. Glykol (tokomponent) senker frysepunktet. Glyserol (treverdig alkohol) er tyktflytende og brukes i hudpleieprodukter og mat. Forsøket gir god oversikt over alkoholkjemien.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for organisk kjemi og forklare egenskapene til ulike funksjonelle grupper</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🔍 Hvitt pulver</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p6-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p6-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p6','Hvitt pulver')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p6-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Sukker</li><li>Salt</li><li>Natron</li><li>Potetmel</li><li>pH-papir</li><li>Jodløsning</li><li>Eddik</li><li>Vann</li><li>Begerglass</li><li>Microskopp (valgfritt)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Merk fire glass 1–4 uten å avsløre innholdet til elevene.</span></li><li><span class="steg-nr">2</span><span>Test hvert pulver systematisk: løselighet i vann, pH, reaksjon med eddik, reaksjon med jod.</span></li><li><span class="steg-nr">3</span><span>Fyll ut en observasjonstabell.</span></li><li><span class="steg-nr">4</span><span>Diskuter: basert på observasjonene – hva er hvert pulver?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken test var mest avgjørende for å skille pulverne?</li><li>Hva skjer med natron og eddik?</li><li>Jod er blå-svart med stivelse – hva kalles dette?</li><li>Hvorfor er det viktig å aldri smake på ukjente pulvere i labbet?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p6-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">De fire pulverne skilles ved systematisk testing. Natron: reagerer med syre (CO₂), basisk pH. Sukker: løselig, nøytral pH, ingen reaksjon med jod eller syre. Salt: løselig, nøytral pH, ingen spesielle reaksjoner. Potetmel: reagerer med jod (blå-svart). Forsøket lærer om systematisk identifikasjon – et sentralt prinsipp i analytisk kjemi og etterforskning.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for sentrale kjemiske reaksjoner og bruke dem til å forklare hverdagslige fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kjemiske reaksjoner og forklare massebevaring og energiendringer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🧮 Støkiometri i praksis</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'p7-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'p7-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('p7','Støkiometri i praksis')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="p7-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Vekt</li><li>NaHCO₃ (natron)</li><li>HCl (0,1 M)</li><li>Erlenmeyerkolbe</li><li>Målesylinder</li><li>Kalkulator</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Vei nøyaktig 2,10 g natron (NaHCO₃).</span></li><li><span class="steg-nr">2</span><span>Mål opp 250 mL 0,1 M HCl og hell det i kolben.</span></li><li><span class="steg-nr">3</span><span>Tilsett natronet forsiktig og observer reaksjonen.</span></li><li><span class="steg-nr">4</span><span>Beregn den teoretiske mengden CO₂ som frigjøres: NaHCO₃ + HCl → NaCl + H₂O + CO₂. Er HCl i overskudd eller underskudd?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er støkiometri?</li><li>Hva er begrensende reagens i dette forsøket?</li><li>Beregn: antall mol NaHCO₃ og antall mol HCl. Hva er forholdet?</li><li>Hva ville skje om du brukte dobbelt så mye natron?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="p7-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Støkiometri er beregning av mengdeforhold i kjemiske reaksjoner. NaHCO₃ (M=84 g/mol): 2,10 g = 0,025 mol. HCl (0,1 M × 0,25 L) = 0,025 mol. Eksakt 1:1-forhold – perfekt for å illustrere begrensende reagens og beregning av teoretisk utbytte. CO₂ produsert: 0,025 mol × 44 g/mol = 1,1 g.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for kjemiske reaksjoner, massebevaring og energiendringer og beregne støkiometriske mengder</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-teknologi">
+    <div class="cat-header">
+      <span class="cat-icon">🤖</span>
+      <div>
+        <h2>Teknologi</h2>
+        <p>Design, bygg og test – teknologi er naturvitenskap i praksis.</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🌉 Bru av LEGO</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45–90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'t1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'t1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('t1','Bru av LEGO')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="t1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>LEGO-klosser</li><li>Vekt (0,5 L vann)</li><li>Linjal</li><li>Prisliste for LEGO (lag selv)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Utfordring: Bygg en bru med 1 meters spenn som kan bære 0,5 L vann (500 g).</span></li><li><span class="steg-nr">2</span><span>Budsjettregel: hver kloss koster ulikt – bruk vedlagte prisliste. Billigste bru vinner.</span></li><li><span class="steg-nr">3</span><span>Tegn designet på forhånd og beregn budsjett.</span></li><li><span class="steg-nr">4</span><span>Bygg og test bruen. Juster og optimaliser.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken konstruksjon holdt mest vekt i forhold til materialkost?</li><li>Hva er en fagverkskonstruksjon, og hvorfor er den sterk?</li><li>Hva er det typiske for broer i virkeligheten som gjør dem sterke?</li><li>Hva ville skje med bruen om du brukte balsa­tre i stedet for LEGO?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="t1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Ingeniørdesign­prosessen: definer problem → design → bygg → test → evaluer → redesign. Fagverkskonstruksjoner fordeler laster effektivt gjennom triangulering. Bruen er et flott eksempel på teknologisk problemløsning med reell kost-nytte-analyse. Læreplanen vektlegger at elevene skal kunne designe, bygge og vurdere teknologiske løsninger.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive hvordan teknologiske produkter er laget og hva de er laget av</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Planlegge og lage et produkt basert på en kravspesifikasjon og vurdere produktet</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Planlegge og lage et produkt, begrunne valg og vurdere produktet opp mot kravspesifikasjon</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">❓ Elektronisk quizbrett</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'t2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'t2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('t2','Elektronisk quizbrett')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="t2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>A3-ark</li><li>Splittbinders</li><li>Aluminiums­folie</li><li>9V batteri</li><li>Lyspære med holder</li><li>Ledninger</li><li>Tape</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Lag 5–10 spørsmål og svar på A3-arket (spørsmål til venstre, svar i tilfeldig rekkefølge til høyre).</span></li><li><span class="steg-nr">2</span><span>Stikk splittbinders ved hvert spørsmål og hvert svar.</span></li><li><span class="steg-nr">3</span><span>Koble riktig spørsmål til riktig svar på baksiden av arket med aluminiumsfolie.</span></li><li><span class="steg-nr">4</span><span>Koble batteri og lyspære til systemet slik at riktige svar lyser opp.</span></li><li><span class="steg-nr">5</span><span>Test og reparer eventuelle feil i kretsen.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er en elektrisk krets?</li><li>Hva betyr det at kretsen er «lukket»?</li><li>Hva er leder og isolator? Hvilke materialer brukte du?</li><li>Hvordan kan du utvide quizbretten til å ha 20 spørsmål?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="t2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Quizbretten er en enkel elektrisk krets med to noder (ett på spørsmål, ett på svar). Når riktig par kobles, lukkes kretsen og lyspæren lyser. Forsøket kombinerer elektrisk­lære (serie­krets, leder/isolator) med kreativ problemløsning og kan lages med faginnhold fra hvilket som helst fag.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Gjøre enkle undersøkelser av elektriske kretser</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for elektrisitet og magnetisme og forklare sammenhengen</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for elektromagnetisk induksjon og prinsippet i generatorer</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🤖 Kunstig intelligens</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'t3-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'t3-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('t3','Kunstig intelligens')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="t3-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Datamaskin med internett</li><li>Valgfri AI-chatbot (f.eks. ChatGPT, Claude, Gemini)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Velg et naturfaglig tema du jobber med nå. Still chatboten 5 spørsmål om temaet.</span></li><li><span class="steg-nr">2</span><span>Sjekk svarene mot læreboka eller andre troverdige kilder. Hva er riktig? Hva er feil?</span></li><li><span class="steg-nr">3</span><span>Prøv å «lure» chatboten med ledende spørsmål. Hva skjer?</span></li><li><span class="steg-nr">4</span><span>Diskuter i gruppen: Hva er AI bra til? Hva er AI dårlig til? Hva er risikoen?</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Fant du feil i AI-svarene? Hva slags feil?</li><li>Hva er en kilde, og hvorfor er det viktig å oppgi kilder?</li><li>Hva er forskjellen mellom å bruke AI som hjelpemiddel og å jukse?</li><li>Hvilke etiske problemstillinger reiser AI i skole og samfunn?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="t3-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">AI-chatboter er store språkmodeller (LLM) trent på enorme tekstmengder. De genererer sannsynlige tekstsvar, men har ingen forståelse i menneskelig forstand og kan hallusinere (finne på fakta). Kildekritikk og digital kompetanse er avgjørende. Forsøket kobler programmering og digitale ferdigheter til naturfaglig innhold og demokratisk dannelse.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Bruke digitale verktøy på en kritisk og reflektert måte og vurdere kildenes troverdighet</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for programmering og digitale systemer og drøfte etiske og samfunnsmessige konsekvenser</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🔋 Galvanisk celle</div>
+            <div class="kort-trinn"><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 90 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'t4-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'t4-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('t4','Galvanisk celle')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="t4-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Kobberplate</li><li>Sinkplate</li><li>Kobbersulfatløsning</li><li>Sinksulfatløsning</li><li>Saltbru (natriumsulfat i gelatin)</li><li>Voltmeter</li><li>Ledninger</li><li>Begerglass</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Sett opp to begerglass: ett med CuSO₄ og kobberplate, ett med ZnSO₄ og sinkplate.</span></li><li><span class="steg-nr">2</span><span>Koble saltbruen mellom de to begraene.</span></li><li><span class="steg-nr">3</span><span>Koble voltmeteret mellom de to metallplatene.</span></li><li><span class="steg-nr">4</span><span>Les av spenningen. Prøv ulike kombinasjoner av metaller og noter spenningene.</span></li><li><span class="steg-nr">5</span><span>Koble til en LED-diode og se om cellen kan drive den.</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er en galvanisk celle?</li><li>Hva skjer på anoden og katoden?</li><li>Hva er saltbruens funksjon?</li><li>Hva er forskjellen mellom en galvanisk celle og et batteri vi kjøper i butikken?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="t4-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">En galvanisk celle omdanner kjemisk energi til elektrisk energi via redoksprosesser. Zn oksideres (anoden) og Cu²⁺ reduseres (katoden). Elektroner flyter gjennom den ytre kretsen, ioner flyter gjennom saltbruen. Standardspenning: Zn/Cu-celle ≈ 1,1 V. Forsøket er grunnlaget for å forstå batterier og elektrokjemi.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for redoksreaksjoner og forklare prinsippet i elektrokjemiske celler</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cat-section" id="cat-spiselig">
+    <div class="cat-header">
+      <span class="cat-icon">🍦</span>
+      <div>
+        <h2>Spiselig</h2>
+        <p>Kjemi og fysikk du faktisk kan spise etterpå!</p>
+      </div>
+      <div class="cat-line"></div>
+    </div>
+    <div class="forsok-grid">
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🍦 Iskrem</div>
+            <div class="kort-trinn"><span class="trinn-tag t4">4. trinn</span><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'s1-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'s1-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('s1','Iskrem')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="s1-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Fløte (3 dL)</li><li>Melk (1 dL)</li><li>Sukker (4 ss)</li><li>Vanilje</li><li>Stor bolle</li><li>Is</li><li>Grovt salt</li><li>Ziplock-pose (stor og liten)</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Bland fløte, melk, sukker og vanilje i den lille ziplock-posen og lukk den godt.</span></li><li><span class="steg-nr">2</span><span>Fyll den store ziplock-posen halvfull med is og tilsett mye grovt salt.</span></li><li><span class="steg-nr">3</span><span>Legg den lille posen ned i isblanding i den store posen. Lukk godt.</span></li><li><span class="steg-nr">4</span><span>Massér og skvip den store posen frem og tilbake i 10–15 minutter.</span></li><li><span class="steg-nr">5</span><span>Åpne og smak på iskremen!</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hva er det saltet gjør med isen?</li><li>Hvorfor er hånden din kald under prosessen?</li><li>Hva er frysepunkt­nedsettelse?</li><li>Hva er fettet og sukkeret sin rolle i iskremen?</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="s1-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Salt senker frysepunktet til vann (frysepunktnedsettelse: ΔTf = Kf·b). Is med salt smelter ved lavere temperatur enn 0 °C og absorberer varme fra omgivelsene – inkludert fra iskremblandingen i den lille posen. Blandingen avkjøles dermed til under 0 °C og stivner. Prinsippet brukes i strøing av veier om vinteren.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t4"><span class="km-trinn">4. trinn</span>Utforske og beskrive observerbare egenskaper til ulike stoffer</li><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for trykk, temperatur og faseoverganger og forklare hverdagslige fenomener</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for løsningers egenskaper og forklare kolligative egenskaper som frysepunktnedsettelse</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="forsok-kort">
+        <div class="kort-header">
+          <div>
+            <div class="kort-tittel">🍫 Forbrenning</div>
+            <div class="kort-trinn"><span class="trinn-tag t7">7. trinn</span><span class="trinn-tag t10">10. trinn</span></div>
+          </div>
+          <div class="kort-meta">
+            <span class="kort-tid">⏱ 45 min</span>
+          </div>
+        </div>
+        <div class="kort-body">
+          <div class="kort-tabs">
+            <button class="ktab active" onclick="visKtab(this,'s2-elev')">🎒 Elev</button>
+            <button class="ktab laerer-tab" onclick="visKtab(this,'s2-laerer')">📋 Lærer</button>
+            <button class="pdf-btn" onclick="lagPDF('s2','Forbrenning')">⬇ PDF</button>
+          </div>
+          <div class="ktab-panel active" id="s2-elev">
+            <p class="seksjons-tittel">🧴 Utstyr</p>
+            <ul class="utstyr-liste"><li>Sjokolade</li><li>Gulrot</li><li>Vekt</li><li>Termometer</li><li>Metallboks (boks­hermetikk)</li><li>Kalorimeter (enkel)</li><li>Lighter</li><li>Nål / knappenål</li></ul>
+            <p class="seksjons-tittel">📋 Fremgangsmåte</p>
+            <ol class="steg-liste"><li><span class="steg-nr">1</span><span>Vei 1 g sjokolade og 1 g gulrot.</span></li><li><span class="steg-nr">2</span><span>Sett opp et enkelt kalorimeter: 100 mL vann i en metallboks over et stativ.</span></li><li><span class="steg-nr">3</span><span>Fest sjokoladen på nålen under boksen og tenn på den.</span></li><li><span class="steg-nr">4</span><span>Mål temperaturendringen i vannet. Gjenta med gulroten.</span></li><li><span class="steg-nr">5</span><span>Beregn kalori­innholdet: Q = m · c · ΔT (c for vann = 4,18 J/g°C).</span></li></ol>
+            <div class="refleksjon-boks">
+              <p class="refleksjon-tittel">💭 Refleksjonsspørsmål</p>
+              <ul><li>Hvilken matvare hadde høyest energiinnhold per gram?</li><li>Hva er en kalori?</li><li>Hva er forskjellen mellom «kalori» og «kilokalori» (kcal) på matpakke­emballasje?</li><li>Hva er forbrenning? Skriv den kjemiske reaksjonen.</li></ul>
+            </div>
+          </div>
+          <div class="ktab-panel" id="s2-laerer">
+            <div class="laerer-panel">
+              
+              <p class="laerer-teori">Forbrenning: CₓHᵧ + O₂ → CO₂ + H₂O + energi. Kalorimetri måler energi frigjort som varme. Fett har ca. 9 kcal/g, karbohydrater ca. 4 kcal/g. Gulrot er ca. 90 % vann, sjokolade inneholder mye fett – stor forskjell i energitetthet. Forsøket gir konkret forståelse av energi i mat og metabolisme.</p>
+              <p class="km-tittel">📌 Kompetansemål (LK20)</p>
+              <ul class="km-liste"><li class="km-item t7"><span class="km-trinn">7. trinn</span>Gjøre rede for fotosyntese og celleånding og forklare energiomsetning i levende organismer</li><li class="km-item t10"><span class="km-trinn">10. trinn</span>Gjøre rede for energibevaring og gjøre beregninger knyttet til energiomsetning</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- PDF VERSJON-MODAL -->
+<!-- VERSJON-MODAL -->
+<div id="pdfModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.75);
+  align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+  <div style="background:#0d1b3e;border:1.5px solid rgba(0,229,255,.25);border-radius:20px;
+    padding:36px 40px;max-width:400px;width:90%;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:12px;">📄</div>
+    <h3 id="pdfModalTittel" style="font-family:'Fredoka One',cursive;font-size:1.5rem;
+      color:#e8f4fd;margin-bottom:8px;"></h3>
+    <p style="color:#8bafc8;font-size:.9rem;margin-bottom:24px;">
+      Velg versjon – åpnes som forhåndsvisning du kan skrive ut.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="skrivUt('elev')" style="font-family:'Fredoka One',cursive;font-size:1rem;
+        padding:10px 22px;border-radius:12px;cursor:pointer;
+        background:rgba(0,229,255,.15);color:#00e5ff;border:1.5px solid #00e5ff;">
+        🎒 Elevversjon
+      </button>
+      <button onclick="skrivUt('laerer')" style="font-family:'Fredoka One',cursive;font-size:1rem;
+        padding:10px 22px;border-radius:12px;cursor:pointer;
+        background:rgba(199,125,255,.15);color:#c77dff;border:1.5px solid #c77dff;">
+        📋 Lærerversjon
+      </button>
+    </div>
+    <button onclick="lukkModal()" style="margin-top:20px;background:none;border:none;color:#8bafc8;
+      cursor:pointer;font-size:.88rem;text-decoration:underline;">Avbryt</button>
+  </div>
+</div>
+
+<!-- FULLSKJERM FORHÅNDSVISNING (ingen popup, ingen print fra iframe) -->
+<div id="forsokPreview" style="display:none;position:fixed;inset:0;z-index:1000;
+  background:#e8edf2;overflow-y:auto;">
+  <div style="max-width:760px;margin:0 auto;padding:20px 16px 60px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:16px;gap:10px;flex-wrap:wrap;">
+      <button onclick="lukkPreview()" style="font-family:'Fredoka One',cursive;
+        font-size:.9rem;padding:7px 16px;border-radius:9px;border:none;cursor:pointer;
+        background:#2a3550;color:#e8f4fd;">← Tilbake</button>
+      <span id="previewLabel" style="font-family:'Fredoka One',cursive;font-size:.85rem;
+        padding:4px 14px;border-radius:99px;font-weight:700;"></span>
+      <button onclick="window.print()" style="font-family:'Fredoka One',cursive;
+        font-size:.9rem;padding:7px 16px;border-radius:9px;border:none;cursor:pointer;
+        background:#005f80;color:#fff;">🖨 Skriv ut / PDF</button>
+    </div>
+    <div id="previewInnhold" style="background:#fff;border-radius:12px;padding:30px 34px;
+      box-shadow:0 2px 20px rgba(0,0,0,.1);"></div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    body > *:not(#forsokPreview) { display: none !important; }
+    #forsokPreview {
+      position: static !important;
+      background: #fff !important;
+      overflow: visible !important;
+    }
+    #forsokPreview > div { padding: 0 !important; max-width: 100% !important; }
+    #forsokPreview > div > div:first-child { display: none !important; }
+    #previewInnhold { box-shadow: none !important; border-radius: 0 !important;
+      padding: 0 !important; }
+  }
+</style>
+
+<script>
+  let aktivForsokId = '';
+  let aktivTittel   = '';
+  let aktivTrinn    = 'alle';
+
+  // ── KATEGORINAVIGASJON ──
+  function visCat(catId, btn) {
+    tømmSok(false);
+    document.querySelectorAll('.cat-section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('cat-' + catId).classList.add('visible');
+    if (btn) btn.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // ── TABS ──
+  function visKtab(btn, panelId) {
+    const kort = btn.closest('.forsok-kort');
+    kort.querySelectorAll('.ktab').forEach(b => b.classList.remove('active'));
+    kort.querySelectorAll('.ktab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+  }
+
+  // ── TRINNFILTER ──
+  function velgTrinn(btn) {
+    document.querySelectorAll('.trinn-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    aktivTrinn = btn.dataset.trinn;
+    filtrer();
+  }
+
+  // ── SØK + FILTER ──
+  function filtrer() {
+    const q = document.getElementById('sokInput').value.trim().toLowerCase();
+    const clearBtn = document.getElementById('sokClear');
+    clearBtn.style.display = q ? 'block' : 'none';
+
+    // Hvis ingen søk og trinn=alle → vis kategorivisning normalt
+    if (!q && aktivTrinn === 'alle') {
+      document.getElementById('sokResultat').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      document.querySelector('.cat-nav').style.display = 'flex';
+      return;
+    }
+
+    // Ellers: samle alle .forsok-kort og filtrer
+    const alleKort = [...document.querySelectorAll('#mainContent .forsok-kort')];
+    const treff = alleKort.filter(kort => {
+      // Trinnsjekk
+      if (aktivTrinn !== 'alle') {
+        const harTrinn = kort.querySelector(`.trinn-tag.t${aktivTrinn}`);
+        if (!harTrinn) return false;
+      }
+      // Tekstsøk
+      if (q) {
+        const tekst = kort.textContent.toLowerCase();
+        return tekst.includes(q);
+      }
+      return true;
+    });
+
+    // Klon treff inn i sokGrid
+    const grid = document.getElementById('sokGrid');
+    grid.innerHTML = '';
+    if (treff.length === 0) {
+      grid.innerHTML = `<div class="ingen-treff" style="grid-column:1/-1;">
+        <div class="emoji">🔭</div>
+        <h3>Ingen forsøk funnet</h3>
+        <p>Prøv et annet søkeord eller endre trinnfilter.</p>
+      </div>`;
+    } else {
+      treff.forEach(k => {
+        const klon = k.cloneNode(true);
+        // Reaktiver første tab-panel i klonen
+        klon.querySelectorAll('.ktab-panel').forEach(p => p.classList.remove('active'));
+        klon.querySelectorAll('.ktab').forEach(b => b.classList.remove('active'));
+        const forstePanel = klon.querySelector('.ktab-panel');
+        const forsteTab   = klon.querySelector('.ktab');
+        if (forstePanel) forstePanel.classList.add('active');
+        if (forsteTab)   forsteTab.classList.add('active');
+        grid.appendChild(klon);
+      });
+    }
+
+    const antall = treff.length;
+    document.getElementById('sokAntall').textContent =
+      antall === 0 ? 'Ingen treff' :
+      antall === 1 ? '1 forsøk funnet' : `${antall} forsøk funnet`;
+
+    document.getElementById('sokResultat').style.display = 'block';
+    document.getElementById('mainContent').style.display = 'none';
+    document.querySelector('.cat-nav').style.display = 'none';
+  }
+
+  function tømmSok(scrollTop = true) {
+    document.getElementById('sokInput').value = '';
+    document.getElementById('sokClear').style.display = 'none';
+    aktivTrinn = 'alle';
+    document.querySelectorAll('.trinn-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.trinn === 'alle'));
+    document.getElementById('sokResultat').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    document.querySelector('.cat-nav').style.display = 'flex';
+    if (scrollTop) window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // ── PDF ──
+  function lagPDF(forsokId, tittel) {
+    aktivForsokId = forsokId;
+    aktivTittel   = tittel;
+    document.getElementById('pdfModalTittel').textContent = tittel;
+    document.getElementById('pdfModal').style.display = 'flex';
+  }
+
+  function lukkModal() {
+    document.getElementById('pdfModal').style.display = 'none';
+  }
+
+  function lukkPreview() {
+    document.getElementById('forsokPreview').style.display = 'none';
+  }
+
+  function skrivUt(versjon) {
+    lukkModal();
+    const erL   = versjon === 'laerer';
+    // Mørke, høykontrastfarger på hvit bakgrunn
+    const farge     = erL ? '#4a0080' : '#003d55';   // dyp lilla / dyp blå
+    const fargeAccent = erL ? '#6a00b8' : '#005878';
+
+    const elevPanel = document.getElementById(aktivForsokId + '-elev');
+    if (!elevPanel) { alert('Fant ikke panel: ' + aktivForsokId + '-elev'); return; }
+    const kort = elevPanel.closest('.forsok-kort');
+
+    const trinnEls  = [...kort.querySelectorAll('.trinn-tag')];
+    const tid       = kort.querySelector('.kort-tid')?.textContent.trim() || '';
+    const utstyrEls = [...kort.querySelectorAll('.utstyr-liste li')].map(l => l.textContent.trim());
+    const stegEls   = [...kort.querySelectorAll('.steg-liste li')].map(li => {
+      const s = li.querySelector('span:last-child');
+      return s ? s.innerHTML.trim() : li.textContent.trim();
+    });
+    const reflEls   = [...kort.querySelectorAll('.refleksjon-boks ul li')].map(l => l.textContent.trim());
+    const laererPanel = kort.querySelector('.laerer-panel');
+    const teori     = laererPanel?.querySelector('.laerer-teori')?.textContent.trim() || '';
+    const advarsel  = laererPanel?.querySelector('.advarsel')?.textContent.trim() || '';
+    const kmEls     = erL ? [...(laererPanel?.querySelectorAll('.km-item') || [])] : [];
+
+    const pill = t => `<span style="font-size:11px;font-weight:700;border-radius:99px;padding:2px 9px;
+      background:#ddeef5;border:1.5px solid #003d55;color:#003d55;display:inline-block;">${t}</span>`;
+
+    const trinnHTML  = trinnEls.map(t => pill(t.textContent.trim())).join(' ');
+    const utstyrHTML = utstyrEls.map(u =>
+      `<li style="font-size:13px;background:#f0f4f7;border:1px solid #b0c4d0;border-radius:6px;
+        padding:4px 10px;display:inline-block;margin:2px;color:#111;font-weight:600;">${u}</li>`).join('');
+    const stegHTML = stegEls.map((s,i) =>
+      `<li style="display:flex;gap:10px;margin-bottom:10px;font-size:13.5px;line-height:1.6;
+        font-family:Georgia,serif;color:#111;">
+        <span style="min-width:24px;height:24px;border-radius:50%;background:#003d55;
+          color:#fff;font-size:11px;font-weight:800;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;
+          margin-top:2px;">${i+1}</span><span>${s}</span></li>`).join('');
+    const reflHTML = reflEls.map(r =>
+      `<li style="font-size:13px;padding-left:16px;position:relative;margin-bottom:6px;
+        line-height:1.55;font-family:Georgia,serif;color:#222;">
+        <span style="position:absolute;left:0;color:#7a5c00;font-weight:900;font-size:14px;">?</span>${r}</li>`).join('');
+
+    const advHTML = advarsel
+      ? `<div style="background:#fff0eb;border:2px solid #b83000;border-radius:6px;
+          padding:8px 12px;font-size:12px;color:#8a2000;font-weight:700;margin-bottom:12px;">${advarsel}</div>`
+      : '';
+
+    const bgMap  = {t2:'#eafaea',t4:'#e4f2fa',t7:'#fdf0e8',t10:'#f5eaff'};
+    const borMap = {t2:'#1a6000',t4:'#003d55',t7:'#8a2000',t10:'#4a0080'};
+    const txtMap = {t2:'#1a6000',t4:'#003d55',t7:'#8a2000',t10:'#4a0080'};
+    const kmHTML = kmEls.map(el => {
+      const kl = el.className.match(/t\d+/)?.[0] || '';
+      const trEl = el.querySelector('.km-trinn');
+      const lab  = trEl?.textContent.trim() || '';
+      const txt  = el.textContent.replace(trEl?.textContent||'','').trim();
+      return `<li style="font-size:12px;padding:6px 10px;border-radius:6px;margin-bottom:5px;
+        line-height:1.5;background:${bgMap[kl]||'#f5f5f5'};border-left:3px solid ${borMap[kl]||'#555'};
+        color:#111;">
+        <span style="font-weight:800;font-size:11px;display:block;color:${txtMap[kl]||'#333'};
+          margin-bottom:2px;">${lab}</span>${txt}</li>`;
+    }).join('');
+
+    const laererHTML = erL ? `
+      <div style="margin-top:20px;background:#f5eeff;border:1.5px solid #9050c0;
+        border-radius:8px;padding:16px;">
+        <p style="font-size:13px;font-weight:800;color:#4a0080;margin-bottom:10px;
+          text-transform:uppercase;letter-spacing:.06em;">Lærerinformasjon</p>
+        ${advHTML}
+        <p style="font-size:13px;line-height:1.7;margin-bottom:14px;color:#111;
+          font-family:Georgia,serif;">${teori}</p>
+        <p style="font-size:12px;font-weight:800;color:#4a0080;margin-bottom:7px;
+          text-transform:uppercase;letter-spacing:.05em;">Kompetansemål (LK20)</p>
+        <ul style="list-style:none;padding:0;">${kmHTML}</ul>
+      </div>` : '';
+
+    document.getElementById('previewInnhold').innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;
+        border-bottom:3px solid ${farge};padding-bottom:10px;margin-bottom:18px;">
+        <span style="font-size:13px;font-weight:800;color:${farge};letter-spacing:.03em;">
+          SkapLab – Forsøkshefte</span>
+        <span style="font-size:11px;font-weight:800;padding:3px 12px;border-radius:99px;
+          background:${farge};color:#fff;">${erL?'Lærerversjon':'Elevversjon'}</span>
+      </div>
+      <h1 style="font-family:'Fredoka One',cursive;font-size:26px;margin-bottom:10px;color:#111;">
+        ${aktivTittel}</h1>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:20px;">
+        ${trinnHTML}
+        <span style="font-size:11px;font-weight:800;color:#5a3c00;background:#fff3cc;
+          border:1.5px solid #c8960a;border-radius:99px;padding:2px 9px;">${tid}</span>
+      </div>
+      <p style="font-size:12px;font-weight:800;color:${farge};margin:0 0 8px;
+        text-transform:uppercase;letter-spacing:.07em;border-left:3px solid ${farge};
+        padding-left:8px;">Utstyr</p>
+      <ul style="list-style:none;padding:0;margin-bottom:16px;">${utstyrHTML}</ul>
+      <p style="font-size:12px;font-weight:800;color:${farge};margin:0 0 9px;
+        text-transform:uppercase;letter-spacing:.07em;border-left:3px solid ${farge};
+        padding-left:8px;">Fremgangsmåte</p>
+      <ol style="list-style:none;padding:0;margin-bottom:4px;">${stegHTML}</ol>
+      <div style="background:#fffbe6;border:1.5px solid #c8960a;border-radius:8px;
+        padding:13px 15px;margin-top:16px;">
+        <p style="font-size:12px;font-weight:800;color:#5a3c00;margin-bottom:9px;
+          text-transform:uppercase;letter-spacing:.06em;">Refleksjonsspørsmål</p>
+        <ul style="list-style:none;padding:0;">${reflHTML}</ul>
+      </div>
+      ${laererHTML}
+      <div style="margin-top:22px;padding-top:9px;border-top:1px solid #ccc;
+        font-size:10px;color:#666;display:flex;justify-content:space-between;">
+        <span>SkapLab – Forsøkshefte</span>
+        <span>${erL?'Lærerversjon':'Elevversjon'} – ${aktivTittel}</span>
+      </div>`;
+
+    const lbl = document.getElementById('previewLabel');
+    lbl.textContent = erL ? '📋 Lærerversjon' : '🎒 Elevversjon';
+    lbl.style.background = erL ? '#f9f4ff' : '#e8f4fd';
+    lbl.style.border = `1.5px solid ${farge}`;
+    lbl.style.color = farge;
+
+    document.getElementById('forsokPreview').style.display = 'block';
+    document.getElementById('forsokPreview').scrollTop = 0;
+  }
+
+  document.getElementById('pdfModal').addEventListener('click', function(e) {
+    if (e.target === this) lukkModal();
+  });
+</script>
+</body>
+</html>
