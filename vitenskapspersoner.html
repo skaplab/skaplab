@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Vitenskapspersoner Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #f5f5f0;
+  --bg2:    #e8e8e2;
+  --text:   #1a1a1a;
+  --dim:    #666;
+  --serif:  'Instrument Serif', Georgia, serif;
+  --sans:   'Bricolage Grotesque', sans-serif;
+  --shadow: 0 4px 24px rgba(0,0,0,0.09);
+  --shadow-h: 0 12px 40px rgba(0,0,0,0.16);
+}
+/* Fargekart per fagområde */
+.kat-bio  { --cf:#14301a; --cl:#4caf50; --cxl:#c8e6c9; --ca:#e8f5e9; }
+.kat-fys  { --cf:#0d1f3c; --cl:#42a5f5; --cxl:#bbdefb; --ca:#e3f2fd; }
+.kat-kje  { --cf:#2d1600; --cl:#ff7043; --cxl:#ffe0b2; --ca:#fff3e0; }
+.kat-geo  { --cf:#1a0a2e; --cl:#ab47bc; --cxl:#e1bee7; --ca:#f3e5f5; }
+.kat-ele  { --cf:#1a1500; --cl:#f9a825; --cxl:#fff9c4; --ca:#fffde7; }
+.kat-oko  { --cf:#0d2010; --cl:#66bb6a; --cxl:#c8e6c9; --ca:#e8f5e9; }
+.kat-tek  { --cf:#2d0a14; --cl:#ef5350; --cxl:#ffcdd2; --ca:#ffebee; }
+
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+nav {
+  position:sticky; top:0; z-index:100;
+  background:rgba(245,245,240,0.92); backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  padding:13px 32px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.nav-lnk { font-weight:600; font-size:0.88rem; color:#333; text-decoration:none; font-family:var(--sans); }
+.nav-lnk:hover { opacity:0.7; }
+.nav-lnk.dim { color:var(--dim); }
+.nav-sep { color:var(--dim); }
+.nav-tittel { font-weight:700; font-size:0.88rem; }
+
+.del-nav { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:14px 32px 0; display:flex; gap:8px; flex-wrap:wrap; }
+.del-btn { padding:6px 14px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.1); background:white; color:var(--dim); font-family:var(--sans); font-size:0.78rem; font-weight:600; text-decoration:none; transition:all .16s; display:inline-block; }
+.del-btn:hover { border-color:#666; color:#333; }
+.del-btn.aktiv-del { background:#1a1a1a; border-color:#1a1a1a; color:white; }
+
+.hero { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:40px 32px 20px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px; }
+.hero-tag { display:inline-flex; align-items:center; gap:7px; background:#e8e8e2; color:#333; font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; padding:5px 12px; border-radius:20px; margin-bottom:12px; }
+h1 { font-family:var(--serif); font-size:clamp(2rem,4vw,3.4rem); line-height:1.06; letter-spacing:-0.02em; margin-bottom:10px; }
+h1 em { font-style:italic; color:#555; }
+.hero-sub { font-size:0.93rem; color:var(--dim); max-width:500px; line-height:1.6; }
+.hero-teller { text-align:right; flex-shrink:0; }
+.hero-tall { font-family:var(--serif); font-size:3rem; line-height:1; color:#333; }
+.hero-tall-sub { font-size:0.72rem; color:var(--dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:3px; }
+
+.progress-wrap { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 32px 6px; }
+.progress-label { font-size:0.72rem; color:var(--dim); font-weight:500; margin-bottom:6px; display:flex; justify-content:space-between; }
+.progress-bar { height:4px; background:var(--bg2); border-radius:4px; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#555,#999); border-radius:4px; transition:width .4s ease; width:0%; }
+
+.kontroller { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:16px 32px 8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.sok-wrap { position:relative; flex:1; min-width:200px; }
+.sok-ikon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--dim); pointer-events:none; }
+.sokefelt { width:100%; background:white; border:1.5px solid rgba(0,0,0,0.1); border-radius:10px; padding:9px 14px 9px 34px; font-family:var(--sans); font-size:0.86rem; color:var(--text); outline:none; transition:border-color .18s; }
+.sokefelt:focus { border-color:#999; }
+.sokefelt::placeholder { color:var(--dim); }
+.filter-gruppe { display:flex; gap:6px; flex-wrap:wrap; }
+.f-pill { padding:6px 13px; border-radius:20px; border:1.5px solid rgba(0,0,0,0.1); background:white; color:var(--dim); font-family:var(--sans); font-size:0.76rem; font-weight:500; cursor:pointer; transition:all .16s; user-select:none; }
+.f-pill:hover { border-color:#999; color:#333; }
+.f-pill.aktiv { background:#1a1a1a; border-color:#1a1a1a; color:white; }
+
+.info-rad { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:6px 32px 14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.resultat-tekst { font-size:0.76rem; color:var(--dim); font-weight:500; }
+.knapp-gruppe { display:flex; gap:8px; }
+.k-btn { padding:6px 13px; border-radius:8px; border:1.5px solid rgba(0,0,0,0.1); background:white; color:var(--dim); font-family:var(--sans); font-size:0.76rem; font-weight:500; cursor:pointer; transition:all .16s; }
+.k-btn:hover { border-color:#999; color:#333; }
+.k-btn.prim { background:#e8e8e2; border-color:#e8e8e2; color:#333; }
+
+.kort-grid { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:0 32px 80px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; }
+
+/* FLIPCARD */
+.flip-scene { height:240px; perspective:900px; }
+.flip-scene.skjult { display:none !important; }
+.flip-card { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.4,0,.2,1); cursor:pointer; }
+.flip-card.flippet { transform:rotateY(180deg); }
+.flip-card:not(.flippet):hover { filter:brightness(1.06); }
+.flip-front, .flip-back { position:absolute; inset:0; backface-visibility:hidden; border-radius:18px; padding:22px; display:flex; flex-direction:column; }
+
+.flip-front { background:var(--cf,#1a1a1a); box-shadow:var(--shadow); justify-content:space-between; }
+.front-topp { display:flex; align-items:flex-start; justify-content:space-between; }
+.front-fagchip { font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:2px 7px; color:rgba(255,255,255,0.38); max-width:130px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.front-nr { font-size:0.63rem; font-weight:700; letter-spacing:0.12em; color:rgba(255,255,255,0.25); text-transform:uppercase; }
+.front-midt { flex:1; display:flex; align-items:center; gap:14px; padding:6px 0; }
+.front-emoji { font-size:2.4rem; line-height:1; flex-shrink:0; }
+.front-info { display:flex; flex-direction:column; gap:3px; }
+.front-navn { font-family:var(--serif); font-size:1.35rem; line-height:1.15; color:white; letter-spacing:-0.01em; }
+.front-periode { font-size:0.68rem; color:rgba(255,255,255,0.42); font-family:monospace; letter-spacing:0.05em; }
+.front-bunn { display:flex; align-items:flex-end; justify-content:flex-end; }
+.front-hint { font-size:0.64rem; color:rgba(255,255,255,0.2); }
+
+.flip-back { background:white; border:1.5px solid var(--cxl,#e0e0e0); box-shadow:var(--shadow-h); transform:rotateY(180deg); gap:9px; }
+.back-topp { display:flex; align-items:center; gap:10px; }
+.back-avatar { width:38px; height:38px; border-radius:10px; background:var(--ca,#f5f5f5); display:flex; align-items:center; justify-content:center; font-size:1.25rem; flex-shrink:0; }
+.back-navn { font-family:var(--serif); font-size:1rem; line-height:1.2; }
+.back-fagchip { display:inline-block; font-size:0.62rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; color:var(--cl,#555); background:var(--cxl,#eee); padding:2px 7px; border-radius:4px; margin-top:2px; }
+.back-label { font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--cl,#666); }
+.back-bio { font-size:0.79rem; line-height:1.54; color:var(--text); flex:1; overflow:hidden; }
+.back-kjent { background:var(--ca,#f5f5f5); border-left:3px solid var(--cxl,#ddd); border-radius:0 6px 6px 0; padding:6px 10px; font-size:0.73rem; font-weight:600; color:#333; line-height:1.4; }
+
+.ingen { grid-column:1/-1; text-align:center; padding:60px 20px; display:none; }
+.ingen.vis { display:block; }
+.ingen p { color:var(--dim); }
+.flip-scene { opacity:0; transform:translateY(12px); animation:innfade .36s forwards; }
+@keyframes innfade { to { opacity:1; transform:none; } }
+
+footer { position:relative; z-index:1; border-top:1px solid rgba(0,0,0,0.08); padding:24px 32px; text-align:center; font-size:0.74rem; color:var(--dim); }
+footer a { color:#333; text-decoration:none; }
+
+@media (max-width:600px) {
+  nav,.del-nav,.hero,.progress-wrap,.kontroller,.info-rad,.kort-grid { padding-left:16px; padding-right:16px; }
+  .hero { flex-direction:column; align-items:flex-start; }
+  .flip-scene { height:230px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-lnk">⚡ SkapLab</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag.html" class="nav-lnk dim">Naturfagbegreper</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">👩‍🔬 Vitenskapspersoner · Flashcards</span>
+</nav>
+
+<div class="del-nav">
+  <a href="naturfag.html" class="del-btn">← Alle fagbegreper</a>
+  <span class="del-btn aktiv-del">👩‍🔬 Vitenskapspersoner (21)</span>
+</div>
+
+<div class="hero">
+  <div>
+    <div class="hero-tag">👩‍🔬 Naturfag · 21 personer</div>
+    <h1>Store <em>vitenskapspersoner</em></h1>
+    <p class="hero-sub">Klikk et kort for å snu det og lese om personen. Filtrer etter fagområde eller søk etter navn.</p>
+  </div>
+  <div class="hero-teller">
+    <div class="hero-tall" id="synligTall">21</div>
+    <div class="hero-tall-sub">personer synlige</div>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Åpnet: <strong id="apnetTall">0</strong> av <span id="totalTall">21</span></span>
+    <span id="prosent">0 %</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="kontroller">
+  <div class="sok-wrap">
+    <span class="sok-ikon">🔍</span>
+    <input class="sokefelt" id="sokefelt" type="text" placeholder="Søk etter navn, fagfelt eller bidrag …" oninput="filtrer()">
+  </div>
+  <div class="filter-gruppe">
+    <button class="f-pill aktiv" data-filter="alle" onclick="settFilter(this)">Alle (21)</button>
+    <button class="f-pill" data-filter="bio"  onclick="settFilter(this)">🧬 Biologi (3)</button>
+    <button class="f-pill" data-filter="fys"  onclick="settFilter(this)">⚛️ Fysikk (3)</button>
+    <button class="f-pill" data-filter="kje"  onclick="settFilter(this)">🧪 Kjemi (3)</button>
+    <button class="f-pill" data-filter="geo"  onclick="settFilter(this)">🪨 Geologi (3)</button>
+    <button class="f-pill" data-filter="ele"  onclick="settFilter(this)">⚡ Elektronikk (3)</button>
+    <button class="f-pill" data-filter="oko"  onclick="settFilter(this)">🌿 Økologi (3)</button>
+    <button class="f-pill" data-filter="tek"  onclick="settFilter(this)">🔧 Teknologi (3)</button>
+  </div>
+</div>
+
+<div class="info-rad">
+  <span class="resultat-tekst" id="resultatTekst">Viser 21 personer</span>
+  <div class="knapp-gruppe">
+    <button class="k-btn" onclick="lukkAlle()">↺ Lukk alle</button>
+    <button class="k-btn prim" onclick="blandKort()">🔀 Bland kortene</button>
+  </div>
+</div>
+
+<div class="kort-grid" id="kortGrid">
+  <div class="ingen" id="ingenTreff"><p>Ingen treff.</p></div>
+</div>
+
+<footer>
+  <a href="naturfag.html">← Tilbake til alle fagbegreper</a> &nbsp;·&nbsp; SkapLab – gratis for alle skoler
+</footer>
+
+<script>
+const KAT_NAVN = {
+  bio:'🧬 Biologi', fys:'⚛️ Fysikk', kje:'🧪 Kjemi',
+  geo:'🪨 Geologi', ele:'⚡ Elektronikk', oko:'🌿 Økologi', tek:'🔧 Teknologi',
+};
+const KAT_CSS = {
+  bio:'kat-bio', fys:'kat-fys', kje:'kat-kje',
+  geo:'kat-geo', ele:'kat-ele', oko:'kat-oko', tek:'kat-tek',
+};
+
+const PERSONER = [
+  {id:1,  kat:'bio', n:'Charles Darwin',   p:'1809–1882', e:'🦎',
+   bio:'Britisk naturalist og geolog. Reiste rundt kloden med HMS Beagle og samlet bevis for at arter endrer seg over tid. Hans bok «Om artenes opprinnelse» (1859) revolusjonerte biologi.',
+   kjent:'Teorien om naturlig seleksjon og evolusjon'},
+  {id:2,  kat:'bio', n:'Rosalind Franklin', p:'1920–1958', e:'🧬',
+   bio:'Britisk kjemiker og krystallograf. Hennes røntgendiffraksjonsbilder av DNA – særlig «Bilde 51» – var avgjørende for oppdagelsen av DNA-ets doble heliks-struktur.',
+   kjent:'Røntgenbilder av DNA som muliggjorde strukturoppdagelsen'},
+  {id:3,  kat:'bio', n:'Gregor Mendel',     p:'1822–1884', e:'🌸',
+   bio:'Østerriksk augustiner-munk og botaniker. Eksperimenter med erteblomster over 8 år avdekket grunnleggende arvemønstre. Ble ignorert i sin levetid – nå grunnlegger av genetikken.',
+   kjent:'Mendels arveregler og grunnlegging av genetikken'},
+  {id:4,  kat:'fys', n:'Isaac Newton',      p:'1643–1727', e:'🍎',
+   bio:'Britisk matematiker, fysiker og astronom. Formulerte de tre bevegelseslovene og gravitasjonsloven, oppfant kalkulus og utforsket optikk. Regnes som en av historiens mest innflytelsesrike vitenskapsmenn.',
+   kjent:'Gravitasjonsloven og de tre bevegelseslovene'},
+  {id:5,  kat:'fys', n:'Marie Curie',       p:'1867–1934', e:'⚗️',
+   bio:'Polsk-fransk fysiker og kjemiker. Første person til å vinne to Nobelpris (fysikk 1903, kjemi 1911). Oppdaget grunnstoffene polonium og radium og grunnla studiet av radioaktivitet.',
+   kjent:'Oppdagelsen av polonium og radium; radioaktivitetsforskning'},
+  {id:6,  kat:'fys', n:'Albert Einstein',   p:'1879–1955', e:'🌌',
+   bio:'Tyskfødt teoretisk fysiker. Spesiell relativitetsteori (1905), generell relativitetsteori (1915) og forklaring av fotoelektrisk effekt (Nobelpris 1921) er blant hans bidrag.',
+   kjent:'Relativitetsteorien og E = mc²'},
+  {id:7,  kat:'kje', n:'Dmitri Mendeleev',  p:'1834–1907', e:'🗂️',
+   bio:'Russisk kjemiker som systematiserte alle kjente grunnstoff i det periodiske system (1869). Forutsiktet egenskapene til ennå ikke oppdagede grunnstoff – noe som ble bekreftet.',
+   kjent:'Det periodiske system med forutsigelse av nye grunnstoff'},
+  {id:8,  kat:'kje', n:'Antoine Lavoisier', p:'1743–1794', e:'🔥',
+   bio:'Fransk kjemiker og «moderne kjemis far». Navnga oksygen og hydrogen, viste at forbrenning er en oksidasjonsprosess og formulerte loven om massebevarelse i kjemiske reaksjoner.',
+   kjent:'Massebevaring i kjemi og navngivning av oksygen'},
+  {id:9,  kat:'kje', n:'Linus Pauling',     p:'1901–1994', e:'🏆',
+   bio:'Amerikansk kjemiker. To Nobelpris: kjemi (1954) for forskning på kjemiske bindinger og kovalente strukturer, og fredspris (1962) for atomvåpenmotstand. Utviklet elektronegativitetsskalaen.',
+   kjent:'Teori om kjemiske bindinger og elektronegativitetsskalaen'},
+  {id:10, kat:'geo', n:'Alfred Wegener',    p:'1880–1930', e:'🌍',
+   bio:'Tysk meteorolog og geofysiker. Foreslo teorien om kontinentaldrift (1912) – at kontinentene en gang var ett superkontinent (Pangaea). Avvist i hans levetid; bevist 30 år etter hans død.',
+   kjent:'Teorien om kontinentaldrift og Pangaea'},
+  {id:11, kat:'geo', n:'Mary Anning',       p:'1799–1847', e:'🦕',
+   bio:'Britisk fossiljeger og palaeontolog fra Dorset. Oppdaget det første komplette ichtyosaurus-skjelettet som 12-åring og bidro med banebrytende funn til forståelsen av forhistorisk liv.',
+   kjent:'Banebrytende fossilfunn; ichtyosaurus, plesiosaurus'},
+  {id:12, kat:'geo', n:'Charles Lyell',     p:'1797–1875', e:'🪨',
+   bio:'Skotsk geolog og «moderne geologis far». Prinsippet om uniformitarisme (fortiden forklares av prosesser vi ser i dag) la grunnlaget for moderne geologi og inspirerte Darwin.',
+   kjent:'Uniformitarisme-prinsippet i geologi'},
+  {id:13, kat:'ele', n:'Nikola Tesla',      p:'1856–1943', e:'⚡',
+   bio:'Serbisk-amerikansk oppfinner og ingeniør. Utviklet vekselstrømsystemet (AC), polyfase-strøm, transformatoren, og mange patenter innen elektriske systemer. Livslang rival til Edison.',
+   kjent:'Vekselstrømsystemet (AC) og transformatoren'},
+  {id:14, kat:'ele', n:'Ada Lovelace',      p:'1815–1852', e:'💻',
+   bio:'Britisk matematiker og forfatter. Samarbeidet med Charles Babbage om den analytiske maskinen og skrev det første algoritmen beregnet for maskinell utførelse – regnes som verdens første programmerer.',
+   kjent:'Første dataprogrammet; algoritme for Babbages maskin'},
+  {id:15, kat:'ele', n:'William Shockley',  p:'1910–1989', e:'🔬',
+   bio:'Amerikansk fysiker som ledet teamet som oppfant transistoren ved Bell Labs i 1947. Nobelpris i fysikk 1956. Transistoren ble grunnlaget for all moderne elektronikk.',
+   kjent:'Medoppfinner av transistoren (1947)'},
+  {id:16, kat:'oko', n:'Rachel Carson',     p:'1907–1964', e:'🌿',
+   bio:'Amerikansk marinbiolog og forfatter. Hennes bok «Silent Spring» (1962) dokumenterte skadene fra DDT og andre pesticider på fugle- og dyrebestander og startet den moderne miljøbevegelsen.',
+   kjent:'«Silent Spring» og oppstarten av den moderne miljøbevegelsen'},
+  {id:17, kat:'oko', n:'Wangari Maathai',   p:'1940–2011', e:'🌳',
+   bio:'Kenyansk miljøaktivist og professor. Grunnla Grønt Belte-bevegelsen som plantet over 51 millioner trær i Afrika. Første afrikanske kvinne til å motta Nobels fredspris (2004).',
+   kjent:'Grønt Belte-bevegelsen; 51 millioner trær plantet'},
+  {id:18, kat:'oko', n:'E.O. Wilson',       p:'1929–2021', e:'🐜',
+   bio:'Amerikansk biolog og naturalist. «Sosiobiologiens far». Hans arbeid om biodiversitet, øygeografi og myrer la grunnlag for moderne bevaringsbiologi. Forfattet 30 bøker.',
+   kjent:'Biodiversitetsforskning og sosiobiologi'},
+  {id:19, kat:'tek', n:'James Watt',        p:'1736–1819', e:'⚙️',
+   bio:'Skotsk ingeniør og oppfinner. Forbedret dampmaskinens dampforbruk dramatisk og muliggjorde den industrielle revolusjon. Enheten for effekt (Watt) er oppkalt etter ham.',
+   kjent:'Forbedret dampmaskin som drev den industrielle revolusjon'},
+  {id:20, kat:'tek', n:'Grace Hopper',      p:'1906–1992', e:'🖥️',
+   bio:'Amerikansk informatiker og marineoffiser. Oppfant kompilatoren (1952), som lar programmerere skrive i lesbart språk i stedet for maskinkode. Medvirkende til utviklingen av COBOL.',
+   kjent:'Kompilatoren og fremme av høynivåprogrammeringsspråk'},
+  {id:21, kat:'tek', n:'Hedy Lamarr',       p:'1914–2000', e:'📡',
+   bio:'Østerriksk-amerikansk skuespiller og oppfinner. Patenterte frekvenshoppende radiosignaler (1942) for å gjøre torpedostyring vanskelig å jamme – grunnlaget for WiFi, Bluetooth og GPS.',
+   kjent:'Frekvenshoppende signaler – grunnlag for WiFi og Bluetooth'},
+];
+
+let aktivFilter = 'alle';
+let apnet = new Set();
+let rekkefølge = [...PERSONER];
+
+function byggKort() {
+  const grid = document.getElementById('kortGrid');
+  const tom  = document.getElementById('ingenTreff');
+  grid.querySelectorAll('.flip-scene').forEach(el => el.remove());
+
+  rekkefølge.forEach((p, idx) => {
+    const scene = document.createElement('div');
+    scene.className = 'flip-scene ' + (KAT_CSS[p.kat] || '');
+    scene.dataset.kat  = p.kat;
+    scene.dataset.term = (p.n + ' ' + p.bio + ' ' + p.kjent).toLowerCase();
+    scene.dataset.id   = p.id;
+    scene.style.animationDelay = idx * 28 + 'ms';
+
+    const katNavn = KAT_NAVN[p.kat] || '';
+    const flippet = apnet.has(p.id) ? ' flippet' : '';
+
+    scene.innerHTML =
+      '<div class="flip-card' + flippet + '" onclick="flipKort(this,' + p.id + ')">'
+      + '<div class="flip-front">'
+        + '<div class="front-topp">'
+          + '<span class="front-nr">Person ' + String(p.id).padStart(2,'0') + '</span>'
+          + '<span class="front-fagchip">' + katNavn + '</span>'
+        + '</div>'
+        + '<div class="front-midt">'
+          + '<div class="front-emoji">' + p.e + '</div>'
+          + '<div class="front-info">'
+            + '<div class="front-navn">' + p.n + '</div>'
+            + '<div class="front-periode">' + p.p + '</div>'
+          + '</div>'
+        + '</div>'
+        + '<div class="front-bunn"><span class="front-hint">↕ snu</span></div>'
+      + '</div>'
+      + '<div class="flip-back">'
+        + '<div class="back-topp">'
+          + '<div class="back-avatar">' + p.e + '</div>'
+          + '<div>'
+            + '<div class="back-navn">' + p.n + '</div>'
+            + '<span class="back-fagchip">' + katNavn + '</span>'
+          + '</div>'
+        + '</div>'
+        + '<div class="back-label">Biografi</div>'
+        + '<div class="back-bio">' + p.bio + '</div>'
+        + '<div class="back-kjent">' + p.kjent + '</div>'
+      + '</div>'
+      + '</div>';
+
+    grid.insertBefore(scene, tom);
+  });
+  filtrer();
+}
+
+function flipKort(card, id) {
+  card.classList.toggle('flippet');
+  if (card.classList.contains('flippet')) apnet.add(id); else apnet.delete(id);
+  oppdaterProgress();
+}
+function lukkAlle() {
+  document.querySelectorAll('.flip-card.flippet').forEach(c => c.classList.remove('flippet'));
+  apnet.clear(); oppdaterProgress();
+}
+function oppdaterProgress() {
+  const synlige = [...document.querySelectorAll('.flip-scene:not(.skjult)')];
+  const synligeIds = new Set(synlige.map(s => parseInt(s.dataset.id)));
+  const apnetSynlig = [...apnet].filter(id => synligeIds.has(id)).length;
+  const total = synlige.length;
+  document.getElementById('apnetTall').textContent = apnetSynlig;
+  document.getElementById('totalTall').textContent = total;
+  const pst = total > 0 ? Math.round(apnetSynlig / total * 100) : 0;
+  document.getElementById('prosent').textContent = pst + ' %';
+  document.getElementById('progressFill').style.width = pst + '%';
+}
+function settFilter(el) {
+  document.querySelectorAll('.f-pill').forEach(p => p.classList.remove('aktiv'));
+  el.classList.add('aktiv'); aktivFilter = el.dataset.filter; filtrer();
+}
+function filtrer() {
+  const sok = document.getElementById('sokefelt').value.toLowerCase().trim();
+  let synlig = 0;
+  document.querySelectorAll('.flip-scene').forEach(s => {
+    const ok = (aktivFilter === 'alle' || s.dataset.kat === aktivFilter)
+            && (!sok || s.dataset.term.includes(sok));
+    s.classList.toggle('skjult', !ok); if (ok) synlig++;
+  });
+  document.getElementById('synligTall').textContent = synlig;
+  document.getElementById('ingenTreff').classList.toggle('vis', synlig === 0);
+  const pill = document.querySelector('.f-pill.aktiv');
+  const kt = aktivFilter === 'alle' ? '' : ' · ' + (pill ? pill.textContent : '');
+  document.getElementById('resultatTekst').textContent =
+    'Viser ' + synlig + ' person' + (synlig !== 1 ? 'er' : '') + kt;
+  oppdaterProgress();
+}
+function blandKort() {
+  for (let i = rekkefølge.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rekkefølge[i], rekkefølge[j]] = [rekkefølge[j], rekkefølge[i]];
+  }
+  lukkAlle(); byggKort();
+}
+byggKort();
+</script>
+</body>
+</html>

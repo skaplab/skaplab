@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Teknologi Flashcards del 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f8f6; --bg2: #eeeeed;
+  --card-f: #2d0a14; --card-b: #ffffff;
+  --col: #c62828; --col-l: #ef5350; --col-xl: #ffcdd2;
+  --accent: #ffebee; --text: #1a1a1a; --dim: #666;
+  --border: rgba(198,40,40,0.14);
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'Bricolage Grotesque', sans-serif;
+  --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  --shadow-h: 0 12px 40px rgba(0,0,0,0.16);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; overflow-x: hidden; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(198,40,40,0.14) 1px, transparent 0);
+  background-size: 28px 28px; }
+nav { position: sticky; top: 0; z-index: 100; background: rgba(248,248,246,0.92); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border); padding: 13px 32px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.nav-lnk { font-family: var(--sans); font-weight: 600; font-size: 0.88rem; color: var(--col); text-decoration: none; }
+.nav-lnk:hover { opacity: 0.7; } .nav-lnk.dim { color: var(--dim); }
+.nav-sep { color: var(--dim); font-size: 0.85rem; } .nav-tittel { font-weight: 700; font-size: 0.88rem; }
+.del-nav { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 14px 32px 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.del-btn { padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--dim);
+  font-family: var(--sans); font-size: 0.78rem; font-weight: 600; text-decoration: none; transition: all .16s; display: inline-block; }
+.del-btn:hover { border-color: var(--col-l); color: var(--col); }
+.del-btn.aktiv-del { background: var(--col); border-color: var(--col); color: white; }
+.hero { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 40px 32px 20px;
+  display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; }
+.hero-tag { display: inline-flex; align-items: center; gap: 7px; background: var(--col-xl); color: var(--col);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 20px; margin-bottom: 12px; }
+h1 { font-family: var(--serif); font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.06; letter-spacing: -0.02em; margin-bottom: 10px; }
+h1 em { font-style: italic; color: var(--col); }
+.hero-sub { font-size: 0.93rem; color: var(--dim); max-width: 460px; line-height: 1.6; }
+.hero-teller { text-align: right; flex-shrink: 0; }
+.hero-tall { font-family: var(--serif); font-size: 3rem; line-height: 1; color: var(--col); }
+.hero-tall-sub { font-size: 0.72rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+.progress-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 32px 6px; }
+.progress-label { font-size: 0.72rem; color: var(--dim); font-weight: 500; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.progress-bar { height: 4px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--col), var(--col-l)); border-radius: 4px; transition: width .4s ease; width: 0%; }
+.kontroller { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 16px 32px 8px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sok-wrap { position: relative; flex: 1; min-width: 200px; }
+.sok-ikon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--dim); pointer-events: none; font-size: 0.85rem; }
+.sokefelt { width: 100%; background: white; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 9px 14px 9px 34px; font-family: var(--sans); font-size: 0.86rem; color: var(--text); outline: none; transition: border-color .18s; }
+.sokefelt:focus { border-color: var(--col-l); } .sokefelt::placeholder { color: var(--dim); }
+.filter-gruppe { display: flex; gap: 6px; flex-wrap: wrap; }
+.f-pill { padding: 6px 13px; border-radius: 20px; border: 1.5px solid var(--border); background: white; color: var(--dim);
+  font-family: var(--sans); font-size: 0.76rem; font-weight: 500; cursor: pointer; transition: all .16s; user-select: none; }
+.f-pill:hover { border-color: var(--col-l); color: var(--col); }
+.f-pill.aktiv { background: var(--col); border-color: var(--col); color: white; }
+.info-rad { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 6px 32px 14px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.resultat-tekst { font-size: 0.76rem; color: var(--dim); font-weight: 500; }
+.knapp-gruppe { display: flex; gap: 8px; }
+.k-btn { padding: 6px 13px; border-radius: 8px; border: 1.5px solid var(--border); background: white; color: var(--dim);
+  font-family: var(--sans); font-size: 0.76rem; font-weight: 500; cursor: pointer; transition: all .16s; }
+.k-btn:hover { border-color: var(--col-l); color: var(--col); }
+.k-btn.prim { background: var(--col-xl); border-color: var(--col-xl); color: var(--col); }
+.kort-grid { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 32px 80px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 16px; }
+.flip-scene { height: 210px; perspective: 900px; }
+.flip-scene.skjult { display: none !important; }
+.flip-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.4,0,.2,1); cursor: pointer; }
+.flip-card.flippet { transform: rotateY(180deg); }
+.flip-card:not(.flippet):hover { filter: brightness(1.06); }
+.flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; }
+.flip-front { background: var(--card-f); box-shadow: var(--shadow); justify-content: space-between; }
+.front-topp { display: flex; align-items: flex-start; justify-content: space-between; }
+.front-nr { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.12em; color: rgba(255,255,255,0.28); text-transform: uppercase; }
+.front-chip { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 2px 7px;
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em; color: rgba(255,255,255,0.36); text-transform: uppercase; max-width: 130px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.front-term { font-family: var(--serif); font-size: 1.5rem; line-height: 1.15; color: #ffffff; letter-spacing: -0.02em;
+  flex: 1; display: flex; align-items: center; padding: 6px 0; }
+.front-bunn { display: flex; align-items: flex-end; justify-content: space-between; }
+.front-eng { font-size: 0.68rem; color: rgba(255,255,255,0.34); font-style: italic; max-width: 82%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.front-hint { font-size: 0.64rem; color: rgba(255,255,255,0.2); flex-shrink: 0; }
+.flip-back { background: var(--card-b); border: 1.5px solid var(--col-xl); box-shadow: var(--shadow-h); transform: rotateY(180deg); gap: 8px; }
+.back-label { font-size: 0.63rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--col-l); }
+.back-def { font-size: 0.84rem; line-height: 1.56; color: var(--text); flex: 1; }
+.back-eks { background: var(--accent); border-left: 3px solid var(--col-xl); border-radius: 0 6px 6px 0;
+  padding: 6px 10px; font-size: 0.74rem; color: var(--dim); font-style: italic; line-height: 1.44; }
+.back-kat { font-size: 0.66rem; font-weight: 600; color: var(--col); margin-top: 1px; }
+.ingen { grid-column: 1/-1; text-align: center; padding: 60px 20px; display: none; }
+.ingen.vis { display: block; } .ingen p { color: var(--dim); font-size: 0.86rem; }
+.flip-scene { opacity: 0; transform: translateY(12px); animation: innfade .36s forwards; }
+@keyframes innfade { to { opacity: 1; transform: none; } }
+.pkort { background: white; border: 1.5px solid var(--col-xl); border-radius: 16px; padding: 22px;
+  display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s; }
+.pkort:hover { transform: translateY(-3px); box-shadow: var(--shadow-h); }
+.pkort-wrap { opacity: 0; transform: translateY(12px); animation: innfade .36s forwards; }
+.pkort-topp { display: flex; gap: 14px; align-items: flex-start; }
+.pkort-avatar { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; background: var(--col-xl); }
+.pkort-navn { font-family: var(--serif); font-size: 1.1rem; font-weight: 400; line-height: 1.2; margin-bottom: 2px; }
+.pkort-periode { font-size: 0.7rem; color: var(--dim); font-family: monospace; }
+.pkort-kat { display: inline-block; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--col); background: var(--col-xl); padding: 2px 8px; border-radius: 4px; margin-top: 5px; }
+.pkort-bio { font-size: 0.84rem; color: #333; line-height: 1.62; }
+.pkort-kjent { font-size: 0.78rem; font-weight: 600; color: var(--text); border-left: 3px solid var(--col-xl); padding-left: 10px; }
+footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 24px 32px; text-align: center; font-size: 0.74rem; color: var(--dim); }
+footer a { color: var(--col); text-decoration: none; }
+@media (max-width: 600px) {
+  nav, .del-nav, .hero, .progress-wrap, .kontroller, .info-rad, .kort-grid { padding-left: 16px; padding-right: 16px; }
+  .hero { flex-direction: column; align-items: flex-start; } .flip-scene { height: 200px; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-lnk">⚡ SkapLab</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag.html" class="nav-lnk dim">Naturfagbegreper</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">🔧 Teknologi · Flashcards del 1</span>
+</nav>
+<div class="del-nav">
+  <a href="naturfag.html" class="del-btn">← Alle emner</a>
+  <a href="tek_flipcards2.html" class="del-btn">Del 2 (26–25)</a>
+  <span class="del-btn aktiv-del">Del 1 (1–25)</span>
+</div>
+<div class="hero">
+  <div>
+    <div class="hero-tag">🔧 Teknologi · Begrep 1–25</div>
+    <h1>Teknologi – <em>del 1</em></h1>
+    <p class="hero-sub">Klikk et kort for å snu det og se definisjonen. Filtrer, søk eller bland kortene.</p>
+  </div>
+  <div class="hero-teller">
+    <div class="hero-tall" id="synligTall">25</div>
+    <div class="hero-tall-sub">begreper synlige</div>
+  </div>
+</div>
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span>Åpnet: <strong id="apnetTall">0</strong> av <span id="totalTall">25</span></span>
+    <span id="prosent">0 %</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+<div class="kontroller">
+  <div class="sok-wrap">
+    <span class="sok-ikon">🔍</span>
+    <input class="sokefelt" id="sokefelt" type="text" placeholder="Søk etter begrep eller definisjon …" oninput="filtrer()">
+  </div>
+  <div class="filter-gruppe">
+    <button class="f-pill aktiv" data-filter="alle" onclick="settFilter(this)">Alle (25)</button>
+    <button class="f-pill" data-filter="digital" onclick="settFilter(this)">💻 Digital (7)</button>
+    <button class="f-pill" data-filter="produksjon" onclick="settFilter(this)">🏭 Produksjon (10)</button>
+    <button class="f-pill" data-filter="ai" onclick="settFilter(this)">🤖 AI & Data (3)</button>
+    <button class="f-pill" data-filter="energi" onclick="settFilter(this)">⚡ Energi (1)</button>
+    <button class="f-pill" data-filter="kommunikasjon" onclick="settFilter(this)">📡 Kommunikasjon (1)</button>
+    <button class="f-pill" data-filter="bio" onclick="settFilter(this)">🧬 Bioteknologi (1)</button>
+    <button class="f-pill" data-filter="design" onclick="settFilter(this)">📐 Design (2)</button>
+
+  </div>
+</div>
+<div class="info-rad">
+  <span class="resultat-tekst" id="resultatTekst">Viser 25 begreper</span>
+  <div class="knapp-gruppe">
+    <button class="k-btn" onclick="lukkAlle()">↺ Lukk alle</button>
+    <button class="k-btn prim" onclick="blandKort()">🔀 Bland kortene</button>
+  </div>
+</div>
+<div class="kort-grid" id="kortGrid">
+  <div class="ingen" id="ingenTreff"><p>Ingen begreper matcher søket.</p></div>
+</div>
+<footer><a href="naturfag.html">Alle fagbegreper</a> &nbsp;·&nbsp; <a href="tek_flipcards2.html">Del 2 →</a> &nbsp;·&nbsp; SkapLab – gratis for alle skoler</footer>
+<script>
+const KAT_NAVN = {
+  'digital': '💻 Digital',
+  'produksjon': '🏭 Produksjon',
+  'ai': '🤖 AI & Data',
+  'energi': '⚡ Energi',
+  'kommunikasjon': '📡 Kommunikasjon',
+  'bio': '🧬 Bioteknologi',
+  'design': '📐 Design',
+  'transport': '🚀 Transport',
+};
+
+const BEGREPER = [
+  {nr:1,t:'Algorithm',e:'Algorithm',kat:'digital',d:'En endelig sekvens av veldefinerte instruksjoner som løser et problem eller utfører en beregning.',x:'Googles søkealgoritme rangerer milliarder av nettsider på millisekunder.'},
+  {nr:2,t:'3D-printing',e:'3D printing / Additive manufacturing',kat:'produksjon',d:'Fremstilling av tredimensjonale gjenstander ved å legge materiale lag for lag etter en digital modell.',x:'FDM-printing smelter plastfilament; SLA bruker harpiksherding via UV-lys.'},
+  {nr:3,t:'Kunstig intelligens',e:'Artificial intelligence',kat:'ai',d:'Datasystemer som kan utføre oppgaver som vanligvis krever menneskelig intelligens: gjenkjenning, beslutning, læring.',x:'ChatGPT, selvkjørende biler og ansiktsgjenkjenning er AI-applikasjoner.'},
+  {nr:4,t:'Maskinlæring',e:'Machine learning',kat:'ai',d:'En gren av AI der systemer lærer fra data og forbedrer sin ytelse uten eksplisitt programmering.',x:'Spam-filteret i e-posten lærer av hvilke meldinger du markerer som spam.'},
+  {nr:5,t:'Robotikk',e:'Robotics',kat:'produksjon',d:'Felt som kombinerer maskinteknologi, elektronikk og programmering for å designe og bygge roboter.',x:'Industriroboter sveiser og monterer biler med stor presisjon og hastighet.'},
+  {nr:6,t:'Internett of Things',e:'Internet of Things (IoT)',kat:'digital',d:'Nettverk av fysiske enheter med sensorer, programvare og nettverkstilkobling som samler og deler data.',x:'Smarthus-enheter, smarte strømmålere og koblete biler er IoT-eksempler.'},
+  {nr:7,t:'Fornybar energi',e:'Renewable energy',kat:'energi',d:'Energi fra kilder som naturlig fornyes på menneskelig tidsskala: sol, vind, vann, biomasse og geotermisk.',x:'Norge produserer over 90 % av sin elektrisitet fra vannkraft.'},
+  {nr:8,t:'Biomedisin',e:'Biomedical engineering',kat:'bio',d:'Anvendelse av ingeniørprinsipper og teknologi på biologi og medisin for å utvikle diagnostikk og behandling.',x:'Pacemakere, MR-maskiner og protetiske lemmer er biomedisinsk teknologi.'},
+  {nr:9,t:'Nanoteknologi',e:'Nanotechnology',kat:'produksjon',d:'Manipulering av materie på atomar og molekylær skala (1–100 nm) for å skape nye materialer og enheter.',x:'Karbonnano\xadrør er sterkere enn stål og tynnere enn et menneskehår.'},
+  {nr:10,t:'Kryptering',e:'Encryption',kat:'digital',d:'Omdanning av lesbar data til ulesbar form ved hjelp av en algoritme og nøkkel for å beskytte informasjon.',x:'HTTPS krypterer all trafikk mellom nettleser og webserver.'},
+  {nr:11,t:'Blokkjede',e:'Blockchain',kat:'digital',d:'En desentralisert, distribuert registre av transaksjoner som er kryptografisk koblet og nesten umulig å endre.',x:'Bitcoin bruker blokkjede for å registrere alle transaksjoner uten en sentral bank.'},
+  {nr:12,t:'Skylagring',e:'Cloud storage',kat:'digital',d:'Lagring av digitale data på fjerne servere som er tilgjengelige via internett, istedenfor lokal harddisk.',x:'Google Drive, Dropbox og iCloud er skylagringstjenester.'},
+  {nr:13,t:'CAD',e:'Computer-Aided Design',kat:'produksjon',d:'Bruk av dataprogrammer til å lage, endre, analysere og optimere tekniske tegninger og 3D-modeller.',x:'Ingeniører bruker AutoCAD og SolidWorks til produktdesign.'},
+  {nr:14,t:'CNC',e:'Computer Numerical Control',kat:'produksjon',d:'En produksjonsmetode der maskinverktøy styres av en datamaskin etter en digital modell – presis og repeterbar.',x:'CNC-fresing brukes til å lage presisjonsdeler av metall og plast.'},
+  {nr:15,t:'Material\xadvitenskap',e:'Materials science',kat:'produksjon',d:'Tverrfaglig felt som studerer struktur, egenskaper, prosessering og ytelse av materialer.',x:'Utvikling av supraledende materialer kan revolusjonere energioverføring.'},
+  {nr:16,t:'Bærekraftig design',e:'Sustainable design',kat:'design',d:'Design som minimerer negativ miljøpåvirkning gjennom valg av materialer, energieffektivitet og levetid.',x:'Cradle-to-cradle-design sikrer at alle materialer kan resirkuleres.'},
+  {nr:17,t:'Prototype',e:'Prototype',kat:'produksjon',d:'En tidlig modell av et produkt laget for å teste konsept, form, funksjoner og brukbarhet.',x:'Rask prototyping med 3D-printing reduserer tid fra idé til testprodukt.'},
+  {nr:18,t:'Ingeniørsyklusen',e:'Engineering design cycle',kat:'design',d:'Iterativ prosess: Identifiser problem → forskning → design → prototype → test → evaluer → forbedre.',x:'SpaceX itererer raskt gjennom ingeniørsyklusen med raske testoppskytinger.'},
+  {nr:19,t:'Bærer\xadfrekvens',e:'Carrier frequency',kat:'kommunikasjon',d:'En fast frekvens som moduleres for å bære et informasjonssignal i trådløs kommunikasjon.',x:'FM-radio er frekvens-modulert rundt bærere i 87,5–108 MHz-båndet.'},
+  {nr:20,t:'Hydraulikk',e:'Hydraulics',kat:'produksjon',d:'Bruk av flytende væske under trykk til å overføre kraft og energi i maskiner og systemer.',x:'Gravemaskiner, hydrauliske presser og bremsesystemer bruker hydraulikk.'},
+  {nr:21,t:'Pneumatikk',e:'Pneumatics',kat:'produksjon',d:'Bruk av trykkluft til å overføre kraft og bevegelse i maskiner og automatiseringssystemer.',x:'Pneumatiske sylindre brukes til å åpne og lukke ventiler i industrien.'},
+  {nr:22,t:'Feedback\xadkontroll',e:'Feedback control',kat:'digital',d:'System der utgangssignalet måles og sammenlignes med ønsket verdi for å minimere avvik (feil).',x:'Termostat er et enkelt feedback-kontrollsystem.'},
+  {nr:23,t:'Sensorfusjon',e:'Sensor fusion',kat:'ai',d:'Kombinering av data fra flere sensorer for å oppnå mer nøyaktig og pålitelig informasjon enn fra én sensor alene.',x:'Selvkjørende biler fusjonerer kamera, LiDAR og radar for situasjonsbevissthet.'},
+  {nr:24,t:'Additive manufacturing',e:'Additive manufacturing',kat:'produksjon',d:'Samlebetegnelse for fremstillingsprosesser der materiale tilføres lag for lag, inkludert 3D-printing.',x:'Medisinsk kirurgi bruker AM til å printe pasient-spesifikke implantater.'},
+  {nr:25,t:'Digital tvilling',e:'Digital twin',kat:'digital',d:'En virtuell modell av et fysisk objekt eller system som oppdateres i sanntid fra sensor-data.',x:'Rolls-Royce bruker digitale tvillinger av flymotorer for prediktivt vedlikehold.'},
+];
+
+
+let aktivFilter = 'alle';
+let apnet = new Set();
+let rekkefølge = [...BEGREPER];
+
+function byggKort() {
+  const grid = document.getElementById('kortGrid');
+  const tom  = document.getElementById('ingenTreff');
+  grid.querySelectorAll('.flip-scene').forEach(el => el.remove());
+  rekkefølge.forEach((b, idx) => {
+    const scene = document.createElement('div');
+    scene.className = 'flip-scene';
+    scene.dataset.kat  = b.kat;
+    scene.dataset.term = b.t.toLowerCase();
+    scene.dataset.def  = b.d.toLowerCase();
+    scene.dataset.id   = b.nr;
+    scene.style.animationDelay = idx * 28 + 'ms';
+    const nr = String(b.nr).padStart(2,'0');
+    const katNavn = KAT_NAVN[b.kat] || b.kat;
+    scene.innerHTML = '<div class="flip-card' + (apnet.has(b.nr) ? ' flippet' : '') + '" onclick="flipKort(this,' + b.nr + ')">'
+      + '<div class="flip-front">'
+      + '<div class="front-topp"><span class="front-nr">Begrep ' + nr + '</span><span class="front-chip">' + katNavn + '</span></div>'
+      + '<div class="front-term">' + b.t + '</div>'
+      + '<div class="front-bunn"><span class="front-eng">' + b.e + '</span><span class="front-hint">↕ snu</span></div>'
+      + '</div>'
+      + '<div class="flip-back">'
+      + '<div class="back-label">Definisjon</div>'
+      + '<div class="back-def">' + b.d + '</div>'
+      + '<div class="back-eks">↳ ' + b.x + '</div>'
+      + '<div class="back-kat">' + katNavn + '</div>'
+      + '</div></div>';
+    grid.insertBefore(scene, tom);
+  });
+  filtrer();
+}
+
+function flipKort(card, id) {
+  card.classList.toggle('flippet');
+  if (card.classList.contains('flippet')) apnet.add(id); else apnet.delete(id);
+  oppdaterProgress();
+}
+function lukkAlle() {
+  document.querySelectorAll('.flip-card.flippet').forEach(c => c.classList.remove('flippet'));
+  apnet.clear(); oppdaterProgress();
+}
+function oppdaterProgress() {
+  const synlige = [...document.querySelectorAll('.flip-scene:not(.skjult)')];
+  const synligeIds = new Set(synlige.map(s => parseInt(s.dataset.id)));
+  const apnetSynlig = [...apnet].filter(id => synligeIds.has(id)).length;
+  const total = synlige.length;
+  document.getElementById('apnetTall').textContent = apnetSynlig;
+  document.getElementById('totalTall').textContent = total;
+  const pst = total > 0 ? Math.round(apnetSynlig / total * 100) : 0;
+  document.getElementById('prosent').textContent = pst + ' %';
+  document.getElementById('progressFill').style.width = pst + '%';
+}
+function settFilter(el) {
+  document.querySelectorAll('.f-pill').forEach(p => p.classList.remove('aktiv'));
+  el.classList.add('aktiv'); aktivFilter = el.dataset.filter; filtrer();
+}
+function filtrer() {
+  const sok = document.getElementById('sokefelt').value.toLowerCase().trim();
+  let synlig = 0;
+  document.querySelectorAll('.flip-scene').forEach(s => {
+    const ok = (aktivFilter === 'alle' || s.dataset.kat === aktivFilter)
+            && (!sok || s.dataset.term.includes(sok) || s.dataset.def.includes(sok));
+    s.classList.toggle('skjult', !ok); if (ok) synlig++;
+  });
+  document.getElementById('synligTall').textContent = synlig;
+  document.getElementById('ingenTreff').classList.toggle('vis', synlig === 0);
+  const pill = document.querySelector('.f-pill.aktiv');
+  const kt = aktivFilter === 'alle' ? '' : ' · ' + (pill ? pill.textContent : '');
+  document.getElementById('resultatTekst').textContent = 'Viser ' + synlig + ' begrep' + (synlig !== 1 ? 'er' : '') + kt;
+  oppdaterProgress();
+}
+function blandKort() {
+  for (let i = rekkefølge.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rekkefølge[i], rekkefølge[j]] = [rekkefølge[j], rekkefølge[i]];
+  }
+  lukkAlle(); byggKort();
+}
+byggKort();
+
+</script>
+</body>
+</html>
