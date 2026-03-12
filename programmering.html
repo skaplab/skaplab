@@ -1,0 +1,4255 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Programmering – SkapLab</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --space: #0a0e1a;
+      --deep: #0d1b3e;
+      --mid: #1a2f6b;
+      --accent1: #00e5ff;
+      --accent2: #ff6b35;
+      --accent3: #ffe135;
+      --accent4: #7fff6e;
+      --accent5: #c77dff;
+      --accent6: #ff4d8d;
+      --text: #e8f4fd;
+      --textdim: #8bafc8;
+      --card: rgba(255,255,255,0.06);
+      --cardborder: rgba(0,229,255,0.18);
+      --radius: 18px;
+      --font-head: 'Fredoka One', cursive;
+      --font-body: 'Nunito', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--space);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,14,26,0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(0,229,255,0.12);
+      padding: 0 24px;
+      display: flex; align-items: center; gap: 12px;
+      height: 56px; overflow-x: auto;
+    }
+    .nav-logo { font-family: var(--font-head); font-size: 1.3rem; color: var(--accent1); margin-right: 10px; white-space: nowrap; text-decoration: none; }
+    nav a { color: var(--textdim); text-decoration: none; font-size: 0.88rem; font-weight: 700; white-space: nowrap; padding: 4px 8px; border-radius: 8px; transition: all .2s; }
+    nav a:hover { color: var(--text); background: rgba(0,229,255,0.08); }
+    nav a.active { color: var(--accent5); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      padding: 80px 24px 70px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 30% 40%, rgba(199,125,255,0.13) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 75% 60%, rgba(0,229,255,0.10) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-label {
+      display: inline-block;
+      background: rgba(199,125,255,0.15);
+      color: var(--accent5);
+      border: 1px solid rgba(199,125,255,0.3);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: var(--font-head);
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+    .hero h1 span { color: var(--accent5); }
+    .hero p {
+      max-width: 620px;
+      margin: 0 auto 32px;
+      color: var(--textdim);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    /* kode-badges */
+    .badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 0.82rem; font-weight: 700;
+      color: var(--textdim);
+    }
+    .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent4); }
+    .badge .dot.py { background: #4da8ff; }
+    .badge .dot.mu { background: var(--accent3); }
+
+    /* ── SEKSJONER ── */
+    .section {
+      padding: 72px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: clamp(1.7rem, 4vw, 2.4rem);
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .section-sub {
+      color: var(--textdim);
+      font-size: 0.97rem;
+      margin-bottom: 40px;
+      font-weight: 600;
+      max-width: 540px;
+      line-height: 1.6;
+    }
+
+    /* ── PROSJEKTKORT ── */
+    .prosjekt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px;
+    }
+    .prosjekt-kort {
+      background: var(--card);
+      border: 1px solid var(--cardborder);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      transition: transform .25s, border-color .25s;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .prosjekt-kort::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .prosjekt-kort.farge-lilla::before { background: var(--accent5); }
+    .prosjekt-kort.farge-cyan::before  { background: var(--accent1); }
+    .prosjekt-kort.farge-oransj::before{ background: var(--accent2); }
+    .prosjekt-kort.farge-gul::before   { background: var(--accent3); }
+    .prosjekt-kort:hover { transform: translateY(-4px); border-color: rgba(0,229,255,0.35); }
+
+    .prosjekt-ikon { font-size: 2rem; line-height: 1; }
+    .prosjekt-tittel { font-family: var(--font-head); font-size: 1.2rem; color: var(--text); }
+    .prosjekt-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.75rem; font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 4px;
+    }
+    .tag-pygame  { background: rgba(0,229,255,0.12); color: var(--accent1); }
+    .tag-tekst   { background: rgba(199,125,255,0.12); color: var(--accent5); }
+    .tag-intro   { background: rgba(127,255,110,0.12); color: var(--accent4); }
+    .tag-utvidelse { background: rgba(255,107,53,0.12); color: var(--accent2); }
+    .tag-html  { background: rgba(46,160,67,0.15); color: #4caf50; border: 1px solid rgba(46,160,67,0.3); }
+    .tag-kreativ { background: rgba(255,225,53,0.12); color: var(--accent3); }
+
+    .prosjekt-kort p { font-size: 0.875rem; color: var(--textdim); line-height: 1.6; }
+
+    .kort-meta {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      font-size: 0.78rem; font-weight: 700;
+      color: var(--textdim);
+      margin-top: 2px;
+    }
+    .kort-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* nedtrekk */
+    .ned-toggle {
+      width: 100%;
+      margin-top: auto;
+      padding: 8px 12px;
+      background: rgba(0,229,255,0.06);
+      border: 1px solid rgba(0,229,255,0.18);
+      border-radius: 10px;
+      color: var(--accent1);
+      font-family: var(--font-body);
+      font-size: 0.83rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: background .2s;
+    }
+    .ned-toggle:hover { background: rgba(0,229,255,0.12); }
+    .ned-toggle.open { border-color: var(--accent1); }
+
+    .ned-innhold {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 4px;
+    }
+    .ned-innhold.open { display: flex; }
+    .ned-innhold h4 {
+      font-family: var(--font-head);
+      font-size: 0.92rem;
+      color: var(--accent1);
+      margin-bottom: 4px;
+    }
+    .ned-innhold ul {
+      list-style: none; padding: 0;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .ned-innhold li {
+      font-size: 0.84rem;
+      color: var(--textdim);
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.55;
+    }
+    .ned-innhold li::before {
+      content: '→';
+      position: absolute; left: 0;
+      color: var(--accent4);
+      font-size: 0.8rem;
+    }
+    .ned-innhold .kode-boks {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: var(--accent4);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .ned-innhold .kode-boks .kom { color: var(--textdim); }
+    .ned-innhold .kode-boks .kw  { color: var(--accent5); }
+    .ned-innhold .kode-boks .str { color: var(--accent3); }
+    .ned-innhold .kode-boks .fn  { color: var(--accent1); }
+
+    /* ── TRINNMODELL ── */
+    .trinn-rad {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .trinn-boks {
+      background: var(--card);
+      border: 1px solid var(--cardborder);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .trinn-nr {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      color: rgba(199,125,255,0.25);
+      line-height: 1;
+    }
+    .trinn-tittel { font-family: var(--font-head); font-size: 1rem; color: var(--accent5); }
+    .trinn-boks p { font-size: 0.82rem; color: var(--textdim); line-height: 1.5; }
+
+    /* ── KONSEPTRAD ── */
+    .konsept-rad {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .konsept-brikke {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: var(--textdim);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .konsept-brikke span { font-size: 1rem; }
+
+    /* ── VERKTØY-BOKS ── */
+    .verktoy-rad {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+      margin-top: 36px;
+    }
+    .verktoy-kort {
+      background: var(--card);
+      border: 1px solid rgba(255,225,53,0.2);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .verktoy-kort h3 { font-family: var(--font-head); font-size: 1.05rem; color: var(--accent3); }
+    .verktoy-kort p { font-size: 0.84rem; color: var(--textdim); line-height: 1.55; }
+    .verktoy-kort a {
+      display: inline-block;
+      margin-top: auto;
+      color: var(--accent3);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .verktoy-kort a:hover { text-decoration: underline; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin: 0 24px;
+    }
+
+    /* ── TIPS-BOKS ── */
+    .tips-boks {
+      background: rgba(127,255,110,0.06);
+      border: 1px solid rgba(127,255,110,0.2);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-top: 40px;
+      display: flex; gap: 16px; align-items: flex-start;
+    }
+    .tips-boks .tips-ikon { font-size: 1.8rem; flex-shrink: 0; }
+    .tips-boks h4 { font-family: var(--font-head); font-size: 1rem; color: var(--accent4); margin-bottom: 6px; }
+    .tips-boks p { font-size: 0.85rem; color: var(--textdim); line-height: 1.6; }
+
+
+    /* ── LÆRERSEKSJON ── */
+    .laerer-seksjon {
+      margin-top: 40px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(199,125,255,0.18);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .laerer-header {
+      display: flex; align-items: center; gap: 16px;
+      background: rgba(199,125,255,0.08);
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(199,125,255,0.15);
+    }
+    .laerer-ikon { font-size: 2rem; flex-shrink: 0; }
+    .laerer-header h3 {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      color: var(--accent5);
+      margin-bottom: 4px;
+    }
+    .laerer-header p { font-size: 0.84rem; color: var(--textdim); }
+    .laerer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0;
+    }
+    .laerer-kort {
+      padding: 20px 22px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .laerer-kort:last-child { border-right: none; }
+    .laerer-kort h4 {
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      color: var(--accent5);
+      margin-bottom: 10px;
+    }
+    .laerer-kort ol, .laerer-kort ul {
+      padding-left: 18px;
+      font-size: 0.84rem;
+      color: var(--textdim);
+      line-height: 1.7;
+    }
+    .laerer-kort li { margin-bottom: 3px; }
+    .laerer-kort strong { color: var(--text); }
+    .laerer-info-rad {
+      display: flex; flex-wrap: wrap; gap: 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .laerer-info-boks {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 16px 22px;
+      flex: 1; min-width: 260px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.84rem;
+    }
+    .laerer-info-boks:last-child { border-right: none; }
+    .laerer-info-boks > span { font-size: 1.4rem; flex-shrink: 0; }
+    .laerer-info-boks strong { display: block; color: var(--text); margin-bottom: 4px; font-size: 0.88rem; }
+    .laerer-info-boks p { color: var(--textdim); line-height: 1.6; }
+    .laerer-info-boks.advarsel { background: rgba(220,50,50,0.06); border-top: 2px solid rgba(220,50,50,0.3); }
+    .laerer-info-boks.advarsel strong { color: #ff8080; }
+    .laerer-info-boks.tips { background: rgba(127,255,110,0.04); }
+
+    /* ── OVERSIKTSTABELL ── */
+    .oversikt-seksjon {
+      max-width: 1100px;
+      margin: 36px auto 0;
+      padding: 0 24px;
+    }
+    .oversikt-toggle {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.9rem; font-weight: 800;
+      color: var(--textdim);
+      width: 100%; text-align: left;
+      transition: all .2s;
+    }
+    .oversikt-toggle:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+    .oversikt-toggle .pil { margin-left: auto; transition: transform .3s; }
+    .oversikt-toggle.open .pil { transform: rotate(180deg); }
+    .oversikt-innhold { display: none; margin-top: 16px; overflow-x: auto; }
+    .oversikt-innhold.open { display: block; }
+    .oversikt-tabell {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    .oversikt-tabell th {
+      background: rgba(199,125,255,0.12);
+      color: var(--accent5);
+      font-family: var(--font-head);
+      font-size: 0.82rem;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 2px solid rgba(199,125,255,0.2);
+      white-space: nowrap;
+    }
+    .oversikt-tabell td {
+      padding: 9px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--textdim);
+      vertical-align: middle;
+    }
+    .oversikt-tabell tr:hover td { background: rgba(255,255,255,0.03); }
+    .oversikt-tabell td:first-child { color: var(--text); font-weight: 700; }
+    .kat-badge {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+
+    /* ── SCRATCH-BLOKKER ── */
+    .sb-rad { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+    .sb {
+      display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 6px; padding: 5px 10px 5px 12px;
+      font-size: 0.78rem; font-weight: 700; font-family: var(--font-body);
+      color: #fff; white-space: nowrap; width: fit-content;
+    }
+    .sb-innrykk { margin-left: 18px; }
+    .sb-hendelse  { background: #cc9900; }
+    .sb-bevegelse { background: #4c97ff; }
+    .sb-kontroll  { background: #cc7a00; }
+    .sb-utseende  { background: #9966ff; }
+    .sb-lyd       { background: #cf63cf; }
+    .sb-sanse     { background: #5cb1d6; }
+    .sb-variabel  { background: #e07000; }
+    .sb-operator  { background: #59c059; }
+    .sb-gap {
+      display: inline-block; background: rgba(255,255,255,0.25);
+      border-radius: 3px; padding: 1px 6px; margin: 0 2px; font-size: 0.75rem;
+    }
+
+    /* ── REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity .5s, transform .5s; }
+    .reveal.vis { opacity: 1; transform: none; }
+
+
+    /* ── SOeK OG FILTER ── */
+    .sok-omraade {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 0;
+    }
+    .sok-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .sok-ikon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem; pointer-events: none;
+    }
+    .sokefelt {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 14px;
+      padding: 13px 44px 13px 42px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      transition: border-color .2s, background .2s;
+      outline: none;
+    }
+    .sokefelt:focus {
+      border-color: rgba(0,229,255,0.5);
+      background: rgba(255,255,255,0.09);
+    }
+    .sokefelt::placeholder { color: var(--textdim); font-weight: 400; }
+    .sok-clear {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--textdim); font-size: 1rem;
+      cursor: pointer; padding: 4px 8px;
+    }
+    .sok-clear:hover { color: var(--text); }
+    .filter-rad {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .filter-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-family: var(--font-body);
+      font-size: 0.82rem; font-weight: 800;
+      color: var(--textdim);
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .filter-btn:hover {
+      background: rgba(0,229,255,0.08);
+      color: var(--text);
+    }
+    .filter-btn.aktiv {
+      background: rgba(0,229,255,0.15);
+      border-color: rgba(0,229,255,0.4);
+      color: var(--accent1);
+    }
+    .filter-info {
+      font-size: 0.82rem; color: var(--textdim);
+      padding: 4px 0 8px;
+    }
+    .skjult { display: none !important; }
+    /* Skjul divider-linjer etter en skjult seksjon */
+    .section.skjult + hr.divider { display: none !important; }
+    hr.divider.skjult { display: none !important; }
+
+    /* ── VERKTOeY-GRUPPER ── */
+    .verktoy-gruppe { margin-bottom: 40px; }
+    .verktoy-gruppe-tittel {
+      font-family: var(--font-head);
+      font-size: 1.15rem;
+      color: var(--accent3);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,225,53,0.15);
+    }
+    .verktoy-gruppe-tittel span { font-size: 1.3rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 24px 28px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin-top: 60px;
+    }
+    .footer-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    @media (max-width: 800px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+    .footer-logo { font-family: var(--font-head); font-size: 1.4rem; color: var(--accent1); margin-bottom: 10px; }
+    .footer-ingress { font-size: 0.83rem; color: var(--textdim); line-height: 1.6; }
+    .footer-overskrift {
+      font-family: var(--font-head); font-size: 0.85rem; color: var(--accent3);
+      margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .footer-lenker { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .footer-lenker a { color: var(--textdim); text-decoration: none; font-size: 0.84rem; transition: color .15s; }
+    .footer-lenker a:hover { color: var(--text); }
+    .footer-bunn {
+      max-width: 1100px; margin: 20px auto 0;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 10px; font-size: 0.8rem; color: var(--textdim);
+    }
+    .footer-bunn a { color: var(--accent1); text-decoration: none; }
+    .footer-bunn a:hover { text-decoration: underline; }
+
+    /* ── PDF-KNAPPER ── */
+    .pdf-rad {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+    .pdf-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 13px;
+      border-radius: 9px;
+      font-family: var(--font-body);
+      font-size: 0.78rem; font-weight: 800;
+      text-decoration: none;
+      transition: transform .15s, filter .15s;
+    }
+    .pdf-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+    .pdf-btn.elev {
+      background: rgba(0,229,255,0.13);
+      border: 1px solid rgba(0,229,255,0.35);
+      color: var(--accent1);
+    }
+    .pdf-btn.losning {
+      background: rgba(127,255,110,0.10);
+      border: 1px solid rgba(127,255,110,0.3);
+      color: var(--accent4);
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">⚡ SkapLab</a>
+  <a href="matte.html">🔢 Matte</a>
+  <a href="geometri.html">📐 Geometri</a>
+  <a href="statistikk.html">📊 Statistikk</a>
+  <a href="grafer.html">📈 Grafer</a>
+  <a href="sannsynlighet.html">🎲 Sannsynlighet</a>
+  <a href="forsok.html">🔬 Forsøk</a>
+  <a href="skaperverksted.html">🛠️ Skaperverksted</a>
+  <a href="programmering.html" class="active">💻 Programmering</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label">💻 Programmering og digital skapning</div>
+  <h1>Frå kode til <span>verkelege objekt</span></h1>
+  <p>
+    Ti prosjekter – fra Scratch og Python til micro:bit, Arduino og 3D-printing. Ingen fast rekkefølge – velg det som passer ditt trinn og dine elever.
+  </p>
+  <div class="badge-row">
+    <div class="badge"><div class="dot" style="background:#4da8ff"></div> Python</div>
+    <div class="badge"><div class="dot" style="background:#ffab19"></div> Scratch</div>
+    <div class="badge"><div class="dot" style="background:#c0003c"></div> micro:bit</div>
+    <div class="badge"><div class="dot" style="background:#00796b"></div> Arduino</div>
+    <div class="badge"><div class="dot" style="background:#4527a0"></div> 3D-printing</div>
+    <div class="badge"><div class="dot" style="background:#4caf50"></div> HTML</div>
+    <div class="badge"><div class="dot" style="background:var(--accent6)"></div> 4.–10. trinn</div>
+  </div>
+</section>
+
+
+<!-- SOeK OG FILTER -->
+<div class="sok-omraade">
+  <div class="sok-wrapper">
+    <span class="sok-ikon">🔍</span>
+    <input
+      type="text"
+      id="sokefelt"
+      class="sokefelt"
+      placeholder="Søk etter prosjekt, konsept eller verktøy …"
+      oninput="filtrer()"
+    />
+    <button class="sok-clear" id="sokClear" onclick="clearSok()" style="display:none">✕</button>
+  </div>
+  <div class="filter-rad" id="filterRad">
+    <button class="filter-btn aktiv" data-filter="alle" onclick="settFilter(this)">🌐 Alle</button>
+    <button class="filter-btn" data-filter="python" onclick="settFilter(this)">🐍 Python</button>
+    <button class="filter-btn" data-filter="scratch" onclick="settFilter(this)">🐱 Scratch</button>
+    <button class="filter-btn" data-filter="microbit" onclick="settFilter(this)">🔴 micro:bit</button>
+    <button class="filter-btn" data-filter="arduino" onclick="settFilter(this)">🔵 Arduino</button>
+    <button class="filter-btn" data-filter="3dprint" onclick="settFilter(this)">🟣 3D-print</button>
+    <button class="filter-btn" data-filter="html" onclick="settFilter(this)">🌐 HTML/Web</button>
+  </div>
+  <div class="filter-info" id="filterInfo" style="display:none"></div>
+</div>
+
+<!-- OVERSIKTSTABELL -->
+<div class="oversikt-seksjon">
+  <button class="oversikt-toggle" onclick="toggleOversikt(this)">
+    📋 Vis oversikt over alle prosjekter
+    <span class="pil">▼</span>
+  </button>
+  <div class="oversikt-innhold">
+    <table class="oversikt-tabell">
+      <thead>
+        <tr>
+          <th>Prosjekt</th>
+          <th>Kategori</th>
+          <th>Trinn</th>
+          <th>Tid</th>
+          <th>Antall deler</th>
+          <th>Hva elevene lager</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>🎨 Tegn med kode</td>
+          <td><span class="kat-badge" style="background:rgba(0,229,255,0.15);color:#00e5ff">Python</span></td>
+          <td>6.–9. trinn</td>
+          <td>5 × 45 min</td>
+          <td>5 oppgaver</td>
+          <td>Animert scene med pygame – figurer, løkker, tastatur og kreativt prosjekt</td>
+        </tr>
+        <tr>
+          <td>🗡️ Tekstbasert eventyrspill</td>
+          <td><span class="kat-badge" style="background:rgba(0,229,255,0.15);color:#00e5ff">Python</span></td>
+          <td>6.–9. trinn</td>
+          <td>5 × 40 min</td>
+          <td>5 oppgaver</td>
+          <td>Terminalspill med valg, inventar, kamp og funksjoner</td>
+        </tr>
+        <tr>
+          <td>🪙 Myntkast og sannsynlighet</td>
+          <td><span class="kat-badge" style="background:rgba(0,229,255,0.15);color:#00e5ff">Python</span></td>
+          <td>6.–8. trinn</td>
+          <td>3 × 30 min</td>
+          <td>3 oppgaver</td>
+          <td>Simulering koblet til matematikk – store talls lov</td>
+        </tr>
+        <tr>
+          <td>🎲 Terningkast og statistikk</td>
+          <td><span class="kat-badge" style="background:rgba(0,229,255,0.15);color:#00e5ff">Python</span></td>
+          <td>7.–9. trinn</td>
+          <td>3 × 40 min</td>
+          <td>3 oppgaver</td>
+          <td>Sumfordeling, analyse og terningspill med Yatzy-logikk</td>
+        </tr>
+        <tr>
+          <td>🧮 Mattetrener med while-løkke</td>
+          <td><span class="kat-badge" style="background:rgba(0,229,255,0.15);color:#00e5ff">Python</span></td>
+          <td>7.–10. trinn</td>
+          <td>3 × 40 min</td>
+          <td>3 oppgaver</td>
+          <td>Feilsøking og bygging av egen treningsapp med while-løkke</td>
+        </tr>
+        <tr>
+          <td>🌐 Lag din første nettside</td>
+          <td><span class="kat-badge" style="background:rgba(76,175,80,0.18);color:#81c784">HTML</span></td>
+          <td>5.–10. trinn</td>
+          <td>6 × 25 min</td>
+          <td>6 oppgaver</td>
+          <td>Et komplett nettsted med to sider, bilder, lister og lenker</td>
+        </tr>
+        <tr>
+          <td>🐱 Lag spill med Scratch</td>
+          <td><span class="kat-badge" style="background:rgba(255,171,25,0.18);color:#ffab19">Scratch</span></td>
+          <td>4.–8. trinn</td>
+          <td>6 × 30 min</td>
+          <td>6 oppgaver</td>
+          <td>Et komplett spill med bevegelse, poeng, kloner og game over</td>
+        </tr>
+        <tr>
+          <td>🔴 Programmering med micro:bit</td>
+          <td><span class="kat-badge" style="background:rgba(192,0,60,0.18);color:#f06292">micro:bit</span></td>
+          <td>5.–10. trinn</td>
+          <td>6 × 35 min</td>
+          <td>6 oppgaver</td>
+          <td>LED, akselerometer, radio, servomotor og elektrisk krets</td>
+        </tr>
+        <tr>
+          <td>🔵 Kom i gang med Arduino</td>
+          <td><span class="kat-badge" style="background:rgba(0,121,107,0.2);color:#4db6ac">Arduino</span></td>
+          <td>8.–10. trinn</td>
+          <td>6 × 40 min</td>
+          <td>6 oppgaver</td>
+          <td>Trafikklys, temperatursensor, ultralydsensor og servomotor</td>
+        </tr>
+        <tr>
+          <td>🟣 3D-printing med Tinkercad</td>
+          <td><span class="kat-badge" style="background:rgba(69,39,160,0.2);color:#b39ddb">3D-print</span></td>
+          <td>5.–10. trinn</td>
+          <td>4 × 60 min</td>
+          <td>6 oppgaver</td>
+          <td>Eget 3D-designet objekt – fra idé til ferdig printet produkt</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 1: PYGAME ── -->
+<section class="section">
+  <div class="section-title">🎨 Tegn med kode</div>
+  <div class="section-sub">Elevene lager en animert scene med pygame. De lærer koordinatsystemet, farger, geometriske figurer og til slutt animasjon – uten å se fasitskoden.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>📦</span> import</div>
+    <div class="konsept-brikke"><span>🎨</span> RGB-farger</div>
+    <div class="konsept-brikke"><span>📐</span> Koordinatsystem</div>
+    <div class="konsept-brikke"><span>🔵</span> Sirkler, rektangler, polygon</div>
+    <div class="konsept-brikke"><span>🎬</span> Animasjon (frame for frame)</div>
+    <div class="konsept-brikke"><span>⏱️</span> FPS og klokke</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Sett opp vinduet</div>
+      <p>Importer pygame, start det og lag et farget vindu med en tittel. Hva skjer hvis du endrer tallene?</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Lær farger</div>
+      <p>Farger i pygame er tre tall (rød, grønn, blå) fra 0–255. Lag egne fargevariabler og fyll bakgrunnen.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Tegn figurer</div>
+      <p>Bruk draw.circle, draw.rect, draw.polygon og draw.line til å plassere former på arket. Koordinatsystemet starter øverst til venstre.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Bygg en scene</div>
+      <p>Kombiner figurer til noe gjenkjennelig – en fotballbane, et ansikt, en by. Bruk kommentarer til å forklare hva hver del er.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Animer det</div>
+      <p>Tegn scenen på nytt med én endring mellom hver frame. Bruk display.update() og Clock.tick(FPS) for å styre hastigheten.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-cyan reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🪟</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-pygame">pygame</span>
+      </div>
+      <div class="prosjekt-tittel">Sett opp et pygame-vindu</div>
+      <p>Kom i gang med pygame: importer biblioteket, initialiser det og vis et farget vindu på skjermen.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 20 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="pygame1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="pygame1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konsepter</h4>
+          <ul>
+            <li><code>import pygame, sys</code> – henter inn bibliotek</li>
+            <li><code>pygame.init()</code> – starter opp systemet</li>
+            <li><code>pygame.display.set_mode((bredde, høyde))</code> – lager vinduet</li>
+            <li><code>pygame.display.set_caption("tittel")</code> – setter vindustittel</li>
+            <li><code>ark.fill(farge)</code> – fyller bakgrunnen med en farge</li>
+            <li><code>pygame.display.update()</code> – viser det du har tegnet</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🔢 Farger er tre tall</h4>
+          <ul>
+            <li>RGB = Rød, Grønn, Blå – hvert tall fra 0 til 255</li>
+            <li>(0, 0, 0) = sort &nbsp;&nbsp; (255, 255, 255) = hvit</li>
+            <li>(255, 0, 0) = rød &nbsp;&nbsp; (0, 0, 255) = blå</li>
+            <li>Lag egne variabler: <code>rød = (255, 0, 0)</code></li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Lag et vindu som er 800×600 piksler</li>
+            <li>Gi det en tittel du velger selv</li>
+            <li>Fyll bakgrunnen med en farge du lager selv</li>
+            <li>Prøv å endre størrelsen – hva skjer?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-cyan reveal" data-kategori="python">
+      <div class="prosjekt-ikon">📐</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-pygame">pygame</span>
+      </div>
+      <div class="prosjekt-tittel">Koordinatsystemet i pygame</div>
+      <p>I pygame starter (0,0) øverst til venstre. X går til høyre, Y går nedover. Forstå dette før du tegner figurer.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 15 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="pygame2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="pygame2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>📌 Slik fungerer det</h4>
+          <ul>
+            <li>(0, 0) = øvre venstre hjørne av vinduet</li>
+            <li>X øker mot høyre – Y øker nedover (motsatt av matte!)</li>
+            <li>Et vindu på 800×600 har hjørner: (0,0), (800,0), (0,600), (800,600)</li>
+            <li>Midten av et 800×600-vindu er ca. (400, 300)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Prøv det</h4>
+          <ul>
+            <li>Tegn en sirkel midt på skjermen</li>
+            <li>Flytt sirkelen til hvert hjørne – hvilke koordinater bruker du?</li>
+            <li>Hva skjer med Y-verdien når du vil at noe skal være høyt oppe?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-cyan reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔵</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-pygame">pygame</span>
+      </div>
+      <div class="prosjekt-tittel">Tegn sirkler, rektangler og linjer</div>
+      <p>Lær de viktigste tegnefunksjonene i pygame og forstå hva hvert argument betyr.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="pygame3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="pygame3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Funksjoner</h4>
+          <div class="kode-boks"><span class="kom"># Sirkel: (vindu, farge, sentrum, radius, tykkelse)</span>
+<span class="fn">pygame.draw.circle</span>(ark, rød, (400, 300), 50, 0)
+<span class="kom"># tykkelse=0 = fylt, >0 = bare kanten</span>
+
+<span class="kom"># Rektangel: (vindu, farge, (x, y, bredde, høyde))</span>
+<span class="fn">pygame.draw.rect</span>(ark, blå, (100, 100, 200, 80))
+
+<span class="kom"># Linje: (vindu, farge, start, slutt, tykkelse)</span>
+<span class="fn">pygame.draw.line</span>(ark, hvit, (0, 0), (400, 300), 3)
+
+<span class="kom"># Polygon: (vindu, farge, liste med punkter)</span>
+<span class="fn">pygame.draw.polygon</span>(ark, grønn, [(100,0),(200,100),(0,100)])</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Tegn en enkel figur – et ansikt, en bil, et hus</li>
+            <li>Bruk minst tre ulike draw-funksjoner</li>
+            <li>Gi alle farger selvvalgte variabelnavn</li>
+            <li>Skriv kommentarer som forklarer hva hver linje tegner</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🎬</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">🚀 Utvidelse</span>
+        <span class="prosjekt-tag tag-pygame">pygame</span>
+      </div>
+      <div class="prosjekt-tittel">Animer – lag bevegelse med kode</div>
+      <p>En animasjon er bare mange bilder etter hverandre. Lær å tegne scenen på nytt med en liten endring mellom hver frame.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 45 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="pygame4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="pygame4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Slik fungerer animasjon</h4>
+          <ul>
+            <li>Du tegner alt på nytt for hvert bilde (frame)</li>
+            <li><code>ark.fill(farge)</code> på nytt = sletter forrige bilde</li>
+            <li><code>display.update()</code> = vis det nye bildet</li>
+            <li><code>Clock.tick(FPS)</code> = vent litt (kontrollerer hastighet)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🔢 FPS og hastighet</h4>
+          <ul>
+            <li>FPS = Frames Per Second – bilder per sekund</li>
+            <li>FPS = 1 betyr ett bilde i sekundet (veldig sakte)</li>
+            <li>FPS = 30 er vanlig for jevn animasjon</li>
+            <li>Endre FPS underveis: <code>FPS = 3</code> gjør det raskere</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Tegn scenen din fra forrige oppgave</li>
+            <li>Endre én ting mellom hvert bilde (f.eks. en ball som faller)</li>
+            <li>Begynn med FPS = 1 – prøv å endre det</li>
+            <li>Hva er det minste du kan endre mellom to bilder for å få bevegelse?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-gul reveal">
+      <div class="prosjekt-ikon">⚽</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-pygame">pygame</span>
+      </div>
+      <div class="prosjekt-tittel">Lag din egen animerte scene</div>
+      <p>Nå vet du nok til å planlegge og bygge en hel animert scene fra bunnen. Hva vil du vise?</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 60–120 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="pygame5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="pygame5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst 5 forskjellige figurer (bruk alle draw-typene)</li>
+            <li>Minst 6 selvlagde fargevariabler</li>
+            <li>Minst én animert del (noe beveger seg)</li>
+            <li>Kommentarer som forklarer hva du har bygget</li>
+          </ul>
+        </div>
+        <div>
+          <h4>💡 Ideer</h4>
+          <ul>
+            <li>En fotballkamp med ball som beveger seg og scoretavle</li>
+            <li>Et solsystem der planetene kretser rundt sola</li>
+            <li>En storm med regn som faller</li>
+            <li>En enkel animert karakter som går</li>
+            <li>Din egen idé – avklar med lærer!</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🏆 Utfordring</h4>
+          <ul>
+            <li>Kan du endre FPS underveis i animasjonen?</li>
+            <li>Kan noe vokse (radius øker frame for frame)?</li>
+            <li>Kan noe endre farge når det beveger seg?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid pygame -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Tegn med kode (pygame)</h3>
+        <p>Installasjon, differensiering og tekniske tips for Python/pygame i klasserommet</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Installasjon</h4>
+        <ol>
+          <li>Last ned <strong>Mu Editor</strong> fra codewith.mu – inkluderer pygame</li>
+          <li>Alternativt: installer Python fra python.org, kjør <code>pip install pygame</code></li>
+          <li>Test med: <code>import pygame; pygame.init()</code> – ingen feil = ok</li>
+          <li>På Chromebook: bruk Trinket.io (begrenset pygame-støtte)</li>
+        </ol>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> gi ferdig vindu-oppsett, be om å legge til figurer</li>
+          <li><strong>Middels:</strong> eleven bruker kode-eksemplene og tilpasser fritt</li>
+          <li><strong>Høyt nivå:</strong> lag en variabel som endres mellom frames → animasjon</li>
+          <li>Alle 5 deler kan tas uavhengig – ikke obligatorisk rekkefølge</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Vanlige feil</h4>
+        <ul>
+          <li><strong>Svart vindu:</strong> pygame.display.flip() mangler</li>
+          <li><strong>Vinduet fryser:</strong> mangler hendelsesløkke (event.get())</li>
+          <li><strong>ModuleNotFoundError:</strong> pygame ikke installert</li>
+          <li><strong>Feil koordinater:</strong> minn om at Y øker nedover</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurderingstips</h4>
+        <ul>
+          <li>Be elevene forklare koden muntlig – hva gjør hver linje?</li>
+          <li>Sjekk at de bruker kommentarer i koden</li>
+          <li>Del 5 (kreativt prosjekt) egner seg godt til vurdering</li>
+          <li>Skjermbilde + kode som innlevering fungerer fint</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–4: 40–45 min per del. Del 5 (kreativt prosjekt): 60–90 min. Totalt ca. 4–5 skoletimer om man tar alle delene.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>💡</span>
+        <div>
+          <strong>Tips</strong>
+          <p>La elevene vise hverandres animasjoner på slutten av timen – det motiverer og gir gode ideer. Mu Editor anbefales fremfor IDLE for nybegynnere.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 2: TEKSTSPILL ── -->
+<section class="section">
+  <div class="section-title">🗡️ Lag et tekstbasert spill</div>
+  <div class="section-sub">Elevene bygger sitt eget eventyrspill med valg, inventory, penger og liv – trinn for trinn. Programmet kjøres i terminalen, ikke i pygame.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>📦</span> import random</div>
+    <div class="konsept-brikke"><span>📝</span> print og input</div>
+    <div class="konsept-brikke"><span>🔀</span> if / elif / else</div>
+    <div class="konsept-brikke"><span>📋</span> Lister</div>
+    <div class="konsept-brikke"><span>🔢</span> Variabler og aritmetikk</div>
+    <div class="konsept-brikke"><span>🎲</span> random.randint</div>
+    <div class="konsept-brikke"><span>✂️</span> .strip() og .lower()</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Variabler og status</div>
+      <p>Definer liv, penger og inventory som variabler. Print dem ut slik at spilleren alltid ser statusen sin.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Valg med input</div>
+      <p>Bruk input() til å stille spørsmål og if/elif/else til å reagere på svaret. Husk .strip() og .lower()!</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Inventory med liste</div>
+      <p>En liste er en samling av ting: <code>inventory = ["kniv"]</code>. Bruk .append() for å legge til og .remove() for å ta bort.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Sjekk inventory</div>
+      <p>Bruk <code>if "kniv" in inventory:</code> for å sjekke hva spilleren har. Ulike gjenstander gir ulike utfall.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Tilfeldig med random</div>
+      <p>Importer random og bruk random.randint(1, 10) for å lage tilfeldige tall. Perfekt til kampscener og utfordringer.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">📊</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-tekst">Tekstspill</span>
+      </div>
+      <div class="prosjekt-tittel">Variabler og status</div>
+      <p>Lag de grunnleggende spillvariablene: liv, penger og inventory. Det er spillets "hjerne" – alt bygger på dette.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 20 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="tekstspill1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="tekstspill1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konsepter</h4>
+          <ul>
+            <li>En variabel lagrer en verdi: <code>liv = 100</code></li>
+            <li>Du kan endre den: <code>liv = liv - 20</code> eller <code>liv -= 20</code></li>
+            <li>En liste lagrer flere ting: <code>inventory = ["kniv", "skjold"]</code></li>
+            <li><code>print()</code> viser tekst og verdier til spilleren</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Lag variablene <code>liv</code>, <code>penger</code> og <code>inventory</code></li>
+            <li>Print dem ut med en forklaring (f.eks. "Liv: 100")</li>
+            <li>Test: hva skjer hvis du endrer verdiene og printer igjen?</li>
+            <li>Velg en setting for spillet ditt – kloakk? Skog? Skolegård?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔀</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-tekst">Tekstspill</span>
+      </div>
+      <div class="prosjekt-tittel">Valg med if og input</div>
+      <p>Spillere tar valg. Lær å stille spørsmål med input() og reagere ulikt basert på svaret med if/elif/else.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="tekstspill2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="tekstspill2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Slik fungerer det</h4>
+          <div class="kode-boks"><span class="kom"># input() stiller et spørsmål og lagrer svaret</span>
+svar = <span class="fn">input</span>(<span class="str">"Hva gjør du? "</span>).<span class="fn">strip</span>().<span class="fn">lower</span>()
+
+<span class="kw">if</span> svar == <span class="str">"gå frem"</span>:
+    <span class="fn">print</span>(<span class="str">"Du gikk frem og fant en skatt!"</span>)
+<span class="kw">elif</span> svar == <span class="str">"gå tilbake"</span>:
+    <span class="fn">print</span>(<span class="str">"Du snudde og gikk tilbake."</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Ugyldig valg. Prøv igjen."</span>)</div>
+        </div>
+        <div>
+          <h4>⚠️ Husk!</h4>
+          <ul>
+            <li><code>.strip()</code> fjerner mellomrom foran og bak</li>
+            <li><code>.lower()</code> gjør alt til små bokstaver</li>
+            <li>Uten disse to vil "Ja " og "ja" gi ulike svar</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Lag en åpningsscene der spilleren møter en karakter</li>
+            <li>La spilleren ta minst to valg med ulike konsekvenser</li>
+            <li>Bruk alltid .strip().lower() på input</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🎒</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-tekst">Tekstspill</span>
+      </div>
+      <div class="prosjekt-tittel">Inventory med lister</div>
+      <p>En inventory er bare en liste i Python. Lær å legge til ting, ta bort ting og sjekke hva som er der.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="tekstspill3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="tekstspill3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Liste-operasjoner</h4>
+          <div class="kode-boks">inventory = [<span class="str">"brød"</span>, <span class="str">"kart"</span>]
+
+<span class="kom"># Legg til</span>
+inventory.<span class="fn">append</span>(<span class="str">"sverd"</span>)
+
+<span class="kom"># Fjern (må finnes i listen!)</span>
+inventory.<span class="fn">remove</span>(<span class="str">"brød"</span>)
+
+<span class="kom"># Sjekk om noe er der</span>
+<span class="kw">if</span> <span class="str">"sverd"</span> <span class="kw">in</span> inventory:
+    <span class="fn">print</span>(<span class="str">"Du har sverdet!"</span>)
+
+<span class="kom"># Vis hele inventory</span>
+<span class="fn">print</span>(<span class="str">"Inventory:"</span>, inventory)</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Lag et sted i spillet der du kan kjøpe noe</li>
+            <li>Trekk fra penger og legg til gjenstanden i inventory</li>
+            <li>Lag et annet sted der inventory avgjør hva som skjer</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-oransj reveal">
+      <div class="prosjekt-ikon">🎲</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">🚀 Utvidelse</span>
+        <span class="prosjekt-tag tag-tekst">Tekstspill</span>
+      </div>
+      <div class="prosjekt-tittel">Tilfeldig – bruk random</div>
+      <p>Importer random og bruk randint til å generere tilfeldige tall. Perfekt til kampscener, spørsmål og overraskelser.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 35 min</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="tekstspill4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="tekstspill4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 random i praksis</h4>
+          <div class="kode-boks"><span class="kw">import</span> random
+
+<span class="kom"># Tilfeldig tall mellom 1 og 6</span>
+terning = random.<span class="fn">randint</span>(1, 6)
+<span class="fn">print</span>(<span class="str">"Du kastet:"</span>, terning)
+
+<span class="kom"># Ta et tilfeldig element fra en liste</span>
+inventory = [<span class="str">"kniv"</span>, <span class="str">"skjold"</span>, <span class="str">"brød"</span>]
+mistet = random.<span class="fn">choice</span>(inventory)
+inventory.<span class="fn">remove</span>(mistet)
+<span class="fn">print</span>(<span class="str">"Du mistet:"</span>, mistet)</div>
+        </div>
+        <div>
+          <h4>💡 Ideer til bruk</h4>
+          <ul>
+            <li>En boss som stiller tilfeldige regnestykker</li>
+            <li>En fiende som gjør tilfeldig skade mellom 5 og 25</li>
+            <li>En sjansen der du vinner eller taper avhengig av et tilfeldig tall</li>
+            <li>En fiende som stjeler en tilfeldig gjenstand fra inventory</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgave</h4>
+          <ul>
+            <li>Legg til en kampscene med tilfeldige tall</li>
+            <li>Bruk random.choice til å la fienden stjele en tilfeldig ting</li>
+            <li>Test: kjør programmet 5 ganger – er utfallet alltid ulikt?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-gul reveal">
+      <div class="prosjekt-ikon">🗺️</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-tekst">Tekstspill</span>
+      </div>
+      <div class="prosjekt-tittel">Bygg ditt eget eventyrspill</div>
+      <p>Nå vet du nok til å planlegge og bygge et helt eget spill. Lag et kart på papir først – så koder du det.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 90–180 min</span>
+        <span>✏️ Planlegg på papir</span>
+      </div>
+
+      <div class="pdf-rad"><a class="pdf-btn elev" href="tekstspill5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="tekstspill5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis krav og ideer</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst 3 variabler (f.eks. liv, penger, poeng)</li>
+            <li>En inventory med minst 2 gjenstander du kan samle</li>
+            <li>Minst 5 valg med if/elif/else</li>
+            <li>En tilfeldig hendelse med random</li>
+            <li>Minst to mulige utfall: vinn og tap</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🗺️ Planlegg på papir</h4>
+          <ul>
+            <li>Tegn et kart over spillverdenen</li>
+            <li>Marker: startpunkt, valg-punkter, slutt-punkter</li>
+            <li>Bestem: hvilke gjenstander finnes og hva gjør de?</li>
+            <li>Begynn alltid å kode etter du har planlagt</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🏆 Ekstra utfordring</h4>
+          <ul>
+            <li>Lag en boss som stiller matteoppgaver med tilfeldige tall</li>
+            <li>La inventory påvirke hvem som vinner finalkampen</li>
+            <li>Legg til en butikk der spilleren kan bruke penger</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid tekstspill -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Tekstbasert eventyrspill</h3>
+        <p>Pedagogiske tips, differensiering og vanlige utfordringer</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Planlegging først</h4>
+        <ul>
+          <li>Be elevene tegne <strong>spillkart på papir</strong> med rom, valg og konsekvenser</li>
+          <li>Godkjenn kartet før de begynner å kode – forhindrer at de sitter fast</li>
+          <li>Tips: la elevene bytte kart med en medelev og kode den andres spill</li>
+          <li>Sjekk at kartet har minst én vinnerbetingelse og én «game over»</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> del 1–2 – enkle valg og én helsevariabel</li>
+          <li><strong>Middels:</strong> del 1–4 – fullt inventarsystem og kampsystem</li>
+          <li><strong>Høyt nivå:</strong> del 5 – fullstendig spill med 4+ rom og logikk</li>
+          <li>Fungerer godt som tverrfaglig prosjekt med norsk (historiefortelling)</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Vanlige feil</h4>
+        <ul>
+          <li><strong>IndentationError:</strong> feil innrykk – Python er strengt</li>
+          <li><strong>if x = y:</strong> én = er tilordning, == er sammenligning</li>
+          <li><strong>input() gir tekst:</strong> husk int() for å sammenligne med tall</li>
+          <li><strong>Uendelig løkke:</strong> while True uten break stopper aldri</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurderingstips</h4>
+        <ul>
+          <li>Innlevering: .py-fil + spillkart-skisse (foto av papir er fint)</li>
+          <li>La eleven presentere spillet for klassen – andre elever spiller det</li>
+          <li>Vurder: fungerer spillet, er koden ryddig, er det kommentarer?</li>
+          <li>Del 5 egner seg godt til vurdering – fullstendig produkt</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–4: 35–45 min per del. Del 5 (fullstendig spill): 60–90 min. Totalt ca. 4–5 timer for hele prosjektet.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>🔧</span>
+        <div>
+          <strong>Ingen installasjon?</strong>
+          <p>Tekstspillet kjører i vanlig terminal/IDLE – trenger ikke pygame. Trinket.io fungerer utmerket for del 1–3 om maskiner ikke har Python installert.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 3: MYNTKAST ── -->
+<section class="section">
+  <div class="section-title">🪙 Myntkast og sannsynlighet</div>
+  <div class="section-sub">Elevene leser, endrer og utvider et ferdig program som simulerer myntkast. De utforsker hva som skjer med fordelingen når antall kast øker – og kobler det til sannsynlighet i matematikk.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>🔄</span> for-løkke</div>
+    <div class="konsept-brikke"><span>🎲</span> random.randint</div>
+    <div class="konsept-brikke"><span>🔢</span> Teller-variabler</div>
+    <div class="konsept-brikke"><span>📊</span> Prosent-utregning</div>
+    <div class="konsept-brikke"><span>⌨️</span> int(input())</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Les og forstå</div>
+      <p>Gå gjennom programmet linje for linje. Hva gjør range()? Hva teller variablene?</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Endre antall kast</div>
+      <p>Hva skjer med fordelingen ved 10 kast vs 10 000 kast? Test og beskriv hva du ser.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Legg til prosent</div>
+      <p>Beregn og print hvor mange prosent som ble krone og mynt. La brukeren velge antall kast.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Lag egen simulering</div>
+      <p>Bruk for-løkken og random til å simulere noe helt eget – regndager, lotteri eller basket.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-oransje reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔍</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag" style="background:rgba(255,107,53,0.15);color:#ff6b35;border-color:rgba(255,107,53,0.3)">Myntkast</span>
+      </div>
+      <div class="prosjekt-tittel">Forstå programmet</div>
+      <p>Les og analyser et ferdig myntkast-program. Hva gjør hver linje? Hva skjer hvis du endrer antall kast?</p>
+      <div class="kort-meta">
+        <span>🎯 6.–8. trinn</span>
+        <span>⏱ 20 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="myntkast1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="myntkast1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konsepter</h4>
+          <ul>
+            <li><code>for i in range(n)</code> – gjenta noe n ganger</li>
+            <li><code>random.randint(1, 2)</code> – tilfeldig 1 eller 2</li>
+            <li>Teller-variabel: <code>Krone = Krone + 1</code></li>
+            <li>Jo flere kast, jo jevnere fordeling</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Kjør programmet – er fordelingen ca. 50/50?</li>
+            <li>Test med kast = 10 og kast = 1 000 000</li>
+            <li>Forklar hva range(kast) gjør med egne ord</li>
+            <li>Hva er sannsynligheten for krone matematisk?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-oransje reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔧</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag" style="background:rgba(255,107,53,0.15);color:#ff6b35;border-color:rgba(255,107,53,0.3)">Myntkast</span>
+      </div>
+      <div class="prosjekt-tittel">Endre og utvide</div>
+      <p>Legg til prosent-utregning og la brukeren velge antall kast. Sammenlign resultater ved ulike antall kast.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–8. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="myntkast2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="myntkast2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Slik regner du prosent</h4>
+          <div class="kode-boks"><span class="fn">prosent</span> = <span class="fn">round</span>(Krone / kast * <span class="str">100</span>)</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Print prosent for krone og mynt</li>
+            <li>La brukeren skrive inn antall kast</li>
+            <li>Kjør 5 ganger med 100 kast – skriv ned resultatene</li>
+            <li>Kjør 5 ganger med 10 000 kast – er det jevnere?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-oransje reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🚀</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag" style="background:rgba(255,107,53,0.15);color:#ff6b35;border-color:rgba(255,107,53,0.3)">Myntkast</span>
+      </div>
+      <div class="prosjekt-tittel">Lag din egen simulering</div>
+      <p>Bruk for-løkken og random til å simulere noe eget – regndager, lotteri, basketball eller noe du finner på selv.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 40 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="myntkast3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="myntkast3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Ideer</h4>
+          <ul>
+            <li>Regndager: 50 % sjanse per dag i 365 dager</li>
+            <li>Lotteri: 1 av 10 sjanse, telle antall forsøk</li>
+            <li>Basketball: 70 % scoring – hvor mange av 100?</li>
+            <li>Din helt egen idé!</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>For-løkke med minst 100 repetisjoner</li>
+            <li>Bruk random.randint()</li>
+            <li>Minst én teller-variabel</li>
+            <li>Print resultat med prosent</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid myntkast -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Myntkast og sannsynlighet</h3>
+        <p>Tverrfaglig prosjekt som kobler programmering og matematikk</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Kobling til matematikk</h4>
+        <ul>
+          <li>Passer til LK20-mål om sannsynlighet på 6.–8. trinn</li>
+          <li>La elevene <strong>notere en hypotese</strong> om fordelingen før de kjører koden</li>
+          <li>Diskuter: hvorfor er ikke resultatet nøyaktig 50/50?</li>
+          <li>Store talls lov blir konkret og synlig – mye sterkere enn teori alene</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Gjennomføring</h4>
+        <ul>
+          <li>Del 1: les og forstå – egnet som introduksjon uten forkunnskaper</li>
+          <li>Del 2: endre og utvide – passer for elever som vil utforske mer</li>
+          <li>Del 3: store talls lov – kan brukes direkte i mattetimen</li>
+          <li>Kan gjøres som gruppearbeid: ulike grupper tester ulike kastantall</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> kjør del 1, endre antall_kast og beskriv mønsteret</li>
+          <li><strong>Middels:</strong> del 2 – streak-analyse og tekstgraf</li>
+          <li><strong>Høyt nivå:</strong> del 3 – Lotto-simulering og store talls lov</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurdering</h4>
+        <ul>
+          <li>Be elevene skrive en kort rapport: hva observerte de, hva ble bekreftet?</li>
+          <li>Koble til matematikkbegreper: sannsynlighet, frekvens, store talls lov</li>
+          <li>Muntlig: kan eleven forklare hva random.randint(0,1) gjør?</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>📐</span>
+        <div>
+          <strong>Tverrfaglig med matematikk</strong>
+          <p>Prosjektet dekker kompetansemål i sannsynlighet. La matematikklæreren delta – simulering er et kraftig verktøy for å visualisere statistiske begreper.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1: 30 min. Del 2: 30 min. Del 3: 35 min. Hele prosjektet kan gjøres på én dobbelttime.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 4: TERNINGKAST ── -->
+<section class="section">
+  <div class="section-title">🎲 Terningkast og statistikk</div>
+  <div class="section-sub">Et mer komplekst simuleringsprogram med to terninger og 11 mulige utfall. Elevene analyserer fordelingen, finner det mest sannsynlige utfallet og utforsker matematikken bak.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>🔄</span> for-løkke</div>
+    <div class="konsept-brikke"><span>🎲</span> To uavhengige terninger</div>
+    <div class="konsept-brikke"><span>🔀</span> Mange elif-grener</div>
+    <div class="konsept-brikke"><span>📊</span> Fordeling og prosent</div>
+    <div class="konsept-brikke"><span>📖</span> Dictionary (utvidelse)</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Les og forstå</div>
+      <p>Programmet har 11 variabler og en lang elif-kjede. Hva teller de? Hva er mulig sum med to terninger?</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Analyser fordelingen</div>
+      <p>Hvilken sum kommer oftest? Hva sier matematikken? Sammenlign 1 000 kast med 100 000 kast.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Forbedre koden</div>
+      <p>Finn vanligste sum, legg til tre terninger, eller lær om dictionary som en mer elegant løsning.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Eget prosjekt</div>
+      <p>Simuler et terningspill du kjenner – Ludo, Yatzy eller Poker. Koble til teoretisk sannsynlighet.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-bla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔍</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag" style="background:rgba(0,229,255,0.15);color:var(--accent1);border-color:rgba(0,229,255,0.3)">Terningkast</span>
+      </div>
+      <div class="prosjekt-tittel">Forstå programmet</div>
+      <p>Analyser et program som kaster to terninger tusenvis av ganger og teller alle mulige summer fra 2 til 12.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–9. trinn</span>
+        <span>⏱ 20 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="terning1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="terning1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konsepter</h4>
+          <ul>
+            <li>To <code>randint(1,6)</code>-kall = to uavhengige terninger</li>
+            <li><code>c = a + b</code> – summen av begge</li>
+            <li>Én variabel per mulig sum (2–12) = 11 variabler</li>
+            <li>elif-kjede sjekker alle mulige utfall</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Kjør med 100 kast – hvilken sum er vanligst?</li>
+            <li>Kjør med 100 000 – er fordelingen jevnere?</li>
+            <li>Hvilken sum er matematisk mest sannsynlig?</li>
+            <li>Finn alle kombinasjoner som gir sum = 7</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-bla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔧</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag" style="background:rgba(0,229,255,0.15);color:var(--accent1);border-color:rgba(0,229,255,0.3)">Terningkast</span>
+      </div>
+      <div class="prosjekt-tittel">Endre og forbedre</div>
+      <p>Finn vanligste sum automatisk, prøv tre terninger, og lær om dictionary som en kraftigere datastruktur.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–9. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="terning2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="terning2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Dictionary – mer elegant løsning</h4>
+          <div class="kode-boks"><span class="kw">res</span> = {}
+<span class="kw">res</span>[c] = <span class="kw">res</span>.<span class="fn">get</span>(c, <span class="str">0</span>) + <span class="str">1</span>
+<span class="fn">max</span>(<span class="kw">res</span>, key=<span class="kw">res</span>.get)</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Print hvilken sum som kom oftest</li>
+            <li>Prøv tre terninger i stedet for to</li>
+            <li>Legg til sjekk for sum som ikke forekom</li>
+            <li>Sammenlign 1 000 og 100 000 kast</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-bla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🏆</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag" style="background:rgba(0,229,255,0.15);color:var(--accent1);border-color:rgba(0,229,255,0.3)">Terningkast</span>
+      </div>
+      <div class="prosjekt-tittel">Analyser et terningspill</div>
+      <p>Simuler et virkelig terningspill – Ludo, Yatzy eller Poker – og sammenlign simuleringen med teoretisk sannsynlighet.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–10. trinn</span>
+        <span>⏱ 50 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="terning3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="terning3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Ideer</h4>
+          <ul>
+            <li>Ludo: kast til du får 6 – snitt antall kast?</li>
+            <li>Yatzy: kast 5 terninger – hvor ofte Yatzy?</li>
+            <li>Poker terning: par, tre like, full hus</li>
+            <li>Beregn teoretisk sannsynlighet og sammenlign</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst to terninger (to randint-kall)</li>
+            <li>Minst 1000 repetisjoner</li>
+            <li>Tell to ulike utfall med prosent</li>
+            <li>Sammenlign med matematisk forventet verdi</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid terningkast -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Terningkast og statistikk</h3>
+        <p>Kombinerer programmering med statistikk og matematisk analyse</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Pedagogisk tilnærming</h4>
+        <ul>
+          <li>Vis tekst-histogrammet på storskjerm – diskuter i klassen</li>
+          <li>Spørsmål: <em>Hvorfor har sum 7 høyest frekvens?</em> – tell kombinasjoner på tavlen</li>
+          <li>Beregn 6/36 ≈ 16,7 % og sammenlign med simuleringsresultatet</li>
+          <li>Kjør med 100 vs. 100 000 kast – se hvor mye avviket reduseres</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Kobling til læreplanen</h4>
+        <ul>
+          <li>Statistikk og sannsynlighet – 7.–9. trinn LK20</li>
+          <li>Kombinatorikk: telle mulige utfall med to terninger (6×6 = 36)</li>
+          <li>Frekvenstabell og histogram som datarepresentasjon</li>
+          <li>Gjennomsnitt, modus og fordeling i praksis</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> del 1 – les og kjør, beskriv hva du ser</li>
+          <li><strong>Middels:</strong> del 2 – sammenlign simulert med teoretisk</li>
+          <li><strong>Høyt nivå:</strong> del 3 – Yatzy-logikk med Counter-klassen</li>
+          <li>Gruppearbeid: par A kjører 1 000 kast, par B 100 000 – sammenlign avvik</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurdering</h4>
+        <ul>
+          <li>Be eleven forklare sumfordelingen med egne ord</li>
+          <li>Del 2: avviksberegning er god matematisk forståelse</li>
+          <li>Del 3 (Yatzy): fungerer koden korrekt for alle kombinasjoner?</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>📊</span>
+        <div>
+          <strong>Histogram på storskjerm</strong>
+          <p>Kjør programmet med 36 000 kast på tavle-PC og vis histogrammet live. Diskuter formen – er den symmetrisk? Hva kaller matematikere denne typen fordeling?</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1: 35 min. Del 2: 40 min. Del 3: 45 min. Alle tre delene passer over én dobbeltime og én enkelttime.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 5: MATTETRENER ── -->
+<section class="section">
+  <div class="section-title">🧮 Mattetrener med while-løkke</div>
+  <div class="section-sub">Det mest avanserte prosjektet. Elevene leser et program med while-løkke, nested if-setninger og input. De finner og fikser feil, og bygger til slutt sin egen digitale treningsapp.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>🔁</span> while True</div>
+    <div class="konsept-brikke"><span>🔀</span> Nested if</div>
+    <div class="konsept-brikke"><span>⌨️</span> float / int input</div>
+    <div class="konsept-brikke"><span>🔢</span> Telle riktig/feil</div>
+    <div class="konsept-brikke"><span>🛑</span> break og continue</div>
+    <div class="konsept-brikke"><span>📊</span> Sluttstatistikk</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Les strukturen</div>
+      <p>Forstå while True, nested if og hvordan valg og score fungerer. Finn de skjulte skrivefeilene!</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Debug og fiks</div>
+      <p>Rett skrivefeilene, legg til avslutt-mulighet og beregn sluttresultat med prosent.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Utvid programmet</div>
+      <p>La brukeren velge regneart for hver oppgave. Legg til vanskelighetsgrad og sluttstatistikk.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Lag din fagtrener</div>
+      <p>Lag en treningsapp for et fag du velger – geografi, historie, engelsk eller noe annet.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🔍</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag" style="background:rgba(199,125,255,0.15);color:var(--accent5);border-color:rgba(199,125,255,0.3)">Mattetrener</span>
+      </div>
+      <div class="prosjekt-tittel">Forstå programmet</div>
+      <p>Les et program med while-løkke og nested if. Forstå strukturen, finn skrivefeilene og forklar hva hvert konsept gjør.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–10. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="matte1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="matte1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konsepter</h4>
+          <ul>
+            <li><code>while True</code> – kjører for alltid til du avbryter</li>
+            <li>Nested if – en if-setning inne i en annen</li>
+            <li><code>float(input())</code> – tar imot desimaltall</li>
+            <li><code>valg in ('1','2','3','4')</code> – sjekk mot flere verdier</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Kjør programmet – svar på 5 oppgaver</li>
+            <li>Test ugyldig valg (f.eks. '5') – hva skjer?</li>
+            <li>Hva betyr while True? Hvordan avslutter du?</li>
+            <li>Finn alle skrivefeilene i koden!</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🐛</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag" style="background:rgba(199,125,255,0.15);color:var(--accent5);border-color:rgba(199,125,255,0.3)">Mattetrener</span>
+      </div>
+      <div class="prosjekt-tittel">Fiks og forbedre</div>
+      <p>Debug koden, legg til avslutt-mulighet med break og beregn sluttresultat. La brukeren velge regneart for hver oppgave.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–10. trinn</span>
+        <span>⏱ 35 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="matte2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="matte2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 break og continue</h4>
+          <div class="kode-boks"><span class="kw">if</span> svar == <span class="str">"0"</span>:
+    <span class="fn">print</span>(<span class="str">"Slutter..."</span>)
+    <span class="kw">break</span>   <span class="kom"># avslutter løkken</span>
+
+<span class="kw">if</span> valg <span class="kw">not in</span> gyldige:
+    <span class="kw">continue</span>  <span class="kom"># hopp til neste runde</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Rett alle skrivefeil ('rikitge')</li>
+            <li>Legg til 0 = avslutt med break</li>
+            <li>Print sluttresultat med prosent</li>
+            <li>La brukeren velge regneart for hver oppgave</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-lilla reveal" data-kategori="python">
+      <div class="prosjekt-ikon">🌟</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag" style="background:rgba(199,125,255,0.15);color:var(--accent5);border-color:rgba(199,125,255,0.3)">Mattetrener</span>
+      </div>
+      <div class="prosjekt-tittel">Lag din egen fagtrener</div>
+      <p>Bygg en treningsapp for et fag du velger – matte, geografi, engelsk eller noe annet. Bruk while-løkken og input til å lage et fullstendig program.</p>
+      <div class="kort-meta">
+        <span>🎯 7.–10. trinn</span>
+        <span>⏱ 60–90 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="matte3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="matte3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Ideer</h4>
+          <ul>
+            <li>Geografi: vis en by – gjett landet</li>
+            <li>Engelsk: vis norsk ord – gjett engelsk</li>
+            <li>Historie: vis årstall – gjett hendelsen</li>
+            <li>Naturfag: vis formel – forklar hva den betyr</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>while-løkke med avslutt-mulighet</li>
+            <li>Minst 3 ulike spørsmål</li>
+            <li>Tell riktige og feil – print prosent</li>
+            <li>Bruk .strip().lower() på input</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid mattetrener -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Mattetrener med while-løkke</h3>
+        <p>Feilsøking som pedagogisk metode og differensiering i matematikk</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Feilsøking som metode</h4>
+        <ul>
+          <li>Del 2 er bevisst fylt med 5 vanlige Python-feil</li>
+          <li>La elevene jobbe <strong>i par</strong> – diskuter hva som kan gå galt FØR dere kjører</li>
+          <li>Feilsøking er det utviklere bruker mest tid på – en undervurdert ferdighet</li>
+          <li>Be elevene liste opp alle feilene på papir, sammenlign med medelever</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Kobling til matematikk</h4>
+        <ul>
+          <li>Prosjektet er naturlig integrert med matematikkopplæringen</li>
+          <li>La mattelæreren bruke del 3 som en del av regningstimen</li>
+          <li>Elever med ekstra behov for regntrening kan bruke appen på egenhånd</li>
+          <li>Tilpass tall-området (1–10, 1–100) etter matematikknivå</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> del 1 – kjør og forstå while True-løkken</li>
+          <li><strong>Middels:</strong> del 2 – finn og rett de 5 feilene</li>
+          <li><strong>Høyt nivå:</strong> del 3 – bygg en komplett app med valg av operasjon</li>
+          <li>Utfordring: legg til tidsbegrensning per oppgave med time-modulen</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurdering</h4>
+        <ul>
+          <li>Del 2: be eleven dokumentere hver feil og hva de rettet</li>
+          <li>Del 3: fungerer alle operasjoner? Krasjer den ved ugyldig input?</li>
+          <li>Muntlig: hva skjer om man skriver «abc» i stedet for et tall?</li>
+          <li>Sjekk at de bruker try/except for robust feilhåndtering</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>🐛</span>
+        <div>
+          <strong>Debug-kultur</strong>
+          <p>Normaliser det å gjøre feil – alle utviklere gjør det. Del 2 er designet for å gi elevene trygghet: kode kan ha feil, og det er alltid en løsbar situasjon.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1: 35 min. Del 2: 35 min. Del 3: 50 min. Hele prosjektet passer i én dobbelttime + én enkelttime.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 6: HTML ── -->
+<section class="section">
+  <div class="section-title">🌐 Lag din første nettside</div>
+  <div class="section-sub">Elevene lærer HTML fra bunnen av – steg for steg. Fra å opprette en tom fil til å bygge en hel nettside med tekst, bilder og lenker. Ingen installasjon nødvendig – bare en teksteditor og en nettleser.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>📄</span> HTML-filstruktur</div>
+    <div class="konsept-brikke"><span>✍️</span> Overskrifter og avsnitt</div>
+    <div class="konsept-brikke"><span>📋</span> Lister</div>
+    <div class="konsept-brikke"><span>🖼️</span> Bilder</div>
+    <div class="konsept-brikke"><span>🔗</span> Lenker</div>
+    <div class="konsept-brikke"><span>💻</span> Notepad / TextEdit</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Grunnstrukturen</div>
+      <p>Lag filen index.html og skriv inn DOCTYPE, html, head og body. Åpne i nettleseren og se resultatet.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Tekst og overskrifter</div>
+      <p>Legg til h1, h2, p-avsnitt og formater tekst med strong og em. Forstå hva mellomrom gjør i HTML.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Lister</div>
+      <p>Lag punktlister med ul og numrerte lister med ol. Når bruker man hvilken? Prøv lister inne i lister.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Bilder</div>
+      <p>Bruk img-taggen med src og alt. Hent bilder fra nettet eller bruk egne filer. Kontroller størrelsen.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Lenker</div>
+      <p>Lag lenker til andre nettsider, mellom egne sider og til steder på samme side med anchor-lenker.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">06</div>
+      <div class="trinn-tittel">Eget nettsted</div>
+      <p>Planlegg og bygg et fullstendig nettsted om et tema du velger selv, med alle elementene du har lært.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">📄</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Grunnstrukturen</div>
+      <p>Opprett din første HTML-fil og forstå byggesteinene alle nettsider er laget av: DOCTYPE, html, head og body.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Grunnstrukturen</h4>
+          <div class="kode-boks"><span class="kw">&lt;!DOCTYPE html&gt;</span>
+<span class="fn">&lt;html</span> lang=<span class="str">"no"</span><span class="fn">&gt;</span>
+<span class="fn">&lt;head&gt;</span>
+  <span class="fn">&lt;meta</span> charset=<span class="str">"UTF-8"</span> /&gt;
+  <span class="fn">&lt;title&gt;</span>Min side<span class="fn">&lt;/title&gt;</span>
+<span class="fn">&lt;/head&gt;</span>
+<span class="fn">&lt;body&gt;</span>
+  <span class="kom">&lt;!-- Innhold her --&gt;</span>
+<span class="fn">&lt;/body&gt;</span>
+<span class="fn">&lt;/html&gt;</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Opprett index.html i Notepad/TextEdit</li>
+            <li>Skriv inn grunnstrukturen og lagre</li>
+            <li>Dobbelklikk filen – åpnes den i nettleseren?</li>
+            <li>Endre title og se hva som skjer i fanen</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">✍️</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Tekst og overskrifter</div>
+      <p>Legg til overskrifter i ulike størrelser, avsnitt og tekstformatering. Forstå hva mellomrom og linjeskift gjør i HTML.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 Taggene</h4>
+          <div class="kode-boks"><span class="fn">&lt;h1&gt;</span>Størst overskrift<span class="fn">&lt;/h1&gt;</span>
+<span class="fn">&lt;h2&gt;</span>Nest størst<span class="fn">&lt;/h2&gt;</span>
+<span class="fn">&lt;p&gt;</span>Avsnitt med tekst.<span class="fn">&lt;/p&gt;</span>
+<span class="fn">&lt;strong&gt;</span>Fet<span class="fn">&lt;/strong&gt;</span>
+<span class="fn">&lt;em&gt;</span>Kursiv<span class="fn">&lt;/em&gt;</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Legg til h1 med sidetittel og h2 med "Om meg"</li>
+            <li>Skriv et avsnitt om deg selv</li>
+            <li>Gjør noe tekst fet med strong</li>
+            <li>Test: hva gjør ekstra mellomrom i koden?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">📋</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Lister</div>
+      <p>Lag punktlister og numrerte lister. Lær når du bruker ul og ol, og prøv å lage lister inne i lister.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 20 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 ul og ol</h4>
+          <div class="kode-boks"><span class="kom">&lt;!-- Punktliste --&gt;</span>
+<span class="fn">&lt;ul&gt;</span>
+  <span class="fn">&lt;li&gt;</span>Element<span class="fn">&lt;/li&gt;</span>
+<span class="fn">&lt;/ul&gt;</span>
+
+<span class="kom">&lt;!-- Numrert liste --&gt;</span>
+<span class="fn">&lt;ol&gt;</span>
+  <span class="fn">&lt;li&gt;</span>Steg 1<span class="fn">&lt;/li&gt;</span>
+<span class="fn">&lt;/ol&gt;</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Lag en punktliste med 4 favorittting</li>
+            <li>Lag en numrert liste med en oppskrift</li>
+            <li>Prøv en liste inne i en liste</li>
+            <li>Når bruker du ul vs. ol?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">🖼️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Bilder</div>
+      <p>Legg til bilder fra internett og fra egne filer. Lær hva src og alt betyr, og kontroller størrelsen med width.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 img-taggen</h4>
+          <div class="kode-boks"><span class="fn">&lt;img</span>
+  src=<span class="str">"bilde.jpg"</span>
+  alt=<span class="str">"Beskrivelse"</span>
+  width=<span class="str">"300"</span>
+<span class="fn">/&gt;</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Legg til et bilde fra internett med src og alt</li>
+            <li>Endre width – hva skjer?</li>
+            <li>Hva skjer hvis src er feil?</li>
+            <li>Lagre et bilde lokalt og vis det</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">🔗</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Lenker</div>
+      <p>Koble sider sammen med a-taggen. Lag lenker til andre nettsider, mellom egne filer og til seksjoner på samme side.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔧 a-taggen</h4>
+          <div class="kode-boks"><span class="kom">&lt;!-- Ekstern lenke --&gt;</span>
+<span class="fn">&lt;a</span> href=<span class="str">"https://vg.no"</span>
+   target=<span class="str">"_blank"</span><span class="fn">&gt;</span>VG<span class="fn">&lt;/a&gt;</span>
+
+<span class="kom">&lt;!-- Intern lenke --&gt;</span>
+<span class="fn">&lt;a</span> href=<span class="str">"ommeg.html"</span><span class="fn">&gt;</span>Om meg<span class="fn">&lt;/a&gt;</span>
+
+<span class="kom">&lt;!-- Anchor --&gt;</span>
+<span class="fn">&lt;a</span> href=<span class="str">"#toppen"</span><span class="fn">&gt;</span>Til toppen<span class="fn">&lt;/a&gt;</span></div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Lag lenke til en favorittside med target="_blank"</li>
+            <li>Opprett ommeg.html og lenk dit</li>
+            <li>Legg til id="toppen" og lag en anchor-lenke</li>
+            <li>Gjør et bilde klikkbart</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 6 -->
+    <div class="prosjekt-kort farge-gronn reveal" data-kategori="html">
+      <div class="prosjekt-ikon">🚀</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-html">HTML</span>
+      </div>
+      <div class="prosjekt-tittel">Lag ditt eget nettsted</div>
+      <p>Planlegg og bygg et fullstendig nettsted om et tema du velger – med flere sider, bilder, lister og lenker.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 60–120 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="html6_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="html6_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Ideer til tema</h4>
+          <ul>
+            <li>Fanside for en artist, film eller spill</li>
+            <li>En nettside om et dyr eller naturfenomen</li>
+            <li>En personlig presentasjonsside</li>
+            <li>Oppskriftsside med favorittmat</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst 2 HTML-sider som lenker til hverandre</li>
+            <li>h1, h2, avsnitt og minst én liste</li>
+            <li>Minst ett bilde med alt-tekst</li>
+            <li>Én intern og én ekstern lenke</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid html -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Lag din første nettside (HTML)</h3>
+        <p>Ingen installasjon nødvendig – alt kjører i nettleseren</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Ingen installasjon</h4>
+        <ul>
+          <li><strong>Windows:</strong> Notisblokk (Notepad) + nettleser er nok</li>
+          <li><strong>Mac:</strong> TextEdit → Format → Gjør om til ren tekst → lagre som .html</li>
+          <li><strong>Chromebook:</strong> bruk CodePen (codepen.io) – live-forhåndsvisning i nettleseren</li>
+          <li>Anbefalt: Notepad++ (Windows) – gratis, fargekoder HTML-syntaks</li>
+          <li>F5 i nettleseren oppdaterer siden etter endringer</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Prosjektstruktur</h4>
+        <ul>
+          <li>Del 1–3: grunnleggende struktur, tekst og lister</li>
+          <li>Del 4–5: bilder og lenker</li>
+          <li>Del 6: fullstendig nettsted med to HTML-sider</li>
+          <li>Alle filer må ligge i <strong>samme mappe</strong> for at lenker skal fungere</li>
+          <li>Bilder til siden må også ligge i samme mappe</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Differensiering</h4>
+        <ul>
+          <li><strong>Lavt nivå:</strong> del 1–2 – grunnstruktur og tekstformatering</li>
+          <li><strong>Middels:</strong> del 1–5 – komplett side med bilde og lenker</li>
+          <li><strong>Høyt nivå:</strong> del 6 – flersides nettsted, kan legge til enkel CSS</li>
+          <li>Tverrfaglig: nettside om tema fra norsk, samfunnsfag eller naturfag</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurdering</h4>
+        <ul>
+          <li>Lever HTML-fil(er) på læringsplattform eller e-post</li>
+          <li>Vurder: fungerer lenker, er bilder gitt riktig alt-tekst, er koden ryddig?</li>
+          <li>Del 6 egner seg godt til vurdering – fullstendig produkt</li>
+          <li>La elevene presentere nettsiden sin for klassen</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>🌐</span>
+        <div>
+          <strong>Publisering (valgfritt)</strong>
+          <p>Elever kan publisere siden gratis via GitHub Pages eller Netlify Drop (dra-og-slipp). Ikke obligatorisk, men veldig motiverende for interesserte elever.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–5: 20–30 min per del. Del 6 (eget nettsted): 60–120 min. Hele prosjektet passer over 2–3 dobbelttimer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 7: SCRATCH ── -->
+<section class="section">
+  <div class="section-title">🐱 Lag spill med Scratch</div>
+  <div class="section-sub">Scratch er det perfekte startpunktet for programmering – ingen kode å skrive, bare blokker å sette sammen. Elevene lærer spillogikk steg for steg og bygger til slutt et eget spill helt fra bunnen.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>🧩</span> Blokk-programmering</div>
+    <div class="konsept-brikke"><span>🎮</span> Bevegelse og piltaster</div>
+    <div class="konsept-brikke"><span>💥</span> Berøringsdeteksjon</div>
+    <div class="konsept-brikke"><span>⭐</span> Variabler og poeng</div>
+    <div class="konsept-brikke"><span>🎲</span> Tilfeldighet og kloner</div>
+    <div class="konsept-brikke"><span>🌐</span> scratch.mit.edu</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Bevegelse</div>
+      <p>Bli kjent med grensesnittet og styr en figur med piltastene ved å koble hendelse-blokker til bevegelse-blokker.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Utseende</div>
+      <p>Legg til bakgrunner, bytt kostymer for animasjon og spill lyder. Gi spillet et eget uttrykk.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Berøring</div>
+      <p>Bruk hvis-blokker i en evig-løkke til å oppdage berøring mellom figurer og lage game over.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Variabler</div>
+      <p>Lag variabler for poeng og liv, og bruk tidtakeren til å lage et tidsbegrenset spill.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Kloner</div>
+      <p>Bruk kloner til å lage mange kopier av en figur automatisk – perfekt for fallende gjenstander.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">06</div>
+      <div class="trinn-tittel">Eget spill</div>
+      <p>Planlegg og bygg et fullstendig spill med start, mål og game over – helt etter eget valg.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">🎮</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Bevegelse og piltaster</div>
+      <p>Bli kjent med Scratch-grensesnittet og lag ditt første program: en figur som styres med piltastene.</p>
+      <div class="kort-meta">
+        <span>🎯 4.–8. trinn</span>
+        <span>⏱ 25 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🧩 Blokkene du trenger</h4>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">når <span class="sb-gap">pil høyre</span> trykkes</span>
+            <span class="sb sb-bevegelse sb-innrykk">gå <span class="sb-gap">10</span> steg</span>
+          </div>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">når 🚩 klikkes</span>
+            <span class="sb sb-bevegelse sb-innrykk">gå til x: <span class="sb-gap">0</span> y: <span class="sb-gap">0</span></span>
+          </div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Gå til scratch.mit.edu og klikk «Lag»</li>
+            <li>Koble «når pil høyre trykkes» → «gå 10 steg»</li>
+            <li>Gjør det samme for alle fire retninger</li>
+            <li>Endre 10 til 20 – hva skjer med hastigheten?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">🎨</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Bakgrunner og kostymer</div>
+      <p>Gi spillet et visuelt uttrykk med egne bakgrunner, kostymeskift for animasjon og lydeffekter.</p>
+      <div class="kort-meta">
+        <span>🎯 4.–8. trinn</span>
+        <span>⏱ 30 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🧩 Blokkene du trenger</h4>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">når <span class="sb-gap">mellomrom</span> trykkes</span>
+            <span class="sb sb-utseende sb-innrykk">neste kostyme</span>
+          </div>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">når 🚩 klikkes</span>
+            <span class="sb sb-lyd sb-innrykk">spill lyden <span class="sb-gap">Meow</span></span>
+            <span class="sb sb-utseende sb-innrykk">bytt bakgrunn til <span class="sb-gap">Natur</span></span>
+          </div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Legg til en bakgrunn fra biblioteket</li>
+            <li>Legg til en ny figur og utforsk kostymene</li>
+            <li>Koble «neste kostyme» til mellomromstasten</li>
+            <li>Koble en lyd til grønt flagg</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">💥</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Berøring og game over</div>
+      <p>Bruk hvis-blokker i en evig-løkke til å oppdage berøring mellom figurer. Bygg et enkelt unnvikningsspill.</p>
+      <div class="kort-meta">
+        <span>🎯 4.–8. trinn</span>
+        <span>⏱ 35 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🧩 Blokkene du trenger</h4>
+          <div class="sb-rad">
+            <span class="sb sb-kontroll">for alltid</span>
+            <span class="sb sb-kontroll sb-innrykk">hvis <span class="sb-gap">berører Hinder?</span></span>
+            <span class="sb sb-utseende sb-innrykk" style="margin-left:36px">si <span class="sb-gap">Game Over!</span></span>
+            <span class="sb sb-kontroll sb-innrykk" style="margin-left:36px">stopp <span class="sb-gap">alle</span></span>
+          </div>
+          <div class="sb-rad" style="margin-top:6px">
+            <span class="sb sb-bevegelse">hvis ved kanten, sprette</span>
+          </div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Lag et hinder som beveger seg automatisk</li>
+            <li>Sjekk berøring inne i en evig-løkke</li>
+            <li>Vis «Game Over!» og stopp alle</li>
+            <li>La spillet starte fra samme sted (gå til x/y ved grønt flagg)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">⭐</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Variabler – poeng og liv</div>
+      <p>Legg til variabler for å holde styr på poeng og liv, og bruk tidtakeren til å lage et tidsbegrenset spill.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–9. trinn</span>
+        <span>⏱ 35 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🧩 Blokkene du trenger</h4>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">når 🚩 klikkes</span>
+            <span class="sb sb-variabel sb-innrykk">sett <span class="sb-gap">poeng</span> til <span class="sb-gap">0</span></span>
+            <span class="sb sb-variabel sb-innrykk">sett <span class="sb-gap">liv</span> til <span class="sb-gap">3</span></span>
+            <span class="sb sb-sanse sb-innrykk">nullstill tidtaker</span>
+          </div>
+          <div class="sb-rad" style="margin-top:6px">
+            <span class="sb sb-variabel">endre <span class="sb-gap">poeng</span> med <span class="sb-gap">1</span></span>
+          </div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Lag variablene «poeng» og «liv»</li>
+            <li>Sett startverdier ved grønt flagg</li>
+            <li>Endre poeng ved berøring av noe positivt</li>
+            <li>Game over når liv = 0 eller tidtaker > 30</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">🎲</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Kloner og tilfeldighet</div>
+      <p>Bruk kloner til å lage mange kopier av en figur automatisk, og tilfeldige tall for uforutsigbar bevegelse.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–9. trinn</span>
+        <span>⏱ 40 min</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🧩 Blokkene du trenger</h4>
+          <div class="sb-rad">
+            <span class="sb sb-kontroll">for alltid</span>
+            <span class="sb sb-kontroll sb-innrykk">vent <span class="sb-gap">1.5</span> sekunder</span>
+            <span class="sb sb-kontroll sb-innrykk">lag klon av <span class="sb-gap">meg selv</span></span>
+          </div>
+          <div class="sb-rad" style="margin-top:8px">
+            <span class="sb sb-hendelse">når jeg starter som klon</span>
+            <span class="sb sb-bevegelse sb-innrykk">gå til x: <span class="sb-gap">tilfeldig tall fra -220 til 220</span> y: <span class="sb-gap">180</span></span>
+            <span class="sb sb-kontroll sb-innrykk">vent til <span class="sb-gap">y-posisjon &lt; -170</span></span>
+            <span class="sb sb-kontroll sb-innrykk">slett denne klonen</span>
+          </div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Lag kloner hvert 1.5 sekund i en evig-løkke</li>
+            <li>Gi klonene tilfeldig x-posisjon øverst på skjermen</li>
+            <li>Klonene faller ned og slettes ved bunnen</li>
+            <li>Poeng når spilleren berører en klon</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 6 -->
+    <div class="prosjekt-kort farge-scratch reveal" data-kategori="scratch">
+      <div class="prosjekt-ikon">🏆</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-scratch">Scratch</span>
+      </div>
+      <div class="prosjekt-tittel">Bygg ditt eget spill</div>
+      <p>Planlegg og bygg et fullstendig Scratch-spill med start, mål og game over. Del det med klassen etterpå!</p>
+      <div class="kort-meta">
+        <span>🎯 4.–10. trinn</span>
+        <span>⏱ 60–120 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="scratch6_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="scratch6_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Spillideer</h4>
+          <ul>
+            <li>Unnvikningsspill – styr unna hindre</li>
+            <li>Samlespill – ta stjerner som dukker opp</li>
+            <li>Labyrint – finn veien til målet</li>
+            <li>Klikk-spill – klikk på figurer for poeng</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <div class="sb-rad">
+            <span class="sb sb-hendelse">✅ Minst 2 figurer med skript</span>
+          </div>
+          <div class="sb-rad">
+            <span class="sb sb-bevegelse">✅ Spillerstyring (tastatur eller mus)</span>
+          </div>
+          <div class="sb-rad">
+            <span class="sb sb-variabel">✅ Minst én variabel (poeng, liv eller tid)</span>
+          </div>
+          <div class="sb-rad">
+            <span class="sb sb-kontroll">✅ Tydelig start og game over</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid scratch -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Lag spill med Scratch</h3>
+        <p>Kontooppsett, klasseromsfunksjon og pedagogiske tips</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Kontoer og lagring</h4>
+        <ul>
+          <li>Scratch fungerer uten konto, men innlogging gir skylagring</li>
+          <li>Opprett <strong>klasseromskonto</strong> på scratch.mit.edu/educators</li>
+          <li>Elever under 13: læreren oppretter kontoer, ingen e-post nødvendig</li>
+          <li>Scratch lagrer automatisk til skyen hvert 30. sekund</li>
+          <li>Uten konto: Fil → Lagre til datamaskinen etter hver økt</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Dele og innlevere</h4>
+        <ul>
+          <li>Elever kan dele prosjektet og sende læreren en <strong>lenke</strong></li>
+          <li>Klasseromskonto: du ser alle elevprosjekter i dashbordet ditt</li>
+          <li>Alternativ innlevering: eksporter som .sb3-fil og lever på læringsplattform</li>
+          <li>Spillmesse: alle spill vises og spilles av resten av klassen</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Differensiering</h4>
+        <ul>
+          <li><strong>4.–5. trinn:</strong> del 1–3 – bevegelse, utseende og berøring</li>
+          <li><strong>6.–7. trinn:</strong> del 1–5 – fullt spill med kloner og variabler</li>
+          <li><strong>8. trinn+:</strong> del 6 – eget spill fra bunnen av</li>
+          <li>Scratch er godt egnet for elever med lese/skrivevansker</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Vurdering</h4>
+        <ul>
+          <li>Be eleven forklare koden muntlig – «hva skjer når du klikker her?»</li>
+          <li>Sjekk at spillet har tydelig start, mål og game over</li>
+          <li>Del 6 egner seg til vurdering: fullstendig spill etter kravliste</li>
+          <li>Klassegalleri: alle spill vises og spilles av medelever</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks tips">
+        <span>🔧</span>
+        <div>
+          <strong>Scratch Desktop</strong>
+          <p>Installer Scratch Desktop (scratch.mit.edu/download) for bruk uten internett. Prosjekter lagres lokalt – minn elevene på å ta backup til OneDrive/USB.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–5: 25–40 min per del. Del 6 (eget spill): 60–120 min. Hele prosjektet passer over 3–4 dobbelttimer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 8: MICRO:BIT ── -->
+<section class="section">
+  <div class="section-title">🔴 Programmering med micro:bit</div>
+  <div class="section-sub">micro:bit er en liten datamaskin med innebygde sensorer, LED-display og radio. Elevene programmerer den i MakeCode og kobler den til virkelige komponenter – fra blinkende LED-er til servomotorer og trådløs kommunikasjon.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>💡</span> LED-display</div>
+    <div class="konsept-brikke"><span>📐</span> Akselerometer</div>
+    <div class="konsept-brikke"><span>📡</span> Radio</div>
+    <div class="konsept-brikke"><span>⚙️</span> Servomotor</div>
+    <div class="konsept-brikke"><span>⚡</span> Elektrisk krets</div>
+    <div class="konsept-brikke"><span>🌐</span> makecode.microbit.org</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Display og knapper</div>
+      <p>Vis tekst, ikoner og animasjoner på LED-displayet. Reagér på knapp A, B og A+B med ulike hendelser.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Akselerometer</div>
+      <p>Bruk den innebygde bevegelsessensoren til å registrere risting, helning og retning.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Radio</div>
+      <p>Send meldinger og tall trådløst mellom to micro:bit-er. Bygg et ping-pong-system eller quiz.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Servomotor</div>
+      <p>Koble en servo til Pin 0 og styr vinkelen med knapper eller akselerometeret.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Elektrisk krets</div>
+      <p>Bygg en krets med ekstern LED, motstand, trykknapp og summer på breadboard.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">06</div>
+      <div class="trinn-tittel">Eget prosjekt</div>
+      <p>Kombiner sensorer, radio og kretselementer til et eget kreativt micro:bit-produkt.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">💡</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">LED-display og knapper</div>
+      <p>Lær å vise tekst, tall og ikoner på det 5×5 LED-displayet, og programér knapp A og B til ulike hendelser.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–9. trinn</span>
+        <span>⏱ 30 min</span>
+        <span>🔌 Bare micro:bit + USB</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Kode i MakeCode Python</h4>
+          <div class="kode-boks"><span class="kw">def</span> <span class="fn">on_button_pressed_a</span>():
+    basic.show_icon(IconNames.HAPPY)
+input.on_button_pressed(Button.A,
+    on_button_pressed_a)
+
+<span class="kw">def</span> <span class="fn">on_forever</span>():
+    basic.show_string(<span class="str">"Hei!"</span>)
+    basic.pause(<span class="str">1000</span>)
+basic.forever(on_forever)</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Vis ditt navn ved oppstart</li>
+            <li>Knapp A → glad smiley, Knapp B → trist</li>
+            <li>Lag en nedtelling: 3, 2, 1, GO!</li>
+            <li>A+B samtidig → tilfeldig tall 1–6</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">📐</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">Akselerometer og bevegelse</div>
+      <p>Bruk den innebygde bevegelsessensoren til å registrere risting, helning og orientering. Lag en digital terning!</p>
+      <div class="kort-meta">
+        <span>🎯 5.–9. trinn</span>
+        <span>⏱ 30 min</span>
+        <span>🔌 Bare micro:bit + USB</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Gestures</h4>
+          <ul>
+            <li>SHAKE – risting</li>
+            <li>TILT_LEFT / TILT_RIGHT – helning</li>
+            <li>FACE_UP / FACE_DOWN – snudd</li>
+            <li>X/Y/Z-aksel: verdier –1000 til +1000</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Rist → vis tilfeldig tall 1–6</li>
+            <li>Heln venstre/høyre → vis pil</li>
+            <li>Les X-aksel og vis verdien</li>
+            <li>FACE_DOWN → vis skull-ikon</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">📡</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">Radio – trådløs kommunikasjon</div>
+      <p>Send meldinger og tall trådløst mellom to micro:bit-er på samme radiokanal. Bygg ping-pong eller quiz.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 40 min</span>
+        <span>🔌 2× micro:bit</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Radio-regler</h4>
+          <ul>
+            <li>Begge micro:bit-er MÅ ha samme gruppe</li>
+            <li>Grupper: 0–255 (bruk klasseromsnummer!)</li>
+            <li>Send tekst: <code>radio.send_string()</code></li>
+            <li>Send tall: <code>radio.send_number()</code></li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Sender: A → «Hei!», mottaker viser det</li>
+            <li>Rist sender → mottaker reagerer</li>
+            <li>Bygg ping-pong mellom to micro:bit-er</li>
+            <li>Bruk ulike grupper per elevpar</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">⚙️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">Servomotor</div>
+      <p>Koble en servomotor til Pin 0 og styr vinkelen (0–180°) med knapper eller akselerometeret. Bygg en mekanisk bom!</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 45 min</span>
+        <span>🔌 micro:bit + servo + batteri</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis kobling og kode</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔌 Koble servo til micro:bit</h4>
+          <ul>
+            <li>Signal (hvit/gul) → Pin 0</li>
+            <li>VCC (rød) → 3V</li>
+            <li>GND (svart/brun) → GND</li>
+            <li>Bruk alltid batteripakke – ikke bare USB!</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>A → 0°, B → 180°, A+B → 90°</li>
+            <li>Sveip sakte fra 0 til 180 og tilbake</li>
+            <li>Styr vinkelen med akselerometeret</li>
+            <li>Bygg en papir-bom som åpner og lukker</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">⚡</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">Elektrisk krets</div>
+      <p>Bygg en ekstern krets med LED, 470Ω motstand, trykknapp og summer på breadboard. Forstå hvorfor motstanden er nødvendig.</p>
+      <div class="kort-meta">
+        <span>🎯 6.–10. trinn</span>
+        <span>⏱ 50 min</span>
+        <span>🔌 micro:bit + breadboard + komponenter</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis kobling og kode</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔌 Koblingsskjema</h4>
+          <ul>
+            <li>Pin 0 → 470Ω → LED+ → LED- → GND</li>
+            <li>Pin 1 → Summer+ → Summer- → GND</li>
+            <li>Pin 2 → Knapp → GND (aktiv lav)</li>
+            <li>Aldri LED uten motstand!</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Koble og test: A → LED på, B → av</li>
+            <li>Koble summer, spill tone når LED lyser</li>
+            <li>Ekstern knapp → LED + lyd</li>
+            <li>Blink 5 ganger, deretter pause</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 6 -->
+    <div class="prosjekt-kort farge-microbit reveal" data-kategori="microbit">
+      <div class="prosjekt-ikon">🚀</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-mb">micro:bit</span>
+      </div>
+      <div class="prosjekt-tittel">Lag ditt eget prosjekt</div>
+      <p>Kombiner sensorer, radio, servomotor og elektrisk krets til et eget kreativt produkt. Planlegg på papir – bygg i virkeligheten.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 60–120 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="mb6_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="mb6_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Prosjektideer</h4>
+          <ul>
+            <li>Trådløs terning: rist → mottaker viser tall</li>
+            <li>Temperaturvakt: LED + lyd ved for varmt</li>
+            <li>Automatisk bom: servo åpner på knappetrykk</li>
+            <li>Morsekodesender via radio</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst 2 konsepter kombinert</li>
+            <li>Minst én sensor/inngang</li>
+            <li>Minst én utgang (display, LED, servo, lyd)</li>
+            <li>Koden har kommentarer</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid microbit -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Programmering med micro:bit</h3>
+        <p>Utstyrsliste, MakeCode-oppsett og sikkerhetstips for krets-delen</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Kom i gang med MakeCode</h4>
+        <ul>
+          <li>MakeCode kjører i nettleseren – ingen installasjon (<a href="https://makecode.microbit.org" target="_blank">makecode.microbit.org</a>)</li>
+          <li>Koble micro:bit til PC med USB-kabel</li>
+          <li>Klikk «Last ned» → .hex-filen → dra den til micro:bit i filutforskeren</li>
+          <li>Alternativ: Mu Editor for Python-programmering direkte</li>
+          <li>Simulator i MakeCode lar elevene teste uten fysisk enhet</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Utstyrsliste</h4>
+        <ul>
+          <li>1× micro:bit v2 per elev/par (ca. 250 kr)</li>
+          <li>USB-kabel (micro-USB)</li>
+          <li>Batteripakke (3V, 2× AAA) – <strong>nødvendig for servo og krets</strong></li>
+          <li>Del 4–5: breadboard, 470Ω motstander, LED-er, trykknapp, summer</li>
+          <li>Del 4: servo SG90 (ca. 30–50 kr per stk.)</li>
+          <li>Krokodilleklemmer og ledninger</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Sikkerhet og krets</h4>
+        <ul>
+          <li>Bruk alltid <strong>470Ω motstand</strong> i serie med ekstern LED</li>
+          <li>Servo og krets: bruk <strong>batteripakke</strong> – USB alene gir ustabil drift</li>
+          <li>Del 5 (elektrisk krets): voksne bør hjelpe med koblinger første gang</li>
+          <li>Dobbeltsjekk polaritet på LED (langt bein = +) før strøm på</li>
+          <li>GND må alltid kobles felles mellom micro:bit og krets</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Differensiering og progresjon</h4>
+        <ul>
+          <li><strong>5.–6. trinn:</strong> del 1–2 i blokk-modus (MakeCode)</li>
+          <li><strong>7.–8. trinn:</strong> del 1–4 – sensorer og servo</li>
+          <li><strong>9.–10. trinn:</strong> del 5–6 – krets og kreativt prosjekt i Python</li>
+          <li>Del 3 (radio) krever minst 2 micro:bit-er i klasserommet</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks advarsel">
+        <span>⚠️</span>
+        <div>
+          <strong>Servo og strøm</strong>
+          <p>Koble alltid servo til ekstern batteripakke (3V), ikke bare USB. Servo trekker mer strøm enn micro:bit-pinnene leverer stabilt, og kan forårsake uventede restart.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>📦</span>
+        <div>
+          <strong>Innkjøpstips</strong>
+          <p>Elektronikksett for skole (f.eks. Kitronik Inventor's Kit for micro:bit) inneholder det meste til del 4–5. Kjøpes billig fra Kjell &amp; Company, Elfa eller Amazon.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–2: 30 min. Del 3 (radio): 40 min. Del 4–5 (servo/krets): 45–50 min. Del 6 (kreativt): 60–120 min.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 9: ARDUINO ── -->
+<section class="section">
+  <div class="section-title">🔵 Kom i gang med Arduino</div>
+  <div class="section-sub">Arduino er neste steg etter Scratch og micro:bit – her skriver elevene ren C/C++ og kobler virkelige komponenter selv. Ingen innebygde sensorer: alt bygges fra bunnen på breadboard. Passer fra 8.–10. trinn og oppover.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>💻</span> C / C++ kode</div>
+    <div class="konsept-brikke"><span>💡</span> LED og knapper</div>
+    <div class="konsept-brikke"><span>🌡️</span> Temperatursensor</div>
+    <div class="konsept-brikke"><span>📡</span> Ultralydsensor</div>
+    <div class="konsept-brikke"><span>⚙️</span> Servomotor</div>
+    <div class="konsept-brikke"><span>🖥️</span> Arduino IDE</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Blink og knapp</div>
+      <p>Forstå setup() og loop(). Blink en LED og styr den med en knapp – klassisk «Hello World» for hardware.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Trafikklys</div>
+      <p>Styr tre LED-er i sekvens med timing. Lær funksjoner, konstanter og tilstandsmaskiner.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Temperatursensor</div>
+      <p>Les temperatur fra TMP36, konverter til Celsius og vis på I2C LCD-skjerm.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Ultralydsensor</div>
+      <p>Mål avstand med HC-SR04 og bygg en parkeringsassistent med LED og summer.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">Servo + potensiometer</div>
+      <p>Styr en servomotor med en dreieknapp. Lær map()-funksjonen og Servo-biblioteket.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">06</div>
+      <div class="trinn-tittel">Eget prosjekt</div>
+      <p>Kombiner sensorer og aktuatorer til et eget produkt. Planlegg på papir – bygg i kode.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">💡</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Blink og knapp</div>
+      <p>Ditt første Arduino-program i C/C++. Forstå setup() og loop(), blink en LED og styr den med en knapp.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 35 min</span>
+        <span>🔌 Arduino Uno + LED + knapp</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard1_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard1_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Grunnstrukturen i Arduino</h4>
+          <div class="kode-boks"><span class="kw">void</span> <span class="fn">setup</span>() {
+  pinMode(<span class="str">13</span>, OUTPUT);
+}
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  digitalWrite(<span class="str">13</span>, HIGH);
+  delay(<span class="str">1000</span>);
+  digitalWrite(<span class="str">13</span>, LOW);
+  delay(<span class="str">1000</span>);
+}</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Skriv blink-programmet og last opp</li>
+            <li>Endre delay-verdiene – hva skjer?</li>
+            <li>Koble knapp på pin 2 med INPUT_PULLUP</li>
+            <li>Knapp styrer LED av og på</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">🚦</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Trafikklys</div>
+      <p>Styr tre LED-er (rød, gul, grønn) i korrekt trafikklys-sekvens. Lær funksjoner og konstanter i C++.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 40 min</span>
+        <span>🔌 3× LED + 3× 220Ω</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard2_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard2_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Egne funksjoner</h4>
+          <div class="kode-boks"><span class="kw">void</span> <span class="fn">slukk</span>() {
+  digitalWrite(ROD,   LOW);
+  digitalWrite(GUL,   LOW);
+  digitalWrite(GRONN, LOW);
+}
+<span class="kom">// Kall funksjonen:</span>
+slukk();
+digitalWrite(ROD, HIGH);</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Koble 3 LED-er og last opp</li>
+            <li>Tilpass timingen til reelle trafikklys</li>
+            <li>Legg til fotgjengerknapp</li>
+            <li>Lag blink()-funksjon for gul LED</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">🌡️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Temperatursensor + LCD</div>
+      <p>Les temperatur fra TMP36, konverter spenning til Celsius og vis på I2C LCD-skjerm. Legg til alarm-LED.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 45 min</span>
+        <span>🔌 TMP36 + I2C LCD</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard3_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard3_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Konvertering</h4>
+          <div class="kode-boks"><span class="kw">int</span> raa = analogRead(A0);
+<span class="kw">float</span> volt = raa * (<span class="str">5.0</span> / <span class="str">1023.0</span>);
+<span class="kw">float</span> temp = (volt - <span class="str">0.5</span>) * <span class="str">100.0</span>;</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Installer LiquidCrystal_I2C-biblioteket</li>
+            <li>Koble TMP36 og LCD som vist</li>
+            <li>Vis temperatur med 1 desimal</li>
+            <li>Alarm-LED når temp &gt; 30°C</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">📡</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Ultralydsensor – avstandsmåler</div>
+      <p>Mål avstand med HC-SR04 og bygg en parkeringsassistent – summer piper raskere jo nærmere noe er.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 40 min</span>
+        <span>🔌 HC-SR04 + summer + LED-er</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard4_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard4_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Slik måles avstand</h4>
+          <ul>
+            <li>TRIG sender 10µs ultralydpuls</li>
+            <li>ECHO måler tid til ekko returnerer</li>
+            <li>Avstand (cm) = varighet / 58.2</li>
+            <li>Rekkevidde: 2–400 cm</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Koble HC-SR04 og test i seriell monitor</li>
+            <li>Alarm når avstand &lt; 20 cm</li>
+            <li>Rød/gul/grønn LED etter avstand</li>
+            <li>Raskere pip jo nærmere = parkeringsassistent</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">⚙️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Servo + potensiometer</div>
+      <p>Styr en servomotors vinkel (0–180°) med en dreieknapp. Lær map()-funksjonen og Servo-biblioteket.</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 40 min</span>
+        <span>🔌 Servo + potensiometer 10kΩ</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard5_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard5_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 map()-funksjonen</h4>
+          <div class="kode-boks"><span class="kom">// Skalerer fra ett omraade til et annet</span>
+<span class="kw">int</span> vinkel = map(
+  analogRead(A0), <span class="kom">// verdi</span>
+  <span class="str">0</span>, <span class="str">1023</span>,     <span class="kom">// fra-omraade</span>
+  <span class="str">0</span>, <span class="str">180</span>      <span class="kom">// til-omraade</span>
+);</div>
+        </div>
+        <div>
+          <h4>🎯 Oppgaver</h4>
+          <ul>
+            <li>Koble servo og potensiometer</li>
+            <li>Drei knappen – følger servoen med?</li>
+            <li>Begrens til 30–150 grader</li>
+            <li>Knapp tilbakestiller til 90 grader</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 6 -->
+    <div class="prosjekt-kort farge-arduino reveal" data-kategori="arduino">
+      <div class="prosjekt-ikon">🚀</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-ard">Arduino</span>
+      </div>
+      <div class="prosjekt-tittel">Lag ditt eget prosjekt</div>
+      <p>Kombiner sensorer, aktuatorer og logikk til et eget produkt. Fra reaksjonsspill til værstasjon – hva vil du bygge?</p>
+      <div class="kort-meta">
+        <span>🎯 8.–10. trinn</span>
+        <span>⏱ 60–120 min</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad"><a class="pdf-btn elev" href="ard6_elev.pdf" target="_blank">📄 Elevversjon</a><a class="pdf-btn losning" href="ard6_losning.pdf" target="_blank">✅ Løsningsforslag</a></div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis ideer og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Prosjektideer</h4>
+          <ul>
+            <li>Reaksjonsspill med LCD og millis()</li>
+            <li>Værstasjon: temp + lys på LCD</li>
+            <li>Automatisk gardin med LDR + servo</li>
+            <li>Pianoknapper med summer</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Minst 2 komponenter koblet til</li>
+            <li>Minst én egendefinert funksjon</li>
+            <li>Debuginfo i seriell monitor</li>
+            <li>Koden har forklarende kommentarer</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid arduino -->
+
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Kom i gang med Arduino</h3>
+        <p>Utstyrsliste, installasjon, biblioteker og sikkerhetstips</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Utstyr</h4>
+        <ul>
+          <li><strong>ELEGOO Super Starter Kit</strong> (ca. 300–400 kr) inneholder alt til alle 6 delene</li>
+          <li>Del 3 (LCD): I2C LCD 16×2 medfølger i de fleste starter-kit</li>
+          <li>Del 4: HC-SR04 ultralydsensor</li>
+          <li>Del 5: servo SG90 + potensiometer 10kΩ</li>
+          <li>USB-kabel type B (printer-USB) for tilkobling til PC</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Installasjon</h4>
+        <ul>
+          <li>Last ned <strong>Arduino IDE</strong> fra arduino.cc – gratis</li>
+          <li>Uten installasjon: <strong>Arduino Cloud Editor</strong> (krever konto)</li>
+          <li>Verktøy → Port → COMx (Windows) / /dev/ttyUSB0 (Linux)</li>
+          <li>Verktøy → Kort → Arduino Uno</li>
+          <li>Test: Fil → Eksempler → 01.Basics → Blink</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Biblioteker</h4>
+        <ul>
+          <li>Del 3: installer <strong>LiquidCrystal_I2C</strong> av Frank de Brabander</li>
+          <li>Verktøy → Administrer biblioteker → søk «LiquidCrystal I2C»</li>
+          <li>Del 5 (servo): Servo-biblioteket er innebygd – ingen installasjon</li>
+          <li>LCD-adresse: som regel 0x27 eller 0x3F – kjør I2C-scanner om usikkert</li>
+        </ul>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Differensiering</h4>
+        <ul>
+          <li><strong>8. trinn:</strong> del 1–2 – blink, knapp og trafikklys</li>
+          <li><strong>9. trinn:</strong> del 1–4 – sensorer og LCD</li>
+          <li><strong>10. trinn:</strong> del 5–6 – servo og kreativt prosjekt</li>
+          <li>C/C++ er nytt for de fleste – bruk god tid på del 1</li>
+        </ul>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks advarsel">
+        <span>⚠️</span>
+        <div>
+          <strong>Aldri uten motstand!</strong>
+          <p>Koble alltid en 220Ω (eller høyere) motstand i serie med ekstern LED. Uten motstand vil for mye strøm flyte og LED-en ødelegges – og i verste fall Arduino-pinnen.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>🔌</span>
+        <div>
+          <strong>Tinkercad Circuits</strong>
+          <p>La elevene simulere kretsen i Tinkercad Circuits (tinkercad.com/circuits) FØR de bygger den fysisk. Perfekt for å oppdage koblingsfeil uten risiko.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>⏱️</span>
+        <div>
+          <strong>Tidsoversikt</strong>
+          <p>Del 1–2: 35–40 min. Del 3–4: 40–45 min. Del 5: 40 min. Del 6 (kreativt): 60–120 min. Totalt ca. 5–6 timer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<hr class="divider" />
+
+<!-- ── PROSJEKT 10: 3D-PRINTING ── -->
+<section class="section">
+  <div class="section-title">🟣 3D-printing med Tinkercad</div>
+  <div class="section-sub">Den komplette arbeidsflyten: design en 3D-modell i Tinkercad, eksporter som STL, kjør gjennom et slice-program og 3D-print det ferdige objektet. Ingen installasjon nødvendig for Tinkercad – det kjører i nettleseren.</div>
+
+  <div class="konsept-rad">
+    <div class="konsept-brikke"><span>🖱️</span> Tinkercad (nettlesar)</div>
+    <div class="konsept-brikke"><span>📁</span> STL-filformat</div>
+    <div class="konsept-brikke"><span>⚙️</span> Ultimaker Cura</div>
+    <div class="konsept-brikke"><span>🖨️</span> 3D-printer (FDM)</div>
+    <div class="konsept-brikke"><span>🔷</span> Primitiver og hull</div>
+    <div class="konsept-brikke"><span>📐</span> Frå idé til objekt</div>
+  </div>
+
+  <div class="trinn-rad">
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">01</div>
+      <div class="trinn-tittel">Tinkercad-grensesnittet</div>
+      <p>Naviger i 3D-rommet, plasser former på arbeidsplanet og lær de grunnleggende verktøyene.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">02</div>
+      <div class="trinn-tittel">Former og hull</div>
+      <p>Kombiner solide former og negative hull for å lage komplekse modeller. Lag et navneskilt.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">03</div>
+      <div class="trinn-tittel">Eksporter STL</div>
+      <p>Sjekk modellen og eksporter som STL-fil i millimeter. Forstå kva STL-formatet er.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">04</div>
+      <div class="trinn-tittel">Slice-programmet</div>
+      <p>Opne STL i Cura, set laghøyde, fyll og støtte – og eksporter G-kode til printeren.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">05</div>
+      <div class="trinn-tittel">3D-printing</div>
+      <p>Start printen, følg med på første lag, og etterbehandla det ferdige objektet.</p>
+    </div>
+    <div class="trinn-boks reveal">
+      <div class="trinn-nr">06</div>
+      <div class="trinn-tittel">Kreativt prosjekt</div>
+      <p>Fra egen idé og skisse til ferdig 3D-printet objekt – hele arbeidsflyten selvstendig.</p>
+    </div>
+  </div>
+
+  <div class="prosjekt-grid">
+
+    <!-- KORT 1 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">🖱️</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">Bli kjent med Tinkercad</div>
+      <p>Naviger i 3D-rommet, flytt og skaler former, og lær hvordan arbeidsplanet fungerer. Ingen installasjon – bare nettleser.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 30 min</span>
+        <span>🌐 tinkercad.com</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp1_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp1_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🖱️ Navigasjon i 3D</h4>
+          <ul>
+            <li>Roter: hald høgre museknapp + dra</li>
+            <li>Zoom: mushjulet</li>
+            <li>F-tasten: fyll vinduet med val</li>
+            <li>R-tasten: roter 45° steg</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgåver</h4>
+          <ul>
+            <li>Logg inn og lag nytt design</li>
+            <li>Dra ut en boks – endre mål til 30×20×10 mm</li>
+            <li>Legg til ei kule og naviger rundt begge</li>
+            <li>Vel begge (Ctrl+A) og trykk F</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 2 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">🔷</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">Former og hull</div>
+      <p>Kombiner solide former og negative hull (Hole) for å skjære geometri ut av hverandre. Lag et navneskilt med 3D-tekst og hengehull.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 45 min</span>
+        <span>🌐 tinkercad.com</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp2_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp2_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>🔷 Solid vs. Hull</h4>
+          <ul>
+            <li>Solid = fast materiale i modellen</li>
+            <li>Hole = negativ form – skjer ut material</li>
+            <li>Vel form → klikk "Hole" i høgre hjørne</li>
+            <li>Vel alt → Ctrl+G for å gruppere og skjere</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgåver</h4>
+          <ul>
+            <li>Boks + kule som hull → grupper</li>
+            <li>Lag navneskilt 80×30×4 mm med tekst</li>
+            <li>Legg til sylinder-hull for å henge det opp</li>
+            <li>Bruk Align til å sentrere teksten</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 3 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">📁</div>
+      <div>
+        <span class="prosjekt-tag tag-intro">🌱 Intro</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">Eksporter STL-fil</div>
+      <p>Sjekk at modellen er printbar, forstå STL-formatet og eksporter i rett eining (millimeter). Lever fila til læraren.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 20 min</span>
+        <span>🌐 tinkercad.com → .stl</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp3_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp3_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis hva du trenger å vite</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>📁 Sjekkliste før eksport</h4>
+          <ul>
+            <li>Alt er gruppert til éitt objekt</li>
+            <li>Ingenting er tynnare enn 1.5 mm</li>
+            <li>Mål er kontrollert (ikke for stort!)</li>
+            <li>Enheten er millimeter, ikke inches</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgåver</h4>
+          <ul>
+            <li>Sjekk totalstorleiken (Ctrl+A)</li>
+            <li>Eksporter → .STL → millimeter</li>
+            <li>Opne i Windows 3D-visning</li>
+            <li>Send fila til læraren</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 4 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">⚙️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">Slice-programmet – Cura</div>
+      <p>Åpne STL i Ultimaker Cura, velg laghøyde, fyllprosent og støtte, og eksporter G-kode klar for printing.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 30 min</span>
+        <span>💻 Ultimaker Cura (gratis)</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp4_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp4_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis innstillinger</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>⚙️ Anbefalte innstillingar</h4>
+          <ul>
+            <li>Laghøgde: 0.2 mm</li>
+            <li>Veggar: 3</li>
+            <li>Fyll (Infill): 15–20 %</li>
+            <li>Støtte: Av (eller Auto ved overheng)</li>
+            <li>Brim: 5 mm for god festing</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgåver</h4>
+          <ul>
+            <li>Dra STL inn i Cura</li>
+            <li>Still inn og klikk Slice</li>
+            <li>Les av tid og materialbruk</li>
+            <li>Sjekk Preview-modus lag for lag</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 5 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">🖨️</div>
+      <div>
+        <span class="prosjekt-tag tag-utvidelse">⚡ Utvidelse</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">3D-printing</div>
+      <p>Start printen, følg med på første lag og etterbehandla det ferdige objektet. Forstå kvifor første lag er det viktigaste.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 20 min + ventetid</span>
+        <span>🖨️ FDM 3D-printer</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp5_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp5_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis sjekkliste og tips</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>⚠️ Sikkerheit</h4>
+          <ul>
+            <li>Dyse og plate: 200°C+ – rør ALDRI</li>
+            <li>Alltid vaksen til stades</li>
+            <li>Bruk spatelen forsiktig for å løsne – ikke hendene</li>
+            <li>La modellen kjøle seg ned 10 min</li>
+          </ul>
+        </div>
+        <div>
+          <h4>🎯 Oppgåver</h4>
+          <ul>
+            <li>Gå gjennom sjekklista med læraren</li>
+            <li>Observer første 5 minuttar</li>
+            <li>Mål ferdig objekt – stemmer med Tinkercad?</li>
+            <li>Reflekter: kva ville du gjort annleis?</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- KORT 6 -->
+    <div class="prosjekt-kort farge-3dprint reveal" data-kategori="3dprint">
+      <div class="prosjekt-ikon">🏆</div>
+      <div>
+        <span class="prosjekt-tag tag-kreativ">🎨 Kreativt prosjekt</span>
+        <span class="prosjekt-tag tag-3dp">3D-print</span>
+      </div>
+      <div class="prosjekt-tittel">Design og print ditt eige objekt</div>
+      <p>Heile arbeidsflyten sjølvstendig: idé → skisse → Tinkercad → STL → Cura → ferdig 3D-printa objekt du kan ta med heim.</p>
+      <div class="kort-meta">
+        <span>🎯 5.–10. trinn</span>
+        <span>⏱ 2–4 skuletimar</span>
+        <span>🏠 Prosjektarbeid</span>
+      </div>
+      <div class="pdf-rad">
+        <a class="pdf-btn elev" href="3dp6_elev.pdf" target="_blank">📄 Elevversjon</a>
+        <a class="pdf-btn laerer" href="3dp6_laerer.pdf" target="_blank">👩‍🏫 Lærarveiledning</a>
+      </div>
+      <button class="ned-toggle" onclick="toggleNed(this)">↓ Vis idear og krav</button>
+      <div class="ned-innhold">
+        <div>
+          <h4>💡 Idear til objekt</h4>
+          <ul>
+            <li>Nøkkelring med namn eller monogram</li>
+            <li>Mobilstativ eller blyantstativ</li>
+            <li>Miniatyrbygg med vindaugehull</li>
+            <li>Brikke til et brettspill</li>
+          </ul>
+        </div>
+        <div>
+          <h4>📋 Minimumskrav</h4>
+          <ul>
+            <li>Skisse på papir godkjent av lærar</li>
+            <li>Minst 2 former kombinert</li>
+            <li>Minst éitt hull (negativ form)</li>
+            <li>Maks 80 mm i største mål</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prosjekt-grid 3dprint -->
+
+  <!-- LAERERSEKSJON -->
+  <div class="laerer-seksjon reveal">
+    <div class="laerer-header">
+      <span class="laerer-ikon">👩‍🏫</span>
+      <div>
+        <h3>For læreren – Tinkercad-konto og klasseoppsett</h3>
+        <p>Alt du trenger å vite for å komme i gang med Tinkercad i klasserommet</p>
+      </div>
+    </div>
+    <div class="laerer-grid">
+      <div class="laerer-kort">
+        <h4>① Opprett lærarkonto</h4>
+        <ol>
+          <li>Gå til <strong>tinkercad.com</strong> og klikk «Registrer deg»</li>
+          <li>Velg <strong>«Lag en skole- eller lærerkonto»</strong></li>
+          <li>Fyll ut skolens navn, land og din e-postadresse</li>
+          <li>Bekreft e-posten og logg inn</li>
+          <li>Du kommer til <strong>Undervisning-dashbordet</strong></li>
+        </ol>
+      </div>
+      <div class="laerer-kort">
+        <h4>② Opprett klasse</h4>
+        <ol>
+          <li>Gå til <strong>tinkercad.com/teach</strong></li>
+          <li>Klikk «Opprett ny klasse» og gi den et navn</li>
+          <li>Velg aldersgruppe for elevene</li>
+          <li>Klassen får en <strong>unik klassekode</strong> (4–6 tegn)</li>
+          <li>Del koden med elevene – de bruker den til å melde seg inn</li>
+        </ol>
+      </div>
+      <div class="laerer-kort">
+        <h4>③ Elever under 13 år</h4>
+        <ol>
+          <li>Gå til klassen → «Håndter elever»</li>
+          <li>Klikk «Legg til elever» og skriv inn navnene</li>
+          <li>Tinkercad genererer <strong>brukernavn og passord</strong> automatisk</li>
+          <li>Skriv ut innloggingsark (knapp i Tinkercad)</li>
+          <li>Elever trenger <strong>ikke</strong> egen e-post</li>
+        </ol>
+      </div>
+      <div class="laerer-kort">
+        <h4>④ Elever over 13 år</h4>
+        <ol>
+          <li>Elever oppretter egen konto med skole-e-post</li>
+          <li>De melder seg inn i klassen via <strong>klassekoden</strong></li>
+          <li>Du ser alle elevarbeider i klassevisningen din</li>
+          <li>Du kan åpne og eksportere design på vegne av eleven</li>
+          <li>Gi tilbakemelding direkte i designet</li>
+        </ol>
+      </div>
+    </div>
+    <div class="laerer-info-rad">
+      <div class="laerer-info-boks advarsel">
+        <span>⚠️</span>
+        <div>
+          <strong>GDPR og personvern</strong>
+          <p>For elever under 13 år: bruk alltid lærer-administrerte kontoer. La IKKE barn under 13 opprette egne Autodesk-kontoer. Sjekk at skolens personvernerklæring dekker bruk av Tinkercad.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>💡</span>
+        <div>
+          <strong>Praktiske tips</strong>
+          <p>Nettleser: Chrome eller Edge anbefalt. Krever WebGL – test på skolens maskiner på forhånd (get.webgl.org). Tinkercad er helt gratis og lagrer automatisk i skyen.</p>
+        </div>
+      </div>
+      <div class="laerer-info-boks tips">
+        <span>📄</span>
+        <div>
+          <strong>Fullstendig veiledning</strong>
+          <p>Last ned lærerveilednings-PDF for komplett tidplan, vurderingskriterier, feilsøkingstips for 3D-printeren og råd om filamentbehandling.</p>
+          <a class="pdf-btn laerer" href="3dp_laererveil.pdf" target="_blank" style="display:inline-block;margin-top:8px;">👩‍🏫 Last ned lærarveiledning (PDF)</a>
+        </div>
+      </div>
+    </div>
+  </div><!-- /laerer-seksjon -->
+
+  <div class="tips-boks reveal">
+    <div class="tips-ikon">🟣</div>
+    <div>
+      <h4>Tips til læreren – utstyr og planlegging</h4>
+      <p>En ELEGOO eller Creality Ender 3-type printer (ca. 2000–3000 kr) er mer enn nok til skolebruk. PLA-filament er trygt, lukter lite og er enkelt å bruke. Typisk elevmodell (navneskilt, nøkkelring) tar 20–60 minutter å printe – planlegg slik at print starter tidlig i dobbelttimen. Cura lastes ned gratis fra ultimaker.com. Ha alltid spatel, tang og sandpapir tilgjengelig ved printeren.</p>
+    </div>
+  </div>
+</section>
+
+
+<hr class="divider" />
+
+<!-- ── VERKTØY ── -->
+<section class="section" id="verktoy">
+  <div class="section-title">🛠️ Verktøy, program og nettsider</div>
+  <div class="section-sub">Alt du trenger for å kome i gang – sortert etter kva prosjekt dei høyrer til.</div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🐍</span> Python</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🐍 Mu Editor</h3>
+        <p>Enkel Python-editor laget for elever. Har innebygd støtte for pygame og micro:bit. Gratis, ingen konfigurasjon. Anbefalt for 6.–8. trinn.</p>
+        <a href="https://codewith.mu/" target="_blank">↗ Last ned Mu Editor</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>⚙️ Python / IDLE</h3>
+        <p>IDLE følger med Python. Enkel å bruke for tekstprogrammer uten pygame. Last ned Python.org og IDLE er inkludert.</p>
+        <a href="https://www.python.org/downloads/" target="_blank">↗ Last ned Python</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>💻 VS Code</h3>
+        <p>Kraftig editor for mer erfarne elever. Støtter Python, HTML, JavaScript og mye mer. Krever manuell installasjon av utvidelser.</p>
+        <a href="https://code.visualstudio.com/" target="_blank">↗ Last ned VS Code</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🌐 Trinket.io</h3>
+        <p>Kjør Python direkte i nettlesaren – ingen installasjon nødvendig. Bra for tekstprogrammer. Perfekt på Chromebook eller lånte maskiner.</p>
+        <a href="https://trinket.io/python" target="_blank">↗ Åpne Trinket.io</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🎮 Repl.it</h3>
+        <p>Nettbasert kodemiljø som støtter Python, HTML, JavaScript og meir. Gratis basis-konto. Kan dele prosjekt med lenke – fint til innlevering.</p>
+        <a href="https://replit.com/" target="_blank">↗ Åpne Repl.it</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🐱</span> Scratch</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🐱 Scratch (nettleser)</h3>
+        <p>Det offisielle Scratch-miljøet. Ingen installasjon – køyrer i alle nettlesarar. Elevar kan logge inn og lagre prosjekta sine i skyen.</p>
+        <a href="https://scratch.mit.edu/" target="_blank">↗ Åpne Scratch</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>💾 Scratch Desktop</h3>
+        <p>Offisiell desktop-app for Scratch – fungerer utan internett. Bra på skular med ustabil nettilgang. Lagrar lokalt på maskinen.</p>
+        <a href="https://scratch.mit.edu/download" target="_blank">↗ Last ned Scratch Desktop</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>👩‍🏫 ScratchEd</h3>
+        <p>Ressurssider for lærere fra MIT. Undervisningsopplegg, læringsguider og fellesskap for Scratch-lærere. Gratis og åpen tilgang.</p>
+        <a href="https://scratched.gse.harvard.edu/" target="_blank">↗ Åpne ScratchEd</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🔴</span> micro:bit</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🔴 MakeCode (nettleser)</h3>
+        <p>Det offisielle programmeringsmiljøet for micro:bit. Støtter blokk-programmering og Python. Ingen installasjon – bare koble micro:bit til USB.</p>
+        <a href="https://makecode.microbit.org/" target="_blank">↗ Åpne MakeCode</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🐍 Mu Editor (micro:bit)</h3>
+        <p>Mu Editor støtter direkte Python-programmering av micro:bit. Last ned, koble til og flash koden med ett klikk. Anbefalt for Python-elever.</p>
+        <a href="https://codewith.mu/" target="_blank">↗ Last ned Mu Editor</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>📚 microbit.org</h3>
+        <p>Offisiell side for micro:bit med prosjektidear, lærarressursar og dokumentasjon. Mange ferdiglagde oppgåver sortert etter alder og nivå.</p>
+        <a href="https://microbit.org/teach/" target="_blank">↗ microbit.org/teach</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🔵</span> Arduino</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🔵 Arduino IDE</h3>
+        <p>Det offisielle utviklingsmiljøet for Arduino. Gratis og tilgjengelig for Windows, Mac og Linux. Last ned og installer – inkluderer alle drivere.</p>
+        <a href="https://www.arduino.cc/en/software" target="_blank">↗ Last ned Arduino IDE</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>☁️ Arduino Cloud Editor</h3>
+        <p>Nettbasert Arduino-editor – ingen installasjon nødvendig. Krever en (gratis) Arduino-konto. Bra på maskiner der man ikke kan installere programmer.</p>
+        <a href="https://create.arduino.cc/editor" target="_blank">↗ Åpne Cloud Editor</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>📚 Arduino Reference</h3>
+        <p>Fullstendig referansedokumentasjon for alle Arduino-funksjoner. Uunnværlig når elevene skal slå opp hvordan en funksjon brukes.</p>
+        <a href="https://www.arduino.cc/reference/en/" target="_blank">↗ Arduino Reference</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🔌 Tinkercad Circuits</h3>
+        <p>Simuler Arduino-kretser i nettleseren uten fysisk utstyr! Perfekt til å teste kode og kretser før man bygger dem i virkeligheten.</p>
+        <a href="https://www.tinkercad.com/circuits" target="_blank">↗ Tinkercad Circuits</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🟣</span> 3D-printing</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🟣 Tinkercad</h3>
+        <p>Gratis nettbasert 3D-modelleringsprogram fra Autodesk. Ideelt for elever – enkelt grensesnitt, automatisk lagring i skyen. Krever WebGL-støtte.</p>
+        <a href="https://www.tinkercad.com/" target="_blank">↗ Åpne Tinkercad</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>⚙️ Ultimaker Cura</h3>
+        <p>Det mest brukte slice-programmet for FDM-printing. Gratis, støtter de fleste printermodeller og har gode standardprofiler for PLA.</p>
+        <a href="https://ultimaker.com/software/ultimaker-cura/" target="_blank">↗ Last ned Cura</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🟧 PrusaSlicer</h3>
+        <p>Kraftig og gratis slice-program fra Prusa. God støtte for mange printertyper, avanserte støttestrukturer og fin forhåndsvisning av lag.</p>
+        <a href="https://www.prusa3d.com/page/prusaslicer_424/" target="_blank">↗ Last ned PrusaSlicer</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>📦 Printables.com</h3>
+        <p>Gratis database med tusenvis av 3D-modellar å laste ned og printe. Bra for å inspisere andres modellar og finne inspirasjon til eigne prosjekt.</p>
+        <a href="https://www.printables.com/" target="_blank">↗ Åpne Printables</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="verktoy-gruppe">
+    <div class="verktoy-gruppe-tittel"><span>🌐</span> HTML / Web</div>
+    <div class="verktoy-rad">
+      <div class="verktoy-kort reveal">
+        <h3>🌐 MDN Web Docs</h3>
+        <p>Mozillas referanseside for HTML, CSS og JavaScript. Bransjestandardens dokumentasjon – forklarar alle HTML-taggar med eksempel. Gratis.</p>
+        <a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank">↗ Åpne MDN</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🎓 W3Schools</h3>
+        <p>Interaktive HTML-, CSS- og JavaScript-opplæringar med «Try it yourself»-editor. Enklare enn MDN – veldig bra for nybegynnere.</p>
+        <a href="https://www.w3schools.com/html/" target="_blank">↗ Åpne W3Schools</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>🖊️ Notepad / Notepad++</h3>
+        <p>HTML-prosjektet krever bare en teksteditor og en nettleser. Notepad++ er gratis og fargekoder HTML-syntaks – anbefalt fremfor vanlig Notepad.</p>
+        <a href="https://notepad-plus-plus.org/" target="_blank">↗ Last ned Notepad++</a>
+      </div>
+      <div class="verktoy-kort reveal">
+        <h3>▶️ CodePen</h3>
+        <p>Nettbasert editor for HTML, CSS og JavaScript – sjå resultatet live medan du skriv. Ingen konto nødvendig for å teste. Bra til demonstrasjonar.</p>
+        <a href="https://codepen.io/" target="_blank">↗ Åpne CodePen</a>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-kolonne">
+      <div class="footer-logo">⚡ SkapLab</div>
+      <p class="footer-ingress">En digital læringsplattform for elever og lærere på 4.–10. trinn. Prosjektene er utviklet ved Nordahl Grieg ungdomsskole.</p>
+    </div>
+    <div class="footer-kolonne">
+      <div class="footer-overskrift">Matematikk og data</div>
+      <ul class="footer-lenker">
+        <li><a href="matte.html">🔢 Matte</a></li>
+        <li><a href="geometri.html">📐 Geometri</a></li>
+        <li><a href="statistikk.html">📊 Statistikk</a></li>
+        <li><a href="grafer.html">📈 Grafer og diagrammer</a></li>
+        <li><a href="sannsynlighet.html">🎲 Sannsynlighet</a></li>
+      </ul>
+    </div>
+    <div class="footer-kolonne">
+      <div class="footer-overskrift">Skapning og programmering</div>
+      <ul class="footer-lenker">
+        <li><a href="forsok.html">🔬 Forsøk</a></li>
+        <li><a href="skaperverksted.html">🛠️ Skaperverksted</a></li>
+        <li><a href="programmering.html" style="color:var(--accent1)">💻 Programmering</a></li>
+      </ul>
+    </div>
+    <div class="footer-kolonne">
+      <div class="footer-overskrift">Lærerveiledninger (PDF)</div>
+      <ul class="footer-lenker">
+        <li><a href="3dp_laererveil.pdf" target="_blank">🟣 3D-printing</a></li>
+        <li><a href="index.html">🏠 Forside og RPG-spill</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bunn">
+    <span>© SkapLab – fritt tilgjengelig for skoler</span>
+    <a href="index.html">← Tilbake til forsiden</a>
+  </div>
+</footer>
+
+<script>
+  // Nedtrekk
+  function toggleNed(btn) {
+    const innhold = btn.nextElementSibling;
+    const open = innhold.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.textContent = open ? '↑ Skjul' : '↓ Vis hva du trenger å vite';
+    if (btn.textContent === '↑ Skjul' && btn.dataset.label) {
+      btn.textContent = '↑ Skjul';
+    }
+  }
+
+
+  // ── SOeK OG FILTER ──
+  let aktivFilter = 'alle';
+
+  function settFilter(btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('aktiv'));
+    btn.classList.add('aktiv');
+    aktivFilter = btn.dataset.filter;
+    filtrer();
+  }
+
+  function clearSok() {
+    document.getElementById('sokefelt').value = '';
+    document.getElementById('sokClear').style.display = 'none';
+    filtrer();
+  }
+
+  function filtrer() {
+    const sok = document.getElementById('sokefelt').value.toLowerCase().trim();
+    const clearBtn = document.getElementById('sokClear');
+    clearBtn.style.display = sok ? 'block' : 'none';
+
+    // Skjul/vis enkelt-kort
+    const kort = document.querySelectorAll('.prosjekt-kort[data-kategori]');
+    let synlige = 0;
+    kort.forEach(k => {
+      const kat   = k.dataset.kategori || '';
+      const tekst = k.innerText.toLowerCase();
+      const katOk  = aktivFilter === 'alle' || kat === aktivFilter;
+      const sokOk  = !sok || tekst.includes(sok);
+      if (katOk && sokOk) { k.classList.remove('skjult'); synlige++; }
+      else                { k.classList.add('skjult'); }
+    });
+
+    // Skjul heile seksjonar om alle korta er skjulte
+    document.querySelectorAll('.section').forEach(seksjon => {
+      const alleKort = seksjon.querySelectorAll('.prosjekt-kort[data-kategori]');
+      if (alleKort.length === 0) return; // verktøy-seksjonen
+      const synligeIKort = [...alleKort].filter(k => !k.classList.contains('skjult'));
+      seksjon.classList.toggle('skjult', synligeIKort.length === 0);
+    });
+
+    // Skjul/vis divider-linjer mellom seksjoner
+    const alleSeksjoner = document.querySelectorAll('.section');
+    alleSeksjoner.forEach(seksjon => {
+      const neste = seksjon.nextElementSibling;
+      if (neste && neste.classList.contains('divider')) {
+        neste.classList.toggle('skjult', seksjon.classList.contains('skjult'));
+      }
+    });
+
+    // Vis infotekst
+    const info = document.getElementById('filterInfo');
+    if (sok || aktivFilter !== 'alle') {
+      info.style.display = 'block';
+      info.textContent = synlige === 0
+        ? 'Ingen prosjekter passer søket.'
+        : `Viser ${synlige} prosjekt${synlige !== 1 ? 'er' : ''}.`;
+    } else {
+      info.style.display = 'none';
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('skjult'));
+      document.querySelectorAll('hr.divider').forEach(d => d.classList.remove('skjult'));
+    }
+  }
+
+  function toggleOversikt(btn) {
+    const innhold = btn.nextElementSibling;
+    const open = innhold.classList.toggle('open');
+    btn.classList.toggle('open', open);
+    btn.querySelector('.pil').textContent = open ? '▲' : '▼';
+  }
+
+  // Reveal on scroll
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); obs.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
