@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Naturfagbegreper</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b10;
+  --bg2:     #0d1219;
+  --bg3:     #111822;
+  --border:  rgba(255,255,255,0.07);
+  --text:    #e8edf5;
+  --dim:     #6b7a94;
+  --mono:    'Space Mono', monospace;
+  --sans:    'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+
+  /* Kategorifarge-par: [glow, border, badge-bg, badge-text] */
+  --bio:   #22c55e;
+  --fys:   #38bdf8;
+  --kje:   #f97316;
+  --geo:   #a78bfa;
+  --ele:   #facc15;
+  --oko:   #86efac;
+  --tek:   #fb7185;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BAKGRUNNSNETT ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(8,11,16,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.nav-logo {
+  font-family: var(--display);
+  font-size: 1.3rem; font-weight: 800;
+  color: #38bdf8;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+  margin-right: 4px;
+}
+.nav-sep { color: var(--dim); font-size: 1.1rem; }
+.nav-title {
+  font-family: var(--display);
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--text);
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  padding: 60px 28px 48px;
+  max-width: 1180px; margin: 0 auto;
+}
+.hero-kode {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin-bottom: 18px;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, #38bdf8, #22c55e, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--dim);
+  max-width: 580px;
+  line-height: 1.65;
+  margin-bottom: 36px;
+}
+.hero-stats {
+  display: flex; gap: 28px; flex-wrap: wrap;
+}
+.hero-stat {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.hero-stat-tall {
+  font-family: var(--mono);
+  font-size: 1.6rem; font-weight: 700;
+  color: #38bdf8;
+}
+.hero-stat-label {
+  font-size: 0.78rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── KAT-PILLER (fargelegend) ── */
+.kat-legend {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 0 28px 28px;
+  max-width: 1180px; margin: 0 auto;
+  position: relative; z-index: 1;
+}
+.kat-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .18s;
+  user-select: none;
+  font-family: var(--sans);
+}
+.kat-pill:hover { opacity: 1 !important; filter: brightness(1.2); }
+.kat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── SØKEFELT OG TABS ── */
+.kontroll {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto;
+  padding: 0 28px 24px;
+}
+.sok-wrapper {
+  position: relative; margin-bottom: 18px;
+}
+.sok-ikon {
+  position: absolute; left: 16px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--dim); font-size: 0.95rem;
+  pointer-events: none;
+}
+.sokefelt {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px 44px 13px 44px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color .2s;
+}
+.sokefelt:focus { border-color: rgba(56,189,248,0.4); }
+.sokefelt::placeholder { color: var(--dim); }
+.sok-clear {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: var(--dim); font-size: 1rem;
+  cursor: pointer; padding: 4px 8px;
+  display: none;
+}
+.sok-clear:hover { color: var(--text); }
+
+.tab-rad {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.tab-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  font-family: var(--sans);
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+.tab-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.tab-btn.aktiv {
+  background: rgba(56,189,248,0.12);
+  border-color: rgba(56,189,248,0.35);
+  color: #38bdf8;
+}
+
+.resultat-info {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--dim);
+  padding: 4px 0 8px;
+  min-height: 24px;
+}
+
+/* ── GRID ── */
+.kort-grid {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto;
+  padding: 0 28px 80px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* ── BEGREP-KORT ── */
+.bkort {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.bkort::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0.7;
+  transition: opacity .2s;
+}
+.bkort:hover { transform: translateY(-3px); }
+.bkort:hover::before { opacity: 1; }
+
+/* Topprad: nummer + kategori-badge */
+.bkort-topp {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.bkort-nr {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+.bkort-kat {
+  font-family: var(--mono);
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+.bkort-term {
+  font-family: var(--display);
+  font-size: 1.2rem; font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.bkort-eng {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  margin-top: -6px;
+}
+.bkort-def {
+  font-size: 0.85rem;
+  color: var(--dim);
+  line-height: 1.6;
+  flex: 1;
+}
+.bkort-eks {
+  font-size: 0.78rem;
+  color: var(--dim);
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ── PERSON-KORT ── */
+.pkort {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform .18s, box-shadow .18s;
+}
+.pkort:hover { transform: translateY(-3px); }
+.pkort-topp {
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.pkort-avatar {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+.pkort-meta { flex: 1; }
+.pkort-navn {
+  font-family: var(--display);
+  font-size: 1.05rem; font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+.pkort-periode {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+.pkort-kat {
+  font-family: var(--mono);
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-block;
+  margin-top: 5px;
+}
+.pkort-bio {
+  font-size: 0.84rem;
+  color: var(--dim);
+  line-height: 1.65;
+}
+.pkort-kjent {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  border-left: 2px solid var(--border);
+  padding-left: 10px;
+}
+
+/* ── KATEGORI-STYLING (generert via JS) ── */
+.skjult { display: none !important; }
+
+/* ── REVEAL ── */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .4s, transform .4s; }
+.reveal.vis { opacity: 1; transform: none; }
+
+/* ── INGEN TREFF ── */
+.ingen-treff {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 80px 20px;
+  display: none;
+}
+.ingen-treff.vis { display: block; }
+.ingen-treff p { font-family: var(--mono); color: var(--dim); font-size: 0.9rem; }
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 32px 28px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+footer a { color: #38bdf8; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">⚡ SkapLab</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-title">🔬 Naturfagbegreper</span>
+</nav>
+
+<div class="hero">
+  <div class="hero-kode">// naturfag_begreper.js — v1.0</div>
+  <h1>Naturfag&shy;<em>begreper</em></h1>
+  <p class="hero-sub">350 fagbegreper og 21 vitenskapspersoner fordelt på biologi, fysikk, kjemi, geologi, elektronikk, økologi og teknologi.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-tall">350</span><span class="hero-stat-label">Begreper</span></div>
+    <div class="hero-stat"><span class="hero-stat-tall">21</span><span class="hero-stat-label">Vitenskapspersoner</span></div>
+    <div class="hero-stat"><span class="hero-stat-tall">7</span><span class="hero-stat-label">Fagområder</span></div>
+  </div>
+</div>
+
+<div class="kat-legend" id="katLegend"></div>
+
+<div class="kontroll">
+  <div class="sok-wrapper">
+    <span class="sok-ikon">🔍</span>
+    <input type="text" class="sokefelt" id="sokefelt" placeholder="Søk etter begrep, forklaring eller navn …" oninput="filtrer()">
+    <button class="sok-clear" id="sokClear" onclick="clearSok()">✕</button>
+  </div>
+  <div class="tab-rad" id="tabRad"></div>
+  <div class="resultat-info" id="resultatInfo"></div>
+</div>
+
+<div class="kort-grid" id="kortGrid">
+  <div class="ingen-treff" id="ingenTreff">
+    <p>// ingen_treff — prøv et annet søkeord</p>
+  </div>
+</div>
+
+<footer>
+  <p><a href="index.html">← Tilbake til forsiden</a> &nbsp;·&nbsp; SkapLab – fritt tilgjengelig for skoler</p>
+</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// KATEGORIER
+// ════════════════════════════════════════════════════════════════
+const KAT = {
+  bio: { navn: 'Biologi',     emoji: '🧬', farge: '#22c55e', bg: 'rgba(34,197,94,0.12)'  },
+  fys: { navn: 'Fysikk',      emoji: '⚛️',  farge: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
+  kje: { navn: 'Kjemi',       emoji: '🧪', farge: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  geo: { navn: 'Geologi',     emoji: '🪨', farge: '#a78bfa', bg: 'rgba(167,139,250,0.12)'},
+  ele: { navn: 'Elektronikk', emoji: '⚡', farge: '#facc15', bg: 'rgba(250,204,21,0.12)' },
+  oko: { navn: 'Økologi',     emoji: '🌿', farge: '#86efac', bg: 'rgba(134,239,172,0.12)'},
+  tek: { navn: 'Teknologi',   emoji: '🔧', farge: '#fb7185', bg: 'rgba(251,113,133,0.12)'},
+};
+
+// ════════════════════════════════════════════════════════════════
+// BEGREPER  (50 per kategori × 7 = 350)
+// ════════════════════════════════════════════════════════════════
+const BEGREPER = [
+// ── BIOLOGI ──
+{k:'bio',t:'Celle',e:'Cell',d:'Den minste levende enheten i alle organismer. Består av cellemembran, cytoplasma og (i eukaryoter) cellekjerne.',x:'Muskelceller, nerveceller og hudceller er ulike celletyper i kroppen.'},
+{k:'bio',t:'DNA',e:'DNA (Deoxyribonucleic acid)',d:'Arvematerialet som inneholder instruksjonene for oppbygging og funksjon av alle levende organismer. Har en dobbel heliks-struktur.',x:'DNA-et i en enkelt menneskecelle er om lag 2 meter langt.'},
+{k:'bio',t:'Cellemembran',e:'Cell membrane',d:'En tynn, fleksibel hud som omgir cellen og kontrollerer hva som slippes inn og ut. Består av et dobbelt lag fosfolipider.',x:'Cellemembranen slipper inn næring og slipper ut avfallsstoffer.'},
+{k:'bio',t:'Fotosyntese',e:'Photosynthesis',d:'Prosessen der planter og alger bruker sollys, CO₂ og vann til å lage sukker og oksygen.',x:'6CO₂ + 6H₂O + lys → C₆H₁₂O₆ + 6O₂'},
+{k:'bio',t:'Respirasjon',e:'Cellular respiration',d:'Prosessen der celler bryter ned sukker med oksygen for å frigjøre energi (ATP), CO₂ og vann.',x:'Alle levende celler, inkludert planteceller, driver cellulær respirasjon.'},
+{k:'bio',t:'Evolusjon',e:'Evolution',d:'Endring i arvelige egenskaper i en populasjon over generasjoner, drevet av naturlig seleksjon, mutasjon og genetisk drift.',x:'Darwins finker på Galápagos illustrerer tilpasning til ulike miljøer.'},
+{k:'bio',t:'Naturlig seleksjon',e:'Natural selection',d:'Mekanisme der individer med egenskaper som gir bedre overlevelse og reproduksjon etterlater seg flere avkom.',x:'Mørke bjørnspinnere overlevde bedre etter industriell forurensning.'},
+{k:'bio',t:'Gen',e:'Gene',d:'Et DNA-segment som koder for et bestemt protein eller RNA og arves fra foreldre til avkom.',x:'Øyenfarge bestemmes av flere gener som samvirker.'},
+{k:'bio',t:'Kromosom',e:'Chromosome',d:'Struktur i cellekjernen som består av tett pakket DNA med tilhørende proteiner. Mennesker har 46 kromosomer.',x:'Kjønnkromosomene XX (jente) og XY (gutt) bestemmer biologisk kjønn.'},
+{k:'bio',t:'Mitose',e:'Mitosis',d:'Celledeling der én celle deler seg i to identiske datterceller med samme antall kromosomer. Grunnlag for vekst og reparasjon.',x:'Hudceller deler seg via mitose omtrent hvert 2.–3. døgn.'},
+{k:'bio',t:'Meiose',e:'Meiosis',d:'Spesialisert celledeling som produserer kjønnsceller (egg og sæd) med halvt antall kromosomer.',x:'Meiose sikrer at avkom får ett kromosomsett fra hver forelder.'},
+{k:'bio',t:'Protein',e:'Protein',d:'Store molekyler bygd av aminosyrer. Fungerer som enzymer, strukturmaterialer, hormoner og transportmolekyler.',x:'Hemoglobin er et protein som frakter oksygen i blodet.'},
+{k:'bio',t:'Enzym',e:'Enzyme',d:'Et protein som fungerer som katalysator og øker hastigheten på kjemiske reaksjoner i cellen uten å forbrukes selv.',x:'Amylase i spyttet starter nedbrytningen av stivelse i munnen.'},
+{k:'bio',t:'Nervesystem',e:'Nervous system',d:'Kroppens kommunikasjonssystem bestående av hjerne, ryggmarg og nervetråder som sender elektriske signaler.',x:'Et nervesignal kan reise opptil 120 m/s langs en motornerve.'},
+{k:'bio',t:'Hormon',e:'Hormone',d:'Kjemisk budbringer produsert av kjertler som frakter signaler via blodbanen til målceller i andre deler av kroppen.',x:'Insulin regulerer blodsukkernivået etter et måltid.'},
+{k:'bio',t:'Homeostase',e:'Homeostasis',d:'Kroppens evne til å opprettholde stabile indre forhold (temperatur, pH, blodsukker) til tross for ytre endringer.',x:'Svette og blodgjennomstrømning regulerer kroppstemperaturen.'},
+{k:'bio',t:'Økosystem',e:'Ecosystem',d:'Alle levende organismer i et område pluss det ikke-levende miljøet de lever i, og samspillet mellom disse.',x:'En innsjø er et eget økosystem med fisk, alger, bakterier og vann.'},
+{k:'bio',t:'Næringskjede',e:'Food chain',d:'Sekvens som viser hvem som spiser hvem i naturen – fra produsenter (planter) via forbrukere til nedbrytere.',x:'Gress → gresshoppe → frosk → slange → ørn'},
+{k:'bio',t:'Symbiose',e:'Symbiosis',d:'Et langvarig samspill mellom to ulike arter. Kan være gjensidig nyttig (mutualisme), ensidig nyttig (kommensalisme) eller skadelig (parasittisme).',x:'Kløverblomster og humler er avhengige av hverandre.'},
+{k:'bio',t:'Virus',e:'Virus',d:'Et ikke-cellulært smittstoff som bare kan formere seg inne i levende celler. Består av arvestoff omgitt av et proteinkappe.',x:'Influensavirus og SARS-CoV-2 er RNA-virus.'},
+{k:'bio',t:'Bakterie',e:'Bacterium',d:'Encellede prokaryote organismer uten cellekjerne. Finnes overalt i naturen og spiller viktige roller i stoffkretsløp.',x:'E. coli lever i tarmen og hjelper til med vitamin K-produksjon.'},
+{k:'bio',t:'Osmose',e:'Osmosis',d:'Diffusjon av vann gjennom en semipermeabel membran fra et område med høy vannkonsentrasjon til lav.',x:'Rødbeten blir slapp i salt vann fordi vann trekkes ut av cellene.'},
+{k:'bio',t:'Diffusjon',e:'Diffusion',d:'Nettobevegelse av partikler fra et område med høy konsentrasjon til lav – uten energiforbruk.',x:'Oksygen diffunderer fra lungene til blodet via alveoleveggen.'},
+{k:'bio',t:'ATP',e:'Adenosine triphosphate',d:'Cellens energivaluta. Frigjør energi ved å spaltes til ADP og fosfat, og kan gjenoppbygges under respirasjon.',x:'En menneskekropp produserer sin egen kroppsvekt i ATP hver dag.'},
+{k:'bio',t:'Klorofyll',e:'Chlorophyll',d:'Det grønne fargestoffet i kloroplaster som absorberer lys (særlig rødt og blått) og driver fotosyntesen.',x:'Klorofyll reflekterer grønt lys – derfor ser planter grønne ut.'},
+{k:'bio',t:'Kloroplast',e:'Chloroplast',d:'Organell i planteceller der fotosyntesen foregår. Har eget DNA og doble membraner.',x:'Kloroplaster stammer trolig fra gamle fotosyntetiserende bakterier.'},
+{k:'bio',t:'Mitokondrie',e:'Mitochondrion',d:'Organell kalt «cellens kraftverk» der ATP produseres gjennom cellulær respirasjon. Har eget DNA.',x:'Celler med høyt energibehov (f.eks. muskel) har mange mitokondrier.'},
+{k:'bio',t:'Mutasjon',e:'Mutation',d:'En varig endring i DNA-sekvensen. Kan være skadelig, nøytral eller i sjeldne tilfeller gunstig.',x:'Mutasjoner i BRCA1-genet øker risikoen for brystkreft.'},
+{k:'bio',t:'Adaptasjon',e:'Adaptation',d:'En arvet egenskap som øker en organisms overlevelse og reproduksjon i sitt miljø over evolusjonær tid.',x:'Isbjørnens hvite pels er en adaptasjon til arktisk miljø.'},
+{k:'bio',t:'Habitat',e:'Habitat',d:'Det spesifikke stedet eller miljøet der en organisme lever og finner mat, vann og ly.',x:'Laksens habitat er kaldt, oksygenrikt ferskvann.'},
+{k:'bio',t:'Biodiversitet',e:'Biodiversity',d:'Variasjonen av livsformer på Jorden – inkludert genetisk variasjon, artsrikdom og mangfold av økosystemer.',x:'Tropiske regnskoger har den høyeste biodiversiteten på land.'},
+{k:'bio',t:'Immunsystem',e:'Immune system',d:'Kroppens forsvarssystem mot patogener. Består av hvite blodceller, antistoffer og lymfesystemet.',x:'Vaksiner trener immunsystemet uten å forårsake sykdom.'},
+{k:'bio',t:'Antistoff',e:'Antibody',d:'Protein produsert av B-celler som binder seg til spesifikke antigener og merker dem for destruksjon.',x:'Etter influensa-infeksjon har kroppen antistoffer i mange år.'},
+{k:'bio',t:'Arv',e:'Heredity/Genetics',d:'Overføring av genetiske egenskaper fra foreldre til avkom via egg- og sæd-celler.',x:'Mendels erter viste at egenskaper arves i faste mønstre.'},
+{k:'bio',t:'Fenotype',e:'Phenotype',d:'Det observerbare uttrykket av en organisms genotype – altså utseende, adferd og fysiologi.',x:'Blomsterfarge er en fenotype bestemt av pigmentgener.'},
+{k:'bio',t:'Genotype',e:'Genotype',d:'Den genetiske sammensetningen av en organisme – summen av alle alleler i genomet.',x:'Genotypen AA (homozygot dominant) gir samme fenotype som Aa.'},
+{k:'bio',t:'Allel',e:'Allele',d:'En av to eller flere varianter av et gen. Dominante alleler uttrykkes over recessive ved heterozygoti.',x:'Brune øyne er dominante over blå øyne.'},
+{k:'bio',t:'Ribosomer',e:'Ribosome',d:'Cellens proteinfabrikk. Leser mRNA-instruksjoner og setter sammen aminosyrer til proteinkjeder.',x:'En enkelt E. coli-celle inneholder omtrent 10 000 ribosomer.'},
+{k:'bio',t:'mRNA',e:'Messenger RNA',d:'Et RNA-molekyl som kopierer instruksjoner fra DNA i kjernen og bringer dem til ribosomene for proteinsyntese.',x:'Covid-19-vaksiner bruker mRNA til å instruere celler om å lage et spike-protein.'},
+{k:'bio',t:'Stomata',e:'Stomata',d:'Mikroskopiske åpninger i blad-overflaten som regulerer gassutveksling (CO₂ inn, O₂ og vanndamp ut).',x:'Stomatene lukker seg i tørke for å hindre vanntap.'},
+{k:'bio',t:'Transpirasjonen',e:'Transpiration',d:'Fordampning av vann fra plantens overflate (særlig blader), som driver vanntransport fra røtter til blader.',x:'En stor ek kan transpirere opptil 500 liter vann per dag.'},
+{k:'bio',t:'Hjertet',e:'Heart',d:'Et muskulært organ som pumper blod gjennom kroppen. Hos mennesket har det fire kamre og slår 60–100 ganger per minutt.',x:'I løpet av et liv pumper hjertet over 250 millioner liter blod.'},
+{k:'bio',t:'Blodplasma',e:'Blood plasma',d:'Den flytende delen av blodet (ca. 55 %) som transporterer næringsstoffer, hormoner og avfallsstoffer.',x:'Blodplasma er 90 % vann og inneholder hundrevis av proteiner.'},
+{k:'bio',t:'Alveole',e:'Alveolus',d:'Små luftsekker i lungene der gassutvekslingen mellom luft og blod skjer via diffusjon.',x:'Lungene inneholder om lag 500 millioner alveoler.'},
+{k:'bio',t:'Populasjon',e:'Population',d:'En gruppe individer av samme art som lever i samme område og kan formere seg med hverandre.',x:'Ulvepopulasjonen i Skandinavia telles nøye hvert år.'},
+{k:'bio',t:'Artsdannelse',e:'Speciation',d:'Prosessen der én art deler seg i to genetisk isolerte linjer som ikke lenger kan forplante seg med hverandre.',x:'Darwin-finker på Galápagos er et klassisk eksempel på artsdannelse.'},
+{k:'bio',t:'Nedbryter',e:'Decomposer',d:'Organisme (sopp, bakterier) som bryter ned dødt organisk materiale og frigjør næringsstoffer tilbake til miljøet.',x:'Nedbrytere er avgjørende for nitrogensyklusen og jordfruktbarheten.'},
+{k:'bio',t:'Parasitt',e:'Parasite',d:'En organisme som lever på eller i en vert og tar næring fra den, vanligvis til skade for verten.',x:'Bendelorm er en parasitt som lever i tarmkanalen.'},
+{k:'bio',t:'Pollensering',e:'Pollination',d:'Overføring av pollen fra pollenbærere til arr på en blomst, nødvendig for frøproduksjon og reproduksjon.',x:'Bier, vindeller og insekter er viktige pollinatorer.'},
+
+// ── FYSIKK ──
+{k:'fys',t:'Kraft',e:'Force',d:'En påvirkning som kan endre et legemes bevegelse eller form. Måles i Newton (N). F = m × a.',x:'Tyngdekraften trekker en 1 kg-gjenstand ned med ca. 9,8 N.'},
+{k:'fys',t:'Energi',e:'Energy',d:'Evnen til å utføre arbeid. Finnes i mange former: kinetisk, potensiell, termisk, kjemisk og elektromagnetisk. Måles i Joule.',x:'Et eple som faller konverterer potensiell energi til kinetisk.'},
+{k:'fys',t:'Masse',e:'Mass',d:'Mengden stoff i et legeme. Konstant uavhengig av tyngdekraft. Måles i kilogram (kg).',x:'En astronauts masse er den samme på Månen som på Jorden.'},
+{k:'fys',t:'Tyngdekraft',e:'Gravity',d:'Tiltrekkingskraften mellom masser. På Jordens overflate gir den en akselerasjon på ca. 9,8 m/s².',x:'Newtons eple illustrerte at tyngdekraft virker på alle masser.'},
+{k:'fys',t:'Akselerasjon',e:'Acceleration',d:'Endring i hastighet per tidsenhet. a = Δv / Δt. Måles i m/s².',x:'En bil som øker fra 0 til 27,8 m/s (100 km/t) på 10 s har a = 2,78 m/s².'},
+{k:'fys',t:'Arbeid',e:'Work',d:'Produktet av kraft og forflytning i kraftens retning. W = F × d. Måles i Joule.',x:'Å løfte en stein på 1 kg én meter opp krever ca. 9,8 J arbeid.'},
+{k:'fys',t:'Effekt',e:'Power',d:'Arbeid utført per tidsenhet. P = W / t. Måles i Watt (W = J/s).',x:'En 100 W lyspære bruker 100 J energi hvert sekund.'},
+{k:'fys',t:'Friksjon',e:'Friction',d:'Motstandskraft mellom to flater i kontakt som motstår bevegelse. Kan være statisk eller kinetisk.',x:'Bremsene på en sykkel utnytter friksjon mellom bremsebelegg og felg.'},
+{k:'fys',t:'Bølge',e:'Wave',d:'En forstyrrelse som brer seg gjennom et medium eller rom og overfører energi uten å flytte materie.',x:'Lydbølger er mekaniske, mens lys er elektromagnetiske bølger.'},
+{k:'fys',t:'Frekvens',e:'Frequency',d:'Antall svingninger per sekund. Måles i Hertz (Hz). f = 1/T der T er perioden.',x:'Mennesker hører lyder fra ca. 20 Hz til 20 000 Hz.'},
+{k:'fys',t:'Bølgelengde',e:'Wavelength',d:'Avstanden mellom to bølgetopper (eller bunner). λ = v/f. Bestemmer fargen for lys og tonehøyde for lyd.',x:'Synlig lys har bølgelengder mellom 380 nm (fiolett) og 750 nm (rødt).'},
+{k:'fys',t:'Elektromagnetisk stråling',e:'Electromagnetic radiation',d:'Bølger av elektriske og magnetiske felt som ikke trenger medium. Inkluderer radio, infrarødt, synlig lys, UV, røntgen og gamma.',x:'Mikroovner bruker mikrobølger ved ca. 2,4 GHz til å varme mat.'},
+{k:'fys',t:'Trykk',e:'Pressure',d:'Kraft per flateenhet. P = F / A. Måles i Pascal (Pa) eller bar.',x:'Atmosfærisk lufttrykk ved havnivå er ca. 101 325 Pa (1 atm).'},
+{k:'fys',t:'Temperatur',e:'Temperature',d:'Mål på den gjennomsnittlige kinetiske energien til partiklene i et stoff. Måles i Celsius, Kelvin eller Fahrenheit.',x:'Absolutt nullpunkt er 0 K = −273,15 °C; da er all termisk bevegelse stoppet.'},
+{k:'fys',t:'Varme',e:'Heat',d:'Energi som overføres mellom objekter på grunn av temperaturforskjell, alltid fra varmt til kaldt.',x:'En kjølemaskin pumper varme fra kalt inne til varmt ute.'},
+{k:'fys',t:'Elektrisk strøm',e:'Electric current',d:'Strøm av elektriske ladninger (vanligvis elektroner). I = Q/t. Måles i Ampere (A).',x:'En vanlig sikring i hjemmet tåler 10–16 A før den slår ut.'},
+{k:'fys',t:'Spenning',e:'Voltage',d:'Elektrisk potensialforskjell mellom to punkter som driver strømmen. Måles i Volt (V).',x:'Norske stikkontakter leverer 230 V vekselspenning.'},
+{k:'fys',t:'Ohms lov',e:"Ohm's law",d:'Sammenhengen U = R × I: spenningen (V) er produktet av motstanden (Ω) og strømmen (A).',x:'I en krets med R = 10 Ω og U = 5 V er strømmen I = 0,5 A.'},
+{k:'fys',t:'Motstand',e:'Electrical resistance',d:'Motstanden mot strømflyt i en leder. Måles i Ohm (Ω). Øker ved høyere temperatur for de fleste metaller.',x:'Volframtråden i en lyspære har høy motstand og glør når strøm går gjennom.'},
+{k:'fys',t:'Magnetfelt',e:'Magnetic field',d:'Kraftfelt skapt av magnetisk materiale eller bevegende elektriske ladninger. Visualisert med feltlinjer fra nord- til sydpol.',x:'Jordens magnetfelt beskytter oss mot solvindens partikler.'},
+{k:'fys',t:'Atomet',e:'Atom',d:'Den minste enheten av et grunnstoff som beholder grunnstoffets kjemiske egenskaper. Består av kjerne (protoner + nøytroner) og elektronskall.',x:'Et hydrogenatom er 99,99999 % tomt rom.'},
+{k:'fys',t:'Radioaktivitet',e:'Radioactivity',d:'Spontan stråling fra ustabile atomkjerner. Tre typer: alfa (α), beta (β) og gamma (γ) stråling.',x:'Radon er en radioaktiv gass som kan samle seg i kjellere.'},
+{k:'fys',t:'Halverings­tid',e:'Half-life',d:'Tid det tar for halvparten av atomkjernene i en radioaktiv prøve å henfalle. Konstant for hvert isotop.',x:'Karbon-14 har en halveringstid på 5 730 år – brukes til datering.'},
+{k:'fys',t:'Lyshastigheten',e:'Speed of light',d:'Maksimal hastighet i universet: c ≈ 3 × 10⁸ m/s i vakuum. Symbol c.',x:'Lys fra Solen bruker ca. 8 minutter og 20 sekunder på å nå Jorden.'},
+{k:'fys',t:'Newtons første lov',e:"Newton's first law",d:'Et legeme i ro forblir i ro, og et legeme i bevegelse fortsetter med konstant hastighet – med mindre en ytre kraft virker på det.',x:'En hockeyball fortsetter å gli på is til friksjon stopper den.'},
+{k:'fys',t:'Newtons tredje lov',e:"Newton's third law",d:'For enhver kraft finnes en like stor og motrette rettet reaksjonskraft (aksjon = reaksjon).',x:'En rakett drives fremover av avgassene som spruter bakover.'},
+{k:'fys',t:'Gravitasjonspotensial energi',e:'Gravitational potential energy',d:'Energi et legeme har på grunn av sin høyde over en referanse. E_p = mgh.',x:'Et 70 kg-menneske på 10 m høyde har E_p = 70 × 9,8 × 10 ≈ 6 860 J.'},
+{k:'fys',t:'Kinetisk energi',e:'Kinetic energy',d:'Energi et legeme har på grunn av sin bevegelse. E_k = ½mv².',x:'En bil (1500 kg) som kjører 100 km/t (27,8 m/s) har E_k ≈ 579 000 J.'},
+{k:'fys',t:'Lydhas­tigheten',e:'Speed of sound',d:'Hastigheten lyd brer seg med, avhenger av medium. I luft ved 20°C: ca. 343 m/s.',x:'Lynet slår ned, men vi hører tordenen 3 sekunder senere per km avstand.'},
+{k:'fys',t:'Refleksjon',e:'Reflection',d:'Tilbakekasting av en bølge (lys, lyd) fra en overflate. Innfallsvinkel = refleksjonsvinkel.',x:'Speil reflekterer lys og lager speilbilder.'},
+{k:'fys',t:'Refraksjon',e:'Refraction',d:'Endring i en bølges retning når den passerer fra ett medium til et annet med ulik hastighet.',x:'En blyant i et glass vann ser knekket ut på grunn av refraksjon.'},
+{k:'fys',t:'Absorpsjon',e:'Absorption',d:'Et medium tar opp energi fra stråling. Mørke overflater absorberer mer lys enn lyse.',x:'Solkollektorer er svarte for å absorbere mest mulig solenergi.'},
+{k:'fys',t:'Treghet',e:'Inertia',d:'En gjenstand motstår endring i sin bevegelsestilstand. Større masse = større treghet.',x:'Passasjerer kaster seg fremover i bilen ved bremsing – treghetens effekt.'},
+{k:'fys',t:'Moment',e:'Torque',d:'En roterende kraft. τ = r × F. Produktet av kraftarm og kraft. Måles i Nm.',x:'En lang skiftenøkkel gir større moment enn en kort.'},
+{k:'fys',t:'Sentripetalkraft',e:'Centripetal force',d:'Kraft rettet mot rotasjonssentrum som holder et legeme i sirkulær bane. F = mv²/r.',x:'Friksjon fra veibanen er sentripetalkraften når en bil svinger.'},
+{k:'fys',t:'Impuls',e:'Impulse/Momentum',d:'Produktet av masse og hastighet. p = mv. Bevegelsesmengde er bevart i et lukket system.',x:'En billist med livbelte overfører impuls over lengre tid og skades mindre.'},
+{k:'fys',t:'Termodynamikkens 1. lov',e:'First law of thermodynamics',d:'Energi kan ikke skapes eller ødelegges, bare omdannes. ΔU = Q − W.',x:'Bensinmotoren omdanner kjemisk energi til mekanisk arbeid og varme.'},
+{k:'fys',t:'Entropi',e:'Entropy',d:'Mål på uorden i et system. Ifølge termodynamikkens 2. lov øker entropien alltid i et isolert system.',x:'En iskube som smelter i varmt vann øker systemets entropi.'},
+{k:'fys',t:'Kondensasjon',e:'Condensation',d:'Faseovergang fra gass til væske. Skjer når temperaturen synker under duggpunktet.',x:'Vanndamp kondenserer til vanndråper på et kaldt glass.'},
+{k:'fys',t:'Fordampning',e:'Evaporation',d:'Faseovergang fra væske til gass som skjer fra overflaten ved temperaturer under kokepunktet.',x:'Svette kjøler kroppen fordi fordampning tar varme fra huden.'},
+{k:'fys',t:'Smelting',e:'Melting',d:'Faseovergang fra fast stoff til væske ved tilførsel av varme. Skjer ved stoffets smeltepunkt.',x:'Is smelter ved 0°C under standard atmosfærisk trykk.'},
+{k:'fys',t:'Koking',e:'Boiling',d:'Rask fordampning gjennom hele væskens volum når temperaturen når kokepunktet. Avhenger av trykk.',x:'Vann koker ved 100°C på havnivå, men ved ca. 89°C på Everest.'},
+{k:'fys',t:'Elektron',e:'Electron',d:'Negativt ladet subatomær partikkel som beveger seg i elektronskall rundt atomkjernen. Masse ca. 9,11 × 10⁻³¹ kg.',x:'Elektrisk strøm er bevegelsen av elektroner i en leder.'},
+{k:'fys',t:'Proton',e:'Proton',d:'Positivt ladet subatomær partikkel i atomkjernen. Antall protoner = atomnummer og bestemmer grunnstoffet.',x:'Hydrogen har 1 proton; uran har 92 protoner.'},
+{k:'fys',t:'Nøytron',e:'Neutron',d:'Elektrisk nøytral subatomær partikkel i atomkjernen. Isotoper av samme grunnstoff har ulikt antall nøytroner.',x:'Karbon-12 har 6 nøytroner; karbon-14 har 8 nøytroner.'},
+{k:'fys',t:'Fotoelektrisk effekt',e:'Photoelectric effect',d:'Elektroner slynges ut fra et metall når lys av tilstrekkelig høy frekvens treffer det. Forklart av Einstein i 1905.',x:'Fotocelledøren på butikken bruker fotoelektrisk effekt.'},
+{k:'fys',t:'Kvantefysikk',e:'Quantum physics',d:'Fysikkgren som beskriver partiklers oppførsel på atomnivå. Energi overføres i diskrete pakker kalt kvantar.',x:'Laserlys og LED-lys er kvantemekaniske fenomener.'},
+
+// ── KJEMI ──
+{k:'kje',t:'Atom',e:'Atom',d:'Den minste enheten av et grunnstoff som beholder grunnstoffets egenskaper. Består av kjerne (protoner og nøytroner) og elektronskall.',x:'Alt fast stoff, all væske og alle gasser er bygd av atomer.'},
+{k:'kje',t:'Molekyl',e:'Molecule',d:'To eller flere atomer bundet sammen med kovalente bindinger. Kan bestå av ett grunnstoff eller flere.',x:'Vann (H₂O) er et molekyl av to hydrogen og ett oksygenatom.'},
+{k:'kje',t:'Grunnstoff',e:'Element',d:'Rent stoff som kun inneholder atomer med samme atomnummer. Kan ikke brytes ned kjemisk.',x:'Det finnes 118 kjente grunnstoff, opplistet i periodesystemet.'},
+{k:'kje',t:'Periodesystemet',e:'Periodic table',d:'En tabell som organiserer alle grunnstoff etter stigende atomnummer og grupperer dem etter kjemiske egenskaper.',x:'Mendeleev forutsiktet egenskapene til grunnstoff som ennå ikke var oppdaget.'},
+{k:'kje',t:'Kjemisk binding',e:'Chemical bond',d:'Kraft som holder atomer sammen i molekyler og krystaller. Typer: kovalent, ionisk, metallisk og van der Waals.',x:'NaCl (salt) holdes sammen av ioniske bindinger.'},
+{k:'kje',t:'Kovalent binding',e:'Covalent bond',d:'Binding mellom atomer der de deler ett eller flere elektronpar. Vanlig i organiske molekyler.',x:'Oksygenmolekylet O₂ har en dobbel kovalent binding.'},
+{k:'kje',t:'Ionisk binding',e:'Ionic bond',d:'Elektrostatisk tiltrekning mellom positivt ladede kationer og negativt ladede anioner.',x:'NaCl: Na⁺ og Cl⁻ holdes sammen av ionisk binding.'},
+{k:'kje',t:'Syre',e:'Acid',d:'Et stoff som avgir H⁺-ioner (protoner) i vann. pH < 7. Reagerer med baser i nøytraliseringsreaksjon.',x:'Saltsyre (HCl), svovelsyre (H₂SO₄) og eddiksyre er syrer.'},
+{k:'kje',t:'Base',e:'Base',d:'Et stoff som tar opp H⁺-ioner eller avgir OH⁻-ioner i vann. pH > 7.',x:'Natriumhydroksid (NaOH) og ammoniakk (NH₃) er baser.'},
+{k:'kje',t:'pH',e:'pH',d:'Logaritmisk skala fra 0–14 som måler surhetsgraden. pH 7 er nøytralt; < 7 er surt; > 7 er basisk.',x:'Magesaft har pH ≈ 2; blod har pH ≈ 7,4; natron har pH ≈ 8,3.'},
+{k:'kje',t:'Oksidasjon',e:'Oxidation',d:'En reaksjon der et atom avgir elektroner. Inngår alltid i et redokssystem (oksidasjon + reduksjon).',x:'Jern oksideres til jernoksid (rust) i kontakt med vann og oksygen.'},
+{k:'kje',t:'Reduksjon',e:'Reduction',d:'En reaksjon der et atom tar opp elektroner. Alltid koblet til oksidasjon i redoksreaksjoner.',x:'Kobberioner (Cu²⁺) reduseres til kobbermetall (Cu⁰) under elektrolyse.'},
+{k:'kje',t:'Katalysator',e:'Catalyst',d:'Et stoff som øker reaksjonshastigheten uten selv å forbrukes. Senker aktiveringsenergi.',x:'Bilens katalysator konverterer giftgasser til CO₂, N₂ og H₂O.'},
+{k:'kje',t:'Løsning',e:'Solution',d:'En homogen blanding der ett stoff (løsemiddel) løser opp et annet (løst stoff) på molekylnivå.',x:'Salt oppløst i vann er en vandig løsning av NaCl.'},
+{k:'kje',t:'Konsentrasjon',e:'Concentration',d:'Mengden løst stoff per volum løsning. Ofte angitt i mol/L (M) eller g/L.',x:'Saltvann i havet har en NaCl-konsentrasjon på ca. 35 g/L.'},
+{k:'kje',t:'Mol',e:'Mole',d:'SI-enhet for stoffmengde. 1 mol = 6,022 × 10²³ partikler (Avogadros tall). n = m/M.',x:'1 mol vann (18 g) inneholder 6,022 × 10²³ vannmolekyler.'},
+{k:'kje',t:'Avogadros tall',e:"Avogadro's number",d:'Antall partikler i 1 mol av et stoff: Nₐ = 6,022 × 10²³ mol⁻¹.',x:'Navngitt etter Amedeo Avogadro, men beregnet av andre.'},
+{k:'kje',t:'Kjemisk reaksjon',e:'Chemical reaction',d:'En prosess der atombindinger brytes og dannes slik at nye stoffer oppstår. Masse er alltid bevart.',x:'Forbrenning av propan: C₃H₈ + 5O₂ → 3CO₂ + 4H₂O'},
+{k:'kje',t:'Forbrenning',e:'Combustion',d:'En eksotermisk kjemisk reaksjon der et stoff reagerer raskt med oksygen og frigir varme og lys.',x:'Hydrokarboner brenner til CO₂ og H₂O; ufullstendig forbrenning gir CO.'},
+{k:'kje',t:'Felling',e:'Precipitation',d:'Dannelse av et uløselig fast stoff fra en løsning ved blanding av to løsninger.',x:'BaSO₄ (bariumsulfat) felles ut hvitt when Ba²⁺ og SO₄²⁻-løsninger blandes.'},
+{k:'kje',t:'Elektrolyse',e:'Electrolysis',d:'Bruk av elektrisk strøm til å drive en ikke-spontan kjemisk reaksjon. Brukes i industrien til utvinning av metaller.',x:'Aluminium utvinnes industrielt via elektrolyse av aluminiumoksid.'},
+{k:'kje',t:'Isomer',e:'Isomer',d:'To molekyler med samme molekylformel men ulik atomarrangering og dermed ulike egenskaper.',x:'Etanol (drikkalkohol) og dimetyleter er isomerer: C₂H₆O.'},
+{k:'kje',t:'Polymer',e:'Polymer',d:'Store molekyler bygd av mange gjentakende enheter (monomerer) koblet med kovalente bindinger.',x:'Polyetylen (plastposer), DNA og stivelse er polymerer.'},
+{k:'kje',t:'Organisk kjemi',e:'Organic chemistry',d:'Studiet av karbonholdige molekyler, inkludert hydrokarboner, alkoholer, syrer og biomolekyler.',x:'Benzin, plast, sukker og legemidler er organiske kjemikalier.'},
+{k:'kje',t:'Hydrokarbon',e:'Hydrocarbon',d:'Organisk molekyl som kun inneholder hydrogen og karbon. Basis for fossile brennstoff.',x:'Metan (CH₄), etan og propan er enkle hydrokarboner.'},
+{k:'kje',t:'Isotop',e:'Isotope',d:'Varianter av et grunnstoff med samme antall protoner men ulikt antall nøytroner – og dermed ulik masse.',x:'Karbon-12, karbon-13 og karbon-14 er isotoper av karbon.'},
+{k:'kje',t:'Reaksjonshastighet',e:'Reaction rate',d:'Hastigheten som et substrat forbrukes eller produkt dannes. Påvirkes av konsentrasjon, temperatur, katalysator og overflate.',x:'Sukker løser seg raskere i varmt vann enn i kaldt.'},
+{k:'kje',t:'Aktiveringsenergi',e:'Activation energy',d:'Minimumsenergi som må tilføres for at en kjemisk reaksjon skal starte. Katalysatorer senker denne.',x:'Hydrogen og oksygen reagerer ikke spontant uten gnist eller katalysator.'},
+{k:'kje',t:'Eksotermisk',e:'Exothermic',d:'En reaksjon som frigjør energi (varme) til omgivelsene. ΔH < 0.',x:'Forbrenning, nøytralisering og kroppens respirasjon er eksotermiske.'},
+{k:'kje',t:'Endotermisk',e:'Endothermic',d:'En reaksjon som krever tilført energi fra omgivelsene. ΔH > 0.',x:'Fotosyntese og koking er endotermiske prosesser.'},
+{k:'kje',t:'Kjemisk likevekt',e:'Chemical equilibrium',d:'Tilstand der den fremre og bakre reaksjonen skjer like raskt, slik at konsentrasjonene er konstante.',x:'Haber-prosessen for ammoniakk er en likevektsreaksjon.'},
+{k:'kje',t:'Le Chateliers prinsipp',e:"Le Chatelier's principle",d:'Når en likevekt forstyrres, forskyver den seg for å motvirke forstyrrelsn.',x:'Økt trykk i Haber-prosessen forskyver likevekten mot ammoniakk.'},
+{k:'kje',t:'Destillasjon',e:'Distillation',d:'Separeringsmetode basert på ulike kokepunkter. Væsken varmes og dampen kondenseres separat.',x:'Råolje destilleres til bensin, diesel, parafin og asfalt.'},
+{k:'kje',t:'Kromatografi',e:'Chromatography',d:'Separeringsteknikk der komponenter beveger seg i ulik hastighet gjennom et medium, og skilles dermed.',x:'Fargestoff i tusjer kan separeres med vanlig papiromkromatografi.'},
+{k:'kje',t:'Buffersystem',e:'Buffer system',d:'Løsning som motstår pH-endringer ved tilsats av syre eller base, ved hjelp av et syre-base-par.',x:'Blodets bikarbonat-buffersystem holder pH stabilt på 7,35–7,45.'},
+{k:'kje',t:'Kolloide',e:'Colloid',d:'En blanding der partikler (1–1000 nm) er jevnt fordelt i et medium – verken ren løsning eller suspensjon.',x:'Melk, røyk og gelatin er kolloider.'},
+{k:'kje',t:'Oksidasjonstall',e:'Oxidation number',d:'Et tall som angir den hypotetiske ladningen til et atom i et stoff, brukt til å balansere redoksreaksjoner.',x:'I H₂O er oksidasjonstallet for O = −2 og for H = +1.'},
+{k:'kje',t:'Kovalent nettverksstoff',e:'Covalent network solid',d:'Fast stoff der atomer er bundet til hverandre i et gigantisk nettverk av kovalente bindinger. Svært harde.',x:'Diamant og kvartskrystall (SiO₂) er kovalente nettverksstoffer.'},
+{k:'kje',t:'Ionekrystall',e:'Ionic crystal',d:'Fast stoff bygd av positive og negative ioner ordnet i et regelmessig gitter. Høyt smeltepunkt.',x:'Bordsalt (NaCl) er et ionekrystall med smeltepunkt 801 °C.'},
+{k:'kje',t:'Sublimering',e:'Sublimation',d:'Direkte faseovergang fra fast stoff til gass uten flytende fase.',x:'Tørris (fast CO₂) sublimerer ved −78,5 °C til atmosfærisk trykk.'},
+{k:'kje',t:'Damptrykk',e:'Vapour pressure',d:'Trykk som utøves av dampen i likevekt over en væske. Avhenger av temperatur.',x:'Væsker koker når damptrykket overstiger atmosfærisk trykk.'},
+{k:'kje',t:'Støkiometri',e:'Stoichiometry',d:'Beregning av mengder reaktanter og produkter i en kjemisk reaksjon basert på balanseringen av likningen.',x:'Fra 1 mol propan (44 g) får man 3 mol CO₂ (132 g) ved fullstendig forbrenning.'},
+{k:'kje',t:'Proton',e:'Proton (chemistry)',d:'Positivt ladet subatomær partikkel med ladning +1e. I kjemien brukes «proton» også for H⁺-ion i syre-base-kjemi.',x:'Brønsted-Lowry-definisjonen: en syre er en protondonor.'},
+{k:'kje',t:'Amfoter',e:'Amphoteric',d:'Et stoff som kan opptre som både syre og base avhengig av motparten.',x:'Vann (H₂O) og aluminiumhydroksid er amfotere stoffer.'},
+{k:'kje',t:'Radikal',e:'Free radical',d:'Atom eller molekyl med ett uparret elektron. Svært reaktivt og deltar i kjedereaksjoner.',x:'Frie radikaler dannes i UV-eksponert plast og i kroppen ved oksidativt stress.'},
+{k:'kje',t:'Smeltepunkt',e:'Melting point',d:'Temperaturen ved hvilken et fast stoff smelter til væske under gitt trykk.',x:'Gull smelter ved 1064 °C; voks ved ca. 50–60 °C.'},
+
+// ── GEOLOGI ──
+{k:'geo',t:'Bergart',e:'Rock',d:'En naturlig fast masse av ett eller flere mineraler som er dannet gjennom geologiske prosesser.',x:'Granitt er en intrusiv bergart; sandstein er en sedimentær bergart.'},
+{k:'geo',t:'Mineral',e:'Mineral',d:'Et naturlig forekommende, uorganisk fast stoff med fast kjemisk sammensetning og ordnet krystallinsk struktur.',x:'Kvarts, feltspat og kalsitt er vanlige mineraler.'},
+{k:'geo',t:'Vulkan',e:'Volcano',d:'En åpning i jordskorpen der magma, gasser og aske kan strømme ut til overflaten.',x:'Island er geologisk aktiv på grunn av midthavsryggen og et hot spot.'},
+{k:'geo',t:'Jordskjelv',e:'Earthquake',d:'Plutselig frigjøring av energi i jordskorpen langs en forkastningssone, som skaper seismiske bølger.',x:'Richter-skalaen er logaritmisk: et 7,0-skjelv er 10× sterkere enn 6,0.'},
+{k:'geo',t:'Tektoniske plater',e:'Tectonic plates',d:'Store stykker av jordskorpen og øvre kappe som beveger seg langsomt (cm per år) på grunn av konveksjon i kappen.',x:'Himalaya dannes av kollisjonen mellom den indiske og eurasiske platen.'},
+{k:'geo',t:'Magma',e:'Magma',d:'Smeltet bergartsmaterial under jordens overflate. Heter lava når det strømmer ut på overflaten.',x:'Magmaet i jordens øvre kappe holder temperaturer på 700–1300 °C.'},
+{k:'geo',t:'Lava',e:'Lava',d:'Smeltet bergartsmaterial (magma) som har strømmet ut på jordoverflaten eller havbunnen fra en vulkan.',x:'Basalt dannes av avsatt og størknet lava.'},
+{k:'geo',t:'Fossilisering',e:'Fossilization',d:'Prosess der rester eller spor av organismer bevares i sedimenter og over tid forsteines.',x:'Flest fossiler finnes i sedimentære bergarter som kalkstein og skifer.'},
+{k:'geo',t:'Forvitring',e:'Weathering',d:'Nedbrytning av bergarter på overflaten via kjemiske (løsning, oksidasjon) eller fysiske (frost, temperatur) prosesser.',x:'Frostforvitring: vann fryser i sprekker og sprenger stein i stykker.'},
+{k:'geo',t:'Erosjon',e:'Erosion',d:'Transport av forvitret materiale (jord, sand, grus) av vann, vind eller is fra sted til sted.',x:'Grand Canyon er hogget ut av Colorado-elven gjennom millioner av år.'},
+{k:'geo',t:'Sediment',e:'Sediment',d:'Løse partikler (grus, sand, leire) avsatt av vann, vind eller is. Komprimeres over tid til sedimentær bergart.',x:'Silt og leire fra Nilen bygger opp et delta ved munningen.'},
+{k:'geo',t:'Metamorfose',e:'Metamorphism',d:'Forandring av bergart som følge av høyt trykk og/eller høy temperatur under jordens overflate.',x:'Marmor dannes av kalkstein under metamorfose; gneis av granitt.'},
+{k:'geo',t:'Bergartssyklusen',e:'Rock cycle',d:'Kontinuerlig prosess der bergarter dannes, brytes ned og omdannes mellom intrusiv, sedimentær og metamorf bergart.',x:'Granitt kan forvitres til sand, bli sandstein, og ved metamorfose bli gneis.'},
+{k:'geo',t:'Litosfer',e:'Lithosphere',d:'Jordens ytre stive lag bestående av jordskorpen og øvre kappe. Delt i tektoniske plater.',x:'Litosferplater beveger seg med 1–10 cm per år.'},
+{k:'geo',t:'Asthenosfære',e:'Asthenosphere',d:'Det delvis smeltede, plastiske laget i jordens øvre kappe rett under litosfæren. Muliggjør platebevegelselene.',x:'Asthenosfæren er rundt 100–350 km dyp.'},
+{k:'geo',t:'Jordkjerne',e:'Earth\'s core',d:'Jordens sentrale region. Ytre kjernen er flytende jern-nikkel; indre kjernen er fast. Genererer magnetfeltet.',x:'Den indre kjernen er varmere enn Solens overflate – ca. 5 700 °C.'},
+{k:'geo',t:'Geologisk tid',e:'Geological time',d:'Inndeling av jordens 4,5 milliarder år lange historie i eoner, eraer, perioder og epoker.',x:'Dinosaurene levde i Mesozoikum (251–66 millioner år siden).'},
+{k:'geo',t:'Stratigrafi',e:'Stratigraphy',d:'Studiet av lagdelte bergarter og bruk av disse til å rekonstruere geologisk historie og datering.',x:'Yngre lag ligger alltid over eldre (Stenos prinsipp).'},
+{k:'geo',t:'Jordskjelvbølger',e:'Seismic waves',d:'Vibrasjoner som brer seg gjennom jorden etter et jordskjelv. P-bølger (trykk) og S-bølger (skjær) avslører jordas indre struktur.',x:'P-bølger reiser gjennom fast, flytende og gass; S-bølger bare gjennom fast.'},
+{k:'geo',t:'Subduktjon',e:'Subduction',d:'En tektonisk plate glir under en annen langs en subduktsonssone. Driver vulkanisme og fjellbygging.',x:'Den japanske vulkanøykjeden skyldes subduktjon av den Stillehavsplaten.'},
+{k:'geo',t:'Riftsone',e:'Rift zone',d:'Område der to tektoniske plater beveger seg fra hverandre, og ny litosfer dannes fra magma.',x:'Det Afrikanske riftdalen er en aktiv riftsone der Afrika sakte deler seg.'},
+{k:'geo',t:'Havbunnspeating',e:'Seafloor spreading',d:'Prosess der ny havbunn dannes langs midthavsrygger der to plater beveger seg fra hverandre.',x:'Atlanterhavet vokser ca. 2,5 cm per år.'},
+{k:'geo',t:'Orogeni',e:'Orogeny',d:'Fjellkjedebyggende prosess forårsaket av kollisjon av tektoniske plater.',x:'Alpeorogenesen dannet Alpene og Karpatene for 30–15 millioner år siden.'},
+{k:'geo',t:'Isbre',e:'Glacier',d:'En stor masse av is og snø som beveger seg langsomt nedover under sin egen tyngde. Former landskap via erosjon.',x:'Norske fjorder ble hugget ut av isbreer under siste istid.'},
+{k:'geo',t:'Istid',e:'Ice age',d:'En periode med utbredt isdekke over store deler av Jordens overflate, drevet av Milanković-syklusene.',x:'Siste istid kulminerte for ca. 20 000 år siden; isen smeltet for ca. 10 000 år siden.'},
+{k:'geo',t:'Moreneavsetning',e:'Moraine',d:'Usortert bergartsmateriale avsatt av en isbre. Kantmorene, endemorene og bunnmorene er ulike typer.',x:'Ra-morenen på Østlandet er en endemorene fra siste istid.'},
+{k:'geo',t:'Topografi',e:'Topography',d:'Beskrivelse av jordens overflateformer: høyder, daler, fjorder og sletter.',x:'Topografiske kart viser høydekurver for å representere relieffet.'},
+{k:'geo',t:'Jordsmonn',e:'Soil',d:'Det øverste laget av jordens overflate, dannet av forvitret bergartsmateriale blandet med organisk materiale.',x:'God matjord inneholder sand, silt, leire, humus og mange organismer.'},
+{k:'geo',t:'Humus',e:'Humus',d:'Organisk del av jordsmonnet, dannet av nedbrytning av plante- og dyremateriale. Øker jordas fruktbarhet.',x:'Regnskogjord har lavt humusinnhold fordi nedbrytningen er så rask.'},
+{k:'geo',t:'Kildebergart',e:'Source rock',d:'Sedimentær bergart rik på organisk materiale som under høyt trykk og temperatur omdannes til olje og gass.',x:'Jurassic-skifer er kildebergart for mye av Nordsjøens olje.'},
+{k:'geo',t:'Radiometrisk datering',e:'Radiometric dating',d:'Metode for å bestemme alderen på bergarter og fossiler ved å måle nedbrytningen av radioaktive isotoper.',x:'Karbon-14-datering er nøyaktig for materiale yngre enn ca. 50 000 år.'},
+{k:'geo',t:'Tsunami',e:'Tsunami',d:'En serie enorme bølger utløst av undervanns jordskjelv, vulkanutbrudd eller skred.',x:'Tsunamien i Indiahavet i 2004 drepte over 230 000 mennesker.'},
+{k:'geo',t:'Leirskred',e:'Landslide',d:'Rask nedover-bevegelse av jord og stein langs en skråning. Utløses av regn, jordskjelv eller menneskelig aktivitet.',x:'Kvikkleire er en spesiell type leirjord som flyter som vann når den forstyrres.'},
+{k:'geo',t:'Mineral­rikdom',e:'Ore',d:'Bergart eller mineral som inneholder nok verdifulle stoffer til at det er lønnsomt å utvinne.',x:'Jernmalm (hematitt og magnetitt) er de viktigste jernkildene.'},
+{k:'geo',t:'Havdyp',e:'Ocean depth',d:'Havet dekker 71 % av Jordens overflate med et gjennomsnittsdyp på 3 688 m. Mariana-gropen er 11 km dyp.',x:'Hadal-sonen (> 6 000 m) har enorme trykk på hundrevis av atmosfærer.'},
+{k:'geo',t:'Permafrost',e:'Permafrost',d:'Jord eller bergart som har vært frossen i minst to år. Dekker ca. 25 % av landoverflaten på den nordlige halvkule.',x:'Klimaendringer tiner permafrost og frigjør store mengder metan.'},
+{k:'geo',t:'Solfatare',e:'Fumarole',d:'En åpning i jordens overflate som avgir gasser og damper (H₂S, CO₂, SO₂) fra magmatisk aktivitet.',x:'Solfatarene i Rotorua, New Zealand er turistattraksjon og geotermisk ressurs.'},
+{k:'geo',t:'Bergkrystall',e:'Quartz crystal',d:'Krystallinsk form av silisiumdioksid (SiO₂). Svært vanlig mineral, det nest vanligste i jordskorpen.',x:'Kvarts brukes i ur og elektronikk på grunn av sin piezoelektriske effekt.'},
+{k:'geo',t:'Deltaformasjon',e:'River delta',d:'Sedimentavsetning ved et elveos der strømmens hastighet avtar og partikler avsettes i vifteform.',x:'Nildeltaet og Ganges-deltaet er blant verdens største.'},
+{k:'geo',t:'Hydro­termisk vent',e:'Hydrothermal vent',d:'Sprekk i havbunnen der supervarmt vann beriket med mineraler strømmer ut, ofte fra vulkansk aktivitet.',x:'Svarte røykere støtter unike levemiljøer uavhengig av sollys.'},
+{k:'geo',t:'Steinalder',e:'Stone Age',d:'Arkeologisk periode preget av bruk av steinredskaper, delt i paleolittikum, mesolitikum og neolittikum.',x:'Steinalderen i Norge endte ca. 3500 f.Kr. med innføringen av metallredskaper.'},
+{k:'geo',t:'Paleontologi',e:'Palaeontology',d:'Vitenskapen om fortidsliv gjennom studiet av fossiler. Beskriver evolusjon og livets utvikling.',x:'Fossilfunn som Archaeopteryx knyttet fugler til dinosaurer.'},
+
+// ── ELEKTRONIKK ──
+{k:'ele',t:'Transistor',e:'Transistor',d:'En halvlederkomponent som kan forsterke eller bytte elektriske signaler. Grunnleggende byggestein i all digital elektronikk.',x:'En moderne CPU inneholder over 100 milliarder transistorer.'},
+{k:'ele',t:'Diode',e:'Diode',d:'En halvlederkomponent som bare lar strøm flyte i én retning. Brukes til likeretting og signal-deteksjon.',x:'LED er en diode som avgir lys når strøm flyter gjennom den.'},
+{k:'ele',t:'Kondensator',e:'Capacitor',d:'En komponent som lagrer elektrisk energi i et elektrisk felt mellom to ledere adskilt av et isolerende materiale.',x:'Kondensatorer brukes til filtrering av strøm og i minnekretser.'},
+{k:'ele',t:'Spole',e:'Inductor',d:'En komponent bygd av en lederspiral som lagrer energi i et magnetfelt når strøm flyter gjennom.',x:'Spoler brukes i radioer, transformatorer og strømforsyninger.'},
+{k:'ele',t:'Motstand',e:'Resistor',d:'Komponent som begrenser strømmengden i en krets. Verdien angis i ohm (Ω). Fargekodede ringer angir verdi.',x:'En 1000 Ω-motstand i en 5 V-krets gir I = 5 mA.'},
+{k:'ele',t:'Integrert krets',e:'Integrated circuit (IC)',d:'En mikroskopisk krets med mange transistorer, motstander og kondensatorer på en enkelt silisiumbrikke.',x:'Microchips i smarttelefoner inneholder milliarder av transistorer.'},
+{k:'ele',t:'PCB',e:'Printed Circuit Board',d:'Et kretskort av isolerende materiale med trykte kobberledere der elektroniske komponenter loddes fast.',x:'Alle elektroniske enheter – fra leker til satelitter – bruker PCB.'},
+{k:'ele',t:'Halvleder',e:'Semiconductor',d:'Et materiale med elektrisk ledningsevne mellom en leder og en isolator. Silisium er det vanligste.',x:'Germanium var det første halvledermaterialet brukt i transistorer.'},
+{k:'ele',t:'Transformator',e:'Transformer',d:'En elektrisk maskin som overfører elektrisk energi mellom to kretser via elektromagnetisk induksjon og endrer spenning.',x:'Straffetransformatorer i nettverket senker 22 000 V til 230 V hjemme.'},
+{k:'ele',t:'Vekselstrøm',e:'Alternating current (AC)',d:'Elektrisk strøm som periodisk skifter retning. Strømnettet i Norge leverer 50 Hz AC.',x:'Tesla argumenterte for AC; Edison for DC i «strøm-krigen» på 1880-tallet.'},
+{k:'ele',t:'Likestrøm',e:'Direct current (DC)',d:'Elektrisk strøm som flyter i én konstant retning. Batterier og solceller produserer DC.',x:'USB-lading konverterer AC fra stikkontakten til DC til enheten.'},
+{k:'ele',t:'Jordfeil­bryter',e:'RCD/GFCI',d:'Sikkerhetskomponent som kobler fra strømmen umiddelbart ved jordfeil (lekkasjstrøm), for å forhindre elektrisk sjokk.',x:'Jordfeilbrytere monteres i våtrom og kjøkken etter norsk byggstandard.'},
+{k:'ele',t:'Operasjons­forsterker',e:'Operational amplifier (op-amp)',d:'En integrert krets som forsterker differansen mellom to inngangssignaler med svært høy forsterkning.',x:'Op-ampen LM741 er en klassiker brukt i tusenvis av applikasjoner.'},
+{k:'ele',t:'Oscillator',e:'Oscillator',d:'En krets som produserer et periodisk signal (svingebevegelse) uten ekstern inngangssignal.',x:'Kvartskrystall-oscillatorer holder nøyaktig tid i ur og datamaskiner.'},
+{k:'ele',t:'Pulsbredde­modulasjon',e:'PWM (Pulse Width Modulation)',d:'Teknikk der et digitalt signal av/på brukes til å simulere analoge verdier ved å variere bredden på pulsene.',x:'Lysstyrken på LED-skjermer og motorhastigheten i servo-er styres med PWM.'},
+{k:'ele',t:'ADC',e:'Analog-to-Digital Converter',d:'Komponent som konverterer et analogt signal (kontinuerlig) til digitale tall (diskrete verdier).',x:'Lydkort bruker ADC til å digitalisere mikrofonsignalet.'},
+{k:'ele',t:'DAC',e:'Digital-to-Analog Converter',d:'Komponent som konverterer digitale verdier til et analogt signal. Brukes i lydavspillingskjeder.',x:'Høyttalere mottar analogt signal fra en DAC i lydkortet.'},
+{k:'ele',t:'Logisk port',e:'Logic gate',d:'En digital krets som utfører boolsk algebra. Grunntyper: AND, OR, NOT, NAND, NOR og XOR.',x:'En NAND-port er universell: alle logiske funksjoner kan bygges av NAND-porter.'},
+{k:'ele',t:'Flip-flop',e:'Flip-flop',d:'En digital krets med to stabile tilstander som kan lagre én bit informasjon. Grunnlag for registre og RAM.',x:'D-flip-flopper brukes i klokkede digitale systemer for synkronisering.'},
+{k:'ele',t:'Mikroprosessor',e:'Microprocessor',d:'En integrert krets som inneholder CPU-en (sentralprosessoren) til en datamaskin på en enkelt brikke.',x:'Intel 4004 (1971) var verdens første kommersielle mikroprosessor.'},
+{k:'ele',t:'Minne (RAM)',e:'RAM (Random Access Memory)',d:'Flyktig hurtigminne som datamaskinen bruker til å lagre data og programmer som kjøres for øyeblikket.',x:'Mer RAM lar datamaskinen kjøre flere programmer samtidig.'},
+{k:'ele',t:'Sensor',e:'Sensor',d:'En komponent som måler fysiske størrelser (temperatur, lys, trykk) og konverterer dem til elektriske signaler.',x:'En NTC-termistor endrer motstand med temperatur og brukes i termostater.'},
+{k:'ele',t:'Aktuator',e:'Actuator',d:'En komponent som konverterer et elektrisk signal til fysisk bevegelse eller handling.',x:'Servomotorer og solenoider er vanlige aktuatorer i robotikk.'},
+{k:'ele',t:'Kortslutning',e:'Short circuit',d:'En uønsket, lav-motstandsforbindelse mellom to punkter i en krets som gir svært høy strøm.',x:'Kortslutning kan smelte ledninger, utløse branntilløp og sprenge sikringer.'},
+{k:'ele',t:'Frekvensrespons',e:'Frequency response',d:'Beskrivelse av hvordan en krets eller et system reagerer på signaler av ulik frekvens.',x:'Høyttalere har flat frekvensrespons fra 20 Hz til 20 kHz for god lydkvalitet.'},
+{k:'ele',t:'Impedans',e:'Impedance',d:'Den totale motstanden mot vekselstrøm i en krets, inkludert motstand, kapasitiv og induktiv motstand. Symbol Z, enhet Ω.',x:'En 8 Ω høyttaler er dimensjonert for en 8 Ω forsterkerutgang.'},
+{k:'ele',t:'Feedback',e:'Feedback',d:'Et signal fra utgang til inngang i et system. Negativ feedback stabiliserer; positiv feedback kan forårsake ustabilitet.',x:'Negativ feedback brukes i operasjonsforsterkere for presis forsterkning.'},
+{k:'ele',t:'Jording',e:'Earthing/Grounding',d:'Elektrisk forbindelse mellom en krets og Jord, for å eliminere uønsket spenning og øke sikkerhet.',x:'Alle elektriske apparater med metallkappe skal jordes.'},
+{k:'ele',t:'Effektforbruk',e:'Power consumption',d:'Elektrisk effekt en komponent eller krets forbruker. P = U × I = I²R = U²/R. Måles i Watt.',x:'En lader på 5 V og 2 A leverer maksimalt 10 W effekt.'},
+{k:'ele',t:'Solcelle',e:'Solar cell',d:'En halvlederkomponent som konverterer sollys direkte til elektrisk energi via fotoelektrisk effekt.',x:'Silisiumsolceller har en effektivitet på 15–22 % i kommersielle paneler.'},
+{k:'ele',t:'Batteri',e:'Battery',d:'En elektrokjemisk celle som omdanner kjemisk energi til elektrisk energi via redoksreaksjoner.',x:'Litium-ion-batterier brukes i de fleste moderne smarttelefoner og elbiler.'},
+{k:'ele',t:'Protokoll',e:'Communication protocol',d:'Et sett regler for dataoverføring mellom elektroniske enheter. Eksempler: UART, I2C, SPI.',x:'I2C brukes mellom mikrokontroller og sensorer på Arduino.'},
+{k:'ele',t:'Mikro­kontroller',e:'Microcontroller',d:'En enkelbrikke-datamaskin med CPU, minne og I/O-periferi integrert. Styrer elektroniske systemer.',x:'Arduino Uno er basert på ATmega328P-mikrokontrolleren.'},
+{k:'ele',t:'GPIO',e:'General Purpose Input/Output',d:'Pins på en mikrokontroller eller mikroprosessor som kan programmeres som inngang eller utgang.',x:'Arduino har 14 digitale GPIO-pinner og 6 analoge innganger.'},
+{k:'ele',t:'Breadboard',e:'Breadboard',d:'Et prototyperingsbrett med hullsystem for å koble elektroniske komponenter uten lodding.',x:'Breadboard brukes i undervisning og prototyping av elektroniske kretser.'},
+{k:'ele',t:'Lodding',e:'Soldering',d:'Permanente elektriske forbindelser ved å smelte en tin-bly- eller tin-kobber-legering mellom komponenter og PCB.',x:'God lodding er blank og glatt; kald loddeskjøt er matt og sprø.'},
+{k:'ele',t:'Multimeter',e:'Multimeter',d:'Et måleinstrument som kan måle spenning, strøm og motstand i elektriske kretser.',x:'Alltid mål spenning parallelt og strøm seriell i kretsen.'},
+{k:'ele',t:'Oscilloskop',e:'Oscilloscope',d:'Et instrument som viser elektriske spenningssignalers form over tid på en skjerm.',x:'Oscilloskop brukes til å se bølgeform, frekvens og amplitude på signaler.'},
+{k:'ele',t:'EMC',e:'Electromagnetic compatibility',d:'En enhets evne til å fungere tilfredsstillende i sitt elektromagnetiske miljø uten å forstyrre andre.',x:'Alle elektroniske produkter i EU skal ha CE-merking som bekrefter EMC.'},
+{k:'ele',t:'Strøm­forsyning',e:'Power supply',d:'En enhet som leverer stabil elektrisk strøm og spenning til et elektronisk system fra et kraftnett.',x:'En PC-strømforsyning konverterer 230 V AC til 12 V, 5 V og 3,3 V DC.'},
+{k:'ele',t:'Lavspenning',e:'Low voltage',d:'Spenninger opp til 1 000 V AC eller 1 500 V DC i elektriske anlegg. Under dette er risikoen for lysbue lavere.',x:'230 V i husholdningen er lavspenning; høyspenningsnett er 22 kV eller høyere.'},
+{k:'ele',t:'RF',e:'Radio frequency',d:'Elektromagnetisk stråling med frekvens 3 kHz – 300 GHz, brukt til trådløs kommunikasjon.',x:'WiFi opererer på 2,4 GHz og 5 GHz RF-frekvenser.'},
+{k:'ele',t:'PWR LED',e:'Power indicator LED',d:'En LED koblet til strømforsyningen for å indikere at enheten er slått på.',x:'Den røde LED-en på de fleste elektroniske enheter er en PWR LED.'},
+{k:'ele',t:'BMS',e:'Battery Management System',d:'Et elektronisk system som overvåker og beskytter et batteri mot overladning, dypdeladning og overtemperatur.',x:'Elbil-batterier har komplekse BMS for å forlenge levetiden.'},
+{k:'ele',t:'Inverterer',e:'Inverter',d:'En elektronisk krets som konverterer DC til AC. Brukes i solcelleanlegg og UPS-systemer.',x:'Solcellepaneler produserer DC; inverterer konverterer til AC for hjemmet.'},
+
+// ── ØKOLOGI ──
+{k:'oko',t:'Biosfære',e:'Biosphere',d:'Summen av alle levende organismer og deres miljøer på Jord, fra havdypene til den øvre atmosfæren.',x:'Biosfæren er den tynne livgivende «hinna» rundt Jord.'},
+{k:'oko',t:'Biom',e:'Biome',d:'Et stort geografisk område med en karakteristisk kombinasjon av klima, vegetasjon og dyreliv.',x:'Taiga, tundra, regnskog og savanne er ulike biomer.'},
+{k:'oko',t:'Karbonsyklus',e:'Carbon cycle',d:'Biogeokjemisk syklus der karbon sirkulerer mellom atmosfæren, biosfæren, hydrosfæren og litosfæren.',x:'Havet absorberer ca. 25–30 % av menneskeskapte CO₂-utslipp.'},
+{k:'oko',t:'Nitrogensyklus',e:'Nitrogen cycle',d:'Kretsløpet der nitrogen omdannes mellom N₂ i atmosfæren, ammonium, nitrat og organisk nitrogen.',x:'Belgvekster med nitrogenfikserende bakterier er naturlige gjødselbringere.'},
+{k:'oko',t:'Vannkrets­løpet',e:'Water cycle',d:'Kontinuerlig sirkulasjon av vann mellom atmosfæren, landoverflaten og havet via fordampning, nedbør og avrenning.',x:'Tropiske skoger er kritiske for lokale og globale vannkretsløp.'},
+{k:'oko',t:'Primær­produksjon',e:'Primary production',d:'Produksjon av organisk materiale fra uorganiske forbindelser via fotosyntese eller kjemosyntese.',x:'Havets fytoplankton står for ca. 50 % av Jordens primærproduksjon.'},
+{k:'oko',t:'Trofisk nivå',e:'Trophic level',d:'Trinn i næringskjeden, definert av antall ledd fra primærprodusenten. Producenter → herbivorer → karnivorer.',x:'Bare ca. 10 % av energien overføres mellom hvert trofiske nivå.'},
+{k:'oko',t:'Nærings­nett',e:'Food web',d:'Et komplekst nettverk av sammenvevde næringskjeder som viser energistrømmene i et økosystem.',x:'Fjerning av ulven fra Yellowstone forårsaket kaskadevirkninger i hele næringsnettet.'},
+{k:'oko',t:'Nøkkelart',e:'Keystone species',d:'En art med uforholdsmessig stor effekt på sitt økosystem i forhold til sin abundanse. Fjerning kan kollapse systemet.',x:'Sjøoter kontrollerer kråkebolle-bestanden som ellers ødelegger tangskogen.'},
+{k:'oko',t:'Klimaendring',e:'Climate change',d:'Langsiktig endring i globale eller regionale klimamønstre, primært forårsaket av menneskelig utslipp av drivhusgasser.',x:'Jordens gjennomsnittstemperatur er 1,2 °C høyere enn førindustrielt nivå.'},
+{k:'oko',t:'Drivhuseffekt',e:'Greenhouse effect',d:'Prosess der atmosfæriske gasser (CO₂, CH₄, N₂O) absorberer og re-emitterer infrarød stråling og varmer opp Jorda.',x:'Uten noen drivhuseffekt ville jordens gjennomsnittstemperatur vært −18 °C.'},
+{k:'oko',t:'Ozonlaget',e:'Ozone layer',d:'Et lag i stratosfæren (15–35 km høyde) med høy ozonkonsentrasjon som absorberer det meste av UV-B- og UV-C-stråling.',x:'CFC-gasser fra spraybokser skadet ozonlaget – nå delvis reparert etter Montreal-protokollen.'},
+{k:'oko',t:'Biologisk mangfold',e:'Biodiversity',d:'Variasjonen av livsformer – gener, arter og økosystemer – på Jord eller i et gitt område.',x:'Den sjette masseutryddelsen pågår nå, drevet av menneskelig aktivitet.'},
+{k:'oko',t:'Invasiv art',e:'Invasive species',d:'En art introdusert utenfor sitt naturlige habitat som fortrenger hjemlige arter og forstyrrer økosystemet.',x:'Signalkreps fra Amerika har nesten utryddet den hjemlige elvekrepsen i Norge.'},
+{k:'oko',t:'Bæreevne',e:'Carrying capacity',d:'Maksimalt antall individer av én art et bestemt habitat kan støtte stabilt over tid.',x:'Reinsdyrbestanden på St. Matthew Island kollapset etter at den overskredet bæreevnen.'},
+{k:'oko',t:'Konkurranseeksklusion',e:'Competitive exclusion',d:'Prinsippet om at to arter med identisk nisje ikke kan eksistere stabilt i samme habitat – den ene vil fortrenge den andre.',x:'Gause demonstrerte dette med to Paramecium-arter i samme kultur.'},
+{k:'oko',t:'Nisje',e:'Ecological niche',d:'En arts rolle og posisjon i et økosystem – hva den spiser, hvem som spiser den, og hvilke ressurser den bruker.',x:'To ulike arter kan leve i samme habitat hvis de har ulike nisjer.'},
+{k:'oko',t:'Suksesjon',e:'Ecological succession',d:'Den gradvise endringen i et samfunn av organismer over tid frem mot en klimaksstand.',x:'En nybygd lavalflate koloniseres gradvis av lav, mose, gress og til slutt skog.'},
+{k:'oko',t:'Klimaks­samfunn',e:'Climax community',d:'Det stabile sluttpunktet for økologisk suksesjon der samfunnet er tilpasset klimaet og ikke lenger endres.',x:'Temperert løvskog er klimaks for mange lavlandshabitater i Europa.'},
+{k:'oko',t:'Forstyrrelses­regim',e:'Disturbance regime',d:'Hyppighet og intensitet av forstyrrelser (brann, storm, oversvømmelse) i et område, som former biodiversiteten.',x:'Periodisk brann i savanner fremmer urte-vekster og forhindrer skogsuksesjon.'},
+{k:'oko',t:'Eutrofiering',e:'Eutrophication',d:'Overgjødsling av vann med næringsstoffer (fosfor, nitrogen) som medfører algeoppblomstring og oksygensvikt.',x:'Avrenning fra jordbruksareal fører til eutrofiering av innsjøer og kystfarvann.'},
+{k:'oko',t:'Biomasse',e:'Biomass',d:'Den totale massen av levende organismer i et gitt område eller trofisk nivå. Måles i gram per m².',x:'Biomassen til planteplankton i havet er liten, men produktiviteten er enorm.'},
+{k:'oko',t:'Produktivitet',e:'Productivity',d:'Raten der energi bindes eller biomasse produseres i et økosystem. Skilles mellom brutto og netto primærproduksjon.',x:'Tropiske regnskoger har høyest nettoprimærproduksjon på land.'},
+{k:'oko',t:'Toksins­opphopning',e:'Bioaccumulation',d:'Opphoping av giftstoffer i organismer fordi de lagres raskere enn de brytes ned.',x:'DDT hopet seg opp i ørn og rovfugler og forårsaket eggskalltynnelse.'},
+{k:'oko',t:'Biomagnifikasjon',e:'Biomagnification',d:'Økning av giftstoffkonsentrasjon opp gjennom næringskjeden fordi konsumenten spiser mange kontaminerte byttedyr.',x:'Kvikksølv i tunfisk er farligst for toppkonsumenter inkludert mennesker.'},
+{k:'oko',t:'Saprofit',e:'Saprotroph',d:'Organisme som lever av og bryter ned dødt organisk materiale. Viktig i næringsstoffer-syklusen.',x:'Hattsopp og visse bakterier er saprofytter i skogsbunn.'},
+{k:'oko',t:'Mutualis­me',e:'Mutualism',d:'En symbiose der begge parter har nytte av forholdet.',x:'Mykorrhiza er mutualistisk sopp som hjelper planterøtter å ta opp vann og næring.'},
+{k:'oko',t:'Allelopati',e:'Allelopathy',d:'En plantes produksjon av kjemikalier som hemmer vekst av naboarter, en form for kjemisk konkurranse.',x:'Svartvalnøtt produserer juglon som hemmer vekst av epler og tomater i nærheten.'},
+{k:'oko',t:'Migrasjon',e:'Migration',d:'Sesongmessig forflytning av dyr mellom ulike leveområder, vanligvis knyttet til mat, klima eller reproduksjon.',x:'Arktisk terne migrerer 70 000 km tur-retur mellom Arktis og Antarktis hvert år.'},
+{k:'oko',t:'Fragmentering',e:'Habitat fragmentation',d:'Oppdeling av kontinuerlige habitater i isolerte biter av menneskelige inngrep (vei, landbruk, bebyggelse).',x:'Motorveier fragmenterer habitater og isolerer dyrepopulasjoner.'},
+{k:'oko',t:'Korridorer',e:'Wildlife corridors',d:'Sammenhengende vegetasjonsstriper som knytter fragmenterte habitater og muliggjør dyrs forflytning.',x:'Grønne broer over motorveier fungerer som dyrekorridorer i Norge.'},
+{k:'oko',t:'Forsuringen av havet',e:'Ocean acidification',d:'Reduksjon av havets pH forårsaket av absorpsjon av menneskeskapte CO₂-utslipp, som truer kalkskallende organismer.',x:'Havets pH har sunket fra 8,2 til 8,1 siden industrialiseringen.'},
+{k:'oko',t:'Nitrogenfiksering',e:'Nitrogen fixation',d:'Omdanning av N₂-gass til ammonium (NH₄⁺) av spesialiserte bakterier, gjort tilgjengelig for planter.',x:'Rhizobium-bakterier lever i rotknoller hos belgvekster og fikserer nitrogen.'},
+{k:'oko',t:'Detritus',e:'Detritus',d:'Dødt organisk materiale (løv, avføring, lik) som danner grunnlag for nedbryterfoodnettet.',x:'Detritus-næringskjeden er like viktig som de grønn-plante-baserte kjeder.'},
+{k:'oko',t:'Tropeskog',e:'Tropical rainforest',d:'Det mest biodiversebiom på land, med høy nedbør (> 2000 mm/år), konstant varme og tett vegetasjon.',x:'Amazonas inneholder ca. 10 % av alle kjente arter på Jord.'},
+{k:'oko',t:'Mangroveskog',e:'Mangrove forest',d:'Kystøkosystem dominert av salttolende trær i tropiske og subtropiske tidevannssoner.',x:'Mangrover er ynglehabitater for utallige fiskearter og beskytter kysten mot erosjon.'},
+{k:'oko',t:'Koralrev',e:'Coral reef',d:'Undervanns-habitater bygd av levende korallpolypper og deres kalkskjelletter. Svært biodiverse.',x:'Store Barriererev utenfor Australia er verdens største biologiske struktur.'},
+
+// ── TEKNOLOGI ──
+{k:'tek',t:'Algorithm',e:'Algorithm',d:'En endelig sekvens av veldefinerte instruksjoner som løser et problem eller utfører en beregning.',x:'Googles søkealgoritme rangerer milliarder av nettsider på millisekunder.'},
+{k:'tek',t:'3D-printing',e:'3D printing / Additive manufacturing',d:'Fremstilling av tredimensjonale gjenstander ved å legge materiale lag for lag etter en digital modell.',x:'FDM-printing smelter plastfilament; SLA bruker harpiksherding via UV-lys.'},
+{k:'tek',t:'Kunstig intelligens',e:'Artificial intelligence',d:'Datasystemer som kan utføre oppgaver som vanligvis krever menneskelig intelligens: gjenkjenning, beslutning, læring.',x:'ChatGPT, selvkjørende biler og ansiktsgjenkjenning er AI-applikasjoner.'},
+{k:'tek',t:'Maskinlæring',e:'Machine learning',d:'En gren av AI der systemer lærer fra data og forbedrer sin ytelse uten eksplisitt programmering.',x:'Spam-filteret i e-posten lærer av hvilke meldinger du markerer som spam.'},
+{k:'tek',t:'Robotikk',e:'Robotics',d:'Felt som kombinerer maskinteknologi, elektronikk og programmering for å designe og bygge roboter.',x:'Industriroboter sveiser og monterer biler med stor presisjon og hastighet.'},
+{k:'tek',t:'Internett of Things',e:'Internet of Things (IoT)',d:'Nettverk av fysiske enheter med sensorer, programvare og nettverkstilkobling som samler og deler data.',x:'Smarthus-enheter, smarte strømmålere og koblete biler er IoT-eksempler.'},
+{k:'tek',t:'Fornybar energi',e:'Renewable energy',d:'Energi fra kilder som naturlig fornyes på menneskelig tidsskala: sol, vind, vann, biomasse og geotermisk.',x:'Norge produserer over 90 % av sin elektrisitet fra vannkraft.'},
+{k:'tek',t:'Biomedisin',e:'Biomedical engineering',d:'Anvendelse av ingeniørprinsipper og teknologi på biologi og medisin for å utvikle diagnostikk og behandling.',x:'Pacemakere, MR-maskiner og protetiske lemmer er biomedisinsk teknologi.'},
+{k:'tek',t:'Nanoteknologi',e:'Nanotechnology',d:'Manipulering av materie på atomar og molekylær skala (1–100 nm) for å skape nye materialer og enheter.',x:'Karbonnano­rør er sterkere enn stål og tynnere enn et menneskehår.'},
+{k:'tek',t:'Kryptering',e:'Encryption',d:'Omdanning av lesbar data til ulesbar form ved hjelp av en algoritme og nøkkel for å beskytte informasjon.',x:'HTTPS krypterer all trafikk mellom nettleser og webserver.'},
+{k:'tek',t:'Blokkjede',e:'Blockchain',d:'En desentralisert, distribuert registre av transaksjoner som er kryptografisk koblet og nesten umulig å endre.',x:'Bitcoin bruker blokkjede for å registrere alle transaksjoner uten en sentral bank.'},
+{k:'tek',t:'Skylagring',e:'Cloud storage',d:'Lagring av digitale data på fjerne servere som er tilgjengelige via internett, istedenfor lokal harddisk.',x:'Google Drive, Dropbox og iCloud er skylagringstjenester.'},
+{k:'tek',t:'CAD',e:'Computer-Aided Design',d:'Bruk av dataprogrammer til å lage, endre, analysere og optimere tekniske tegninger og 3D-modeller.',x:'Ingeniører bruker AutoCAD og SolidWorks til produktdesign.'},
+{k:'tek',t:'CNC',e:'Computer Numerical Control',d:'En produksjonsmetode der maskinverktøy styres av en datamaskin etter en digital modell – presis og repeterbar.',x:'CNC-fresing brukes til å lage presisjonsdeler av metall og plast.'},
+{k:'tek',t:'Material­vitenskap',e:'Materials science',d:'Tverrfaglig felt som studerer struktur, egenskaper, prosessering og ytelse av materialer.',x:'Utvikling av supraledende materialer kan revolusjonere energioverføring.'},
+{k:'tek',t:'Bærekraftig design',e:'Sustainable design',d:'Design som minimerer negativ miljøpåvirkning gjennom valg av materialer, energieffektivitet og levetid.',x:'Cradle-to-cradle-design sikrer at alle materialer kan resirkuleres.'},
+{k:'tek',t:'Prototype',e:'Prototype',d:'En tidlig modell av et produkt laget for å teste konsept, form, funksjoner og brukbarhet.',x:'Rask prototyping med 3D-printing reduserer tid fra idé til testprodukt.'},
+{k:'tek',t:'Ingeniørsyklusen',e:'Engineering design cycle',d:'Iterativ prosess: Identifiser problem → forskning → design → prototype → test → evaluer → forbedre.',x:'SpaceX itererer raskt gjennom ingeniørsyklusen med raske testoppskytinger.'},
+{k:'tek',t:'Bærer­frekvens',e:'Carrier frequency',d:'En fast frekvens som moduleres for å bære et informasjonssignal i trådløs kommunikasjon.',x:'FM-radio er frekvens-modulert rundt bærere i 87,5–108 MHz-båndet.'},
+{k:'tek',t:'Hydraulikk',e:'Hydraulics',d:'Bruk av flytende væske under trykk til å overføre kraft og energi i maskiner og systemer.',x:'Gravemaskiner, hydrauliske presser og bremsesystemer bruker hydraulikk.'},
+{k:'tek',t:'Pneumatikk',e:'Pneumatics',d:'Bruk av trykkluft til å overføre kraft og bevegelse i maskiner og automatiseringssystemer.',x:'Pneumatiske sylindre brukes til å åpne og lukke ventiler i industrien.'},
+{k:'tek',t:'Feedback­kontroll',e:'Feedback control',d:'System der utgangssignalet måles og sammenlignes med ønsket verdi for å minimere avvik (feil).',x:'Termostat er et enkelt feedback-kontrollsystem.'},
+{k:'tek',t:'Sensorfusjon',e:'Sensor fusion',d:'Kombinering av data fra flere sensorer for å oppnå mer nøyaktig og pålitelig informasjon enn fra én sensor alene.',x:'Selvkjørende biler fusjonerer kamera, LiDAR og radar for situasjonsbevissthet.'},
+{k:'tek',t:'Additive manufacturing',e:'Additive manufacturing',d:'Samlebetegnelse for fremstillingsprosesser der materiale tilføres lag for lag, inkludert 3D-printing.',x:'Medisinsk kirurgi bruker AM til å printe pasient-spesifikke implantater.'},
+{k:'tek',t:'Digital tvilling',e:'Digital twin',d:'En virtuell modell av et fysisk objekt eller system som oppdateres i sanntid fra sensor-data.',x:'Rolls-Royce bruker digitale tvillinger av flymotorer for prediktivt vedlikehold.'},
+{k:'tek',t:'LiDAR',e:'LiDAR (Light Detection and Ranging)',d:'Fjernmålingsteknikk som bruker laserpulser til å lage 3D-kart av omgivelsene. Brukes i biler og kartlegging.',x:'LiDAR på selvkjørende biler måler avstander med millimeter-presisjon.'},
+{k:'tek',t:'Augmented Reality',e:'Augmented Reality (AR)',d:'Teknologi som legger digitale elementer oppå den fysiske verdenen i sanntid via kamera og skjerm.',x:'Pokémon Go, IKEA Place og kirurgiske navigasjonssystemer bruker AR.'},
+{k:'tek',t:'Bioteknologi',e:'Biotechnology',d:'Bruk av levende organismer og biologiske systemer til å utvikle produkter og løse problemer.',x:'Insulin produseres nå av genmodifiserte bakterier via bioteknologi.'},
+{k:'tek',t:'CRISPR',e:'CRISPR-Cas9',d:'Et revolusjonerende genediterings-verktøy som kan klippe og endre DNA-sekvenser i levende celler med høy presisjon.',x:'CRISPR forskes på for behandling av sigdcelleanemi og visse kreftformer.'},
+{k:'tek',t:'Kvantedatamaskin',e:'Quantum computer',d:'Datamaskin som utnytter kvantemek­aniske fenomener (superposisjon, sammenfletting) for å løse visse problemer mye raskere.',x:'Google hevdet å ha vist «kvantoverlegenhet» med sin Sycamore-prosessor i 2019.'},
+{k:'tek',t:'Hydrogen­økonomi',e:'Hydrogen economy',d:'Energisystem der hydrogen produsert fra fornybar energi brukes som brensel og energibærer.',x:'Toyota Mirai og bussruter i Oslo er tidlige eksempler på hydrogenteknologi.'},
+{k:'tek',t:'CO₂-fangst',e:'Carbon capture and storage (CCS)',d:'Teknologi som fanger CO₂ fra industrikilder og lagrer det geologisk for å redusere klimagassutslipp.',x:'Sleipner-prosjektet i Nordsjøen injiserer CO₂ i sandstein under havbunnen.'},
+{k:'tek',t:'Smartgrid',e:'Smart grid',d:'Et elektrisk nett som bruker digital kommunikasjon, sensorer og automatisering for å optimalisere strømproduksjon og -forbruk.',x:'Smartmålere i norske hjem er første steg mot et smartgrid.'},
+{k:'tek',t:'Integrert bærekraft',e:'Life cycle assessment (LCA)',d:'En metode for å vurdere den samlede miljøpåvirkningen av et produkt fra råvare til avfall.',x:'LCA viser at elektriske biler har lavere CO₂-utslipp over levetiden enn bensinbiler.'},
+{k:'tek',t:'Sensorteknologi',e:'Sensor technology',d:'Utvikling og bruk av sensorer som konverterer fysiske fenomener til målbare elektriske signaler.',x:'MEMS-akselerometere i smarttelefoner oppdager orientering og skrittellting.'},
+{k:'tek',t:'Trådløs kommunikasjon',e:'Wireless communication',d:'Overføring av data mellom enheter uten fysiske kabelforbindelser, via elektromagnetiske bølger.',x:'WiFi (802.11), Bluetooth, 4G og 5G er ulike trådløse standarder.'},
+{k:'tek',t:'Optisk fiber',e:'Optical fibre',d:'En tynn glasstråd som overfører data som lys ved hjelp av total indre refleksjon. Svært høy båndbredde.',x:'Internett-kablene over Atlanterhavet er optiske fiberkabler.'},
+{k:'tek',t:'Halvleder­industri',e:'Semiconductor industry',d:'Industri for produksjon av halvlederkomponenter (brikker). Krever ekstrem renhet og avansert litografi.',x:'TSMC i Taiwan produserer 90 % av verdens mest avanserte halvlederbrikker.'},
+
+// ── EKSTRA BIO (→50) ──
+{k:'bio',t:'Sopp',e:'Fungi',d:'Et eget rike av organismer – verken plante eller dyr – som lever av å bryte ned organisk materiale eksternt og absorbere næring. Cellevegg av kitin.',x:'Sopp danner mykorrhiza med planterøtter og er avgjørende for skogens helse.'},
+
+// ── EKSTRA FYSIKK (→50) ──
+{k:'fys',t:'Spesiell relativitetsteori',e:'Special relativity',d:'Einsteins teori (1905): lyshastigheten er konstant for alle observatører og masse og energi er ekvivalente: E = mc².',x:'GPS-satellitter må korrigere for relativistiske tidsforskjeller for nøyaktig posisjon.'},
+{k:'fys',t:'Magnetisme',e:'Magnetism',d:'Kraft mellom magnetiske materialer og elektriske strømmer. Atomer med uparret elektron-spinn danner permanente magneter.',x:'Jordens jernkjerne oppfører seg som en gigantisk magnet med nord- og sydpol.'},
+{k:'fys',t:'Supraledning',e:'Superconductivity',d:'Fenomen der visse materialer ved svært lave temperaturer leder elektrisk strøm med null motstand.',x:'MR-maskiner bruker supraledende magneter avkjølt med flytende helium.'},
+
+// ── EKSTRA KJEMI (→50) ──
+{k:'kje',t:'Elektronegativitet',e:'Electronegativity',d:'Et atoms evne til å tiltrekke seg elektroner i en kovalent binding. Angitt på Pauling-skalaen der fluor = 4,0.',x:'Oksygen (3,5) er mer elektronegativt enn hydrogen (2,1) – gir polær O–H-binding.'},
+{k:'kje',t:'Polaritet',e:'Polarity',d:'Ujevn fordeling av elektrisk ladning i et molekyl pga. forskjell i elektronegativitet. Polære molekyler løser seg i vann.',x:'Vann (H₂O) er polært; bensin er upolær – de blander seg ikke.'},
+{k:'kje',t:'Oksidasjonsmiddel',e:'Oxidising agent',d:'Et stoff som tar opp elektroner fra et annet stoff og selv reduseres. Øker oksidasjonstallet til motparten.',x:'Klorgass og hydrogenperoksid er sterke oksidasjonsmidler.'},
+{k:'kje',t:'Reduksjonsmiddel',e:'Reducing agent',d:'Et stoff som avgir elektroner til et annet stoff og derved reduserer det, mens det selv oksideres.',x:'Hydrogen og kull brukes som reduksjonsmidler i metallfremstilling.'},
+
+// ── EKSTRA GEOLOGI (→50) ──
+{k:'geo',t:'Jordskorpe',e:'Earth\'s crust',d:'Det ytterste, tynne laget av Jord. Kontinentalskorpen er 30–50 km tykk; havbunnskorpen er bare 5–10 km tykk.',x:'Jordskorpen er tykkest under store fjellkjeder som Himalaya.'},
+{k:'geo',t:'Kappe',e:'Mantle',d:'Laget mellom jordskorpen og kjernen (30–2890 km dypt). Består av silikatrike bergarter og er delvis plastisk.',x:'Varmekonveksjon i kappen driver bevegelsen av tektoniske plater.'},
+{k:'geo',t:'Forkastning',e:'Fault',d:'En sprekk i jordskorpen der bergarter på hver side har beveget seg relativt til hverandre. Sone for jordskjelv.',x:'San Andreas-forkastningen i California er over 1 300 km lang.'},
+{k:'geo',t:'Kalkstein',e:'Limestone',d:'En sedimentær bergart bestående av kalsiumkarbonat (CaCO₃), ofte dannet av skallrester fra marine organismer.',x:'Stalaktitter og stalagmitter i huler dannes av oppløst kalkstein.'},
+{k:'geo',t:'Granitt',e:'Granite',d:'En intrusiv magmatisk bergart med synlige krystaller av kvarts, feltspat og glimmer. Svært hard og vanlig i jordskorpen.',x:'Store deler av norsk fjellgrunn er granitt og gneis dannet for over 1 milliard år siden.'},
+{k:'geo',t:'Geotermisk energi',e:'Geothermal energy',d:'Varme fra jordens indre (radioaktivt henfall og rest fra planetdannelse) som utnyttes til strømproduksjon og oppvarming.',x:'Island dekker over 90 % av sitt oppvarmingsbehov med geotermisk energi.'},
+{k:'geo',t:'Paleontologi',e:'Palaeontology',d:'Vitenskapen om fortidsliv gjennom studiet av fossiler, som beskriver livets utvikling og evolusjon.',x:'Fossilfunn som Archaeopteryx knyttet fugler til dinosaurer.'},
+{k:'geo',t:'Bergartssyklusen',e:'Rock cycle',d:'Kontinuerlig prosess der bergarter dannes, brytes ned og omdannes mellom magmatisk, sedimentær og metamorf bergart.',x:'Granitt kan forvitres til sand, bli sandstein, og ved metamorfose bli gneis.'},
+
+// ── EKSTRA ELEKTRONIKK (→50) ──
+{k:'ele',t:'Spenningsregulator',e:'Voltage regulator',d:'En krets som holder utgangsspenningen stabil uavhengig av endringer i inngangsspenning eller belastning.',x:'78xx-serien (f.eks. 7805) er klassiske lineære spenningsregulatorer.'},
+{k:'ele',t:'H-bro',e:'H-bridge',d:'En elektronisk krets som lar en motor kjøre i begge retninger ved å snu polariteten på spenningen.',x:'L298N er en populær H-bro-brikke brukt med Arduino for motorstyring.'},
+{k:'ele',t:'Watchdog-timer',e:'Watchdog timer',d:'En nedtellingstimer i en mikrokontroller som nullstiller systemet hvis programmet ikke sender et heartbeat-signal innen fristen.',x:'Watchdog-timere hindrer at innebygde systemer henger seg permanent.'},
+{k:'ele',t:'Logisk nivå',e:'Logic level',d:'Spenningsnivåene som representerer binære 0 og 1 i digitale kretser. Vanligst: 5 V (TTL) og 3,3 V (CMOS).',x:'Arduino Uno bruker 5 V logikk; Raspberry Pi bruker 3,3 V – nivåkonverter trengs.'},
+{k:'ele',t:'Pull-up motstand',e:'Pull-up resistor',d:'En motstand koblet mellom en inngangslinje og VCC for å sikre at linjen har en definert høy tilstand når ingen enhet driver den.',x:'Interne pull-up motstander på Arduino aktiveres med pinMode(pin, INPUT_PULLUP).'},
+
+// ── EKSTRA ØKOLOGI (→50) ──
+{k:'oko',t:'Pollinasjon',e:'Pollination',d:'Overføring av pollen fra støvbærer til arr, nødvendig for frøproduksjon. Utføres av vind, insekter, fugler og andre.',x:'Over 75 % av verdens matplanter avhenger av pollinatorer.'},
+{k:'oko',t:'Trofisk kaskade',e:'Trophic cascade',d:'Indirekte effekter der endringer i én arts abundanse påvirker ikke-nærliggende trofiske nivåer gjennom næringskjeden.',x:'Gjeninnføring av ulv i Yellowstone endret til og med elveløp via trofiske kaskader.'},
+{k:'oko',t:'Endemisk art',e:'Endemic species',d:'En art som bare finnes naturlig i ett avgrenset geografisk område.',x:'Lemuren er endemisk til Madagaskar.'},
+{k:'oko',t:'Havstrøm',e:'Ocean current',d:'Kontinuerlig, rettet bevegelse av havvann drevet av vind, tetthetforskjeller og jordrotasjon. Regulerer klima globalt.',x:'Golfstrømmen holder Nord-Europa 5–10 °C varmere enn ellers på samme breddegrader.'},
+{k:'oko',t:'Albedo',e:'Albedo',d:'Refleksjonsevnen til en overflate. Snø og is reflekterer 80–90 %; åpent hav reflekterer ca. 6 % av sollyset.',x:'Smelting av is senker albedoet og akselererer oppvarmingen – en positiv klimafeedback.'},
+{k:'oko',t:'Jordfruktbarhet',e:'Soil fertility',d:'Jordens evne til å forsyne planter med nødvendige næringsstoffer, vann og oksygen for vekst. Påvirkes av humusinnhold, pH og mikroliv.',x:'Meitemark er nøkkelorganismer for jordfruktbarheten ved å løsne og berike jord.'},
+{k:'oko',t:'Populasjonsdynamikk',e:'Population dynamics',d:'Studiet av hvordan populasjonsstørrelser endrer seg over tid via fødsel, død, innvandring og utvandring.',x:'Byttedyr-rovdyr-syklusen mellom hare og gaupe er et klassisk eksempel.'},
+
+// ── EKSTRA TEKNOLOGI (→50) ──
+{k:'tek',t:'Nettsky',e:'Cloud computing',d:'Levering av IT-tjenester via internett (servere, lagring, databaser, programvare) på forespørsel uten lokal infrastruktur.',x:'AWS, Azure og Google Cloud er de tre dominerende skyleverandørene.'},
+{k:'tek',t:'API',e:'Application Programming Interface',d:'Et sett regler og protokoller som lar to programvare-systemer kommunisere med hverandre.',x:'Google Maps tilbyr et API som nettsider kan bruke til å vise kart.'},
+{k:'tek',t:'Versjonskontroll',e:'Version control',d:'System for å spore endringer i filer over tid slik at man kan gå tilbake til tidligere versjoner. Git er det dominerende systemet.',x:'GitHub er en plattform basert på Git som brukes av millioner av utviklere.'},
+{k:'tek',t:'Universell utforming',e:'Universal design',d:'Design av produkter og miljøer slik at de kan brukes av flest mulig uten spesiell tilpasning.',x:'Ramper i stedet for trapper og lydsignaler ved fotgjengeroverganger er eksempler.'},
+{k:'tek',t:'Digital tvilling',e:'Digital twin',d:'En virtuell modell av et fysisk objekt eller system som oppdateres i sanntid fra sensordata.',x:'Rolls-Royce bruker digitale tvillinger av flymotorer for prediktivt vedlikehold.'},
+{k:'tek',t:'LiDAR',e:'LiDAR (Light Detection and Ranging)',d:'Fjernmålingsteknikk som bruker laserpulser til å lage presise 3D-kart av omgivelsene.',x:'LiDAR på selvkjørende biler måler avstander med millimeter-presisjon.'},
+{k:'tek',t:'Bærekraftig design',e:'Sustainable design',d:'Design som minimerer negativ miljøpåvirkning gjennom materialvalg, energieffektivitet og lang levetid.',x:'Cradle-to-cradle-design sikrer at alle materialer kan gjenbrukes eller resirkuleres.'},
+{k:'tek',t:'Hydraulikk',e:'Hydraulics',d:'Bruk av flytende væske under trykk til å overføre kraft og energi i maskiner og systemer.',x:'Gravemaskiner, hydrauliske presser og bilens bremsesystem bruker hydraulikk.'},
+{k:'tek',t:'CO₂-fangst',e:'Carbon capture and storage (CCS)',d:'Teknologi som fanger CO₂ fra industrikilder og lagrer det geologisk for å redusere klimagassutslipp.',x:'Sleipner-prosjektet i Nordsjøen har injisert CO₂ i sandstein siden 1996.'},
+{k:'tek',t:'Smartgrid',e:'Smart grid',d:'Et elektrisk nett som bruker digital kommunikasjon og automatisering for å optimalisere strømproduksjon og -forbruk.',x:'Smartmålere i norske hjem er første steg mot et smartgrid.'},
+{k:'tek',t:'Drone­teknologi',e:'Drone / UAV',d:'Ubemannede luftfartøy styrt av fjernkontroll eller autonom programmering, med et bredt spekter av bruksområder.',x:'Droner brukes til kartlegging, levering, søk og redning, og landbruksinspeksjon.'},
+{k:'tek',t:'CRISPR',e:'CRISPR-Cas9',d:'Et revolusjonerende genediteringsverktøy som kan klippe og endre DNA-sekvenser i levende celler med høy presisjon.',x:'CRISPR forskes på for behandling av sigdcelleanemi og visse kreftformer.'},
+,
+{k:'oko',t:'Nitrogenfiksering',e:'Nitrogen fixation',d:'Omdanning av atmosfærisk N₂ til ammonium av spesialiserte bakterier, som gjør nitrogen biologisk tilgjengelig.',x:'Rhizobium-bakterier i belgvekstrøtter fikserer nitrogen og gjødsler naturlig.'},
+{k:'oko',t:'Forsuringen av havet',e:'Ocean acidification',d:'Reduksjon av havets pH forårsaket av absorpsjon av CO₂-utslipp, som truer kalkskallende organismer.',x:'Havets pH har sunket fra 8,2 til 8,1 siden industrialiseringen.'},
+{k:'oko',t:'Fragmentering',e:'Habitat fragmentation',d:'Oppdeling av kontinuerlige habitater av menneskelige inngrep. Isolerer populasjoner og reduserer biodiversitet.',x:'Motorveier fragmenterer habitater og hindrer dyrepopulasjoners utveksling.'},
+{k:'oko',t:'Eutrofiering',e:'Eutrophication',d:'Overgjødsling av vann med nitrogen og fosfor fra avrenning. Gir algeoppblomstring og oksygensvikt.',x:'Eutrofiering av Oslofjorden truer bunndyr og fisk.'},
+{k:'oko',t:'Koralrev',e:'Coral reef',d:'Marine habitater bygd av korallpolypper og deres kalkskjelletter. Svært biodiverse og truet av oppvarming og forsuring.',x:'Store Barriererev utenfor Australia er verdens største biologiske struktur.'},
+{k:'oko',t:'Jordfruktbarhet',e:'Soil fertility',d:'Jordens evne til å forsyne planter med næringsstoffer, vann og oksygen. Avhenger av humusinnhold, pH og mikroliv.',x:'Meitemark er nøkkelorganismer for jordfruktbarheten.'}
+];
+
+
+// ════════════════════════════════════════════════════════════════
+// VITENSKAPSPERSONER  (3 per kategori × 7 = 21)
+// ════════════════════════════════════════════════════════════════
+const PERSONER = [
+// BIOLOGI
+{k:'bio',n:'Charles Darwin',p:'1809–1882',e:'🦎',bio:'Britisk naturalist og geolog. Reiste rundt kloden med HMS Beagle og samlet bevis for at arter endrer seg over tid. Hans bok «Om artenes opprinnelse» (1859) revolusjonerte biologi.',kjent:'Teorien om naturlig seleksjon og evolusjon'},
+{k:'bio',n:'Rosalind Franklin',p:'1920–1958',e:'🧬',bio:'Britisk kjemiker og krystallograf. Hennes røntgendiffraksjonsbilder av DNA – særlig «Bilde 51» – var avgjørende for oppdagelsen av DNA-ets doble heliks-struktur.',kjent:'Røntgenbilder av DNA som muliggjorde strukturoppdagelsen'},
+{k:'bio',n:'Gregor Mendel',p:'1822–1884',e:'🌸',bio:'Østerriksk augustiner-munk og botaniker. Eksperimenter med erteblomster over 8 år avdekket grunnleggende arvemønstre. Ble ignorert i sin levetid – nå grunnlegger av genetikken.',kjent:'Mendels arveregler og grunnlegging av genetikken'},
+// FYSIKK
+{k:'fys',n:'Isaac Newton',p:'1643–1727',e:'🍎',bio:'Britisk matematiker, fysiker og astronom. Formulerte de tre bevegelseslovene og gravitasjonsloven, oppfant kalkulus og utforsket optikk. Regnes som en av historiens mest innflytelsesrike vitenskapsmenn.',kjent:'Gravitasjonsloven og de tre bevegelseslovene'},
+{k:'fys',n:'Marie Curie',p:'1867–1934',e:'⚗️',bio:'Polsk-fransk fysiker og kjemiker. Første person til å vinne to Nobelpris (fysikk 1903, kjemi 1911). Oppdaget grunnstoffene polonium og radium og grunnla studiet av radioaktivitet.',kjent:'Oppdagelsen av polonium og radium; radioaktivitetsforskning'},
+{k:'fys',n:'Albert Einstein',p:'1879–1955',e:'🌌',bio:'Tyskfødt teoretisk fysiker. Spesiell relativitetsteori (1905), generell relativitetsteori (1915) og forklaring av fotoelektrisk effekt (Nobelpris 1921) er blant hans bidrag.',kjent:'Relativitetsteorien og E = mc²'},
+// KJEMI
+{k:'kje',n:'Dmitri Mendeleev',p:'1834–1907',e:'🗂️',bio:'Russisk kjemiker som systematiserte alle kjente grunnstoff i det periodiske system (1869). Forutsiktet egenskapene til ennå ikke oppdagede grunnstoff – noe som ble bekreftet.',kjent:'Det periodiske system med forutsigelse av nye grunnstoff'},
+{k:'kje',n:'Antoine Lavoisier',p:'1743–1794',e:'🔥',bio:'Fransk kjemiker og «moderne kjemis far». Navnga oksygen og hydrogen, viste at forbrenning er en oksidasjonsprosess og formulerte loven om massebevarelse i kjemiske reaksjoner.',kjent:'Massebevaring i kjemi og navngivning av oksygen'},
+{k:'kje',n:'Linus Pauling',p:'1901–1994',e:'🏆',bio:'Amerikansk kjemiker. To Nobelpris: kjemi (1954) for forskning på kjemiske bindinger og kovalente strukturer, og fredspris (1962) for atomvåpenmotstand. Utviklet elektronegativitets-skalaen.',kjent:'Teori om kjemiske bindinger og elektronegativitetsskalaen'},
+// GEOLOGI
+{k:'geo',n:'Alfred Wegener',p:'1880–1930',e:'🌍',bio:'Tysk meteorolog og geofysiker. Foreslo teorien om kontinentaldrift (1912) – at kontinentene en gang var ett superkontinent (Pangaea). Avvist i hans levetid; bevist 30 år etter hans død.',kjent:'Teorien om kontinentaldrift og Pangaea'},
+{k:'geo',n:'Mary Anning',p:'1799–1847',e:'🦕',bio:'Britisk fossiljeger og palaeontolog fra Dorset. Oppdaget det første komplette ichtyosaurus-skjelettet som 12-åring og bidro med banebrytende funn til forståelsen av forhistorisk liv.',kjent:'Banebrytende fossilfunn; ichtyosaurus, plesiosaurus'},
+{k:'geo',n:'Charles Lyell',p:'1797–1875',e:'🪨',bio:'Skotsk geolog og «moderne geologis far». Prinsippet om uniformitarisme (fortiden forklares av prosesser vi ser i dag) la grunnlaget for moderne geologi og inspirerte Darwin.',kjent:'Uniformitarisme-prinsippet i geologi'},
+// ELEKTRONIKK
+{k:'ele',n:'Nikola Tesla',p:'1856–1943',e:'⚡',bio:'Serbisk-amerikansk oppfinner og ingeniør. Utviklet vekselstrømsystemet (AC), polyfase-strøm, transformatoren, og mange patenter innen elektriske systemer. Livslang rivalen til Edison.',kjent:'Vekselsstrømsystemet (AC) og transformatoren'},
+{k:'ele',n:'Ada Lovelace',p:'1815–1852',e:'💻',bio:'Britisk matematiker og forfatter. Samarbeidet med Charles Babbage om den analytiske maskinen og skrev det første algoritmen beregnet for maskinell utførelse – regnes som verdens første programmerer.',kjent:'Første dataprogrammet; algoritme for Babbages maskin'},
+{k:'ele',n:'William Shockley',p:'1910–1989',e:'🔬',bio:'Amerikansk fysiker som ledet teamet som oppfant transistoren ved Bell Labs i 1947. Nobelpris i fysikk 1956. Transistoren ble grunnlaget for all moderne elektronikk.',kjent:'Medoppfinner av transistoren (1947)'},
+// ØKOLOGI
+{k:'oko',n:'Rachel Carson',p:'1907–1964',e:'🌿',bio:'Amerikansk marinbiolog og forfatter. Hennes bok «Silent Spring» (1962) dokumenterte skadene fra DDT og andre pesticider på fugle- og dyrebestander og startet den moderne miljøbevegelsen.',kjent:'«Silent Spring» og oppstarten av den moderne miljøbevegelsen'},
+{k:'oko',n:'Wangari Maathai',p:'1940–2011',e:'🌳',bio:'Kenyansk miljøaktivist og professor. Grunnla Grønt Belte-bevegelsen som plantet over 51 millioner trær i Afrika. Første afrikanske kvinne til å motta Nobels fredspris (2004).',kjent:'Grønt Belte-bevegelsen; 51 millioner trær plantet'},
+{k:'oko',n:'E.O. Wilson',p:'1929–2021',e:'🐜',bio:'Amerikansk biolog og naturalist. «Sosiobiologiens far». Hans arbeid om biodiversitet, øygeografi og myrer la grunnlag for moderne bevaringsbiologi. Forfattet 30 bøker.',kjent:'Biodiversitets-forskning og sosiobiologi'},
+// TEKNOLOGI
+{k:'tek',n:'James Watt',p:'1736–1819',e:'⚙️',bio:'Skotsk ingeniør og oppfinner. Forbedret dampmaskinens dampforbruk dramatisk og muliggjorde den industrielle revolusjon. Enheten for effekt (Watt) er oppkalt etter ham.',kjent:'Forbedret dampmaskin som drev den industrielle revolusjon'},
+{k:'tek',n:'Grace Hopper',p:'1906–1992',e:'🖥️',bio:'Amerikansk informatiker og marineoffiser. Oppfant kompilatoren (1952), som lar programmerere skrive i lesbart språk i stedet for maskinkode. Medvirkende til utviklingen av COBOL.',kjent:'Kompilatoren og fremme av høynivåprogrammeringsspråk'},
+{k:'tek',n:'Hedy Lamarr',p:'1914–2000',e:'📡',bio:'Østerriksk-amerikansk skuespiller og oppfinner. Patenterte frekvenshoppende radiosignaler (1942) for å gjøre torpedostyring vanskelig å jamme – grunnlaget for WiFi, Bluetooth og GPS.',kjent:'Frekvenshoppende signaler – grunnlag for WiFi og Bluetooth'},
+];
+
+// ════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════
+let aktivKat = 'alle';
+let aktivTab = 'begreper'; // 'begreper' | 'personer' | 'alle'
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+function init() {
+  byggKatLegend();
+  byggTabRad();
+  byggKort();
+}
+
+function byggKatLegend() {
+  const el = document.getElementById('katLegend');
+  const alleBtn = `<span class="kat-pill aktiv-kat" data-kat="alle" onclick="settKat(this)"
+    style="background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.15);color:#e8edf5;">
+    <span class="kat-dot" style="background:#e8edf5"></span> Alle fagområder
+  </span>`;
+  el.innerHTML = alleBtn + Object.entries(KAT).map(([id, k]) => `
+    <span class="kat-pill" data-kat="${id}" onclick="settKat(this)"
+      style="background:${k.bg};border-color:${k.farge}40;color:${k.farge};">
+      <span class="kat-dot" style="background:${k.farge}"></span> ${k.emoji} ${k.navn}
+    </span>`).join('');
+}
+
+function byggTabRad() {
+  const el = document.getElementById('tabRad');
+  el.innerHTML = `
+    <button class="tab-btn aktiv" data-tab="begreper" onclick="settTab(this)">📖 Begreper (350)</button>
+    <button class="tab-btn" data-tab="personer" onclick="settTab(this)">👩‍🔬 Vitenskapspersoner (21)</button>
+    <button class="tab-btn" data-tab="alle" onclick="settTab(this)">🔀 Vis alle</button>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// FILTER
+// ════════════════════════════════════════════════════════════════
+function settKat(el) {
+  document.querySelectorAll('.kat-pill').forEach(p => p.classList.remove('aktiv-kat'));
+  el.classList.add('aktiv-kat');
+  aktivKat = el.dataset.kat;
+  filtrer();
+}
+
+function settTab(el) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('aktiv'));
+  el.classList.add('aktiv');
+  aktivTab = el.dataset.tab;
+  filtrer();
+}
+
+function clearSok() {
+  document.getElementById('sokefelt').value = '';
+  document.getElementById('sokClear').style.display = 'none';
+  filtrer();
+}
+
+function filtrer() {
+  const sok = document.getElementById('sokefelt').value.toLowerCase().trim();
+  document.getElementById('sokClear').style.display = sok ? 'block' : 'none';
+
+  let synlige = 0;
+  document.querySelectorAll('.bkort, .pkort').forEach(k => {
+    const erBegrep = k.classList.contains('bkort');
+    const erPerson = k.classList.contains('pkort');
+    const kat = k.dataset.kat;
+    const tekst = k.innerText.toLowerCase();
+
+    const tabOk = aktivTab === 'alle'
+      || (aktivTab === 'begreper' && erBegrep)
+      || (aktivTab === 'personer' && erPerson);
+    const katOk = aktivKat === 'alle' || kat === aktivKat;
+    const sokOk = !sok || tekst.includes(sok);
+
+    if (tabOk && katOk && sokOk) { k.classList.remove('skjult'); synlige++; }
+    else k.classList.add('skjult');
+  });
+
+  const info = document.getElementById('resultatInfo');
+  const treff = document.getElementById('ingenTreff');
+  if (synlige === 0) {
+    treff.classList.add('vis');
+    info.textContent = '// ingen_treff';
+  } else {
+    treff.classList.remove('vis');
+    if (sok || aktivKat !== 'alle' || aktivTab !== 'begreper') {
+      info.textContent = `// ${synlige} treff`;
+    } else {
+      info.textContent = '';
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// BYGG KORT
+// ════════════════════════════════════════════════════════════════
+function byggKort() {
+  const grid = document.getElementById('kortGrid');
+  const tomEl = document.getElementById('ingenTreff');
+
+  BEGREPER.forEach((b, i) => {
+    const k = KAT[b.k];
+    const div = document.createElement('div');
+    div.className = 'bkort reveal';
+    div.dataset.kat = b.k;
+    div.style.cssText = `--kfarge:${k.farge};`;
+    div.innerHTML = `
+      <style>.bkort[data-kat="${b.k}"]::before{background:${k.farge};}</style>
+      <div class="bkort-topp">
+        <span class="bkort-nr">${String(i+1).padStart(3,'0')}</span>
+        <span class="bkort-kat" style="background:${k.bg};color:${k.farge};">${k.emoji} ${k.navn}</span>
+      </div>
+      <div class="bkort-term">${b.t}</div>
+      <div class="bkort-eng">${b.e}</div>
+      <div class="bkort-def">${b.d}</div>
+      ${b.x ? `<div class="bkort-eks">↳ ${b.x}</div>` : ''}`;
+    grid.insertBefore(div, tomEl);
+  });
+
+  PERSONER.forEach(p => {
+    const k = KAT[p.k];
+    const div = document.createElement('div');
+    div.className = 'pkort reveal skjult'; // skjult til fanen byttes
+    div.dataset.kat = p.k;
+    div.innerHTML = `
+      <div class="pkort-topp">
+        <div class="pkort-avatar" style="background:${k.bg};">${p.e}</div>
+        <div class="pkort-meta">
+          <div class="pkort-navn">${p.n}</div>
+          <div class="pkort-periode">${p.p}</div>
+          <span class="pkort-kat" style="background:${k.bg};color:${k.farge};">${k.emoji} ${k.navn}</span>
+        </div>
+      </div>
+      <div class="pkort-bio">${p.bio}</div>
+      <div class="pkort-kjent">🏅 ${p.kjent}</div>`;
+    grid.insertBefore(div, tomEl);
+  });
+
+  // Inline style-duplisering er unødvendig – bruker CSS data-attr for topp-strek
+  document.querySelectorAll('.bkort').forEach(k => {
+    const farge = KAT[k.dataset.kat].farge;
+    k.style.setProperty('--topline', farge);
+  });
+
+  // Reveal on scroll
+  const obs = new IntersectionObserver(e => {
+    e.forEach(en => { if (en.isIntersecting) { en.target.classList.add('vis'); obs.unobserve(en.target); }});
+  }, { threshold: 0.04 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  filtrer();
+}
+
+// CSS workaround: topp-strek via JS
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.bkort').forEach(k => {
+    const farge = KAT[k.dataset.kat]?.farge;
+    if (farge) {
+      const s = document.createElement('style');
+      s.textContent = `.bkort[data-kat="${k.dataset.kat}"]::before{background:${farge};}`;
+      if (!document.querySelector(`style[data-kat="${k.dataset.kat}"]`)) {
+        s.dataset.kat = k.dataset.kat;
+        document.head.appendChild(s);
+      }
+    }
+  });
+});
+
+init();
+</script>
+</body>
+</html>
