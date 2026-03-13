@@ -582,6 +582,7 @@ let aktivOppgave= 0;
 let løsteOppgaver= new Set();
 let animFrame   = null;
 let spinTeller  = 0;
+let animId = null;
 
 const canvas = document.getElementById('kretsCanvas');
 const ctx    = canvas.getContext('2d');
@@ -704,7 +705,11 @@ function tegn() {
   // Hint
   document.getElementById('canvas-hint').classList.toggle('skjult', komponenter.length>0);
 
-  if(live) requestAnimationFrame(()=>{ tegn(); });
+  if(live){
+    animId = requestAnimationFrame(()=>{ tegn(); });
+  } else {
+    animId = null;
+  }
 }
 
 // ══════════════════════════════════════════════════
@@ -755,6 +760,15 @@ canvas.addEventListener('mouseleave',()=>{document.getElementById('tooltip').sty
 canvas.addEventListener('click',e=>{
   const [x,y]=canvasPos(e);
 
+  // Klikk på bryter = toggle, uansett modus (sjekkes alltid først)
+  const kBryter=komponentVed(x,y);
+  if(kBryter&&kBryter.type==='bryter'){
+    if(animId){ cancelAnimationFrame(animId); animId=null; }
+    kBryter.lukket=!kBryter.lukket;
+    tegn();
+    skjulResultat(); return;
+  }
+
   if(modus==='plasser'){
     komponenter.push({id:nextId++,type:valgtType,x,y,rot:0,lukket:valgtType==='bryter'?false:undefined});
     tegn(); skjulResultat(); return;
@@ -781,10 +795,6 @@ canvas.addEventListener('click',e=>{
     ledninger.push({fra:[ledningFra.id,ledningFra.tidx],til:[term.id,term.tidx]});
     ledningFra=null; tegn(); skjulResultat(); return;
   }
-
-  // Klikk på bryter i alle modi = toggle
-  const k=komponentVed(x,y);
-  if(k&&k.type==='bryter'){ k.lukket=!k.lukket; tegn(); skjulResultat(); }
 });
 
 // ══════════════════════════════════════════════════
