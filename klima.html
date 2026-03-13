@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Klima og drivhuseffekten</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fdfaf5;--surface:#ffffff;--card:#f5f0e8;--border:#e0d5c0;
+  --text:#1c1a14;--dim:#7a7060;
+  --varm:#d97706;--kald:#2563eb;--grønn:#16a34a;--rød:#dc2626;
+  --font-d:'Playfair Display',serif;--font-b:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(217,119,6,.04),transparent)}
+
+nav{position:sticky;top:0;z-index:300;background:rgba(253,250,245,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--varm);font-weight:700}
+
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:30px 0 44px}
+.hero-over{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;font-weight:500}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.4rem);font-weight:800;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:400;color:var(--rød)}
+.hero-sub{font-size:.88rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.75}
+
+.seksjon{margin-bottom:52px}
+.sep{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.sep-l{flex:1;height:1px;background:var(--border)}
+.sep-t{font-family:var(--font-d);font-size:1.05rem;font-weight:700;color:var(--dim);white-space:nowrap}
+
+/* ══ DRIVHUSEFFEKT SVG ══ */
+.drivhus-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px}
+
+/* ══ KARUSELL ══ */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:320px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:34px 36px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px;position:relative}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;font-weight:600}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+  padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,2rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(28,26,20,.58);margin-bottom:18px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:8px 11px;border-radius:9px;
+  background:rgba(0,0,0,.025);border:1px solid var(--border);font-size:.78rem;line-height:1.6;color:rgba(28,26,20,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:.95rem;margin-top:1px}
+.k-fakt strong{color:var(--text);font-weight:600}
+
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;
+  border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s;display:flex;align-items:center;justify-content:center}
+.k-pil:hover:not([disabled]){border-color:var(--varm);color:var(--varm)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--varm);transform:scale(1.4)}
+
+/* ══ KLIMAGASS TABELL ══ */
+.gass-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.gass-kort{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.gass-navn{font-family:var(--font-d);font-size:.95rem;font-weight:700;margin-bottom:4px}
+.gass-formel{font-size:.7rem;color:var(--dim);letter-spacing:.06em;margin-bottom:8px}
+.gass-bar-wrap{background:var(--card);border-radius:4px;height:6px;margin-bottom:6px;overflow:hidden}
+.gass-bar{height:100%;border-radius:4px;transition:width 1s ease}
+.gass-pst{font-size:.68rem;color:var(--dim);font-weight:500}
+.gass-tekst{font-size:.74rem;color:rgba(28,26,20,.6);line-height:1.55;margin-top:8px}
+
+/* ══ KONSEKVENSER ══ */
+.konsekvenser-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.konsekvens-kort{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.kk-ikon{font-size:1.5rem;margin-bottom:8px}
+.kk-tittel{font-size:.88rem;font-weight:600;margin-bottom:5px;font-family:var(--font-d)}
+.kk-tekst{font-size:.76rem;color:rgba(28,26,20,.62);line-height:1.6}
+
+/* ══ TILTAK ══ */
+.tiltak-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.tiltak-kort{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;
+  border-top:3px solid var(--grønn)}
+.tk-ikon{font-size:1.2rem;margin-bottom:6px}
+.tk-tittel{font-size:.84rem;font-weight:600;margin-bottom:4px;color:var(--grønn)}
+.tk-tekst{font-size:.74rem;color:rgba(28,26,20,.6);line-height:1.55}
+
+/* SVG-animasjoner */
+@keyframes sol-strale{0%,100%{opacity:.4}50%{opacity:.9}}
+@keyframes str-ned{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(55px);opacity:0}}
+@keyframes str-opp{0%{transform:translateY(0);opacity:0}20%{opacity:.7}100%{transform:translateY(-50px);opacity:0}}
+@keyframes co2-float{0%{transform:translateY(0) translateX(0)}33%{transform:translateY(-8px) translateX(5px)}66%{transform:translateY(-4px) translateX(-3px)}100%{transform:translateY(0) translateX(0)}}
+@keyframes temp-rise{from{height:0}to{height:var(--h)}}
+@keyframes is-smelt{0%,100%{opacity:.8}50%{opacity:.4}}
+@keyframes sky-drift{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}
+.ss{animation:sol-strale 2.5s ease-in-out infinite}
+.sn{animation:str-ned 2s ease-in infinite}
+.sn2{animation:str-ned 2s ease-in infinite .7s}
+.sn3{animation:str-ned 2s ease-in infinite 1.4s}
+.so1{animation:str-opp 2.2s ease-out infinite .3s}
+.so2{animation:str-opp 2.2s ease-out infinite 1s}
+.cf{animation:co2-float 4s ease-in-out infinite}
+.cf2{animation:co2-float 4s ease-in-out infinite 1.3s}
+.cf3{animation:co2-float 4s ease-in-out infinite 2.6s}
+.is-a{animation:is-smelt 3s ease-in-out infinite}
+.sky{animation:sky-drift 5s ease-in-out infinite}
+
+@media(max-width:700px){
+  .k-slide{grid-template-columns:1fr}
+  .k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}
+  .k-anim{min-height:180px}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Klima og drivhuseffekten</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Naturfag · Klimavitenskap</div>
+    <h1>Klima, vær og<br><em>drivhuseffekten</em></h1>
+    <p class="hero-sub">Hvordan reguleres jordas temperatur, hva er drivhuseffekten, og hva skjer når vi tilfører mer klimagasser?</p>
+  </div>
+
+  <!-- DRIVHUSEFFEKT -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Drivhuseffekten – naturlig og forsterket</div><div class="sep-l"></div></div>
+    <div class="drivhus-wrap">
+      <svg viewBox="0 0 780 380" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
+        <defs>
+          <linearGradient id="himmel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0c1a3d"/>
+            <stop offset="55%" stop-color="#1e3a6e"/>
+            <stop offset="100%" stop-color="#2d5fa0"/>
+          </linearGradient>
+          <linearGradient id="jord-l" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#65a30d"/>
+            <stop offset="100%" stop-color="#3f6212"/>
+          </linearGradient>
+          <radialGradient id="sol-g3" cx="40%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fbbf24"/>
+          </radialGradient>
+        </defs>
+        <!-- Bakgrunn himmel -->
+        <rect width="780" height="310" fill="url(#himmel)"/>
+        <!-- Bakgrunn jord -->
+        <rect y="310" width="780" height="70" fill="url(#jord-l)"/>
+        <!-- Hav -->
+        <rect x="0" y="310" width="300" height="70" fill="#1d4ed8" opacity=".4"/>
+        <!-- Atmosfærelag -->
+        <rect y="30" width="780" height="120" fill="rgba(56,189,248,.04)" stroke="rgba(56,189,248,.12)" stroke-width="1"/>
+        <text x="390" y="25" text-anchor="middle" font-family="Outfit" font-size="8" fill="rgba(148,220,252,.6)" letter-spacing=".12em" text-transform="uppercase">ATMOSFÆRE</text>
+
+        <!-- Solen -->
+        <circle cx="680" cy="55" r="38" fill="rgba(251,191,36,.12)"/>
+        <circle cx="680" cy="55" r="26" fill="#fef3c7" opacity=".9"/>
+        <circle cx="680" cy="55" r="18" fill="#fbbf24"/>
+        <!-- Solstråler -->
+        <g opacity=".5">
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(45deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(90deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(135deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(180deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(225deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(270deg);transform-origin:680px 55px"/>
+          <line x1="680" y1="17" x2="680" y2="8" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" class="ss" style="transform:rotate(315deg);transform-origin:680px 55px"/>
+        </g>
+
+        <!-- INNKOMMENDE stråling (gul/hvit) – NED -->
+        <g opacity=".7">
+          <line x1="580" y1="40" x2="470" y2="310" stroke="#fde68a" stroke-width="2" stroke-dasharray="0" class="sn" style="transform-origin:470px 310px"/>
+          <polygon points="468,305 470,316 472,305" fill="#fde68a" opacity=".6"/>
+          <line x1="620" y1="35" x2="350" y2="310" stroke="#fde68a" stroke-width="1.8" class="sn2" style="transform-origin:350px 310px"/>
+          <line x1="650" y1="38" x2="200" y2="310" stroke="#fde68a" stroke-width="1.5" class="sn3" style="transform-origin:200px 310px"/>
+        </g>
+        <text x="550" y="190" font-family="Outfit" font-size="8.5" fill="rgba(253,230,138,.8)" letter-spacing=".06em">Innkommende</text>
+        <text x="550" y="202" font-family="Outfit" font-size="8.5" fill="rgba(253,230,138,.8)">kortbølgestråling</text>
+
+        <!-- CO2-molekyler i atmosfæren -->
+        <g class="cf" font-family="Outfit" font-size="10" font-weight="600" fill="rgba(248,113,113,.8)">
+          <text x="130" y="95">CO₂</text>
+        </g>
+        <g class="cf2" font-family="Outfit" font-size="10" font-weight="600" fill="rgba(248,113,113,.8)">
+          <text x="280" y="75">CO₂</text>
+        </g>
+        <g class="cf3" font-family="Outfit" font-size="10" font-weight="600" fill="rgba(248,113,113,.8)">
+          <text x="430" y="100">CH₄</text>
+        </g>
+        <g class="cf" style="animation-delay:1.8s" font-family="Outfit" font-size="9" font-weight="600" fill="rgba(248,113,113,.6)">
+          <text x="195" y="120">N₂O</text>
+        </g>
+        <g class="cf2" style="animation-delay:2.4s" font-family="Outfit" font-size="9" font-weight="600" fill="rgba(248,113,113,.6)">
+          <text x="380" y="55">CO₂</text>
+        </g>
+        <g class="cf3" style="animation-delay:.6s" font-family="Outfit" font-size="9" font-weight="600" fill="rgba(248,113,113,.6)">
+          <text x="510" y="115">CO₂</text>
+        </g>
+
+        <!-- UTGÅENDE varmestråling (rød/oransje) – OPP fra jord, reflekteres ned igjen -->
+        <g opacity=".65">
+          <line x1="200" y1="310" x2="240" y2="150" stroke="#f97316" stroke-width="2" class="so1" style="transform-origin:240px 150px"/>
+          <line x1="370" y1="310" x2="320" y2="130" stroke="#f97316" stroke-width="1.8" class="so2" style="transform-origin:320px 130px"/>
+          <!-- Tilbakestråling (ned igjen fra CO2) -->
+          <line x1="240" y1="148" x2="180" y2="310" stroke="#ef4444" stroke-width="1.8" stroke-dasharray="5 3" class="so1" style="animation-direction:reverse;transform-origin:180px 310px" opacity=".7"/>
+          <line x1="318" y1="128" x2="400" y2="310" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5 3" class="so2" style="animation-direction:reverse;transform-origin:400px 310px" opacity=".6"/>
+        </g>
+        <text x="55" y="220" font-family="Outfit" font-size="8.5" fill="rgba(249,115,22,.8)">Utgående</text>
+        <text x="55" y="232" font-family="Outfit" font-size="8.5" fill="rgba(249,115,22,.8)">varmestråling</text>
+        <text x="55" y="255" font-family="Outfit" font-size="7.5" fill="rgba(239,68,68,.7)">← fanges av</text>
+        <text x="55" y="266" font-family="Outfit" font-size="7.5" fill="rgba(239,68,68,.7)">klimagasser</text>
+
+        <!-- Temperaturindikator -->
+        <text x="390" y="345" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(101,163,13,.8)" letter-spacing=".08em">JORDOVERFLATE · HAV OG LAND</text>
+
+        <!-- Sky -->
+        <g class="sky">
+          <ellipse cx="160" cy="62" rx="32" ry="14" fill="rgba(255,255,255,.2)"/>
+          <ellipse cx="148" cy="58" rx="20" ry="12" fill="rgba(255,255,255,.18)"/>
+          <ellipse cx="172" cy="58" rx="22" ry="11" fill="rgba(255,255,255,.15)"/>
+        </g>
+        <g class="sky" style="animation-delay:2.5s">
+          <ellipse cx="520" cy="70" rx="26" ry="11" fill="rgba(255,255,255,.15)"/>
+          <ellipse cx="510" cy="66" rx="18" ry="10" fill="rgba(255,255,255,.12)"/>
+        </g>
+
+        <!-- Legende -->
+        <line x1="640" y1="330" x2="660" y2="330" stroke="#fde68a" stroke-width="2"/>
+        <text x="664" y="334" font-family="Outfit" font-size="8" fill="rgba(253,230,138,.8)">Kortbølge (sol)</text>
+        <line x1="640" y1="348" x2="660" y2="348" stroke="#f97316" stroke-width="2"/>
+        <text x="664" y="352" font-family="Outfit" font-size="8" fill="rgba(249,115,22,.8)">Langbølge (varme)</text>
+        <line x1="640" y1="366" x2="660" y2="366" stroke="#ef4444" stroke-width="2" stroke-dasharray="4 2"/>
+        <text x="664" y="370" font-family="Outfit" font-size="8" fill="rgba(239,68,68,.7)">Tilbakestråling</text>
+      </svg>
+    </div>
+    <div style="font-size:.8rem;line-height:1.78;color:rgba(28,26,20,.6);padding:0 4px">
+      <strong style="color:var(--text)">Naturlig drivhuseffekt:</strong> Uten klimagasser ville jordens gjennomsnittstemperatur være –18°C i stedet for +15°C. Klimagassene absorberer varmestråling og sender noe tilbake mot jorda – en livsnødvendig oppvarming.
+      <br><strong style="color:var(--rød)">Forsterket drivhuseffekt:</strong> Menneskelig utslipp (CO₂, CH₄, N₂O) øker konsentrasjonen og fanget mer varme enn normalt → global oppvarming.
+    </div>
+  </div>
+
+  <!-- KARUSELL: KLIMA-EMNER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Klimavitenskap – viktige emner</div><div class="sep-l"></div></div>
+    <div class="karusell" id="karusell">
+      <div class="k-slides" id="k-slides">
+
+        <!-- S1: Klimagasser -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">01 / 07</div>
+            <div class="k-kat" style="background:rgba(239,68,68,.1);color:#dc2626;border:1px solid rgba(239,68,68,.2)">🔥 Klimagasser</div>
+            <h3 class="k-tittel">CO₂ og andre klimagasser</h3>
+            <p class="k-ingress">Karbondioksid er den viktigste menneskeskapte klimagassen, men metan og lystgass er langt kraftigere per molekyl.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>CO₂:</strong> 421 ppm i 2024 – høyeste på 800 000 år. Stiger ~2 ppm/år. Kilder: fossil brensel, avskoging.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🐄</span><div><strong>Metan (CH₄):</strong> 84× sterkere enn CO₂ over 20 år. Kilder: husdyr, rismark, deponier, gasslekkasjer.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>Lystgass (N₂O):</strong> 265× sterkere enn CO₂ over 100 år. Kilder: kunstgjødsel og husdyrgjødsel.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <rect width="300" height="260" fill="#fdf8f0"/>
+              <!-- Søylediagram: Bidrag til drivhuseffekt -->
+              <text x="150" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="#7a7060" letter-spacing=".08em">KLIMAGASSBIDRAG (CO₂-ekvivalent %)</text>
+              <!-- CO2 -->
+              <rect x="30" y="50" width="40" height="150" fill="rgba(220,38,38,.12)" stroke="#dc2626" stroke-width="1.5" rx="3"/>
+              <rect x="30" y="90" width="40" height="110" fill="rgba(220,38,38,.6)" rx="3" style="transform-origin:30px 200px"/>
+              <text x="50" y="82" text-anchor="middle" font-family="Outfit" font-size="10" fill="#dc2626" font-weight="600">76%</text>
+              <text x="50" y="220" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">CO₂</text>
+              <!-- CH4 -->
+              <rect x="100" y="130" width="40" height="70" fill="rgba(234,179,8,.6)" rx="3"/>
+              <text x="120" y="122" text-anchor="middle" font-family="Outfit" font-size="10" fill="#ca8a04" font-weight="600">16%</text>
+              <text x="120" y="220" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">CH₄</text>
+              <!-- N2O -->
+              <rect x="170" y="155" width="40" height="45" fill="rgba(168,85,247,.5)" rx="3"/>
+              <text x="190" y="148" text-anchor="middle" font-family="Outfit" font-size="10" fill="#7c3aed" font-weight="600">6%</text>
+              <text x="190" y="220" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">N₂O</text>
+              <!-- F-gasser -->
+              <rect x="240" y="175" width="40" height="25" fill="rgba(14,165,233,.45)" rx="3"/>
+              <text x="260" y="168" text-anchor="middle" font-family="Outfit" font-size="9" fill="#0369a1" font-weight="600">2%</text>
+              <text x="260" y="220" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">F-gass</text>
+              <!-- X-akse -->
+              <line x1="20" y1="200" x2="290" y2="200" stroke="#e0d5c0" stroke-width="1.5"/>
+              <!-- CO2-trend -->
+              <text x="150" y="246" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">Kilde: IPCC 2023</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S2: Karbonkretsløp -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">02 / 07</div>
+            <div class="k-kat" style="background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.2)">🌿 Karbonkretsløp</div>
+            <h3 class="k-tittel">Karbonets kretsløp</h3>
+            <p class="k-ingress">Karbon sirkulerer mellom atmosfæren, havet, planter, jord og berggrunn. Menneskelige utslipp bryter balansen.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Fotosyntese:</strong> Planter binder ~120 Gt C/år fra atmosfæren. Nettopptak etter respirasjon ~3 Gt/år.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Havet:</strong> Absorberer ~25% av menneskeskapte CO₂-utslipp. Gjør havet surere (forsuring).</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🛢️</span><div><strong>Fossile reserver:</strong> Vi slipper ut ~37 Gt CO₂/år – karbon som var lagret i millioner av år.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="hav-g2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#1e3a8a"/>
+                </linearGradient>
+              </defs>
+              <rect width="300" height="260" fill="#f0fdf4"/>
+              <!-- Atmosfære -->
+              <rect x="10" y="10" width="280" height="60" rx="8" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.2)" stroke-width="1"/>
+              <text x="150" y="38" text-anchor="middle" font-family="Outfit" font-size="9" fill="#0ea5e9" font-weight="600">ATMOSFÆRE</text>
+              <text x="150" y="52" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">421 ppm CO₂</text>
+              <!-- Planter -->
+              <rect x="10" y="100" width="90" height="60" rx="8" fill="rgba(22,163,74,.1)" stroke="#16a34a" stroke-width="1.2"/>
+              <text x="55" y="128" text-anchor="middle" font-family="Outfit" font-size="9" fill="#15803d" font-weight="600">🌿 Planter</text>
+              <text x="55" y="142" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">Fotosyntese</text>
+              <!-- Hav -->
+              <rect x="200" y="100" width="90" height="60" rx="8" fill="rgba(29,78,216,.1)" stroke="#1d4ed8" stroke-width="1.2"/>
+              <text x="245" y="128" text-anchor="middle" font-family="Outfit" font-size="9" fill="#1d4ed8" font-weight="600">🌊 Hav</text>
+              <text x="245" y="142" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">Absorbert CO₂</text>
+              <!-- Jord/fossil -->
+              <rect x="105" y="195" width="90" height="55" rx="8" fill="rgba(120,53,15,.1)" stroke="#92400e" stroke-width="1.2"/>
+              <text x="150" y="221" text-anchor="middle" font-family="Outfit" font-size="9" fill="#92400e" font-weight="600">🪨 Fossil/jord</text>
+              <text x="150" y="235" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">Lagret karbon</text>
+              <!-- Piler -->
+              <path d="M55,100 Q55,78 100,70" fill="none" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+              <path d="M110,70 Q150,80 200,100" fill="none" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <path d="M245,100 Q270,78 240,70" fill="none" stroke="#1d4ed8" stroke-width="1.5"/>
+              <!-- Menneskelig utslipp -->
+              <path d="M150,195 L150,72" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#ar)"/>
+              <text x="158" y="145" font-family="Outfit" font-size="7.5" fill="#dc2626" font-weight="600">+37 Gt/år</text>
+              <text x="158" y="156" font-family="Outfit" font-size="7" fill="#dc2626">UTSLIPP</text>
+              <defs>
+                <marker id="ag" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#16a34a"/>
+                </marker>
+                <marker id="ar" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#dc2626"/>
+                </marker>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S3: Global oppvarming -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">03 / 07</div>
+            <div class="k-kat" style="background:rgba(220,38,38,.1);color:#dc2626;border:1px solid rgba(220,38,38,.2)">🌡️ Oppvarming</div>
+            <h3 class="k-tittel">Global oppvarming og 1,5-gradersmålet</h3>
+            <p class="k-ingress">Jorda er allerede 1,2°C varmere enn førindustrielt nivå. Parisavtalen sikter mot å begrense oppvarmingen til 1,5°C.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Nåværende:</strong> +1,2°C siden 1880. De ti varmeste år på rekord er alle etter 2010. 2023 var det varmeste år noensinne.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>1,5°C-grensen:</strong> Parisavtalen (2015). Over 1,5°C øker risikoen for uopprettelige endringer i klima og økosystemer drastisk.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Havnivå:</strong> Stiger 3,3 mm/år. Over 1 milliard mennesker bor i lavliggende kystområder som trues av havnivåstigning.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <rect width="300" height="260" fill="#fff8f0"/>
+              <text x="150" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="#7a7060" letter-spacing=".08em">GLOBAL TEMPERATURAVVIK (°C)</text>
+              <!-- Grid -->
+              <g stroke="#e0d5c0" stroke-width=".8" opacity=".8">
+                <line x1="40" y1="55" x2="280" y2="55"/><text x="32" y="58" text-anchor="end" font-family="Outfit" font-size="7.5" fill="#7a7060">+1.5</text>
+                <line x1="40" y1="90" x2="280" y2="90"/><text x="32" y="93" text-anchor="end" font-family="Outfit" font-size="7.5" fill="#7a7060">+1.0</text>
+                <line x1="40" y1="125" x2="280" y2="125"/><text x="32" y="128" text-anchor="end" font-family="Outfit" font-size="7.5" fill="#7a7060">+0.5</text>
+                <line x1="40" y1="160" x2="280" y2="160"/><text x="32" y="163" text-anchor="end" font-family="Outfit" font-size="7.5" fill="#7a7060">0.0</text>
+              </g>
+              <!-- 1.5 grad linje -->
+              <line x1="40" y1="55" x2="280" y2="55" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 3" opacity=".7"/>
+              <text x="284" y="58" font-family="Outfit" font-size="7.5" fill="#dc2626">1,5°C</text>
+              <!-- Temperatur-kurve (historisk) -->
+              <path d="M40,162 L60,158 L80,161 L100,155 L120,150 L140,145 L160,138 L180,128 L200,118 L220,108 L240,97 L260,88 L275,80"
+                fill="none" stroke="#f97316" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Gjennomsnittslinjer (blå) -->
+              <path d="M40,162 L60,159 L80,160 L100,158 L120,155" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity=".5"/>
+              <!-- Fremtidsprojesjoner -->
+              <path d="M275,80 Q285,70 290,60" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>
+              <path d="M275,80 Q285,78 290,78" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 3" opacity=".7"/>
+              <text x="278" y="56" font-family="Outfit" font-size="7" fill="#dc2626">↑ BAU</text>
+              <text x="278" y="80" font-family="Outfit" font-size="7" fill="#16a34a">→ Paris</text>
+              <!-- X-akse -->
+              <line x1="40" y1="200" x2="280" y2="200" stroke="#e0d5c0" stroke-width="1.5"/>
+              <text x="40" y="212" font-family="Outfit" font-size="7.5" fill="#7a7060">1880</text>
+              <text x="150" y="212" font-family="Outfit" font-size="7.5" fill="#7a7060" text-anchor="middle">1960</text>
+              <text x="275" y="212" font-family="Outfit" font-size="7.5" fill="#7a7060" text-anchor="end">2024</text>
+              <text x="150" y="235" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">Kilde: NASA GISS / IPCC</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S4: Albedo og tilbakekoblinger -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">04 / 07</div>
+            <div class="k-kat" style="background:rgba(14,165,233,.1);color:#0284c7;border:1px solid rgba(14,165,233,.2)">❄️ Tilbakekoblinger</div>
+            <h3 class="k-tittel">Albedo og forsterkende tilbakekoblinger</h3>
+            <p class="k-ingress">Klimasystemet inneholder selvforsterkende mekanismer som kan akselerere oppvarmingen langt utover det vi direkte forårsaker.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Albedo-tilbakekobling:</strong> Is smelter → mørk hav/jord eksponeres → absorberer mer sol → mer oppvarming → mer smelting.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Vanndamp:</strong> Varmere luft holder mer vanndamp (kraftig klimagass) → ytterligere oppvarming. Den sterkeste positive tilbakekoblingen.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Permafrost:</strong> Tundra tiner → frigjør lagret CH₄ og CO₂ → kraftig oppvarming → mer tining. Potensielt katastrofalt.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <rect width="300" height="260" fill="#f0f9ff"/>
+              <!-- Albedo-illustrasjon -->
+              <!-- Is/snø (høy albedo) -->
+              <rect x="20" y="50" width="110" height="80" rx="8" fill="rgba(219,234,254,.6)" stroke="#93c5fd" stroke-width="1.5"/>
+              <text x="75" y="85" text-anchor="middle" font-family="Outfit" font-size="10" fill="#1d4ed8" font-weight="600">❄️ Is/snø</text>
+              <text x="75" y="100" text-anchor="middle" font-family="Outfit" font-size="9" fill="#3b82f6">Albedo: ~80%</text>
+              <text x="75" y="115" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">Reflekterer sol</text>
+              <!-- Strålepil opp (reflektert) -->
+              <line x1="75" y1="50" x2="75" y2="25" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4 2"/>
+              <polygon points="71,25 75,15 79,25" fill="#fbbf24"/>
+              <text x="75" y="11" text-anchor="middle" font-family="Outfit" font-size="7" fill="#ca8a04">REFLEKTERT</text>
+
+              <!-- Hav (lav albedo) -->
+              <rect x="170" y="50" width="110" height="80" rx="8" fill="rgba(30,58,138,.15)" stroke="#1d4ed8" stroke-width="1.5"/>
+              <text x="225" y="85" text-anchor="middle" font-family="Outfit" font-size="10" fill="#1e3a8a" font-weight="600">🌊 Hav</text>
+              <text x="225" y="100" text-anchor="middle" font-family="Outfit" font-size="9" fill="#2563eb">Albedo: ~6%</text>
+              <text x="225" y="115" text-anchor="middle" font-family="Outfit" font-size="8" fill="#7a7060">Absorberer sol</text>
+              <!-- Strålepil ned (absorbert) -->
+              <line x1="225" y1="50" x2="225" y2="25" stroke="#f97316" stroke-width="2"/>
+              <polygon points="221,50 225,60 229,50" fill="#f97316"/>
+              <text x="225" y="11" text-anchor="middle" font-family="Outfit" font-size="7" fill="#ea580c">ABSORBERT</text>
+
+              <!-- Tilbakekobling-pil -->
+              <path d="M130,90 L170,90" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#ar2)"/>
+              <text x="150" y="82" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#dc2626" font-weight="600">Smelting</text>
+              <defs>
+                <marker id="ar2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#dc2626"/>
+                </marker>
+              </defs>
+
+              <!-- Forklaringsboks -->
+              <rect x="20" y="165" width="260" height="75" rx="8" fill="rgba(220,38,38,.05)" stroke="rgba(220,38,38,.15)" stroke-width="1"/>
+              <text x="150" y="183" text-anchor="middle" font-family="Outfit" font-size="8.5" fill="#dc2626" font-weight="600">FORSTERKENDE TILBAKEKOBLING</text>
+              <text x="30" y="198" font-family="Outfit" font-size="8" fill="#7a7060">Is smelter → mer hav → mer absorpsjon</text>
+              <text x="30" y="213" font-family="Outfit" font-size="8" fill="#7a7060">→ høyere temp → mer ismelting →</text>
+              <text x="30" y="228" font-family="Outfit" font-size="8" fill="#dc2626" font-weight="600">Selvforsterkende spiral ⚠️</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S5: Havforsuring -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">05 / 07</div>
+            <div class="k-kat" style="background:rgba(59,130,246,.1);color:#1d4ed8;border:1px solid rgba(59,130,246,.2)">🌊 Havforsuring</div>
+            <h3 class="k-tittel">Havforsuring</h3>
+            <p class="k-ingress">Havet absorberer CO₂ og redder oss fra raskere oppvarming – men prisen er et surere hav som truer marint liv.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">⚗️</span><div><strong>Kjemi:</strong> CO₂ + H₂O → H₂CO₃ (karbonsyre) → H⁺ + HCO₃⁻. Havets pH har sunket fra 8,2 til 8,1 siden 1800-tallet.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🐚</span><div><strong>Kalkskall-trussel:</strong> Lavere pH løser opp kalk (CaCO₃). Koraller, muslinger, snegler og mange planktonarter mister skall og skjelett.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🐟</span><div><strong>Matfaten:</strong> Plankton er grunnlaget for havets næringskjeder. Svekkede planktonbestander truer hele havøkosystemet.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <rect width="300" height="260" fill="#f0f9ff"/>
+              <!-- pH-skala -->
+              <text x="150" y="22" text-anchor="middle" font-family="Outfit" font-size="9" fill="#7a7060" letter-spacing=".08em">HAV-pH OVER TID</text>
+              <!-- Skala bak -->
+              <defs>
+                <linearGradient id="ph-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#dc2626"/><stop offset="100%" stop-color="#2563eb"/>
+                </linearGradient>
+              </defs>
+              <rect x="30" y="35" width="240" height="14" rx="7" fill="url(#ph-grad)" opacity=".3"/>
+              <text x="30" y="62" font-family="Outfit" font-size="8" fill="#dc2626" font-weight="600">Sur (pH 7)</text>
+              <text x="270" y="62" text-anchor="end" font-family="Outfit" font-size="8" fill="#2563eb" font-weight="600">Basisk (pH 9)</text>
+              <!-- Markering 1800 -->
+              <circle cx="200" cy="42" r="7" fill="#2563eb" opacity=".8" stroke="white" stroke-width="1.5"/>
+              <text x="200" y="79" text-anchor="middle" font-family="Outfit" font-size="8" fill="#2563eb" font-weight="600">pH 8,2</text>
+              <text x="200" y="90" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">1800-tall</text>
+              <!-- Markering i dag -->
+              <circle cx="175" cy="42" r="7" fill="#1d4ed8" stroke="white" stroke-width="1.5"/>
+              <text x="175" y="109" text-anchor="middle" font-family="Outfit" font-size="8" fill="#1d4ed8" font-weight="600">pH 8,1</text>
+              <text x="175" y="120" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">I dag</text>
+              <!-- Markering fremtid -->
+              <circle cx="138" cy="42" r="7" fill="#dc2626" stroke="white" stroke-width="1.5"/>
+              <text x="138" y="138" text-anchor="middle" font-family="Outfit" font-size="8" fill="#dc2626" font-weight="600">pH 7,8?</text>
+              <text x="138" y="149" text-anchor="middle" font-family="Outfit" font-size="7.5" fill="#7a7060">2100 (BAU)</text>
+              <!-- Pil ned -->
+              <line x1="200" y1="74" x2="175" y2="104" stroke="#dc2626" stroke-width="1.5"/>
+              <line x1="175" y1="124" x2="148" y2="133" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4 2"/>
+              <!-- Korall -->
+              <text x="150" y="185" text-anchor="middle" font-family="Outfit" font-size="28">🪸</text>
+              <text x="150" y="175" text-anchor="middle" font-family="Outfit" font-size="8.5" fill="#7a7060">Korallrev trues av forsuring</text>
+              <text x="150" y="210" text-anchor="middle" font-family="Outfit" font-size="8" fill="#dc2626">0,1 enhets pH-fall = 26%</text>
+              <text x="150" y="222" text-anchor="middle" font-family="Outfit" font-size="8" fill="#dc2626">mer surt (logaritmisk skala)</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S6: Klimasoner -->
+        <div class="k-slide">
+          <div class="k-info">
+            <div class="k-nr">06 / 07</div>
+            <div class="k-kat" style="background:rgba(217,119,6,.1);color:#b45309;border:1px solid rgba(217,119,6,.2)">🌍 Klimasoner</div>
+            <h3 class="k-tittel">Jordens klimasoner</h3>
+            <p class="k-ingress">Klimaet varierer med breddegraden. Solvinkel, havstrømmer og kontinentplassering avgjør hvilken klimasone et sted tilhører.</p>
+            <div class="k-faktaliste">
+              <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Tropisk sone (0–23,5°N/S):</strong> Høy temperatur hele året. Trop. regnskoger (mye nedbør) og trop. savanner (tørre årstider).</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">🍂</span><div><strong>Temperert sone (23,5–66,5°N/S):</strong> Fire årstider. Løvskog, gress-stepper og middelhavsklima. Her ligger Norge.</div></div>
+              <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Polar sone (66,5–90°N/S):</strong> Ekstremt kaldt. Tundra, is og snø. Midnight sun om sommeren, polarnatt om vinteren.</div></div>
+            </div>
+          </div>
+          <div class="k-anim">
+            <svg viewBox="0 0 300 260" width="270" xmlns="http://www.w3.org/2000/svg">
+              <rect width="300" height="260" fill="#faf5eb"/>
+              <!-- Forenklet jordklode med klimabelte-striper -->
+              <defs>
+                <clipPath id="jord-klipp"><circle cx="150" cy="130" r="105"/></clipPath>
+              </defs>
+              <!-- Bakgrunn hav -->
+              <circle cx="150" cy="130" r="105" fill="#1d4ed8" opacity=".3"/>
+              <!-- Tropisk (rød) -->
+              <rect x="45" y="95" width="210" height="70" fill="rgba(220,38,38,.25)" clip-path="url(#jord-klipp)"/>
+              <!-- Temperert nord -->
+              <rect x="45" y="50" width="210" height="45" fill="rgba(34,197,94,.2)" clip-path="url(#jord-klipp)"/>
+              <!-- Temperert sør -->
+              <rect x="45" y="165" width="210" height="45" fill="rgba(34,197,94,.2)" clip-path="url(#jord-klipp)"/>
+              <!-- Polar nord -->
+              <rect x="45" y="25" width="210" height="25" fill="rgba(148,163,184,.35)" clip-path="url(#jord-klipp)"/>
+              <!-- Polar sør -->
+              <rect x="45" y="210" width="210" height="20" fill="rgba(148,163,184,.35)" clip-path="url(#jord-klipp)"/>
+              <!-- Jord-kontur -->
+              <circle cx="150" cy="130" r="105" fill="none" stroke="rgba(29,78,216,.3)" stroke-width="2"/>
+              <!-- Ekvator -->
+              <line x1="45" y1="130" x2="255" y2="130" stroke="rgba(255,255,255,.6)" stroke-width="1.5" stroke-dasharray="6 3"/>
+              <!-- Labels -->
+              <text x="266" y="38" font-family="Outfit" font-size="7.5" fill="#94a3b8" font-weight="600">❄️ POLAR</text>
+              <text x="266" y="80" font-family="Outfit" font-size="7.5" fill="#16a34a" font-weight="600">🌿 TEMPERERT</text>
+              <text x="266" y="134" font-family="Outfit" font-size="7.5" fill="#dc2626" font-weight="600">☀️ TROPISK</text>
+              <text x="266" y="178" font-family="Outfit" font-size="7.5" fill="#16a34a" font-weight="600">🌿 TEMPERERT</text>
+              <text x="266" y="222" font-family="Outfit" font-size="7.5" fill="#94a3b8" font-weight="600">❄️ POLAR</text>
+              <!-- Norges markering -->
+              <circle cx="162" cy="72" r="5" fill="#fbbf24" stroke="white" stroke-width="1.5"/>
+              <text x="154" y="62" font-family="Outfit" font-size="7" fill="#ca8a04" font-weight="600">NO</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- S7: Tiltak -->
+        <div class="k-slide k-slide hel">
+          <div class="k-info" style="border-right:none;padding:32px 36px">
+            <div class="k-nr">07 / 07</div>
+            <div class="k-kat" style="background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.2)">✅ Løsninger</div>
+            <h3 class="k-tittel">Klimatiltak – hva kan vi gjøre?</h3>
+            <p class="k-ingress">Klimaendringer er menneskeskapte og kan dempes av mennesker. Vi trenger tiltak på alle nivåer – individuelt, nasjonalt og globalt.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:4px">
+              <div class="tiltak-kort"><div class="tk-ikon">⚡</div><div class="tk-tittel">Fornybar energi</div><div class="tk-tekst">Sol, vind og vann erstatter fossile brensler. Kostnadene har falt dramatisk.</div></div>
+              <div class="tiltak-kort"><div class="tk-ikon">🏠</div><div class="tk-tittel">Energieffektivisering</div><div class="tk-tekst">Bedre isolasjon, LED, varmepumper og smarte bygg reduserer energiforbruk.</div></div>
+              <div class="tiltak-kort"><div class="tk-ikon">🌳</div><div class="tk-tittel">Avskoging/planting</div><div class="tk-tekst">Stoppe avskogingen og plante trær binder CO₂. Skog er naturens karbonfangst.</div></div>
+              <div class="tiltak-kort"><div class="tk-ikon">🚌</div><div class="tk-tittel">Grønn transport</div><div class="tk-tekst">El-biler, tog og sykkel. Fly og bil er de største utslippskildene for privatpersoner.</div></div>
+              <div class="tiltak-kort"><div class="tk-ikon">🥦</div><div class="tk-tittel">Kostholdsendringer</div><div class="tk-tekst">Mindre kjøtt (særlig storfe) og mer plantebasert mat reduserer utslipp kraftig.</div></div>
+              <div class="tiltak-kort"><div class="tk-ikon">💰</div><div class="tk-tittel">CO₂-prising</div><div class="tk-tekst">Karbonavgift gjør utslipp dyrere og incentiverer grønne løsninger i næringslivet.</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /k-slides -->
+      <div class="k-ctrl">
+        <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+        <div class="k-dots" id="k-dots"></div>
+        <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KLIMAGASSER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">De viktigste klimagassene</div><div class="sep-l"></div></div>
+    <div class="gass-grid">
+      <div class="gass-kort">
+        <div class="gass-navn" style="color:#dc2626">Karbondioksid</div>
+        <div class="gass-formel">CO₂ · GWP100: 1</div>
+        <div class="gass-bar-wrap"><div class="gass-bar" style="width:76%;background:#dc2626"></div></div>
+        <div class="gass-pst">76% av totale utslipp</div>
+        <div class="gass-tekst">Fossil forbrenning, sement, avskoging. Levetid i atmosfæren: hundrevis av år.</div>
+      </div>
+      <div class="gass-kort">
+        <div class="gass-navn" style="color:#ca8a04">Metan</div>
+        <div class="gass-formel">CH₄ · GWP100: 28–36</div>
+        <div class="gass-bar-wrap"><div class="gass-bar" style="width:16%;background:#ca8a04"></div></div>
+        <div class="gass-pst">16% av totale utslipp</div>
+        <div class="gass-tekst">Husdyr, rismark, gass-lekkasjer, deponier. Levetid: ~12 år, men svært kraftig.</div>
+      </div>
+      <div class="gass-kort">
+        <div class="gass-navn" style="color:#7c3aed">Lystgass</div>
+        <div class="gass-formel">N₂O · GWP100: 265</div>
+        <div class="gass-bar-wrap"><div class="gass-bar" style="width:6%;background:#7c3aed"></div></div>
+        <div class="gass-pst">6% av totale utslipp</div>
+        <div class="gass-tekst">Kunstgjødsel, husdyrgjødsel, industri. Levetid: ~114 år. Ødelegger ozonlaget.</div>
+      </div>
+      <div class="gass-kort">
+        <div class="gass-navn" style="color:#0ea5e9">Fluorkarboner</div>
+        <div class="gass-formel">F-gasser · GWP: opptil 23 900</div>
+        <div class="gass-bar-wrap"><div class="gass-bar" style="width:2%;background:#0ea5e9"></div></div>
+        <div class="gass-pst">2% av totale utslipp</div>
+        <div class="gass-tekst">Kjølemidler, industri. Ekstremt langlivede og kraftige. Svært lav konsentrasjon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KONSEKVENSER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Konsekvenser av klimaendringer</div><div class="sep-l"></div></div>
+    <div class="konsekvenser-grid">
+      <div class="konsekvens-kort"><div class="kk-ikon">🌊</div><div class="kk-tittel">Havnivåstigning</div><div class="kk-tekst">Isbreer og iskapper smelter. Havet stiger 0,5–1 m innen 2100 (konservativt). Kystbyer og øynasjoner trues.</div></div>
+      <div class="konsekvens-kort"><div class="kk-ikon">🔥</div><div class="kk-tittel">Ekstremvær</div><div class="kk-tekst">Kraftigere orkaner, lengre tørkeperioder, mer intense regnskyll og flommer. Risikoen fordobles ved 2°C oppvarming.</div></div>
+      <div class="konsekvens-kort"><div class="kk-ikon">🦎</div><div class="kk-tittel">Artsutryddelse</div><div class="kk-tekst">Opptil 1 million arter trues av utryddelse innen 2050. Korallrev kan forsvinne ved 1,5°C oppvarming.</div></div>
+      <div class="konsekvens-kort"><div class="kk-ikon">🌾</div><div class="kk-tittel">Matproduksjon</div><div class="kk-tekst">Tørke og flom reduserer avlinger i sårbare regioner. Mat-usikkerhet for hundrevis av millioner.</div></div>
+      <div class="konsekvens-kort"><div class="kk-ikon">🏃</div><div class="kk-tittel">Klimaflyktninger</div><div class="kk-tekst">Ulevelige temperaturer, tørke og oversvømmelse kan tvinge milliarder til å flytte innen 2100.</div></div>
+      <div class="konsekvens-kort"><div class="kk-ikon">💧</div><div class="kk-tittel">Vannmangel</div><div class="kk-tekst">Isbreer forsyner ferskvann til milliarder. Når de smelter, forsvinner viktige vannreserver permanent.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Karusell
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+
+// Touch/swipe
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, {passive:true});
+
+goTo(0);
+</script>
+</body>
+</html>
