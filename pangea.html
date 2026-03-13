@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Pangea-puslespill</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Nunito:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04080f;
+  --ocean:#061525;
+  --ocean2:#0a2040;
+  --land:#8B6914;
+  --land-h:#c49a2a;
+  --text:#e8dcc8;
+  --dim:#7a6a50;
+  --accent:#d4a843;
+  --accent2:#e87c2a;
+  --green:#4a9060;
+  --snap:#fff;
+  --font-h:'Cinzel',serif;
+  --font-b:'Nunito',sans-serif;
+  --font-t:'Fredoka One',cursive;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);display:flex;flex-direction:column;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(6,21,37,.0) 0%,rgba(4,8,15,.6) 100%);}
+
+/* ── TOP BAR ── */
+.topbar{
+  position:relative;z-index:100;
+  display:flex;align-items:center;gap:0;padding:0;
+  background:rgba(4,8,15,.97);border-bottom:1px solid rgba(212,168,67,.15);
+  flex-shrink:0;
+}
+.topbar-lnk{font-family:var(--font-b);font-size:.82rem;font-weight:700;color:var(--dim);
+  text-decoration:none;padding:10px 16px;border-right:1px solid rgba(255,255,255,.06);}
+.topbar-lnk:hover{color:var(--accent)}
+.topbar-tittel{font-family:var(--font-h);font-size:.95rem;color:var(--accent);padding:10px 18px;
+  letter-spacing:.05em;border-right:1px solid rgba(255,255,255,.06);}
+.topbar-spacer{flex:1}
+.topbar-score{font-family:var(--font-t);font-size:.9rem;color:var(--text);padding:10px 16px;
+  display:flex;align-items:center;gap:8px;}
+.score-prikk{width:12px;height:12px;border-radius:50%;background:var(--dim);transition:background .4s;}
+.score-prikk.fylt{background:var(--accent);}
+
+/* ── MODUS-VELGER ── */
+.modus-bar{
+  position:relative;z-index:100;
+  display:flex;justify-content:center;gap:0;
+  background:rgba(4,8,15,.9);border-bottom:1px solid rgba(212,168,67,.1);
+  flex-shrink:0;
+}
+.modus-knapp{
+  font-family:var(--font-h);font-size:.8rem;letter-spacing:.06em;
+  padding:10px 28px;border:none;background:transparent;color:var(--dim);
+  cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;
+}
+.modus-knapp:hover{color:var(--text)}
+.modus-knapp.aktiv{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── HOVED-ARENA ── */
+.arena{flex:1;position:relative;overflow:hidden;cursor:default;}
+#bakgrunnsCanvas{position:absolute;inset:0;z-index:1;}
+#puslespillCanvas{position:absolute;inset:0;z-index:2;cursor:grab;}
+#puslespillCanvas.dragger{cursor:grabbing;}
+
+/* ── INFO-PANEL ── */
+.info-panel{
+  position:absolute;left:12px;bottom:12px;z-index:50;
+  background:rgba(4,8,15,.88);backdrop-filter:blur(12px);
+  border:1px solid rgba(212,168,67,.2);border-radius:12px;
+  padding:12px 15px;max-width:260px;pointer-events:none;
+  transition:opacity .3s;
+}
+.info-panel.skjult{opacity:0}
+.info-navn{font-family:var(--font-h);font-size:.9rem;color:var(--accent);margin-bottom:4px;}
+.info-tekst{font-size:.78rem;color:var(--dim);line-height:1.55;}
+
+/* ── KONTROLLER ── */
+.kontroll-panel{
+  position:absolute;right:12px;top:12px;z-index:50;
+  display:flex;flex-direction:column;gap:7px;
+}
+.kp-btn{
+  font-family:var(--font-b);font-size:.76rem;font-weight:700;
+  padding:7px 14px;border-radius:9px;border:1px solid rgba(212,168,67,.25);
+  background:rgba(4,8,15,.85);color:var(--dim);cursor:pointer;
+  transition:all .15s;backdrop-filter:blur(8px);text-align:center;
+}
+.kp-btn:hover{border-color:var(--accent);color:var(--text)}
+.kp-btn.primary{background:rgba(212,168,67,.15);border-color:var(--accent);color:var(--accent)}
+
+/* ── FULLFØRT ── */
+.fullfort-banner{
+  position:absolute;inset:0;z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(4,8,15,.85);backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .5s;
+}
+.fullfort-banner.synlig{opacity:1;pointer-events:all;}
+.fullfort-kort{
+  background:linear-gradient(135deg,#0a1a0a,#0f1a08);
+  border:1px solid rgba(212,168,67,.4);border-radius:20px;
+  padding:36px 44px;text-align:center;max-width:420px;
+  box-shadow:0 0 60px rgba(212,168,67,.15);
+}
+.fullfort-tittel{font-family:var(--font-h);font-size:1.5rem;color:var(--accent);margin-bottom:10px;}
+.fullfort-tekst{font-size:.9rem;color:var(--dim);line-height:1.65;margin-bottom:20px;}
+.fullfort-neste{font-family:var(--font-t);font-size:1rem;padding:11px 28px;border-radius:12px;
+  border:none;cursor:pointer;background:var(--accent);color:#000;margin:4px;}
+.fullfort-repeat{font-family:var(--font-b);font-size:.85rem;font-weight:700;padding:11px 20px;
+  border-radius:12px;border:1px solid rgba(212,168,67,.4);background:transparent;color:var(--accent);
+  cursor:pointer;margin:4px;}
+
+/* Hint-pil */
+@keyframes ping{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+.hint-ring{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.5);
+  pointer-events:none;animation:ping 1s ease-out 3;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="naturfag_hub.html" class="topbar-lnk">🔬 Naturfag</a>
+  <div class="topbar-tittel">🌍 Pangea-puslespill</div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-score">
+    <span style="font-size:.75rem;color:var(--dim)">Plassert:</span>
+    <div id="score-rad" style="display:flex;gap:4px"></div>
+    <span id="score-tekst" style="color:var(--accent);min-width:28px">0/7</span>
+  </div>
+</div>
+
+<div class="modus-bar">
+  <button class="modus-knapp aktiv" id="modus-pangea" onclick="byttModus('pangea')">
+    🌋 PANGEA  <small style="font-family:var(--font-b);font-size:.7rem;color:var(--dim)"> · 250 mill. år siden</small>
+  </button>
+  <button class="modus-knapp" id="modus-idag" onclick="byttModus('idag')">
+    🌍 I DAG  <small style="font-family:var(--font-b);font-size:.7rem;color:var(--dim)"> · Dagens verdenskart</small>
+  </button>
+</div>
+
+<div class="arena">
+  <canvas id="bakgrunnsCanvas"></canvas>
+  <canvas id="puslespillCanvas"></canvas>
+
+  <div class="info-panel skjult" id="info-panel">
+    <div class="info-navn" id="info-navn"></div>
+    <div class="info-tekst" id="info-tekst"></div>
+  </div>
+
+  <div class="kontroll-panel">
+    <button class="kp-btn primary" onclick="blandBrikker()">🔀 Bland brikker</button>
+    <button class="kp-btn" onclick="visHint()">💡 Hint</button>
+    <button class="kp-btn" onclick="nullstill()">↺ Nullstill</button>
+    <button class="kp-btn" onclick="autoLøs()">✨ Løs automatisk</button>
+  </div>
+
+  <div class="fullfort-banner" id="fullfort">
+    <div class="fullfort-kort">
+      <div style="font-size:3rem;margin-bottom:10px" id="fullfort-ikon">🌍</div>
+      <div class="fullfort-tittel" id="fullfort-tittel">Pangea fullført!</div>
+      <div class="fullfort-tekst" id="fullfort-tekst"></div>
+      <div>
+        <button class="fullfort-neste" id="fullfort-neste" onclick="byttModusOgLukk()">Prøv i dag-kart →</button>
+        <button class="fullfort-repeat" onclick="lukkFullfort()">Spill igjen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  KONTINENTDATA
+//  Koordinater er normalisert 0-1 for et 2:1 (bredde:høyde)
+//  Mercator-lignende verdenskart.
+//  pangea: posisjon i Pangea-bildet (senter, i 0-1 av canvas)
+//  idag:   dagens posisjon (senter)
+//  form:   polygon-punkter relativt til senter, i pixel-enheter
+//          skalert etter canvasbredde/1400
+// ══════════════════════════════════════════════════════════════
+// Kontinentformer: detaljerte polygon-punkter relativt til sentrum.
+// Enheten er "kart-piksler" ved referansebredde 1400px.
+// Hvert kontinent er tegnet med karakteristiske geografiske trekk.
+const KONTINENTER = [
+  {
+    id:'nordamerika', navn:'Nord-Amerika',
+    farge:'#8B6914', fargeH:'#d4a830',
+    info:'Nord-Amerika er det tredje største kontinentet. Det var festet til Europa og Afrika i Pangea, og skilte seg ut for ca. 180 millioner år siden da Atlanterhavet begynte å åpne seg.',
+    pangea: { cx:0.40, cy:0.34 },
+    idag:   { cx:0.21, cy:0.37 },
+    // Alaska-tunge øverst venstre, Florida-spiss nede høyre,
+    // Mexicos smalning og Karibien-bukt, Grønland-halvøy nord
+    form: [
+      // Starter Alaska/nordvest, går med klokka
+      [-90,-60],[-75,-75],[-55,-80],[-30,-78],[-10,-72],
+      [5,-68],[20,-65],[30,-58],[35,-48],
+      // Østkyst ned mot Florida
+      [45,-40],[55,-25],[58,-10],[55,5],[50,18],
+      // Florida-spiss
+      [42,32],[38,42],[30,52],
+      // Mexiko-bukt og smalning
+      [18,50],[5,52],[-8,48],[-20,42],[-28,38],
+      // Stillehavs-kyst opp mot Alaska
+      [-40,28],[-52,12],[-60,-5],[-65,-22],[-72,-40],[-80,-52],[-90,-60]
+    ],
+  },
+  {
+    id:'sydamerika', navn:'Sør-Amerika',
+    farge:'#3a7a20', fargeH:'#60c040',
+    info:'Sør-Amerika var koblet til Afrika i Pangea – kystlinjene passer fortsatt nesten perfekt sammen. Kontinentet driftet vestover og Andesfjellene oppsto da havbunnen presset seg under kontinentet.',
+    pangea: { cx:0.45, cy:0.60 },
+    idag:   { cx:0.28, cy:0.63 },
+    // Bred topp (Colombia/Venezuela), smal mot Hornkapp sør
+    form: [
+      // Nordvest-hjørne, går med klokka
+      [-35,-72],[-15,-78],[5,-75],[22,-68],[35,-58],[40,-42],
+      // Østkyst – relativt rett ned
+      [42,-25],[44,-8],[42,10],[38,28],[32,48],
+      [24,65],[14,78],[2,88],
+      // Hornkapp (sør-spiss)
+      [-8,95],[-18,90],[-22,80],
+      // Vestkyst – Andes, rettere linje
+      [-30,65],[-38,45],[-44,22],[-46,0],[-44,-20],
+      [-40,-40],[-38,-58],[-35,-72]
+    ],
+  },
+  {
+    id:'europa', navn:'Europa',
+    farge:'#4a6830', fargeH:'#78a848',
+    info:'Europa var sentralt plassert i Pangea, koblet til Nord-Amerika i vest og Asia i øst. Skandinavias halvøy, Iberias blokk og Italias «støvel» gjør Europa lett gjenkjennelig.',
+    pangea: { cx:0.54, cy:0.28 },
+    idag:   { cx:0.51, cy:0.28 },
+    // Særtrekk: Skandinavia-halvøy nord, Iberia vest, Italia sør, Hellas
+    form: [
+      // Vest – Iberia/Portugal
+      [-55,15],[-60,-5],[-52,-22],[-40,-30],[-28,-38],
+      // Nord – Frankrike, Danmark
+      [-12,-42],[5,-48],[18,-50],
+      // Skandinavia – halvøy stikker nord
+      [25,-48],[30,-62],[22,-78],[10,-85],[-2,-80],[-8,-70],
+      // Tilbake sørover
+      [20,-55],[32,-48],[42,-38],
+      // Baltikum / nordøst
+      [50,-30],[55,-18],[52,-5],
+      // Middelhavet – Italia stikker sør
+      [45,5],[38,12],[30,8],[24,18],[18,28],[12,38],
+      // Italia-spiss (støvelen)
+      [16,48],[20,55],[14,58],[8,52],[4,42],
+      // Hellas / Egeerhavet
+      [10,30],[18,22],[22,30],[16,42],
+      // Vest langs Middelhavet tilbake
+      [0,18],[-12,12],[-28,8],[-42,14],[-55,15]
+    ],
+  },
+  {
+    id:'africa', navn:'Afrika',
+    farge:'#a06820', fargeH:'#e09030',
+    info:'Afrika var kjernen av Pangea – det kontinentet som bevegde seg minst. Sør-Amerika passet mot Afrikas vestkyst som puslespillbrikker. Sahara var en gang dekket av grunt hav.',
+    pangea: { cx:0.55, cy:0.53 },
+    idag:   { cx:0.52, cy:0.56 },
+    // Karakteristisk: bred topp, buet vestkyst, Afrikas horn øst, smal sør-spiss
+    form: [
+      // Nordvest – Marokko
+      [-55,-72],[-35,-80],[-10,-82],[12,-80],[32,-75],[48,-65],
+      // Nordøst – Egypt, Suez, Afrikas horn
+      [55,-55],[58,-40],[55,-25],[50,-10],[48,5],
+      // Afrikas horn (sørøst)
+      [52,15],[58,25],[55,38],[45,45],
+      // Østkyst ned mot Kapp det gode håp
+      [40,55],[35,70],[28,82],[18,90],
+      // Kapp det gode håp (sør-spiss)
+      [8,98],[0,102],[-10,98],
+      // Vestkyst opp
+      [-20,88],[-30,72],[-40,55],[-50,38],[-55,22],
+      [-58,8],[-56,-10],[-55,-28],[-52,-48],[-55,-72]
+    ],
+  },
+  {
+    id:'asia', navn:'Asia',
+    farge:'#4a3c7a', fargeH:'#7865c8',
+    info:'Asia er verdens største kontinent. I Pangea var det del av Laurasia (nord) og kolliderte med India for ca. 50 millioner år siden – det var den kollisjonen som skapte Himalaya!',
+    pangea: { cx:0.66, cy:0.33 },
+    idag:   { cx:0.68, cy:0.32 },
+    // Særtrekk: India-halvøy sør, Kamtsjatka/Japan øst, Arabia, stor Sibir-blokk
+    form: [
+      // Nordvest – Ural/Russland
+      [-85,-55],[-60,-72],[-30,-80],[-5,-78],[15,-72],
+      // Nordøst – Sibir bredt
+      [40,-70],[65,-68],[85,-62],[100,-50],[105,-38],
+      // Stillehavs-kyst sørover
+      [100,-22],[95,-8],[90,5],
+      // Korea/Kina-bukt
+      [85,15],[78,25],[70,30],
+      // Sørøst-Asia-spiss
+      [75,40],[70,52],[65,62],[55,60],
+      // India-halvøy (trekant ned)
+      [50,50],[42,65],[35,80],[28,90],[22,82],
+      [18,68],[15,55],[12,42],
+      // Arabia-halvøy
+      [8,38],[5,25],[10,12],[18,5],[28,-2],[35,-8],
+      // Tilbake nordover vest
+      [30,-22],[20,-35],[8,-42],[-8,-50],[-25,-58],
+      [-45,-60],[-65,-58],[-85,-55]
+    ],
+  },
+  {
+    id:'australia', navn:'Australia',
+    farge:'#8c4a18', fargeH:'#d47828',
+    info:'Australia var festet til Antarktis i Pangea, som del av Gondwana. Det skilte seg ut relativt sent – for ca. 35–45 millioner år siden. Dermed utviklet dyrene der seg isolert, noe som forklarer pungdyrene.',
+    pangea: { cx:0.72, cy:0.67 },
+    idag:   { cx:0.80, cy:0.65 },
+    // Karakteristisk: relativt rektangulær, men med karakteristisk nordkyst (hakkete),
+    // Great Australian Bight (rettlinje sør), Cape York-halvøy nordøst
+    form: [
+      // Nordvest – Kimberley
+      [-55,-32],[-45,-42],[-30,-48],[-15,-50],
+      // Nord – Cape York-halvøy stikker nordøst
+      [0,-48],[10,-50],[18,-58],[22,-52],[18,-42],
+      // Nordøst – Queensland
+      [28,-38],[38,-28],[45,-15],[48,0],
+      // Østkyst
+      [46,15],[42,30],[35,40],
+      // Sørøst – Victoria
+      [28,46],[18,50],[8,48],
+      // Great Australian Bight – nesten rett linje
+      [-5,48],[-20,50],[-38,48],[-50,44],
+      // Sørvest – Perth-hjørnet
+      [-58,32],[-62,18],[-60,2],[-56,-12],
+      [-55,-22],[-55,-32]
+    ],
+  },
+  {
+    id:'antarktis', navn:'Antarktis',
+    farge:'#90b8d0', fargeH:'#c8e8f8',
+    info:'Antarktis lå i sentrum av Gondwana i Pangea. Det driftet sørover og er nå dekket av et 2 km tykt islag. For 50 millioner år siden var det tropisk – fossiler av palmetrær er funnet der!',
+    pangea: { cx:0.56, cy:0.78 },
+    idag:   { cx:0.50, cy:0.91 },
+    // Tilnærmet sirkulær, men med Antarctic Peninsula som stikker nordover (mot venstre)
+    form: [
+      // Antarctic Peninsula stikker nordvest
+      [-55,-10],[-62,-22],[-65,-35],[-58,-45],
+      // Vestantarktis
+      [-48,-52],[-35,-58],[-18,-60],
+      // Sør-pol-platå (bred)
+      [0,-62],[18,-60],[35,-55],[48,-48],
+      // Østantarktis
+      [58,-38],[62,-22],[60,-8],[55,5],
+      [45,18],[30,28],[15,32],[0,35],
+      [-15,32],[-30,25],[-42,15],
+      [-52,2],[-58,-5],[-55,-10]
+    ],
+  },
+];
+
+// ══════════════════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════════════════
+let modus = 'pangea';   // 'pangea' | 'idag'
+let brikker = [];       // { id, x, y, snappet, dragging, ... }
+let dra = null;         // { brikkeId, offX, offY }
+let W = 0, H = 0;
+let snapRadius = 45;
+let animerer = false;
+let snappetAntall = 0;
+
+const bgCanvas  = document.getElementById('bakgrunnsCanvas');
+const bgCtx     = bgCanvas.getContext('2d');
+const canvas    = document.getElementById('puslespillCanvas');
+const ctx       = canvas.getContext('2d');
+
+// ══════════════════════════════════════════════════════════════
+//  SKALERING
+// ══════════════════════════════════════════════════════════════
+function formScale() { return W / 1100; }
+
+function absolutForm(kontinent) {
+  const s = formScale();
+  return kontinent.form.map(([px, py]) => [px * s, py * s]);
+}
+
+function målPos(kontinent) {
+  const m = kontinent[modus];
+  return { x: m.cx * W, y: m.cy * H };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INITIALISERING
+// ══════════════════════════════════════════════════════════════
+function initBrikker() {
+  brikker = KONTINENTER.map(k => {
+    // Spred brikker rundt kanten
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.min(W, H) * 0.38;
+    return {
+      id: k.id,
+      x: W / 2 + Math.cos(angle) * r * (0.6 + Math.random() * 0.4),
+      y: H / 2 + Math.sin(angle) * r * (0.5 + Math.random() * 0.4),
+      snappet: false,
+      dragging: false,
+      animFra: null,
+      animTil: null,
+      animT: 1,
+    };
+  });
+  snappetAntall = 0;
+  oppdaterScore();
+}
+
+function blandBrikker() {
+  lukkFullfort();
+  brikker.forEach(b => {
+    b.snappet = false;
+    const angle = Math.random() * Math.PI * 2;
+    const rx = W * 0.35 + Math.random() * W * 0.15;
+    const ry = H * 0.30 + Math.random() * H * 0.15;
+    b.x = W / 2 + Math.cos(angle) * rx;
+    b.y = H / 2 + Math.sin(angle) * ry;
+    b.x = Math.max(60, Math.min(W - 60, b.x));
+    b.y = Math.max(60, Math.min(H - 60, b.y));
+  });
+  snappetAntall = 0;
+  oppdaterScore();
+  tegn();
+}
+
+function nullstill() {
+  lukkFullfort();
+  initBrikker();
+  blandBrikker();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEGNING – BAKGRUNN
+// ══════════════════════════════════════════════════════════════
+function tegnBakgrunn() {
+  bgCtx.clearRect(0, 0, W, H);
+
+  if (modus === 'pangea') {
+    tegnPangeaBakgrunn();
+  } else {
+    tegnVerdenskartBakgrunn();
+  }
+}
+
+function tegnPangeaBakgrunn() {
+  // Dypt hav
+  const grad = bgCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  grad.addColorStop(0, '#061a30');
+  grad.addColorStop(1, '#020810');
+  bgCtx.fillStyle = grad;
+  bgCtx.fillRect(0, 0, W, H);
+
+  // Thetys-hav område (midten av Pangea)
+  bgCtx.save();
+  bgCtx.globalAlpha = 0.25;
+  const thGrad = bgCtx.createRadialGradient(W*0.58, H*0.45, 0, W*0.58, H*0.45, W*0.15);
+  thGrad.addColorStop(0, '#0d4080');
+  thGrad.addColorStop(1, 'transparent');
+  bgCtx.fillStyle = thGrad;
+  bgCtx.fillRect(0, 0, W, H);
+  bgCtx.restore();
+
+  // Koordinatgitter (ekvator, breddegrader)
+  tegnGitter(bgCtx, 'rgba(255,255,255,.04)');
+
+  // Etiketter
+  bgCtx.font = `${W*0.012}px Cinzel, serif`;
+  bgCtx.fillStyle = 'rgba(212,168,67,.18)';
+  bgCtx.textAlign = 'center';
+  bgCtx.fillText('PANTHALASSA', W * 0.12, H * 0.5);
+  bgCtx.fillText('PANTHALASSA', W * 0.88, H * 0.5);
+  bgCtx.font = `${W*0.009}px Nunito, sans-serif`;
+  bgCtx.fillStyle = 'rgba(100,150,200,.15)';
+  bgCtx.fillText('TETHYSHAVET', W * 0.57, H * 0.43);
+
+  // Årstall
+  bgCtx.font = `bold ${W*0.013}px Cinzel, serif`;
+  bgCtx.fillStyle = 'rgba(212,168,67,.12)';
+  bgCtx.fillText('~ 250 000 000 ÅR SIDEN', W/2, H * 0.96);
+}
+
+function tegnVerdenskartBakgrunn() {
+  // Hav-gradient
+  const grad = bgCtx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#03111f');
+  grad.addColorStop(0.5, '#061828');
+  grad.addColorStop(1, '#02080f');
+  bgCtx.fillStyle = grad;
+  bgCtx.fillRect(0, 0, W, H);
+
+  // Gitter
+  tegnGitter(bgCtx, 'rgba(255,255,255,.05)');
+
+  // Ekvator-linje
+  bgCtx.save();
+  bgCtx.strokeStyle = 'rgba(212,168,67,.2)';
+  bgCtx.lineWidth = 1;
+  bgCtx.setLineDash([8, 8]);
+  bgCtx.beginPath();
+  bgCtx.moveTo(0, H * 0.5);
+  bgCtx.lineTo(W, H * 0.5);
+  bgCtx.stroke();
+  bgCtx.setLineDash([]);
+  bgCtx.restore();
+
+  // Havnavn
+  bgCtx.font = `italic ${W*0.009}px Cinzel, serif`;
+  bgCtx.fillStyle = 'rgba(100,160,220,.18)';
+  bgCtx.textAlign = 'center';
+  bgCtx.fillText('ATLANTERHAVET',  W * 0.35, H * 0.52);
+  bgCtx.fillText('STILLEHAVET',    W * 0.13, H * 0.48);
+  bgCtx.fillText('STILLEHAVET',    W * 0.90, H * 0.48);
+  bgCtx.fillText('INDIAHAVET',     W * 0.63, H * 0.68);
+  bgCtx.fillText('NORDISHAVET',    W * 0.50, H * 0.08);
+  bgCtx.fillText('SYDISHAVET',     W * 0.50, H * 0.94);
+
+  // Ekvator-label
+  bgCtx.font = `${W*0.008}px Nunito, sans-serif`;
+  bgCtx.fillStyle = 'rgba(212,168,67,.18)';
+  bgCtx.fillText('EKVATOR', W * 0.03, H * 0.495);
+
+  // Årstall
+  bgCtx.font = `bold ${W*0.013}px Cinzel, serif`;
+  bgCtx.fillStyle = 'rgba(212,168,67,.12)';
+  bgCtx.fillText('I DAG', W/2, H * 0.96);
+}
+
+function tegnGitter(c, farge) {
+  c.save();
+  c.strokeStyle = farge;
+  c.lineWidth = 1;
+  // Breddegrader
+  for (let lat = 0; lat <= 1; lat += 1/6) {
+    c.beginPath(); c.moveTo(0, lat * H); c.lineTo(W, lat * H); c.stroke();
+  }
+  // Lengdegrader
+  for (let lon = 0; lon <= 1; lon += 1/12) {
+    c.beginPath(); c.moveTo(lon * W, 0); c.lineTo(lon * W, H); c.stroke();
+  }
+  c.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEGNING – BRIKKER
+// ══════════════════════════════════════════════════════════════
+function tegn() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Tegn mål-skygger (ghostet posisjon)
+  KONTINENTER.forEach(k => {
+    const b = brikker.find(b => b.id === k.id);
+    if (!b || b.snappet) return;
+    const mål = målPos(k);
+    const pts = absolutForm(k);
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.translate(mål.x, mål.y);
+    ctx.beginPath();
+    splinePath(ctx, pts, true);
+    ctx.fillStyle = k.farge;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Tegn brikker (snappede først, deretter løse, deretter den som dras)
+  const sorterteBrikker = [...brikker].sort((a, b) => {
+    if (a.snappet && !b.snappet) return -1;
+    if (!a.snappet && b.snappet) return 1;
+    if (a.dragging) return 1;
+    if (b.dragging) return -1;
+    return 0;
+  });
+
+  sorterteBrikker.forEach(b => {
+    const k = KONTINENTER.find(k => k.id === b.id);
+    if (!k) return;
+    tegnBrikke(ctx, k, b);
+  });
+}
+
+// Catmull-Rom spline gjennom punktene (lukket kurve)
+function splinePath(c, pts, lukket = true) {
+  const n = pts.length;
+  if (n < 3) {
+    c.beginPath();
+    pts.forEach(([px,py],i) => i===0 ? c.moveTo(px,py) : c.lineTo(px,py));
+    if (lukket) c.closePath();
+    return;
+  }
+  const tension = 0.35;
+  c.beginPath();
+  c.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n];
+    const p1 = pts[i];
+    const p2 = pts[(i + 1) % n];
+    const p3 = pts[(i + 2) % n];
+    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
+    c.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2[0], p2[1]);
+  }
+  if (lukket) c.closePath();
+}
+
+
+function tegnBrikke(c, k, b) {
+  const pts = absolutForm(k);
+  const x = b.x, y = b.y;
+
+  c.save();
+  c.translate(x, y);
+
+  // Skygge
+  c.shadowColor = b.dragging ? 'rgba(212,168,67,.5)' : 'rgba(0,0,0,.5)';
+  c.shadowBlur  = b.dragging ? 22 : 12;
+  c.shadowOffsetX = b.dragging ? 0 : 4;
+  c.shadowOffsetY = b.dragging ? 0 : 6;
+
+  // Kontinent-fyll
+  // Tegn med Catmull-Rom spline for organiske kystlinjer
+  splinePath(c, pts, true);
+
+  // Gradient-fyll
+  const bb = bBoxOf(pts);
+  const grad = c.createLinearGradient(bb.minX, bb.minY, bb.maxX, bb.maxY);
+  grad.addColorStop(0, lighten(k.farge, b.dragging ? 30 : 15));
+  grad.addColorStop(1, k.farge);
+  c.fillStyle = grad;
+  c.fill();
+
+  // Kontur
+  c.strokeStyle = b.snappet ? 'rgba(255,255,255,.35)' : (b.dragging ? k.fargeH : 'rgba(255,255,255,.18)');
+  c.lineWidth = b.dragging ? 2.5 : 1.5;
+  c.stroke();
+
+  c.shadowBlur = 0;
+
+  // Relieff-linjer (topografi-hint)
+  c.globalAlpha = 0.07;
+  c.strokeStyle = '#fff';
+  c.lineWidth = 0.8;
+  for (let i = 0; i < pts.length - 1; i += 3) {
+    const [ax, ay] = pts[i], [bx, by] = pts[(i+2) % pts.length];
+    c.beginPath();
+    c.moveTo(ax * 0.6, ay * 0.6);
+    c.lineTo(bx * 0.6, by * 0.6);
+    c.stroke();
+  }
+  c.globalAlpha = 1;
+
+  // Navn-label
+  c.shadowBlur = 0;
+  const labelSize = Math.max(9, W * 0.009);
+  c.font = `bold ${labelSize}px Nunito, sans-serif`;
+  c.fillStyle = b.snappet ? 'rgba(255,255,255,.7)' : 'rgba(255,255,255,.5)';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(KONTINENTER.find(kk => kk.id === k.id).navn.toUpperCase(), 0, 0);
+
+  // Snappet-hake
+  if (b.snappet) {
+    c.font = `${W * 0.016}px serif`;
+    c.fillStyle = 'rgba(255,255,255,.5)';
+    c.fillText('✓', bb.maxX - 8, bb.minY + 8);
+  }
+
+  c.restore();
+}
+
+function bBoxOf(pts) {
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
+
+function lighten(hex, pct) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, (n >> 16) + pct);
+  const g = Math.min(255, ((n >> 8) & 0xff) + pct);
+  const b = Math.min(255, (n & 0xff) + pct);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INTERAKSJON
+// ══════════════════════════════════════════════════════════════
+function brikkeVed(x, y) {
+  // Sjekk i omvendt rekkefølge (øverst sist)
+  for (let i = brikker.length - 1; i >= 0; i--) {
+    const b = brikker[i];
+    const k = KONTINENTER.find(k => k.id === b.id);
+    if (!k) continue;
+    const pts = absolutForm(k);
+    if (pktIPolygon(x - b.x, y - b.y, pts)) return b;
+  }
+  return null;
+}
+
+function pktIPolygon(px, py, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function canvasPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const scX = canvas.width / r.width, scY = canvas.height / r.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return [(clientX - r.left) * scX, (clientY - r.top) * scY];
+}
+
+canvas.addEventListener('pointerdown', e => {
+  const [x, y] = canvasPos(e);
+  const b = brikkeVed(x, y);
+  if (!b) return;
+  b.snappet = false;
+  b.dragging = true;
+  dra = { id: b.id, offX: x - b.x, offY: y - b.y };
+  // Flytt til toppen av stapelen
+  brikker.splice(brikker.indexOf(b), 1);
+  brikker.push(b);
+  canvas.setPointerCapture(e.pointerId);
+  canvas.classList.add('dragger');
+  visInfo(b.id);
+  tegn();
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!dra) return;
+  const [x, y] = canvasPos(e);
+  const b = brikker.find(b => b.id === dra.id);
+  if (!b) return;
+  b.x = x - dra.offX;
+  b.y = y - dra.offY;
+  tegn();
+});
+
+canvas.addEventListener('pointerup', e => {
+  if (!dra) return;
+  const b = brikker.find(b => b.id === dra.id);
+  if (b) {
+    b.dragging = false;
+    // Snap-sjekk
+    const k = KONTINENTER.find(k => k.id === b.id);
+    const mål = målPos(k);
+    const d = Math.hypot(b.x - mål.x, b.y - mål.y);
+    if (d < snapRadius) {
+      animerTilPos(b, mål.x, mål.y, true);
+    }
+  }
+  dra = null;
+  canvas.classList.remove('dragger');
+  tegn();
+});
+
+// Touch-støtte
+canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// Hover for info
+canvas.addEventListener('mousemove', e => {
+  if (dra) return;
+  const [x, y] = canvasPos(e);
+  const b = brikkeVed(x, y);
+  if (b) visInfo(b.id);
+  else skjulInfo();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  ANIMASJON – smooth snap
+// ══════════════════════════════════════════════════════════════
+function animerTilPos(brikke, tx, ty, skalSnap = false) {
+  const startX = brikke.x, startY = brikke.y;
+  const dur = 300;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    brikke.x = startX + (tx - startX) * ease;
+    brikke.y = startY + (ty - startY) * ease;
+    tegn();
+    if (t < 1) { requestAnimationFrame(step); }
+    else {
+      brikke.x = tx; brikke.y = ty;
+      if (skalSnap) {
+        brikke.snappet = true;
+        snappetAntall++;
+        oppdaterScore();
+        if (snappetAntall === KONTINENTER.length) setTimeout(visFullfort, 600);
+      }
+      tegn();
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MODUS-BYTTE med animert drift
+// ══════════════════════════════════════════════════════════════
+function byttModus(nyModus) {
+  if (nyModus === modus) return;
+  modus = nyModus;
+
+  document.getElementById('modus-pangea').classList.toggle('aktiv', modus === 'pangea');
+  document.getElementById('modus-idag').classList.toggle('aktiv', modus === 'idag');
+
+  tegnBakgrunn();
+
+  // Marker alle snappede brikker som usnappet – de må plasseres på nytt i ny modus
+  brikker.forEach(b => { b.snappet = false; });
+  snappetAntall = 0;
+  oppdaterScore();
+  tegn();
+}
+
+function byttModusOgLukk() {
+  lukkFullfort();
+  const nyModus = modus === 'pangea' ? 'idag' : 'pangea';
+  byttModus(nyModus);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HJELPE-FUNKSJONER
+// ══════════════════════════════════════════════════════════════
+function visInfo(id) {
+  const k = KONTINENTER.find(k => k.id === id);
+  if (!k) return;
+  document.getElementById('info-navn').textContent = k.navn;
+  document.getElementById('info-tekst').textContent = k.info;
+  document.getElementById('info-panel').classList.remove('skjult');
+}
+
+function skjulInfo() {
+  document.getElementById('info-panel').classList.add('skjult');
+}
+
+function visHint() {
+  // Finn den neste ikke-snappede brikken og animer den halvveis mot målet
+  const laus = brikker.find(b => !b.snappet);
+  if (!laus) return;
+  const k = KONTINENTER.find(k => k.id === laus.id);
+  const mål = målPos(k);
+  const hx = (laus.x + mål.x) / 2;
+  const hy = (laus.y + mål.y) / 2;
+  animerTilPos(laus, hx, hy, false);
+  visInfo(laus.id);
+}
+
+function autoLøs() {
+  lukkFullfort();
+  brikker.forEach((b, i) => {
+    const k = KONTINENTER.find(k => k.id === b.id);
+    const mål = målPos(k);
+    setTimeout(() => animerTilPos(b, mål.x, mål.y, true), i * 150);
+  });
+}
+
+function oppdaterScore() {
+  const rad = document.getElementById('score-rad');
+  rad.innerHTML = '';
+  KONTINENTER.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'score-prikk' + (i < snappetAntall ? ' fylt' : '');
+    rad.appendChild(d);
+  });
+  document.getElementById('score-tekst').textContent = `${snappetAntall}/7`;
+}
+
+function visFullfort() {
+  const erPangea = modus === 'pangea';
+  document.getElementById('fullfort-ikon').textContent = erPangea ? '🌋' : '🌍';
+  document.getElementById('fullfort-tittel').textContent = erPangea ? 'Pangea er samlet!' : 'Verden er på plass!';
+  document.getElementById('fullfort-tekst').textContent = erPangea
+    ? 'Bra jobba! Alle kontinentene er samlet slik de var for 250 millioner år siden. Pangea betyr «alt land» på gresk. Neste: prøv å plassere dem på dagens kart!'
+    : 'Utmerket! Du kjenner plasseringen til alle kontinentene på jordas nåværende kart. Vil du prøve å sette dem sammen til Pangea?';
+  document.getElementById('fullfort-neste').textContent = erPangea ? '🌍 Prøv dagens kart →' : '🌋 Prøv Pangea →';
+  document.getElementById('fullfort').classList.add('synlig');
+}
+
+function lukkFullfort() {
+  document.getElementById('fullfort').classList.remove('synlig');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RESIZE
+// ══════════════════════════════════════════════════════════════
+function resize() {
+  const arena = document.querySelector('.arena');
+  W = arena.clientWidth;
+  H = arena.clientHeight;
+  bgCanvas.width = canvas.width = W;
+  bgCanvas.height = canvas.height = H;
+  snapRadius = Math.min(W, H) * 0.06;
+  tegnBakgrunn();
+  tegn();
+}
+
+window.addEventListener('resize', () => {
+  resize();
+  // Re-normaliser posisjoner
+  brikker.forEach(b => {
+    if (b.snappet) {
+      const k = KONTINENTER.find(k => k.id === b.id);
+      const m = målPos(k);
+      b.x = m.x; b.y = m.y;
+    }
+  });
+  tegn();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+resize();
+initBrikker();
+blandBrikker();
+oppdaterScore();
+</script>
+</body>
+</html>

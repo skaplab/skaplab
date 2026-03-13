@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Energi og varme</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0800;--surface:#180f00;--card:#1e1100;--border:rgba(255,200,50,.08);
+  --text:#fff8e8;--dim:#7a6040;
+  --accent:#fb923c;   /* oransje-rød – varme/energi */
+  --accent2:#facc15;  /* gul – lys/sol */
+  --accent3:#4ade80;  /* grønn – kjemisk/bio */
+  --accent4:#60a5fa;  /* blå – elektrisk */
+  --red:#f87171;--purple:#c084fc;--cyan:#22d3ee;
+  --font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;--font-m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 10% 5%,rgba(251,146,60,.07) 0%,transparent 55%),
+             radial-gradient(ellipse 40% 30% at 88% 90%,rgba(250,204,21,.05) 0%,transparent 55%);}
+nav{position:sticky;top:0;z-index:200;background:rgba(15,8,0,.93);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-family:var(--font-h);font-size:.95rem;color:var(--text);text-decoration:none}
+.nav-lnk:hover{color:var(--accent)}.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:var(--accent);font-size:.9rem}
+.page{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:24px 0 28px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.7rem,4vw,2.6rem);margin-bottom:8px}
+.hero h1 span{color:var(--accent)}.hero-sub{font-size:.92rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.65}
+.fremgang-rad{display:flex;gap:5px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.fremgang-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;cursor:pointer;transition:all .25s}
+.fremgang-dot.løst{background:var(--accent);border-color:var(--accent);color:#000}
+.fremgang-dot.aktiv{border-color:var(--accent);box-shadow:0 0 0 3px rgba(251,146,60,.2)}
+.oppgave-nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+.oppg-btn{font-family:var(--font-b);font-size:.75rem;font-weight:700;padding:5px 12px;
+  border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--dim);cursor:pointer;transition:all .18s}
+.oppg-btn:hover{border-color:var(--accent);color:var(--text)}
+.oppg-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.oppgave-header{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px 22px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.oppgave-nr{font-family:var(--font-h);font-size:2rem;color:var(--accent);line-height:1;flex-shrink:0}
+.oppgave-body{flex:1;min-width:180px}
+.oppgave-tittel{font-family:var(--font-h);font-size:1.05rem;margin-bottom:3px}
+.oppgave-tekst{font-size:.86rem;color:var(--dim);line-height:1.6}
+.oppgave-hint{font-size:.76rem;margin-top:7px;color:var(--accent2);background:rgba(250,204,21,.07);
+  border:1px solid rgba(250,204,21,.2);border-radius:8px;padding:4px 9px;display:inline-block}
+
+/* ── SPILL-ARENA ── */
+/* Variant A: Dra-og-slipp kobling */
+.kobling-arena{display:flex;align-items:stretch;gap:0;margin-bottom:20px;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;min-height:340px}
+.kobling-kolonne{flex:1;padding:18px 14px;display:flex;flex-direction:column;gap:10px}
+.kobling-kolonne-tittel{font-family:var(--font-h);font-size:.85rem;color:var(--dim);margin-bottom:4px;text-align:center}
+.kobling-midtstrek{width:2px;background:var(--border);flex-shrink:0}
+
+.kobling-kort{
+  padding:11px 13px;border-radius:12px;border:2px solid var(--border);
+  background:rgba(255,255,255,.04);cursor:grab;user-select:none;
+  font-size:.86rem;font-weight:700;transition:all .18s;position:relative;
+  display:flex;align-items:center;gap:8px;
+}
+.kobling-kort:hover{border-color:var(--accent);background:rgba(251,146,60,.08)}
+.kobling-kort.valgt{border-color:var(--accent);background:rgba(251,146,60,.15);box-shadow:0 0 12px rgba(251,146,60,.3)}
+.kobling-kort.koblet{border-color:rgba(74,222,128,.6);background:rgba(74,222,128,.08)}
+.kobling-kort.feil-kobling{border-color:var(--red);background:rgba(248,113,113,.08)}
+.kobling-ikon{font-size:1.3rem;flex-shrink:0}
+.kobling-slot{
+  padding:11px 13px;border-radius:12px;border:2px dashed var(--border);
+  background:rgba(255,255,255,.02);font-size:.84rem;color:var(--dim);
+  min-height:52px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:all .18s;
+}
+.kobling-slot:hover,.kobling-slot.over{border-color:var(--accent);background:rgba(251,146,60,.06)}
+.kobling-slot.fylt{border-color:rgba(74,222,128,.5);border-style:solid;background:rgba(74,222,128,.06);color:var(--text)}
+.kobling-slot.fylt-feil{border-color:rgba(248,113,113,.5);border-style:solid}
+
+/* Variant B: Sortering */
+.sortering-arena{margin-bottom:20px}
+.sortering-pool{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;min-height:64px}
+.sortering-pool-label{font-family:var(--font-h);font-size:.82rem;color:var(--dim);width:100%;margin-bottom:4px}
+.sortering-kategorier{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.sortering-boks{background:var(--card);border:2px dashed var(--border);border-radius:14px;
+  padding:14px;min-height:110px;transition:border-color .2s}
+.sortering-boks:hover,.sortering-boks.over{border-color:var(--accent)}
+.sortering-boks.fylt-korrekt{border-color:rgba(74,222,128,.5)}
+.sortering-boks-tittel{font-family:var(--font-h);font-size:.82rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sortering-boks-innhold{display:flex;flex-wrap:wrap;gap:6px}
+
+.brikke{
+  padding:7px 12px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.06);cursor:pointer;font-size:.82rem;font-weight:700;
+  transition:all .15s;user-select:none;display:flex;align-items:center;gap:6px;
+}
+.brikke:hover{border-color:var(--accent);background:rgba(251,146,60,.1)}
+.brikke.valgt{border-color:var(--accent);background:rgba(251,146,60,.2);box-shadow:0 0 8px rgba(251,146,60,.3)}
+
+/* Variant C: Flervalgsspørsmål med animasjon */
+.flervalg-arena{margin-bottom:20px}
+.flervalg-scenario{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px;margin-bottom:14px;text-align:center;min-height:140px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.flervalg-ikon{font-size:3rem}
+.flervalg-beskrivelse{font-size:.9rem;color:var(--dim);max-width:400px;line-height:1.6}
+.flervalg-alternativer{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.flervalg-alt{padding:12px 16px;border-radius:12px;border:2px solid var(--border);
+  background:rgba(255,255,255,.04);cursor:pointer;font-size:.88rem;font-weight:700;
+  transition:all .18s;text-align:left;display:flex;align-items:center;gap:8px}
+.flervalg-alt:hover{border-color:var(--accent);background:rgba(251,146,60,.07)}
+.flervalg-alt.valgt{border-color:var(--accent);background:rgba(251,146,60,.15)}
+.flervalg-alt.korrekt-svar{border-color:#4ade80;background:rgba(74,222,128,.1)}
+.flervalg-alt.feil-svar{border-color:var(--red);background:rgba(248,113,113,.1)}
+
+/* Sjekk-knapp */
+.sjekk-wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.btn-sjekk{font-family:var(--font-h);font-size:.98rem;padding:10px 26px;border-radius:14px;
+  border:none;cursor:pointer;background:var(--accent);color:#fff;transition:transform .15s,box-shadow .15s}
+.btn-sjekk:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(251,146,60,.35)}
+.btn-reset{font-family:var(--font-b);font-size:.82rem;font-weight:700;padding:10px 16px;
+  border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .15s}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+
+/* Resultat */
+.resultat{border-radius:16px;padding:0;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s ease}
+.resultat.synlig{max-height:420px;padding:22px;border:1px solid var(--border)}
+.resultat.korrekt{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25)!important}
+.resultat.feil{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.25)!important}
+.res-tittel{font-family:var(--font-h);font-size:1.25rem;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.res-tittel.korrekt{color:#4ade80}.res-tittel.feil{color:var(--red)}
+.res-felt{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+.res-felt-label{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.res-felt-verdi{font-size:.88rem;color:var(--text);line-height:1.6}
+.res-feil-tips{font-size:.84rem;color:var(--dim);line-height:1.7}
+.res-feil-tips strong{color:var(--accent2)}
+
+@keyframes flame{0%,100%{transform:scaleY(1) rotate(-2deg)}50%{transform:scaleY(1.15) rotate(2deg)}}
+.flame{display:inline-block;animation:flame 0.7s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">🔥 Energi og varme</span>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <h1>🔥 Energi og varme – <span>Koble og sorter</span></h1>
+    <p class="hero-sub">Koble energikilder til energiformer, sorter eksempler, og svar på hva som skjer med energien.</p>
+  </div>
+
+  <div class="fremgang-rad" id="fremgang-rad"></div>
+  <div class="oppgave-nav" id="oppgave-nav"></div>
+
+  <div class="oppgave-header">
+    <div class="oppgave-nr" id="oppg-nr">01</div>
+    <div class="oppgave-body">
+      <div class="oppgave-tittel" id="oppg-tittel"></div>
+      <div class="oppgave-tekst" id="oppg-tekst"></div>
+      <div class="oppgave-hint" id="oppg-hint"></div>
+    </div>
+  </div>
+
+  <div id="oppgave-arena"></div>
+
+  <div class="sjekk-wrap">
+    <button class="btn-sjekk" onclick="sjekkSvar()">✓ Sjekk svaret</button>
+    <button class="btn-reset" onclick="tilbakestill()">↺ Start på nytt</button>
+  </div>
+
+  <div class="resultat" id="resultat"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  OPPGAVE-DATA
+// type: 'kobling' | 'sortering' | 'flervalg'
+// ══════════════════════════════════════════════════
+const OPPGAVER = [
+  // ── KOBLING: energikilde → energiform ──
+  {
+    id:1, type:'kobling', emoji:'🔋', vanskelighet:'★☆☆',
+    tittel:'Energikilder og energiformer',
+    tekst:'Koble hver energikilde til den energiformen den primært gir fra seg. Klikk på kilden, deretter på riktig energiform.',
+    hint:'💡 En solcellepanel gir elektrisk energi. Et bål gir varme. En sykkelhjul gir bevegelse.',
+    navn:'Energikilder → former',
+    venstre:[
+      {id:'sol',  ikon:'☀️', tekst:'Solcellepanel'},
+      {id:'bål',  ikon:'🔥', tekst:'Bål'},
+      {id:'sykkel',ikon:'🚲',tekst:'Sykkelpedalering'},
+      {id:'batteri',ikon:'🔋',tekst:'Batteri'},
+      {id:'lyd',  ikon:'🔊', tekst:'Høyttaler'},
+    ],
+    høyre:[
+      {id:'elektrisk', ikon:'⚡',tekst:'Elektrisk energi (sol)'},
+      {id:'varme',     ikon:'🌡️',tekst:'Varmeenergi'},
+      {id:'bevegelse', ikon:'💨',tekst:'Bevegelsesenergi'},
+      {id:'lyd_form',  ikon:'🎵',tekst:'Lydenergi'},
+      {id:'elektrisk2',ikon:'🔋',tekst:'Elektrisk energi (lagret)'},
+    ],
+    fasit:{sol:'elektrisk',bål:'varme',sykkel:'bevegelse',batteri:'elektrisk2',lyd:'lyd_form'},
+    forklaring:'Energi kan ikke lages eller ødelegges – den omdannes fra én form til en annen. En solcelle omdanner lysenergi til elektrisk energi. Et bål omdanner kjemisk energi til varme og lys.',
+    fakta:'Selv en lyspære kaster bort ca. 95% av energien som varme, ikke lys. LED-pærer er mye mer effektive!',
+  },
+  {
+    id:2, type:'kobling', emoji:'⚡', vanskelighet:'★☆☆',
+    tittel:'Hva omdannes energien til?',
+    tekst:'Koble hvert apparat til hva slags energi det primært produserer fra elektrisk energi.',
+    hint:'💡 Alle starter med elektrisk energi (stikkontakt). Hva kommer ut?',
+    navn:'Elektrisk → andre former',
+    venstre:[
+      {id:'pære',  ikon:'💡', tekst:'Glødepære'},
+      {id:'mikro', ikon:'🍕', tekst:'Mikrobølgeovn'},
+      {id:'motor2',ikon:'⚙️', tekst:'Elektrisk motor'},
+      {id:'radio', ikon:'📻', tekst:'Radio'},
+      {id:'lader', ikon:'🔌', tekst:'Mobillader'},
+    ],
+    høyre:[
+      {id:'lys',     ikon:'💡',tekst:'Lys'},
+      {id:'varme2',  ikon:'🌡️',tekst:'Varme'},
+      {id:'bevegelse2',ikon:'💨',tekst:'Bevegelse'},
+      {id:'lyd2',    ikon:'🎵',tekst:'Lyd'},
+      {id:'kjemisk', ikon:'⚗️',tekst:'Kjemisk energi (lagret)'},
+    ],
+    fasit:{pære:'lys',mikro:'varme2',motor2:'bevegelse2',radio:'lyd2',lader:'kjemisk'},
+    forklaring:'Elektrisk energi er veldig allsidig fordi den lett kan omdannes til andre energiformer. En glødepære omdanner elektrisitet til lys (og mye varme), en motor til bevegelse, en radio til lyd.',
+    fakta:'En mobiltelefon lagrer energi som kjemisk energi i batteriet. Lading er å «pumpe» elektroner inn i batteriet.',
+  },
+  // ── SORTERING: eksempler i kategorier ──
+  {
+    id:3, type:'sortering', emoji:'🌡️', vanskelighet:'★★☆',
+    tittel:'Varmeoverføring – tre metoder',
+    tekst:'Sorter eksemplene til riktig metode for varmeoverføring: ledning, strømning (konveksjon) eller stråling.',
+    hint:'💡 Ledning = kontakt mellom faste stoffer. Strømning = varm væske/luft stiger. Stråling = energi uten kontakt.',
+    navn:'Varmeoverføring',
+    kategorier:[
+      {id:'ledning',   ikon:'🤝', tittel:'Ledning',    farge:'#fb923c'},
+      {id:'konveksjon',ikon:'🌀', tittel:'Strømning',   farge:'#60a5fa'},
+      {id:'stråling',  ikon:'☀️', tittel:'Stråling',    farge:'#facc15'},
+    ],
+    brikker:[
+      {id:'b1',tekst:'Gryte varmer opp håndtak',  fasit:'ledning'},
+      {id:'b2',tekst:'Sola varmer opp huden',      fasit:'stråling'},
+      {id:'b3',tekst:'Varm luft stiger i rommet',  fasit:'konveksjon'},
+      {id:'b4',tekst:'Is smelter i hånden',        fasit:'ledning'},
+      {id:'b5',tekst:'Bål varmer fra avstand',     fasit:'stråling'},
+      {id:'b6',tekst:'Varm sjokolade varmer opp kopp', fasit:'ledning'},
+      {id:'b7',tekst:'Kokende vann stiger til toppen', fasit:'konveksjon'},
+      {id:'b8',tekst:'Panelovn varmer rommet via luft', fasit:'konveksjon'},
+      {id:'b9',tekst:'Termoskanne holder varmen',  fasit:'stråling'},
+    ],
+    forklaring:'Varme overføres alltid fra varmt til kaldt, på tre måter: ledning (direkte kontakt), konveksjon (flytende stoffer/gass som beveger seg) og stråling (elektromagnetiske bølger – trenger ikke stoff).',
+    fakta:'En termos bruker vakuum mellom veggene for å stoppe alle tre varmeoverføringene – det er derfor kaffe holder seg varm så lenge!',
+    vanskelighet:'★★☆', navn:'Varmeoverføring'
+  },
+  {
+    id:4, type:'sortering', emoji:'⚡', vanskelighet:'★★☆',
+    tittel:'Fornybar eller ikke-fornybar energi?',
+    tekst:'Sorter energikildene i to grupper: fornybar (uuttømmelig) eller ikke-fornybar (tar slutt).',
+    hint:'💡 Fornybar = naturen fyller på igjen (sol, vind, vann). Ikke-fornybar = brukes opp (kull, olje, gass).',
+    navn:'Fornybar energi',
+    kategorier:[
+      {id:'fornybar',    ikon:'♻️', tittel:'Fornybar',      farge:'#4ade80'},
+      {id:'ikkefornybar',ikon:'⛽', tittel:'Ikke-fornybar',  farge:'#f87171'},
+    ],
+    brikker:[
+      {id:'e1',tekst:'☀️ Solenergi',    fasit:'fornybar'},
+      {id:'e2',tekst:'🛢️ Olje',          fasit:'ikkefornybar'},
+      {id:'e3',tekst:'💨 Vindenergi',   fasit:'fornybar'},
+      {id:'e4',tekst:'⛏️ Kull',          fasit:'ikkefornybar'},
+      {id:'e5',tekst:'💧 Vannkraft',    fasit:'fornybar'},
+      {id:'e6',tekst:'🔥 Naturgass',    fasit:'ikkefornybar'},
+      {id:'e7',tekst:'🌊 Tidevannsenergi',fasit:'fornybar'},
+      {id:'e8',tekst:'☢️ Uran (kjerne)',fasit:'ikkefornybar'},
+      {id:'e9',tekst:'🌿 Bioenergi',    fasit:'fornybar'},
+    ],
+    forklaring:'Fornybare energikilder fylles på av naturen i løpet av menneskers levetid. Ikke-fornybare er dannet over millioner av år og vil ta slutt. Norge er heldige – nesten all vår strøm kommer fra fornybar vannkraft!',
+    fakta:'Det tar ca. 300 millioner år å danne olje. Vi bruker opp millioner av år gammel energi på noen generasjoner.',
+    vanskelighet:'★★☆', navn:'Fornybar energi'
+  },
+  // ── FLERVALG med scenario ──
+  {
+    id:5, type:'flervalg', emoji:'🏔️', vanskelighet:'★★☆',
+    tittel:'Potensiell og kinetisk energi',
+    tekst:'En stein ligger på toppen av et fjell. Hva skjer med energien når den ruller ned?',
+    hint:'💡 Potensiell energi (høyde) → kinetisk energi (bevegelse). Energien bevares, men formen endres.',
+    navn:'Potensiell→kinetisk',
+    scenario:{ ikon:'🪨', beskrivelse:'En stein på 5 kg ligger på toppen av et fjell, 100 meter over bakken. Den begynner å rulle nedover.' },
+    alternativer:[
+      {id:'a', tekst:'Potensiell energi øker, kinetisk energi minker'},
+      {id:'b', tekst:'Potensiell energi minker, kinetisk energi øker'},
+      {id:'c', tekst:'Begge energiformene øker'},
+      {id:'d', tekst:'Energien forsvinner som varme'},
+    ],
+    fasit:'b',
+    forklaring:'Potensiell energi (Ep = mgh) avhenger av høyde. Når steinen faller, minker høyden og Ep. Samtidig øker farten og kinetisk energi (Ek = ½mv²). Energien omdannes fra potensiell til kinetisk – og litt til varme via friksjon.',
+    fakta:'Vannkraftverk bruker akkurat dette prinsippet: vann i høyden (potensiell energi) renner ned og driver turbiner (kinetisk → elektrisk).',
+  },
+  {
+    id:6, type:'flervalg', emoji:'☕', vanskelighet:'★☆☆',
+    tittel:'Varme flyter alltid én vei',
+    tekst:'Du legger en kald metallskje i en varm kopp kaffe. Hva skjer?',
+    hint:'💡 Varme flyter alltid fra varmt til kaldt – aldri motsatt.',
+    navn:'Varmestrøm',
+    scenario:{ ikon:'☕', beskrivelse:'En skje på 20°C legges i en kopp kaffe på 80°C.' },
+    alternativer:[
+      {id:'a', tekst:'Varme flyter fra skjeen til kaffen'},
+      {id:'b', tekst:'Varme flyter fra kaffen til skjeen'},
+      {id:'c', tekst:'Ingen varme flyter – de er i balanse'},
+      {id:'d', tekst:'Skjeen blir kaldere, kaffen blir varmere'},
+    ],
+    fasit:'b',
+    forklaring:'Varme flyter alltid spontant fra høyere til lavere temperatur. Kaffen (80°C) varmer opp skjeen (20°C) – aldri motsatt. De vil til slutt nå samme temperatur (termisk likevekt).',
+    fakta:'Dette er faktisk en naturlov – termodynamikkens 2. lov. Den forklarer blant annet hvorfor iskrem alltid smelter og aldri fryser av seg selv.',
+  },
+  {
+    id:7, type:'flervalg', emoji:'💡', vanskelighet:'★★☆',
+    tittel:'Energieffektivitet',
+    tekst:'En glødepære bruker 60 W og avgir 3 W som lys. Resten er varme. Hva er energieffektiviteten?',
+    hint:'💡 Effektivitet = nyttig energi ut / total energi inn × 100%',
+    navn:'Energieffektivitet',
+    scenario:{ ikon:'💡', beskrivelse:'Glødepære: 60 W inn. 3 W ut som lys. Resten som varme.' },
+    alternativer:[
+      {id:'a', tekst:'5% – svært lite energi blir til lys'},
+      {id:'b', tekst:'50% – halvparten blir til lys'},
+      {id:'c', tekst:'95% – nesten all energi blir til lys'},
+      {id:'d', tekst:'100% – energien bevares alltid'},
+    ],
+    fasit:'a',
+    forklaring:'Effektivitet = 3/60 × 100% = 5%. Bare 5% av energien i en glødepære blir til lys – 95% går tapt som varme. En LED-pære med 10 W kan gi like mye lys, dvs. ~30% effektivitet. Mye bedre!',
+    fakta:'EU forbød salg av glødepærer i 2012 nettopp på grunn av den dårlige energieffektiviteten. LED-pærer bruker opptil 90% mindre energi.',
+  },
+  {
+    id:8, type:'sortering', emoji:'🌍', vanskelighet:'★★★',
+    tittel:'Energikjeden i hverdagen',
+    tekst:'Sorter disse leddene i riktig energikjede – fra primærenergi til sluttbruk.',
+    hint:'💡 Energi omdannes i mange ledd: sol → plante → dyr → mat → kropp → bevegelse.',
+    navn:'Energikjede',
+    kategorier:[
+      {id:'primær', ikon:'🌞', tittel:'Primærenergi',  farge:'#facc15'},
+      {id:'omform',ikon:'⚙️', tittel:'Omdanning',      farge:'#fb923c'},
+      {id:'slutt',  ikon:'🏠', tittel:'Sluttbruk',      farge:'#4ade80'},
+    ],
+    brikker:[
+      {id:'k1',tekst:'☀️ Sollys treffer solcelle',     fasit:'primær'},
+      {id:'k2',tekst:'⚡ Strøm sendes i ledning',      fasit:'omform'},
+      {id:'k3',tekst:'💡 Lampen lyser i rommet',       fasit:'slutt'},
+      {id:'k4',tekst:'🌊 Vann faller i demning',       fasit:'primær'},
+      {id:'k5',tekst:'⚙️ Turbin spinner rundt',        fasit:'omform'},
+      {id:'k6',tekst:'🔌 Støvsuger kjøres i huset',    fasit:'slutt'},
+      {id:'k7',tekst:'🛢️ Olje brennes i kraftverk',    fasit:'primær'},
+      {id:'k8',tekst:'🏭 Generator produserer strøm',  fasit:'omform'},
+      {id:'k9',tekst:'📱 Mobil lades og brukes',       fasit:'slutt'},
+    ],
+    forklaring:'Energi gjennomgår mange omdanningsledd fra kilde til forbruker. Hvert ledd har tap, vanligvis som varme. En typisk energikjede fra kull til lys i pære har bare 10-15% virkningsgrad.',
+    fakta:'Strøm taper ca. 5-10% i overføringslinjene fra kraftverk til hjem. Det er grunnen til at kraftverk ofte bygges nær forbrukerne.',
+    vanskelighet:'★★★', navn:'Energikjede'
+  },
+  {
+    id:9, type:'flervalg', emoji:'🧊', vanskelighet:'★★☆',
+    tittel:'Faseoverganger og energi',
+    tekst:'Vann smelter fra is til vann ved 0°C. Hva skjer med temperaturen mens isen smelter?',
+    hint:'💡 Energien brukes til å bryte bindinger, ikke til å varme opp. Temperatur = kinetisk energi i molekylene.',
+    navn:'Smelting og energi',
+    scenario:{ ikon:'🧊', beskrivelse:'Is legges i en gryte. Varmen skrus på. Termometeret viser hva som skjer.' },
+    alternativer:[
+      {id:'a', tekst:'Temperaturen stiger jevnt fra −10°C til 100°C'},
+      {id:'b', tekst:'Temperaturen stopper på 0°C mens isen smelter, deretter stiger den'},
+      {id:'c', tekst:'Temperaturen synker mens isen smelter'},
+      {id:'d', tekst:'Temperaturen endrer seg ikke – is og vann har alltid 0°C'},
+    ],
+    fasit:'b',
+    forklaring:'Under smelting (faseovergang) brukes all tilsatt energi til å bryte bindingene mellom molekylene – ikke til å øke temperaturen. Temperaturen holder seg på 0°C til all isen er smeltet. Denne energien kalles smeltevarme.',
+    fakta:'Havis smelter i Arktis fordi den "sluker" enorme mengder varme uten at temperaturen stiger. Det er derfor Arktis fungerer som jordens "klimaanker"!',
+  },
+  {
+    id:10, type:'sortering', emoji:'🏠', vanskelighet:'★★★',
+    tittel:'Isolasjon i huset',
+    tekst:'Sorter tiltakene i huset etter hvilken varmeoverføring de primært hindrer.',
+    hint:'💡 Glassull stopper ledning. Tett vindu stopper konveksjon (trekk). Lav-e-glass stopper stråling.',
+    navn:'Isolasjon i huset',
+    kategorier:[
+      {id:'i_ledning',   ikon:'🧱', tittel:'Stopper ledning',   farge:'#fb923c'},
+      {id:'i_konveks',   ikon:'🪟', tittel:'Stopper strømning', farge:'#60a5fa'},
+      {id:'i_stråling',  ikon:'✨', tittel:'Stopper stråling',  farge:'#facc15'},
+    ],
+    brikker:[
+      {id:'i1',tekst:'Glassull i vegger',       fasit:'i_ledning'},
+      {id:'i2',tekst:'Lav-e glass i vindu',     fasit:'i_stråling'},
+      {id:'i3',tekst:'Tette fuger rundt vindu', fasit:'i_konveks'},
+      {id:'i4',tekst:'Styrofoam i gulv',        fasit:'i_ledning'},
+      {id:'i5',tekst:'Varmefolie bak radiator', fasit:'i_stråling'},
+      {id:'i6',tekst:'Tetting av luftlekkasje', fasit:'i_konveks'},
+    ],
+    forklaring:'God isolasjon hindrer alle tre varmeoverføringer: tykke vegger med glassull (ledning), tette vinduer uten trekk (konveksjon), og spesialglass som reflekterer infrarød stråling (stråling). Moderne passivhus reduserer varmetap med 90%!',
+    fakta:'Hus i Norge brukte 50% mer energi til oppvarming på 1970-tallet enn i dag, takket være bedre isolasjon og tetning.',
+    vanskelighet:'★★★', navn:'Isolasjon'
+  },
+];
+
+// ══════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════
+let aktivOppgave=0, løsteOppgaver=new Set();
+// Kobling-tilstand
+let koblingValgt=null, koblingState={};
+// Sortering-tilstand
+let sorteringState={}, sorteringPool=[];
+// Flervalg-tilstand
+let flervalg=null;
+
+// ══════════════════════════════════════════════════
+//  RENDER OPPGAVE
+// ══════════════════════════════════════════════════
+function renderOppgave(){
+  const opp=OPPGAVER[aktivOppgave];
+  const arena=document.getElementById('oppgave-arena');
+  arena.innerHTML='';
+  if(opp.type==='kobling')   arena.innerHTML=renderKobling(opp);
+  else if(opp.type==='sortering') arena.innerHTML=renderSortering(opp);
+  else if(opp.type==='flervalg')  arena.innerHTML=renderFlervalg(opp);
+  bindEvents(opp);
+}
+
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+function renderKobling(opp){
+  const vRows=shuffle(opp.venstre).map(k=>`
+    <div class="kobling-kort" id="kv-${k.id}" onclick="koblKlikk('venstre','${k.id}')">
+      <span class="kobling-ikon">${k.ikon}</span>${k.tekst}
+    </div>`).join('');
+  const hRows=shuffle(opp.høyre).map(h=>`
+    <div class="kobling-slot" id="ks-${h.id}" onclick="koblKlikk('høyre','${h.id}')">
+      <span style="font-size:1.2rem">${h.ikon}</span><span id="ks-tekst-${h.id}">${h.tekst}</span>
+    </div>`).join('');
+  return `<div class="kobling-arena">
+    <div class="kobling-kolonne"><div class="kobling-kolonne-tittel">📋 Energikilde / apparat</div>${vRows}</div>
+    <div class="kobling-midtstrek"></div>
+    <div class="kobling-kolonne"><div class="kobling-kolonne-tittel">⚡ Energiform / resultat</div>${hRows}</div>
+  </div>`;
+}
+
+function renderSortering(opp){
+  const brikker=opp.brikker.map(b=>`
+    <div class="brikke" id="br-${b.id}" onclick="sorterKlikk('pool','${b.id}')">${b.tekst}</div>`).join('');
+  const bokser=opp.kategorier.map(k=>`
+    <div class="sortering-boks" id="sb-${k.id}">
+      <div class="sortering-boks-tittel">
+        <span>${k.ikon}</span>
+        <span style="color:${k.farge}">${k.tittel}</span>
+      </div>
+      <div class="sortering-boks-innhold" id="sbi-${k.id}"></div>
+    </div>`).join('');
+  return `<div class="sortering-arena">
+    <div class="sortering-pool"><div class="sortering-pool-label">Dra brikker til riktig kategori:</div>${brikker}</div>
+    <div class="sortering-kategorier">${bokser}</div>
+  </div>`;
+}
+
+function renderFlervalg(opp){
+  const alts=opp.alternativer.map(a=>`
+    <div class="flervalg-alt" id="fa-${a.id}" onclick="flerVelg('${a.id}')">
+      <span style="font-family:var(--font-m);font-size:.8rem;color:var(--dim)">${a.id.toUpperCase()})</span>
+      ${a.tekst}
+    </div>`).join('');
+  return `<div class="flervalg-arena">
+    <div class="flervalg-scenario">
+      <div class="flervalg-ikon">${opp.scenario.ikon}</div>
+      <div class="flervalg-beskrivelse">${opp.scenario.beskrivelse}</div>
+    </div>
+    <div class="flervalg-alternativer">${alts}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  INTERAKSJON
+// ══════════════════════════════════════════════════
+function bindEvents(){}  // Events er inline
+
+// Kobling
+function koblKlikk(side, id){
+  const opp=OPPGAVER[aktivOppgave];
+  if(side==='venstre'){
+    // Velg kilde
+    if(koblingValgt===id){ koblingValgt=null; document.getElementById(`kv-${id}`)?.classList.remove('valgt'); return; }
+    if(koblingValgt) document.getElementById(`kv-${koblingValgt}`)?.classList.remove('valgt');
+    koblingValgt=id;
+    document.getElementById(`kv-${id}`)?.classList.add('valgt');
+  } else {
+    // Koble til mål
+    if(!koblingValgt) return;
+    // Fjern gammel kobling for denne kilden
+    const gammel=koblingState[koblingValgt];
+    if(gammel) { document.getElementById(`ks-${gammel}`)?.classList.remove('fylt'); }
+    // Fjern gammel kilde for dette målet
+    Object.entries(koblingState).forEach(([k,v])=>{ if(v===id){ delete koblingState[k]; document.getElementById(`kv-${k}`)?.classList.remove('koblet'); } });
+    koblingState[koblingValgt]=id;
+    document.getElementById(`kv-${koblingValgt}`)?.classList.remove('valgt');
+    document.getElementById(`kv-${koblingValgt}`)?.classList.add('koblet');
+    const slot=document.getElementById(`ks-${id}`);
+    if(slot){ slot.classList.add('fylt'); }
+    const tekst=document.getElementById(`ks-tekst-${id}`);
+    const kilde=opp.venstre.find(k=>k.id===koblingValgt);
+    if(tekst&&kilde) tekst.textContent=`${kilde.ikon} ${kilde.tekst} → ${opp.høyre.find(h=>h.id===id)?.tekst||''}`;
+    koblingValgt=null;
+    skjulResultat();
+  }
+}
+
+// Sortering – klikk-basert (velg + plasser)
+let sorterValgt=null;
+function sorterKlikk(fraKat, id){
+  const opp=OPPGAVER[aktivOppgave];
+  const el=document.getElementById(`br-${id}`);
+  if(!el) return;
+  if(sorterValgt===id){ sorterValgt=null; el.classList.remove('valgt'); return; }
+  if(sorterValgt){ document.getElementById(`br-${sorterValgt}`)?.classList.remove('valgt'); }
+  sorterValgt=id; el.classList.add('valgt');
+}
+
+function sorterTilKat(katId){
+  if(!sorterValgt) return;
+  const opp=OPPGAVER[aktivOppgave];
+  const el=document.getElementById(`br-${sorterValgt}`);
+  const kat=document.getElementById(`sbi-${katId}`);
+  if(!el||!kat) return;
+  // Flytt brikken til kategorien
+  sorteringState[sorterValgt]=katId;
+  el.classList.remove('valgt');
+  el.setAttribute('onclick',`sorterFraKat('${katId}','${sorterValgt}',event)`);
+  kat.appendChild(el);
+  sorterValgt=null;
+  skjulResultat();
+}
+
+function sorterFraKat(katId, id, event){
+  if(event) event.stopPropagation();  // Hindre event delegation fra å trigge sorterTilKat
+  // Flytt tilbake til pool
+  const el=document.getElementById(`br-${id}`);
+  const pool=document.querySelector('.sortering-pool');
+  if(!el||!pool) return;
+  delete sorteringState[id];
+  el.classList.remove('valgt');
+  el.setAttribute('onclick',`sorterKlikk('pool','${id}')`);
+  pool.appendChild(el);
+  sorterValgt=null;  // Reset valgt tilstand
+  skjulResultat();
+}
+
+// Klikk på sorterings-boks = plasser valgt brikke
+document.addEventListener('click',e=>{
+  const boks=e.target.closest('.sortering-boks');
+  // Ikke trigger hvis man klikket på en brikke (som håndterer seg selv via onclick)
+  if(boks&&sorterValgt&&!e.target.closest('.brikke')){
+    const katId=boks.id.replace('sb-','');
+    sorterTilKat(katId);
+  }
+});
+
+// Flervalg
+function flerVelg(id){
+  flervalg=id;
+  document.querySelectorAll('.flervalg-alt').forEach(el=>{
+    el.classList.remove('valgt');
+  });
+  document.getElementById(`fa-${id}`)?.classList.add('valgt');
+  skjulResultat();
+}
+
+// ══════════════════════════════════════════════════
+//  SJEKK
+// ══════════════════════════════════════════════════
+function sjekkSvar(){
+  const opp=OPPGAVER[aktivOppgave];
+  let korrekt=false, tips=[];
+
+  if(opp.type==='kobling'){
+    let feil=0;
+    opp.venstre.forEach(k=>{
+      const svar=koblingState[k.id];
+      const riktig=opp.fasit[k.id];
+      if(!svar){ tips.push(`<strong>${k.tekst}</strong> er ikke koblet.`); feil++; }
+      else if(svar!==riktig){
+        tips.push(`<strong>${k.tekst}</strong> er koblet feil.`); feil++;
+        document.getElementById(`kv-${k.id}`)?.classList.add('feil-kobling');
+        document.getElementById(`ks-${svar}`)?.classList.add('fylt-feil');
+      }
+    });
+    korrekt=feil===0;
+  } else if(opp.type==='sortering'){
+    let feil=0;
+    opp.brikker.forEach(b=>{
+      const svar=sorteringState[b.id];
+      if(!svar){ tips.push(`<strong>${b.tekst}</strong> er ikke sortert.`); feil++; }
+      else if(svar!==b.fasit){ tips.push(`<strong>${b.tekst}</strong> er i feil kategori.`); feil++; }
+    });
+    korrekt=feil===0;
+  } else if(opp.type==='flervalg'){
+    if(!flervalg){ tips.push('Velg et alternativ.'); }
+    else if(flervalg!==opp.fasit){
+      tips.push(`Det er ikke riktig. Se hint og prøv igjen.`);
+      document.getElementById(`fa-${flervalg}`)?.classList.add('feil-svar');
+      document.getElementById(`fa-${opp.fasit}`)?.classList.add('korrekt-svar');
+    }
+    korrekt=flervalg===opp.fasit;
+  }
+
+  if(korrekt){ løsteOppgaver.add(aktivOppgave); oppdaterFremgang(); }
+  visResultat(korrekt, opp, tips);
+}
+
+function visResultat(ok, opp, tips){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); void r.offsetWidth;
+  if(ok){
+    r.innerHTML=`
+      <div class="res-tittel korrekt">✅ Riktig! ${opp.emoji} ${opp.navn}</div>
+      <div class="res-felt"><div class="res-felt-label">🧠 Forklaring</div><div class="res-felt-verdi">${opp.forklaring}</div></div>
+      <div class="res-felt"><div class="res-felt-label">💡 Visste du at</div><div class="res-felt-verdi">${opp.fakta}</div></div>`;
+    r.classList.add('synlig','korrekt');
+  } else {
+    r.innerHTML=`<div class="res-tittel feil">❌ Ikke helt riktig ennå</div>
+      <div class="res-feil-tips">${tips.length?tips.slice(0,4).map(t=>`• ${t}`).join('<br>'):'• Sjekk svarene dine og prøv igjen.'}</div>`;
+    r.classList.add('synlig','feil');
+  }
+}
+
+function skjulResultat(){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); r.innerHTML='';
+}
+
+// ══════════════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════════════
+function tilbakestill(){
+  koblingValgt=null; koblingState={}; sorteringState={}; sorterValgt=null; flervalg=null;
+  skjulResultat(); renderOppgave();
+}
+
+function lastOppgave(idx){
+  aktivOppgave=idx;
+  const opp=OPPGAVER[idx];
+  koblingValgt=null; koblingState={}; sorteringState={}; sorterValgt=null; flervalg=null;
+  document.getElementById('oppg-nr').textContent=String(idx+1).padStart(2,'0');
+  document.getElementById('oppg-tittel').textContent=`${opp.emoji} ${opp.tittel}`;
+  document.getElementById('oppg-tekst').textContent=opp.tekst;
+  document.getElementById('oppg-hint').textContent=opp.hint;
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  skjulResultat(); renderOppgave(); oppdaterFremgang();
+}
+
+function byggNavigasjon(){
+  const nav=document.getElementById('oppgave-nav');
+  const rad=document.getElementById('fremgang-rad');
+  nav.innerHTML=''; rad.innerHTML='';
+  OPPGAVER.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='oppg-btn'+(i===0?' active':'');
+    btn.textContent=`${o.emoji} ${o.navn}`; btn.title=o.vanskelighet;
+    btn.onclick=()=>lastOppgave(i); nav.appendChild(btn);
+    const dot=document.createElement('div');
+    dot.className='fremgang-dot'+(i===0?' aktiv':'');
+    dot.id=`dot-${i}`; dot.textContent=i+1; dot.title=o.tittel;
+    dot.onclick=()=>lastOppgave(i); dot.style.cursor='pointer';
+    rad.appendChild(dot);
+  });
+}
+
+function oppdaterFremgang(){
+  OPPGAVER.forEach((_,i)=>{
+    const dot=document.getElementById(`dot-${i}`);
+    if(!dot) return;
+    dot.classList.remove('løst','aktiv');
+    if(løsteOppgaver.has(i)) dot.classList.add('løst');
+    else if(i===aktivOppgave) dot.classList.add('aktiv');
+  });
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===aktivOppgave));
+}
+
+byggNavigasjon();
+lastOppgave(0);
+</script>
+</body>
+</html>

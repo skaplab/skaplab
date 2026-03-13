@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Seksualundervisning</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf8f5;
+  --surface:#ffffff;
+  --border:#e8e2d9;
+  --text:#1a1612;
+  --dim:#7a7168;
+  --accent:#c2624a;
+  --accent2:#4a7fb5;
+  --accent3:#5a8a5e;
+  --warm:#f0e8dd;
+  --font-d:'Fraunces',serif;
+  --font-b:'Plus Jakarta Sans',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-b);
+  display:flex;flex-direction:column;
+}
+
+/* Subtle grain texture */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+  opacity:.4;
+}
+
+/* ── NAV ── */
+nav{
+  position:relative;z-index:100;
+  background:rgba(250,248,245,.96);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.8rem;font-weight:500;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.9rem;color:var(--accent);font-weight:600}
+.nav-counter{
+  font-family:var(--font-b);font-size:.78rem;font-weight:600;
+  color:var(--dim);letter-spacing:.04em;
+}
+
+/* ── KARUSELL CONTAINER ── */
+.karusell-wrap{
+  flex:1;overflow:hidden;position:relative;z-index:1;
+  display:flex;flex-direction:column;
+}
+
+/* ── SLIDES ── */
+.slides-viewport{
+  flex:1;overflow:hidden;position:relative;
+}
+.slide{
+  position:absolute;inset:0;
+  display:none;
+  overflow-y:auto;
+  background:var(--bg);
+}
+.slide.aktiv{
+  display:grid;
+  z-index:2;
+  animation:slideInn .32s cubic-bezier(.22,1,.36,1) both;
+}
+.slide.aktiv.fra-venstre{
+  animation:slideInnVenstre .32s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes slideInn{
+  from{opacity:0;transform:translateX(40px)}
+  to{opacity:1;transform:translateX(0)}
+}
+@keyframes slideInnVenstre{
+  from{opacity:0;transform:translateX(-40px)}
+  to{opacity:1;transform:translateX(0)}
+}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{
+  height:3px;background:var(--border);flex-shrink:0;
+}
+.progress-bar{
+  height:100%;background:var(--accent);
+  transition:width .4s cubic-bezier(.22,1,.36,1);
+}
+
+/* ── NAVIGATION ── */
+.nav-kontroller{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 24px;border-top:1px solid var(--border);
+  background:rgba(250,248,245,.96);backdrop-filter:blur(12px);
+  flex-shrink:0;z-index:100;position:relative;
+}
+.nav-pil{
+  width:42px;height:42px;border-radius:50%;
+  border:1.5px solid var(--border);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;color:var(--text);font-size:1.1rem;
+  flex-shrink:0;
+}
+.nav-pil:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:rgba(194,98,74,.05)}
+.nav-pil:disabled{opacity:.3;cursor:default}
+
+/* Prikker */
+.prikker{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:60%;}
+.prikk{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--border);cursor:pointer;
+  transition:all .25s;border:none;padding:0;
+}
+.prikk.aktiv{background:var(--accent);transform:scale(1.3)}
+.prikk:hover{background:var(--dim)}
+
+/* ════════════════════════════════════
+   SLIDE LAYOUTS
+════════════════════════════════════ */
+
+/* -- INTRO SLIDE (tittel) -- */
+.slide-intro{
+  grid-template-columns:1fr;
+  place-items:center;
+  background:linear-gradient(145deg,#1a1612 0%,#2d2520 50%,#1a1612 100%);
+  color:white;padding:40px;text-align:center;
+}
+.slide-intro .stor-tittel{
+  font-family:var(--font-d);
+  font-size:clamp(2rem,5vw,3.5rem);
+  font-weight:700;letter-spacing:-.03em;
+  line-height:1.1;margin-bottom:16px;
+  color:white;
+}
+.slide-intro .stor-tittel em{font-style:italic;color:#f4a261}
+.slide-intro .intro-sub{
+  font-size:clamp(.9rem,1.8vw,1.1rem);
+  color:rgba(255,255,255,.55);
+  max-width:520px;line-height:1.7;margin-bottom:32px;
+}
+.tema-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px}
+.chip{
+  padding:6px 14px;border-radius:100px;
+  font-size:.78rem;font-weight:600;letter-spacing:.02em;
+  border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.7);background:rgba(255,255,255,.06);
+}
+
+/* -- STANDARD SLIDE (to kolonner) -- */
+.slide-2kol{
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto 1fr;
+  gap:0;
+}
+.slide-2kol .kol-venstre{
+  padding:36px 32px 36px 40px;
+  display:flex;flex-direction:column;justify-content:center;
+  border-right:1px solid var(--border);
+}
+.slide-2kol .kol-hoyre{
+  padding:36px 40px 36px 32px;
+  display:flex;flex-direction:column;justify-content:center;
+  background:var(--warm);
+}
+
+/* -- BRED SLIDE (full bredde) -- */
+.slide-bred{
+  grid-template-columns:1fr;
+  padding:36px 48px;
+  align-content:start;
+  gap:20px;
+}
+.slide-bred.sentert{
+  place-items:center;
+  text-align:center;
+  padding:40px;
+}
+
+/* -- 3-KOLONNE -- */
+.slide-3kol{
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+}
+.slide-3kol > div{
+  padding:32px 28px;
+  border-right:1px solid var(--border);
+}
+.slide-3kol > div:last-child{border-right:none}
+
+/* -- HEADER rad for alle slides -- */
+.slide-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:18px;
+}
+.slide-nr{
+  font-family:var(--font-b);font-size:.62rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+}
+.slide-kategori{
+  font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;
+  margin-left:auto;
+}
+
+/* -- TITLER -- */
+.slide-tittel{
+  font-family:var(--font-d);
+  font-size:clamp(1.3rem,2.5vw,2rem);
+  font-weight:700;letter-spacing:-.02em;
+  line-height:1.2;margin-bottom:10px;
+}
+.slide-tittel em{font-style:italic}
+.slide-undertittel{
+  font-size:.88rem;color:var(--dim);line-height:1.6;
+  margin-bottom:20px;
+}
+
+/* -- INNHOLDSELEMENTER -- */
+.fakta-liste{display:flex;flex-direction:column;gap:10px}
+.fakta-item{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,.7);border:1px solid var(--border);
+}
+.fakta-item-varm{background:rgba(194,98,74,.06);border-color:rgba(194,98,74,.15)}
+.fakta-item-blå{background:rgba(74,127,181,.06);border-color:rgba(74,127,181,.15)}
+.fakta-item-grønn{background:rgba(90,138,94,.06);border-color:rgba(90,138,94,.15)}
+.fakta-ikon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.fakta-tekst{font-size:.82rem;line-height:1.6;color:var(--text)}
+.fakta-tekst strong{font-weight:600}
+
+.boks{
+  border-radius:14px;padding:18px 20px;
+  margin-top:14px;
+}
+.boks-varm{background:rgba(194,98,74,.08);border:1px solid rgba(194,98,74,.18)}
+.boks-blå{background:rgba(74,127,181,.08);border:1px solid rgba(74,127,181,.18)}
+.boks-grønn{background:rgba(90,138,94,.08);border:1px solid rgba(90,138,94,.18)}
+.boks-lys{background:var(--warm);border:1px solid var(--border)}
+.boks-tittel{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.boks-tittel.varm{color:var(--accent)}
+.boks-tittel.blå{color:var(--accent2)}
+.boks-tittel.grønn{color:var(--accent3)}
+.boks-tekst{font-size:.82rem;line-height:1.65;color:var(--text)}
+
+/* Stor illustrasjonstekst */
+.illustrasjon-tall{
+  font-family:var(--font-d);font-size:clamp(3rem,8vw,6rem);
+  font-weight:700;line-height:1;letter-spacing:-.04em;
+}
+.illustrasjon-label{
+  font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--dim);margin-top:4px;
+}
+
+/* Tidslinje */
+.tidslinje{display:flex;flex-direction:column;gap:0}
+.tl-item{
+  display:grid;grid-template-columns:60px 1fr;
+  gap:0 16px;position:relative;
+}
+.tl-item:not(:last-child)::before{
+  content:'';position:absolute;left:29px;top:36px;bottom:-4px;
+  width:2px;background:var(--border);
+}
+.tl-sirkel{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;color:white;flex-shrink:0;
+  margin:7px auto 0;
+}
+.tl-innhold{padding:8px 0 14px}
+.tl-tittel{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.tl-tekst{font-size:.76rem;line-height:1.55;color:var(--dim)}
+
+/* 2x2 grid */
+.fire-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.fire-kort{
+  border-radius:12px;padding:14px 16px;
+  border:1px solid var(--border);background:rgba(255,255,255,.6);
+}
+.fire-kort-ikon{font-size:1.3rem;margin-bottom:6px}
+.fire-kort-tittel{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.fire-kort-tekst{font-size:.73rem;line-height:1.55;color:var(--dim)}
+
+/* Fargedede seksjoner */
+.farge-header{
+  font-family:var(--font-d);
+  font-size:clamp(1.1rem,2vw,1.5rem);font-weight:700;
+  margin-bottom:8px;line-height:1.3;
+}
+.stor-sitat{
+  font-family:var(--font-d);
+  font-size:clamp(1.2rem,2.5vw,1.8rem);
+  font-style:italic;font-weight:300;
+  line-height:1.5;color:var(--dim);
+  max-width:680px;
+}
+
+/* Tag liste */
+.tag-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag{
+  padding:6px 14px;border-radius:100px;
+  font-size:.78rem;font-weight:500;
+  border:1px solid var(--border);color:var(--dim);
+  background:rgba(255,255,255,.6);
+}
+.tag.varm{border-color:rgba(194,98,74,.3);color:var(--accent);background:rgba(194,98,74,.06)}
+.tag.blå{border-color:rgba(74,127,181,.3);color:var(--accent2);background:rgba(74,127,181,.06)}
+.tag.grønn{border-color:rgba(90,138,94,.3);color:var(--accent3);background:rgba(90,138,94,.06)}
+
+/* Kategorifarger */
+.kat-pubertet{background:rgba(194,98,74,.12);color:var(--accent)}
+.kat-kropp{background:rgba(74,127,181,.12);color:var(--accent2)}
+.kat-helse{background:rgba(90,138,94,.12);color:var(--accent3)}
+.kat-identitet{background:rgba(130,80,160,.12);color:#8250a0}
+.kat-relasjoner{background:rgba(180,100,60,.12);color:#b46438}
+.kat-hjelp{background:rgba(40,120,140,.12);color:#28788c}
+
+/* Avsluttende slide */
+.slide-slutt{
+  grid-template-columns:1fr;
+  place-items:center;
+  background:linear-gradient(145deg,#f0e8dd 0%,#faf8f5 60%,#e8f0e8 100%);
+  padding:40px;text-align:center;
+}
+
+/* Scrollbar */
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+@media(max-width:800px){
+  .slide-2kol{grid-template-columns:1fr}
+  .slide-2kol .kol-venstre{border-right:none;border-bottom:1px solid var(--border);padding:24px}
+  .slide-2kol .kol-hoyre{padding:24px}
+  .slide-3kol{grid-template-columns:1fr}
+  .slide-3kol>div{border-right:none;border-bottom:1px solid var(--border)}
+  .slide-bred{padding:24px}
+  .fire-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-tittel">Seksualundervisning</span>
+  </div>
+  <div class="nav-counter" id="nav-counter">1 / 18</div>
+</nav>
+
+<div class="karusell-wrap">
+  <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <div class="slides-viewport" id="viewport">
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 1 – INTRO
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-intro aktiv" id="slide-0">
+      <div>
+        <div class="stor-tittel">Kropp, <em>identitet</em><br>og relasjoner</div>
+        <p class="intro-sub">En innføring i alt du trenger å vite om kropp, seksualitet, helse og relasjoner. Alt presentert på en åpen, respektfull og faktabasert måte.</p>
+        <div class="tema-chips">
+          <div class="chip">🌱 Pubertet</div>
+          <div class="chip">🩸 Menstruasjon</div>
+          <div class="chip">💊 Prevensjon</div>
+          <div class="chip">🤰 Fosterutvikling</div>
+          <div class="chip">🦠 SOI</div>
+          <div class="chip">🌈 Seksualitet</div>
+          <div class="chip">🏳️‍🌈 Kjønnsidentitet</div>
+          <div class="chip">❤️ Relasjoner</div>
+          <div class="chip">🤝 Grenser & samtykke</div>
+          <div class="chip">📞 Hjelp & støtte</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 2 – PUBERTET INTRO
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-1">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">01</span>
+          <span class="slide-kategori kat-pubertet">Pubertet</span>
+        </div>
+        <h2 class="slide-tittel">Hva er <em>pubertet?</em></h2>
+        <p class="slide-undertittel">Puberteten er en naturlig periode der kroppen forandrer seg fra barn til voksen. Den styres av hormoner.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">⏱️</span>
+            <div class="fakta-tekst"><strong>Når starter det?</strong> Jenter: typisk 8–13 år. Gutter: typisk 9–14 år. Det er normalt med store variasjoner.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">⚗️</span>
+            <div class="fakta-tekst"><strong>Hva skjer?</strong> Hypofysen i hjernen sender hormoner (østrogen og testosteron) som setter i gang forandringene.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">⏳</span>
+            <div class="fakta-tekst"><strong>Varighet:</strong> Puberteten varer vanligvis 2–5 år. Alle er forskjellige – det finnes ingen «riktig» tempo.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent)">Hormonene tar styringen</div>
+        <p style="font-size:.83rem;line-height:1.7;color:var(--dim);margin-bottom:16px">Hypofysen (en liten kjertel i hjernen) starter å sende signaler til kjønnskjertlene:</p>
+        <div class="tidslinje">
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:var(--accent)">1</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Hypofysen aktiveres</div>
+              <div class="tl-tekst">Sender LH og FSH-hormoner til eggstokker eller testikler</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#e07b55">2</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Kjønnskjertlene svarer</div>
+              <div class="tl-tekst">Eggstokkene produserer østrogen. Testiklene produserer testosteron.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#c25840">3</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Kroppen forandres</div>
+              <div class="tl-tekst">Hormonene når ut i blodet og setter i gang alle de synlige endringene</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 3 – PUBERTET jenter/gutter
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-2">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">02</span>
+          <span class="slide-kategori kat-pubertet">Pubertet</span>
+        </div>
+        <h2 class="slide-tittel">Forandringer i <em>jentekroppen</em></h2>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">📐</span>
+            <div class="fakta-tekst"><strong>Høyde og hofte:</strong> Rask vekst, hoftene utvides, kroppen blir mer kurvet</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🌸</span>
+            <div class="fakta-tekst"><strong>Bryster:</strong> Begynner å utvikle seg, ofte med ømhet. Størrelse varierer svært mye</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🌿</span>
+            <div class="fakta-tekst"><strong>Kroppshår:</strong> Vokser i armhule og skambein. Leggene kan også bli mer behåret</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🩸</span>
+            <div class="fakta-tekst"><strong>Menstruasjon:</strong> Starter som regel 2–3 år etter at brystene begynner å utvikle seg</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">💧</span>
+            <div class="fakta-tekst"><strong>Utflod:</strong> Hvitaktig/gjennomsiktig væske fra vagina er normalt og er tegn på sunn hormonfunksjon</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="slide-header" style="margin-bottom:18px">
+          <span class="slide-kategori kat-kropp" style="margin-left:0">Guttekroppen</span>
+        </div>
+        <h2 class="slide-tittel">Forandringer i <em>guttekroppen</em></h2>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">📐</span>
+            <div class="fakta-tekst"><strong>Høyde:</strong> Kraftig vekstspurt, skuldrene bredner seg</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">🎙️</span>
+            <div class="fakta-tekst"><strong>Stemmen:</strong> Stemmebåndet vokser – stemmen "knekker" og bli dypere</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">🌿</span>
+            <div class="fakta-tekst"><strong>Kroppshår:</strong> Skjegganlegg, armhule, skambein, kroppshår øker</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">💪</span>
+            <div class="fakta-tekst"><strong>Muskler:</strong> Muskelmassen øker, testiklene og penis vokser</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">💦</span>
+            <div class="fakta-tekst"><strong>Ereksjoner og sædavgang:</strong> Kan oppleve spontane ereksjoner og våte drømmer – helt normalt</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 4 – MENSTRUASJON
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-3">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">03</span>
+          <span class="slide-kategori kat-pubertet">Menstruasjon</span>
+        </div>
+        <h2 class="slide-tittel">Menstruasjonssyklusen</h2>
+        <p class="slide-undertittel">Menstruasjonssyklusen er en månedlig syklus som forbereder kroppen for en eventuell graviditet.</p>
+        <div class="tidslinje">
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#c2624a">1</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Dag 1–5: Menstruasjon</div>
+              <div class="tl-tekst">Livmorslimhinnen løsner og blør ut gjennom vagina. Kan gi kramper (dysmenorré)</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#e07b55">2</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Dag 6–13: Follikelfase</div>
+              <div class="tl-tekst">Et egg modnes i eggstokken. Ny slimhinne bygges opp av østrogen</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#5a8a5e">3</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Dag 14: Eggløsning (ovulasjon)</div>
+              <div class="tl-tekst">Egget slippes fra eggstokken og reiser ned egglederen. Fertil periode</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#4a7fb5">4</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Dag 15–28: Lutealfase</div>
+              <div class="tl-tekst">Dersom egget ikke befruktes, synker progesteronnivået og syklusen starter på nytt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent)">Praktisk om mensen</div>
+        <div class="fakta-liste" style="margin-bottom:14px">
+          <div class="fakta-item">
+            <span class="fakta-ikon">📅</span>
+            <div class="fakta-tekst"><strong>Sykluslengde:</strong> Normalt 21–35 dager. Varierer fra person til person og fra måned til måned</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🩸</span>
+            <div class="fakta-tekst"><strong>Blødning:</strong> Varer 3–7 dager. Mengden blod er typisk 20–80 ml per syklus</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">😣</span>
+            <div class="fakta-tekst"><strong>PMS (premenstruelt syndrom):</strong> Humørsvingninger, ømhet, oppblåsthet dagene før mensen – svært vanlig</div>
+          </div>
+        </div>
+        <div class="boks boks-lys">
+          <div class="boks-tittel varm">Hygieneprodukt</div>
+          <div class="boks-tekst">Bind (ytre), tampong (innvendig), menstruasjonskop (innvendig, gjenbrukbar), menstruasjonstrusertser. Alle er like gode – velg det som passer deg.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 5 – ONANI
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-4">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">04</span>
+          <span class="slide-kategori kat-kropp">Kropp & seksualitet</span>
+        </div>
+        <h2 class="slide-tittel">Onani – å utforske <em>kroppen sin</em></h2>
+        <p class="slide-undertittel">Onani er seksuell stimulering av seg selv. Det er helt normalt, vanlig og harmløst – uavhengig av kjønn og alder.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">✅</span>
+            <div class="fakta-tekst"><strong>Normalt:</strong> De aller fleste mennesker onanerer – det er en normal del av seksualiteten og det å bli kjent med kroppen sin</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🚫</span>
+            <div class="fakta-tekst"><strong>Myter som er feil:</strong> Onani gjør deg ikke syk, blind, steril eller «brukt opp». Det finnes ingen skadelig mengde</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🔒</span>
+            <div class="fakta-tekst"><strong>Privat:</strong> Onani er noe som skjer privat. Det er aldri greit å onanere foran andre uten samtykke</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="boks boks-varm" style="margin-bottom:16px">
+          <div class="boks-tittel varm">Orgasme</div>
+          <div class="boks-tekst">En orgasme er en intens, behagelig muskelsammentrekning som kan oppleves under seksuell stimulering. Det er en fysiologisk reaksjon – som hosting eller nysing – og er ikke knyttet til moral eller verdier.</div>
+        </div>
+        <div class="boks boks-lys">
+          <div class="boks-tittel">Kroppslige soner</div>
+          <div class="boks-tekst">Genitalia (penis, vagina, klitoris) er de vanligste erogene sonene, men berøring kan oppleves behagelig mange steder på kroppen. Klitoris hos jenter inneholder ca. 8 000 nerveender – den er primært et lystorgan.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 6 – SEX OG SAMLIV
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-5">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">05</span>
+          <span class="slide-kategori kat-kropp">Seksualitet</span>
+        </div>
+        <h2 class="slide-tittel">Sex og <em>samliv</em></h2>
+        <p class="slide-undertittel">Seksuell aktivitet er en naturlig del av livet for de fleste voksne. Det viktigste er samtykke, respekt og kommunikasjon.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">🤝</span>
+            <div class="fakta-tekst"><strong>Samtykke er alltid nødvendig.</strong> Begge (eller alle) parter må gi et klart, frivillig ja. Taushet er ikke samtykke. Samtykke kan trekkes tilbake.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">💬</span>
+            <div class="fakta-tekst"><strong>Kommunikasjon:</strong> Å snakke om grenser, ønsker og behov er viktig i alle seksuelle relasjoner</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">📜</span>
+            <div class="fakta-tekst"><strong>Aldersgrense:</strong> Den seksuelle lavalder i Norge er <strong>16 år</strong>. Under 16 år er det straffbart for en voksen å ha sex med deg</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent2)">Ulike typer seksuell aktivitet</div>
+        <p style="font-size:.82rem;color:var(--dim);margin-bottom:14px;line-height:1.6">Det finnes mange former for seksuell nærhet og aktivitet. Alle har lik verdi – intet er mer «ekte» enn noe annet.</p>
+        <div class="fire-grid">
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">🤗</div>
+            <div class="fire-kort-tittel">Kyssing & klemming</div>
+            <div class="fire-kort-tekst">Intimitet og nærhet – behagelig og vanlig</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">🖐️</div>
+            <div class="fire-kort-tittel">Masturbasjon (felles)</div>
+            <div class="fire-kort-tekst">Stimulering av hverandre med hender</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">💋</div>
+            <div class="fire-kort-tittel">Oralsex</div>
+            <div class="fire-kort-tekst">Seksuell stimulering med munnen – SOI kan overføres</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">❤️</div>
+            <div class="fire-kort-tittel">Vaginalt/analt samleie</div>
+            <div class="fire-kort-tekst">Krever prevensjon og/eller kondom</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 7 – FOSTERUTVIKLING
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-6">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">06</span>
+          <span class="slide-kategori kat-kropp">Reproduksjon</span>
+        </div>
+        <h2 class="slide-tittel">Fra befruktning til <em>fødsel</em></h2>
+        <div class="tidslinje">
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#4a7fb5">1</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Befruktning</div>
+              <div class="tl-tekst">En sædcelle trenger gjennom eggcellens vegg i egglederen. DNA fra begge foreldre kombineres til et unikt foster (zygote)</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#5a8a5e">2</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Uke 1–8: Embryofase</div>
+              <div class="tl-tekst">Cellen deler seg raskt. Fester seg til livmorveggen. Alle organer anlegges. Hjertet starter å slå (~uke 6)</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#c2624a">3</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Uke 9–40: Fosterfase</div>
+              <div class="tl-tekst">Organene modnes, kroppen vokser. Hjernen utvikles. Uke 20: bevegelser kjennes. Uke 28: levedyktig</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#8250a0">4</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Uke 38–42: Fødsel</div>
+              <div class="tl-tekst">Livmoren trekker seg sammen. Barnet fødes vaginalt eller via keisersnitt</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent2)">Viktige fakta</div>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">🥚</span>
+            <div class="fakta-tekst"><strong>Eggcellen</strong> er den største cellen i kroppen. Kvinner er født med alle eggene de noensinne vil ha (~1–2 millioner)</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">🏊</span>
+            <div class="fakta-tekst"><strong>Sædceller:</strong> Menn produserer ca. 300 millioner sædceller per dag. Bare én trenger å nå frem</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">👥</span>
+            <div class="fakta-tekst"><strong>Tvillinger:</strong> Eneggede (identiske) fra én zygote. Toeggede (ikke-identiske) fra to befruktede egg</div>
+          </div>
+          <div class="fakta-item fakta-item-blå">
+            <span class="fakta-ikon">❓</span>
+            <div class="fakta-tekst"><strong>Spontanabort:</strong> Ca. 15–20% av kjente graviditeter ender i spontanabort, oftest tidlig. Svært vanlig</div>
+          </div>
+        </div>
+        <div class="boks boks-lys" style="margin-top:12px">
+          <div class="boks-tekst">Graviditet kan oppstå dersom ubeskyttet vaginalt samleie finner sted i den fertile perioden – selv første gang.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 8 – PREVENSJON
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-bred" id="slide-7">
+      <div>
+        <div class="slide-header">
+          <span class="slide-nr">07</span>
+          <span class="slide-kategori kat-helse">Prevensjon</span>
+        </div>
+        <h2 class="slide-tittel">Prevensjon – beskytt deg og <em>partneren</em></h2>
+        <p class="slide-undertittel">Prevensjon brukes for å unngå uønsket graviditet. <strong>Bare kondom beskytter også mot seksuelt overførbare infeksjoner (SOI).</strong></p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">🛡️</span>
+          <strong style="font-size:.82rem">Kondom (ekstern)</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Trekkes over penis. 98% effektivt (riktig bruk). Eneste som beskytter mot SOI. Tilgjengelig uten resept.</span>
+          <span class="tag varm" style="font-size:.7rem">Anbefales alltid med ny partner</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">🛡️</span>
+          <strong style="font-size:.82rem">Intern kondom (femidom)</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Settes inn i vagina. Beskytter også mot SOI. 95% effektivt (riktig bruk).</span>
+          <span class="tag varm" style="font-size:.7rem">Beskytter mot SOI</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">💊</span>
+          <strong style="font-size:.82rem">P-piller</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Hormoner (østrogen + gestagen) som hindrer eggløsning. 99%+ effektivt. Krever resept. Tas daglig.</span>
+          <span class="tag blå" style="font-size:.7rem">Ingen SOI-beskyttelse</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">🩹</span>
+          <strong style="font-size:.82rem">P-plaster / P-ring</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Hormoner via hud (plaster) eller skjeden (ring). Byttes ukentlig/månedlig.</span>
+          <span class="tag blå" style="font-size:.7rem">Ingen SOI-beskyttelse</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">🔩</span>
+          <strong style="font-size:.82rem">Spiral (IUD)</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Settes inn i livmoren av lege. Kobber-spiral (hormonFRI) eller hormonspiral. 99%+ effektivt. Varer 3–10 år.</span>
+          <span class="tag blå" style="font-size:.7rem">Ingen SOI-beskyttelse</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">💉</span>
+          <strong style="font-size:.82rem">Hormonimplantat/-sprøyte</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">En liten stav settes inn under huden på overarmen. Varer 3 år. Svært effektivt.</span>
+          <span class="tag blå" style="font-size:.7rem">Ingen SOI-beskyttelse</span>
+        </div>
+        <div class="fakta-item fakta-item-varm" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">🚨</span>
+          <strong style="font-size:.82rem">Nødprevensjon («dagen derpå»)</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Tas innen 72 timer (helst innen 24t) etter ubeskyttet sex. Kjøpes uten resept på apotek. Ikke en abortpille.</span>
+          <span class="tag varm" style="font-size:.7rem">Nødalternativ</span>
+        </div>
+        <div class="fakta-item fakta-item-grønn" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.4rem">⚕️</span>
+          <strong style="font-size:.82rem">Prevensjonsveiledning</strong>
+          <span style="font-size:.75rem;color:var(--dim);line-height:1.5">Helsesykepleier på skolen og fastlegen kan hjelpe deg velge. Under 20 år: gratis hos mange kliniker.</span>
+          <span class="tag grønn" style="font-size:.7rem">Gratis hjelp finnes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 9 – SOI
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-8">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">08</span>
+          <span class="slide-kategori kat-helse">Helse</span>
+        </div>
+        <h2 class="slide-tittel">Seksuelt overførbare <em>infeksjoner</em></h2>
+        <p class="slide-undertittel">SOI (seksuelt overførbare infeksjoner) overføres gjennom seksuell kontakt. De fleste behandles enkelt – men de fleste gir heller ingen symptomer.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🦠</span>
+            <div class="fakta-tekst"><strong>Klamydia:</strong> Vanligste SOI i Norge. Bakteriell infeksjon. Ofte uten symptomer. Behandles med antibiotika. Kan gi ufruktbarhet hvis ubehandlet.</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🔴</span>
+            <div class="fakta-tekst"><strong>Genital herpes (HSV-2):</strong> Virusinfeksjon med blemmer/sår. Ingen kur, men dempes med medisin. Svært vanlig globalt.</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">⚠️</span>
+            <div class="fakta-tekst"><strong>HPV:</strong> Svært vanlig virus. De fleste merker ingenting. Noen typer kan gi kjønnsvorter eller kreft. Vaksine finnes (tilbys på skolen).</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🔬</span>
+            <div class="fakta-tekst"><strong>Gonorré og syfilis:</strong> Bakterielle infeksjoner på vei oppover i Norge. Behandles med antibiotika.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:#c25840">HIV og AIDS</div>
+        <p style="font-size:.82rem;line-height:1.65;color:var(--dim);margin-bottom:16px">HIV er et virus som angriper immunsystemet. AIDS er sykdomsstadiet der immunsystemet er sterkt svekket. Med moderne medisin kan HIV-positive leve et normalt og langt liv.</p>
+        <div class="boks boks-varm" style="margin-bottom:14px">
+          <div class="boks-tittel varm">Overføring</div>
+          <div class="boks-tekst">HIV smitter via blod, sæd, vaginalsekret og morsmelk. Kondom beskytter svært effektivt. PrEP (forebyggende medisin) finnes.</div>
+        </div>
+        <div class="boks boks-grønn">
+          <div class="boks-tittel grønn">Testing</div>
+          <div class="boks-tekst">Test deg for SOI hvis du har hatt ubeskyttet sex. Gratis testing mange steder. Tidlig behandling hindrer komplikasjoner og videre smitte.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 10 – ABORT
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-9">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">09</span>
+          <span class="slide-kategori kat-helse">Reproduktiv helse</span>
+        </div>
+        <h2 class="slide-tittel">Selvbestemt <em>abort</em></h2>
+        <p class="slide-undertittel">I Norge har alle rett til selvbestemt abort innen 18. svangerskapsuke. Dette er en lovfestet rettighet.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">⚖️</span>
+            <div class="fakta-tekst"><strong>Rett til selvbestemt abort:</strong> Innen uke 18 trenger du ikke oppgi grunn. Dette er din beslutning alene.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🏥</span>
+            <div class="fakta-tekst"><strong>Medisinsk abort:</strong> To tabletter tas med noen dagers mellomrom. Vanligst frem til uke 9. Ligner spontanabort.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🔧</span>
+            <div class="fakta-tekst"><strong>Kirurgisk abort:</strong> Utføres på sykehus. Tar ca. 10 minutter. Uke 7–12.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">💙</span>
+            <div class="fakta-tekst"><strong>Følelser:</strong> Det er normalt å ha blandede følelser. Noen opplever lettelse, noen sorg – ofte begge deler. Begge er gyldige.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="boks boks-lys" style="margin-bottom:16px">
+          <div class="boks-tittel">Etter uke 18</div>
+          <div class="boks-tekst">Abort etter uke 18 krever særlige grunner og behandles av lege i samråd med en annen lege. Fra uke 22 regnes fosteret som levedyktig.</div>
+        </div>
+        <div class="boks boks-grønn" style="margin-bottom:16px">
+          <div class="boks-tittel grønn">Graviditetstesting</div>
+          <div class="boks-tekst">Graviditetstest kan tas fra første dag etter uteblitt menstruasjon. Fås kjøpt på apotek eller Kiwi/Rema. Hurtigtester er svært pålitelige.</div>
+        </div>
+        <div class="boks boks-blå">
+          <div class="boks-tittel blå">Stigma</div>
+          <div class="boks-tekst">Abort er vanlig – ca. 1 av 5 graviditeter avsluttes med abort i Norge. Det er ingen skam knyttet til å ta dette valget.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 11 – SEKSUELL ORIENTERING / LEGNING
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-10">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">10</span>
+          <span class="slide-kategori kat-identitet">Identitet</span>
+        </div>
+        <h2 class="slide-tittel">Seksuell <em>orientering</em></h2>
+        <p class="slide-undertittel">Seksuell orientering handler om hvem du blir tiltrukket av – emosjonelt, romantisk og/eller seksuelt.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">❤️</span>
+            <div class="fakta-tekst"><strong>Heterofil/Straight:</strong> Tiltrekkes av det motsatte kjønn</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🌈</span>
+            <div class="fakta-tekst"><strong>Homofil/Lesbisk:</strong> Menn som tiltrekkes av menn (gay), kvinner som tiltrekkes av kvinner (lesbisk)</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">💜</span>
+            <div class="fakta-tekst"><strong>Bifil:</strong> Tiltrekkes av mer enn ett kjønn. Ikke "halvt og halvt" – kan variere</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🌸</span>
+            <div class="fakta-tekst"><strong>Panseksuell:</strong> Tiltrekkes uavhengig av kjønn og kjønnsidentitet</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">⬜</span>
+            <div class="fakta-tekst"><strong>Aseksuell (ace):</strong> Opplever lite eller ingen seksuell tiltrekning. Kan likevel ha romantiske følelser.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:#8250a0">Viktig å vite</div>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">🧬</span>
+            <div class="fakta-tekst"><strong>Medfødt:</strong> Seksuell orientering er ikke et valg. Forskning viser at den er biologisk bestemt av mange faktorer</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🔄</span>
+            <div class="fakta-tekst"><strong>Flytende:</strong> For noen kan orienteringen oppleves som stabil hele livet, for andre kan den endre seg</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🏥</span>
+            <div class="fakta-tekst"><strong>Ikke en sykdom:</strong> WHO og alle anerkjente psykologorganisasjoner sletta homofili fra sykdomslisten i 1990. Konverteringsterapi er skadelig og forbudt i Norge.</div>
+          </div>
+        </div>
+        <div class="boks boks-lys" style="margin-top:14px">
+          <div class="boks-tittel">«Coming out»</div>
+          <div class="boks-tekst">Å stå frem med sin identitet er en svært personlig prosess. Ingen skal presses til det. For mange er det en lettelse, men det kan også komme med utfordringer – støtte er viktig.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 12 – KJØNNSIDENTITET
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-11">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">11</span>
+          <span class="slide-kategori kat-identitet">Identitet</span>
+        </div>
+        <h2 class="slide-tittel">Kjønnsidentitet og <em>kjønnsuttrykk</em></h2>
+        <p class="slide-undertittel">Kjønnsidentitet er den indre opplevelsen av hvem du er – som mann, kvinne, noe annet, eller ingen av delene. Det er ikke det samme som biologisk kjønn.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">👤</span>
+            <div class="fakta-tekst"><strong>Biologisk kjønn:</strong> Kropp, kromosomer, hormoner. De fleste er enten XX (kvinne) eller XY (mann), men varianter finnes (intersex)</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🧠</span>
+            <div class="fakta-tekst"><strong>Kjønnsidentitet:</strong> Hvem du er inni – kan samsvare med kroppen (ciskjønnet) eller ikke (transkjønnet/ikke-binær)</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">👗</span>
+            <div class="fakta-tekst"><strong>Kjønnsuttrykk:</strong> Hvordan du presenterer kjønnet ditt utad – klær, frisyre, navn. Skalaen er vid.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="fire-grid">
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">🙍</div>
+            <div class="fire-kort-tittel">Ciskjønnet</div>
+            <div class="fire-kort-tekst">Kjønnsidentiteten samsvarer med biologisk kjønn ved fødsel</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">🏳️‍⚧️</div>
+            <div class="fire-kort-tittel">Transkjønnet</div>
+            <div class="fire-kort-tekst">Kjønnsidentiteten samsvarer IKKE med biologisk kjønn. Transdame / transmann</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">⚧️</div>
+            <div class="fire-kort-tittel">Ikke-binær / ikke-kjønnet</div>
+            <div class="fire-kort-tekst">Identifiserer seg verken som mann eller kvinne, eller begge deler</div>
+          </div>
+          <div class="fire-kort">
+            <div class="fire-kort-ikon">⚕️</div>
+            <div class="fire-kort-tittel">Intersex</div>
+            <div class="fire-kort-tekst">Medfødte variasjoner i biologiske kjønnskarakteristika som ikke passer klassisk mann/kvinne-inndeling</div>
+          </div>
+        </div>
+        <div class="boks boks-lys" style="margin-top:14px">
+          <div class="boks-tittel">Pronomen</div>
+          <div class="boks-tekst">Mange bruker «han», «hun» eller «hen» (kjønnsnøytralt). Å respektere andres pronomen er en enkel og viktig form for respekt.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 13 – GRENSER OG SAMTYKKE
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-12">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">12</span>
+          <span class="slide-kategori kat-relasjoner">Relasjoner</span>
+        </div>
+        <h2 class="slide-tittel">Grenser og <em>samtykke</em></h2>
+        <p class="slide-undertittel">Alle har rett til å sette grenser for sin egen kropp. Samtykke er en forutsetning for all seksuell aktivitet.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-grønn">
+            <span class="fakta-ikon">✅</span>
+            <div class="fakta-tekst"><strong>Samtykke er:</strong> Frivillig, entusiastisk, informert og kan trekkes tilbake når som helst – selv midt i en handling</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">❌</span>
+            <div class="fakta-tekst"><strong>Ikke samtykke:</strong> Taushet, passivitet, press, trusler, rus, søvn eller alder under 16 år gir IKKE gyldig samtykke</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">⚖️</span>
+            <div class="fakta-tekst"><strong>Lovlig:</strong> Sex uten samtykke er voldtekt – uansett relasjon. Seksuelle overgrep er straffbart. Det er alltid overgriperens skyld, aldri offerets.</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent3)">Egne grenser</div>
+        <p style="font-size:.83rem;color:var(--dim);line-height:1.7;margin-bottom:14px">Du har alltid rett til å si nei – uten å forklare deg. Det er aldri din plikt å gå videre med noe du ikke vil.</p>
+        <div class="boks boks-grønn" style="margin-bottom:14px">
+          <div class="boks-tittel grønn">Å kommunisere grenser</div>
+          <div class="boks-tekst">«Jeg vil ikke», «Stopp», «Jeg er ikke komfortabel med det» er gyldige og klare beskjeder. En god partner respekterer dette uten å presse.</div>
+        </div>
+        <div class="boks boks-varm">
+          <div class="boks-tittel varm">Press og manipulasjon</div>
+          <div class="boks-tekst">Å presse, true, gi skyld, «ta igjen» eller manipulere noen til sex er uakseptabelt og kan være straffbart. Sunn seksualitet er alltid frivillig.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 14 – VOLD OG OVERGREP
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-13">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">13</span>
+          <span class="slide-kategori kat-hjelp">Trygghet</span>
+        </div>
+        <h2 class="slide-tittel">Seksuelle overgrep – <em>ikke din skyld</em></h2>
+        <p class="slide-undertittel">Seksuelle overgrep er all seksuell aktivitet du ikke har samtykket til. Det finnes mange former.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">⚠️</span>
+            <div class="fakta-tekst"><strong>Voldtekt:</strong> Seksuell aktivitet uten samtykke. Kan skje i parforhold, av bekjente eller fremmede</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">📱</span>
+            <div class="fakta-tekst"><strong>Digital seksuell trakassering:</strong> Deling av intime bilder uten samtykke («hevnporno»), uønskede bilder, seksuell mobbing</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">👁️</span>
+            <div class="fakta-tekst"><strong>Seksuell trakassering:</strong> Uønskede kommentarer, berøringer, blikk eller tilnærmelser av seksuell natur</div>
+          </div>
+          <div class="fakta-item fakta-item-varm">
+            <span class="fakta-ikon">🧒</span>
+            <div class="fakta-tekst"><strong>Overgrep mot barn:</strong> All seksuell aktivitet med barn under 16 år er straffbart – uansett om barnet «gikk med på det»</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:#28788c">Husk alltid:</div>
+        <div class="boks boks-blå" style="margin-bottom:14px">
+          <div class="boks-tittel blå">Ikke din skyld</div>
+          <div class="boks-tekst">Uansett hva du hadde på deg, hva du drakk, hvem du var med, eller hva du sa tidligere: overgrep er aldri offerets skyld. Skylden ligger alltid hos den som utfører handlingen.</div>
+        </div>
+        <div class="boks boks-grønn" style="margin-bottom:14px">
+          <div class="boks-tittel grønn">Reaksjoner er normale</div>
+          <div class="boks-tekst">Frysing (å ikke klare å si nei eller bevege seg), sjokk, skam og å ikke huske alt er normale reaksjoner i traumatiske situasjoner.</div>
+        </div>
+        <div class="boks boks-lys">
+          <div class="boks-tittel">Tell noen</div>
+          <div class="boks-tekst">Snakk med noen du stoler på. Du trenger ikke å anmelde for å søke hjelp. Overgrepsmottak finnes i alle helseregioner og er gratis.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 15 – SEKSUALITET OG PSYKISK HELSE
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-2kol" id="slide-14">
+      <div class="kol-venstre">
+        <div class="slide-header">
+          <span class="slide-nr">14</span>
+          <span class="slide-kategori kat-helse">Psykisk helse</span>
+        </div>
+        <h2 class="slide-tittel">Seksualitet og <em>selvbilde</em></h2>
+        <p class="slide-undertittel">Kropp, seksualitet og psykisk helse henger tett sammen. Mange unge opplever usikkerhet – det er helt normalt.</p>
+        <div class="fakta-liste">
+          <div class="fakta-item">
+            <span class="fakta-ikon">📸</span>
+            <div class="fakta-tekst"><strong>Kroppspress:</strong> Sosiale medier viser filtrerte og retusjerte kropper. Disse er ikke representative for vanlige kropper. Sammenligning gjør de fleste ulykkelige.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">🎬</span>
+            <div class="fakta-tekst"><strong>Porno er ikke virkelighet:</strong> Porno er iscenesatt underholdning med urealistiske kropper, handlinger og forventninger. Det er ikke en guide til sex.</div>
+          </div>
+          <div class="fakta-item">
+            <span class="fakta-ikon">💬</span>
+            <div class="fakta-tekst"><strong>Snakk om det:</strong> Det er greit å snakke med helsesykepleier, lege eller en du stoler på om kropp, seksualitet og psykisk helse</div>
+          </div>
+        </div>
+      </div>
+      <div class="kol-hoyre">
+        <div class="farge-header" style="color:var(--accent2)">Seksuell respons</div>
+        <p style="font-size:.82rem;color:var(--dim);line-height:1.7;margin-bottom:14px">Den menneskelige seksuelle responsens faser (Masters & Johnson):</p>
+        <div class="tidslinje">
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#4a7fb5">1</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Eksitasjon</div>
+              <div class="tl-tekst">Økt blodgjennomstrømning til kjønnsorganene, fukting, ereksjoner</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#5a8a5e">2</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Platå</div>
+              <div class="tl-tekst">Økt spenning, hjertefrekvens og pust stiger</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#c2624a">3</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Orgasme</div>
+              <div class="tl-tekst">Intenst behagelige muskelsammentrekninger. Ikke alle opplever dette alltid</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div><div class="tl-sirkel" style="background:#8250a0">4</div></div>
+            <div class="tl-innhold">
+              <div class="tl-tittel">Resolusjon</div>
+              <div class="tl-tekst">Kroppen returnerer til normaltilstand. Frigjøring av oxytocin gir nærhetsfølelse</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 16 – NETTOVERGREP OG DIGITAL SIKKERHET
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-bred" id="slide-15">
+      <div>
+        <div class="slide-header">
+          <span class="slide-nr">15</span>
+          <span class="slide-kategori kat-hjelp">Digital sikkerhet</span>
+        </div>
+        <h2 class="slide-tittel">Sikkerhet <em>på nett</em></h2>
+        <p class="slide-undertittel">Digitale grenser er like viktige som fysiske grenser.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.3rem">🤳</span>
+          <strong style="font-size:.84rem">Nakenbilder</strong>
+          <span style="font-size:.78rem;color:var(--dim);line-height:1.55">Det er straffbart å spre intime bilder uten samtykke. Det er aldri greit å presse noen til å sende bilder. Motta og send aldri til noen under 18 år – dette regnes som barnepornografi.</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.3rem">🎭</span>
+          <strong style="font-size:.84rem">Grooming</strong>
+          <span style="font-size:.78rem;color:var(--dim);line-height:1.55">Grooming er når en voksen bevisst bygger opp tillit til et barn/ung med seksuell hensikt. Skjer ofte via sosiale medier. Tegn: veldig hyggelig/pågående voksen som vil holde kontakten hemmelig.</span>
+        </div>
+        <div class="fakta-item" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.3rem">💰</span>
+          <strong style="font-size:.84rem">Sextorsjon</strong>
+          <span style="font-size:.78lek;color:var(--dim);line-height:1.55">Å true med å spre intime bilder med mindre du betaler eller gjør noe. Det er straffbart. Betal ikke – kontakt politiet.</span>
+        </div>
+        <div class="fakta-item fakta-item-grønn" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.3rem">🛡️</span>
+          <strong style="font-size:.84rem">Beskytt deg</strong>
+          <span style="font-size:.78rem;color:var(--dim);line-height:1.55">Del aldri intime bilder der ansiktet ditt er med. Ikke møt opp alene med noen du kun kjenner fra nett. Si ifra til en voksen du stoler på.</span>
+        </div>
+        <div class="fakta-item fakta-item-blå" style="flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="font-size:1.3rem">📞</span>
+          <strong style="font-size:.84rem">Hjelp er tilgjengelig</strong>
+          <span style="font-size:.78rem;color:var(--dim);line-height:1.55"><strong>Slettmeg.no</strong> kan hjelpe med å fjerne bilder. <strong>Kripos nettpatrulje</strong> tips.kripos.no. Du er ikke alene.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 17 – HJELP OG RESSURSER
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-bred" id="slide-16">
+      <div>
+        <div class="slide-header">
+          <span class="slide-nr">16</span>
+          <span class="slide-kategori kat-hjelp">Støtte og hjelp</span>
+        </div>
+        <h2 class="slide-tittel">Snakk med <em>noen</em></h2>
+        <p class="slide-undertittel">Det finnes mange steder å hente hjelp, råd og støtte – alle er gratis og mange er anonyme.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+        <div class="fire-kort" style="border-color:rgba(74,127,181,.2);background:rgba(74,127,181,.04)">
+          <div class="fire-kort-ikon">🏥</div>
+          <div class="fire-kort-tittel">Helsesykepleier</div>
+          <div class="fire-kort-tekst">På skolen din. Gratis og fortrolig. Kan hjelpe med prevensjon, testing, psykisk helse og mye mer.</div>
+        </div>
+        <div class="fire-kort" style="border-color:rgba(90,138,94,.2);background:rgba(90,138,94,.04)">
+          <div class="fire-kort-ikon">💊</div>
+          <div class="fire-kort-tittel">Sex og samfunn</div>
+          <div class="fire-kort-tekst">Klinikk for seksuell helse. Gratis for under 25 år. sexogsamfunn.no – chat, prevensjon, testing, veiledning.</div>
+        </div>
+        <div class="fire-kort" style="border-color:rgba(194,98,74,.2);background:rgba(194,98,74,.04)">
+          <div class="fire-kort-ikon">📞</div>
+          <div class="fire-kort-tittel">Alarmtelefonen for barn og unge</div>
+          <div class="fire-kort-tekst">Telefon 116 111. Gratis, åpen 24/7. For barn og unge som er utrygge, redde eller trenger noen å snakke med.</div>
+        </div>
+        <div class="fire-kort" style="border-color:rgba(130,80,160,.2);background:rgba(130,80,160,.04)">
+          <div class="fire-kort-ikon">🌈</div>
+          <div class="fire-kort-tittel">FRI – skeiv ungdom</div>
+          <div class="fire-kort-tekst">Støtte for LHBTQ+ ungdom. fri.no – chat, lokallag over hele landet, rådgivning og fellesskap.</div>
+        </div>
+        <div class="fire-kort" style="border-color:rgba(40,120,140,.2);background:rgba(40,120,140,.04)">
+          <div class="fire-kort-ikon">🛡️</div>
+          <div class="fire-kort-tittel">Overgrepsmottak</div>
+          <div class="fire-kort-tekst">Finnes i alle helseregioner. Gratis. Åpent hele døgnet. Du trenger ikke politianmelde for å få hjelp.</div>
+        </div>
+        <div class="fire-kort" style="border-color:rgba(180,100,60,.2);background:rgba(180,100,60,.04)">
+          <div class="fire-kort-ikon">💬</div>
+          <div class="fire-kort-tittel">Klara Klok</div>
+          <div class="fire-kort-tekst">klaraklok.no – still anonyme spørsmål til fagpersoner om kropp, helse, seksualitet og psykisk helse.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SLIDE 18 – AVSLUTNING
+    ══════════════════════════════════════════ -->
+    <div class="slide slide-slutt" id="slide-17">
+      <div style="max-width:560px;text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:16px">💛</div>
+        <h2 style="font-family:var(--font-d);font-size:clamp(1.6rem,3vw,2.4rem);font-weight:700;letter-spacing:-.02em;margin-bottom:12px">Det finnes ingen <em style='font-style:italic'>dumme spørsmål</em></h2>
+        <p style="font-size:.92rem;color:var(--dim);line-height:1.8;margin-bottom:28px">Seksualitet, kropp og identitet er komplekse og personlige tema. Det tar tid å bli kjent med seg selv – og det er ingen feil måte å gjøre det på.</p>
+        <div class="tag-grid" style="justify-content:center;margin-bottom:28px">
+          <div class="tag varm">Alle kropper er normale</div>
+          <div class="tag grønn">Samtykke alltid</div>
+          <div class="tag blå">Søk hjelp om du trenger det</div>
+          <div class="tag" style="border-color:rgba(130,80,160,.3);color:#8250a0;background:rgba(130,80,160,.06)">Din identitet er gyldig</div>
+          <div class="tag varm">Porno er ikke virkelighet</div>
+          <div class="tag grønn">Bruk kondom</div>
+        </div>
+        <p style="font-size:.8rem;color:var(--dim);line-height:1.6;font-style:italic">Lurer du på noe? Helsesykepleier på skolen din er der for deg – og alt er fortrolig.</p>
+      </div>
+    </div>
+
+  </div><!-- /#viewport -->
+
+  <!-- Nav kontroller -->
+  <div class="nav-kontroller">
+    <button class="nav-pil" id="pil-forrige" onclick="gå(-1)" disabled aria-label="Forrige">←</button>
+    <div class="prikker" id="prikker"></div>
+    <button class="nav-pil" id="pil-neste" onclick="gå(1)" aria-label="Neste">→</button>
+  </div>
+</div><!-- /.karusell-wrap -->
+
+<script>
+const ANTALL = document.querySelectorAll('.slide').length;
+let aktiv = 0;
+
+// Bygg prikker
+const prikkerEl = document.getElementById('prikker');
+for(let i=0;i<ANTALL;i++){
+  const p=document.createElement('button');
+  p.className='prikk'+(i===0?' aktiv':'');
+  p.setAttribute('aria-label','Slide '+(i+1));
+  p.onclick=()=>gåTil(i);
+  prikkerEl.appendChild(p);
+}
+
+function gåTil(idx){
+  if(idx===aktiv)return;
+  const retning=idx>aktiv?1:-1;
+  const gammel=document.getElementById('slide-'+aktiv);
+  const ny=document.getElementById('slide-'+idx);
+
+  gammel.classList.remove('aktiv');
+  ny.classList.remove('fra-venstre');
+  if(retning<0) ny.classList.add('fra-venstre');
+  ny.classList.add('aktiv');
+
+  aktiv=idx;
+  oppdaterUI();
+}
+
+function gå(delta){gåTil(Math.max(0,Math.min(ANTALL-1,aktiv+delta)));}
+
+function oppdaterUI(){
+  // Prikker
+  document.querySelectorAll('.prikk').forEach((p,i)=>{
+    p.classList.toggle('aktiv',i===aktiv);
+  });
+  // Knapper
+  document.getElementById('pil-forrige').disabled=aktiv===0;
+  document.getElementById('pil-neste').disabled=aktiv===ANTALL-1;
+  // Counter
+  document.getElementById('nav-counter').textContent=(aktiv+1)+' / '+ANTALL;
+  // Progress
+  document.getElementById('progress-bar').style.width=((aktiv/(ANTALL-1))*100)+'%';
+}
+
+// Keyboard navigation
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') gå(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') gå(-1);
+});
+
+// Touch/swipe
+let tx=0;
+document.getElementById('viewport').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.getElementById('viewport').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>50) gå(dx<0?1:-1);
+},{passive:true});
+
+oppdaterUI();
+</script>
+</body>
+</html>

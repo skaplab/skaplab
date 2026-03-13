@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Elektriske kretser</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f0a;
+  --surface:#0e150e;
+  --card:#131f13;
+  --border:rgba(255,255,255,.07);
+  --text:#f0f7f0;
+  --dim:#5a7a5a;
+  --accent:#4ade80;   /* grønn – elektrisitet */
+  --accent2:#facc15;  /* gul – lys/energi */
+  --accent3:#60a5fa;  /* blå – vann/krets */
+  --red:#f87171;
+  --wire:#4ade80;
+  --wire-live:#facc15;
+  --font-h:'Fredoka One',cursive;
+  --font-b:'Nunito',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 5% 5%,rgba(74,222,128,.05) 0%,transparent 60%),
+    radial-gradient(ellipse 45% 35% at 95% 90%,rgba(250,204,21,.04) 0%,transparent 60%);
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:200;
+  background:rgba(10,15,10,.93);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:12px 28px;display:flex;align-items:center;gap:10px;
+}
+.nav-lnk{font-family:var(--font-h);font-size:.95rem;color:var(--text);text-decoration:none}
+.nav-lnk:hover{color:var(--accent)}
+.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:var(--accent);font-size:.9rem}
+
+/* ── PAGE ── */
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:28px 0 32px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.8rem,4vw,2.7rem);margin-bottom:10px}
+.hero h1 span{color:var(--accent)}
+.hero-sub{font-size:.95rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.65}
+
+/* ── FREMGANG ── */
+.fremgang-rad{display:flex;gap:5px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+.fremgang-dot{
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;cursor:pointer;transition:all .25s;
+}
+.fremgang-dot.løst{background:var(--accent);border-color:var(--accent);color:#000}
+.fremgang-dot.aktiv{border-color:var(--accent);box-shadow:0 0 0 3px rgba(74,222,128,.2)}
+
+/* ── OPPGAVE-NAV ── */
+.oppgave-nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.oppg-btn{
+  font-family:var(--font-b);font-size:.75rem;font-weight:700;
+  padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+  background:var(--card);color:var(--dim);cursor:pointer;transition:all .18s;
+}
+.oppg-btn:hover{border-color:var(--accent);color:var(--text)}
+.oppg-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+/* ── OPPGAVE HEADER ── */
+.oppgave-header{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:20px 24px;margin-bottom:16px;
+  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;
+}
+.oppgave-nr{font-family:var(--font-h);font-size:2rem;color:var(--accent);line-height:1;flex-shrink:0}
+.oppgave-body{flex:1;min-width:200px}
+.oppgave-tittel{font-family:var(--font-h);font-size:1.1rem;margin-bottom:4px}
+.oppgave-tekst{font-size:.88rem;color:var(--dim);line-height:1.6}
+.oppgave-hint{
+  font-size:.78rem;margin-top:8px;color:var(--accent2);
+  background:rgba(250,204,21,.07);border:1px solid rgba(250,204,21,.2);
+  border-radius:8px;padding:5px 10px;display:inline-block;
+}
+
+/* ── BYGGEARENA ── */
+.arena-wrap{
+  display:grid;grid-template-columns:180px 1fr;gap:16px;margin-bottom:16px;
+}
+@media(max-width:640px){.arena-wrap{grid-template-columns:1fr}}
+
+/* Komponent-palett */
+.komponent-palett{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;
+}
+.palett-tittel{font-family:var(--font-h);font-size:.85rem;color:var(--dim);margin-bottom:4px}
+.komp-knapp{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:12px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);cursor:pointer;
+  font-family:var(--font-b);font-weight:700;font-size:.82rem;color:var(--text);
+  transition:all .15s;user-select:none;
+}
+.komp-knapp:hover{border-color:var(--accent);background:rgba(74,222,128,.07)}
+.komp-knapp.aktiv-komp{border-color:var(--accent);background:rgba(74,222,128,.12);color:var(--accent)}
+.komp-ikon{font-size:1.2rem;width:24px;text-align:center}
+.komp-info{font-size:.65rem;color:var(--dim);margin-top:1px;font-weight:400}
+
+/* Canvas */
+.canvas-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;position:relative;overflow:hidden;min-height:420px;
+}
+#kretsCanvas{width:100%;height:420px;display:block;cursor:crosshair}
+.canvas-hint{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:8px;pointer-events:none;opacity:.3;transition:opacity .3s;
+}
+.canvas-hint.skjult{opacity:0}
+.canvas-hint-ikon{font-size:2.5rem}
+.canvas-hint-tekst{font-family:var(--font-h);font-size:.9rem;color:var(--dim)}
+
+/* ── VERKTØYLINJE ── */
+.verktoy-linje{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.vt-btn{
+  font-family:var(--font-b);font-size:.78rem;font-weight:700;
+  padding:6px 14px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--dim);cursor:pointer;transition:all .15s;
+}
+.vt-btn:hover{border-color:var(--accent);color:var(--text)}
+.vt-btn.aktiv{background:rgba(74,222,128,.12);border-color:var(--accent);color:var(--accent)}
+.vt-sep{width:1px;height:24px;background:var(--border)}
+
+/* ── SJEKK ── */
+.sjekk-wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+.btn-sjekk{
+  font-family:var(--font-h);font-size:1rem;
+  padding:10px 28px;border-radius:14px;border:none;cursor:pointer;
+  background:var(--accent);color:#000;transition:transform .15s,box-shadow .15s;
+}
+.btn-sjekk:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,222,128,.3)}
+.btn-reset{
+  font-family:var(--font-b);font-size:.85rem;font-weight:700;
+  padding:10px 18px;border-radius:14px;border:1px solid var(--border);
+  background:transparent;color:var(--dim);cursor:pointer;transition:all .15s;
+}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+
+/* ── RESULTAT ── */
+.resultat{
+  border-radius:16px;padding:0;max-height:0;overflow:hidden;
+  transition:max-height .4s ease,padding .3s ease;
+}
+.resultat.synlig{max-height:400px;padding:24px;border:1px solid var(--border)}
+.resultat.korrekt{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25)!important}
+.resultat.feil{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.25)!important}
+.res-tittel{font-family:var(--font-h);font-size:1.3rem;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.res-tittel.korrekt{color:var(--accent)}
+.res-tittel.feil{color:var(--red)}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.res-felt{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.res-felt-label{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.res-felt-verdi{font-family:var(--font-m);font-size:.95rem;color:var(--text);font-weight:700}
+.res-felt-forklaring{font-family:var(--font-b);font-size:.85rem;color:var(--text);line-height:1.55}
+.res-feil-tips{font-size:.85rem;color:var(--dim);margin-top:4px;line-height:1.7}
+.res-feil-tips strong{color:var(--accent2)}
+
+/* ── TOOLTIP ── */
+.tooltip{
+  position:fixed;background:#1a2e1a;border:1px solid rgba(74,222,128,.3);
+  border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);
+  pointer-events:none;z-index:500;display:none;font-family:var(--font-m);white-space:nowrap;
+}
+
+/* Pæregløding-animasjon */
+@keyframes glow-pulse{
+  0%,100%{filter:drop-shadow(0 0 8px #facc15) drop-shadow(0 0 20px #facc15)}
+  50%{filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 30px #facc15)}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">⚡ Elektriske kretser</span>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <h1>⚡ Elektriske kretser – <span>Bygg og koble</span></h1>
+    <p class="hero-sub">Plasser komponenter og trekk ledninger. Når kretsen er riktig og lukket, tennes lyset!</p>
+  </div>
+
+  <div class="fremgang-rad" id="fremgang-rad"></div>
+  <div class="oppgave-nav" id="oppgave-nav"></div>
+
+  <div class="oppgave-header">
+    <div class="oppgave-nr" id="oppg-nr">01</div>
+    <div class="oppgave-body">
+      <div class="oppgave-tittel" id="oppg-tittel"></div>
+      <div class="oppgave-tekst" id="oppg-tekst"></div>
+      <div class="oppgave-hint" id="oppg-hint"></div>
+    </div>
+  </div>
+
+  <div class="verktoy-linje">
+    <button class="vt-btn aktiv" id="vt-plasser" onclick="setModus('plasser')">📦 Plasser</button>
+    <button class="vt-btn" id="vt-ledning" onclick="setModus('ledning')">〰 Trekk ledning</button>
+    <button class="vt-btn" id="vt-slett" onclick="setModus('slett')">🗑 Slett</button>
+    <div class="vt-sep"></div>
+    <button class="vt-btn" id="vt-roter" onclick="roterValgt()">↻ Roter</button>
+  </div>
+
+  <div class="arena-wrap">
+
+    <div class="komponent-palett">
+      <div class="palett-tittel">🔌 Komponenter</div>
+      <button class="komp-knapp aktiv-komp" id="knapp-batteri" onclick="velgKomponent('batteri')">
+        <span class="komp-ikon">🔋</span>
+        <div><div>Batteri</div><div class="komp-info">Strømkilde (+/−)</div></div>
+      </button>
+      <button class="komp-knapp" id="knapp-paere" onclick="velgKomponent('paere')">
+        <span class="komp-ikon">💡</span>
+        <div><div>Lyspære</div><div class="komp-info">Forbruker energi</div></div>
+      </button>
+      <button class="komp-knapp" id="knapp-bryter" onclick="velgKomponent('bryter')">
+        <span class="komp-ikon">🔘</span>
+        <div><div>Bryter</div><div class="komp-info">Åpen/lukket</div></div>
+      </button>
+      <button class="komp-knapp" id="knapp-motstand" onclick="velgKomponent('motstand')">
+        <span class="komp-ikon">〰️</span>
+        <div><div>Motstand</div><div class="komp-info">Begrenser strøm</div></div>
+      </button>
+      <button class="komp-knapp" id="knapp-motor" onclick="velgKomponent('motor')">
+        <span class="komp-ikon">⚙️</span>
+        <div><div>Motor</div><div class="komp-info">Omdanner energi</div></div>
+      </button>
+      <div style="margin-top:8px;font-size:.7rem;color:var(--dim);line-height:1.6">
+        Klikk komponent → klikk på brettet for å plassere.<br>
+        Klikk bryter for å åpne/lukke.<br>
+        Grønne prikker = koblingsterminal.
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="kretsCanvas"></canvas>
+      <div class="canvas-hint" id="canvas-hint">
+        <div class="canvas-hint-ikon">⚡</div>
+        <div class="canvas-hint-tekst">Klikk på brettet for å plassere komponenter</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sjekk-wrap">
+    <button class="btn-sjekk" onclick="sjekkKrets()">⚡ Sjekk kretsen</button>
+    <button class="btn-reset" onclick="tilbakestill()">↺ Tilbakestill</button>
+  </div>
+
+  <div class="resultat" id="resultat"></div>
+
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  OPPGAVE-DATA
+// ══════════════════════════════════════════════════
+const OPPGAVER = [
+  {
+    id:1, emoji:'💡',
+    tittel:'Den enkleste kretsen',
+    tekst:'Koble ett batteri til én lyspære slik at pæren lyser. Husk at strømmen må ha en vei fra + til − gjennom pæren.',
+    hint:'💡 Plasser batteri og pære, trekk ledning fra + på batteriet til pæren, og fra pæren tilbake til − på batteriet.',
+    krav:{ batteri:1, paere:1, bryter:0, motstand:0, motor:0 },
+    kreverLukketKrets:true, kreverBryter:false, bryterSkalVæreLukket:null,
+    vanskelighet:'★☆☆',
+    navn:'Enkel lyskrets',
+    forklaring:'En enkel serie-krets. Strømmen flyter fra plussiden på batteriet, gjennom pæren og tilbake til minussiden. Pæren lyser fordi elektrisk energi omdannes til lys og varme.',
+    fakta:'Et vanlig AA-batteri gir 1,5 volt. Det er nok til å lyse opp en liten LED-pære!',
+  },
+  {
+    id:2, emoji:'🔘',
+    tittel:'Legg til en bryter',
+    tekst:'Bygg en krets med batteri, lyspære og bryter. Når bryteren er lukket skal pæren lyse. Klikk på bryteren for å åpne/lukke den.',
+    hint:'💡 Bryteren bryter eller fullfører kretsen. Lukket bryter = strøm flyter. Åpen bryter = strøm stoppes.',
+    krav:{ batteri:1, paere:1, bryter:1, motstand:0, motor:0 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★☆☆',
+    navn:'Krets med bryter',
+    forklaring:'En bryter er som en dør for elektroner. Lukket bryter = åpen dør for strøm. Åpen bryter = lukket dør – strømmen stopper og pæren slukker.',
+    fakta:'Alle lysbrytere i huset ditt fungerer på nøyaktig denne måten!',
+  },
+  {
+    id:3, emoji:'💡💡',
+    tittel:'To pærer i serie',
+    tekst:'Koble to lyspærer i serie med ett batteri. I en seriekrets går strømmen gjennom begge pærene etter hverandre.',
+    hint:'💡 Serie betyr at pærene er koblet etter hverandre i én enkelt sløyfe: Batteri → Pære 1 → Pære 2 → tilbake til batteri.',
+    krav:{ batteri:1, paere:2, bryter:0, motstand:0, motor:0 },
+    kreverLukketKrets:true, kreverBryter:false, bryterSkalVæreLukket:null,
+    vanskelighet:'★★☆',
+    navn:'Seriekrets – to pærer',
+    forklaring:'I en seriekrets går strømmen gjennom begge pærene etter hverandre. Hvis én pære brenner ut, slukker begge – fordi kretsen brytes. Pærene er litt svakere enn i en enkel krets fordi de deler på spenningen.',
+    fakta:'Gamle julelyskjeder var koblet i serie – derfor sluknet alle når én pære gikk!',
+  },
+  {
+    id:4, emoji:'〰️',
+    tittel:'Legg inn en motstand',
+    tekst:'Bygg en krets med batteri, motstand og lyspære i serie. Motstanden begrenser strømmen slik at pæren ikke brenner ut.',
+    hint:'💡 En motstand (resistor) reduserer strømstyrken. I serie plasserer du den i linja mellom batteri og pære.',
+    krav:{ batteri:1, paere:1, bryter:0, motstand:1, motor:0 },
+    kreverLukketKrets:true, kreverBryter:false, bryterSkalVæreLukket:null,
+    vanskelighet:'★★☆',
+    navn:'Krets med motstand',
+    forklaring:'En motstand (resistor) begrenser mengden strøm som flyter i kretsen. Jo større motstand (målt i Ohm, Ω), desto svakere blir pæren. Dette er viktig for å beskytte komponenter mot for høy strøm.',
+    fakta:'Motstander brukes i alle elektroniske enheter – telefonen din har hundrevis av dem!',
+  },
+  {
+    id:5, emoji:'⚙️',
+    tittel:'Motor i kretsen',
+    tekst:'Bygg en krets med batteri, bryter og motor. Når bryteren lukkes skal motoren gå.',
+    hint:'💡 Motoren er en forbruker som omdanner elektrisk energi til bevegelse. Koble den i serie som en pære.',
+    krav:{ batteri:1, paere:0, bryter:1, motstand:0, motor:1 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★★☆',
+    navn:'Motor med bryter',
+    forklaring:'En elektrisk motor omdanner elektrisk energi til rotasjonsenergi (bevegelse). Prinsippet brukes i alt fra lekebiler til elektriske sykler og vindmøller.',
+    fakta:'En elektrisk motor og en generator er nesten det samme – motoren bruker strøm for å lage bevegelse, generatoren bruker bevegelse for å lage strøm!',
+  },
+  {
+    id:6, emoji:'🔋🔋',
+    tittel:'To batterier i serie',
+    tekst:'Koble to batterier i serie med en lyspære. Koble + på batteri 1 til − på batteri 2, og + på batteri 2 til pæren.',
+    hint:'💡 To batterier i serie dobler spenningen. Pæren vil lyse sterkere enn med ett batteri.',
+    krav:{ batteri:2, paere:1, bryter:0, motstand:0, motor:0 },
+    kreverLukketKrets:true, kreverBryter:false, bryterSkalVæreLukket:null,
+    vanskelighet:'★★☆',
+    navn:'To batterier i serie',
+    forklaring:'Når to batterier kobles i serie (+ til −) adderes spenningene. To 1,5V-batterier gir 3V totalt. Mer spenning betyr mer strøm – og pæren lyser sterkere. Men det bruker opp batteriene raskere.',
+    fakta:'En 9-volts batteri (den firkantete) er egentlig seks 1,5V-celler koblet i serie inni!',
+  },
+  {
+    id:7, emoji:'💡〰️🔘',
+    tittel:'Full kontrollkrets',
+    tekst:'Bygg en krets med batteri, bryter, motstand og lyspære – alle i serie. Kretsen skal lyse når bryteren lukkes.',
+    hint:'💡 Rekkefølge i serie spiller ingen rolle elektrisk: Batteri → Bryter → Motstand → Pære → tilbake til batteri er én mulig løsning.',
+    krav:{ batteri:1, paere:1, bryter:1, motstand:1, motor:0 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★★★',
+    navn:'Komplett seriekrets',
+    forklaring:'En komplett krets med alle grunnleggende komponenter: strømkilde (batteri), kontroll (bryter), begrensning (motstand) og forbruker (pære). Dette ligner på kretsen i en lommelykt!',
+    fakta:'En lommelykt er nøyaktig denne kretsen: batteri + bryter + pære (og pærens filament er selve motstanden).',
+  },
+  {
+    id:8, emoji:'🔋⚙️🔘',
+    tittel:'Motorkrets med vern',
+    tekst:'Bygg en krets med batteri, bryter, motstand og motor. Motstanden beskytter motoren mot for høy strøm.',
+    hint:'💡 Kombiner motor og motstand i serie. Bryteren kontrollerer om motoren kjører.',
+    krav:{ batteri:1, paere:0, bryter:1, motstand:1, motor:1 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★★★',
+    navn:'Beskyttet motorkrets',
+    forklaring:'I ekte elektriske apparater brukes alltid sikkerhetskomponenter (som motstander og sikringer) for å beskytte motorer. For høy strøm kan brenne ut motoren eller starte brann.',
+    fakta:'Motorvernet i vaskemaskinen din fungerer på samme prinsipp – den bryter kretsen hvis strømmen blir for høy.',
+  },
+  {
+    id:9, emoji:'💡💡🔘',
+    tittel:'To pærer med bryter',
+    tekst:'Bygg en krets med batteri, to pærer i serie og en bryter. Bryteren skal kontrollere begge pærene samtidig.',
+    hint:'💡 Koble alle komponenter i én sløyfe: Batteri → Bryter → Pære 1 → Pære 2 → tilbake til batteri.',
+    krav:{ batteri:1, paere:2, bryter:1, motstand:0, motor:0 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★★★',
+    navn:'To pærer med bryter',
+    forklaring:'En bryter i serie kontrollerer alle komponenter etter seg i kretsen. Dette er prinsippet bak lysbrytere som styrer hele rom med flere lamper fra én bryter.',
+    fakta:'Taklamper med flere lyspærer er ofte koblet i parallell (ikke serie) – det er derfor én pære kan gå uten at de andre slukner.',
+  },
+  {
+    id:10, emoji:'🔋🔋🔘💡',
+    tittel:'Avansert krets',
+    tekst:'Bygg en krets med to batterier i serie, én bryter, én motstand og to lyspærer. Kretsen skal fungere med lukket bryter.',
+    hint:'💡 To batterier i serie gir dobbel spenning. Med to pærer og en motstand i tillegg trenger du å planlegge kretsen nøye.',
+    krav:{ batteri:2, paere:2, bryter:1, motstand:1, motor:0 },
+    kreverLukketKrets:true, kreverBryter:true, bryterSkalVæreLukket:true,
+    vanskelighet:'★★★',
+    navn:'Avansert seriekrets',
+    forklaring:'En krets med alle vanlige komponenter. To batterier gir nok spenning til å drive to pærer selv med en motstand i kretsen. Dette er kompleksiteten som finnes i enkle elektriske apparater.',
+    fakta:'En enkel elektrisk krets i en skolerobot kan ha akkurat disse komponentene: to batterier, bryter, motstand og to motorer!',
+  },
+];
+
+// ══════════════════════════════════════════════════
+//  KOMPONENT-DEFINISJONER (tegning + tilkoblingspunkter)
+// ══════════════════════════════════════════════════
+const KOMP_DEF = {
+  batteri: {
+    w:70, h:34,
+    tegn(ctx, k, live) {
+      const {x,y,rot} = k;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(rot*Math.PI/2);
+      // Kropp
+      ctx.fillStyle = '#1f2d1f';
+      ctx.strokeStyle = live ? '#4ade80' : 'rgba(255,255,255,.3)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, -35,-17, 70,34, 8);
+      ctx.fill(); ctx.stroke();
+      // Polstriper
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(12,-14,14,28);  // +
+      ctx.fillStyle = '#374151'; ctx.fillRect(-24,-14,10,28); // −
+      // Pluss/minus-symbol
+      ctx.fillStyle='#fff'; ctx.font='bold 13px Fredoka One,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('+',19,0); ctx.fillText('−',-19,0);
+      ctx.restore();
+    },
+    // Terminaler relativ til sentrum, i retning av rot
+    terminaler(rot) {
+      // [0]=minus, [1]=pluss
+      const pts = [[-35,0],[35,0]];
+      return pts.map(p => rotPt(p, rot));
+    }
+  },
+  paere: {
+    w:44, h:44,
+    tegn(ctx, k, live) {
+      const {x,y,rot,_glow} = k;
+      ctx.save(); ctx.translate(x,y);
+      if (live) {
+        ctx.shadowColor='#facc15'; ctx.shadowBlur=20;
+        if (_glow) { ctx.shadowBlur=30; }
+      }
+      // Pærekropp
+      ctx.beginPath(); ctx.arc(0,-4,16,0,Math.PI*2);
+      ctx.fillStyle = live ? '#fef08a' : '#1f2d1f';
+      ctx.strokeStyle = live ? '#facc15' : 'rgba(255,255,255,.3)';
+      ctx.lineWidth=2; ctx.fill(); ctx.stroke();
+      // Sokkel
+      ctx.fillStyle='#374151'; ctx.strokeStyle='rgba(255,255,255,.3)';
+      ctx.fillRect(-8,10,16,10); ctx.strokeRect(-8,10,16,10);
+      // Tråd inni
+      if (live) { ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5; }
+      else { ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1; }
+      ctx.beginPath(); ctx.moveTo(-5,-4); ctx.bezierCurveTo(-5,-12,5,-12,5,-4);
+      ctx.stroke();
+      ctx.restore();
+    },
+    terminaler(rot) {
+      return [rotPt([0,-20],rot), rotPt([0,20],rot)];
+    }
+  },
+  bryter: {
+    w:52, h:28,
+    tegn(ctx, k, live) {
+      const {x,y,rot,lukket} = k;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(rot*Math.PI/2);
+      ctx.strokeStyle = live ? '#4ade80' : 'rgba(255,255,255,.3)';
+      ctx.lineWidth=2.5; ctx.lineCap='round';
+      // Venstre terminal
+      ctx.beginPath(); ctx.moveTo(-26,0); ctx.lineTo(-14,0); ctx.stroke();
+      // Høyre terminal
+      ctx.beginPath(); ctx.moveTo(14,0); ctx.lineTo(26,0); ctx.stroke();
+      // Bryterarm
+      ctx.beginPath(); ctx.moveTo(-14,0);
+      if (lukket) { ctx.lineTo(14,0); }
+      else { ctx.lineTo(10,-14); }
+      ctx.stroke();
+      // Endepunkt-sirkler
+      ctx.fillStyle = live ? '#4ade80' : 'rgba(255,255,255,.5)';
+      ctx.beginPath(); ctx.arc(-14,0,3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(14,0,3,0,Math.PI*2); ctx.fill();
+      // Label
+      ctx.font='10px Nunito,sans-serif'; ctx.fillStyle=lukket?'#4ade80':'#f87171';
+      ctx.textAlign='center'; ctx.fillText(lukket?'LUKKET':'ÅPEN',0,18);
+      ctx.restore();
+    },
+    terminaler(rot) {
+      return [rotPt([-26,0],rot), rotPt([26,0],rot)];
+    }
+  },
+  motstand: {
+    w:60, h:24,
+    tegn(ctx, k, live) {
+      const {x,y,rot} = k;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(rot*Math.PI/2);
+      ctx.strokeStyle = live ? '#4ade80' : 'rgba(255,255,255,.3)';
+      ctx.lineWidth=2; ctx.lineCap='round';
+      // Ledninger inn/ut
+      ctx.beginPath(); ctx.moveTo(-30,0); ctx.lineTo(-18,0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(18,0); ctx.lineTo(30,0); ctx.stroke();
+      // Sagtenner (IEC-resistor)
+      ctx.beginPath(); ctx.moveTo(-18,0);
+      const pts=[[-18,0],[-12,-10],[-4,10],[4,-10],[12,10],[18,0]];
+      pts.forEach(p=>ctx.lineTo(p[0],p[1]));
+      ctx.stroke();
+      // Ω-symbol
+      ctx.fillStyle=live?'#4ade80':'rgba(255,255,255,.4)';
+      ctx.font='9px Nunito,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Ω',0,20);
+      ctx.restore();
+    },
+    terminaler(rot) {
+      return [rotPt([-30,0],rot), rotPt([30,0],rot)];
+    }
+  },
+  motor: {
+    w:44, h:44,
+    tegn(ctx, k, live) {
+      const {x,y,rot,_spin} = k;
+      ctx.save(); ctx.translate(x,y);
+      if (live) { ctx.shadowColor='#60a5fa'; ctx.shadowBlur=18; }
+      // Ytre sirkel
+      ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2);
+      ctx.fillStyle='#1a1f2e'; ctx.strokeStyle=live?'#60a5fa':'rgba(255,255,255,.3)';
+      ctx.lineWidth=2; ctx.fill(); ctx.stroke();
+      // M-symbol
+      ctx.fillStyle=live?'#60a5fa':'rgba(255,255,255,.6)';
+      ctx.font='bold 14px Fredoka One,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('M',0,0);
+      // Spin-pil
+      if (live) {
+        ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5;
+        const ang = (_spin||0)*0.05;
+        ctx.beginPath(); ctx.arc(0,0,13,ang,ang+Math.PI*1.4);
+        ctx.stroke();
+        const ax=13*Math.cos(ang+Math.PI*1.4), ay=13*Math.sin(ang+Math.PI*1.4);
+        ctx.beginPath(); ctx.moveTo(ax,ay);
+        ctx.lineTo(ax-4*Math.cos(ang+Math.PI*1.4+0.5),ay-4*Math.sin(ang+Math.PI*1.4+0.5));
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+    terminaler(rot) {
+      return [rotPt([0,-22],rot), rotPt([0,22],rot)];
+    }
+  }
+};
+
+// ══════════════════════════════════════════════════
+//  HJELPEFUNKSJONER
+// ══════════════════════════════════════════════════
+function rotPt([px,py], rot) {
+  const a = (rot||0)*Math.PI/2;
+  return [px*Math.cos(a)-py*Math.sin(a), px*Math.sin(a)+py*Math.cos(a)];
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
+function absoluteTerminaler(k) {
+  const def = KOMP_DEF[k.type];
+  return def.terminaler(k.rot||0).map(([dx,dy])=>[k.x+dx,k.y+dy]);
+}
+
+// ══════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════
+let komponenter = [];  // { id, type, x, y, rot, lukket?, ... }
+let ledninger   = [];  // { fra:[kompId,termIdx], til:[kompId,termIdx] }
+let valgtType   = 'batteri';
+let modus       = 'plasser';
+let ledningFra  = null;   // { id, tidx, x, y }
+let musX=0, musY=0;
+let nextId      = 1;
+let aktivOppgave= 0;
+let løsteOppgaver= new Set();
+let animFrame   = null;
+let spinTeller  = 0;
+
+const canvas = document.getElementById('kretsCanvas');
+const ctx    = canvas.getContext('2d');
+const SNAP   = 28; // piksel-avstand for terminal-snap
+
+// ══════════════════════════════════════════════════
+//  KRETS-ANALYSE
+// ══════════════════════════════════════════════════
+function byggKretsGraf() {
+  // Bygg adjacency: komp-terminaler som noder, ledninger som kanter
+  // Returner { nodes, adj, terminalNode }
+  const terminalNode = {}; // "kompId-termIdx" -> node-id
+  let nid = 0;
+  komponenter.forEach(k => {
+    const terms = absoluteTerminaler(k);
+    terms.forEach((_,ti)=>{
+      terminalNode[`${k.id}-${ti}`] = nid++;
+    });
+  });
+  const adj = Array.from({length:nid}, ()=>[]);
+  ledninger.forEach(l=>{
+    const a = terminalNode[`${l.fra[0]}-${l.fra[1]}`];
+    const b = terminalNode[`${l.til[0]}-${l.til[1]}`];
+    if(a!==undefined&&b!==undefined){adj[a].push(b);adj[b].push(a);}
+  });
+  // Interne koblinger innad i komponenter (begge terminaler er koblet gjennom komponenten)
+  // Unntatt åpen bryter
+  komponenter.forEach(k=>{
+    const t0=terminalNode[`${k.id}-0`], t1=terminalNode[`${k.id}-1`];
+    if(t0===undefined||t1===undefined) return;
+    if(k.type==='bryter'&&!k.lukket) return; // åpen bryter = ingen intern kobling
+    adj[t0].push(t1); adj[t1].push(t0);
+  });
+  return {adj, terminalNode, nid};
+}
+
+function erLukketKrets() {
+  if(!komponenter.length) return false;
+  const batterier = komponenter.filter(k=>k.type==='batteri');
+  if(!batterier.length) return false;
+  const {adj,terminalNode} = byggKretsGraf();
+  // For hvert batteri: sjekk at terminal 0 og 1 er koblet gjennom grafen
+  return batterier.some(batt=>{
+    const s = terminalNode[`${batt.id}-0`];
+    const e = terminalNode[`${batt.id}-1`];
+    if(s===undefined||e===undefined) return false;
+    // BFS
+    const besøkt=new Set([s]); const kø=[s];
+    while(kø.length){ const n=kø.shift(); for(const nb of adj[n]){ if(!besøkt.has(nb)){besøkt.add(nb);kø.push(nb);} } }
+    return besøkt.has(e);
+  });
+}
+
+function telKomponenter() {
+  const telt={batteri:0,paere:0,bryter:0,motstand:0,motor:0};
+  komponenter.forEach(k=>{ if(telt[k.type]!==undefined) telt[k.type]++; });
+  return telt;
+}
+
+function harLukketBryter() {
+  return komponenter.some(k=>k.type==='bryter'&&k.lukket);
+}
+
+// ══════════════════════════════════════════════════
+//  TEGNING
+// ══════════════════════════════════════════════════
+function tegn() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const live = erLukketKrets();
+  spinTeller += live ? 1 : 0;
+
+  // Bakgrunnsgitter
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,.025)'; ctx.lineWidth=1;
+  for(let x=0;x<canvas.width;x+=36){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+  for(let y=0;y<canvas.height;y+=36){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}
+  ctx.restore();
+
+  // Ledninger
+  ledninger.forEach(l=>{
+    const ka=komponenter.find(k=>k.id===l.fra[0]);
+    const kb=komponenter.find(k=>k.id===l.til[0]);
+    if(!ka||!kb) return;
+    const [ax,ay]=absoluteTerminaler(ka)[l.fra[1]];
+    const [bx,by]=absoluteTerminaler(kb)[l.til[1]];
+    ctx.save();
+    ctx.strokeStyle= live ? '#4ade80' : 'rgba(255,255,255,.4)';
+    ctx.lineWidth= live ? 3 : 2;
+    if(live){ctx.shadowColor='#4ade80';ctx.shadowBlur=8;}
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Ledning under arbeid
+  if(ledningFra&&modus==='ledning'){
+    ctx.save();
+    ctx.strokeStyle='rgba(74,222,128,.5)';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(ledningFra.x,ledningFra.y);ctx.lineTo(musX,musY);ctx.stroke();
+    ctx.restore();
+  }
+
+  // Komponenter
+  komponenter.forEach(k=>{
+    if(k.type==='motor') k._spin=spinTeller;
+    KOMP_DEF[k.type].tegn(ctx, k, live);
+  });
+
+  // Terminalprikker
+  if(modus==='ledning'){
+    komponenter.forEach(k=>{
+      absoluteTerminaler(k).forEach(([tx,ty],ti)=>{
+        const near= dist(tx,ty,musX,musY)<SNAP;
+        ctx.beginPath(); ctx.arc(tx,ty,5,0,Math.PI*2);
+        ctx.fillStyle= near ? '#facc15' : '#4ade80';
+        ctx.fill();
+      });
+    });
+  }
+
+  // Hint
+  document.getElementById('canvas-hint').classList.toggle('skjult', komponenter.length>0);
+
+  if(live) requestAnimationFrame(()=>{ tegn(); });
+}
+
+// ══════════════════════════════════════════════════
+//  MUS
+// ══════════════════════════════════════════════════
+function canvasPos(e){
+  const r=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/r.width, scaleY=canvas.height/r.height;
+  return [(e.clientX-r.left)*scaleX,(e.clientY-r.top)*scaleY];
+}
+
+function nærmestTerminal(x,y){
+  let best=null, bestD=Infinity;
+  komponenter.forEach(k=>{
+    absoluteTerminaler(k).forEach(([tx,ty],ti)=>{
+      const d=dist(tx,ty,x,y);
+      if(d<SNAP&&d<bestD){bestD=d;best={id:k.id,tidx:ti,x:tx,y:ty};}
+    });
+  });
+  return best;
+}
+
+function komponentVed(x,y){
+  // Sjekk i omvendt rekkefølge (øverst tegnet sist)
+  for(let i=komponenter.length-1;i>=0;i--){
+    const k=komponenter[i];
+    const def=KOMP_DEF[k.type];
+    if(Math.abs(x-k.x)<def.w/2+8&&Math.abs(y-k.y)<def.h/2+8) return k;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const [x,y]=canvasPos(e);
+  musX=x; musY=y;
+  if(modus==='ledning') tegn();
+  // Tooltip
+  const k=komponentVed(x,y);
+  const tt=document.getElementById('tooltip');
+  if(k){
+    const navn={batteri:'Batteri (+/−)',paere:'Lyspære',bryter:k.lukket?'Bryter (lukket)':'Bryter (åpen)',motstand:'Motstand (Ω)',motor:'Elektrisk motor'};
+    tt.textContent=navn[k.type]||k.type;
+    tt.style.display='block'; tt.style.left=(e.clientX+12)+'px'; tt.style.top=(e.clientY-8)+'px';
+  } else { tt.style.display='none'; }
+});
+canvas.addEventListener('mouseleave',()=>{document.getElementById('tooltip').style.display='none';});
+
+canvas.addEventListener('click',e=>{
+  const [x,y]=canvasPos(e);
+
+  if(modus==='plasser'){
+    komponenter.push({id:nextId++,type:valgtType,x,y,rot:0,lukket:valgtType==='bryter'?false:undefined});
+    tegn(); skjulResultat(); return;
+  }
+
+  if(modus==='slett'){
+    const k=komponentVed(x,y);
+    if(k){
+      ledninger=ledninger.filter(l=>l.fra[0]!==k.id&&l.til[0]!==k.id);
+      komponenter=komponenter.filter(c=>c.id!==k.id);
+      tegn(); skjulResultat();
+    }
+    return;
+  }
+
+  if(modus==='ledning'){
+    const term=nærmestTerminal(x,y);
+    if(!term){ ledningFra=null; tegn(); return; }
+    if(!ledningFra){ ledningFra=term; tegn(); return; }
+    if(ledningFra.id===term.id){ ledningFra=null; tegn(); return; }
+    // Fjern eksisterende ledning på denne terminalen
+    ledninger=ledninger.filter(l=>!(l.fra[0]===term.id&&l.fra[1]===term.tidx)&&!(l.til[0]===term.id&&l.til[1]===term.tidx));
+    ledninger=ledninger.filter(l=>!(l.fra[0]===ledningFra.id&&l.fra[1]===ledningFra.tidx)&&!(l.til[0]===ledningFra.id&&l.til[1]===ledningFra.tidx));
+    ledninger.push({fra:[ledningFra.id,ledningFra.tidx],til:[term.id,term.tidx]});
+    ledningFra=null; tegn(); skjulResultat(); return;
+  }
+
+  // Klikk på bryter i alle modi = toggle
+  const k=komponentVed(x,y);
+  if(k&&k.type==='bryter'){ k.lukket=!k.lukket; tegn(); skjulResultat(); }
+});
+
+// ══════════════════════════════════════════════════
+//  KONTROLL
+// ══════════════════════════════════════════════════
+function velgKomponent(type){
+  valgtType=type;
+  document.querySelectorAll('.komp-knapp').forEach(b=>b.classList.remove('aktiv-komp'));
+  document.getElementById(`knapp-${type}`)?.classList.add('aktiv-komp');
+}
+
+function setModus(m){
+  modus=m; ledningFra=null;
+  ['plasser','ledning','slett'].forEach(id=>{
+    document.getElementById(`vt-${id}`)?.classList.toggle('aktiv',id===m);
+  });
+  canvas.style.cursor=m==='slett'?'not-allowed':m==='ledning'?'cell':'crosshair';
+  tegn();
+}
+
+function roterValgt(){
+  // Roter sist plasserte komponent
+  if(!komponenter.length) return;
+  const k=komponenter[komponenter.length-1];
+  k.rot=((k.rot||0)+1)%4;
+  tegn();
+}
+
+function tilbakestill(){
+  komponenter=[]; ledninger=[]; ledningFra=null; nextId=1;
+  skjulResultat(); tegn();
+}
+
+function skjulResultat(){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); r.innerHTML='';
+}
+
+// ══════════════════════════════════════════════════
+//  SJEKK KRETS
+// ══════════════════════════════════════════════════
+function sjekkKrets(){
+  const opp=OPPGAVER[aktivOppgave];
+  const telt=telKomponenter();
+  const lukket=erLukketKrets();
+  const harBryter=telt.bryter>0;
+  const bryterLukket=harLukketBryter();
+
+  const kravOK=['batteri','paere','bryter','motstand','motor'].every(t=>{
+    if(opp.krav[t]===0) return true; // 0 = ingen krav
+    return telt[t]>=opp.krav[t];
+  });
+
+  let tips=[];
+  ['batteri','paere','bryter','motstand','motor'].forEach(t=>{
+    const n=opp.krav[t];
+    if(n>0&&telt[t]<n) tips.push(`<strong>${{batteri:'Batteri',paere:'Lyspære',bryter:'Bryter',motstand:'Motstand',motor:'Motor'}[t]}:</strong> trenger ${n}, du har ${telt[t]}.`);
+  });
+  if(opp.kreverLukketKrets&&!lukket) tips.push(`<strong>Kretsen er ikke lukket:</strong> strøm kan ikke flyte. Sjekk at alle komponenter er koblet med ledninger.`);
+  if(opp.kreverBryter&&bryterSkalVæreLukket===true&&!bryterLukket) tips.push(`<strong>Bryteren er åpen:</strong> klikk på bryteren for å lukke den.`);
+
+  const korrekt = kravOK && (!opp.kreverLukketKrets || lukket) && (!opp.kreverBryter || bryterLukket);
+
+  if(korrekt){ løsteOppgaver.add(aktivOppgave); oppdaterFremgang(); }
+
+  visResultat(korrekt, opp, telt, tips);
+}
+
+function visResultat(ok, opp, telt, tips){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); void r.offsetWidth;
+  if(ok){
+    const live=erLukketKrets();
+    r.innerHTML=`
+      <div class="res-tittel korrekt">${live?'✅ Kretsen lyser! ':'✅ Korrekt! '}${opp.emoji} ${opp.navn}</div>
+      <div class="res-grid">
+        <div class="res-felt">
+          <div class="res-felt-label">⚡ Krets-type</div>
+          <div class="res-felt-verdi">Seriekrets</div>
+        </div>
+        <div class="res-felt">
+          <div class="res-felt-label">🔋 Komponenter brukt</div>
+          <div class="res-felt-verdi">${Object.entries(telt).filter(([,v])=>v>0).map(([k,v])=>`${v}× ${k}`).join(', ')}</div>
+        </div>
+        <div class="res-felt" style="grid-column:1/-1">
+          <div class="res-felt-label">🧠 Forklaring</div>
+          <div class="res-felt-forklaring">${opp.forklaring}</div>
+        </div>
+        <div class="res-felt" style="grid-column:1/-1">
+          <div class="res-felt-label">💡 Visste du at</div>
+          <div class="res-felt-forklaring">${opp.fakta}</div>
+        </div>
+      </div>`;
+    r.classList.add('synlig','korrekt');
+  } else {
+    r.innerHTML=`
+      <div class="res-tittel feil">❌ Kretsen fungerer ikke ennå</div>
+      <div class="res-feil-tips">${tips.length?tips.map(t=>`• ${t}`).join('<br>'):'• Sjekk at alle komponenter er koblet med ledninger og at kretsen er lukket.'}</div>`;
+    r.classList.add('synlig','feil');
+  }
+}
+
+// Tilgjengelighet for bryterSkalVæreLukket i sjekkKrets
+let bryterSkalVæreLukket=null;
+
+// ══════════════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════════════
+function lastOppgave(idx){
+  aktivOppgave=idx;
+  const opp=OPPGAVER[idx];
+  bryterSkalVæreLukket=opp.bryterSkalVæreLukket;
+  document.getElementById('oppg-nr').textContent=String(idx+1).padStart(2,'0');
+  document.getElementById('oppg-tittel').textContent=`${opp.emoji} ${opp.tittel}`;
+  document.getElementById('oppg-tekst').textContent=opp.tekst;
+  document.getElementById('oppg-hint').textContent=opp.hint;
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  tilbakestill(); oppdaterFremgang();
+}
+
+function byggNavigasjon(){
+  const nav=document.getElementById('oppgave-nav');
+  const rad=document.getElementById('fremgang-rad');
+  nav.innerHTML=''; rad.innerHTML='';
+  OPPGAVER.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='oppg-btn'+(i===0?' active':'');
+    btn.textContent=`${o.emoji} ${o.navn}`;
+    btn.title=o.vanskelighet;
+    btn.onclick=()=>lastOppgave(i);
+    nav.appendChild(btn);
+    const dot=document.createElement('div');
+    dot.className='fremgang-dot'+(i===0?' aktiv':'');
+    dot.id=`dot-${i}`; dot.textContent=i+1;
+    dot.title=o.tittel; dot.onclick=()=>lastOppgave(i);
+    dot.style.cursor='pointer';
+    rad.appendChild(dot);
+  });
+}
+
+function oppdaterFremgang(){
+  OPPGAVER.forEach((_,i)=>{
+    const dot=document.getElementById(`dot-${i}`);
+    if(!dot) return;
+    dot.classList.remove('løst','aktiv');
+    if(løsteOppgaver.has(i)) dot.classList.add('løst');
+    else if(i===aktivOppgave) dot.classList.add('aktiv');
+  });
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===aktivOppgave));
+}
+
+// ══════════════════════════════════════════════════
+//  CANVAS RESIZE + INIT
+// ══════════════════════════════════════════════════
+function resizeCanvas(){
+  const wrap=canvas.parentElement;
+  canvas.width=wrap.clientWidth;
+  canvas.height=420;
+  tegn();
+}
+window.addEventListener('resize',resizeCanvas);
+
+byggNavigasjon();
+lastOppgave(0);
+resizeCanvas();
+</script>
+</body>
+</html>

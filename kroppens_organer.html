@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Kroppens organer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06080d;--surface:#0c1018;--border:rgba(255,255,255,.07);
+  --text:#e8eaf0;--dim:#5a6070;
+  --accent:#7dd3fc;--warm:#fbbf24;
+  --font-d:'Playfair Display',serif;--font-b:'DM Sans',sans-serif;
+}
+html{height:100%}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--font-b);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 50% 50%, rgba(125,211,252,.025) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 15% 20%, rgba(251,191,36,.015) 0%, transparent 55%);
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:300;
+  background:rgba(6,8,13,.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:12px 28px;display:flex;align-items:center;gap:12px;
+}
+.nav-lnk{font-family:var(--font-b);font-size:.82rem;font-weight:500;color:var(--dim);text-decoration:none;letter-spacing:.02em}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.9rem;color:var(--accent)}
+
+/* ── LAYOUT ── */
+.layout{
+  position:relative;z-index:1;
+  display:grid;
+  grid-template-columns:1fr minmax(300px,420px) 1fr;
+  grid-template-rows:auto 1fr;
+  min-height:calc(100vh - 49px);
+  max-width:1400px;margin:0 auto;
+  padding:0 20px 60px;
+  gap:0 24px;
+}
+
+/* ── HEADER ── */
+.header{
+  grid-column:1/-1;
+  text-align:center;
+  padding:36px 20px 24px;
+}
+.header h1{
+  font-family:var(--font-d);
+  font-size:clamp(1.8rem,3.5vw,2.8rem);
+  font-weight:700;letter-spacing:-.02em;
+  margin-bottom:8px;
+}
+.header h1 em{font-style:italic;color:var(--accent)}
+.header-sub{font-size:.88rem;color:var(--dim);letter-spacing:.02em}
+
+/* ── SIDEPANELER ── */
+.side-panel{
+  padding:20px 0;
+  display:flex;flex-direction:column;gap:8px;
+  align-self:start;
+  position:sticky;top:70px;
+}
+.organ-knapp{
+  font-family:var(--font-b);font-size:.78rem;font-weight:500;
+  padding:8px 14px;border-radius:10px;
+  border:1px solid var(--border);background:rgba(255,255,255,.02);
+  color:var(--dim);cursor:pointer;text-align:left;
+  transition:all .2s;letter-spacing:.01em;
+  display:flex;align-items:center;gap:8px;
+}
+.organ-knapp:hover{border-color:rgba(125,211,252,.3);color:var(--text);background:rgba(125,211,252,.04)}
+.organ-knapp.aktiv{border-color:var(--farge,var(--accent));color:var(--farge,var(--accent));background:rgba(125,211,252,.06)}
+.organ-knapp .dot{width:7px;height:7px;border-radius:50%;background:var(--farge,var(--accent));flex-shrink:0;opacity:.7}
+.organ-knapp.aktiv .dot{opacity:1;box-shadow:0 0 6px var(--farge,var(--accent))}
+
+/* ── KROPP-SEKSJON ── */
+.kropp-seksjon{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+}
+
+/* ── INFO-PANEL ── */
+.info-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:24px;
+  width:100%;
+  max-width:420px;
+  margin-top:16px;
+  transition:all .3s;
+  min-height:160px;
+  position:relative;overflow:hidden;
+}
+.info-panel::before{
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,var(--panel-glow,rgba(125,211,252,.04)),transparent);
+  pointer-events:none;
+}
+.info-panel-tom{
+  display:flex;align-items:center;justify-content:center;
+  height:120px;color:var(--dim);font-size:.85rem;letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.info-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.info-emoji{font-size:2.2rem;line-height:1}
+.info-navn{font-family:var(--font-d);font-size:1.4rem;font-weight:700;color:var(--organ-farge,var(--accent))}
+.info-latin{font-size:.78rem;color:var(--dim);font-style:italic;margin-top:1px}
+.info-divider{height:1px;background:var(--border);margin:0 0 16px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.info-kort{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;padding:11px 13px;
+}
+.info-kort-label{font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.info-kort-verdi{font-size:.82rem;font-weight:500;color:var(--text);line-height:1.4}
+.info-tekst{font-size:.83rem;line-height:1.7;color:rgba(232,234,240,.8)}
+.info-fakta{
+  margin-top:12px;padding:10px 13px;
+  background:rgba(255,255,255,.02);border-left:3px solid var(--organ-farge,var(--accent));
+  border-radius:0 8px 8px 0;font-size:.8rem;line-height:1.6;color:var(--dim);
+}
+
+/* ── SVG KROPP ── */
+.kropp-svg-wrap{
+  position:relative;
+  width:100%;max-width:380px;
+}
+.kropp-svg{width:100%;height:auto;display:block}
+
+/* Organ-klikk-flater */
+.organ-hotspot{
+  cursor:pointer;
+  transition:all .25s;
+}
+.organ-hotspot:hover .organ-fill{
+  filter:brightness(1.4) saturate(1.3);
+}
+.organ-hotspot.aktiv .organ-fill{
+  filter:brightness(1.6) saturate(1.5) drop-shadow(0 0 8px currentColor);
+}
+
+/* Pulserende animasjoner */
+@keyframes puls-hjerte{
+  0%,100%{transform:scale(1)}
+  15%{transform:scale(1.06)}
+  30%{transform:scale(1)}
+  45%{transform:scale(1.04)}
+  60%{transform:scale(1)}
+}
+@keyframes puls-lunge{
+  0%,100%{transform:scaleX(1) scaleY(1)}
+  50%{transform:scaleX(1.04) scaleY(1.05)}
+}
+@keyframes glow-fade{
+  0%,100%{opacity:.5}50%{opacity:.9}
+}
+.puls-hjerte{
+  transform-origin:50% 50%;
+  animation:puls-hjerte 1.0s ease-in-out infinite;
+}
+.puls-lunge{
+  transform-origin:50% 50%;
+  animation:puls-lunge 3.2s ease-in-out infinite;
+}
+.glow{animation:glow-fade 3s ease-in-out infinite}
+
+/* Etikett-linjer */
+.etikett-linje{stroke:rgba(255,255,255,.12);stroke-width:1;stroke-dasharray:3 4}
+.etikett-tekst{font-family:'DM Sans',sans-serif;font-size:10px;fill:rgba(255,255,255,.35);font-weight:500}
+
+/* Tooltip */
+.tooltip{
+  position:absolute;
+  background:rgba(12,16,24,.95);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:6px 10px;
+  font-size:.75rem;color:var(--text);
+  pointer-events:none;white-space:nowrap;
+  transform:translate(-50%,-100%) translateY(-8px);
+  transition:opacity .15s;
+  z-index:10;
+}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto}
+  .side-panel{flex-direction:row;flex-wrap:wrap;position:static;padding:0 0 8px}
+  .organ-knapp{padding:6px 10px;font-size:.72rem}
+  .header{padding:24px 12px 16px}
+  .kropp-svg-wrap{max-width:300px}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Kroppens organer</span>
+</nav>
+
+<div class="layout">
+  <div class="header">
+    <h1>Kroppens <em>organer</em></h1>
+    <p class="header-sub">Klikk på et organ for å lære mer</p>
+  </div>
+
+  <!-- Venstre meny -->
+  <div class="side-panel" id="venstre-panel">
+    <button class="organ-knapp" style="--farge:#f87171" onclick="velgOrgan('hjerte')"><span class="dot"></span>Hjerte</button>
+    <button class="organ-knapp" style="--farge:#93c5fd" onclick="velgOrgan('lunge_v')"><span class="dot"></span>Lunger</button>
+    <button class="organ-knapp" style="--farge:#fb923c" onclick="velgOrgan('lever')"><span class="dot"></span>Lever</button>
+    <button class="organ-knapp" style="--farge:#a78bfa" onclick="velgOrgan('mage')"><span class="dot"></span>Mage</button>
+    <button class="organ-knapp" style="--farge:#34d399" onclick="velgOrgan('tynntarm')"><span class="dot"></span>Tynntarm</button>
+    <button class="organ-knapp" style="--farge:#6ee7b7" onclick="velgOrgan('tykktarm')"><span class="dot"></span>Tykktarm</button>
+  </div>
+
+  <!-- Kropp + info -->
+  <div class="kropp-seksjon">
+    <div class="kropp-svg-wrap" id="svg-wrap">
+
+      <svg class="kropp-svg" viewBox="0 0 320 640" xmlns="http://www.w3.org/2000/svg" id="kropp-svg">
+        <defs>
+          <!-- Glødende filtere -->
+          <filter id="glow-rød" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-blå" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+
+          <!-- Gradienter -->
+          <radialGradient id="hud-grad" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#c8a882"/>
+            <stop offset="100%" stop-color="#8a6644"/>
+          </radialGradient>
+          <linearGradient id="hjerte-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f87171"/>
+            <stop offset="100%" stop-color="#dc2626"/>
+          </linearGradient>
+          <linearGradient id="lunge-grad-v" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#93c5fd"/>
+            <stop offset="100%" stop-color="#2563eb"/>
+          </linearGradient>
+          <linearGradient id="lunge-grad-h" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#93c5fd"/>
+            <stop offset="100%" stop-color="#2563eb"/>
+          </linearGradient>
+          <linearGradient id="lever-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fb923c"/>
+            <stop offset="100%" stop-color="#c2410c"/>
+          </linearGradient>
+          <linearGradient id="mage-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#c084fc"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+          <linearGradient id="tynntarm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6ee7b7"/>
+            <stop offset="100%" stop-color="#059669"/>
+          </linearGradient>
+          <linearGradient id="tykktarm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#34d399"/>
+            <stop offset="100%" stop-color="#065f46"/>
+          </linearGradient>
+          <linearGradient id="nyre-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fbbf24"/>
+            <stop offset="100%" stop-color="#b45309"/>
+          </linearGradient>
+          <linearGradient id="milt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f472b6"/>
+            <stop offset="100%" stop-color="#9d174d"/>
+          </linearGradient>
+          <linearGradient id="blære-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#a5f3fc"/>
+            <stop offset="100%" stop-color="#0891b2"/>
+          </linearGradient>
+          <linearGradient id="hjerne-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fda4af"/>
+            <stop offset="100%" stop-color="#e11d48"/>
+          </linearGradient>
+          <linearGradient id="spiserør-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#d8b4fe"/>
+            <stop offset="100%" stop-color="#6d28d9"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ══ KROPP-SILHUETT ══ -->
+        <!-- Hode -->
+        <ellipse cx="160" cy="52" rx="46" ry="50" fill="url(#hud-grad)" opacity=".25"/>
+        <!-- Hals -->
+        <rect x="148" y="96" width="24" height="28" rx="6" fill="url(#hud-grad)" opacity=".2"/>
+        <!-- Overkropp -->
+        <path d="M90,120 Q80,130 78,170 L75,290 Q74,310 80,320 L95,370 L225,370 L240,320 Q246,310 245,290 L242,170 Q240,130 230,120 Z" fill="url(#hud-grad)" opacity=".18"/>
+        <!-- Mage/hofte -->
+        <path d="M95,370 Q90,400 92,430 L100,480 L220,480 L228,430 Q230,400 225,370 Z" fill="url(#hud-grad)" opacity=".15"/>
+        <!-- Ben (antydet) -->
+        <path d="M100,480 L92,560 L115,560 L128,480 Z" fill="url(#hud-grad)" opacity=".1"/>
+        <path d="M220,480 L228,560 L205,560 L192,480 Z" fill="url(#hud-grad)" opacity=".1"/>
+
+        <!-- Ribben (dekorativt) -->
+        <g stroke="rgba(255,255,255,.07)" stroke-width="1.2" fill="none">
+          <path d="M140,168 Q120,174 112,185"/>
+          <path d="M140,178 Q118,185 110,198"/>
+          <path d="M140,188 Q116,196 109,211"/>
+          <path d="M140,198 Q115,208 110,224"/>
+          <path d="M140,208 Q116,220 112,237"/>
+          <path d="M180,168 Q200,174 208,185"/>
+          <path d="M180,178 Q202,185 210,198"/>
+          <path d="M180,188 Q204,196 211,211"/>
+          <path d="M180,198 Q205,208 210,224"/>
+          <path d="M180,208 Q204,220 208,237"/>
+          <path d="M140,168 L180,168"/>
+        </g>
+
+        <!-- Ryggrad (dekorativt) -->
+        <g fill="rgba(255,255,255,.06)">
+          <rect x="157" y="128" width="6" height="5" rx="1"/>
+          <rect x="157" y="136" width="6" height="5" rx="1"/>
+          <rect x="157" y="144" width="6" height="5" rx="1"/>
+          <rect x="157" y="152" width="6" height="5" rx="1"/>
+          <rect x="157" y="160" width="6" height="5" rx="1"/>
+          <rect x="157" y="168" width="6" height="5" rx="1"/>
+          <rect x="157" y="176" width="6" height="5" rx="1"/>
+          <rect x="157" y="184" width="6" height="5" rx="1"/>
+          <rect x="157" y="192" width="6" height="5" rx="1"/>
+          <rect x="157" y="200" width="6" height="5" rx="1"/>
+          <rect x="157" y="208" width="6" height="5" rx="1"/>
+          <rect x="157" y="216" width="6" height="5" rx="1"/>
+          <rect x="157" y="224" width="6" height="5" rx="1"/>
+          <rect x="157" y="232" width="6" height="5" rx="1"/>
+          <rect x="157" y="240" width="6" height="5" rx="1"/>
+          <rect x="157" y="248" width="6" height="5" rx="1"/>
+          <rect x="157" y="256" width="6" height="5" rx="1"/>
+          <rect x="157" y="264" width="6" height="5" rx="1"/>
+          <rect x="157" y="272" width="6" height="5" rx="1"/>
+          <rect x="157" y="280" width="6" height="5" rx="1"/>
+          <rect x="157" y="288" width="6" height="5" rx="1"/>
+          <rect x="157" y="296" width="6" height="5" rx="1"/>
+          <rect x="157" y="304" width="6" height="5" rx="1"/>
+          <rect x="157" y="312" width="6" height="5" rx="1"/>
+          <rect x="157" y="320" width="6" height="5" rx="1"/>
+          <rect x="157" y="328" width="6" height="5" rx="1"/>
+          <rect x="157" y="336" width="6" height="5" rx="1"/>
+          <rect x="157" y="344" width="6" height="5" rx="1"/>
+          <rect x="157" y="352" width="6" height="5" rx="1"/>
+          <rect x="157" y="360" width="6" height="5" rx="1"/>
+        </g>
+
+        <!-- ══ ORGANER ══ -->
+
+        <!-- HJERNE -->
+        <g class="organ-hotspot" id="hot-hjerne" onclick="window.location='hjernen.html'" data-organ="hjerne">
+          <ellipse class="organ-fill" cx="160" cy="48" rx="38" ry="36" fill="url(#hjerne-grad)" opacity=".8"/>
+          <!-- Hjernefolde-linjer -->
+          <path d="M132,44 Q140,36 150,42 Q158,48 168,40 Q178,32 186,42" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+          <path d="M128,52 Q137,44 147,50 Q155,56 165,48 Q175,40 184,50" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+          <path d="M130,60 Q140,52 150,58 Q158,64 168,56 Q177,50 185,58" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>
+          <!-- Usynlig klikk-flate -->
+          <ellipse cx="160" cy="48" rx="44" ry="42" fill="transparent"/>
+        </g>
+
+        <!-- SPISERØR -->
+        <g class="organ-hotspot" id="hot-spiserør" onclick="velgOrgan('spiserør')" data-organ="spiserør">
+          <rect class="organ-fill" x="155" y="98" width="10" height="30" rx="5" fill="url(#spiserør-grad)" opacity=".7"/>
+          <rect cx="160" cy="113" x="152" y="95" width="16" height="36" rx="6" fill="transparent"/>
+        </g>
+
+        <!-- VENSTRE LUNGE (pasientens venstre = høyre på skjermen) -->
+        <g class="organ-hotspot puls-lunge" id="hot-lunge_v" onclick="velgOrgan('lunge_v')" data-organ="lunge_v" style="transform-origin:125px 210px">
+          <path class="organ-fill" d="M138,138 Q130,142 122,152 Q112,168 110,188 Q108,210 112,232 Q115,248 120,255 Q128,260 134,252 Q138,242 138,225 Z" fill="url(#lunge-grad-v)" opacity=".85"/>
+          <path d="M136,145 Q130,155 128,170 Q126,185 128,200" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+          <path d="M133,150 Q126,162 124,178" fill="none" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <path class="organ-fill" d="M138,138 Q130,142 122,152 Q112,168 110,188 Q108,210 112,232 Q115,248 120,255 Q128,260 134,252 Q138,242 138,225 Z" fill="transparent" stroke="none"/>
+          <ellipse cx="122" cy="200" rx="20" ry="55" fill="transparent"/>
+        </g>
+
+        <!-- HØYRE LUNGE -->
+        <g class="organ-hotspot puls-lunge" id="hot-lunge_h" onclick="velgOrgan('lunge_h')" data-organ="lunge_h" style="transform-origin:195px 210px;animation-delay:.15s">
+          <path class="organ-fill" d="M182,138 Q190,142 198,152 Q208,168 210,188 Q212,210 208,232 Q205,248 200,255 Q192,260 186,252 Q182,242 182,225 Z" fill="url(#lunge-grad-h)" opacity=".85"/>
+          <path d="M184,145 Q190,155 192,170 Q194,185 192,200" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+          <path d="M187,150 Q194,162 196,178" fill="none" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <ellipse cx="198" cy="200" rx="20" ry="55" fill="transparent"/>
+        </g>
+
+        <!-- HJERTE -->
+        <g class="organ-hotspot puls-hjerte" id="hot-hjerte" onclick="velgOrgan('hjerte')" data-organ="hjerte" style="transform-origin:152px 205px">
+          <path class="organ-fill" d="M152,192 C152,185 144,180 138,185 C132,190 132,198 138,205 L152,222 L166,205 C172,198 172,190 166,185 C160,180 152,185 152,192 Z" fill="url(#hjerte-grad)" filter="url(#glow-rød)" opacity=".95"/>
+          <!-- Aorta -->
+          <path d="M155,192 L158,178 Q160,170 165,168" fill="none" stroke="#f87171" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+          <ellipse cx="152" cy="205" rx="22" ry="22" fill="transparent"/>
+        </g>
+
+        <!-- LEVER -->
+        <g class="organ-hotspot" id="hot-lever" onclick="velgOrgan('lever')" data-organ="lever">
+          <path class="organ-fill" d="M182,242 Q196,238 210,244 Q220,250 218,268 Q216,282 206,286 Q194,290 182,284 Q172,280 170,268 Q168,252 182,242 Z" fill="url(#lever-grad)" opacity=".88"/>
+          <path d="M185,248 Q194,244 204,248" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+          <path d="M183,256 Q193,252 205,256" fill="none" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <!-- Galleblære (liten) -->
+          <ellipse cx="194" cy="292" rx="7" ry="5" fill="#fde68a" opacity=".7"/>
+          <ellipse cx="194" cy="255" rx="22" ry="26" fill="transparent"/>
+        </g>
+
+        <!-- MAGE -->
+        <g class="organ-hotspot" id="hot-mage" onclick="velgOrgan('mage')" data-organ="mage">
+          <path class="organ-fill" d="M138,252 Q128,250 122,260 Q118,272 124,282 Q130,290 142,292 Q154,294 160,286 Q164,278 158,266 Q152,252 138,252 Z" fill="url(#mage-grad)" opacity=".85"/>
+          <path d="M134,258 Q125,260 122,270" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>
+          <ellipse cx="138" cy="272" rx="20" ry="22" fill="transparent"/>
+        </g>
+
+        <!-- MILT -->
+        <g class="organ-hotspot" id="hot-milt" onclick="velgOrgan('milt')" data-organ="milt">
+          <ellipse class="organ-fill" cx="114" cy="278" rx="14" ry="18" fill="url(#milt-grad)" opacity=".82"/>
+          <ellipse cx="114" cy="278" rx="18" ry="22" fill="transparent"/>
+        </g>
+
+        <!-- VENSTRE NYRE -->
+        <g class="organ-hotspot" id="hot-nyre_v" onclick="velgOrgan('nyre_v')" data-organ="nyre_v">
+          <path class="organ-fill" d="M110,308 Q104,302 102,312 Q100,324 104,332 Q108,340 116,338 Q122,334 122,324 Q122,312 116,308 Z" fill="url(#nyre-grad)" opacity=".88"/>
+          <!-- Urinleder -->
+          <path d="M114,338 Q113,355 114,370" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3,3" opacity=".5"/>
+          <ellipse cx="112" cy="322" rx="14" ry="20" fill="transparent"/>
+        </g>
+
+        <!-- HØYRE NYRE -->
+        <g class="organ-hotspot" id="hot-nyre_h" onclick="velgOrgan('nyre_h')" data-organ="nyre_h">
+          <path class="organ-fill" d="M210,308 Q216,302 218,312 Q220,324 216,332 Q212,340 204,338 Q198,334 198,324 Q198,312 204,308 Z" fill="url(#nyre-grad)" opacity=".88"/>
+          <path d="M206,338 Q207,355 206,370" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3,3" opacity=".5"/>
+          <ellipse cx="208" cy="322" rx="14" ry="20" fill="transparent"/>
+        </g>
+
+        <!-- TYNNTARM -->
+        <g class="organ-hotspot" id="hot-tynntarm" onclick="velgOrgan('tynntarm')" data-organ="tynntarm">
+          <path class="organ-fill" d="M138,300 Q148,296 158,302 Q168,298 176,304 Q182,314 178,326 Q174,338 164,342 Q154,346 144,340 Q134,334 132,322 Q130,310 138,300 Z" fill="url(#tynntarm-grad)" opacity=".7"/>
+          <!-- Tarmslyng-linjer -->
+          <path d="M142,308 Q152,304 162,310 Q170,316 166,326 Q162,334 152,336 Q142,334 138,326 Q136,316 142,308 Z" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>
+          <path d="M146,314 Q154,310 162,316 Q167,322 163,330" fill="none" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+          <ellipse cx="156" cy="322" rx="28" ry="26" fill="transparent"/>
+        </g>
+
+        <!-- TYKKTARM -->
+        <g class="organ-hotspot" id="hot-tykktarm" onclick="velgOrgan('tykktarm')" data-organ="tykktarm">
+          <!-- Høyre (oppadstigende) -->
+          <path class="organ-fill" d="M192,300 Q200,296 206,304 Q210,316 208,334 Q206,346 198,348 Q190,348 188,338 Q186,324 188,308 Z" fill="url(#tykktarm-grad)" opacity=".78"/>
+          <!-- Tverrliggende -->
+          <path class="organ-fill" d="M120,296 Q130,290 158,290 Q186,290 198,296 Q198,306 188,308 Q165,300 138,300 Q124,302 120,296 Z" fill="url(#tykktarm-grad)" opacity=".78"/>
+          <!-- Venstre (nedadstigende) -->
+          <path class="organ-fill" d="M108,296 Q116,292 122,298 Q126,310 124,328 Q122,342 114,344 Q106,342 106,330 Q104,314 108,296 Z" fill="url(#tykktarm-grad)" opacity=".78"/>
+          <!-- Nedre del -->
+          <path class="organ-fill" d="M108,342 Q114,350 125,354 Q140,358 160,356 Q178,354 190,348 Q196,344 196,348 Q192,360 175,364 Q158,368 140,366 Q122,364 112,356 Q106,350 108,342 Z" fill="url(#tykktarm-grad)" opacity=".78"/>
+          <rect x="100" y="288" width="110" height="82" fill="transparent"/>
+        </g>
+
+        <!-- URINBLÆRE -->
+        <g class="organ-hotspot" id="hot-blære" onclick="velgOrgan('blære')" data-organ="blære">
+          <ellipse class="organ-fill" cx="160" cy="420" rx="24" ry="20" fill="url(#blære-grad)" opacity=".8"/>
+          <ellipse cx="160" cy="420" rx="28" ry="24" fill="transparent"/>
+        </g>
+
+        <!-- BUKSPYTTKJERTEL (bak lever/mage) -->
+        <g class="organ-hotspot" id="hot-bukspytt" onclick="velgOrgan('bukspytt')" data-organ="bukspytt">
+          <path class="organ-fill" d="M136,294 Q148,290 162,292 Q172,294 174,298 Q172,304 160,304 Q148,304 138,300 Z" fill="#fde68a" opacity=".65"/>
+          <path d="M136,296 Q148,292 162,294 Q172,296 174,300" fill="transparent" stroke="transparent" stroke-width="12"/>
+        </g>
+
+        <!-- ══ ETIKETTER ══ -->
+        <!-- Hjerne -->
+        <line x1="202" y1="42" x2="232" y2="42" class="etikett-linje"/>
+        <text x="235" y="46" class="etikett-tekst" font-size="9">Hjerne</text>
+        <!-- Lunge v -->
+        <line x1="108" y1="200" x2="72" y2="200" class="etikett-linje"/>
+        <text x="26" y="204" class="etikett-tekst" text-anchor="middle" font-size="9">Lunge</text>
+        <!-- Lunge h -->
+        <line x1="212" y1="200" x2="248" y2="200" class="etikett-linje"/>
+        <text x="270" y="204" class="etikett-tekst" text-anchor="middle" font-size="9">Lunge</text>
+        <!-- Hjerte -->
+        <line x1="130" y1="205" x2="96" y2="218" class="etikett-linje"/>
+        <text x="60" y="222" class="etikett-tekst" text-anchor="middle" font-size="9">Hjerte</text>
+        <!-- Lever -->
+        <line x1="218" y1="262" x2="248" y2="256" class="etikett-linje"/>
+        <text x="270" y="260" class="etikett-tekst" text-anchor="middle" font-size="9">Lever</text>
+        <!-- Mage -->
+        <line x1="120" y1="270" x2="90" y2="270" class="etikett-linje"/>
+        <text x="58" y="274" class="etikett-tekst" text-anchor="middle" font-size="9">Mage</text>
+        <!-- Milt -->
+        <line x1="100" y1="278" x2="72" y2="290" class="etikett-linje"/>
+        <text x="52" y="294" class="etikett-tekst" text-anchor="middle" font-size="9">Milt</text>
+        <!-- Nyre v -->
+        <line x1="100" y1="322" x2="72" y2="322" class="etikett-linje"/>
+        <text x="44" y="326" class="etikett-tekst" text-anchor="middle" font-size="9">Nyre</text>
+        <!-- Nyre h -->
+        <line x1="222" y1="322" x2="250" y2="322" class="etikett-linje"/>
+        <text x="270" y="326" class="etikett-tekst" text-anchor="middle" font-size="9">Nyre</text>
+        <!-- Tynntarm -->
+        <line x1="184" y1="322" x2="248" y2="340" class="etikett-linje"/>
+        <text x="270" y="344" class="etikett-tekst" text-anchor="middle" font-size="9">Tynntarm</text>
+        <!-- Tykktarm -->
+        <line x1="102" y1="318" x2="72" y2="340" class="etikett-linje"/>
+        <text x="44" y="344" class="etikett-tekst" text-anchor="middle" font-size="9">Tykktarm</text>
+        <!-- Blære -->
+        <line x1="184" y1="420" x2="248" y2="420" class="etikett-linje"/>
+        <text x="270" y="424" class="etikett-tekst" text-anchor="middle" font-size="9">Blære</text>
+        <!-- Spiserør -->
+        <line x1="155" y1="108" x2="130" y2="108" class="etikett-linje"/>
+        <text x="108" y="112" class="etikett-tekst" text-anchor="middle" font-size="8">Spiserør</text>
+
+        <!-- Aktiv markering (oppdateres via JS) -->
+        <circle id="aktiv-ring" cx="-100" cy="-100" r="30" fill="none" stroke="white" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.4">
+          <animateTransform attributeName="transform" type="rotate" from="0 -100 -100" to="360 -100 -100" dur="4s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+
+      <!-- Tooltip -->
+      <div class="tooltip" id="tooltip" style="opacity:0;left:-200px;top:0px"></div>
+    </div>
+
+    <!-- Info-panel under kroppen -->
+    <div class="info-panel" id="info-panel" style="--panel-glow:rgba(125,211,252,.04)">
+      <div class="info-panel-tom" id="info-tom">
+        Klikk på et organ for å lære mer
+      </div>
+      <div id="info-innhold" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Høyre meny -->
+  <div class="side-panel" id="høyre-panel">
+    <button class="organ-knapp" style="--farge:#fda4af" onclick="velgOrgan('hjerne')"><span class="dot"></span>Hjerne</button>
+    <button class="organ-knapp" style="--farge:#d8b4fe" onclick="velgOrgan('spiserør')"><span class="dot"></span>Spiserør</button>
+    <button class="organ-knapp" style="--farge:#fbbf24" onclick="velgOrgan('nyre_v')"><span class="dot"></span>Nyrer</button>
+    <button class="organ-knapp" style="--farge:#f472b6" onclick="velgOrgan('milt')"><span class="dot"></span>Milt</button>
+    <button class="organ-knapp" style="--farge:#fde68a" onclick="velgOrgan('bukspytt')"><span class="dot"></span>Bukspyttkjertel</button>
+    <button class="organ-knapp" style="--farge:#a5f3fc" onclick="velgOrgan('blære')"><span class="dot"></span>Urinblære</button>
+  </div>
+</div>
+
+<script>
+const ORGANER = {
+  hjerne: {
+    navn:'Hjerne', latin:'Cerebrum / Encephalon',
+    emoji:'🧠', farge:'#fda4af',
+    fakta:[
+      {label:'Vekt',         verdi:'~1,4 kg'},
+      {label:'Nevroner',     verdi:'~86 milliarder'},
+      {label:'Energiforbruk',verdi:'20% av kroppsenergi'},
+      {label:'Temperatur',   verdi:'37,5–38°C'},
+    ],
+    tekst:'Hjernen er kroppens kontrollsenter og styrer alt fra bevegelse og sanser til tanker, minner og følelser. Den er delt i to hemisfærer og flere lober med spesialiserte funksjoner. Storehjernen (cerebrum) tar seg av bevisst tenkning, lillehjernen (cerebellum) koordinerer bevegelse, og hjernestammen styrer grunnleggende funksjoner som pust og hjerteslag.',
+    morsomt:'Hjernen produserer nok elektrisitet til å lyse opp en svak lyspære – og bruker omtrent like mye energi som en 25-watt pære.'
+  },
+  spiserør: {
+    navn:'Spiserør', latin:'Oesophagus',
+    emoji:'🫁', farge:'#d8b4fe',
+    fakta:[
+      {label:'Lengde',     verdi:'25–30 cm'},
+      {label:'Diameter',   verdi:'~2 cm'},
+      {label:'Transport',  verdi:'~10 sekunder'},
+      {label:'Veggtykkelse',verdi:'~3–4 mm'},
+    ],
+    tekst:'Spiserøret er et muskelrør som forbinder munnen med magen. Det transporterer mat og drikke ned til magen ved hjelp av bølgelignende muskelsammentrekninger kalt peristaltikk. To lukkemusler (sfinkter) hindrer syre fra magen i å stige opp. Spiserøret er ikke involvert i fordøyelse – det er kun en transportkanal.',
+    morsomt:'Du kan svelge mat selv opp-ned – peristaltikken arbeider mot tyngdekraften!'
+  },
+  hjerte: {
+    navn:'Hjerte', latin:'Cor / Cardia',
+    emoji:'❤️', farge:'#f87171',
+    fakta:[
+      {label:'Størrelse',  verdi:'Knyttneven din'},
+      {label:'Vekt',       verdi:'250–350 g'},
+      {label:'Slag/min',   verdi:'60–100 i hvile'},
+      {label:'Pumper/dag', verdi:'~7 000 liter'},
+    ],
+    tekst:'Hjertet er en kraftig muskel som pumper blod gjennom hele kroppen. Det er delt i fire kamre: to forkamre (atrier) og to hjertekamre (ventrikler). Høyre side pumper oksygenfattig blod til lungene, venstre side pumper oksygenrikt blod til resten av kroppen. Hjerteklaffer sørger for at blodet bare flyter én vei.',
+    morsomt:'Gjennom et liv slår hjertet over 3 milliarder ganger – uten hvile!'
+  },
+  lunge_v: {
+    navn:'Venstre lunge', latin:'Pulmo sinister',
+    emoji:'🫁', farge:'#93c5fd',
+    fakta:[
+      {label:'Lapper',    verdi:'2 (venstre), 3 (høyre)'},
+      {label:'Overflateareal',verdi:'50–75 m²'},
+      {label:'Alveoler',  verdi:'~300–500 mill.'},
+      {label:'Luftvolum', verdi:'~6 liter (total)'},
+    ],
+    tekst:'Lungene er kroppens gassutvekslingsorganer. Ved innånding fylles millioner av bittesmå luftsekker (alveoler) med luft. O₂ diffunderer inn i blodet og CO₂ diffunderer ut. Venstre lunge er litt mindre enn høyre fordi hjertet tar litt plass. Lungene har ingen muskler – det er mellomgulvet og ribbemusklene som skaper pustebevegelene.',
+    morsomt:'Utfoldet ville lungeflaten dekke et halvt tennisspill bane!'
+  },
+  lunge_h: {
+    navn:'Høyre lunge', latin:'Pulmo dexter',
+    emoji:'🫁', farge:'#93c5fd',
+    fakta:[
+      {label:'Lapper',    verdi:'3 (høyre)'},
+      {label:'Overflateareal',verdi:'50–75 m²'},
+      {label:'Alveoler',  verdi:'~300–500 mill.'},
+      {label:'Luftvolum', verdi:'~6 liter (total)'},
+    ],
+    tekst:'Høyre lunge er litt større enn venstre og har tre lapper (overlapp, midtlapp, underlapp). Lungene er beskyttet av brystkassen og omgitt av to hinnelag (pleura) med væske imellom som gjør at de glir fritt ved pust. Lungene er ansvarlige for at blodet forsynes med oksygen og kvitter seg med karbondioksid.',
+    morsomt:'Du puster ca. 22 000 ganger per dag – og nesten aldri tenker på det!'
+  },
+  lever: {
+    navn:'Lever', latin:'Hepar',
+    emoji:'🟧', farge:'#fb923c',
+    fakta:[
+      {label:'Vekt',       verdi:'1,2–1,5 kg'},
+      {label:'Funksjoner', verdi:'500+'},
+      {label:'Blodfiltert', verdi:'1,4 L/min'},
+      {label:'Regenerasjon',verdi:'Kan vokse tilbake!'},
+    ],
+    tekst:'Leveren er kroppens største indre organ og har over 500 kjente funksjoner. Den produserer galle (som bryter ned fett), lagrer glukose som glykogen, renser blodet for giftstoffer og legemidler, produserer viktige proteiner (albumin, koagulasjonsfaktorer) og regulerer kolesterol. Leveren er det eneste indre organet som kan regenerere seg selv.',
+    morsomt:'Leveren kan regenerere selv om 75% er fjernet – men det tar tid!'
+  },
+  mage: {
+    navn:'Mage', latin:'Gaster / Ventriculus',
+    emoji:'💜', farge:'#c084fc',
+    fakta:[
+      {label:'Kapasitet',  verdi:'0,9–1,5 L (tom), 4 L (full)'},
+      {label:'pH i magen', verdi:'1,5–3,5 (svært surt)'},
+      {label:'Oppholdstid',verdi:'2–4 timer'},
+      {label:'Celler',     verdi:'Erstattes hvert 3.–5. døgn'},
+    ],
+    tekst:'Magen er en muskelsekk som mottar mat fra spiserøret og begynner fordøyelsesprosessen. Magesyre (saltsyre, HCl) og pepsin bryter ned proteiner. Musklene i mageveggen kneler og blander innholdet. Magen beskytter seg selv mot sin egen syre med et tykt slimlag. Pylorus-klaffen regulerer tømming av mageinnholdet til tolvfingertarmen.',
+    morsomt:'Knurringen du hører fra magen er magen som strammer seg og skyver luft og væske rundt – det skjer enten du er sulten eller ikke!'
+  },
+  milt: {
+    navn:'Milt', latin:'Lien / Splen',
+    emoji:'🩷', farge:'#f472b6',
+    fakta:[
+      {label:'Vekt',        verdi:'150–200 g'},
+      {label:'Plassering',  verdi:'Venstre side, under ribben'},
+      {label:'Størrelse',   verdi:'~12 × 7 × 4 cm'},
+      {label:'Blodfiltrering',verdi:'~350 L/dag'},
+    ],
+    tekst:'Milten er et viktig immunorgan og blodfilter. Den fjerner gamle og skadde røde blodlegemer, lagrer blodplater og hvite blodlegemer (lymfocytter), og filtrerer blodet for bakterier. I fosterstadiet produserer milten blodceller. Milten er ikke livsnødvendig – man kan leve uten den – men immunforsvaret svekkes noe.',
+    morsomt:'Milten kan lagre nok røde blodlegemer til å møte plutselig blodtap – den fungerer som en nødreserve!'
+  },
+  nyre_v: {
+    navn:'Venstre nyre', latin:'Ren sinister',
+    emoji:'🫘', farge:'#fbbf24',
+    fakta:[
+      {label:'Størrelse',  verdi:'~12 × 6 cm'},
+      {label:'Nefron',     verdi:'~1 mill. per nyre'},
+      {label:'Blod filtrert',verdi:'~180 L/dag'},
+      {label:'Urin produsert',verdi:'1–2 L/dag'},
+    ],
+    tekst:'Nyrene er kroppens renseanlegg. Hvert minutt filtrerer de ca. 1 liter blod, fjerner avfallsstoffer (urinstoff, kreatinin), regulerer væskebalansen og blodtrykket (via hormonet renin), og justerer elektrolyttbalansen (natrium, kalium, kalsium). De produserer også erytropoietin (EPO) som stimulerer produksjon av røde blodlegemer.',
+    morsomt:'Nyrene filtrerer 180 liter væske per dag – men bare 1–2 liter blir til urin. Resten resirkuleres!'
+  },
+  nyre_h: {
+    navn:'Høyre nyre', latin:'Ren dexter',
+    emoji:'🫘', farge:'#fbbf24',
+    fakta:[
+      {label:'Størrelse',  verdi:'~12 × 6 cm'},
+      {label:'Nefron',     verdi:'~1 mill. per nyre'},
+      {label:'Blod filtrert',verdi:'~180 L/dag'},
+      {label:'Urin produsert',verdi:'1–2 L/dag'},
+    ],
+    tekst:'Høyre nyre sitter litt lavere enn venstre nyre (pga. leveren over). Begge nyrene samarbeider om å regulere blodets sammensetning. Filtreringen skjer i de små nefronene – hver nyre har ca. 1 million av dem. Nyrebarkens glomeruli filtrerer blodet, og rørene i nyremarginen reabsorberer det kroppen trenger.',
+    morsomt:'Du kan leve normalt med bare én nyre – den gjenværende nyren vokser seg større og overtar!'
+  },
+  tynntarm: {
+    navn:'Tynntarm', latin:'Intestinum tenue',
+    emoji:'🟢', farge:'#6ee7b7',
+    fakta:[
+      {label:'Lengde',      verdi:'6–7 meter'},
+      {label:'Overflate',   verdi:'~250 m² (med villi)'},
+      {label:'Oppholdstid', verdi:'3–6 timer'},
+      {label:'Deler',       verdi:'Tolvfingertarm, jejunum, ileum'},
+    ],
+    tekst:'Tynntarmen er det viktigste fordøyelsesorganet. Her brytes maten ned til enkle molekyler (aminosyrer, glukose, fettsyrer) av enzymer fra bukspyttkjertelen og tarmen selv. Tarmslimhinnens folder, villi og mikrovilli øker overflaten enormt slik at næringsstoffene effektivt absorberes inn i blodet og lymfen.',
+    morsomt:'Utfoldet ville tynntarmens overflate dekke et helt tennisspill bane (250 m²)!'
+  },
+  tykktarm: {
+    navn:'Tykktarm', latin:'Intestinum crassum / Colon',
+    emoji:'💚', farge:'#34d399',
+    fakta:[
+      {label:'Lengde',      verdi:'1,5 meter'},
+      {label:'Diameter',    verdi:'~6 cm'},
+      {label:'Oppholdstid', verdi:'10–59 timer'},
+      {label:'Bakterier',   verdi:'~100 milliarder/gram'},
+    ],
+    tekst:'Tykktarmen absorberer vann og elektrolytter fra den ufordøyde maten som kommer fra tynntarmen. Den er hjem for billioner av tarmbakterier (mikrobiomet) som bryter ned ufordøyelige fibre, produserer vitamin K og B12, og spiller en viktig rolle for immunsystemet. Det resterende avfallet komprimeres til avføring.',
+    morsomt:'Du har mer bakterieceller i tarmen enn du har egne celler i kroppen!'
+  },
+  bukspytt: {
+    navn:'Bukspyttkjertel', latin:'Pancreas',
+    emoji:'💛', farge:'#fde68a',
+    fakta:[
+      {label:'Lengde',      verdi:'15–20 cm'},
+      {label:'Vekt',        verdi:'~80 g'},
+      {label:'Hormoner',    verdi:'Insulin & glukagon'},
+      {label:'Enzymer',     verdi:'Amylase, lipase, protease'},
+    ],
+    tekst:'Bukspyttkjertelen er både et eksokrint og endokrint organ. Den eksokrine delen produserer fordøyelsesenzymer (amylase, lipase, protease) som skilles ut i tolvfingertarmen for å bryte ned karbohydrater, fett og proteiner. Den endokrine delen (Langerhans øyer) produserer hormonene insulin (senker blodsukkeret) og glukagon (hever blodsukkeret).',
+    morsomt:'Bukspyttkjertelen lager ~1,5 liter fordøyelsesvæske per dag – nok til å fylle en stor flaske!'
+  },
+  blære: {
+    navn:'Urinblære', latin:'Vesica urinaria',
+    emoji:'💧', farge:'#a5f3fc',
+    fakta:[
+      {label:'Kapasitet',   verdi:'300–500 ml (komfortabelt)'},
+      {label:'Maks kapasitet',verdi:'~700–1000 ml'},
+      {label:'Veggtykkelse',verdi:'3 mm (full) – 15 mm (tom)'},
+      {label:'Tømmes',      verdi:'4–8 ganger/dag'},
+    ],
+    tekst:'Urinblæren er en muskelsekk som lagrer urin fra nyrene (via urinlederne) til den kan tømmes (via urinrøret). Blæreveggen (detrusor-muskelen) kan strekkes enormt. Nerveimpulser gir tilrangen til å late vannet når blæren er ~150–300 ml full. Lukkemuskler (sfinkter) holder urinrøret lukket til vi bevisst velger å åpne.',
+    morsomt:'Urinblæren kan strekkes til nesten dobbel størrelse i nødsfall – men det er ikke anbefalt å vente så lenge!'
+  },
+};
+
+let aktivOrgan = null;
+
+function velgOrgan(id){
+  aktivOrgan = id;
+  const data = ORGANER[id];
+  if(!data) return;
+
+  // Oppdater alle knapper
+  document.querySelectorAll('.organ-knapp').forEach(b=>{
+    const onclick = b.getAttribute('onclick');
+    if(onclick && onclick.includes(`'${id}'`)){
+      b.classList.add('aktiv');
+    } else {
+      b.classList.remove('aktiv');
+    }
+  });
+
+  // Oppdater SVG-glød
+  document.querySelectorAll('.organ-hotspot').forEach(g=>{
+    g.classList.remove('aktiv');
+  });
+  // Finn alle hotspots for dette organet
+  ['hot-'+id].forEach(hid=>{
+    const el = document.getElementById(hid);
+    if(el) el.classList.add('aktiv');
+  });
+  // Håndter special cases (to nyrer, to lunger)
+  if(id==='nyre_v'||id==='nyre_h'){
+    document.querySelectorAll('[id^="hot-nyre"]').forEach(el=>el.classList.add('aktiv'));
+  }
+  if(id==='lunge_v'||id==='lunge_h'){
+    document.querySelectorAll('[id^="hot-lunge"]').forEach(el=>el.classList.add('aktiv'));
+  }
+
+  // Flytt aktiv-ring
+  const ringPosisjoner = {
+    hjerne:    {cx:160,cy:48,r:42},
+    spiserør:  {cx:160,cy:112,r:18},
+    hjerte:    {cx:152,cy:206,r:24},
+    lunge_v:   {cx:122,cy:200,r:32},
+    lunge_h:   {cx:198,cy:200,r:32},
+    lever:     {cx:194,cy:264,r:30},
+    mage:      {cx:138,cy:272,r:24},
+    milt:      {cx:114,cy:278,r:20},
+    nyre_v:    {cx:112,cy:322,r:18},
+    nyre_h:    {cx:208,cy:322,r:18},
+    tynntarm:  {cx:156,cy:322,r:32},
+    tykktarm:  {cx:160,cy:318,r:55},
+    bukspytt:  {cx:155,cy:298,r:20},
+    blære:     {cx:160,cy:420,r:28},
+  };
+  const pos = ringPosisjoner[id]||{cx:160,cy:300,r:30};
+  const ring = document.getElementById('aktiv-ring');
+  ring.setAttribute('cx',pos.cx);ring.setAttribute('cy',pos.cy);ring.setAttribute('r',pos.r);
+  ring.querySelector('animateTransform').setAttribute('from',`0 ${pos.cx} ${pos.cy}`);
+  ring.querySelector('animateTransform').setAttribute('to',`360 ${pos.cx} ${pos.cy}`);
+  ring.setAttribute('stroke', data.farge);
+  ring.setAttribute('opacity','0.6');
+
+  // Bygg info-panel
+  document.getElementById('info-tom').style.display='none';
+  document.getElementById('info-innhold').style.display='block';
+  document.getElementById('info-panel').style.setProperty('--panel-glow', data.farge+'18');
+  document.getElementById('info-panel').style.setProperty('--organ-farge', data.farge);
+
+  const kortHTML = data.fakta.map(f=>`
+    <div class="info-kort">
+      <div class="info-kort-label">${f.label}</div>
+      <div class="info-kort-verdi">${f.verdi}</div>
+    </div>`).join('');
+
+  document.getElementById('info-innhold').innerHTML = `
+    <div class="info-header">
+      <span class="info-emoji">${data.emoji}</span>
+      <div>
+        <div class="info-navn">${data.navn}</div>
+        <div class="info-latin">${data.latin}</div>
+      </div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-grid">${kortHTML}</div>
+    <p class="info-tekst">${data.tekst}</p>
+    <div class="info-fakta">💡 <strong>Visste du?</strong> ${data.morsomt}</div>
+  `;
+
+  // Scroll til info-panel på mobil
+  if(window.innerWidth < 900){
+    document.getElementById('info-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+
+// Tooltip ved hover
+document.querySelectorAll('.organ-hotspot').forEach(el=>{
+  const id = el.getAttribute('data-organ');
+  if(!id) return;
+  const data = ORGANER[id];
+  if(!data) return;
+  const tt = document.getElementById('tooltip');
+
+  el.addEventListener('mouseenter', e=>{
+    tt.textContent = data.navn;
+    tt.style.opacity = '1';
+  });
+  el.addEventListener('mousemove', e=>{
+    const wrap = document.getElementById('svg-wrap');
+    const rect = wrap.getBoundingClientRect();
+    tt.style.left = (e.clientX - rect.left) + 'px';
+    tt.style.top  = (e.clientY - rect.top) + 'px';
+  });
+  el.addEventListener('mouseleave', ()=>{
+    tt.style.opacity = '0';
+  });
+});
+
+// Start med hjerte valgt
+velgOrgan('hjerte');
+</script>
+</body>
+</html>

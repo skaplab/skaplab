@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Kroppen i bevegelse</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070410;--card:#110820;--border:rgba(255,255,255,.07);
+  --text:#f5f0ff;--dim:#6a5080;
+  --pink:#f472b6;--red:#f87171;--blue:#60a5fa;--green:#4ade80;
+  --yellow:#facc15;--purple:#c084fc;--cyan:#22d3ee;--orange:#fb923c;
+  --font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 45% at 15% 10%,rgba(244,114,182,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 85% 90%,rgba(192,132,252,.05) 0%,transparent 55%);}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(7,4,16,.96);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-family:var(--font-h);font-size:.9rem;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:var(--pink);font-size:.9rem}
+
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:20px 0 28px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.6rem,3.5vw,2.4rem);margin-bottom:8px}
+.hero h1 span{color:var(--pink)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.65}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.tab{font-family:var(--font-h);font-size:.8rem;padding:7px 15px;border-radius:20px;
+  border:1px solid var(--border);background:var(--card);color:var(--dim);cursor:pointer;transition:all .18s}
+.tab:hover{border-color:var(--pink);color:var(--text)}
+.tab.aktiv{background:var(--pink);color:#000;border-color:var(--pink)}
+
+.steg-rad{display:flex;gap:5px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.steg-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--dim);
+  transition:all .3s;cursor:pointer;font-family:var(--font-h)}
+.steg-dot.aktiv{background:var(--pink);border-color:var(--pink);color:#000}
+.steg-dot.ferdig{background:rgba(244,114,182,.2);border-color:var(--pink);color:var(--pink)}
+.steg-tittel{font-family:var(--font-h);font-size:.85rem;color:var(--pink);padding:4px 10px;
+  background:rgba(244,114,182,.1);border-radius:8px;margin-left:8px}
+
+.scene-wrap{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  overflow:hidden;margin-bottom:14px}
+.scene-canvas{width:100%;display:block}
+
+.kontroll-rad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn-play{font-family:var(--font-h);font-size:1rem;padding:9px 24px;border-radius:12px;
+  border:none;cursor:pointer;background:var(--pink);color:#000;transition:all .15s}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(244,114,182,.35)}
+.btn-steg{font-family:var(--font-b);font-size:.82rem;font-weight:700;padding:9px 16px;
+  border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--dim);
+  cursor:pointer;transition:all .15s}
+.btn-steg:hover{border-color:var(--pink);color:var(--text)}
+.hastighet-label{font-size:.78rem;color:var(--dim);margin-left:4px}
+.hastighet-slider{accent-color:var(--pink);cursor:pointer;width:80px}
+
+.info-strip{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.info-strip{grid-template-columns:1fr}}
+.info-felt{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.info-felt-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:5px}
+.info-felt-tekst{font-size:.84rem;line-height:1.6;color:var(--text)}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">🫀 Kroppen i bevegelse</span>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <h1>🫀 Kroppen i <span>bevegelse</span></h1>
+    <p class="hero-sub">Se hva som skjer inni kroppen – fra celle til hjerne til immunforsvar.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab aktiv"  onclick="visFenomen('aanding')">🔴 Celleånding</button>
+    <button class="tab"        onclick="visFenomen('deling')">🔵 Celledeling</button>
+    <button class="tab"        onclick="visFenomen('protein')">🟡 Proteinsyntese</button>
+    <button class="tab"        onclick="visFenomen('blod')">❤️ Blodkretsløp</button>
+    <button class="tab"        onclick="visFenomen('nerve')">⚡ Nervesystemet</button>
+    <button class="tab"        onclick="visFenomen('hormon')">🟣 Hormonsystemet</button>
+    <button class="tab"        onclick="visFenomen('virus')">🦠 Virusinfeksjon</button>
+    <button class="tab"        onclick="visFenomen('immun')">🛡️ Immunforsvaret</button>
+  </div>
+
+  <div class="steg-rad" id="steg-rad"></div>
+
+  <div class="scene-wrap">
+    <canvas class="scene-canvas" id="sceneCanvas" height="440"></canvas>
+  </div>
+
+  <div class="kontroll-rad">
+    <button class="btn-play" id="btn-play" onclick="togglePlay()">▶ Spill av</button>
+    <button class="btn-steg" onclick="forrigeSteg()">← Forrige</button>
+    <button class="btn-steg" onclick="nesteSteg()">Neste →</button>
+    <button class="btn-steg" onclick="nullstillAnim()">↺ Start på nytt</button>
+    <span class="hastighet-label">Hastighet:</span>
+    <input class="hastighet-slider" type="range" min="0.3" max="3" step="0.1" value="1"
+      oninput="hastighet=+this.value">
+  </div>
+
+  <div class="info-strip" id="info-strip"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('sceneCanvas');
+const ctx    = canvas.getContext('2d');
+let W=0, H=440, spiller=false, hastighet=1, t=0, aktivSteg=0, animId=null;
+let aktivFenomen='aanding';
+
+// ── Hjelpere ──
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?2*t*t:-1+(4-2*t)*t;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function rr(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+
+function lbl(c,txt,x,y,col='rgba(255,255,255,.85)',bg='rgba(0,0,0,.6)'){
+  c.save();c.font=`bold ${Math.max(10,W*.012)}px Nunito,sans-serif`;
+  c.textAlign='center';c.textBaseline='middle';
+  const tw=c.measureText(txt).width;
+  c.fillStyle=bg;rr(c,x-tw/2-6,y-10,tw+12,20,5);c.fill();
+  c.fillStyle=col;c.fillText(txt,x,y);c.restore();
+}
+
+function stiplet(c,x1,y1,x2,y2,col,a=.35){
+  c.save();c.globalAlpha=a;c.strokeStyle=col;c.lineWidth=1.5;c.setLineDash([4,4]);
+  c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);c.restore();
+}
+
+// ════════════════════════════════════════════════
+const FENOMENER = {
+
+// ── 1. CELLEÅNDING ──────────────────────────────
+aanding:{
+  navn:'Celleånding',
+  steg:[
+    {tittel:'🍬 Glukose + O₂ tas inn',   info:'Cellen absorberer glukose fra blodet og oksygen (O₂) fra lungene via diffusjon. Disse er råstoffene for energiproduksjonen. Formelen er: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ~38 ATP.'},
+    {tittel:'⚙️ Glykolyse i cytoplasma', info:'I cytoplasmaet (utenfor mitokondriet) spaltes glukose til to pyruvatmolekyler. Dette gir kun 2 ATP og krever ikke oksygen – anaerob prosess.'},
+    {tittel:'🔄 Sitronsyresyklus',        info:'Pyruvat går inn i mitokondriet. I sitronsyresyklusen brytes det videre ned, CO₂ frigjøres, og energibærerne NADH og FADH₂ lades opp.'},
+    {tittel:'⚡ 34 ATP produseres',       info:'Elektrontransportkjeden i mitokondriet bruker NADH/FADH₂ til å pumpe protoner og drive ATP-syntase. Dette gir opptil 34 ATP. Vann dannes som biprodukt.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnAanding(ctx,steg,t,W,H); }
+},
+
+// ── 2. CELLEDELING ──────────────────────────────
+deling:{
+  navn:'Celledeling (Mitose)',
+  steg:[
+    {tittel:'🧬 Interfase – DNA kopieres',    info:'Cellen er i hvile og forbereder seg. Hele DNA-strengen kopieres nøyaktig (replikasjon). Hvert kromosom finnes nå i to identiske kopier – søsterkromatider.'},
+    {tittel:'🔵 Profase – kromosomer synlige', info:'Kromosomene kondenserer og blir synlige under mikroskop. Kjernemembranen løses opp. Spindelen – et nettverk av proteintråder – begynner å dannes.'},
+    {tittel:'🎯 Metafase – oppstilling',       info:'Alle 46 kromosomparene stiller seg opp langs midtlinjen (metafaseplaten). Spindeltråder fra begge poler fester seg til hvert kromosom.'},
+    {tittel:'✂️ Anafase + Telofase',          info:'Søsterkromatidene trekkes fra hverandre mot hver pol. To nye kjerner dannes. Cellen snøres inn på midten (cytokinese) og danner to identiske datterceller.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnDeling(ctx,steg,t,W,H); }
+},
+
+// ── 3. PROTEINSYNTESE ───────────────────────────
+protein:{
+  navn:'Proteinsyntese',
+  steg:[
+    {tittel:'📖 Transkripsjon – DNA → mRNA',  info:'RNA-polymerase binder seg til en promotorsekvens på DNA og leser av genet. Et komplementært mRNA-molekyl bygges opp base for base inne i cellekjernen.'},
+    {tittel:'🚪 mRNA forlater kjernen',        info:'Det ferdigstilte mRNA-molekylet forlater kjernen gjennom kjerneporer. mRNA inneholder instruksjonen (kodon-sekvensen) for hvilken aminosyrerekke som skal bygges.'},
+    {tittel:'🏭 Translasjon – ribosom leser',  info:'Ribosomet fester seg til mRNA og leser kodonet (3 baser av gangen). For hvert kodon bringer et tRNA-molekyl riktig aminosyre. De kobles sammen med peptidbindinger.'},
+    {tittel:'🔗 Protein foldes til 3D-form',   info:'Den lange aminosyrekjeden folder seg spontant til en spesifikk tredimensjonal form – bestemt av sekvensen. Formen avgjør proteinets funksjon (enzym, reseptor, struktur osv.).'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnProtein(ctx,steg,t,W,H); }
+},
+
+// ── 4. BLODETS KRETSLØP ─────────────────────────
+blod:{
+  navn:'Blodets kretsløp',
+  steg:[
+    {tittel:'❤️ Hjertet pumper',           info:'Hjertet er en dobbelpumpe. Høyre side pumper oksygenfattig blod til lungene. Venstre side pumper oksygenrikt blod ut til resten av kroppen. Det slår ~70 ganger i minuttet.'},
+    {tittel:'🫁 Lungekretsløpet',          info:'Oksygenfattig blod (blåfarget) pumpes til lungene via lungearterien. I lungenes alveoler diffunderer O₂ inn i blodet og CO₂ ut. Oksygenrikt (rødt) blod returnerer til hjertet.'},
+    {tittel:'🌿 Systemkretsløpet',         info:'Oksygenrikt blod pumpes fra venstre hjertekammer ut gjennom aorta til alle organer og muskler. Oksygen og næring leveres, og CO₂ og avfallsstoffer hentes opp.'},
+    {tittel:'🔄 Full syklus',              info:'Et enkelt blodlegeme bruker ca. 1 minutt på en hel runde gjennom kroppen. Hjertet pumper ca. 5 liter blod per minutt i hvile – opptil 25 liter under hard trening.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnBlod(ctx,steg,t,W,H); }
+},
+
+// ── 5. NERVESYSTEMET ────────────────────────────
+nerve:{
+  navn:'Nervesystemet',
+  steg:[
+    {tittel:'👁️ Sansecelle mottar stimulus',  info:'Sanseceller i huden, øynene og ørene registrerer stimuli – trykk, lys, lyd, varme. De omdanner dem til elektriske signaler som sendes inn i nervesystemet.'},
+    {tittel:'⚡ Aksjonspotensial langs aksonen', info:'Nervecellen "avfyres": Na⁺-ioner strømmer inn gjennom ionekanalene og skaper en elektrisk bølge (aksjonspotensial). Denne løper langs aksonen med opptil 120 m/s.'},
+    {tittel:'🔗 Synapse – kjemisk overføring', info:'Aksjonspotensialet når synapseknappen. Nevrotransmittere (f.eks. dopamin, serotonin) slippes ut i synapsspalten og binder seg til reseptorene på neste celle.'},
+    {tittel:'🧠 Hjerne tolker og svarer',      info:'Sensorisk informasjon bearbeides i hjernen. Motoriske signaler sendes tilbake: muskler aktiveres og du reagerer. Hele prosessen fra stimulus til respons kan ta under 0,1 sekund.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnNerve(ctx,steg,t,W,H); }
+},
+
+// ── 6. HORMONSYSTEMET ───────────────────────────
+hormon:{
+  navn:'Hormonsystemet',
+  steg:[
+    {tittel:'🏭 Kjertel produserer hormon',   info:'Endokrine kjertler (skjoldbruskkjertelen, binyrer, bukspyttkjertelen, hypofysen m.fl.) produserer hormoner – kjemiske budbringere – som skilles ut direkte i blodet.'},
+    {tittel:'🩸 Hormon transporteres i blod', info:'Hormonet flyter med blodet og passerer forbi milliarder av celler. Men det reagerer kun med celler som har den komplementære reseptoren – resten ignorerer det.'},
+    {tittel:'🔑 Nøkkel-lås: hormon binder',   info:'Hormonet binder seg til reseptoren på målcellen – som en nøkkel i en lås. Bindingen utløser en kaskade av reaksjoner inne i cellen: genuttrykk endres, enzymer aktiveres.'},
+    {tittel:'🔁 Negativ tilbakekobling',       info:'Når ønsket effekt er oppnådd (f.eks. normalt blodsukker) sender kroppen negativt tilbakekoblingssignal til kjertelen om å redusere produksjonen. Dette holder systemet i balanse.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnHormon(ctx,steg,t,W,H); }
+},
+
+// ── 7. VIRUSINFEKSJON ───────────────────────────
+virus:{
+  navn:'Virusinfeksjon',
+  steg:[
+    {tittel:'🦠 Virus fester seg til celle',    info:'Virus har overflateproteiner (spikes) som passer nøyaktig til reseptorer på visse celletyper. Dette er grunnen til at SARS-CoV-2 angriper luftveisceller (ACE2-reseptor).'},
+    {tittel:'💉 Genetisk materiale injiseres',  info:'Viruset fusjonerer med cellemembranen eller svelges av cellen. Det genetiske materialet (RNA eller DNA) injiseres inn i cytoplasmaet og finner veien til ribosomet.'},
+    {tittel:'🏭 Cellen lager tusenvis av virus', info:'Cellens ribosomer leser virusets RNA som om det var cellens egne instruksjoner. Nye virusproteiner og kapsider monteres. Cellen er nå en virusfabrikk.'},
+    {tittel:'💥 Celle sprenges – virus spres',  info:'Cellen fylles med nye viruspartikler og brister (lysering) – eller virus knoppskytes fra membranen. Hundrevis til tusenvis av nye virus slippes ut og infiserer naboceller.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnVirus(ctx,steg,t,W,H); }
+},
+
+// ── 8. IMMUNFORSVARET ───────────────────────────
+immun:{
+  navn:'Immunforsvaret',
+  steg:[
+    {tittel:'🔍 Makrofag fagocyterer inntrenger', info:'Makrofager er patruljerende hvite blodceller. De gjenkjenner fremmede mønstre (PAMP) på bakterier og virus, og sluker dem (fagocytose). Inntrengeren brytes ned inni makrofagen.'},
+    {tittel:'📣 Cytokiner sender alarm',          info:'Makrofagen sender ut signalproteiner (cytokiner og interleukin) som varsler andre immunceller. Betennelse starter – økt blodstrøm og permeabilitet i kapillærene bringer flere forsvarsceller til stedet.'},
+    {tittel:'🎯 T-dreperceller angriper',         info:'T-hjelperceller koordinerer forsvaret. T-dreperceller (cytotoksiske T-celler) søker opp og dreper infiserte celler ved å sprøyte inn perforin og granzym som trigger apoptose.'},
+    {tittel:'🛡️ B-celler og antistoffer',        info:'B-celler produserer antistoffer – Y-formede proteiner som binder spesifikt til inntrengeren (antigenet). Dette nøytraliserer viruset og merker det for fagocytose. Hukommelsesceller lagres for raskere respons ved neste infeksjon.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnImmun(ctx,steg,t,W,H); }
+},
+
+}; // slutt FENOMENER
+
+// ════════════════════════════════════════════════
+//  TEGNEFUNKSJONER
+// ════════════════════════════════════════════════
+
+// ── CELLEÅNDING ──────────────────────────────────
+function tegnAanding(ctx,steg,t,W,H){
+  const bg=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.6);
+  bg.addColorStop(0,'#110820');bg.addColorStop(1,'#04020a');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const cx=W/2,cy=H/2,cr=Math.min(W,H)*.28;
+
+  // Mitokondrie (synlig fra steg 2)
+  if(steg>=2){
+    const mx=cx+cr*.12,my=cy+cr*.08;
+    ctx.save();
+    ctx.fillStyle='#180806';ctx.strokeStyle='rgba(248,113,113,.5)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(mx,my,cr*.72,cr*.4,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // Cristae
+    ctx.strokeStyle='rgba(248,113,113,.2)';ctx.lineWidth=1.5;
+    for(let i=0;i<4;i++){
+      const fx=mx-cr*.4+cr*i*.27;
+      ctx.beginPath();ctx.moveTo(fx,my-cr*.35);
+      ctx.bezierCurveTo(fx+16,my,fx-16,my,fx,my+cr*.35);ctx.stroke();
+    }
+    lbl(ctx,'Mitokondrie',mx,my+cr*.52,'#f87171');
+    ctx.restore();
+  }
+
+  // Celle
+  ctx.save();
+  ctx.strokeStyle='rgba(192,132,252,.4)';ctx.lineWidth=2.5;
+  ctx.fillStyle='rgba(192,132,252,.04)';
+  ctx.beginPath();ctx.ellipse(cx,cy,cr,cr*.88,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Celle (cytoplasma)',cx,cy-cr*.92,'#c084fc');
+  // Kjerne
+  ctx.fillStyle='rgba(96,165,250,.07)';ctx.strokeStyle='rgba(96,165,250,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.ellipse(cx-cr*.3,cy-cr*.1,cr*.2,cr*.16,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.restore();
+
+  // ATP-tellere
+  const atpN=[0,2,5,10][steg];
+  for(let i=0;i<atpN;i++){
+    const ang=i/atpN*Math.PI*2+t*1.5;
+    const r2=cr*.52;
+    const ax=cx+Math.cos(ang)*r2,ay=cy+Math.sin(ang)*r2*.78;
+    ctx.save();ctx.shadowColor='#facc15';ctx.shadowBlur=10;
+    ctx.fillStyle='#facc15';ctx.beginPath();ctx.arc(ax,ay,6,0,Math.PI*2);ctx.fill();
+    ctx.font=`bold ${W*.009}px Nunito,sans-serif`;ctx.fillStyle='#000';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('ATP',ax,ay);
+    ctx.restore();
+  }
+
+  if(steg===0){
+    for(let i=0;i<7;i++){
+      const f=(t*.7+i*.14)%1;
+      const ang=(i/7)*Math.PI*2;
+      const px=lerp(cx+Math.cos(ang)*cr*1.4,cx+Math.cos(ang)*cr*.5,ease(f));
+      const py=lerp(cy+Math.sin(ang)*cr*1.1,cy+Math.sin(ang)*cr*.4,ease(f));
+      ctx.save();ctx.globalAlpha=1-f*.4;
+      const isGlu=i<4;
+      ctx.fillStyle=isGlu?'#facc15':'#38bdf8';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;
+      ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.008}px Nunito,sans-serif`;ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(isGlu?'C₆':'O₂',px,py);
+      ctx.restore();
+    }
+    lbl(ctx,'Glukose (gul) + O₂ (blå) diffunderer inn',cx,H*.06,'#facc15');
+  }
+  if(steg===1){
+    for(let i=0;i<5;i++){
+      const f=(t*.6+i*.2)%1;
+      const ang=lerp(-Math.PI*.3,Math.PI*.3,f);
+      const px=cx+Math.cos(ang)*lerp(cr*.75,cr*.28,f);
+      const py=cy+Math.sin(ang)*lerp(cr*.6,cr*.22,f);
+      ctx.save();ctx.fillStyle='#facc15';ctx.shadowColor='#facc15';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    lbl(ctx,'Glykolyse: glukose → 2 pyruvat + 2 ATP',cx,H*.06,'#facc15');
+  }
+  if(steg===2){
+    for(let i=0;i<6;i++){
+      const f=(t*.55+i*.17)%1;
+      const ang=(i/6)*Math.PI*2;
+      const px=lerp(cx+cr*.12,cx+Math.cos(ang)*cr*1.25,ease(f));
+      const py=lerp(cy+cr*.08,cy+Math.sin(ang)*cr*.95,ease(f));
+      ctx.save();ctx.globalAlpha=f;
+      ctx.fillStyle='#fb923c';ctx.shadowColor='#fb923c';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(px,py,4.5,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.008}px Nunito,sans-serif`;ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('CO₂',px,py);
+      ctx.restore();
+    }
+    lbl(ctx,'Sitronsyresyklus: CO₂ frigjøres, NADH lades',cx,H*.06,'#fb923c');
+  }
+  if(steg===3){
+    ctx.save();ctx.font=`bold ${W*.02}px Fredoka One,cursive`;
+    ctx.fillStyle='rgba(250,204,21,.15)';ctx.textAlign='center';
+    ctx.fillText('⚡ 34 ATP ⚡',cx,cy);ctx.restore();
+    lbl(ctx,'Elektrontransportkjeden: 34 ATP + H₂O dannes',cx,H*.06,'#facc15');
+  }
+}
+
+// ── CELLEDELING ──────────────────────────────────
+function tegnDeling(ctx,steg,t,W,H){
+  ctx.fillStyle='#030609';ctx.fillRect(0,0,W,H);
+  const cx=W/2,cy=H/2,kr=Math.min(W,H)*.3;
+
+  if(steg===0){
+    // Interfase: stor celle med kopiert DNA
+    ctx.save();
+    ctx.strokeStyle='rgba(34,211,238,.4)';ctx.lineWidth=2;ctx.fillStyle='rgba(34,211,238,.05)';
+    ctx.beginPath();ctx.arc(cx,cy,kr,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='rgba(34,211,238,.1)';ctx.strokeStyle='rgba(34,211,238,.5)';
+    ctx.beginPath();ctx.arc(cx,cy,kr*.4,0,Math.PI*2);ctx.fill();ctx.stroke();
+    for(let i=0;i<10;i++){
+      const ang=i/10*Math.PI*2+t*.6;
+      ctx.fillStyle=i%2===0?'#60a5fa':'#f472b6';
+      ctx.beginPath();ctx.arc(cx+Math.cos(ang)*kr*.25,cy+Math.sin(ang)*kr*.16,3,0,Math.PI*2);ctx.fill();
+    }
+    lbl(ctx,'DNA kopieres – to kopier av hvert kromosom',cx,cy+kr+22,'#22d3ee');
+    ctx.restore();
+  }
+
+  if(steg===1){
+    // Profase: kromosomer kondenserer
+    ctx.save();
+    ctx.strokeStyle='rgba(34,211,238,.3)';ctx.lineWidth=2;ctx.fillStyle='rgba(34,211,238,.04)';
+    ctx.beginPath();ctx.arc(cx,cy,kr,0,Math.PI*2);ctx.fill();ctx.stroke();
+    const pos=[[-3,-2],[3,-2],[-2,1],[2,1],[0,-3.5],[0,3],[-.4,.05],[4,.05]];
+    pos.forEach(([dx,dy],i)=>{
+      const farger=['#f472b6','#60a5fa','#4ade80'];
+      tegnKromosom(ctx,cx+dx*kr*.35,cy+dy*kr*.28,farger[i%3],kr*.11);
+    });
+    lbl(ctx,'Profase: kromosomer synlige, spindel dannes',cx,cy+kr+22,'#22d3ee');
+    ctx.restore();
+  }
+
+  if(steg===2){
+    // Metafase
+    ctx.save();
+    ctx.strokeStyle='rgba(34,211,238,.3)';ctx.lineWidth=2;ctx.fillStyle='rgba(34,211,238,.04)';
+    ctx.beginPath();ctx.arc(cx,cy,kr,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='rgba(250,204,21,.2)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(cx,cy-kr*.85);ctx.lineTo(cx,cy+kr*.85);ctx.stroke();ctx.setLineDash([]);
+    const kPos=[[0,-.3],[0,.3],[0,-.65],[0,.65],[0,0],[0,-.45],[0,.15],[0,-.15]];
+    const fc=['#f472b6','#60a5fa','#4ade80','#fb923c'];
+    kPos.forEach(([dx,dy],i)=>{
+      const kx=cx+dx*kr*(1+(i%2)*.2),ky=cy+dy*kr;
+      // Spindeltråder
+      ctx.save();ctx.strokeStyle=fc[i%4]+'50';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(cx,cy-kr*.92);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(kx,ky);ctx.lineTo(cx,cy+kr*.92);ctx.stroke();
+      ctx.restore();
+      tegnKromosom(ctx,kx,ky,fc[i%4],kr*.09);
+    });
+    lbl(ctx,'Metafase: kromosomer stiller seg opp på midtlinjen',cx,cy+kr+22,'#facc15');
+    ctx.restore();
+  }
+
+  if(steg===3){
+    // Anafase/Telofase – to nye celler
+    const split=ease(clamp(t*1.8,0,1));
+    const off=kr*.6*split;
+    ctx.save();
+    [[0,-1],[0,1]].forEach(([_,dy])=>{
+      const ncy=cy+dy*off,nr=kr*(.78+.12*(1-split));
+      ctx.strokeStyle='rgba(34,211,238,.5)';ctx.lineWidth=2;ctx.fillStyle='rgba(34,211,238,.06)';
+      ctx.beginPath();ctx.arc(cx,ncy,nr,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle='rgba(34,211,238,.12)';ctx.strokeStyle='rgba(34,211,238,.4)';
+      ctx.beginPath();ctx.arc(cx,ncy,nr*.34,0,Math.PI*2);ctx.fill();ctx.stroke();
+    });
+    if(split>.6) lbl(ctx,'To identiske datterceller med fullt DNA-sett',cx,cy+kr+off+28,'#4ade80');
+    else lbl(ctx,'Cellen deles (cytokinese)',cx,cy+kr+22,'#22d3ee');
+    ctx.restore();
+  }
+}
+
+function tegnKromosom(c,x,y,farge,r){
+  c.save();c.fillStyle=farge;c.shadowColor=farge;c.shadowBlur=4;
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{
+    c.beginPath();c.ellipse(x+dx*r*.42,y+dy*r*.5,r*.25,r*.38,0,0,Math.PI*2);c.fill();
+  });
+  c.fillStyle='rgba(255,255,255,.45)';c.beginPath();c.arc(x,y,r*.2,0,Math.PI*2);c.fill();
+  c.restore();
+}
+
+// ── PROTEINSYNTESE ───────────────────────────────
+function tegnProtein(ctx,steg,t,W,H){
+  ctx.fillStyle='#030510';ctx.fillRect(0,0,W,H);
+  const kjCx=W*.27,kjCy=H*.46,kjR=H*.2;
+  const poreX=kjCx+kjR*.72,poreY=kjCy;
+  const ribX=W*.72,ribY=H*.44;
+
+  // Kjerne
+  ctx.save();
+  ctx.strokeStyle='rgba(96,165,250,.5)';ctx.lineWidth=2.5;ctx.fillStyle='rgba(96,165,250,.06)';
+  ctx.beginPath();ctx.arc(kjCx,kjCy,kjR,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Cellekjerne',kjCx,kjCy+kjR+16,'#60a5fa');
+  // DNA heliks
+  for(let i=0;i<18;i++){
+    const ang=i/18*Math.PI*4+t*.4;
+    ctx.fillStyle=i%2===0?'#60a5fa':'#a78bfa';
+    ctx.beginPath();ctx.arc(kjCx+Math.cos(ang)*kjR*.58,kjCy+Math.sin(ang)*kjR*.35,2.5,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+
+  // Kjerneporene
+  ctx.save();ctx.strokeStyle='rgba(96,165,250,.4)';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(poreX,poreY-10);ctx.lineTo(poreX,poreY+10);ctx.stroke();
+  ctx.restore();
+
+  if(steg===0){
+    for(let i=0;i<8;i++){
+      const ang=i/8*Math.PI*2;
+      ctx.fillStyle='#4ade80';ctx.beginPath();
+      ctx.arc(kjCx+Math.cos(ang)*kjR*.5,kjCy+Math.sin(ang)*kjR*.3,3.5,0,Math.PI*2);ctx.fill();
+    }
+    lbl(ctx,'RNA-polymerase leser DNA → lager mRNA',W/2,H*.06,'#4ade80');
+  }
+
+  if(steg>=1){
+    const mf=steg===1?ease(t):1;
+    const mxEnd=lerp(poreX,ribX,mf);
+    ctx.save();ctx.strokeStyle='#4ade80';ctx.lineWidth=3;ctx.lineCap='round';
+    ctx.shadowColor='#4ade80';ctx.shadowBlur=6;
+    ctx.beginPath();ctx.moveTo(poreX,poreY);
+    ctx.bezierCurveTo(poreX+W*.12,poreY-H*.12,mxEnd-W*.05,ribY-H*.05,mxEnd,ribY);ctx.stroke();
+    const kodoner=['AUG','UUU','GGC','CCA','UAA'];
+    kodoner.forEach((k,i)=>{
+      const f=(i+1)/6;
+      ctx.font=`bold ${W*.0075}px monospace`;ctx.fillStyle='rgba(74,222,128,.55)';ctx.textAlign='center';
+      ctx.fillText(k,lerp(poreX,mxEnd,f),lerp(poreY,ribY,f)-11);
+    });
+    ctx.restore();
+    if(steg===1) lbl(ctx,'mRNA forlater kjernen gjennom kjernepore',W/2,H*.06,'#4ade80');
+  }
+
+  if(steg>=2){
+    // Ribosom
+    ctx.save();
+    ctx.fillStyle='#f97316';ctx.shadowColor='#f97316';ctx.shadowBlur=10;
+    ctx.beginPath();ctx.ellipse(ribX,ribY-11,W*.052,H*.055,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fb923c';
+    ctx.beginPath();ctx.ellipse(ribX,ribY+11,W*.068,H*.068,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Ribosom',ribX,ribY+H*.1,'#fb923c');
+    // tRNA
+    for(let i=0;i<3;i++){
+      const f=(t*.6+i*.33)%1;
+      const tx=lerp(ribX+W*.22,ribX,ease(f)),ty=lerp(ribY-H*.28,ribY,ease(f));
+      ctx.save();ctx.globalAlpha=1-f*.35;
+      ctx.fillStyle='#a78bfa';ctx.shadowColor='#a78bfa';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(tx,ty,6,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.0075}px Nunito,sans-serif`;ctx.fillStyle='#fff';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('aa',tx,ty);
+      ctx.restore();
+    }
+    if(steg===2) lbl(ctx,'tRNA bringer aminosyrer – ribosom leser kodon for kodon',W/2,H*.06,'#a78bfa');
+  }
+
+  if(steg>=3){
+    const nAA=Math.floor(t*14)+3;
+    ctx.save();ctx.strokeStyle='rgba(250,204,21,.5)';ctx.lineWidth=2;
+    for(let i=0;i<nAA;i++){
+      const ang=i*.75+t;const r2=i*3.8;
+      const px=ribX+W*.13+Math.cos(ang)*r2*.85,py=ribY+Math.sin(ang)*r2*.5;
+      if(i===0){ctx.beginPath();ctx.moveTo(px,py);}else ctx.lineTo(px,py);
+      ctx.fillStyle='#facc15';ctx.shadowColor='#facc15';ctx.shadowBlur=4;
+      ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
+    }
+    ctx.stroke();ctx.restore();
+    lbl(ctx,'Proteinkjede folder seg til 3D-struktur',W/2,H*.06,'#facc15');
+  }
+}
+
+// ── BLODETS KRETSLØP ─────────────────────────────
+function tegnBlod(ctx,steg,t,W,H){
+  ctx.fillStyle='#0a0304';ctx.fillRect(0,0,W,H);
+  const hx=W/2,hy=H*.47,hr=Math.min(W,H)*.1;
+
+  // Lunger
+  [[W*.3,H*.22],[W*.7,H*.22]].forEach(([lx,ly],i)=>{
+    ctx.save();ctx.fillStyle='rgba(244,114,182,.08)';ctx.strokeStyle='rgba(244,114,182,.4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(lx,ly,W*.1,H*.13,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    lbl(ctx,i===0?'Venstre lunge':'Høyre lunge',lx,ly,'#f472b6');
+    ctx.restore();
+  });
+
+  // Organer/kropp
+  ctx.save();ctx.fillStyle='rgba(74,222,128,.05)';ctx.strokeStyle='rgba(74,222,128,.22)';ctx.lineWidth=1.5;
+  rr(ctx,W*.2,H*.71,W*.6,H*.17,10);ctx.fill();ctx.stroke();
+  lbl(ctx,'Organer og muskler',W/2,H*.8,'#4ade80');
+  ctx.restore();
+
+  // Hjerte
+  ctx.save();ctx.shadowColor='#f87171';ctx.shadowBlur=18;
+  tegnHjerte(ctx,hx,hy,hr,'#dc2626');
+  lbl(ctx,'Hjerte',hx,hy+hr+14,'#f87171');
+  ctx.restore();
+
+  // Kar-linjer
+  if(steg>=1){
+    stiplet(ctx,hx-hr*.5,hy-hr*.35,W*.3,H*.31,'#60a5fa',.5);
+    stiplet(ctx,W*.3,H*.2,hx+hr*.5,hy-hr*.35,'#f87171',.5);
+    stiplet(ctx,hx+hr*.5,hy-hr*.35,W*.7,H*.31,'#60a5fa',.5);
+    stiplet(ctx,W*.7,H*.2,hx-hr*.5,hy-hr*.35,'#f87171',.5);
+  }
+  if(steg>=2){
+    stiplet(ctx,hx,hy+hr*.3,W*.25,H*.71,'#f87171',.5);
+    stiplet(ctx,hx,hy+hr*.3,W*.75,H*.71,'#f87171',.5);
+    stiplet(ctx,W*.25,H*.71,hx-hr*.2,hy+hr*.45,'#60a5fa',.5);
+    stiplet(ctx,W*.75,H*.71,hx+hr*.2,hy+hr*.45,'#60a5fa',.5);
+  }
+
+  // Animert blodlegeme
+  const stegRuter=[
+    [[hx,hy-hr],[hx+hr*.9,hy],[hx,hy+hr],[hx-hr*.9,hy]],
+    [[hx-hr*.5,hy-hr*.3],[W*.3,H*.3],[W*.3,H*.22],[W*.3,H*.32],[hx,hy-hr*.5]],
+    [[hx,hy+hr*.3],[W*.25,H*.71],[W*.5,H*.76],[W*.75,H*.71],[hx,hy+hr*.4]],
+    [[hx-hr*.5,hy],[W*.3,H*.3],[W*.7,H*.3],[hx+hr*.5,hy],[W*.75,H*.71],[W*.25,H*.71],[hx-hr*.5,hy]],
+  ];
+  const ruter=stegRuter[steg]||[];
+  if(ruter.length>1){
+    const f=t%1,s=Math.floor(f*(ruter.length-1)),sf=(f*(ruter.length-1))%1;
+    const fra=ruter[Math.min(s,ruter.length-2)],til=ruter[Math.min(s+1,ruter.length-1)];
+    const bx=lerp(fra[0],til[0],ease(sf)),by=lerp(fra[1],til[1],ease(sf));
+    const oksy=steg===0||(steg>=1&&bx>W*.35);
+    ctx.save();ctx.fillStyle=oksy?'#f87171':'#60a5fa';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(bx,by,7,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+
+  const etiketter=['Hjertet pumper ~70 slag/min','Lungekretsløpet: O₂ inn, CO₂ ut','Systemkretsløpet: næring til organer','Full syklus: ~1 minutt, 5 L/min'];
+  lbl(ctx,etiketter[steg],W/2,H*.06,'#f87171');
+}
+
+function tegnHjerte(c,x,y,r,farge){
+  c.save();c.fillStyle=farge;
+  c.beginPath();c.moveTo(x,y+r*.42);
+  c.bezierCurveTo(x-r*1.5,y-r,x-r*1.5,y-r*2,x,y-r*1.2);
+  c.bezierCurveTo(x+r*1.5,y-r*2,x+r*1.5,y-r,x,y+r*.42);
+  c.fill();c.restore();
+}
+
+// ── NERVESYSTEMET ────────────────────────────────
+function tegnNerve(ctx,steg,t,W,H){
+  ctx.fillStyle='#020608';ctx.fillRect(0,0,W,H);
+  const sensX=W*.08,sensY=H*.5;
+  const aksonX1=W*.15,aksonX2=W*.75,aksonY=H*.5;
+  const synX=W*.82,synY=H*.5;
+  const hjX=W*.88,hjY=H*.2;
+
+  // Sansecelle
+  ctx.save();ctx.strokeStyle='rgba(250,204,21,.4)';ctx.lineWidth=2;ctx.fillStyle='rgba(250,204,21,.07)';
+  rr(ctx,sensX-22,sensY-30,44,60,8);ctx.fill();ctx.stroke();
+  lbl(ctx,'Sansecelle',sensX,sensY+44,'#facc15');
+  ctx.restore();
+
+  // Nervecelle
+  ctx.save();
+  for(let i=0;i<5;i++){
+    const ang=-Math.PI*.4+i*.2;
+    ctx.strokeStyle='rgba(250,204,21,.3)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(aksonX1,aksonY);
+    ctx.lineTo(aksonX1+Math.cos(ang)*28,aksonY+Math.sin(ang)*28);ctx.stroke();
+  }
+  ctx.fillStyle='rgba(250,204,21,.14)';ctx.strokeStyle='rgba(250,204,21,.5)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(aksonX1,aksonY,H*.058,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Nervecelle',aksonX1,aksonY+H*.09,'#facc15');
+  // Akson
+  ctx.strokeStyle='rgba(250,204,21,.3)';ctx.lineWidth=7;
+  ctx.beginPath();ctx.moveTo(aksonX1+H*.06,aksonY);ctx.lineTo(aksonX2,aksonY);ctx.stroke();
+  // Myelinskjeder
+  for(let i=0;i<6;i++){
+    const mx=lerp(aksonX1+H*.07,aksonX2,i/5);
+    ctx.fillStyle='rgba(255,255,255,.13)';
+    ctx.beginPath();ctx.ellipse(mx,aksonY,W*.038,H*.026,0,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+
+  // Synapse-celle
+  ctx.save();ctx.strokeStyle='rgba(192,132,252,.5)';ctx.lineWidth=2;ctx.fillStyle='rgba(192,132,252,.07)';
+  ctx.beginPath();ctx.arc(synX,synY,H*.07,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Neste celle',synX,synY+H*.09,'#c084fc');
+  ctx.restore();
+
+  // Hjerne
+  ctx.save();ctx.fillStyle='rgba(248,113,113,.1)';ctx.strokeStyle='rgba(248,113,113,.4)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(hjX,hjY,W*.065,H*.1,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Hjerne',hjX,hjY+H*.12,'#f87171');
+  ctx.restore();
+
+  if(steg===0) lbl(ctx,'Sansecelle registrerer stimulus og sender elektrisk signal',W/2,H*.07,'#facc15');
+
+  if(steg>=1){
+    const frac=(t*.75)%1;
+    const bx=lerp(aksonX1+H*.07,aksonX2,ease(frac));
+    ctx.save();ctx.fillStyle='#facc15';ctx.shadowColor='#facc15';ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(bx,aksonY,9,0,Math.PI*2);ctx.fill();
+    for(let i=0;i<3;i++){
+      ctx.globalAlpha=.7;ctx.fillStyle='#38bdf8';ctx.shadowColor='#38bdf8';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(bx+(i-1)*18,aksonY-17,5,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.008}px Nunito,sans-serif`;ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('Na⁺',bx+(i-1)*18,aksonY-17);
+    }
+    ctx.restore();
+    if(steg===1) lbl(ctx,'Aksjonspotensial: Na⁺ inn → elektrisk bølge langs aksonen',W/2,H*.07,'#facc15');
+  }
+
+  if(steg>=2){
+    for(let i=0;i<8;i++){
+      const f=(t*.75+i*.125)%1;
+      const tx=lerp(aksonX2,synX-H*.07,f),ty=synY+Math.sin(f*Math.PI)*18;
+      ctx.save();ctx.fillStyle='#c084fc';ctx.shadowColor='#c084fc';ctx.shadowBlur=6;
+      ctx.beginPath();ctx.arc(tx,ty,4.5,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    if(steg===2) lbl(ctx,'Synapse: nevrotransmittere krysser synapsspalten',W/2,H*.07,'#c084fc');
+  }
+
+  if(steg===3){
+    const uf=(t*.65)%1;
+    const ux=lerp(synX,hjX,ease(uf)),uy=lerp(synY,hjY,ease(uf));
+    ctx.save();ctx.fillStyle='#f87171';ctx.shadowColor='#f87171';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(ux,uy,7,0,Math.PI*2);ctx.fill();ctx.restore();
+    lbl(ctx,'Signal → hjerne → motorrespons på under 0.1 sek',W/2,H*.07,'#f87171');
+  }
+}
+
+// ── HORMONSYSTEMET ───────────────────────────────
+function tegnHormon(ctx,steg,t,W,H){
+  ctx.fillStyle='#060210';ctx.fillRect(0,0,W,H);
+
+  // Kropp-silhuett (enkel)
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.fillStyle='rgba(255,255,255,.02)';
+  ctx.beginPath();ctx.ellipse(W/2,H*.17,W*.08,H*.1,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  rr(ctx,W*.4,H*.29,W*.2,H*.45,8);ctx.fill();ctx.stroke();
+  ctx.restore();
+
+  const kjertler=[
+    {n:'Hypofyse',x:W*.5,y:H*.21,r:13,f:'#f472b6'},
+    {n:'Skjoldbrusk',x:W*.5,y:H*.31,r:15,f:'#a78bfa'},
+    {n:'Binyrer',x:W*.54,y:H*.51,r:13,f:'#fb923c'},
+    {n:'Bukspyttkjertelen',x:W*.47,y:H*.56,r:14,f:'#facc15'},
+  ];
+
+  kjertler.forEach((k,i)=>{
+    const isAktiv=i<=steg;
+    ctx.save();
+    ctx.fillStyle=k.f+(isAktiv?'30':'15');ctx.strokeStyle=k.f+(isAktiv?'90':'40');ctx.lineWidth=2;
+    if(isAktiv){ctx.shadowColor=k.f;ctx.shadowBlur=10;}
+    ctx.beginPath();ctx.arc(k.x,k.y,k.r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    if(isAktiv) lbl(ctx,k.n,k.x+k.r+ctx.measureText(k.n).width/2+8,k.y,k.f);
+    ctx.restore();
+  });
+
+  const aktK=kjertler[Math.min(steg,kjertler.length-1)];
+
+  if(steg===0){
+    const p=.85+Math.sin(t*Math.PI*4)*.15;
+    ctx.save();ctx.strokeStyle=aktK.f;ctx.lineWidth=3;ctx.globalAlpha=p;
+    ctx.beginPath();ctx.arc(aktK.x,aktK.y,aktK.r*1.7,0,Math.PI*2);ctx.stroke();
+    lbl(ctx,aktK.n+' produserer hormon',W/2,H*.07,aktK.f);
+    ctx.restore();
+  }
+
+  if(steg>=1){
+    for(let i=0;i<10;i++){
+      const f=(t*.45+i*.1)%1;
+      const ang=(i/10)*Math.PI*2+t*.25;
+      const r=f*W*.34;
+      const px=aktK.x+Math.cos(ang)*r,py=aktK.y+Math.sin(ang)*r;
+      if(px<10||px>W-10||py<10||py>H-10) continue;
+      ctx.save();ctx.globalAlpha=(1-f)*.9;
+      ctx.fillStyle=aktK.f;ctx.shadowColor=aktK.f;ctx.shadowBlur=6;
+      ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.008}px Nunito,sans-serif`;ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('H',px,py);
+      ctx.restore();
+    }
+    if(steg===1) lbl(ctx,'Hormon transporteres med blodet til alle celler',W/2,H*.07,aktK.f);
+  }
+
+  if(steg>=2){
+    const målX=W*.18,målY=H*.52;
+    ctx.save();
+    ctx.fillStyle='rgba(74,222,128,.07)';ctx.strokeStyle='rgba(74,222,128,.4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(målX,målY,H*.1,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#4ade80';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(målX+H*.1,målY,11,0,Math.PI);ctx.stroke();
+    lbl(ctx,'Målcelle',målX,målY+H*.13,'#4ade80');
+    const bf=ease(clamp((t-.35)*2.5,0,1));
+    const hbx=lerp(aktK.x+W*.14,målX+H*.1+7,bf);
+    ctx.fillStyle=aktK.f;ctx.shadowColor=aktK.f;ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(hbx,målY,7,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    if(steg===2) lbl(ctx,'Nøkkel-lås: hormon passer kun i riktig reseptor',W/2,H*.07,'#4ade80');
+  }
+
+  if(steg===3){
+    ctx.save();
+    ctx.strokeStyle='rgba(248,113,113,.55)';ctx.lineWidth=2;ctx.setLineDash([5,5]);
+    ctx.beginPath();ctx.moveTo(W*.18,H*.44);
+    ctx.bezierCurveTo(W*.06,H*.33,W*.06,H*.24,aktK.x-aktK.r,aktK.y);ctx.stroke();
+    ctx.setLineDash([]);
+    const af=t%1;
+    ctx.fillStyle='#f87171';ctx.shadowColor='#f87171';ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(lerp(W*.18,aktK.x-aktK.r,ease(af)),lerp(H*.44,aktK.y,ease(af)),6,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Negativ tilbakekobling: kjertel reduserer produksjon',W/2,H*.07,'#f87171');
+  }
+}
+
+// ── VIRUSINFEKSJON ───────────────────────────────
+function tegnVirus(ctx,steg,t,W,H){
+  ctx.fillStyle='#080205';ctx.fillRect(0,0,W,H);
+  const cCx=W/2,cCy=H*.54,cCr=Math.min(W,H)*.26;
+
+  // Celle
+  ctx.save();
+  ctx.fillStyle='rgba(74,222,128,.05)';ctx.strokeStyle='rgba(74,222,128,.32)';ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(cCx,cCy,cCr,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(96,165,250,.1)';ctx.strokeStyle='rgba(96,165,250,.38)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(cCx,cCy,cCr*.33,0,Math.PI*2);ctx.fill();ctx.stroke();
+  lbl(ctx,'Vertscelle',cCx,cCy+cCr+16,'#4ade80');
+  ctx.restore();
+
+  function virusPart(c,x,y,r,col){
+    c.save();c.fillStyle=col+'35';c.strokeStyle=col;c.lineWidth=2;c.shadowColor=col;c.shadowBlur=8;
+    c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.stroke();
+    for(let i=0;i<8;i++){
+      const a=i/8*Math.PI*2;
+      c.beginPath();c.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r);
+      c.lineTo(x+Math.cos(a)*(r+7),y+Math.sin(a)*(r+7));c.stroke();
+    }
+    c.restore();
+  }
+
+  if(steg===0){
+    const f=ease(t%1);
+    virusPart(ctx,lerp(W*.1,cCx-cCr*.88,f),lerp(H*.15,cCy-cCr*.38,f),17,'#f87171');
+    lbl(ctx,'Virus gjenkjenner og fester seg til overflatereseptor',W/2,H*.07,'#f87171');
+  }
+  if(steg===1){
+    virusPart(ctx,cCx-cCr*.88,cCy-cCr*.38,13,'#f87171');
+    for(let i=0;i<8;i++){
+      const f=(t*.65+i*.125)%1;
+      ctx.save();ctx.globalAlpha=1-f*.3;
+      ctx.fillStyle='#fb923c';ctx.shadowColor='#fb923c';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(lerp(cCx-cCr*.8,cCx,ease(f)),lerp(cCy-cCr*.33,cCy,ease(f)),4,0,Math.PI*2);ctx.fill();
+      ctx.font=`bold ${W*.0075}px Nunito,sans-serif`;ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('RNA',lerp(cCx-cCr*.8,cCx,ease(f)),lerp(cCy-cCr*.33,cCy,ease(f)));
+      ctx.restore();
+    }
+    lbl(ctx,'Viralt RNA injiseres – ribosomet kapres',W/2,H*.07,'#fb923c');
+  }
+  if(steg===2){
+    const antall=Math.floor(t*11)+2;
+    for(let i=0;i<antall;i++){
+      const ang=(i/11)*Math.PI*2;
+      virusPart(ctx,cCx+Math.cos(ang)*cCr*.52,cCy+Math.sin(ang)*cCr*.52,8,'#f87171');
+    }
+    lbl(ctx,`Cellen produserer ${antall} nye viruspartikler...`,W/2,H*.07,'#f87171');
+  }
+  if(steg===3){
+    const burst=ease(clamp(t*1.8,0,1));
+    ctx.save();ctx.globalAlpha=1-burst;
+    ctx.strokeStyle='rgba(74,222,128,.32)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(cCx,cCy,cCr*(1+burst*.3),0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+    for(let i=0;i<12;i++){
+      const ang=(i/12)*Math.PI*2;
+      virusPart(ctx,cCx+Math.cos(ang)*lerp(cCr*.35,cCr*1.45+W*.1,burst),
+        cCy+Math.sin(ang)*lerp(cCr*.35,cCr*1.2+H*.05,burst),7,'#f87171');
+    }
+    lbl(ctx,'Celle sprenges – hundrevis av virus spres til naboceller',W/2,H*.07,'#f87171');
+  }
+}
+
+// ── IMMUNFORSVARET ───────────────────────────────
+function tegnImmun(ctx,steg,t,W,H){
+  ctx.fillStyle='#020608';ctx.fillRect(0,0,W,H);
+  const bakX=W*.14,bakY=H*.46;
+  const makX=W*.38,makY=H*.46;
+  const tcX=W*.62,tcY=H*.34;
+  const bcX=W*.82,bcY=H*.5;
+
+  // Bakterie
+  ctx.save();ctx.fillStyle='rgba(248,113,113,.2)';ctx.strokeStyle='#f87171';ctx.lineWidth=2;ctx.shadowColor='#f87171';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(bakX,bakY,21,0,Math.PI*2);ctx.fill();ctx.stroke();
+  for(let i=0;i<6;i++){
+    const a=i/6*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(bakX+Math.cos(a)*21,bakY+Math.sin(a)*21);
+    ctx.lineTo(bakX+Math.cos(a)*30,bakY+Math.sin(a)*30);ctx.stroke();
+  }
+  lbl(ctx,'Bakterie',bakX,bakY+36,'#f87171');
+  ctx.restore();
+
+  // Makrofag
+  ctx.save();ctx.fillStyle='rgba(250,204,21,.1)';ctx.strokeStyle='#facc15';ctx.lineWidth=2;ctx.shadowColor='#facc15';ctx.shadowBlur=7;
+  ctx.beginPath();
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2,r=26+Math.sin(a*3+t*1.8)*7;
+    i===0?ctx.moveTo(makX+Math.cos(a)*r,makY+Math.sin(a)*r):ctx.lineTo(makX+Math.cos(a)*r,makY+Math.sin(a)*r);
+  }
+  ctx.closePath();ctx.fill();ctx.stroke();
+  lbl(ctx,'Makrofag',makX,makY+40,'#facc15');
+  ctx.restore();
+
+  if(steg>=2){
+    ctx.save();ctx.fillStyle='rgba(192,132,252,.1)';ctx.strokeStyle='#c084fc';ctx.lineWidth=2;ctx.shadowColor='#c084fc';ctx.shadowBlur=7;
+    ctx.beginPath();ctx.arc(tcX,tcY,21,0,Math.PI*2);ctx.fill();ctx.stroke();
+    lbl(ctx,'T-dreper',tcX,tcY+30,'#c084fc');
+    ctx.restore();
+  }
+  if(steg>=3){
+    ctx.save();ctx.fillStyle='rgba(34,211,238,.09)';ctx.strokeStyle='#22d3ee';ctx.lineWidth=2;ctx.shadowColor='#22d3ee';ctx.shadowBlur=7;
+    ctx.beginPath();ctx.arc(bcX,bcY,21,0,Math.PI*2);ctx.fill();ctx.stroke();
+    lbl(ctx,'B-celle',bcX,bcY+30,'#22d3ee');
+    for(let i=0;i<Math.floor(t*5)+1;i++){
+      const a=(i/5)*Math.PI*2;
+      const ax=bcX+Math.cos(a)*52,ay=bcY+Math.sin(a)*40;
+      if(ax<10||ax>W-10) continue;
+      tegnY(ctx,ax,ay,'#22d3ee');
+    }
+    ctx.restore();
+  }
+
+  if(steg===0){
+    const f=(t*.55)%1;
+    stiplet(ctx,bakX,bakY,makX,makY,'#facc15',.45);
+    ctx.save();ctx.fillStyle='#f87171';ctx.shadowColor='#f87171';ctx.shadowBlur=8;
+    ctx.beginPath();ctx.arc(lerp(bakX,makX-26,ease(f)),lerp(bakY,makY,ease(f)),9,0,Math.PI*2);ctx.fill();ctx.restore();
+    lbl(ctx,'Makrofag gjenkjenner inntrenger og fagocyterer (sluker)',W/2,H*.07,'#facc15');
+  }
+  if(steg>=1){
+    for(let i=0;i<8;i++){
+      const f=(t*.45+i*.125)%1;
+      const ang=(i/8)*Math.PI*2,r=f*W*.36;
+      const cx2=makX+Math.cos(ang)*r,cy2=makY+Math.sin(ang)*r;
+      if(cx2<5||cx2>W-5||cy2<5||cy2>H-5) continue;
+      ctx.save();ctx.globalAlpha=(1-f)*.85;
+      ctx.fillStyle='#facc15';ctx.shadowColor='#facc15';ctx.shadowBlur=5;
+      ctx.font=`${W*.016}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('📣',cx2,cy2);ctx.restore();
+    }
+    if(steg===1) lbl(ctx,'Cytokiner sendes ut – immunsystemet settes i beredskap',W/2,H*.07,'#facc15');
+  }
+  if(steg===2){
+    const f=(t*.6)%1;
+    const tx=lerp(tcX,bakX+28,ease(f)),ty=lerp(tcY,bakY-10,ease(f));
+    ctx.save();ctx.fillStyle='#c084fc';ctx.shadowColor='#c084fc';ctx.shadowBlur=10;
+    ctx.beginPath();ctx.arc(tx,ty,9,0,Math.PI*2);ctx.fill();ctx.restore();
+    lbl(ctx,'T-dreperceller søker opp og dreper infiserte celler',W/2,H*.07,'#c084fc');
+  }
+  if(steg===3){
+    const f=(t*.5)%1;
+    const ax=lerp(bcX,bakX+24,ease(f)),ay=lerp(bcY,bakY-10,ease(f));
+    ctx.save();ctx.globalAlpha=1-f*.25;tegnY(ctx,ax,ay,'#22d3ee');ctx.restore();
+    lbl(ctx,'Antistoffer merker inntrengere – hukommelsesceller dannes',W/2,H*.07,'#22d3ee');
+  }
+}
+
+function tegnY(c,x,y,farge){
+  c.save();c.strokeStyle=farge;c.lineWidth=2;c.lineCap='round';c.shadowColor=farge;c.shadowBlur=5;
+  c.beginPath();c.moveTo(x,y+9);c.lineTo(x,y-2);c.stroke();
+  c.beginPath();c.moveTo(x,y-2);c.lineTo(x-10,y-12);c.stroke();
+  c.beginPath();c.moveTo(x,y-2);c.lineTo(x+10,y-12);c.stroke();
+  c.restore();
+}
+
+// ════════════════════════════════════════════════
+//  ANIMASJONSLOOP
+// ════════════════════════════════════════════════
+let sist=null;
+const STEG_VAR=5;
+
+function loop(nå){
+  if(!spiller) return;
+  const dt=sist?(nå-sist)/1000:0;sist=nå;
+  t=Math.min(t+dt*hastighet/STEG_VAR,1);
+  if(t>=1){
+    const fen=FENOMENER[aktivFenomen];
+    if(aktivSteg<fen.steg.length-1){aktivSteg++;t=0;oppdaterStegUI();}
+    else{t=1;spiller=false;document.getElementById('btn-play').textContent='▶ Spill av';}
+  }
+  tegnScene();animId=requestAnimationFrame(loop);
+}
+
+function togglePlay(){
+  spiller=!spiller;
+  document.getElementById('btn-play').textContent=spiller?'⏸ Pause':'▶ Spill av';
+  if(spiller){sist=null;animId=requestAnimationFrame(loop);}
+  else cancelAnimationFrame(animId);
+}
+function nesteSteg(){const f=FENOMENER[aktivFenomen];if(aktivSteg<f.steg.length-1){aktivSteg++;t=0;oppdaterStegUI();tegnScene();}}
+function forrigeSteg(){if(aktivSteg>0){aktivSteg--;t=0;oppdaterStegUI();tegnScene();}}
+function nullstillAnim(){aktivSteg=0;t=0;spiller=false;cancelAnimationFrame(animId);document.getElementById('btn-play').textContent='▶ Spill av';oppdaterStegUI();tegnScene();}
+function tegnScene(){ctx.clearRect(0,0,W,H);FENOMENER[aktivFenomen].tegn(ctx,aktivSteg,t,W,H);}
+
+function visFenomen(id){
+  aktivFenomen=id;aktivSteg=0;t=0;spiller=false;cancelAnimationFrame(animId);
+  document.getElementById('btn-play').textContent='▶ Spill av';
+  const ids=['aanding','deling','protein','blod','nerve','hormon','virus','immun'];
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('aktiv',ids[i]===id));
+  oppdaterStegUI();tegnScene();
+}
+
+function oppdaterStegUI(){
+  const fen=FENOMENER[aktivFenomen];
+  const rad=document.getElementById('steg-rad');
+  rad.innerHTML='';
+  fen.steg.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='steg-dot'+(i===aktivSteg?' aktiv':i<aktivSteg?' ferdig':'');
+    d.textContent=i+1;d.title=s.tittel;
+    d.onclick=()=>{aktivSteg=i;t=0;oppdaterStegUI();tegnScene();};
+    rad.appendChild(d);
+  });
+  const tittel=document.createElement('div');tittel.className='steg-tittel';
+  tittel.textContent=fen.steg[aktivSteg].tittel;rad.appendChild(tittel);
+  const s=fen.steg[aktivSteg];
+  document.getElementById('info-strip').innerHTML=`
+    <div class="info-felt"><div class="info-felt-label">📖 Forklaring</div><div class="info-felt-tekst">${s.info}</div></div>
+    <div class="info-felt"><div class="info-felt-label">🔢 Steg</div><div class="info-felt-tekst">${aktivSteg+1} av ${fen.steg.length}: <strong>${s.tittel}</strong></div></div>
+    <div class="info-felt"><div class="info-felt-label">💡 Tips</div><div class="info-felt-tekst">Klikk steg-prikker for å hoppe. Bruk ← → for å bla. Juster hastigheten med slideren.</div></div>`;
+}
+
+function resize(){
+  const wrap=document.querySelector('.scene-wrap');
+  W=wrap.clientWidth;canvas.width=W;canvas.height=H;tegnScene();
+}
+window.addEventListener('resize',resize);
+resize();
+visFenomen('aanding');
+</script>
+</body>
+</html>

@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Naturkatastrofer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080608;--card:#100c0c;--border:rgba(255,255,255,.07);
+  --text:#f5f0e8;--dim:#6a5840;
+  --lava:#f97316;--sky:#38bdf8;--earth:#8B6914;--ice:#a5f3fc;
+  --fire:#ef4444;--green:#4ade80;--yellow:#facc15;--purple:#c084fc;
+  --font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 50% at 50% 0%,rgba(249,115,22,.04) 0%,transparent 60%),
+             radial-gradient(ellipse 50% 40% at 80% 90%,rgba(239,68,68,.03) 0%,transparent 55%);}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(8,6,8,.96);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-family:var(--font-h);font-size:.9rem;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:#f97316;font-size:.9rem}
+
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:20px 0 28px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.6rem,3.5vw,2.4rem);margin-bottom:8px}
+.hero h1 span{color:#f97316}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.65}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.tab{font-family:var(--font-h);font-size:.82rem;padding:7px 15px;border-radius:20px;
+  border:1px solid var(--border);background:var(--card);color:var(--dim);cursor:pointer;transition:all .18s}
+.tab:hover{border-color:#f97316;color:var(--text)}
+.tab.aktiv{background:#f97316;color:#000;border-color:#f97316}
+
+.steg-rad{display:flex;gap:5px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.steg-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--dim);
+  transition:all .3s;cursor:pointer;font-family:var(--font-h)}
+.steg-dot.aktiv{background:#f97316;border-color:#f97316;color:#000}
+.steg-dot.ferdig{background:rgba(249,115,22,.2);border-color:#f97316;color:#f97316}
+.steg-tittel{font-family:var(--font-h);font-size:.85rem;color:#f97316;padding:4px 10px;
+  background:rgba(249,115,22,.1);border-radius:8px;margin-left:8px}
+
+.scene-wrap{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  overflow:hidden;margin-bottom:14px}
+.scene-canvas{width:100%;display:block}
+
+.kontroll-rad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn-play{font-family:var(--font-h);font-size:1rem;padding:9px 24px;border-radius:12px;
+  border:none;cursor:pointer;background:#f97316;color:#000;transition:all .15s}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,.4)}
+.btn-steg{font-family:var(--font-b);font-size:.82rem;font-weight:700;padding:9px 16px;
+  border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--dim);
+  cursor:pointer;transition:all .15s}
+.btn-steg:hover{border-color:#f97316;color:var(--text)}
+.hastighet-label{font-size:.78rem;color:var(--dim);margin-left:4px}
+.hastighet-slider{accent-color:#f97316;cursor:pointer;width:80px}
+
+.info-strip{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.info-strip{grid-template-columns:1fr}}
+.info-felt{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.info-felt-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:5px}
+.info-felt-tekst{font-size:.84rem;line-height:1.6;color:var(--text)}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">🌋 Naturkatastrofer</span>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <h1>🌋 <span>Naturkatastrofer</span></h1>
+    <p class="hero-sub">Forstå kreftene bak jordens mektigste fenomener – animert trinn for trinn.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab aktiv" onclick="visFenomen('jordskjelv')">🌍 Jordskjelv</button>
+    <button class="tab" onclick="visFenomen('vulkan')">🌋 Vulkan</button>
+    <button class="tab" onclick="visFenomen('orkan')">🌀 Orkan</button>
+    <button class="tab" onclick="visFenomen('tsunami')">🌊 Tsunami</button>
+    <button class="tab" onclick="visFenomen('torden')">⚡ Tordenvær</button>
+    <button class="tab" onclick="visFenomen('tornado')">🌪️ Tornado</button>
+    <button class="tab" onclick="visFenomen('skred')">❄️ Snøskred</button>
+    <button class="tab" onclick="visFenomen('brann')">🔥 Skogbrann</button>
+  </div>
+
+  <div class="steg-rad" id="steg-rad"></div>
+  <div class="scene-wrap"><canvas class="scene-canvas" id="sceneCanvas" height="440"></canvas></div>
+
+  <div class="kontroll-rad">
+    <button class="btn-play" id="btn-play" onclick="togglePlay()">▶ Spill av</button>
+    <button class="btn-steg" onclick="forrigeSteg()">← Forrige</button>
+    <button class="btn-steg" onclick="nesteSteg()">Neste →</button>
+    <button class="btn-steg" onclick="nullstillAnim()">↺ Start på nytt</button>
+    <span class="hastighet-label">Hastighet:</span>
+    <input class="hastighet-slider" type="range" min="0.3" max="3" step="0.1" value="1" oninput="hastighet=+this.value">
+  </div>
+  <div class="info-strip" id="info-strip"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('sceneCanvas');
+const ctx = canvas.getContext('2d');
+let W=0, H=440, spiller=false, hastighet=1, t=0, aktivSteg=0, animId=null, aktivFenomen='jordskjelv';
+
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?2*t*t:-1+(4-2*t)*t;
+const easeOut=t=>1-Math.pow(1-t,3);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function rr(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+
+function lbl(c,txt,x,y,col='rgba(255,255,255,.9)',bg='rgba(0,0,0,.65)'){
+  c.save();c.font=`bold ${Math.max(10,W*.012)}px Nunito,sans-serif`;
+  c.textAlign='center';c.textBaseline='middle';
+  const tw=c.measureText(txt).width;
+  c.fillStyle=bg;rr(c,x-tw/2-6,y-10,tw+12,20,5);c.fill();
+  c.fillStyle=col;c.fillText(txt,x,y);c.restore();
+}
+
+// ══════════════════════════════════════════════════════
+const FENOMENER = {
+
+// ── JORDSKJELV ──────────────────────────────────────
+jordskjelv:{
+  navn:'Jordskjelv',
+  steg:[
+    {tittel:'🪨 Tektoniske plater bygger spenning', info:'Jordens litosfære er delt i store plater som beveger seg 2–10 cm per år. Der platene møtes bygges det opp enorme spenninger over tid – som et strikk som strekkes.'},
+    {tittel:'💥 Bruddpunktet – hyposenter',         info:'Når spenningen overskrider bergartens styrke, brekker det plutselig langs en forkastning. Bruddet starter i hyposenteret – typisk 5–700 km under overflaten.'},
+    {tittel:'〰️ Seismiske bølger brer seg',         info:'Energien frigjøres som seismiske bølger: P-bølger (kompresjon) og S-bølger (tverrsvingning). P-bølger er raskest (~6 km/s) og registreres først på seismografer.'},
+    {tittel:'🏙️ Overflaten rister',                info:'Når bølgene når overflaten (episenteret), rister bakken. Bygninger, veier og broer kan kollapse. Richter-skalaen er logaritmisk – styrke 7 er 10× kraftigere enn styrke 6.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnJordskjelv(ctx,steg,t,W,H); }
+},
+
+// ── VULKAN ──────────────────────────────────────────
+vulkan:{
+  navn:'Vulkanutbrudd',
+  steg:[
+    {tittel:'🔥 Magma samles i magmakammer',    info:'Dypt nede smelter bergarter og danner magma. Magma er lettere enn fast stein og presses sakte oppover. Det samles i et magmakammer noen kilometer under krateret.'},
+    {tittel:'💨 Trykket bygger seg opp',        info:'Gasser (H₂O, CO₂, SO₂) er løst i magmaen under høyt trykk. Når magmaen stiger, synker trykket og gassene ekspanderer – som å åpne en brus raskt.'},
+    {tittel:'🌋 Utbruddet starter',             info:'Magmaen bryter gjennom overflaten og kalles nå lava. Eksplosive utbrudd (VEI 4–8) slynger askesky til stratosfæren. Lavautbrudd (VEI 1–3) flyter rolig utover.'},
+    {tittel:'🌫️ Aske, lava og pyroplastisk strøm', info:'Pyroplastiske strømmer er glødende gass+askestrømmer opptil 700°C som raser ned med 300 km/t. Lavastrøm beveger seg saktere men ødelegger alt i sin vei.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnVulkan(ctx,steg,t,W,H); }
+},
+
+// ── ORKAN ────────────────────────────────────────────
+orkan:{
+  navn:'Orkan/Tropisk syklon',
+  steg:[
+    {tittel:'🌊 Varm havoverflate – drivstoffet',  info:'Orkaner dannes over hav med overflatetemperatur over 26°C. Vann fordamper intenst, varmluften stiger og skaper lavtrykk. Havet er orkanen energikilde.'},
+    {tittel:'🌐 Coriolis-effekten starter rotasjon', info:'Jordens rotasjon avbøyer luftmassene: mot høyre på nordlige halvkule (mot klokka rundt lavtrykk), mot venstre på sørlige. Dette starter den karakteristiske spiralrotasjonen.'},
+    {tittel:'👁️ Øyet dannes – orkan fullt utviklet',  info:'I sentrum (øyet) er det rolig og klart vær. Rundt øyet er øyeveggen – der de voldsmeste vindene er (300+ km/t). Kategoriskalaen går 1–5 etter vindhastighet.'},
+    {tittel:'🏔️ Landfall – intensiteten synker',    info:'Når orkanen treffer land mister den sin varmtvannskilde. Friksjon og manglende fuktighet svekker systemet. Men storm, flom og tornadoer kan fortsatt forårsake stor skade.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnOrkan(ctx,steg,t,W,H); }
+},
+
+// ── TSUNAMI ─────────────────────────────────────────
+tsunami:{
+  navn:'Tsunami',
+  steg:[
+    {tittel:'⬇️ Havbunnsskjelv – forskyvning',      info:'Et undersjøisk jordskjelv (Mw ≥ 7) løfter eller senker en stor del av havbunnen. Vannsøylen over forskyves og enorme energimengder overføres til havet.'},
+    {tittel:'🌊 Lang, lav bølge krysser havet',     info:'Tsunamibølgen er ikke som vanlige bølger: bølgelengden er 100–1000 km, men høyden bare 30–60 cm ute på dypt hav. Farten er opp til 900 km/t – som et jetfly.'},
+    {tittel:'📈 Bølgen hever seg ved kysten',       info:'Når bølgen treffer grunnere vann bremser den. Energien må et sted – bølgen hever seg dramatisk. Havet trekker seg først tilbake (advarselstegn!), så skyller den inn.'},
+    {tittel:'💧 Flodbølgen treffer land',           info:'Bølgen kan nå 30 meter og trenge kilometer inn i landet. Vann er tungt (1000 kg/m³) – strømmende vann på 3 m/s har enorm kraft. Tilbaketrekkingen er like farlig.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnTsunami(ctx,steg,t,W,H); }
+},
+
+// ── TORDENVÆR ────────────────────────────────────────
+torden:{
+  navn:'Tordenvær og lyn',
+  steg:[
+    {tittel:'☁️ Ladningsseparasjon i cumulonimbus', info:'I en tordenskys oppdriftsstrøm kolliderer ispartikler: store partikler blir negativt ladet og synker, små positive partikler stiger. Toppen av skyen er positiv, bunnen negativ.'},
+    {tittel:'⚡ Elektrisk felt bygges opp',          info:'Jordens overflate under skyen induseres positiv. Det elektriske feltet mellom skybunn og jord kan bli 10 000–100 000 V/m. Luft er normalt isolator – men ikke lenge.'},
+    {tittel:'🔱 Lynkanal dannes – stepped leader',  info:'Usynlige plasmakanaler (stepped leaders) beveger seg i trinn nedover fra skyen. En strømleder fra bakken møter dem. Der de møtes dannes lynkanalen.'},
+    {tittel:'💥 Returbølgen – lynet vi ser',        info:'Strøm (~30 000 A, ~30 000°C) flyr oppover langs lynkanalen i returbølgen – dette er lynet vi ser. Luften ekspanderer eksplosivt: det er det som lager tordenen.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnTorden(ctx,steg,t,W,H); }
+},
+
+// ── TORNADO ──────────────────────────────────────────
+tornado:{
+  navn:'Tornado',
+  steg:[
+    {tittel:'🌩️ Supercelle-tordenvær dannes',       info:'Tornandoer oppstår fra supercelletordenvær – roterende tordenbyger med en mesosyklon (roterende luftsøyle). Vind som varierer med høyden (vindskjær) setter luften i rotasjon.'},
+    {tittel:'🌀 Mesosyklon – rotasjonen intensiveres', info:'Horisontale roterende luftrør tiltes til vertikale av den kraftige oppdriftsstrømmen i supercellen. Rotasjonen strekkes vertikalt og intensiveres – som en figur­skøyter som trekker armene inn.'},
+    {tittel:'🌪️ Trakten dannes – kontakt med jord', info:'Den roterende søylen strekkes nedover fra skyen. Når den synlige trakten (kondenserte vanndamp) berører bakken er det en tornado. Vindhastigheter kan overstige 480 km/t (EF5).'},
+    {tittel:'💨 Ødeleggelse og oppløsning',          info:'Tornandoer varer minutter til timer. Ødeleggelse klassifiseres etter Enhanced Fujita-skalaen (EF0–EF5). Oppløsningen skjer når kald luft avbryter varmlufttilførselen.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnTornado(ctx,steg,t,W,H); }
+},
+
+// ── SNØSKRED ─────────────────────────────────────────
+skred:{
+  navn:'Snøskred/Lavine',
+  steg:[
+    {tittel:'❄️ Svake lag bygges opp i snødekket', info:'Snødekket er sjiktet. Etter mildvær, frost eller vind dannes det svake lag (dybderim, iskorpe) under tyngre nysnø. Dette er som et kulekuleberan­de lag av glass­kuler.'},
+    {tittel:'🔺 Utløsningsbrudd',                   info:'Et ytre utløsermoment – vekt fra nysnø, vind, skiløper eller sprengning – bryter det svake laget. Bruddet brer seg sidelengs med lyd­hastighet over skredflaket.'},
+    {tittel:'💨 Skredet akselererer',               info:'Snømassen sklir ned og fragmenteres. Pulverskredet kan danne en snøsky (air blast) foran seg med vindtrykk opp til 1000 kg/m². Hastigheten kan nå 300 km/t.'},
+    {tittel:'🏔️ Avsetning og redningsarbeid',       info:'Skredet stopper i terrengets flatere parti og stivner raskt som betong. Overlevelsessjansen synker dramatisk etter 15 minutter – luftlomme er avgjørende.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnSkred(ctx,steg,t,W,H); }
+},
+
+// ── SKOGBRANN ────────────────────────────────────────
+brann:{
+  navn:'Skogbrann',
+  steg:[
+    {tittel:'🌵 Tørt brennstoff og antennelse',    info:'Tre betingelser trengs (brannrekke): brennstoff (tørt gress/tre), oksygen og antennelse (lyn, gnist, menneskelig). Langvarig tørke og varme skaper optimale forhold.'},
+    {tittel:'🔥 Flammefronten sprer seg',           info:'Brannen danner en flamme­front. Strålevarme og konduktivitet forvarmer materialet foran. Vind og hellende terreng akselererer spredningen dramatisk – opp-bakke kan brannen gå 6× raskere.'},
+    {tittel:'🌪️ Brannhvirvel og konveksjonssøyle',  info:'Varmen lager en kraftig konveksjonssøyle som suger oksygen til brannen. I ekstreme tilfeller kan brannen lage egne vindmønstre og brannhvirvler – selvstendig av ytre vind.'},
+    {tittel:'🌫️ Røyk, kull og regenerasjon',       info:'Røyken inneholder giftige gasser (CO, NOx) og finpartikler. Glødende kullbiter (spotting) kan spres km foran fronten og starte nye branner. Skogen regenererer over 10–50 år.'},
+  ],
+  tegn(ctx,steg,t,W,H){ tegnBrann(ctx,steg,t,W,H); }
+},
+
+}; // slutt FENOMENER
+
+// ══════════════════════════════════════════════════════
+//  TEGNEFUNKSJONER
+// ══════════════════════════════════════════════════════
+
+// ── JORDSKJELV ──────────────────────────────────────
+function tegnJordskjelv(ctx,steg,t,W,H){
+  // Bakgrunn
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a1520');bg.addColorStop(.5,'#0d1a10');bg.addColorStop(.5,'#1a1008');bg.addColorStop(1,'#0d0808');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const jordY=H*.5,plateTy=H*.22;
+
+  // To plater
+  const forskyvning = steg>=2 ? ease(t)*W*.04 : 0;
+
+  // Venstre plate
+  ctx.save();
+  const lgrd=ctx.createLinearGradient(0,jordY,0,H);
+  lgrd.addColorStop(0,'#3d2a10');lgrd.addColorStop(1,'#1a1008');
+  ctx.fillStyle=lgrd;
+  ctx.beginPath();
+  ctx.moveTo(0,jordY);ctx.lineTo(W/2-forskyvning,jordY);
+  ctx.lineTo(W/2-forskyvning,jordY+plateTy*.3);
+  ctx.lineTo(W/2-forskyvning-40,jordY+plateTy*.8);
+  ctx.lineTo(W/2-forskyvning-20,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,200,100,.2)';ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+
+  // Høyre plate
+  ctx.save();
+  const rgrd=ctx.createLinearGradient(0,jordY,0,H);
+  rgrd.addColorStop(0,'#2a1f0a');rgrd.addColorStop(1,'#0d0808');
+  ctx.fillStyle=rgrd;
+  ctx.beginPath();
+  ctx.moveTo(W/2+forskyvning,jordY);ctx.lineTo(W,jordY);ctx.lineTo(W,H);
+  ctx.lineTo(W/2+forskyvning+20,H);ctx.lineTo(W/2+forskyvning+40,jordY+plateTy*.8);
+  ctx.lineTo(W/2+forskyvning,jordY+plateTy*.3);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,200,100,.2)';ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+
+  // Himmel
+  const sky=ctx.createLinearGradient(0,0,0,jordY);
+  sky.addColorStop(0,'#0a1520');sky.addColorStop(1,'#1a2830');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,jordY);
+
+  // Bygninger
+  const bygg=[[W*.2,H*.12],[W*.35,H*.18],[W*.5,H*.1],[W*.65,H*.16],[W*.78,H*.13]];
+  const risting = steg>=3 ? Math.sin(t*Math.PI*30)*W*.006 : 0;
+  bygg.forEach(([bx,bh],i)=>{
+    const bw=W*.04+i*.005*W,by=jordY-bh;
+    const shake=risting*(i%2===0?1:-1);
+    ctx.save();
+    ctx.fillStyle='#2a3540';ctx.strokeStyle='rgba(150,200,255,.2)';ctx.lineWidth=1;
+    ctx.fillRect(bx+shake,by,bw,bh);ctx.strokeRect(bx+shake,by,bw,bh);
+    // Vinduer
+    ctx.fillStyle='rgba(255,240,150,.3)';
+    for(let r=0;r<Math.floor(bh/18);r++)
+      for(let c=0;c<2;c++)
+        ctx.fillRect(bx+shake+4+c*12,by+4+r*16,8,10);
+    if(steg===3&&t>.5){
+      // Krakk bygning
+      ctx.globalAlpha=ease(clamp((t-.5)*4,0,1));
+      ctx.fillStyle='rgba(100,80,50,.8)';
+      ctx.fillRect(bx+shake,jordY-bh*.4,bw,bh*.4);
+    }
+    ctx.restore();
+  });
+
+  // Spennings-piler (steg 0)
+  if(steg===0){
+    const arr=[[-1,W*.25],[1,W*.75]];
+    arr.forEach(([dir,x])=>{
+      const f=ease(t);
+      ctx.save();ctx.fillStyle='#facc15';ctx.strokeStyle='#facc15';ctx.lineWidth=2.5;ctx.shadowColor='#facc15';ctx.shadowBlur=8;
+      const ax=x+dir*W*.06*f,ay=jordY+H*.12;
+      ctx.beginPath();ctx.moveTo(ax-dir*W*.04,ay);ctx.lineTo(ax,ay);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(ax-dir*12,ay-7);ctx.lineTo(ax-dir*12,ay+7);ctx.closePath();ctx.fill();
+      ctx.restore();
+    });
+    lbl(ctx,'Spenning bygges opp langs forkastningen',W/2,H*.06,'#facc15');
+  }
+
+  // Bruddpunkt (steg 1)
+  if(steg===1){
+    const burst=ease(t);
+    ctx.save();ctx.strokeStyle='#f87171';ctx.lineWidth=3+burst*3;ctx.shadowColor='#f87171';ctx.shadowBlur=20*burst;
+    ctx.beginPath();ctx.moveTo(W/2,jordY);ctx.lineTo(W/2,jordY+H*.35);ctx.stroke();
+    // Sprengningspartikler
+    for(let i=0;i<12;i++){
+      const ang=(i/12)*Math.PI*2,r=burst*W*.1;
+      ctx.fillStyle='rgba(248,113,113,'+(1-burst)+')';
+      ctx.beginPath();ctx.arc(W/2+Math.cos(ang)*r,jordY+Math.sin(ang)*r*.5,4+burst*4,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    lbl(ctx,'Brudd! Hyposeenter: energien frigjøres',W/2,H*.06,'#f87171');
+  }
+
+  // Seismiske bølger (steg 2)
+  if(steg>=2){
+    const maxR=Math.min(W,H)*1.2;
+    for(let i=0;i<4;i++){
+      const r=((t*.8+i*.25)%1)*maxR;
+      const alpha=1-(r/maxR);
+      ctx.save();ctx.strokeStyle=`rgba(250,204,21,${alpha*.7})`;ctx.lineWidth=2;
+      ctx.beginPath();ctx.ellipse(W/2,jordY,r,r*.4,0,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+    lbl(ctx,'Seismiske bølger brer seg fra episenteret',W/2,H*.06,'#facc15');
+  }
+
+  if(steg===3) lbl(ctx,`Bakken rister – Richter-skalaen er logaritmisk`,W/2,H*.06,'#f87171');
+
+  // Richter-indikator
+  if(steg>=1){
+    const mag=[6.2,7.8,8.4,8.4][steg];
+    ctx.save();ctx.font=`bold ${W*.018}px Fredoka One,cursive`;
+    ctx.fillStyle='rgba(248,113,113,.25)';ctx.textAlign='right';
+    ctx.fillText(`M ${mag}`,W-16,H*.92);ctx.restore();
+  }
+}
+
+// ── VULKAN ──────────────────────────────────────────
+function tegnVulkan(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,steg>=2?'#1a0a02':'#0a0810');
+  bg.addColorStop(1,'#0d0604');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const cx=W/2,toppY=H*.18,basseY=H*.82;
+  const bredde=W*.38;
+
+  // Fjellsilhuett
+  ctx.save();
+  const fjGrd=ctx.createLinearGradient(cx,toppY,cx,basseY);
+  fjGrd.addColorStop(0,'#4a3020');fjGrd.addColorStop(1,'#2a1a10');
+  ctx.fillStyle=fjGrd;
+  ctx.beginPath();ctx.moveTo(cx-bredde,basseY);ctx.lineTo(cx,toppY);ctx.lineTo(cx+bredde,basseY);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,200,100,.15)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.restore();
+
+  // Magmakanal
+  ctx.save();
+  ctx.strokeStyle='rgba(249,115,22,.3)';ctx.lineWidth=W*.025;
+  ctx.beginPath();ctx.moveTo(cx,basseY+H*.1);ctx.lineTo(cx,toppY+H*.05);ctx.stroke();
+  ctx.restore();
+
+  // Magmakammer
+  const magmaAlpha = steg>=1?clamp(ease(t)*.8,.2,.8):.3;
+  ctx.save();ctx.fillStyle=`rgba(249,115,22,${magmaAlpha})`;ctx.shadowColor='#f97316';ctx.shadowBlur=30;
+  ctx.beginPath();ctx.ellipse(cx,basseY+H*.12,W*.12,H*.08,0,0,Math.PI*2);ctx.fill();
+  lbl(ctx,'Magmakammer',cx,basseY+H*.12,'#fb923c');
+  ctx.restore();
+
+  if(steg===0){
+    // Bobler stiger i magmakammeret
+    for(let i=0;i<6;i++){
+      const f=(t*.5+i/6)%1;
+      ctx.save();ctx.fillStyle='rgba(251,146,60,.7)';ctx.shadowColor='#fb923c';ctx.shadowBlur=5;
+      ctx.beginPath();ctx.arc(cx+(i-3)*W*.02,lerp(basseY+H*.18,basseY+H*.06,ease(f)),4,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+    lbl(ctx,'Magma samles og gass løses opp under trykk',cx,H*.06,'#fb923c');
+  }
+
+  if(steg>=1){
+    // Magma stiger i kanal
+    for(let i=0;i<5;i++){
+      const f=(t*.6+i*.2)%1;
+      ctx.save();ctx.fillStyle='#f97316';ctx.shadowColor='#f97316';ctx.shadowBlur=8;
+      ctx.beginPath();ctx.arc(cx+(Math.sin(i*1.3)*W*.01),lerp(basseY+H*.08,toppY+H*.05,ease(f)),5,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+    if(steg===1) lbl(ctx,'Trykket øker – magma presses oppover',cx,H*.06,'#f97316');
+  }
+
+  if(steg>=2){
+    // Lavastrøm
+    const lavaf=ease(t);
+    ctx.save();
+    // Venstre lavastrøm
+    const lavaGrd=ctx.createLinearGradient(cx,toppY,cx-bredde*.8,basseY);
+    lavaGrd.addColorStop(0,'#f97316');lavaGrd.addColorStop(1,'#7c2d12');
+    ctx.fillStyle=lavaGrd;ctx.globalAlpha=lavaf*.9;
+    ctx.beginPath();
+    ctx.moveTo(cx,toppY+H*.06);
+    ctx.bezierCurveTo(cx-W*.05,toppY+H*.15,cx-W*.15,toppY+H*.25,cx-W*.22,toppY+H*.35);
+    ctx.bezierCurveTo(cx-W*.28,toppY+H*.45,cx-W*.3,toppY+H*.52,cx-W*.32,basseY-H*.1);
+    ctx.lineTo(cx-W*.28,basseY-H*.1);ctx.lineTo(cx-W*.05,toppY+H*.05);ctx.closePath();
+    ctx.fill();
+    // Høyre lavastrøm
+    ctx.beginPath();
+    ctx.moveTo(cx,toppY+H*.06);
+    ctx.bezierCurveTo(cx+W*.04,toppY+H*.14,cx+W*.12,toppY+H*.22,cx+W*.18,toppY+H*.32);
+    ctx.bezierCurveTo(cx+W*.25,toppY+H*.42,cx+W*.28,toppY+H*.5,cx+W*.28,basseY-H*.12);
+    ctx.lineTo(cx+W*.24,basseY-H*.12);ctx.lineTo(cx+W*.04,toppY+H*.05);ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Askesky
+    const askeH=ease(t)*H*.35;
+    const askeGrd=ctx.createRadialGradient(cx,toppY-askeH*.5,0,cx,toppY-askeH*.5,W*.25);
+    askeGrd.addColorStop(0,'rgba(80,60,40,.8)');askeGrd.addColorStop(1,'rgba(40,30,20,0)');
+    ctx.save();ctx.fillStyle=askeGrd;
+    ctx.beginPath();ctx.ellipse(cx,toppY-askeH*.5,W*.22*lavaf,askeH*.6,0,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+
+    if(steg===2) lbl(ctx,'Utbruddet: lavastrøm og askesky skytes opp',cx,H*.06,'#fb923c');
+  }
+
+  if(steg>=3){
+    // Pyroplastisk strøm
+    const pyf=ease(t);
+    ctx.save();ctx.globalAlpha=pyf*.85;
+    const pyGrd=ctx.createLinearGradient(cx,toppY+H*.2,cx-W*.4,basseY);
+    pyGrd.addColorStop(0,'rgba(249,115,22,.9)');pyGrd.addColorStop(1,'rgba(120,50,10,.4)');
+    ctx.fillStyle=pyGrd;
+    ctx.beginPath();
+    ctx.moveTo(cx,toppY+H*.2);
+    ctx.bezierCurveTo(cx-W*.1,toppY+H*.3,cx-W*.25,toppY+H*.42,cx-W*.38,lerp(toppY+H*.2,basseY,pyf));
+    ctx.lineTo(cx-W*.42,lerp(toppY+H*.22,basseY,pyf));
+    ctx.bezierCurveTo(cx-W*.2,toppY+H*.34,cx-W*.05,toppY+H*.22,cx,toppY+H*.2);
+    ctx.closePath();ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Pyroplastisk strøm: 700°C, 300 km/t – ekstrem fare',cx,H*.06,'#ef4444');
+  }
+}
+
+// ── ORKAN ────────────────────────────────────────────
+function tegnOrkan(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#04101a');bg.addColorStop(.6,'#061828');bg.addColorStop(.6,'#0a2a18');bg.addColorStop(1,'#061408');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const havY=H*.62,cx=W/2,cy=H*.35;
+
+  // Hav
+  const havGrd=ctx.createLinearGradient(0,havY,0,H);
+  havGrd.addColorStop(0,'#0c4a6e');havGrd.addColorStop(1,'#082030');
+  ctx.fillStyle=havGrd;ctx.fillRect(0,havY,W,H-havY);
+  // Bølger
+  ctx.save();ctx.strokeStyle='rgba(56,189,248,.25)';ctx.lineWidth=2;
+  for(let i=0;i<5;i++){
+    const bx=((t*150+i*W*.22)%W)-50;
+    ctx.beginPath();ctx.moveTo(bx,havY+3);ctx.bezierCurveTo(bx+15,havY-4,bx+30,havY-4,bx+45,havY+3);ctx.stroke();
+  }
+  ctx.restore();
+
+  // Fordampnings-piler (steg 0)
+  if(steg===0){
+    for(let i=0;i<8;i++){
+      const f=(t*.6+i*.125)%1;
+      const sx=W*.15+i*W*.1,sy=lerp(havY-5,havY-H*.35,ease(f));
+      ctx.save();ctx.globalAlpha=1-f;ctx.fillStyle='rgba(56,189,248,.7)';ctx.shadowColor='#38bdf8';ctx.shadowBlur=4;
+      ctx.beginPath();ctx.arc(sx,sy,3.5,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    // Solfjerned
+    ctx.save();ctx.fillStyle='#fef08a';ctx.shadowColor='#facc15';ctx.shadowBlur=20;
+    ctx.beginPath();ctx.arc(W*.88,H*.12,W*.04,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Hav > 26°C: intens fordampning – energien bygges opp',cx,H*.06,'#38bdf8');
+  }
+
+  // Coriolis-spiral (steg 1)
+  if(steg===1){
+    const spiraler=20;
+    ctx.save();ctx.strokeStyle='rgba(56,189,248,.4)';ctx.lineWidth=1.5;
+    ctx.beginPath();
+    for(let i=0;i<=spiraler*10;i++){
+      const ang=i*.12+t*Math.PI*2;
+      const r=(i/spiraler/10)*Math.min(W,H)*.38;
+      const px=cx+Math.cos(-ang)*r,py=cy+Math.sin(-ang)*r*.7;
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.stroke();ctx.restore();
+    lbl(ctx,'Coriolis-effekten: rotasjon mot klokka (N-halvkule)',cx,H*.06,'#38bdf8');
+  }
+
+  // Øye og full orkan (steg 2+)
+  if(steg>=2){
+    const intensitet=steg===2?ease(t):1;
+    const maxR=Math.min(W,H)*.42;
+    // Spiralskyer
+    for(let spiral=0;spiral<3;spiral++){
+      ctx.save();ctx.strokeStyle=`rgba(150,200,255,${.15+spiral*.05})`;ctx.lineWidth=2+spiral;
+      ctx.beginPath();
+      for(let i=0;i<=80;i++){
+        const ang=i*.16+t*Math.PI*(2-spiral*.3)+spiral*2.1;
+        const r=(i/80)*maxR*intensitet;
+        const px=cx+Math.cos(-ang)*r,py=cy+Math.sin(-ang)*r*.75;
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }
+      ctx.stroke();ctx.restore();
+    }
+    // Øyet
+    const øyeR=maxR*.12;
+    ctx.save();ctx.fillStyle='rgba(10,20,30,.9)';ctx.strokeStyle='rgba(200,230,255,.5)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(cx,cy,øyeR,øyeR*.75,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    lbl(ctx,'Øye',cx,cy,'rgba(200,230,255,.8)','transparent');
+    ctx.restore();
+    if(steg===2) lbl(ctx,'Øyeveggen: sterkeste vinder (kat. 1–5)',cx,H*.06,'#60a5fa');
+  }
+
+  if(steg===3){
+    // Landfall – bremses
+    const berg=ctx.createLinearGradient(W*.62,havY,W*.85,havY-H*.25);
+    berg.addColorStop(0,'#3a5a2a');berg.addColorStop(1,'#2a4020');
+    ctx.save();ctx.fillStyle=berg;
+    ctx.beginPath();ctx.moveTo(W*.58,havY);ctx.lineTo(W*.72,havY-H*.22);ctx.lineTo(W*.9,havY);ctx.closePath();ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Landfall: mister energikilde – men flom og vind vedvarer',cx,H*.06,'#60a5fa');
+  }
+}
+
+// ── TSUNAMI ─────────────────────────────────────────
+function tegnTsunami(ctx,steg,t,W,H){
+  ctx.fillStyle='#020c18';ctx.fillRect(0,0,W,H);
+
+  const havY=H*.45;
+
+  // Himmel
+  const sky=ctx.createLinearGradient(0,0,0,havY);
+  sky.addColorStop(0,'#020c18');sky.addColorStop(1,'#051828');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,havY);
+
+  // Bunn
+  ctx.save();
+  const bunnGrd=ctx.createLinearGradient(0,H*.85,0,H);
+  bunnGrd.addColorStop(0,'#1a1208');bunnGrd.addColorStop(1,'#0a0804');
+  ctx.fillStyle=bunnGrd;ctx.fillRect(0,H*.85,W,H*.15);
+  ctx.restore();
+
+  // Hav-fyll
+  const havGrd=ctx.createLinearGradient(0,havY,0,H*.85);
+  havGrd.addColorStop(0,'#1e5a8a');havGrd.addColorStop(1,'#0a2840');
+  ctx.fillStyle=havGrd;ctx.fillRect(0,havY,W,H*.85-havY);
+
+  // Kystlinje høyre
+  ctx.save();
+  ctx.fillStyle='#3a5a2a';
+  ctx.beginPath();ctx.moveTo(W*.82,havY);ctx.lineTo(W*.82,H*.85);ctx.lineTo(W,H*.85);ctx.lineTo(W,havY-H*.15);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1;ctx.stroke();
+  lbl(ctx,'Kyst',W*.9,havY-H*.06,'#86efac','rgba(0,0,0,.5)');
+  ctx.restore();
+
+  // Bygning på kysten
+  ctx.save();
+  ctx.fillStyle='#2a3540';ctx.strokeStyle='rgba(150,200,255,.2)';ctx.lineWidth=1;
+  ctx.fillRect(W*.84,havY-H*.12,W*.04,H*.12);ctx.strokeRect(W*.84,havY-H*.12,W*.04,H*.12);
+  ctx.restore();
+
+  if(steg===0){
+    // Havbunn løftes
+    const løft=ease(t)*H*.08;
+    ctx.save();ctx.fillStyle='#2a1a08';ctx.strokeStyle='#f87171';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(W*.2,H*.85);ctx.lineTo(W*.5,H*.85-løft);ctx.lineTo(W*.8,H*.85);ctx.stroke();
+    // Vannsøyle forskyves
+    ctx.fillStyle=`rgba(56,189,248,${løft/H*.2})`;
+    ctx.fillRect(W*.3,havY-løft*.5,W*.4,løft*.5);
+    ctx.restore();
+    lbl(ctx,'Havbunnsskjelv: havbunnen løftes – vannsøylen forskyves',W/2,H*.06,'#f87171');
+  }
+
+  if(steg===1){
+    // Lang lav bølge på dypt hav
+    const bølgeX=lerp(-W*.2,W*.7,ease(t));
+    ctx.save();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.shadowColor='#38bdf8';ctx.shadowBlur=8;
+    ctx.beginPath();
+    for(let x=0;x<W*.8;x+=2){
+      const bølgeH=H*.025*Math.exp(-Math.pow((x-W*.4*ease(t)-.1*W)/W*.25,2));
+      const y=havY-bølgeH;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();ctx.restore();
+    lbl(ctx,'Ute på dypt hav: lav (30 cm) men 100–1000 km lang, 900 km/t',W*.45,H*.06,'#38bdf8');
+  }
+
+  if(steg===2){
+    // Bølgen hever seg ved kysten – havet trekker seg tilbake
+    const heving=ease(t);
+    ctx.save();
+    // Havet trekker seg tilbake
+    const tilbakeX=lerp(W*.82,W*.6,heving);
+    ctx.fillStyle='#1e5a8a';ctx.fillRect(0,havY,tilbakeX,H*.85-havY);
+    // Bølgen hever seg
+    const bølgeH=heving*H*.35;
+    const grad=ctx.createLinearGradient(tilbakeX,havY-bølgeH,tilbakeX+W*.15,havY);
+    grad.addColorStop(0,'#38bdf8');grad.addColorStop(1,'#1e5a8a');
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.moveTo(tilbakeX,havY);
+    ctx.bezierCurveTo(tilbakeX+W*.04,havY-bølgeH*.3,tilbakeX+W*.08,havY-bølgeH,tilbakeX+W*.12,havY-bølgeH);
+    ctx.lineTo(tilbakeX+W*.12,havY);ctx.closePath();ctx.fill();
+    ctx.restore();
+    lbl(ctx,'Havet trekker seg tilbake (advarsel!) – bølgen hever seg',W/2,H*.06,'#facc15');
+  }
+
+  if(steg===3){
+    // Flodbølgen treffer land
+    const innover=ease(t);
+    ctx.save();
+    const bølgeGrd=ctx.createLinearGradient(W*.82,0,W,0);
+    bølgeGrd.addColorStop(0,'rgba(56,189,248,.8)');bølgeGrd.addColorStop(1,'rgba(30,90,138,.4)');
+    ctx.fillStyle=bølgeGrd;
+    const bølgeTopp=havY-H*.3;
+    ctx.beginPath();
+    ctx.moveTo(W*.82,bølgeTopp);
+    ctx.bezierCurveTo(W*.82+W*.05,bølgeTopp-H*.05,W*.82+W*.1*innover,bølgeTopp+H*.05,W*.82+W*.18*innover,havY);
+    ctx.lineTo(W,havY);ctx.lineTo(W,bølgeTopp);ctx.closePath();ctx.fill();
+    // Bygning flommer
+    if(innover>.4){
+      ctx.globalAlpha=ease(clamp((innover-.4)*3,0,1));
+      ctx.fillStyle='rgba(56,189,248,.5)';
+      ctx.fillRect(W*.84,havY-H*.12*innover*.6,W*.04,H*.12*innover*.6);
+    }
+    ctx.restore();
+    lbl(ctx,'Flodbølgen kan nå 30 m – trenger km inn i landet',W/2,H*.06,'#f87171');
+  }
+}
+
+// ── TORDENVÆR ────────────────────────────────────────
+function tegnTorden(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#04060a');bg.addColorStop(.65,'#080c12');bg.addColorStop(.65,'#0a1208');bg.addColorStop(1,'#060a04');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const sky1Y=H*.06,sky2Y=H*.32,bakkY=H*.72;
+  const cx=W/2;
+
+  // Bakke
+  const bkGrd=ctx.createLinearGradient(0,bakkY,0,H);
+  bkGrd.addColorStop(0,'#1a2a10');bkGrd.addColorStop(1,'#0a1408');
+  ctx.fillStyle=bkGrd;ctx.fillRect(0,bakkY,W,H-bakkY);
+
+  // Tre
+  ctx.save();ctx.fillStyle='#2a3a1a';
+  ctx.fillRect(cx+W*.1-4,bakkY-H*.12,8,H*.12);
+  ctx.beginPath();ctx.moveTo(cx+W*.1,bakkY-H*.28);ctx.lineTo(cx+W*.1-W*.04,bakkY-H*.12);ctx.lineTo(cx+W*.1+W*.04,bakkY-H*.12);ctx.closePath();ctx.fill();
+  ctx.restore();
+
+  // Cumulonimbus sky
+  const skyAlpha=steg===0?clamp(ease(t)*1.5,0,1):1;
+  ctx.save();ctx.globalAlpha=skyAlpha;
+  tegnTordenskye(ctx,cx,sky2Y,W*.38,H*.28,'#1a2030','#2a3a4a');
+  ctx.restore();
+
+  if(steg===0){
+    // Ispartikler
+    for(let i=0;i<12;i++){
+      const f=(t*.5+i*.085)%1;
+      const px=cx+(i-6)*W*.05,py=lerp(sky1Y+H*.06,sky2Y-H*.04,ease(f));
+      ctx.save();ctx.fillStyle=i<6?'rgba(200,220,255,.6)':'rgba(255,255,255,.5)';
+      ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    // Ladningspiler
+    ctx.save();ctx.font=`${W*.018}px serif`;ctx.textAlign='center';
+    ctx.fillStyle='rgba(248,113,113,.7)';ctx.fillText('− − −',cx,sky2Y+H*.12);
+    ctx.fillStyle='rgba(250,204,21,.7)';ctx.fillText('+ + +',cx,sky1Y+H*.08);
+    ctx.restore();
+    lbl(ctx,'Ispartikler kolliderer – ladningsseparasjon',cx,H*.04,'#60a5fa');
+  }
+
+  if(steg===1){
+    // Elektrisk felt-linjer
+    ctx.save();
+    for(let i=0;i<7;i++){
+      const x=cx-W*.25+i*W*.08;
+      const f=(t*.6+i*.1)%1;
+      ctx.strokeStyle=`rgba(250,204,21,${.15+f*.3})`;ctx.lineWidth=1;ctx.setLineDash([3,4]);
+      ctx.beginPath();ctx.moveTo(x,sky2Y+H*.14);ctx.lineTo(x,lerp(sky2Y+H*.14,bakkY,ease(f)));ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+    lbl(ctx,'Elektrisk felt: 10 000–100 000 V/m mellom sky og jord',cx,H*.04,'#facc15');
+  }
+
+  if(steg>=2){
+    // Stepped leader ned
+    const leaderF=steg===2?ease(t):1;
+    ctx.save();ctx.strokeStyle='rgba(167,139,250,.6)';ctx.lineWidth=2;ctx.setLineDash([2,6]);
+    ctx.beginPath();ctx.moveTo(cx+W*.1,sky2Y+H*.14);
+    ctx.lineTo(cx+W*.1-W*.02,lerp(sky2Y+H*.14,bakkY,leaderF*.6));
+    ctx.lineTo(cx+W*.1+W*.015,lerp(sky2Y+H*.14,bakkY,leaderF*.8));
+    ctx.lineTo(cx+W*.1,lerp(sky2Y+H*.14,bakkY,leaderF));
+    ctx.stroke();ctx.setLineDash([]);
+    ctx.restore();
+    if(steg===2) lbl(ctx,'Stepped leader: usynlig plasmakanal nærmer seg jord',cx,H*.04,'#a78bfa');
+  }
+
+  if(steg>=3){
+    const lynF=steg===3?(t%0.3<0.15?1:0):1;
+    if(lynF>0){
+      ctx.save();ctx.strokeStyle=`rgba(255,255,200,${lynF*.95})`;ctx.lineWidth=3+Math.random()*2;
+      ctx.shadowColor='#fff';ctx.shadowBlur=30;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(cx+W*.1,sky2Y+H*.14);
+      ctx.lineTo(cx+W*.1-W*.025,sky2Y+H*.25);
+      ctx.lineTo(cx+W*.1+W*.018,sky2Y+H*.36);
+      ctx.lineTo(cx+W*.1-W*.01,sky2Y+H*.45);
+      ctx.lineTo(cx+W*.1,bakkY);
+      ctx.stroke();
+      // Glød rundt treet
+      ctx.fillStyle=`rgba(255,220,100,${lynF*.3})`;
+      ctx.beginPath();ctx.arc(cx+W*.1,bakkY-H*.06,W*.06,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+    lbl(ctx,'Returbølgen: 30 000 A, 30 000°C – luften ekspanderer → torden',cx,H*.04,'#facc15');
+  }
+}
+
+function tegnTordenskye(ctx,cx,cy,rx,ry,farge,kant){
+  ctx.save();
+  [[0,0,rx],[rx*.45,-ry*.2,rx*.75],[-rx*.42,-ry*.18,rx*.7],[rx*.2,-ry*.35,rx*.55],[-rx*.2,-ry*.3,rx*.5]].forEach(([dx,dy,r])=>{
+    ctx.fillStyle=farge;ctx.shadowColor=kant;ctx.shadowBlur=5;
+    ctx.beginPath();ctx.ellipse(cx+dx,cy+dy,r,r*.62,0,0,Math.PI*2);ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ── TORNADO ──────────────────────────────────────────
+function tegnTornado(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#04080a');bg.addColorStop(.6,'#060c0e');bg.addColorStop(.6,'#0c1008');bg.addColorStop(1,'#060804');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const bakkY=H*.75,cx=W/2;
+
+  // Bakke
+  ctx.fillStyle='#1a2a10';ctx.fillRect(0,bakkY,W,H-bakkY);
+
+  // Supercelle-sky (alltid)
+  const skyR=W*.4;
+  ctx.save();
+  [0,skyR*.3,-skyR*.28,skyR*.5,-skyR*.45].forEach((dx,i)=>{
+    ctx.fillStyle=i===0?'#18242c':'#141e24';
+    ctx.beginPath();ctx.ellipse(cx+dx,H*.12+i*.015*H,skyR*(1-.1*i),H*.14*(1-.05*i),0,0,Math.PI*2);ctx.fill();
+  });
+  ctx.restore();
+
+  if(steg===0){
+    // Vindskjær-piler
+    [[H*.08,W*.06,'→'],[H*.2,W*.04,'←'],[H*.35,W*.055,'→']].forEach(([y,spd,pil],i)=>{
+      ctx.save();ctx.font=`bold ${W*.02}px serif`;ctx.fillStyle=`rgba(56,189,248,${.5+i*.15})`;
+      ctx.textAlign='center';ctx.fillText(pil,cx,y);
+      ctx.font=`${W*.008}px Nunito,sans-serif`;ctx.fillStyle='rgba(150,200,255,.5)';
+      ctx.fillText(`${Math.round(50+spd*500)} km/t`,cx+W*.15,y+4);
+      ctx.restore();
+    });
+    lbl(ctx,'Vindskjær: vind fra ulike retninger setter luften i rotasjon',cx,H*.05,'#38bdf8');
+  }
+
+  if(steg>=1){
+    // Mesosyklon-rotasjon
+    const rot=t*Math.PI*2*(steg>=2?2:1);
+    const mesR=steg>=2?W*.15:W*.22;
+    ctx.save();
+    for(let i=0;i<24;i++){
+      const ang=i/24*Math.PI*2+rot;
+      const r=mesR*(1+Math.sin(ang*.3)*.1);
+      ctx.strokeStyle=`rgba(56,189,248,${.15+Math.sin(ang)*.05})`;ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(cx+Math.cos(ang)*r*.8,H*.25+Math.sin(ang)*r*.4,r*.08,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+    if(steg===1) lbl(ctx,'Mesosyklon: roterende luftsøyle dannes og strekkes vertikalt',cx,H*.05,'#38bdf8');
+  }
+
+  if(steg>=2){
+    // Tornado-trakt
+    const traktH=bakkY-H*.2;
+    const topW=ease(t)*W*.14+W*.04;
+    const bunnF=steg>=3?1:ease(t);
+    const bunnY=lerp(H*.22,bakkY,bunnF);
+
+    ctx.save();
+    const traktGrd=ctx.createLinearGradient(cx,H*.2,cx,bakkY);
+    traktGrd.addColorStop(0,'rgba(80,100,120,.8)');traktGrd.addColorStop(1,'rgba(100,80,60,.6)');
+    ctx.fillStyle=traktGrd;ctx.strokeStyle='rgba(150,180,200,.5)';ctx.lineWidth=2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx-topW,H*.2);ctx.lineTo(cx+topW,H*.2);
+    ctx.bezierCurveTo(cx+topW*.8,lerp(H*.2,bunnY,.4),cx+W*.018,lerp(H*.2,bunnY,.8),cx+W*.012,bunnY);
+    ctx.bezierCurveTo(cx+W*.005,bunnY+H*.015,cx-W*.005,bunnY+H*.015,cx-W*.012,bunnY);
+    ctx.bezierCurveTo(cx-W*.018,lerp(H*.2,bunnY,.8),cx-topW*.8,lerp(H*.2,bunnY,.4),cx-topW,H*.2);
+    ctx.closePath();ctx.fill();ctx.stroke();
+
+    // Rotasjonslinjer
+    for(let i=0;i<6;i++){
+      const y=lerp(H*.22,bunnY,.2+i*.13);
+      const w=lerp(topW*.9,W*.014,(.2+i*.13));
+      const ang=t*Math.PI*4+i*1.1;
+      ctx.strokeStyle='rgba(200,220,240,.15)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.ellipse(cx,y,w,H*.012,0,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();
+
+    if(steg===2) lbl(ctx,'Trakten dannes – berører bakken: tornado EF0–EF5',cx,H*.05,'#60a5fa');
+  }
+
+  if(steg===3){
+    // Ødeleggelse
+    const eks=ease(t);
+    ctx.save();
+    // Rusk i lufta
+    for(let i=0;i<20;i++){
+      const ang=(i/20)*Math.PI*2+t*3;
+      const r=lerp(W*.02,W*.22,i/20)*eks;
+      ctx.fillStyle=`rgba(150,120,80,${.6*(1-i/20)})`;
+      ctx.beginPath();ctx.rect(cx+Math.cos(ang)*r-3,bakkY-H*.05+Math.sin(ang)*r*.3-3,6,4);ctx.fill();
+    }
+    // Ødelagte bygninger
+    [[-.3,.06],[.12,.04],[.32,.05]].forEach(([dx,bw])=>{
+      ctx.fillStyle='#2a2a20';ctx.fillRect(cx+dx*W,bakkY-H*.08*eks,bw*W,H*.08*eks);
+    });
+    ctx.restore();
+    lbl(ctx,'Ødeleggelse – oppløsning når kald luft avbryter tilførselen',cx,H*.05,'#fb923c');
+  }
+}
+
+// ── SNØSKRED ─────────────────────────────────────────
+function tegnSkred(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#060c14');bg.addColorStop(1,'#0a0e10');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Fjellsilhuett
+  const fjH=H*.7;
+  ctx.save();
+  const fjGrd=ctx.createLinearGradient(0,H*.08,0,H);
+  fjGrd.addColorStop(0,'#2a3a4a');fjGrd.addColorStop(1,'#1a2830');
+  ctx.fillStyle=fjGrd;
+  ctx.beginPath();ctx.moveTo(0,H);ctx.lineTo(0,H*.45);ctx.bezierCurveTo(W*.1,H*.35,W*.22,H*.12,W*.38,H*.08);
+  ctx.bezierCurveTo(W*.5,H*.04,W*.6,H*.15,W*.72,H*.28);ctx.bezierCurveTo(W*.82,H*.38,W*.9,H*.5,W,H*.55);
+  ctx.lineTo(W,H);ctx.closePath();ctx.fill();
+  ctx.restore();
+
+  // Snølag (alltid synlig)
+  const lagFarger=['rgba(220,235,255,.8)','rgba(200,215,240,.6)','rgba(180,200,230,.4)','rgba(240,245,255,.7)'];
+  const lagTykkelser=[H*.04,H*.05,H*.04,H*.06];
+  let yOff=0;
+  lagFarger.forEach((f,i)=>{
+    ctx.save();ctx.fillStyle=f;ctx.globalAlpha=steg===0?1:.6;
+    ctx.beginPath();
+    const lagy=H*.08+yOff;
+    ctx.moveTo(W*.15,lagy+H*.02);ctx.bezierCurveTo(W*.3,lagy,W*.5,lagy+H*.01,W*.7,lagy+H*.015);
+    ctx.bezierCurveTo(W*.85,lagy+H*.02,W*.95,lagy+H*.025,W,lagy+H*.02);
+    ctx.lineTo(W,lagy+lagTykkelser[i]);ctx.bezierCurveTo(W*.85,lagy+lagTykkelser[i]+H*.01,W*.5,lagy+lagTykkelser[i],W*.15,lagy+lagTykkelser[i]+H*.015);
+    ctx.closePath();ctx.fill();
+    if(steg===0&&i===1){
+      // Svakt lag markert
+      ctx.strokeStyle='rgba(248,113,113,.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(W*.15,lagy+lagTykkelser[i]);ctx.bezierCurveTo(W*.5,lagy+lagTykkelser[i],W*.8,lagy+lagTykkelser[i]+H*.01,W,lagy+lagTykkelser[i]);ctx.stroke();
+      ctx.setLineDash([]);
+      lbl(ctx,'Svakt lag (dybderim)',W*.5,lagy+lagTykkelser[i]+10,'#f87171');
+    }
+    ctx.restore();
+    yOff+=lagTykkelser[i]+H*.005;
+  });
+
+  if(steg===0) lbl(ctx,'Snødekket er sjiktet – ett svakt lag under tyngre nysnø',W/2,H*.04,'#a5f3fc');
+
+  if(steg===1){
+    // Bruddlinje
+    const bruddF=ease(t);
+    ctx.save();ctx.strokeStyle='#f87171';ctx.lineWidth=3+bruddF*2;ctx.shadowColor='#f87171';ctx.shadowBlur=12;
+    ctx.beginPath();
+    ctx.moveTo(W*.15,H*.12);
+    ctx.lineTo(lerp(W*.15,W*.7,bruddF),H*.12);
+    ctx.stroke();
+    // Sprekk-effekt
+    if(bruddF>.3){
+      ctx.strokeStyle='rgba(255,100,100,.5)';ctx.lineWidth=1;
+      for(let i=0;i<5;i++){
+        const bx=W*.15+bruddF*(i/4)*(W*.55);
+        ctx.beginPath();ctx.moveTo(bx,H*.12);ctx.lineTo(bx+W*.01,H*.16+i*H*.01);ctx.stroke();
+      }
+    }
+    ctx.restore();
+    lbl(ctx,'Brudd: sprekklinjen løper sidelengs med lydhastighet',W/2,H*.04,'#f87171');
+  }
+
+  if(steg>=2){
+    // Skredet beveger seg
+    const skredf=steg===2?ease(t):1;
+    const skredbY=lerp(H*.12,H*.85,skredf);
+    ctx.save();
+    const sGrd=ctx.createLinearGradient(W*.1,H*.12,W*.5,skredbY);
+    sGrd.addColorStop(0,'rgba(220,235,255,.9)');sGrd.addColorStop(1,'rgba(200,215,240,.6)');
+    ctx.fillStyle=sGrd;
+    ctx.beginPath();
+    ctx.moveTo(W*.15,H*.12);ctx.lineTo(W*.65,H*.12);
+    ctx.bezierCurveTo(W*.7,lerp(H*.12,H*.55,skredf),W*.55,lerp(H*.12,H*.75,skredf),W*.45,skredbY);
+    ctx.bezierCurveTo(W*.35,skredbY+H*.04,W*.22,skredbY+H*.02,W*.12,skredbY);
+    ctx.bezierCurveTo(W*.08,lerp(H*.12,H*.55,skredf),W*.12,lerp(H*.12,H*.3,skredf),W*.15,H*.12);
+    ctx.closePath();ctx.fill();
+    // Snøsky foran
+    if(skredf>.2){
+      ctx.globalAlpha=.5;ctx.fillStyle='rgba(220,235,255,.5)';
+      ctx.beginPath();ctx.ellipse(W*.4,skredbY,W*.22*skredf,H*.08*skredf,0,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    if(steg===2) lbl(ctx,'Massen akselererer – snøsky (air blast) dannes foran',W/2,H*.04,'#a5f3fc');
+  }
+
+  if(steg===3){
+    lbl(ctx,'Skredet stopper og stivner – 15 min avgjørende for overlevelse',W/2,H*.04,'#a5f3fc');
+    // Søksperson-ikon
+    ctx.save();ctx.font=`${W*.03}px serif`;ctx.textAlign='center';
+    ctx.fillText('🔍',W*.55,H*.72);ctx.restore();
+  }
+}
+
+// ── SKOGBRANN ────────────────────────────────────────
+function tegnBrann(ctx,steg,t,W,H){
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,steg>=2?'#1a0802':'#080c04');
+  bg.addColorStop(1,'#0a0604');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  const bakkY=H*.68;
+
+  // Bakke
+  ctx.fillStyle='#1a2a08';ctx.fillRect(0,bakkY,W,H-bakkY);
+
+  // Trær
+  function tegnTre(x,y,h,brenner,brannFase){
+    ctx.save();
+    // Stamme
+    ctx.fillStyle='#3a2010';ctx.fillRect(x-4,y-h,8,h);
+    // Krone
+    ctx.fillStyle=brenner?`rgba(20,30,10,${1-brannFase*.7})`:'#1a4010';
+    ctx.shadowColor=brenner?'#f97316':'transparent';ctx.shadowBlur=brenner?20:0;
+    ctx.beginPath();ctx.moveTo(x,y-h-h*.6);ctx.lineTo(x-h*.3,y-h);ctx.lineTo(x+h*.3,y-h);ctx.closePath();ctx.fill();
+    if(brenner){
+      // Flammer på treet
+      for(let i=0;i<4;i++){
+        const ff=(t*.8+i*.25)%1;
+        const fy=lerp(y-h,y-h-h*.55,ease(ff));
+        ctx.fillStyle=`rgba(249,115,22,${.8*(1-ff)})`;
+        ctx.beginPath();ctx.moveTo(x+(i-2)*8,fy+20);ctx.lineTo(x+(i-2)*8-8,fy);ctx.lineTo(x+(i-2)*8+8,fy);ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // Plasser trær
+  const trærX=[W*.08,W*.18,W*.28,W*.42,W*.55,W*.65,W*.75,W*.85,W*.92];
+  const trærH=[H*.18,H*.22,H*.16,H*.2,H*.19,H*.21,H*.17,H*.2,H*.18];
+  const brannX=steg===0?W*.55:steg===1?lerp(W*.55,W*.2,ease(t)):steg>=2?W*.18:W*.18;
+
+  trærX.forEach((x,i)=>{
+    const brenner=steg>=1&&x<brannX;
+    tegnTre(x,bakkY,trærH[i],brenner,t);
+  });
+
+  // Flamme-front
+  const frontX=steg===1?lerp(W*.5,W*.15,ease(t)):steg>=2?W*.15:W*.5;
+
+  if(steg>=1){
+    ctx.save();
+    for(let i=0;i<16;i++){
+      const ff=(t*.6+i*.065)%1;
+      const fx=frontX+i*W*.02-W*.05,fy=lerp(bakkY,bakkY-H*.28,ease(ff));
+      ctx.globalAlpha=1-ff*.6;
+      ctx.fillStyle=ff<.5?'#ef4444':'#f97316';ctx.shadowColor='#f97316';ctx.shadowBlur=10;
+      ctx.beginPath();ctx.moveTo(fx,bakkY);ctx.lineTo(fx-10,fy);ctx.lineTo(fx+10,fy);ctx.closePath();ctx.fill();
+    }
+    ctx.restore();
+    if(steg===1) lbl(ctx,'Flammefront: vind + oppoverbakke = 6× raskere spredning',W/2,H*.05,'#f97316');
+  }
+
+  if(steg===0){
+    // Tørt terreng, antennelse
+    ctx.save();ctx.font=`${W*.028}px serif`;ctx.textAlign='center';
+    ctx.fillText('⚡',W*.52,bakkY-H*.22);
+    ctx.restore();
+    lbl(ctx,'Tørt brennstoff + oksygen + antennelse = brann',W/2,H*.05,'#f97316');
+  }
+
+  if(steg>=2){
+    // Konveksjonssøyle
+    const søyleH=ease(t)*H*.55;
+    const søyleGrd=ctx.createLinearGradient(W*.22,bakkY,W*.22,bakkY-søyleH);
+    søyleGrd.addColorStop(0,'rgba(249,115,22,.6)');søyleGrd.addColorStop(.5,'rgba(100,80,60,.4)');søyleGrd.addColorStop(1,'rgba(60,50,40,0)');
+    ctx.save();ctx.fillStyle=søyleGrd;
+    ctx.beginPath();ctx.ellipse(W*.22,bakkY-søyleH*.5,W*.06+ease(t)*W*.02,søyleH*.55,0,0,Math.PI*2);ctx.fill();
+    // Røykbiter
+    for(let i=0;i<10;i++){
+      const ff=(t*.4+i*.1)%1;
+      ctx.fillStyle=`rgba(80,70,60,${.5*(1-ff)})`;
+      ctx.beginPath();ctx.arc(W*.22+(Math.sin(ff*Math.PI*3+i))*W*.04,lerp(bakkY,bakkY-søyleH,ease(ff)),5+ff*8,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+    if(steg===2) lbl(ctx,'Konveksjonssøyle: suger oksygen – brannen lager egne vinder',W/2,H*.05,'#f97316');
+  }
+
+  if(steg===3){
+    // Spotting – glødende biter
+    for(let i=0;i<8;i++){
+      const ff=(t*.5+i*.125)%1;
+      const startX=W*.22,sluttX=W*.5+i*W*.05;
+      const px=lerp(startX,sluttX,ff);
+      const py=lerp(bakkY-H*.3,bakkY-H*.05+Math.sin(ff*Math.PI)*H*.15,ff);
+      ctx.save();ctx.fillStyle='rgba(249,115,22,.8)';ctx.shadowColor='#f97316';ctx.shadowBlur=8;
+      ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    // Røykpanel
+    const røykGrd=ctx.createLinearGradient(0,0,0,H*.4);
+    røykGrd.addColorStop(0,'rgba(60,50,40,.4)');røykGrd.addColorStop(1,'rgba(60,50,40,0)');
+    ctx.fillStyle=røykGrd;ctx.fillRect(0,0,W,H*.4);
+    lbl(ctx,'Spotting: glødende biter spres km foran – ny brann',W/2,H*.05,'#fb923c');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANIMASJONSLOOP
+// ══════════════════════════════════════════════════════
+let sist=null;
+const STEG_VAR=5;
+
+function loop(nå){
+  if(!spiller) return;
+  const dt=sist?(nå-sist)/1000:0;sist=nå;
+  t=Math.min(t+dt*hastighet/STEG_VAR,1);
+  if(t>=1){
+    const fen=FENOMENER[aktivFenomen];
+    if(aktivSteg<fen.steg.length-1){aktivSteg++;t=0;oppdaterStegUI();}
+    else{t=1;spiller=false;document.getElementById('btn-play').textContent='▶ Spill av';}
+  }
+  tegnScene();animId=requestAnimationFrame(loop);
+}
+function togglePlay(){
+  spiller=!spiller;
+  document.getElementById('btn-play').textContent=spiller?'⏸ Pause':'▶ Spill av';
+  if(spiller){sist=null;animId=requestAnimationFrame(loop);}
+  else cancelAnimationFrame(animId);
+}
+function nesteSteg(){const f=FENOMENER[aktivFenomen];if(aktivSteg<f.steg.length-1){aktivSteg++;t=0;oppdaterStegUI();tegnScene();}}
+function forrigeSteg(){if(aktivSteg>0){aktivSteg--;t=0;oppdaterStegUI();tegnScene();}}
+function nullstillAnim(){aktivSteg=0;t=0;spiller=false;cancelAnimationFrame(animId);document.getElementById('btn-play').textContent='▶ Spill av';oppdaterStegUI();tegnScene();}
+function tegnScene(){ctx.clearRect(0,0,W,H);FENOMENER[aktivFenomen].tegn(ctx,aktivSteg,t,W,H);}
+
+function visFenomen(id){
+  aktivFenomen=id;aktivSteg=0;t=0;spiller=false;cancelAnimationFrame(animId);
+  document.getElementById('btn-play').textContent='▶ Spill av';
+  const ids=['jordskjelv','vulkan','orkan','tsunami','torden','tornado','skred','brann'];
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('aktiv',ids[i]===id));
+  oppdaterStegUI();tegnScene();
+}
+function oppdaterStegUI(){
+  const fen=FENOMENER[aktivFenomen];
+  const rad=document.getElementById('steg-rad');rad.innerHTML='';
+  fen.steg.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='steg-dot'+(i===aktivSteg?' aktiv':i<aktivSteg?' ferdig':'');
+    d.textContent=i+1;d.title=s.tittel;
+    d.onclick=()=>{aktivSteg=i;t=0;oppdaterStegUI();tegnScene();};
+    rad.appendChild(d);
+  });
+  const tittel=document.createElement('div');tittel.className='steg-tittel';
+  tittel.textContent=fen.steg[aktivSteg].tittel;rad.appendChild(tittel);
+  const s=fen.steg[aktivSteg];
+  document.getElementById('info-strip').innerHTML=`
+    <div class="info-felt"><div class="info-felt-label">📖 Forklaring</div><div class="info-felt-tekst">${s.info}</div></div>
+    <div class="info-felt"><div class="info-felt-label">🔢 Steg</div><div class="info-felt-tekst">${aktivSteg+1} av ${fen.steg.length}: <strong>${s.tittel}</strong></div></div>
+    <div class="info-felt"><div class="info-felt-label">💡 Tips</div><div class="info-felt-tekst">Klikk steg-prikker for å hoppe. Bruk ← → for å bla manuelt. Juster hastigheten med slideren.</div></div>`;
+}
+function resize(){
+  const wrap=document.querySelector('.scene-wrap');
+  W=wrap.clientWidth;canvas.width=W;canvas.height=H;tegnScene();
+}
+window.addEventListener('resize',resize);
+resize();
+visFenomen('jordskjelv');
+</script>
+</body>
+</html>

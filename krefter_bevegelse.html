@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Krefter og bevegelse</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#0d0d1a;--card:#111122;--border:rgba(255,255,255,.07);
+  --text:#f0f0ff;--dim:#5a5a8a;
+  --accent:#f97316;   /* oransje – bevegelse/energi */
+  --accent2:#60a5fa;  /* blå – tyngdekraft */
+  --accent3:#4ade80;  /* grønn – friksjon */
+  --accent4:#e879f9;  /* lilla – luftmotstand */
+  --red:#f87171;--yellow:#facc15;
+  --font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;--font-m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 55% 35% at 8% 8%,rgba(249,115,22,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 40% 30% at 92% 88%,rgba(96,165,250,.05) 0%,transparent 60%);}
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,15,.93);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:10px;}
+.nav-lnk{font-family:var(--font-h);font-size:.95rem;color:var(--text);text-decoration:none}
+.nav-lnk:hover{color:var(--accent)}.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:var(--accent);font-size:.9rem}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:24px 0 28px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.7rem,4vw,2.6rem);margin-bottom:8px}
+.hero h1 span{color:var(--accent)}.hero-sub{font-size:.92rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.65}
+.fremgang-rad{display:flex;gap:5px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.fremgang-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;cursor:pointer;transition:all .25s}
+.fremgang-dot.løst{background:var(--accent);border-color:var(--accent);color:#000}
+.fremgang-dot.aktiv{border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.2)}
+.oppgave-nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:20px}
+.oppg-btn{font-family:var(--font-b);font-size:.75rem;font-weight:700;padding:5px 12px;
+  border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--dim);cursor:pointer;transition:all .18s}
+.oppg-btn:hover{border-color:var(--accent);color:var(--text)}
+.oppg-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.oppgave-header{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px 22px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.oppgave-nr{font-family:var(--font-h);font-size:2rem;color:var(--accent);line-height:1;flex-shrink:0}
+.oppgave-body{flex:1;min-width:180px}
+.oppgave-tittel{font-family:var(--font-h);font-size:1.05rem;margin-bottom:3px}
+.oppgave-tekst{font-size:.86rem;color:var(--dim);line-height:1.6}
+.oppgave-hint{font-size:.76rem;margin-top:7px;color:var(--yellow);background:rgba(250,204,21,.07);
+  border:1px solid rgba(250,204,21,.2);border-radius:8px;padding:4px 9px;display:inline-block}
+
+/* ── SIMULERINGSARENA ── */
+.sim-layout{display:grid;grid-template-columns:220px 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:620px){.sim-layout{grid-template-columns:1fr}}
+
+/* Kraft-palett */
+.kraft-palett{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:14px;display:flex;flex-direction:column;gap:8px}
+.palett-tittel{font-family:var(--font-h);font-size:.84rem;color:var(--dim);margin-bottom:2px}
+.kraft-knapp{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;
+  border:1px solid var(--border);background:rgba(255,255,255,.03);cursor:pointer;
+  font-family:var(--font-b);font-weight:700;font-size:.82rem;color:var(--text);transition:all .15s;user-select:none}
+.kraft-knapp:hover{border-color:var(--accent);background:rgba(249,115,22,.07)}
+.kraft-knapp.aktiv-kraft{border-color:var(--accent);background:rgba(249,115,22,.1);color:var(--accent)}
+.kraft-ikon{font-size:1.15rem;width:22px;text-align:center}
+.kraft-info{font-size:.63rem;color:var(--dim);margin-top:1px;font-weight:400}
+.kraft-farge{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Sim-canvas */
+.sim-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  position:relative;overflow:hidden;min-height:400px}
+#simCanvas{width:100%;height:400px;display:block}
+
+/* Kontroller */
+.kontroll-rad{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.vt-btn{font-family:var(--font-b);font-size:.78rem;font-weight:700;padding:6px 14px;
+  border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--dim);
+  cursor:pointer;transition:all .15s}
+.vt-btn:hover{border-color:var(--accent);color:var(--text)}
+.vt-btn.aktiv{background:rgba(249,115,22,.1);border-color:var(--accent);color:var(--accent)}
+.vt-sep{width:1px;height:24px;background:var(--border)}
+.btn-spill{font-family:var(--font-h);font-size:.95rem;padding:9px 24px;border-radius:13px;
+  border:none;cursor:pointer;background:var(--accent);color:#fff;transition:transform .15s,box-shadow .15s}
+.btn-spill:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,.3)}
+.btn-reset{font-family:var(--font-b);font-size:.82rem;font-weight:700;padding:9px 16px;
+  border-radius:13px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .15s}
+.btn-reset:hover{border-color:var(--red);color:var(--red)}
+.btn-sjekk{font-family:var(--font-h);font-size:.95rem;padding:9px 24px;border-radius:13px;
+  border:none;cursor:pointer;background:#4ade80;color:#000;transition:transform .15s,box-shadow .15s}
+.btn-sjekk:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,222,128,.3)}
+
+/* Resultat */
+.resultat{border-radius:16px;padding:0;max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s ease}
+.resultat.synlig{max-height:420px;padding:22px;border:1px solid var(--border)}
+.resultat.korrekt{background:rgba(74,222,128,.07);border-color:rgba(74,222,128,.25)!important}
+.resultat.feil{background:rgba(248,113,113,.07);border-color:rgba(248,113,113,.25)!important}
+.res-tittel{font-family:var(--font-h);font-size:1.25rem;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.res-tittel.korrekt{color:#4ade80}.res-tittel.feil{color:var(--red)}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.res-felt{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:13px 15px}
+.res-felt-label{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.res-felt-verdi{font-size:.88rem;color:var(--text);line-height:1.55}
+.res-feil-tips{font-size:.84rem;color:var(--dim);margin-top:4px;line-height:1.7}
+.res-feil-tips strong{color:var(--yellow)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">🏃 Krefter og bevegelse</span>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <h1>🏃 Krefter og bevegelse – <span>Plasser og simuler</span></h1>
+    <p class="hero-sub">Velg krefter fra paletten, plasser dem på objektet, og trykk «Simuler» for å se hva som skjer. Svar deretter på spørsmålet om kretsen.</p>
+  </div>
+
+  <div class="fremgang-rad" id="fremgang-rad"></div>
+  <div class="oppgave-nav" id="oppgave-nav"></div>
+
+  <div class="oppgave-header">
+    <div class="oppgave-nr" id="oppg-nr">01</div>
+    <div class="oppgave-body">
+      <div class="oppgave-tittel" id="oppg-tittel"></div>
+      <div class="oppgave-tekst" id="oppg-tekst"></div>
+      <div class="oppgave-hint" id="oppg-hint"></div>
+    </div>
+  </div>
+
+  <div class="sim-layout">
+    <div class="kraft-palett">
+      <div class="palett-tittel">⬆ Krefter</div>
+      <button class="kraft-knapp aktiv-kraft" id="knapp-tyngde" onclick="velgKraft('tyngde')">
+        <span class="kraft-ikon">⬇️</span>
+        <div><div>Tyngdekraft</div><div class="kraft-info">Trekker ned (9,8 m/s²)</div></div>
+        <div class="kraft-farge" style="background:#60a5fa"></div>
+      </button>
+      <button class="kraft-knapp" id="knapp-normalkraft" onclick="velgKraft('normalkraft')">
+        <span class="kraft-ikon">⬆️</span>
+        <div><div>Normalkraft</div><div class="kraft-info">Overflaten støtter opp</div></div>
+        <div class="kraft-farge" style="background:#4ade80"></div>
+      </button>
+      <button class="kraft-knapp" id="knapp-friksjon" onclick="velgKraft('friksjon')">
+        <span class="kraft-ikon">⬅️</span>
+        <div><div>Friksjon</div><div class="kraft-info">Bremser bevegelse</div></div>
+        <div class="kraft-farge" style="background:#f97316"></div>
+      </button>
+      <button class="kraft-knapp" id="knapp-drivkraft" onclick="velgKraft('drivkraft')">
+        <span class="kraft-ikon">➡️</span>
+        <div><div>Drivkraft</div><div class="kraft-info">Skyver fremover</div></div>
+        <div class="kraft-farge" style="background:#facc15"></div>
+      </button>
+      <button class="kraft-knapp" id="knapp-luftmotstand" onclick="velgKraft('luftmotstand')">
+        <span class="kraft-ikon">💨</span>
+        <div><div>Luftmotstand</div><div class="kraft-info">Bremser i luft</div></div>
+        <div class="kraft-farge" style="background:#e879f9"></div>
+      </button>
+      <button class="kraft-knapp" id="knapp-oppdrift" onclick="velgKraft('oppdrift')">
+        <span class="kraft-ikon">🌊</span>
+        <div><div>Oppdrift</div><div class="kraft-info">Vann støtter opp</div></div>
+        <div class="kraft-farge" style="background:#22d3ee"></div>
+      </button>
+      <div style="margin-top:6px;font-size:.68rem;color:var(--dim);line-height:1.5">
+        Velg kraft → klikk på pilen for å legge til / fjerne.<br>
+        Krefter vises som piler på objektet.
+      </div>
+    </div>
+
+    <div class="sim-wrap">
+      <canvas id="simCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="kontroll-rad">
+    <button class="btn-spill" onclick="simuler()">▶ Simuler</button>
+    <button class="vt-btn" onclick="tilbakestill()">↺ Nullstill krefter</button>
+    <div class="vt-sep"></div>
+    <button class="btn-sjekk" onclick="sjekkSvar()">✓ Sjekk svaret</button>
+  </div>
+
+  <div class="resultat" id="resultat"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  OPPGAVEDATA
+// ══════════════════════════════════════════════════
+// kravKrefter: hvilke krefter MÅ være med
+// forbudtKrefter: hvilke krefter MÅ IKKE være med
+// scenario: hva slags animasjon
+// nettokraftRetning: 'høyre'|'venstre'|'null'|'ned'
+const OPPGAVER = [
+  {
+    id:1, emoji:'📦', tittel:'Eske i ro på bordet',
+    tekst:'En eske ligger stille på et bord. Hvilke krefter virker på esken? Legg til de riktige kreftene fra paletten.',
+    hint:'💡 Når et objekt er i ro er kreftene i balanse. Noe trekker ned, noe holder opp.',
+    krav:['tyngde','normalkraft'], forbudt:['drivkraft','friksjon','luftmotstand','oppdrift'],
+    scenario:'ro', nettokraft:'null',
+    forklaring:'En eske på et bord har to krefter i balanse: tyngdekraften trekker esken ned, og normalkraften fra bordet skyver like mye opp. Summen av kreftene er null – derfor er esken i ro.',
+    fakta:'Newton kalte dette «første bevegelseslov»: et objekt i ro forblir i ro hvis summen av kreftene er null.',
+    vanskelighet:'★☆☆', navn:'Eske i ro'
+  },
+  {
+    id:2, emoji:'⬇️', tittel:'Stein som faller fritt',
+    tekst:'En stein faller fra et tak (ingen luft). Hvilken kraft virker?',
+    hint:'💡 «Fritt fall» betyr kun én kraft. Hva trekker alt ned mot jorda?',
+    krav:['tyngde'], forbudt:['normalkraft','friksjon','drivkraft','oppdrift'],
+    scenario:'fall', nettokraft:'ned',
+    forklaring:'I fritt fall (uten luft) virker bare tyngdekraften. Alle gjenstander faller like raskt uansett vekt – dette beviste Galileo for over 400 år siden ved å slippe kuler fra Skjevt tårn i Pisa!',
+    fakta:'På månen, uten luft, faller en fjær og en hammer like raskt. Astronaut David Scott viste dette i 1971!',
+    vanskelighet:'★☆☆', navn:'Fritt fall'
+  },
+  {
+    id:3, emoji:'🚗', tittel:'Bil som kjører jevnt fremover',
+    tekst:'En bil kjører med konstant fart på flat vei. Hvilke fire krefter er i balanse?',
+    hint:'💡 Fremover: motoren driver frem. Bakover: friksjon og luftmotstand. Opp/ned: tyngde og underlag.',
+    krav:['tyngde','normalkraft','drivkraft','friksjon'],
+    forbudt:['luftmotstand','oppdrift'],
+    scenario:'kjøre', nettokraft:'null',
+    forklaring:'Ved konstant fart er alle krefter i balanse: drivkraft = friksjon (horisontalt), tyngde = normalkraft (vertikalt). Nettokraften er null – bilen endrer ikke fart.',
+    fakta:'Jo raskere du kjører, desto mer luftmotstand. Over 100 km/t bruker en bil mer enn halvparten av motorkraften bare på å bekjempe luftmotstanden!',
+    vanskelighet:'★★☆', navn:'Bil i jevn fart'
+  },
+  {
+    id:4, emoji:'🚀', tittel:'Rakett som akselererer oppover',
+    tekst:'En rakett skytes opp. Drivkraften er større enn tyngdekraften. Hvilke krefter virker?',
+    hint:'💡 Oppover: motoren gir drivkraft. Nedover: tyngdekraften. I luften: også luftmotstand.',
+    krav:['tyngde','drivkraft','luftmotstand'],
+    forbudt:['normalkraft','friksjon','oppdrift'],
+    scenario:'rakett', nettokraft:'opp',
+    forklaring:'Raketten akselererer oppover fordi drivkraften (fra motoren) er større enn tyngdekraft + luftmotstand. Nettokraften peker oppover, og farten øker.',
+    fakta:'En rakett trenger ikke «noe å dytte mot» – den fungerer også i verdensrommet fordi den skyver ut gass bakover (Newtons 3. lov: aksjon = reaksjon).',
+    vanskelighet:'★★☆', navn:'Rakett opp'
+  },
+  {
+    id:5, emoji:'🏊', tittel:'Person som svømmer',
+    tekst:'En person flyter stille i vann (ikke synker, ikke stiger). Hvilke krefter holder dem i balanse?',
+    hint:'💡 I vann virker oppdrift oppover. Hva trekker ned? Normalkraft fra bunn? Nei – de flyter!',
+    krav:['tyngde','oppdrift'],
+    forbudt:['normalkraft','friksjon','drivkraft','luftmotstand'],
+    scenario:'flyte', nettokraft:'null',
+    forklaring:'Når noen flyter er tyngdekraften (ned) lik oppdriften (opp). Oppdriften oppstår fordi væsken presser innover og oppover på objektet. Archimedes oppdaget dette i badekaret for 2200 år siden!',
+    fakta:'Saltere vann gir mer oppdrift. I Dødehavet er vannet så salt at det er nesten umulig å synke!',
+    vanskelighet:'★☆☆', navn:'Flyte i vann'
+  },
+  {
+    id:6, emoji:'⛷️', tittel:'Skihopper i lufta',
+    tekst:'En skihopper er i luften etter hoppet. Hva bremser og hva trekker ned?',
+    hint:'💡 Ingen bakke = ingen normalkraft. Ingen motor = ingen drivkraft. Men hva med luft og tyngde?',
+    krav:['tyngde','luftmotstand'],
+    forbudt:['normalkraft','friksjon','drivkraft','oppdrift'],
+    scenario:'hopp', nettokraft:'ned',
+    forklaring:'I luften virker bare tyngdekraft (ned) og luftmotstand (mot bevegelsen). Skihopperen bøyer kroppen fordi en flatere stilling gir mer luftmotstand og holder dem lengre i luften.',
+    fakta:'Den beste skihoppere kan sveve over 250 meter. Aerodynamisk posisjon kan gi opp til 30% lengre hopp!',
+    vanskelighet:'★★☆', navn:'Skihopper'
+  },
+  {
+    id:7, emoji:'📦➡️', tittel:'Eske som skyves over gulv',
+    tekst:'Du skyver en eske fremover på gulvet med konstant kraft. Esken beveger seg, men akselererer ikke.',
+    hint:'💡 Konstant fart = nettokraft = null. Noe driver frem, noe bremser. Pluss opp/ned-balanse.',
+    krav:['tyngde','normalkraft','drivkraft','friksjon'],
+    forbudt:['luftmotstand','oppdrift'],
+    scenario:'skyve', nettokraft:'null',
+    forklaring:'Esken beveger seg med konstant fart fordi drivkraften (du) er lik friksjonskraften (gulvet). Friksjon oppstår fordi de to overflatene «henger fast» i hverandre på mikroskopisk nivå.',
+    fakta:'Friksjon er det som gjør at vi kan gå uten å gli. På perfekt glatt is ville det vært umulig å gå fremover!',
+    vanskelighet:'★★☆', navn:'Skyve eske'
+  },
+  {
+    id:8, emoji:'🌧️', tittel:'Regndråpe med terminal-hastighet',
+    tekst:'En regndråpe faller med konstant fart (terminal hastighet). Kreftene er i balanse.',
+    hint:'💡 Dråpen faller ikke raskere. Det betyr nettokraft = null. Hva trekker ned, hva bremser?',
+    krav:['tyngde','luftmotstand'],
+    forbudt:['normalkraft','friksjon','drivkraft','oppdrift'],
+    scenario:'dråpe', nettokraft:'null',
+    forklaring:'Terminal hastighet oppnås når luftmotstanden er lik tyngdekraften. Dråpen slutter å akselerere og faller med konstant fart. Større gjenstander har høyere terminalhastighet fordi de har mer masse relativt til overflate.',
+    fakta:'En regndråpe har terminalhastighet på ca. 9 m/s (32 km/t). En fallskjermhopper uten fallskjerm: ca. 55 m/s!',
+    vanskelighet:'★★★', navn:'Terminal hastighet'
+  },
+  {
+    id:9, emoji:'🚲', tittel:'Sykkel i oppoverbakke',
+    tekst:'En syklist kjører oppover en bakke med konstant fart. Friksjon og luftmotstand bremser. Tyngden har en komponent bakover.',
+    hint:'💡 Fremover: drivkraft (tråkking). Bakover: friksjon + tyngde-komponent ned bakken. Opp/ned: normalkraft.',
+    krav:['tyngde','normalkraft','drivkraft','friksjon'],
+    forbudt:['luftmotstand','oppdrift'],
+    scenario:'bakke', nettokraft:'null',
+    forklaring:'I bakke deler tyngdekraften seg i to: én del peker rett ned (normalkraft balanserer) og én del peker langs bakken nedover (friksjon fra drivkraften balanserer). Syklisten må tråkke hardere i bakke.',
+    fakta:'En 10% stigning (10 m opp per 100 m frem) gjør at syklisten bruker dobbelt så mye kraft som på flatmark!',
+    vanskelighet:'★★★', navn:'Sykkel i bakke'
+  },
+  {
+    id:10, emoji:'🛸', tittel:'Ubåt i nøytral oppdrift',
+    tekst:'En ubåt henger stille på en bestemt dybde – verken synker eller stiger.',
+    hint:'💡 Stille = balanse. To krefter: én ned, én opp. Hva virker i vann?',
+    krav:['tyngde','oppdrift'],
+    forbudt:['normalkraft','friksjon','drivkraft','luftmotstand'],
+    scenario:'ubåt', nettokraft:'null',
+    forklaring:'Ubåten styrer oppdriften ved å pumpe vann inn i eller ut av ballasttanker. Mer vann = tyngre = synker. Mindre vann = lettere = stiger. Akkurat balanse = henger stille.',
+    fakta:'Fisk bruker en svømmeblære på samme måte som en ubåt – de fyller den med gass for å regulere dybden!',
+    vanskelighet:'★☆☆', navn:'Ubåt i balanse'
+  },
+];
+
+// ══════════════════════════════════════════════════
+//  TILSTAND
+// ══════════════════════════════════════════════════
+let aktivKrefter = new Set();  // hvilke krefter er lagt til
+let valgtKraft   = 'tyngde';
+let aktivOppgave = 0;
+let løsteOppgaver= new Set();
+let simKjører    = false;
+let animId       = null;
+let simTid       = 0;
+
+const canvas = document.getElementById('simCanvas');
+const ctx    = canvas.getContext('2d');
+
+const KRAFT_DEF = {
+  tyngde:       { farge:'#60a5fa', retning:[0,1],   label:'Tyngdekraft (Fg)',   symbol:'⬇' },
+  normalkraft:  { farge:'#4ade80', retning:[0,-1],  label:'Normalkraft (N)',     symbol:'⬆' },
+  friksjon:     { farge:'#f97316', retning:[-1,0],  label:'Friksjon (f)',        symbol:'⬅' },
+  drivkraft:    { farge:'#facc15', retning:[1,0],   label:'Drivkraft (F)',       symbol:'➡' },
+  luftmotstand: { farge:'#e879f9', retning:[-1,0],  label:'Luftmotstand (Fl)',   symbol:'💨' },
+  oppdrift:     { farge:'#22d3ee', retning:[0,-1],  label:'Oppdrift (Fo)',       symbol:'⬆' },
+};
+
+// ══════════════════════════════════════════════════
+//  TEGNING
+// ══════════════════════════════════════════════════
+function resizeCanvas(){
+  const wrap=canvas.parentElement;
+  canvas.width=wrap.clientWidth; canvas.height=400; tegn();
+}
+
+function tegn(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const opp=OPPGAVER[aktivOppgave];
+  const W=canvas.width, H=canvas.height;
+
+  // Scenario-bakgrunn
+  tegnBakgrunn(opp.scenario, W, H);
+
+  // Objekt-posisjon
+  const cx=W/2, cy=H*0.55;
+
+  // Tegn objekt
+  tegnObjekt(opp, cx, cy, W, H);
+
+  // Tegn kraft-piler
+  tegnKreftpiler(cx, cy);
+}
+
+function tegnBakgrunn(scenario, W, H){
+  // Himmel/rom
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  if(scenario==='flyte'||scenario==='ubåt'){
+    grad.addColorStop(0,'#0a1628'); grad.addColorStop(0.4,'#0e2044'); grad.addColorStop(0.4,'#1a3a6b'); grad.addColorStop(1,'#0c1e3d');
+  } else if(scenario==='rakett'){
+    grad.addColorStop(0,'#000005'); grad.addColorStop(1,'#0a0a2a');
+  } else {
+    grad.addColorStop(0,'#0a0818'); grad.addColorStop(1,'#0d1020');
+  }
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+  // Bakke / vann
+  if(scenario==='ro'||scenario==='skyve'||scenario==='kjøre'||scenario==='bakke'){
+    // Bakkeflate
+    ctx.fillStyle='#1a2a1a'; ctx.fillRect(0,H*0.68,W,H*0.32);
+    ctx.strokeStyle='rgba(74,222,128,.3)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,H*0.68); ctx.lineTo(W,H*0.68); ctx.stroke();
+    if(scenario==='bakke'){
+      // Skrå bakke-indikasjon
+      ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+      for(let x=-W;x<W*2;x+=40){
+        ctx.beginPath(); ctx.moveTo(x,H*0.68); ctx.lineTo(x+30,H); ctx.stroke();
+      }
+    }
+  } else if(scenario==='flyte'||scenario==='ubåt'||scenario==='dråpe'){
+    if(scenario==='flyte'||scenario==='ubåt'){
+      // Vannoverflate
+      ctx.fillStyle='rgba(34,211,238,.08)'; ctx.fillRect(0,H*0.35,W,H*0.65);
+      ctx.strokeStyle='rgba(34,211,238,.3)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(0,H*0.35); ctx.lineTo(W,H*0.35); ctx.stroke();
+      // Bølger
+      ctx.strokeStyle='rgba(34,211,238,.15)'; ctx.lineWidth=1;
+      ctx.beginPath();
+      for(let x=0;x<W;x+=2){
+        const y=H*0.35+Math.sin(x*0.05+simTid*0.03)*4;
+        x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+  } else if(scenario==='fall'||scenario==='hopp'){
+    // Stjerner
+    ctx.fillStyle='rgba(255,255,255,.5)';
+    [[50,30],[120,80],[200,20],[310,60],[380,25],[80,130],[260,100],[430,70]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.arc(x%W,y,1.5,0,Math.PI*2); ctx.fill();
+    });
+  } else if(scenario==='rakett'){
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    for(let i=0;i<25;i++){
+      const x=(i*137)%W, y=(i*97)%H;
+      ctx.beginPath(); ctx.arc(x,y,1,0,Math.PI*2); ctx.fill();
+    }
+  }
+}
+
+function tegnObjekt(opp, cx, cy, W, H){
+  ctx.save();
+
+  // Animasjon ved simulering
+  let animOffset=[0,0];
+  if(simKjører){
+    const t=simTid*0.02;
+    if(opp.nettokraft==='null') animOffset=[Math.sin(t*2)*3,0];
+    else if(opp.nettokraft==='ned') animOffset=[0, Math.min(t*t*4,H*0.2)];
+    else if(opp.nettokraft==='opp') animOffset=[0,-Math.min(t*t*3,H*0.25)];
+    else if(opp.nettokraft==='høyre') animOffset=[Math.min(t*t*3,W*0.25),0];
+  }
+
+  const ox=cx+animOffset[0], oy=cy+animOffset[1];
+
+  const emojis={
+    ro:'📦', fall:'🪨', kjøre:'🚗', rakett:'🚀',
+    flyte:'🏊', hopp:'⛷️', skyve:'📦', dråpe:'💧',
+    bakke:'🚲', ubåt:'🛸'
+  };
+  const e=emojis[opp.scenario]||'📦';
+  ctx.font=`${opp.scenario==='rakett'?44:40}px serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  // Rotasjon for rakett
+  if(opp.scenario==='rakett'){ ctx.translate(ox,oy); ctx.rotate(-Math.PI/6); ctx.fillText(e,0,0); }
+  else { ctx.fillText(e,ox,oy); }
+
+  ctx.restore();
+}
+
+function tegnKreftpiler(cx, cy){
+  const PILE_L=70;
+  const ordreOgOffset={
+    tyngde:     {off:[0,0]},
+    normalkraft:{off:[0,0]},
+    friksjon:   {off:[0,0]},
+    drivkraft:  {off:[0,0]},
+    luftmotstand:{off:[20,0]},
+    oppdrift:   {off:[-20,0]},
+  };
+  aktivKrefter.forEach(k=>{
+    const def=KRAFT_DEF[k];
+    if(!def) return;
+    const [ox,oy]=ordreOgOffset[k]?.off||[0,0];
+    const startX=cx+ox, startY=cy+oy;
+    const endX=startX+def.retning[0]*PILE_L;
+    const endY=startY+def.retning[1]*PILE_L;
+    tegnPil(startX,startY,endX,endY,def.farge,def.label);
+  });
+}
+
+function tegnPil(x1,y1,x2,y2,farge,label){
+  ctx.save();
+  ctx.strokeStyle=farge; ctx.fillStyle=farge;
+  ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.shadowColor=farge; ctx.shadowBlur=8;
+
+  // Linje
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+
+  // Pilhode
+  const ang=Math.atan2(y2-y1,x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-14*Math.cos(ang-0.4),y2-14*Math.sin(ang-0.4));
+  ctx.lineTo(x2-14*Math.cos(ang+0.4),y2-14*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+
+  // Label
+  ctx.shadowBlur=0;
+  ctx.font='bold 11px Nunito,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  const lx=mx+18*Math.sin(ang), ly=my-18*Math.cos(ang);
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  const tw=ctx.measureText(label).width;
+  ctx.fillRect(lx-tw/2-3,ly-8,tw+6,16);
+  ctx.fillStyle=farge; ctx.fillText(label,lx,ly);
+
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════
+//  SIMULERING
+// ══════════════════════════════════════════════════
+function simuler(){
+  if(animId) cancelAnimationFrame(animId);
+  simKjører=true; simTid=0;
+  function loop(){
+    simTid++;
+    tegn();
+    if(simTid<120) animId=requestAnimationFrame(loop);
+    else { simKjører=false; tegn(); }
+  }
+  loop();
+}
+
+// ══════════════════════════════════════════════════
+//  SJEKK
+// ══════════════════════════════════════════════════
+function sjekkSvar(){
+  const opp=OPPGAVER[aktivOppgave];
+  let tips=[];
+
+  // Sjekk manglende krefter
+  opp.krav.forEach(k=>{
+    if(!aktivKrefter.has(k)) tips.push(`<strong>${KRAFT_DEF[k].label}</strong> mangler – den skal være med.`);
+  });
+  // Sjekk forbudte krefter
+  opp.forbudt.forEach(k=>{
+    if(aktivKrefter.has(k)) tips.push(`<strong>${KRAFT_DEF[k].label}</strong> skal ikke være med i denne situasjonen.`);
+  });
+
+  const korrekt=tips.length===0;
+  if(korrekt){ løsteOppgaver.add(aktivOppgave); oppdaterFremgang(); }
+
+  visResultat(korrekt, opp, tips);
+}
+
+function visResultat(ok, opp, tips){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); void r.offsetWidth;
+  if(ok){
+    const krafterListe=[...opp.krav].map(k=>`<span style="color:${KRAFT_DEF[k].farge}">${KRAFT_DEF[k].symbol} ${KRAFT_DEF[k].label}</span>`).join(', ');
+    r.innerHTML=`
+      <div class="res-tittel korrekt">✅ Riktig! ${opp.emoji} ${opp.navn}</div>
+      <div class="res-grid">
+        <div class="res-felt"><div class="res-felt-label">⬆ Krefter i kretsen</div><div class="res-felt-verdi">${krafterListe}</div></div>
+        <div class="res-felt"><div class="res-felt-label">⚖ Nettokraft</div><div class="res-felt-verdi">${{null:'= 0 (balanse)',ned:'↓ Nedover (akselerasjon ned)',opp:'↑ Oppover (akselerasjon opp)',høyre:'→ Fremover (akselerasjon)'}[opp.nettokraft]||opp.nettokraft}</div></div>
+        <div class="res-felt" style="grid-column:1/-1"><div class="res-felt-label">🧠 Forklaring</div><div class="res-felt-verdi">${opp.forklaring}</div></div>
+        <div class="res-felt" style="grid-column:1/-1"><div class="res-felt-label">💡 Visste du at</div><div class="res-felt-verdi">${opp.fakta}</div></div>
+      </div>`;
+    r.classList.add('synlig','korrekt');
+  } else {
+    r.innerHTML=`<div class="res-tittel feil">❌ Ikke helt riktig</div>
+      <div class="res-feil-tips">${tips.map(t=>`• ${t}`).join('<br>')}</div>`;
+    r.classList.add('synlig','feil');
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  KONTROLL
+// ══════════════════════════════════════════════════
+function velgKraft(type){
+  valgtKraft=type;
+  // Toggle: klikk igjen for å fjerne
+  if(aktivKrefter.has(type)) aktivKrefter.delete(type);
+  else aktivKrefter.add(type);
+  oppdaterKraftKnapper(); tegn();
+  skjulResultat();
+}
+
+function oppdaterKraftKnapper(){
+  Object.keys(KRAFT_DEF).forEach(k=>{
+    document.getElementById(`knapp-${k}`)?.classList.toggle('aktiv-kraft',aktivKrefter.has(k));
+  });
+}
+
+function tilbakestill(){
+  aktivKrefter.clear(); oppdaterKraftKnapper();
+  if(animId) cancelAnimationFrame(animId);
+  simKjører=false; simTid=0;
+  skjulResultat(); tegn();
+}
+
+function skjulResultat(){
+  const r=document.getElementById('resultat');
+  r.classList.remove('synlig','korrekt','feil'); r.innerHTML='';
+}
+
+// ══════════════════════════════════════════════════
+//  NAVIGASJON
+// ══════════════════════════════════════════════════
+function lastOppgave(idx){
+  aktivOppgave=idx;
+  const opp=OPPGAVER[idx];
+  document.getElementById('oppg-nr').textContent=String(idx+1).padStart(2,'0');
+  document.getElementById('oppg-tittel').textContent=`${opp.emoji} ${opp.tittel}`;
+  document.getElementById('oppg-tekst').textContent=opp.tekst;
+  document.getElementById('oppg-hint').textContent=opp.hint;
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  tilbakestill(); oppdaterFremgang();
+}
+
+function byggNavigasjon(){
+  const nav=document.getElementById('oppgave-nav');
+  const rad=document.getElementById('fremgang-rad');
+  nav.innerHTML=''; rad.innerHTML='';
+  OPPGAVER.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='oppg-btn'+(i===0?' active':'');
+    btn.textContent=`${o.emoji} ${o.navn}`; btn.title=o.vanskelighet;
+    btn.onclick=()=>lastOppgave(i); nav.appendChild(btn);
+    const dot=document.createElement('div');
+    dot.className='fremgang-dot'+(i===0?' aktiv':'');
+    dot.id=`dot-${i}`; dot.textContent=i+1; dot.title=o.tittel;
+    dot.onclick=()=>lastOppgave(i); dot.style.cursor='pointer';
+    rad.appendChild(dot);
+  });
+}
+
+function oppdaterFremgang(){
+  OPPGAVER.forEach((_,i)=>{
+    const dot=document.getElementById(`dot-${i}`);
+    if(!dot) return;
+    dot.classList.remove('løst','aktiv');
+    if(løsteOppgaver.has(i)) dot.classList.add('løst');
+    else if(i===aktivOppgave) dot.classList.add('aktiv');
+  });
+  document.querySelectorAll('.oppg-btn').forEach((b,i)=>b.classList.toggle('active',i===aktivOppgave));
+}
+
+window.addEventListener('resize',resizeCanvas);
+byggNavigasjon();
+lastOppgave(0);
+resizeCanvas();
+</script>
+</body>
+</html>

@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Naturfag-animasjoner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090f;--card:#0e1018;--border:rgba(255,255,255,.07);
+  --text:#f0f0ff;--dim:#5a5a80;
+  --water:#38bdf8;--earth:#6b8f3a;--fire:#f97316;--air:#a78bfa;
+  --green:#4ade80;--yellow:#facc15;--red:#f87171;--cyan:#22d3ee;
+  --font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(8,9,15,.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-family:var(--font-h);font-size:.9rem;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--dim)}
+.nav-tittel{font-family:var(--font-h);color:var(--cyan);font-size:.9rem}
+
+.page{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+.hero{text-align:center;padding:20px 0 28px}
+.hero h1{font-family:var(--font-h);font-size:clamp(1.6rem,3.5vw,2.4rem);margin-bottom:8px}
+.hero h1 span{color:var(--cyan)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:480px;margin:0 auto}
+
+/* ── FENOMEN-TABS ── */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:28px}
+.tab{font-family:var(--font-h);font-size:.85rem;padding:8px 18px;border-radius:20px;
+  border:1px solid var(--border);background:var(--card);color:var(--dim);
+  cursor:pointer;transition:all .2s}
+.tab:hover{border-color:var(--cyan);color:var(--text)}
+.tab.aktiv{background:var(--cyan);color:#000;border-color:var(--cyan)}
+
+/* ── ANIMASJONS-SCENE ── */
+.scene-wrap{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  overflow:hidden;margin-bottom:16px;position:relative}
+.scene-canvas{width:100%;display:block}
+
+/* ── KONTROLLER ── */
+.kontroll-rad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.btn-play{font-family:var(--font-h);font-size:1rem;padding:9px 24px;border-radius:12px;
+  border:none;cursor:pointer;background:var(--cyan);color:#000;transition:all .15s}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(34,211,238,.3)}
+.btn-steg{font-family:var(--font-b);font-size:.82rem;font-weight:700;padding:9px 16px;
+  border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--dim);
+  cursor:pointer;transition:all .15s}
+.btn-steg:hover{border-color:var(--cyan);color:var(--text)}
+.hastighet-label{font-size:.78rem;color:var(--dim);margin-left:4px}
+.hastighet-slider{accent-color:var(--cyan);cursor:pointer;width:80px}
+
+/* ── INFO-KORT ── */
+.info-strip{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.info-strip{grid-template-columns:1fr}}
+.info-felt{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.info-felt-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:5px}
+.info-felt-tekst{font-size:.84rem;line-height:1.6;color:var(--text)}
+
+/* Steg-indikator */
+.steg-rad{display:flex;gap:5px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.steg-dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--dim);
+  transition:all .3s;cursor:pointer;font-family:var(--font-h)}
+.steg-dot.aktiv{background:var(--cyan);border-color:var(--cyan);color:#000}
+.steg-dot.ferdig{background:rgba(34,211,238,.2);border-color:var(--cyan);color:var(--cyan)}
+.steg-tittel{font-family:var(--font-h);font-size:.85rem;color:var(--cyan);padding:4px 10px;
+  background:rgba(34,211,238,.1);border-radius:8px;margin-left:8px}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">✨ Naturfag-animasjoner</span>
+</nav>
+
+<div class="page">
+  <div class="hero">
+    <h1>✨ Naturfaglige <span>fenomener</span></h1>
+    <p class="hero-sub">Se hvordan naturen fungerer – trinn for trinn. Styr animasjonen selv.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab aktiv" onclick="visFenomen('vann')">🌊 Vannets kretsløp</button>
+    <button class="tab" onclick="visFenomen('drift')">🌍 Kontinentaldrift</button>
+    <button class="tab" onclick="visFenomen('foto')">🌿 Fotosyntese</button>
+    <button class="tab" onclick="visFenomen('naring')">🦊 Næringskjede</button>
+    <button class="tab" onclick="visFenomen('karbon')">♻️ Karbonets kretsløp</button>
+  </div>
+
+  <div class="steg-rad" id="steg-rad"></div>
+
+  <div class="scene-wrap">
+    <canvas class="scene-canvas" id="sceneCanvas" height="420"></canvas>
+  </div>
+
+  <div class="kontroll-rad">
+    <button class="btn-play" id="btn-play" onclick="togglePlay()">▶ Spill av</button>
+    <button class="btn-steg" onclick="forrigeSteg()">← Forrige</button>
+    <button class="btn-steg" onclick="nesteSteg()">Neste →</button>
+    <button class="btn-steg" onclick="nullstillAnim()">↺ Start på nytt</button>
+    <span class="hastighet-label">Hastighet:</span>
+    <input class="hastighet-slider" type="range" min="0.3" max="3" step="0.1" value="1"
+      oninput="hastighet=+this.value">
+  </div>
+
+  <div class="info-strip" id="info-strip"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+const canvas = document.getElementById('sceneCanvas');
+const ctx    = canvas.getContext('2d');
+let W = 0, H = 420;
+let spiller   = false;
+let hastighet = 1;
+let t         = 0;          // global animasjons-tid (0–1 innen steg)
+let aktivSteg = 0;
+let animId    = null;
+let aktivFenomen = 'vann';
+
+// ══════════════════════════════════════════════════════════════
+//  FENOMEN-DEFINISJONER
+// ══════════════════════════════════════════════════════════════
+const FENOMENER = {
+
+// ─────────────────────────────────────────────────────────────
+vann: {
+  navn: 'Vannets kretsløp',
+  steg: [
+    { tittel:'☀️ Fordampning',   info:'Solen varmer opp havoverflaten. Vann fordamper – vannmolekyler får nok energi til å løfte seg opp i atmosfæren som usynlig vanndamp.' },
+    { tittel:'☁️ Kondensasjon',  info:'Vanndamp stiger og kjøler seg ned. Den kondenserer til bitte små dråper som samler seg til skyer. Varme luftmasser løfter dråpene høyere.' },
+    { tittel:'🌧️ Nedbør',        info:'Dråpene i skyen blir tunge nok til å falle. Nedbør kan være regn, snø eller hagl – avhengig av temperaturen.' },
+    { tittel:'💧 Avrenning',     info:'Vann renner som elver og bekker ned mot havet, eller siger ned i bakken som grunnvann. Til slutt ender alt tilbake i havet – og syklusen starter på nytt.' },
+  ],
+  tegn(ctx, steg, t, W, H) { tegnVann(ctx, steg, t, W, H); },
+},
+
+// ─────────────────────────────────────────────────────────────
+drift: {
+  navn: 'Kontinentaldrift',
+  steg: [
+    { tittel:'🌋 Pangea (250 mill. år)',   info:'For 250 millioner år siden var alle kontinenter samlet i superkontinentet Pangea. Det var omgitt av ett verdenshav – Panthalassa.' },
+    { tittel:'💥 Sprekker (200 mill. år)', info:'Pangea begynner å sprekke langs sprekkesoner. Magma trenger opp og skaper ny havbunn. Laurasia (nord) og Gondwana (sør) skiller seg.' },
+    { tittel:'🌊 Drift (100 mill. år)',    info:'Atlanterhavet åpner seg. India drifter nordover mot Asia. Sør-Amerika og Afrika skilles. Tetyshavet lukker seg.' },
+    { tittel:'🌍 I dag',                   info:'Kontinentene er på sin nåværende posisjon. De beveger seg fortsatt – ca. 2–10 cm per år. India presser fortsatt mot Asia og bygger Himalaya høyere.' },
+  ],
+  tegn(ctx, steg, t, W, H) { tegnDrift(ctx, steg, t, W, H); },
+},
+
+// ─────────────────────────────────────────────────────────────
+foto: {
+  navn: 'Fotosyntese',
+  steg: [
+    { tittel:'☀️ Lys absorberes',     info:'Klorofyll i bladets kloroplaster absorberer sollys – særlig rødt og blått lys. Det grønne lyset reflekteres, derfor ser blader grønne ut.' },
+    { tittel:'💧 Vann spaltes',       info:'Lys-energien brukes til å spalte vannmolekyler (H₂O) i hydrogen og oksygen. Oksygenet (O₂) slippes ut som avfallsprodukt – dette er luften vi puster!' },
+    { tittel:'🌬️ CO₂ tas inn',        info:'Karbondioksid (CO₂) fra luften tas inn gjennom bladets spalteåpninger (stomata). CO₂ inneholder karbonatomene som bygges inn i sukker.' },
+    { tittel:'🍬 Glukose lages',      info:'Hydrogen + CO₂ → glukose (C₆H₁₂O₆). Glukosen er plantens mat og energikilde. Overskuddet lagres som stivelse eller brukes til vekst.' },
+  ],
+  tegn(ctx, steg, t, W, H) { tegnFoto(ctx, steg, t, W, H); },
+},
+
+// ─────────────────────────────────────────────────────────────
+naring: {
+  navn: 'Næringskjede',
+  steg: [
+    { tittel:'☀️ Produsenter',    info:'Planter og alger bruker sollys til fotosyntese og lager organisk stoff (sukker). De er næringskjedens basis – alle andre nivåer er avhengige av dem.' },
+    { tittel:'🐛 Primær-konsument', info:'Planteetere (herbivorer) spiser plantene og får energi. Bare ca. 10% av energien overføres – resten går tapt som varme og bevegelse.' },
+    { tittel:'🦊 Sekundær-konsument', info:'Kjøttetere spiser planteterne. Igjen overføres bare ~10% av energien. Antallet individer blir færre for hvert nivå.' },
+    { tittel:'🦅 Topp-rovdyr',    info:'Topp-rovdyrene har ingen naturlige fiender. Når de dør, brytes de ned av bakterier og sopp som frigjør næringsstoffer tilbake til jorda.' },
+  ],
+  tegn(ctx, steg, t, W, H) { tegnNaring(ctx, steg, t, W, H); },
+},
+
+// ─────────────────────────────────────────────────────────────
+karbon: {
+  navn: 'Karbonets kretsløp',
+  steg: [
+    { tittel:'🌿 Fotosyntese',       info:'Planter tar opp CO₂ fra atmosfæren og bygger det inn i organisk stoff. Karbon «låses» inn i biomassen.' },
+    { tittel:'🔥 Respirasjon',       info:'Planter, dyr og mikrober puster og frigjør CO₂ tilbake til atmosfæren. Også skogbranner og vulkaner frigjør karbon.' },
+    { tittel:'⬇️ Avsetning',         info:'Døde organismer synker til havbunnen eller begraves i jorda. Over millioner av år dannes kull, olje og gass – fossilt karbon.' },
+    { tittel:'🏭 Menneskelig påvirkning', info:'Forbrenning av fossilt brensel frigjør gammelt karbon raskt til atmosfæren. CO₂-nivået stiger og forsterker drivhuseffekten.' },
+  ],
+  tegn(ctx, steg, t, W, H) { tegnKarbon(ctx, steg, t, W, H); },
+},
+
+}; // slutt FENOMENER
+
+// ══════════════════════════════════════════════════════════════
+//  HJELPE-FUNKSJONER
+// ══════════════════════════════════════════════════════════════
+function lerp(a, b, t) { return a + (b - a) * t; }
+function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+function pil(c, x1,y1, x2,y2, farge, tykkelse=2, easing=false) {
+  const tt = easing ? ease(clamp(t*2,0,1)) : 1;
+  const ex = lerp(x1,x2,tt), ey = lerp(y1,y2,tt);
+  c.save();
+  c.strokeStyle=farge; c.fillStyle=farge; c.lineWidth=tykkelse; c.lineCap='round';
+  c.shadowColor=farge; c.shadowBlur=6;
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(ex,ey); c.stroke();
+  if (tt > 0.8) {
+    const ang=Math.atan2(ey-y1,ex-x1);
+    c.beginPath(); c.moveTo(ex,ey);
+    c.lineTo(ex-12*Math.cos(ang-0.4),ey-12*Math.sin(ang-0.4));
+    c.lineTo(ex-12*Math.cos(ang+0.4),ey-12*Math.sin(ang+0.4));
+    c.closePath(); c.fill();
+  }
+  c.restore();
+}
+
+function boblePil(c, x1,y1, x2,y2, farge) {
+  // Animert sirkel som beveger seg langs linjen
+  const frac = (t * 1.5) % 1;
+  const bx = lerp(x1, x2, frac), by = lerp(y1, y2, frac);
+  c.save();
+  c.fillStyle=farge; c.shadowColor=farge; c.shadowBlur=8;
+  c.beginPath(); c.arc(bx,by,5,0,Math.PI*2); c.fill();
+  // Spor
+  c.globalAlpha=0.25; c.strokeStyle=farge; c.lineWidth=1.5; c.setLineDash([4,4]);
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  c.restore();
+}
+
+function etikett(c, tekst, x, y, farge='rgba(255,255,255,.8)', bg='rgba(0,0,0,.55)') {
+  c.save();
+  c.font=`bold ${Math.max(11,W*0.013)}px Nunito,sans-serif`;
+  c.textAlign='center'; c.textBaseline='middle';
+  const tw=c.measureText(tekst).width;
+  c.fillStyle=bg; c.beginPath();
+  roundRect(c,x-tw/2-6,y-10,tw+12,20,5); c.fill();
+  c.fillStyle=farge; c.fillText(tekst,x,y);
+  c.restore();
+}
+
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);
+  c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);
+  c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);
+  c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  VANNETS KRETSLØP
+// ══════════════════════════════════════════════════════════════
+function tegnVann(ctx, steg, t, W, H) {
+  // Bakgrunn – himmel/jord
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#061428'); sky.addColorStop(0.65,'#0a2040'); sky.addColorStop(0.65,'#1a3a1a'); sky.addColorStop(1,'#0d2008');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+  const havY = H*0.65;
+  // Hav
+  const havGrad=ctx.createLinearGradient(0,havY,0,H);
+  havGrad.addColorStop(0,'#1e5a8a'); havGrad.addColorStop(1,'#0a2840');
+  ctx.fillStyle=havGrad; ctx.fillRect(0,havY,W,H-havY);
+  // Bølger
+  ctx.save(); ctx.strokeStyle='rgba(56,189,248,.3)'; ctx.lineWidth=1.5;
+  for(let i=0;i<4;i++){
+    const bx=(t*120+i*70)%W;
+    ctx.beginPath(); ctx.moveTo(bx,havY+4); ctx.bezierCurveTo(bx+10,havY-2,bx+20,havY-2,bx+30,havY+4); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Fjell
+  ctx.save(); ctx.fillStyle='#2a4a2a';
+  ctx.beginPath(); ctx.moveTo(W*0.5,havY); ctx.lineTo(W*0.62,havY*0.5); ctx.lineTo(W*0.74,havY); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#3a5a3a';
+  ctx.beginPath(); ctx.moveTo(W*0.55,havY); ctx.lineTo(W*0.65,havY*0.58); ctx.lineTo(W*0.75,havY); ctx.closePath(); ctx.fill();
+  // Snøtopp
+  ctx.fillStyle='rgba(255,255,255,.7)';
+  ctx.beginPath(); ctx.moveTo(W*0.62,havY*0.5); ctx.lineTo(W*0.58,havY*0.6); ctx.lineTo(W*0.66,havY*0.6); ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // Sol
+  ctx.save();
+  const solX=W*0.12, solY=H*0.14;
+  ctx.shadowColor='#facc15'; ctx.shadowBlur=30;
+  ctx.fillStyle='#fef08a'; ctx.beginPath(); ctx.arc(solX,solY,W*0.045,0,Math.PI*2); ctx.fill();
+  // Stråler
+  ctx.strokeStyle='rgba(254,240,138,.4)'; ctx.lineWidth=2;
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4+t*0.5;
+    ctx.beginPath(); ctx.moveTo(solX+Math.cos(a)*W*0.055,solY+Math.sin(a)*W*0.055);
+    ctx.lineTo(solX+Math.cos(a)*W*0.075,solY+Math.sin(a)*W*0.075); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Steg 0: fordampnings-partikler
+  if (steg >= 0) {
+    ctx.save();
+    const antall=12;
+    for(let i=0;i<antall;i++){
+      const fase=(t*0.8+i/antall)%1;
+      const startX=W*(0.1+i*0.07);
+      const px=startX+Math.sin(fase*Math.PI*2)*8;
+      const py=lerp(havY-5, havY*0.55, ease(fase));
+      const alpha=fase<0.7 ? fase/0.7 : 1-(fase-0.7)/0.3;
+      ctx.globalAlpha=alpha*0.8*(steg===0?1:0.3);
+      ctx.fillStyle='#7dd3fc'; ctx.shadowColor='#38bdf8'; ctx.shadowBlur=4;
+      ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===0) etikett(ctx,'Fordampning (evaporasjon)',W*0.22,havY*0.72,'#7dd3fc');
+  }
+
+  // Steg 1: sky
+  if (steg >= 1) {
+    const skyX=W*0.42, skyY=H*0.18;
+    const skyAlpha = steg===1 ? clamp(t*3,0,1) : 1;
+    ctx.save(); ctx.globalAlpha=skyAlpha;
+    tegnSky(ctx, skyX, skyY, W*0.13, '#c7d2fe');
+    tegnSky(ctx, skyX+W*0.08, skyY-10, W*0.1, '#e0e7ff');
+    ctx.restore();
+    if(steg===1) etikett(ctx,'Kondensasjon → sky',skyX+W*0.04,skyY-H*0.05,'#c7d2fe');
+  }
+
+  // Steg 2: regndråper
+  if (steg >= 2) {
+    ctx.save();
+    const skyX=W*0.42, skyY=H*0.18;
+    for(let i=0;i<10;i++){
+      const fase=(t*0.7+i*0.1)%1;
+      const rx=skyX-W*0.06+i*W*0.014;
+      const ry=lerp(skyY+20, havY*0.9, ease(fase));
+      ctx.globalAlpha=steg===2?0.8:0.3;
+      ctx.fillStyle='#38bdf8'; ctx.shadowColor='#38bdf8'; ctx.shadowBlur=3;
+      ctx.beginPath(); ctx.ellipse(rx,ry,2,4,0,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===2) etikett(ctx,'Nedbør (presipitasjon)',W*0.5,H*0.45,'#38bdf8');
+  }
+
+  // Steg 3: elv/avrenning
+  if (steg >= 3) {
+    ctx.save();
+    const alpha=steg===3?clamp(t*2,0,1):1;
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle='#38bdf8'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.shadowColor='#38bdf8'; ctx.shadowBlur=6;
+    // Elv fra fjell ned til hav
+    ctx.beginPath();
+    ctx.moveTo(W*0.62,havY*0.65);
+    ctx.bezierCurveTo(W*0.58,havY*0.8,W*0.45,havY*0.9,W*0.35,havY+2);
+    ctx.stroke();
+    // Løpende vannperle
+    const elvFase=t%1;
+    const eX=lerp(W*0.62,W*0.35,elvFase), eY=lerp(havY*0.65,havY+2,elvFase);
+    ctx.fillStyle='#7dd3fc'; ctx.beginPath(); ctx.arc(eX,eY,4,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    if(steg===3) etikett(ctx,'Avrenning → hav',W*0.45,havY*0.78,'#7dd3fc');
+  }
+
+  // Etikett
+  etikett(ctx,'Havet',W*0.2,havY+30,'#7dd3fc','rgba(0,40,80,.6)');
+}
+
+function tegnSky(c,x,y,r,farge){
+  c.save(); c.fillStyle=farge; c.shadowColor=farge; c.shadowBlur=10;
+  [[0,0,r],[r*0.5,-r*0.3,r*0.75],[r*0.9,0,r*0.6],[-r*0.5,-r*0.2,r*0.65]].forEach(([dx,dy,rad])=>{
+    c.beginPath(); c.arc(x+dx,y+dy,rad,0,Math.PI*2); c.fill();
+  });
+  c.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  KONTINENTALDRIFT
+// ══════════════════════════════════════════════════════════════
+
+// Forenklede silhuetter (Pangea og i-dag-posisjoner) normalisert til W×H
+const DRIFT_CONT = [
+  { navn:'Nord-Amerika', farge:'#8B6914',
+    p:{cx:.40,cy:.34}, d:{cx:.20,cy:.37},
+    form:[[-65,-42],[-50,-55],[-30,-58],[-5,-52],[18,-45],[28,-35],[32,-22],[28,-8],[22,8],[15,22],[8,34],[-2,44],[-14,40],[-24,28],[-34,14],[-40,0],[-42,-14],[-52,-28],[-65,-42]]},
+  { navn:'Sør-Amerika', farge:'#3a7a20',
+    p:{cx:.45,cy:.58}, d:{cx:.27,cy:.62},
+    form:[[-24,-50],[-8,-56],[12,-50],[24,-34],[26,-16],[22,4],[16,24],[8,44],[0,58],[-10,62],[-20,50],[-28,32],[-30,12],[-28,-12],[-24,-50]]},
+  { navn:'Europa',      farge:'#4a6830',
+    p:{cx:.54,cy:.28}, d:{cx:.51,cy:.27},
+    form:[[-36,12],[-40,-4],[-36,-18],[-22,-28],[-4,-32],[14,-28],[28,-18],[30,-4],[24,10],[12,18],[0,20],[-14,16],[-26,8],[-36,12]]},
+  { navn:'Afrika',      farge:'#a06820',
+    p:{cx:.55,cy:.52}, d:{cx:.52,cy:.55},
+    form:[[-32,-52],[-14,-58],[8,-56],[26,-46],[36,-28],[38,-8],[32,14],[22,34],[10,52],[-2,56],[-12,42],[-22,24],[-32,6],[-36,-16],[-34,-38],[-32,-52]]},
+  { navn:'Asia',        farge:'#4a3c7a',
+    p:{cx:.66,cy:.33}, d:{cx:.68,cy:.31},
+    form:[[-60,-32],[-38,-52],[-10,-56],[16,-50],[40,-38],[58,-22],[62,-6],[56,12],[42,28],[24,38],[6,38],[-10,32],[-28,18],[-44,4],[-56,-12],[-60,-32]]},
+  { navn:'Australia',   farge:'#8c4a18',
+    p:{cx:.72,cy:.66}, d:{cx:.80,cy:.64},
+    form:[[-36,-22],[-18,-32],[6,-36],[26,-30],[38,-16],[40,0],[34,14],[18,24],[0,26],[-18,20],[-32,8],[-38,-6],[-36,-22]]},
+  { navn:'Antarktis',   farge:'#90b8d0',
+    p:{cx:.56,cy:.78}, d:{cx:.50,cy:.90},
+    form:[[-42,-12],[-24,-24],[-4,-28],[16,-24],[34,-14],[42,0],[36,14],[18,22],[0,24],[-18,18],[-34,8],[-44,-4],[-42,-12]]},
+];
+
+function tegnDrift(ctx, steg, t, W, H) {
+  // Bakgrunn hav
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#020810'); bg.addColorStop(1,'#061428');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Gitter
+  ctx.save(); ctx.strokeStyle='rgba(255,255,255,.03)'; ctx.lineWidth=1;
+  for(let x=0;x<W;x+=W/12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=H/6){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+
+  // Interpoler posisjon basert på steg
+  // steg 0 = Pangea, steg 3 = i dag, mellomsteg interpolerer
+  const posFrac = steg===0?0 : steg===1?0.33 : steg===2?0.67 : 1;
+  const animFrac = lerp(posFrac, steg===3?1:posFrac+(1/3), ease(t));
+
+  const s = W/900; // skaleringsfaktor for form
+
+  DRIFT_CONT.forEach(k=>{
+    const cx = lerp(k.p.cx, k.d.cx, animFrac) * W;
+    const cy = lerp(k.p.cy, k.d.cy, animFrac) * H;
+
+    ctx.save();
+    ctx.translate(cx,cy);
+
+    // Skygge
+    ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=16; ctx.shadowOffsetX=4; ctx.shadowOffsetY=6;
+
+    // Fyll
+    ctx.beginPath();
+    k.form.forEach(([px,py],i)=>{
+      const gx=px*s, gy=py*s;
+      i===0?ctx.moveTo(gx,gy):ctx.lineTo(gx,gy);
+    });
+    ctx.closePath();
+
+    const grad=ctx.createLinearGradient(-50*s,-50*s,50*s,50*s);
+    grad.addColorStop(0, lightenColor(k.farge,20));
+    grad.addColorStop(1, k.farge);
+    ctx.fillStyle=grad; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1.2; ctx.stroke();
+
+    // Navn
+    ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
+    ctx.font=`bold ${Math.max(8,W*0.008)}px Nunito,sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(k.navn,0,0);
+
+    ctx.restore();
+  });
+
+  // Label
+  const epoke=['Pangea (250 mill. år)','Sprekker (200 mill. år)','Gondwana/Laurasia (100 mill. år)','I dag'][steg]||'';
+  ctx.save();
+  ctx.font=`bold ${W*0.014}px Fredoka One,cursive`;
+  ctx.fillStyle='rgba(212,168,67,.6)'; ctx.textAlign='center';
+  ctx.fillText(epoke, W/2, H*0.96);
+  ctx.restore();
+}
+
+function lightenColor(hex,pct){
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,(n>>16)+pct), g=Math.min(255,((n>>8)&0xff)+pct), b=Math.min(255,(n&0xff)+pct);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FOTOSYNTESE
+// ══════════════════════════════════════════════════════════════
+function tegnFoto(ctx, steg, t, W, H) {
+  // Bakgrunn
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#041208'); bg.addColorStop(1,'#020808');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const leafX=W/2, leafY=H*0.5;
+  const leafW=W*0.22, leafH=H*0.32;
+
+  // Blad
+  ctx.save();
+  ctx.shadowColor='#16a34a'; ctx.shadowBlur=20;
+  const leafGrad=ctx.createLinearGradient(leafX-leafW,leafY,leafX+leafW,leafY);
+  leafGrad.addColorStop(0,'#15803d'); leafGrad.addColorStop(0.5,'#22c55e'); leafGrad.addColorStop(1,'#15803d');
+  ctx.fillStyle=leafGrad;
+  ctx.beginPath();
+  ctx.moveTo(leafX,leafY-leafH);
+  ctx.bezierCurveTo(leafX+leafW,leafY-leafH*0.5,leafX+leafW,leafY+leafH*0.5,leafX,leafY+leafH);
+  ctx.bezierCurveTo(leafX-leafW,leafY+leafH*0.5,leafX-leafW,leafY-leafH*0.5,leafX,leafY-leafH);
+  ctx.fill();
+  // Bladnerver
+  ctx.strokeStyle='rgba(0,100,0,.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(leafX,leafY-leafH); ctx.lineTo(leafX,leafY+leafH); ctx.stroke();
+  [0.4,0.65,0.85].forEach(f=>{
+    const vy=lerp(leafY-leafH,leafY+leafH,f);
+    ctx.beginPath(); ctx.moveTo(leafX,vy); ctx.lineTo(leafX+leafW*(1-f)*0.8,vy-8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(leafX,vy); ctx.lineTo(leafX-leafW*(1-f)*0.8,vy-8); ctx.stroke();
+  });
+  ctx.restore();
+
+  // Kloroplast (sirkel i midten av bladet)
+  ctx.save();
+  ctx.fillStyle='#14532d'; ctx.strokeStyle='rgba(74,222,128,.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(leafX,leafY,leafW*0.3,leafH*0.2,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  etikett(ctx,'Kloroplast',leafX,leafY,'#4ade80');
+  ctx.restore();
+
+  // Sol
+  ctx.save();
+  ctx.shadowColor='#facc15'; ctx.shadowBlur=25;
+  ctx.fillStyle='#fef08a'; ctx.beginPath(); ctx.arc(W*0.12,H*0.12,W*0.045,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // Steg 0: lys-stråler inn i bladet
+  if(steg>=0){
+    ctx.save();
+    const solX=W*0.12, solY=H*0.12;
+    for(let i=0;i<5;i++){
+      const fase=(t*0.6+i*0.2)%1;
+      const lx=lerp(solX,leafX,ease(fase));
+      const ly=lerp(solY,leafY,ease(fase));
+      ctx.globalAlpha=0.7*(1-fase);
+      ctx.fillStyle='#fef08a'; ctx.shadowColor='#facc15'; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===0) etikett(ctx,'Lys absorberes av klorofyll',W*0.3,H*0.25,'#facc15');
+  }
+
+  // Steg 1: H₂O inn, O₂ ut (venstre)
+  if(steg>=1){
+    ctx.save();
+    const alpha=steg===1?clamp(t*2,0,1):1;
+    // H₂O inn (fra rot via stilk)
+    for(let i=0;i<4;i++){
+      const fase=(t*0.7+i*0.25)%1;
+      const px=lerp(leafX-leafW*0.2,leafX,fase);
+      const py=lerp(H*0.9,leafY,fase);
+      ctx.globalAlpha=alpha*(1-fase*0.5);
+      ctx.fillStyle='#38bdf8'; ctx.shadowColor='#38bdf8'; ctx.shadowBlur=5;
+      ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2); ctx.fill();
+    }
+    // O₂ ut (høyre, opp)
+    for(let i=0;i<4;i++){
+      const fase=(t*0.7+i*0.25)%1;
+      const px=lerp(leafX+leafW*0.3,leafX+leafW*0.6,fase);
+      const py=lerp(leafY-leafH*0.3,H*0.05,fase);
+      ctx.globalAlpha=alpha*fase;
+      ctx.fillStyle='#a78bfa'; ctx.shadowColor='#a78bfa'; ctx.shadowBlur=5;
+      ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===1){
+      etikett(ctx,'H₂O inn (røtter)',leafX-leafW*0.6,H*0.75,'#38bdf8');
+      etikett(ctx,'O₂ ut!',leafX+leafW*0.8,H*0.15,'#a78bfa');
+    }
+  }
+
+  // Steg 2: CO₂ inn (høyre side)
+  if(steg>=2){
+    ctx.save();
+    for(let i=0;i<5;i++){
+      const fase=(t*0.7+i*0.2)%1;
+      const px=lerp(W*0.88,leafX+leafW*0.2,ease(fase));
+      const py=lerp(lerp(H*0.2,H*0.6,i/4),leafY,ease(fase));
+      ctx.globalAlpha=0.9*(1-fase*0.3);
+      ctx.fillStyle='#fb923c'; ctx.shadowColor='#fb923c'; ctx.shadowBlur=5;
+      ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===2) etikett(ctx,'CO₂ inn (spalteåpninger)',W*0.78,H*0.38,'#fb923c');
+  }
+
+  // Steg 3: glukose ut (gul, nedover)
+  if(steg>=3){
+    ctx.save();
+    for(let i=0;i<4;i++){
+      const fase=(t*0.6+i*0.25)%1;
+      const px=lerp(leafX,leafX+(i%2===0?20:-20),fase);
+      const py=lerp(leafY+leafH,H*0.95,ease(fase));
+      ctx.globalAlpha=fase<0.8?1:1-(fase-0.8)/0.2;
+      ctx.fillStyle='#facc15'; ctx.shadowColor='#facc15'; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    if(steg===3) etikett(ctx,'Glukose lagres / transporteres',leafX,H*0.82,'#facc15');
+  }
+
+  // Formel-bokser
+  const formelY=H*0.04;
+  ctx.save();
+  ctx.font=`bold ${Math.max(10,W*0.011)}px Nunito,sans-serif`;
+  ctx.textAlign='center'; ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fillText('6CO₂ + 6H₂O + lys → C₆H₁₂O₆ + 6O₂',W/2,formelY+12);
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  NÆRINGSKJEDE
+// ══════════════════════════════════════════════════════════════
+function tegnNaring(ctx, steg, t, W, H) {
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#061208'); bg.addColorStop(0.7,'#0a1a06'); bg.addColorStop(0.7,'#1a3010'); bg.addColorStop(1,'#0a1a06');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const nivåer = [
+    { ikon:'☀️', label:'Sol', under:'Energikilde', y:H*0.14, farge:'#facc15' },
+    { ikon:'🌿', label:'Plante', under:'Produsent (10 000 J)', y:H*0.32, farge:'#4ade80' },
+    { ikon:'🐛', label:'Planteter', under:'Primær-konsument (1 000 J)', y:H*0.52, farge:'#a3e635' },
+    { ikon:'🦊', label:'Kjøtteter', under:'Sekundær-konsument (100 J)', y:H*0.70, farge:'#fb923c' },
+    { ikon:'🦅', label:'Topp-rovdyr', under:'Tertiær-konsument (10 J)', y:H*0.87, farge:'#f87171' },
+  ];
+
+  // Energi-pyramide
+  nivåer.forEach((n,i)=>{
+    const bredde = lerp(W*0.12, W*0.65, i/4);
+    const pyX=W/2-bredde/2, pyW=bredde, pyH=H*0.075;
+    ctx.save();
+    const pyrGrad=ctx.createLinearGradient(pyX,n.y-pyH/2,pyX+pyW,n.y+pyH/2);
+    pyrGrad.addColorStop(0,n.farge+'40'); pyrGrad.addColorStop(1,n.farge+'18');
+    ctx.fillStyle=pyrGrad;
+    ctx.strokeStyle=n.farge+'60'; ctx.lineWidth=1;
+    roundRect(ctx,pyX,n.y-pyH/2,pyW,pyH,6); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+
+  // Piler mellom nivåer (vises opp til aktivt steg)
+  for(let i=0;i<Math.min(steg,4);i++){
+    const fra=nivåer[i], til=nivåer[i+1];
+    if(!til) continue;
+    const aktivFase = (i === steg-1) ? t : 1;
+    // Energi-boble langs pil
+    ctx.save();
+    ctx.strokeStyle=fra.farge+'60'; ctx.lineWidth=2; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(W/2,fra.y+H*0.04); ctx.lineTo(W/2,til.y-H*0.04); ctx.stroke();
+    ctx.setLineDash([]);
+    // Løpende partikkel
+    const py=lerp(fra.y+H*0.04, til.y-H*0.04, (t*(i===steg-1?1:0))%1);
+    ctx.fillStyle=fra.farge; ctx.shadowColor=fra.farge; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(W/2,py,5,0,Math.PI*2); ctx.fill();
+    // 90% varme-tap
+    if(i===steg-1&&t>0.4){
+      ctx.globalAlpha=clamp((t-0.4)*3,0,1);
+      ctx.strokeStyle='#f97316'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(W/2,lerp(fra.y,til.y,0.5)); ctx.lineTo(W/2+W*0.18,lerp(fra.y,til.y,0.5)+30); ctx.stroke();
+      ctx.setLineDash([]); ctx.fillStyle='#f97316'; ctx.shadowColor='#f97316'; ctx.shadowBlur=5;
+      ctx.font=`bold ${W*0.012}px Nunito,sans-serif`; ctx.textAlign='left'; ctx.globalAlpha=clamp((t-0.4)*3,0,1);
+      ctx.fillText('~90% varmetap',W/2+W*0.2,lerp(fra.y,til.y,0.5)+35);
+    }
+    ctx.restore();
+  }
+
+  // Ikoner og tekst for nivåer opp til steg
+  nivåer.forEach((n,i)=>{
+    if(i>steg) return;
+    const alpha=i===steg?clamp(t*3,0,1):1;
+    ctx.save(); ctx.globalAlpha=alpha;
+    ctx.font=`${W*0.035}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(n.ikon, W/2-W*0.26, n.y);
+    ctx.font=`bold ${Math.max(10,W*0.012)}px Nunito,sans-serif`;
+    ctx.fillStyle=n.farge; ctx.fillText(n.label,W/2+W*0.15,n.y-8);
+    ctx.font=`${Math.max(9,W*0.01)}px Nunito,sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,.4)'; ctx.fillText(n.under,W/2+W*0.15,n.y+10);
+    ctx.restore();
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  KARBONETS KRETSLØP
+// ══════════════════════════════════════════════════════════════
+function tegnKarbon(ctx, steg, t, W, H) {
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#06080f'); bg.addColorStop(0.5,'#080c18'); bg.addColorStop(0.5,'#0a1a0a'); bg.addColorStop(1,'#06100a');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // Atmosfære-belte
+  ctx.save();
+  ctx.fillStyle='rgba(96,165,250,.06)'; ctx.strokeStyle='rgba(96,165,250,.15)'; ctx.lineWidth=1;
+  roundRect(ctx,W*0.05,H*0.02,W*0.9,H*0.44,12); ctx.fill(); ctx.stroke();
+  etikett(ctx,'🌬️ Atmosfære (CO₂)',W/2,H*0.06,'#93c5fd','rgba(6,8,15,.8)');
+  ctx.restore();
+
+  // Hav-belte
+  ctx.save();
+  ctx.fillStyle='rgba(56,189,248,.05)'; ctx.strokeStyle='rgba(56,189,248,.12)'; ctx.lineWidth=1;
+  roundRect(ctx,W*0.05,H*0.52,W*0.9,H*0.2,12); ctx.fill(); ctx.stroke();
+  etikett(ctx,'🌊 Hav (oppløst CO₂)',W/2,H*0.57,'#7dd3fc','rgba(6,8,15,.8)');
+  ctx.restore();
+
+  // Jord/berggrunn-belte
+  ctx.save();
+  ctx.fillStyle='rgba(120,80,20,.1)'; ctx.strokeStyle='rgba(160,100,30,.2)'; ctx.lineWidth=1;
+  roundRect(ctx,W*0.05,H*0.76,W*0.9,H*0.2,12); ctx.fill(); ctx.stroke();
+  etikett(ctx,'⛏️ Fossil energi / Jord',W/2,H*0.81,'#d4a843','rgba(6,8,15,.8)');
+  ctx.restore();
+
+  // Plante (midt)
+  ctx.save();
+  ctx.font=`${W*0.055}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🌳',W*0.25,H*0.48);
+  ctx.fillText('🐄',W*0.5,H*0.48);
+  ctx.fillText('🏭',W*0.76,H*0.48);
+  ctx.restore();
+
+  // Karbon-flyt animasjoner per steg
+  const flows = [
+    // steg 0: Fotosyntese – CO₂ fra atm til plante
+    [{fra:[W/2,H*0.12],til:[W*0.25,H*0.44],farge:'#4ade80',label:'Fotosyntese\nCO₂ → glukose'}],
+    // steg 1: Respirasjon – plante+dyr tilbake til atm; brann
+    [{fra:[W*0.25,H*0.44],til:[W*0.3,H*0.12],farge:'#fb923c',label:'Respirasjon\nCO₂ ut'},
+     {fra:[W*0.5,H*0.44], til:[W*0.5,H*0.12],farge:'#fb923c',label:''},
+     {fra:[W*0.76,H*0.44],til:[W*0.7,H*0.12],farge:'#f87171',label:'Forbrenning'}],
+    // steg 2: Avsetning – organisk materiale ned i jord/hav
+    [{fra:[W*0.25,H*0.5],til:[W*0.25,H*0.78],farge:'#a78bfa',label:'Avsetning'},
+     {fra:[W*0.5,H*0.5], til:[W*0.5,H*0.6],farge:'#38bdf8',label:'Oppløsning\ni hav'}],
+    // steg 3: Fossil – olje/kull opp via fabrikk
+    [{fra:[W*0.5,H*0.78],til:[W*0.76,H*0.5],farge:'#facc15',label:'Utvinning'},
+     {fra:[W*0.76,H*0.44],til:[W*0.6,H*0.12],farge:'#f87171',label:'CO₂ utslipp ↑↑'}],
+  ];
+
+  const aktiveFlows = flows.slice(0, steg+1);
+  aktiveFlows.forEach((gruppe,gi)=>{
+    gruppe.forEach(fl=>{
+      const alpha = gi===steg ? 1 : 0.3;
+      const frac  = gi===steg ? t : 1;
+      ctx.save(); ctx.globalAlpha=alpha;
+      // Stiplede linjer
+      ctx.strokeStyle=fl.farge+'50'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(fl.fra[0],fl.fra[1]); ctx.lineTo(fl.til[0],fl.til[1]); ctx.stroke();
+      ctx.setLineDash([]);
+      // Bevegelig boble
+      const bx=lerp(fl.fra[0],fl.til[0],frac), by=lerp(fl.fra[1],fl.til[1],frac);
+      ctx.fillStyle=fl.farge; ctx.shadowColor=fl.farge; ctx.shadowBlur=10;
+      ctx.beginPath(); ctx.arc(bx,by,6,0,Math.PI*2); ctx.fill();
+      // C-symbol inni
+      ctx.shadowBlur=0; ctx.fillStyle='#000'; ctx.font=`bold ${W*0.009}px Nunito,sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('C',bx,by);
+      if(fl.label&&gi===steg){
+        const mx=(fl.fra[0]+fl.til[0])/2+18, my=(fl.fra[1]+fl.til[1])/2;
+        etikett(ctx,fl.label.split('\n')[0],mx,my,fl.farge,'rgba(6,8,15,.8)');
+        if(fl.label.includes('\n')) etikett(ctx,fl.label.split('\n')[1],mx,my+18,fl.farge,'rgba(6,8,15,.8)');
+      }
+      ctx.restore();
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ANIMASJONSLOOP
+// ══════════════════════════════════════════════════════════════
+let sist = null;
+const STEG_VARIGHET = 4; // sekunder per steg
+
+function loop(nå) {
+  if (!spiller) return;
+  const dt = sist ? (nå - sist)/1000 : 0;
+  sist = nå;
+  t = Math.min(t + dt * hastighet / STEG_VARIGHET, 1);
+  if (t >= 1) {
+    const fen = FENOMENER[aktivFenomen];
+    if (aktivSteg < fen.steg.length - 1) {
+      aktivSteg++;
+      t = 0;
+      oppdaterStegUI();
+    } else {
+      t = 1;
+      spiller = false;
+      document.getElementById('btn-play').textContent = '▶ Spill av';
+    }
+  }
+  tegnScene();
+  animId = requestAnimationFrame(loop);
+}
+
+function togglePlay() {
+  spiller = !spiller;
+  document.getElementById('btn-play').textContent = spiller ? '⏸ Pause' : '▶ Spill av';
+  if (spiller) { sist = null; animId = requestAnimationFrame(loop); }
+  else { cancelAnimationFrame(animId); }
+}
+
+function nesteSteg() {
+  const fen = FENOMENER[aktivFenomen];
+  if (aktivSteg < fen.steg.length - 1) { aktivSteg++; t = 0; oppdaterStegUI(); tegnScene(); }
+}
+
+function forrigeSteg() {
+  if (aktivSteg > 0) { aktivSteg--; t = 0; oppdaterStegUI(); tegnScene(); }
+}
+
+function nullstillAnim() {
+  aktivSteg = 0; t = 0; spiller = false;
+  cancelAnimationFrame(animId);
+  document.getElementById('btn-play').textContent = '▶ Spill av';
+  oppdaterStegUI(); tegnScene();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SCENE-TEGNING
+// ══════════════════════════════════════════════════════════════
+function tegnScene() {
+  ctx.clearRect(0,0,W,H);
+  const fen = FENOMENER[aktivFenomen];
+  fen.tegn(ctx, aktivSteg, t, W, H);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  UI
+// ══════════════════════════════════════════════════════════════
+function visFenomen(id) {
+  aktivFenomen = id;
+  aktivSteg = 0; t = 0;
+  spiller = false; cancelAnimationFrame(animId);
+  document.getElementById('btn-play').textContent = '▶ Spill av';
+  document.querySelectorAll('.tab').forEach((b,i)=>{
+    const ids=['vann','drift','foto','naring','karbon'];
+    b.classList.toggle('aktiv', ids[i]===id);
+  });
+  oppdaterStegUI();
+  tegnScene();
+}
+
+function oppdaterStegUI() {
+  const fen = FENOMENER[aktivFenomen];
+  const rad = document.getElementById('steg-rad');
+  rad.innerHTML = '';
+  fen.steg.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='steg-dot'+(i===aktivSteg?' aktiv':i<aktivSteg?' ferdig':'');
+    d.textContent=i+1; d.title=s.tittel;
+    d.onclick=()=>{aktivSteg=i;t=0;oppdaterStegUI();tegnScene();};
+    rad.appendChild(d);
+  });
+  const tittelEl = document.createElement('div');
+  tittelEl.className='steg-tittel';
+  tittelEl.textContent=fen.steg[aktivSteg].tittel;
+  rad.appendChild(tittelEl);
+
+  // Info-strip
+  const strip=document.getElementById('info-strip');
+  const s=fen.steg[aktivSteg];
+  strip.innerHTML=`
+    <div class="info-felt"><div class="info-felt-label">📖 Forklaring</div>
+      <div class="info-felt-tekst">${s.info}</div></div>
+    <div class="info-felt"><div class="info-felt-label">🔢 Steg</div>
+      <div class="info-felt-tekst">${aktivSteg+1} av ${fen.steg.length}: <strong>${s.tittel}</strong></div></div>
+    <div class="info-felt"><div class="info-felt-label">💡 Tips</div>
+      <div class="info-felt-tekst">Klikk på steg-prikker for å hoppe. Juster hastigheten med slideren.</div></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RESIZE
+// ══════════════════════════════════════════════════════════════
+function resize() {
+  const wrap = document.querySelector('.scene-wrap');
+  W = wrap.clientWidth;
+  canvas.width = W;
+  canvas.height = H;
+  tegnScene();
+}
+window.addEventListener('resize', resize);
+
+// ── INIT ──
+resize();
+visFenomen('vann');
+</script>
+</body>
+</html>

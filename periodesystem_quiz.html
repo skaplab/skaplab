@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Periodesystem Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050709;
+  --surface:#0a0d12;
+  --panel:#0f1318;
+  --border:rgba(255,255,255,.07);
+  --text:#dde3ee;
+  --dim:#4a5468;
+  --mono:'Share Tech Mono',monospace;
+  --sans:'Outfit',sans-serif;
+
+  /* Elementtype-farger */
+  --alkali:#ef4444;
+  --alkaline:#f97316;
+  --transition:#6366f1;
+  --post-transition:#8b5cf6;
+  --metalloid:#14b8a6;
+  --nonmetal:#22c55e;
+  --halogen:#eab308;
+  --noble:#06b6d4;
+  --lanthanide:#ec4899;
+  --actinide:#f43f5e;
+  --unknown:#6b7280;
+
+  --correct:#10b981;
+  --wrong:#ef4444;
+  --highlight:#fbbf24;
+}
+
+html{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Animated background grid */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(99,102,241,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridShift 20s linear infinite;
+}
+@keyframes gridShift{0%{background-position:0 0}100%{background-position:40px 40px}}
+
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 20%,rgba(99,102,241,.04) 0%,transparent 65%),
+    radial-gradient(ellipse 40% 40% at 15% 80%,rgba(6,182,212,.03) 0%,transparent 55%),
+    radial-gradient(ellipse 30% 40% at 85% 60%,rgba(234,179,8,.025) 0%,transparent 55%);
+}
+
+/* ── NAV ── */
+nav{
+  position:sticky;top:0;z-index:500;
+  background:rgba(5,7,9,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;gap:12px;
+}
+.nav-lnk{font-family:var(--sans);font-size:.8rem;font-weight:500;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--mono);font-size:.85rem;color:#818cf8;letter-spacing:.05em}
+
+/* ── WRAPPER ── */
+.wrapper{
+  position:relative;z-index:1;
+  max-width:1680px;margin:0 auto;
+  padding:16px 16px 40px;
+}
+
+/* ── QUIZ PANEL ── */
+.quiz-panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px 24px;
+  margin-bottom:16px;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:16px;
+  align-items:center;
+  position:relative;overflow:hidden;
+}
+.quiz-panel::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 120% at 50% 0%,rgba(99,102,241,.05),transparent);
+  pointer-events:none;
+}
+
+.quiz-left{display:flex;flex-direction:column;gap:10px}
+
+.quiz-label{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);
+}
+
+.quiz-sporsmal{
+  font-family:var(--sans);
+  font-size:clamp(1.1rem,2.2vw,1.5rem);
+  font-weight:700;
+  color:var(--text);
+  line-height:1.35;
+  min-height:2.7em;
+  display:flex;align-items:center;
+}
+.quiz-sporsmal .hint-ord{
+  color:#818cf8;
+  border-bottom:2px solid rgba(129,140,248,.3);
+  padding-bottom:1px;
+}
+
+.quiz-hint{
+  font-size:.8rem;color:var(--dim);
+  font-family:var(--mono);letter-spacing:.03em;
+}
+
+/* Stats */
+.quiz-stats{
+  display:flex;flex-direction:column;gap:10px;align-items:flex-end;
+  min-width:180px;
+}
+.stat-gruppe{display:flex;gap:12px;align-items:center}
+.stat-boks{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;padding:10px 16px;text-align:center;
+  min-width:68px;
+}
+.stat-tall{
+  font-family:var(--mono);font-size:1.6rem;font-weight:400;
+  line-height:1;margin-bottom:2px;
+}
+.stat-tall.streak{color:#fbbf24}
+.stat-tall.score{color:#818cf8}
+.stat-tall.totalt{color:#34d399}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+
+/* Streak flames */
+.streak-flames{
+  font-size:.8rem;letter-spacing:-.05em;
+  min-width:40px;text-align:center;
+  transition:all .3s;
+}
+
+/* Feedback strip */
+.feedback-strip{
+  height:3px;width:100%;border-radius:3px;
+  background:var(--border);
+  overflow:hidden;margin-top:8px;
+}
+.feedback-bar{
+  height:100%;width:0;
+  border-radius:3px;
+  transition:width .4s cubic-bezier(.22,1,.36,1), background .3s;
+}
+
+/* Feedback melding */
+.feedback-msg{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);
+  z-index:1000;
+  padding:12px 24px;border-radius:12px;
+  font-family:var(--sans);font-size:1rem;font-weight:600;
+  pointer-events:none;opacity:0;
+  transition:all .25s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap;
+  border:1px solid transparent;
+}
+.feedback-msg.vis{opacity:1;transform:translateX(-50%) translateY(0)}
+.feedback-msg.riktig{background:#052e16;border-color:#10b981;color:#6ee7b7}
+.feedback-msg.feil{background:#2a0a0a;border-color:#ef4444;color:#fca5a5}
+
+/* ── LEGEND ── */
+.legend{
+  display:flex;flex-wrap:wrap;gap:6px;
+  margin-bottom:10px;
+}
+.legend-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:.65rem;font-weight:500;letter-spacing:.03em;
+  color:var(--dim);
+  padding:3px 8px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+  cursor:pointer;
+  transition:all .2s;
+}
+.legend-item:hover{color:var(--text)}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+/* ── PERIODESYSTEM ── */
+.ps-wrap{overflow-x:auto;padding-bottom:8px}
+
+.ps-grid{
+  display:grid;
+  grid-template-columns:repeat(18,minmax(52px,1fr));
+  gap:3px;
+  min-width:960px;
+}
+
+/* Element-celle */
+.el-celle{
+  position:relative;
+  border-radius:6px;
+  padding:4px 4px 3px;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:all .18s cubic-bezier(.22,1,.36,1);
+  user-select:none;
+  background:rgba(255,255,255,.03);
+  overflow:hidden;
+}
+.el-celle::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(255,255,255,0);
+  transition:background .18s;
+  border-radius:inherit;
+}
+.el-celle:hover::before{background:rgba(255,255,255,.05)}
+.el-celle:hover{transform:scale(1.12) translateZ(0);z-index:10;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+
+/* Element info */
+.el-nr{
+  font-family:var(--mono);font-size:.55rem;
+  color:rgba(255,255,255,.35);line-height:1;
+}
+.el-sym{
+  font-family:var(--sans);font-size:1rem;font-weight:800;
+  line-height:1;margin:1px 0;
+  color:#fff;
+}
+.el-navn{
+  font-family:var(--sans);font-size:.42rem;font-weight:400;
+  color:rgba(255,255,255,.5);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  line-height:1;
+}
+.el-masse{
+  font-family:var(--mono);font-size:.44rem;
+  color:rgba(255,255,255,.3);line-height:1;margin-top:1px;
+}
+
+/* Type-farger: border + bakgrunn */
+.el-celle[data-type="alkali"]       {border-color:rgba(239,68,68,.35); background:rgba(239,68,68,.08)}
+.el-celle[data-type="alkaline"]     {border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.08)}
+.el-celle[data-type="transition"]   {border-color:rgba(99,102,241,.3); background:rgba(99,102,241,.07)}
+.el-celle[data-type="post"]         {border-color:rgba(139,92,246,.3); background:rgba(139,92,246,.07)}
+.el-celle[data-type="metalloid"]    {border-color:rgba(20,184,166,.3); background:rgba(20,184,166,.07)}
+.el-celle[data-type="nonmetal"]     {border-color:rgba(34,197,94,.3);  background:rgba(34,197,94,.07)}
+.el-celle[data-type="halogen"]      {border-color:rgba(234,179,8,.3);  background:rgba(234,179,8,.07)}
+.el-celle[data-type="noble"]        {border-color:rgba(6,182,212,.3);  background:rgba(6,182,212,.07)}
+.el-celle[data-type="lanthanide"]   {border-color:rgba(236,72,153,.3); background:rgba(236,72,153,.07)}
+.el-celle[data-type="actinide"]     {border-color:rgba(244,63,94,.3);  background:rgba(244,63,94,.07)}
+.el-celle[data-type="unknown"]      {border-color:rgba(107,114,128,.3);background:rgba(107,114,128,.07)}
+
+/* Hover sym-farge per type */
+.el-celle[data-type="alkali"] .el-sym      {color:#fca5a5}
+.el-celle[data-type="alkaline"] .el-sym    {color:#fdba74}
+.el-celle[data-type="transition"] .el-sym  {color:#a5b4fc}
+.el-celle[data-type="post"] .el-sym        {color:#c4b5fd}
+.el-celle[data-type="metalloid"] .el-sym   {color:#5eead4}
+.el-celle[data-type="nonmetal"] .el-sym    {color:#86efac}
+.el-celle[data-type="halogen"] .el-sym     {color:#fde047}
+.el-celle[data-type="noble"] .el-sym       {color:#67e8f9}
+.el-celle[data-type="lanthanide"] .el-sym  {color:#f9a8d4}
+.el-celle[data-type="actinide"] .el-sym    {color:#fda4af}
+
+/* State klasser */
+.el-celle.maal{
+  animation:pulseMaal 1.2s ease-in-out infinite;
+  z-index:5;
+}
+@keyframes pulseMaal{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(251,191,36,.3)}
+  50%{transform:scale(1.05);box-shadow:0 0 0 6px rgba(251,191,36,.0)}
+}
+.el-celle.riktig-flash{
+  animation:riktigFlash .6s ease-out forwards;
+  border-color:var(--correct)!important;
+}
+@keyframes riktigFlash{
+  0%{background:rgba(16,185,129,.4);transform:scale(1.18)}
+  60%{background:rgba(16,185,129,.2)}
+  100%{background:rgba(16,185,129,.1);transform:scale(1)}
+}
+.el-celle.feil-flash{
+  animation:feilFlash .5s ease-out forwards;
+  border-color:var(--wrong)!important;
+}
+@keyframes feilFlash{
+  0%{background:rgba(239,68,68,.4);transform:scale(0.94)}
+  40%{background:rgba(239,68,68,.2)}
+  100%{transform:scale(1)}
+}
+.el-celle.avslort{
+  border-color:rgba(251,191,36,.5)!important;
+  background:rgba(251,191,36,.1)!important;
+}
+.el-celle.dimmet{opacity:.28;pointer-events:none}
+
+/* Tomme celler (lanthanide/actinide gap) */
+.ps-blank{grid-column:span 1}
+.ps-gap-tekst{
+  font-family:var(--mono);font-size:.55rem;color:var(--dim);
+  display:flex;align-items:center;justify-content:center;
+  padding:4px;letter-spacing:.05em;
+  border:1px dashed var(--border);border-radius:6px;
+}
+
+/* Periode-numre */
+.ps-periode-nr{
+  font-family:var(--mono);font-size:.65rem;color:var(--dim);
+  display:flex;align-items:center;justify-content:center;
+}
+/* Gruppe-numre */
+.ps-gruppe-nr{
+  font-family:var(--mono);font-size:.62rem;color:var(--dim);
+  text-align:center;padding:2px 0 4px;
+}
+
+/* Lanthanide/Actinide rad */
+.la-ac-rad{
+  display:grid;
+  grid-template-columns:repeat(18,minmax(52px,1fr));
+  gap:3px;
+  margin-top:6px;
+  min-width:960px;
+}
+.la-label{
+  grid-column:span 3;
+  display:flex;align-items:center;justify-content:flex-end;
+  padding-right:8px;
+}
+.la-label-tekst{
+  font-family:var(--mono);font-size:.6rem;color:var(--dim);
+  writing-mode:horizontal-tb;letter-spacing:.05em;
+}
+
+/* ── START SKJERM ── */
+.start-overlay{
+  position:fixed;inset:0;z-index:900;
+  background:rgba(5,7,9,.96);backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;
+}
+.start-kort{
+  background:var(--panel);border:1px solid rgba(99,102,241,.2);
+  border-radius:24px;padding:40px 48px;max-width:480px;width:90%;
+  text-align:center;
+}
+.start-kort h1{
+  font-family:var(--mono);font-size:1.8rem;letter-spacing:.06em;
+  color:#818cf8;margin-bottom:8px;
+}
+.start-kort p{color:var(--dim);font-size:.9rem;line-height:1.7;margin-bottom:24px}
+.start-vanskelig{
+  display:flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap;
+}
+.vansk-knapp{
+  padding:8px 18px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--dim);font-family:var(--sans);
+  font-size:.82rem;cursor:pointer;transition:all .2s;
+}
+.vansk-knapp:hover,.vansk-knapp.aktiv{border-color:#818cf8;color:#818cf8;background:rgba(99,102,241,.08)}
+.start-knapp{
+  width:100%;padding:14px;border-radius:12px;
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
+  color:#fff;font-family:var(--sans);font-size:1rem;font-weight:700;
+  border:none;cursor:pointer;letter-spacing:.03em;
+  transition:all .2s;
+}
+.start-knapp:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,.4)}
+
+/* Neste knapp */
+.neste-knapp{
+  display:none;
+  padding:10px 22px;border-radius:10px;
+  background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);
+  color:#818cf8;font-family:var(--sans);font-size:.88rem;font-weight:600;
+  cursor:pointer;transition:all .2s;letter-spacing:.02em;
+  align-self:flex-end;
+}
+.neste-knapp:hover{background:rgba(99,102,241,.25)}
+.neste-knapp.vis{display:block}
+
+/* Fremgang */
+.fremgang-wrap{display:flex;gap:3px;flex-wrap:wrap;max-width:300px}
+.fremgang-prikk{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.fremgang-prikk.riktig{background:#10b981}
+.fremgang-prikk.feil{background:#ef4444}
+.fremgang-prikk.aktiv{background:#818cf8;animation:prikk .8s ease-in-out infinite}
+@keyframes prikk{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Slutt-skjerm */
+.slutt-overlay{
+  position:fixed;inset:0;z-index:900;
+  background:rgba(5,7,9,.96);backdrop-filter:blur(16px);
+  display:none;align-items:center;justify-content:center;
+}
+.slutt-overlay.vis{display:flex}
+.slutt-kort{
+  background:var(--panel);border:1px solid rgba(99,102,241,.2);
+  border-radius:24px;padding:40px 48px;max-width:480px;width:90%;text-align:center;
+}
+.slutt-emoji{font-size:3.5rem;margin-bottom:12px}
+.slutt-tittel{font-family:var(--mono);font-size:1.6rem;color:#818cf8;margin-bottom:8px;letter-spacing:.04em}
+.slutt-score{font-size:.9rem;color:var(--dim);margin-bottom:20px;line-height:1.8}
+.slutt-score strong{color:var(--text)}
+.slutt-knapper{display:flex;gap:12px;justify-content:center}
+.slutt-igjen,.slutt-avbryt{
+  padding:12px 24px;border-radius:10px;font-family:var(--sans);
+  font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;border:1px solid transparent;
+}
+.slutt-igjen{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent}
+.slutt-igjen:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(99,102,241,.4)}
+.slutt-avbryt{background:transparent;border-color:var(--border);color:var(--dim)}
+.slutt-avbryt:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
+
+@media(max-width:700px){
+  .quiz-panel{grid-template-columns:1fr}
+  .quiz-stats{flex-direction:row;align-items:center;min-width:auto}
+  .start-kort,.slutt-kort{padding:28px 20px}
+}
+</style>
+</head>
+<body>
+
+<!-- Start overlay -->
+<div class="start-overlay" id="start-overlay">
+  <div class="start-kort">
+    <h1>⚗️ PERIODEQUIZ</h1>
+    <p>Les spørsmålet og klikk på riktig grunnstoff i periodesystemet. Bygg lengst mulig streak!</p>
+    <div class="start-vanskelig">
+      <button class="vansk-knapp aktiv" onclick="settVanskelig(1,this)">🟢 Enkel<br><small>Periode 1–3</small></button>
+      <button class="vansk-knapp" onclick="settVanskelig(2,this)">🟡 Middels<br><small>Periode 1–5</small></button>
+      <button class="vansk-knapp" onclick="settVanskelig(3,this)">🔴 Avansert<br><small>Alle elementer</small></button>
+    </div>
+    <button class="start-knapp" onclick="startQuiz()">Start quiz →</button>
+  </div>
+</div>
+
+<!-- Slutt overlay -->
+<div class="slutt-overlay" id="slutt-overlay">
+  <div class="slutt-kort">
+    <div class="slutt-emoji" id="slutt-emoji">🏆</div>
+    <div class="slutt-tittel" id="slutt-tittel">FERDIG!</div>
+    <div class="slutt-score" id="slutt-score"></div>
+    <div class="slutt-knapper">
+      <button class="slutt-igjen" onclick="startQuiz()">Spill igjen</button>
+      <button class="slutt-avbryt" onclick="document.getElementById('slutt-overlay').classList.remove('vis');document.getElementById('start-overlay').style.display='flex'">Tilbake</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback melding -->
+<div class="feedback-msg" id="feedback-msg"></div>
+
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">⚗️ PERIODEQUIZ</span>
+</nav>
+
+<div class="wrapper">
+
+  <!-- Quiz panel -->
+  <div class="quiz-panel">
+    <div class="quiz-left">
+      <div class="quiz-label">SPØRSMÅL <span id="sp-nr">1</span> AV <span id="sp-tot">10</span></div>
+      <div class="quiz-sporsmal" id="quiz-sporsmal">Laster spørsmål…</div>
+      <div class="quiz-hint" id="quiz-hint"></div>
+      <div class="feedback-strip"><div class="feedback-bar" id="feedback-bar"></div></div>
+      <div class="fremgang-wrap" id="fremgang"></div>
+    </div>
+    <div class="quiz-stats">
+      <div class="stat-gruppe">
+        <div class="stat-boks">
+          <div class="stat-tall streak" id="streak-tall">0</div>
+          <div class="stat-label">Streak</div>
+        </div>
+        <div class="streak-flames" id="streak-flames"></div>
+      </div>
+      <div class="stat-gruppe">
+        <div class="stat-boks">
+          <div class="stat-tall score" id="score-tall">0</div>
+          <div class="stat-label">Poeng</div>
+        </div>
+        <div class="stat-boks">
+          <div class="stat-tall totalt" id="riktig-tall">0/0</div>
+          <div class="stat-label">Riktige</div>
+        </div>
+      </div>
+      <button class="neste-knapp" id="neste-knapp" onclick="nesteSporsmal()">Neste →</button>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend" id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--alkali)"></div>Alkalimetaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--alkaline)"></div>Jordalkalimetaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--transition)"></div>Overgangsmetaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--post)"></div>Etteroverg.metaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--metalloid)"></div>Halvmetaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--nonmetal)"></div>Ikke-metaller</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--halogen)"></div>Halogener</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--noble)"></div>Edelgasser</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--lanthanide)"></div>Lantanoider</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--actinide)"></div>Aktinoider</div>
+  </div>
+
+  <!-- Periodesystemet -->
+  <div class="ps-wrap">
+    <div class="ps-grid" id="ps-grid"><!-- bygges av JS --></div>
+    <!-- La/Ac rader -->
+    <div class="la-ac-rad" id="la-rad"><!-- bygges av JS --></div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DATA – alle grunnstoffer
+// ════════════════════════════════════════════════════════
+const EL = [
+  // P1
+  {nr:1, sym:"H",  navn:"Hydrogen",     masse:1.008,  g:1,  p:1,  type:"nonmetal",   col:1,  row:1,  skall:[1],      val:1},
+  {nr:2, sym:"He", navn:"Helium",       masse:4.003,  g:18, p:1,  type:"noble",      col:18, row:1,  skall:[2],      val:2},
+  // P2
+  {nr:3, sym:"Li", navn:"Litium",       masse:6.941,  g:1,  p:2,  type:"alkali",     col:1,  row:2,  skall:[2,1],    val:1},
+  {nr:4, sym:"Be", navn:"Beryllium",    masse:9.012,  g:2,  p:2,  type:"alkaline",   col:2,  row:2,  skall:[2,2],    val:2},
+  {nr:5, sym:"B",  navn:"Bor",          masse:10.81,  g:13, p:2,  type:"metalloid",  col:13, row:2,  skall:[2,3],    val:3},
+  {nr:6, sym:"C",  navn:"Karbon",       masse:12.011, g:14, p:2,  type:"nonmetal",   col:14, row:2,  skall:[2,4],    val:4},
+  {nr:7, sym:"N",  navn:"Nitrogen",     masse:14.007, g:15, p:2,  type:"nonmetal",   col:15, row:2,  skall:[2,5],    val:5},
+  {nr:8, sym:"O",  navn:"Oksygen",      masse:15.999, g:16, p:2,  type:"nonmetal",   col:16, row:2,  skall:[2,6],    val:6},
+  {nr:9, sym:"F",  navn:"Fluor",        masse:18.998, g:17, p:2,  type:"halogen",    col:17, row:2,  skall:[2,7],    val:7},
+  {nr:10,sym:"Ne", navn:"Neon",         masse:20.18,  g:18, p:2,  type:"noble",      col:18, row:2,  skall:[2,8],    val:8},
+  // P3
+  {nr:11,sym:"Na", navn:"Natrium",      masse:22.990, g:1,  p:3,  type:"alkali",     col:1,  row:3,  skall:[2,8,1],  val:1},
+  {nr:12,sym:"Mg", navn:"Magnesium",    masse:24.305, g:2,  p:3,  type:"alkaline",   col:2,  row:3,  skall:[2,8,2],  val:2},
+  {nr:13,sym:"Al", navn:"Aluminium",    masse:26.982, g:13, p:3,  type:"post",       col:13, row:3,  skall:[2,8,3],  val:3},
+  {nr:14,sym:"Si", navn:"Silisium",     masse:28.086, g:14, p:3,  type:"metalloid",  col:14, row:3,  skall:[2,8,4],  val:4},
+  {nr:15,sym:"P",  navn:"Fosfor",       masse:30.974, g:15, p:3,  type:"nonmetal",   col:15, row:3,  skall:[2,8,5],  val:5},
+  {nr:16,sym:"S",  navn:"Svovel",       masse:32.06,  g:16, p:3,  type:"nonmetal",   col:16, row:3,  skall:[2,8,6],  val:6},
+  {nr:17,sym:"Cl", navn:"Klor",         masse:35.45,  g:17, p:3,  type:"halogen",    col:17, row:3,  skall:[2,8,7],  val:7},
+  {nr:18,sym:"Ar", navn:"Argon",        masse:39.948, g:18, p:3,  type:"noble",      col:18, row:3,  skall:[2,8,8],  val:8},
+  // P4
+  {nr:19,sym:"K",  navn:"Kalium",       masse:39.098, g:1,  p:4,  type:"alkali",     col:1,  row:4,  skall:[2,8,8,1],val:1},
+  {nr:20,sym:"Ca", navn:"Kalsium",      masse:40.078, g:2,  p:4,  type:"alkaline",   col:2,  row:4,  skall:[2,8,8,2],val:2},
+  {nr:21,sym:"Sc", navn:"Skandium",     masse:44.956, g:3,  p:4,  type:"transition", col:3,  row:4,  skall:[2,8,9,2],val:2},
+  {nr:22,sym:"Ti", navn:"Titan",        masse:47.867, g:4,  p:4,  type:"transition", col:4,  row:4,  skall:[2,8,10,2],val:2},
+  {nr:23,sym:"V",  navn:"Vanadium",     masse:50.942, g:5,  p:4,  type:"transition", col:5,  row:4,  skall:[2,8,11,2],val:2},
+  {nr:24,sym:"Cr", navn:"Krom",         masse:51.996, g:6,  p:4,  type:"transition", col:6,  row:4,  skall:[2,8,13,1],val:1},
+  {nr:25,sym:"Mn", navn:"Mangan",       masse:54.938, g:7,  p:4,  type:"transition", col:7,  row:4,  skall:[2,8,13,2],val:2},
+  {nr:26,sym:"Fe", navn:"Jern",         masse:55.845, g:8,  p:4,  type:"transition", col:8,  row:4,  skall:[2,8,14,2],val:2},
+  {nr:27,sym:"Co", navn:"Kobolt",       masse:58.933, g:9,  p:4,  type:"transition", col:9,  row:4,  skall:[2,8,15,2],val:2},
+  {nr:28,sym:"Ni", navn:"Nikkel",       masse:58.693, g:10, p:4,  type:"transition", col:10, row:4,  skall:[2,8,16,2],val:2},
+  {nr:29,sym:"Cu", navn:"Kobber",       masse:63.546, g:11, p:4,  type:"transition", col:11, row:4,  skall:[2,8,18,1],val:1},
+  {nr:30,sym:"Zn", navn:"Sink",         masse:65.38,  g:12, p:4,  type:"transition", col:12, row:4,  skall:[2,8,18,2],val:2},
+  {nr:31,sym:"Ga", navn:"Gallium",      masse:69.723, g:13, p:4,  type:"post",       col:13, row:4,  skall:[2,8,18,3],val:3},
+  {nr:32,sym:"Ge", navn:"Germanium",    masse:72.63,  g:14, p:4,  type:"metalloid",  col:14, row:4,  skall:[2,8,18,4],val:4},
+  {nr:33,sym:"As", navn:"Arsen",        masse:74.922, g:15, p:4,  type:"metalloid",  col:15, row:4,  skall:[2,8,18,5],val:5},
+  {nr:34,sym:"Se", navn:"Selen",        masse:78.971, g:16, p:4,  type:"nonmetal",   col:16, row:4,  skall:[2,8,18,6],val:6},
+  {nr:35,sym:"Br", navn:"Brom",         masse:79.904, g:17, p:4,  type:"halogen",    col:17, row:4,  skall:[2,8,18,7],val:7},
+  {nr:36,sym:"Kr", navn:"Krypton",      masse:83.798, g:18, p:4,  type:"noble",      col:18, row:4,  skall:[2,8,18,8],val:8},
+  // P5
+  {nr:37,sym:"Rb", navn:"Rubidium",     masse:85.468, g:1,  p:5,  type:"alkali",     col:1,  row:5,  skall:[2,8,18,8,1],val:1},
+  {nr:38,sym:"Sr", navn:"Strontium",    masse:87.62,  g:2,  p:5,  type:"alkaline",   col:2,  row:5,  skall:[2,8,18,8,2],val:2},
+  {nr:39,sym:"Y",  navn:"Yttrium",      masse:88.906, g:3,  p:5,  type:"transition", col:3,  row:5,  skall:[2,8,18,9,2],val:2},
+  {nr:40,sym:"Zr", navn:"Zirkonium",    masse:91.224, g:4,  p:5,  type:"transition", col:4,  row:5,  skall:[2,8,18,10,2],val:2},
+  {nr:41,sym:"Nb", navn:"Niob",         masse:92.906, g:5,  p:5,  type:"transition", col:5,  row:5,  skall:[2,8,18,12,1],val:1},
+  {nr:42,sym:"Mo", navn:"Molybden",     masse:95.96,  g:6,  p:5,  type:"transition", col:6,  row:5,  skall:[2,8,18,13,1],val:1},
+  {nr:43,sym:"Tc", navn:"Technetium",   masse:98,     g:7,  p:5,  type:"transition", col:7,  row:5,  skall:[2,8,18,13,2],val:2},
+  {nr:44,sym:"Ru", navn:"Ruthenium",    masse:101.07, g:8,  p:5,  type:"transition", col:8,  row:5,  skall:[2,8,18,15,1],val:1},
+  {nr:45,sym:"Rh", navn:"Rhodium",      masse:102.91, g:9,  p:5,  type:"transition", col:9,  row:5,  skall:[2,8,18,16,1],val:1},
+  {nr:46,sym:"Pd", navn:"Palladium",    masse:106.42, g:10, p:5,  type:"transition", col:10, row:5,  skall:[2,8,18,18],  val:0},
+  {nr:47,sym:"Ag", navn:"Sølv",         masse:107.87, g:11, p:5,  type:"transition", col:11, row:5,  skall:[2,8,18,18,1],val:1},
+  {nr:48,sym:"Cd", navn:"Kadmium",      masse:112.41, g:12, p:5,  type:"transition", col:12, row:5,  skall:[2,8,18,18,2],val:2},
+  {nr:49,sym:"In", navn:"Indium",       masse:114.82, g:13, p:5,  type:"post",       col:13, row:5,  skall:[2,8,18,18,3],val:3},
+  {nr:50,sym:"Sn", navn:"Tinn",         masse:118.71, g:14, p:5,  type:"post",       col:14, row:5,  skall:[2,8,18,18,4],val:4},
+  {nr:51,sym:"Sb", navn:"Antimon",      masse:121.76, g:15, p:5,  type:"metalloid",  col:15, row:5,  skall:[2,8,18,18,5],val:5},
+  {nr:52,sym:"Te", navn:"Tellur",       masse:127.60, g:16, p:5,  type:"metalloid",  col:16, row:5,  skall:[2,8,18,18,6],val:6},
+  {nr:53,sym:"I",  navn:"Jod",          masse:126.90, g:17, p:5,  type:"halogen",    col:17, row:5,  skall:[2,8,18,18,7],val:7},
+  {nr:54,sym:"Xe", navn:"Xenon",        masse:131.29, g:18, p:5,  type:"noble",      col:18, row:5,  skall:[2,8,18,18,8],val:8},
+  // P6
+  {nr:55,sym:"Cs", navn:"Cesium",       masse:132.91, g:1,  p:6,  type:"alkali",     col:1,  row:6,  skall:[2,8,18,18,8,1],val:1},
+  {nr:56,sym:"Ba", navn:"Barium",       masse:137.33, g:2,  p:6,  type:"alkaline",   col:2,  row:6,  skall:[2,8,18,18,8,2],val:2},
+  {nr:57,sym:"La", navn:"Lantan",       masse:138.91, g:3,  p:6,  type:"lanthanide", col:3,  row:9,  skall:[2,8,18,18,9,2],val:2, laRow:true},
+  {nr:72,sym:"Hf", navn:"Hafnium",      masse:178.49, g:4,  p:6,  type:"transition", col:4,  row:6,  skall:[2,8,18,32,10,2],val:2},
+  {nr:73,sym:"Ta", navn:"Tantal",       masse:180.95, g:5,  p:6,  type:"transition", col:5,  row:6,  skall:[2,8,18,32,11,2],val:2},
+  {nr:74,sym:"W",  navn:"Wolfram",      masse:183.84, g:6,  p:6,  type:"transition", col:6,  row:6,  skall:[2,8,18,32,12,2],val:2},
+  {nr:75,sym:"Re", navn:"Rhenium",      masse:186.21, g:7,  p:6,  type:"transition", col:7,  row:6,  skall:[2,8,18,32,13,2],val:2},
+  {nr:76,sym:"Os", navn:"Osmium",       masse:190.23, g:8,  p:6,  type:"transition", col:8,  row:6,  skall:[2,8,18,32,14,2],val:2},
+  {nr:77,sym:"Ir", navn:"Iridium",      masse:192.22, g:9,  p:6,  type:"transition", col:9,  row:6,  skall:[2,8,18,32,15,2],val:2},
+  {nr:78,sym:"Pt", navn:"Platina",      masse:195.08, g:10, p:6,  type:"transition", col:10, row:6,  skall:[2,8,18,32,17,1],val:1},
+  {nr:79,sym:"Au", navn:"Gull",         masse:196.97, g:11, p:6,  type:"transition", col:11, row:6,  skall:[2,8,18,32,18,1],val:1},
+  {nr:80,sym:"Hg", navn:"Kvikksølv",    masse:200.59, g:12, p:6,  type:"transition", col:12, row:6,  skall:[2,8,18,32,18,2],val:2},
+  {nr:81,sym:"Tl", navn:"Tallium",      masse:204.38, g:13, p:6,  type:"post",       col:13, row:6,  skall:[2,8,18,32,18,3],val:3},
+  {nr:82,sym:"Pb", navn:"Bly",          masse:207.2,  g:14, p:6,  type:"post",       col:14, row:6,  skall:[2,8,18,32,18,4],val:4},
+  {nr:83,sym:"Bi", navn:"Bismut",       masse:208.98, g:15, p:6,  type:"post",       col:15, row:6,  skall:[2,8,18,32,18,5],val:5},
+  {nr:84,sym:"Po", navn:"Polonium",     masse:209,    g:16, p:6,  type:"post",       col:16, row:6,  skall:[2,8,18,32,18,6],val:6},
+  {nr:85,sym:"At", navn:"Astat",        masse:210,    g:17, p:6,  type:"halogen",    col:17, row:6,  skall:[2,8,18,32,18,7],val:7},
+  {nr:86,sym:"Rn", navn:"Radon",        masse:222,    g:18, p:6,  type:"noble",      col:18, row:6,  skall:[2,8,18,32,18,8],val:8},
+  // P7
+  {nr:87,sym:"Fr", navn:"Fransium",     masse:223,    g:1,  p:7,  type:"alkali",     col:1,  row:7,  skall:[2,8,18,32,18,8,1],val:1},
+  {nr:88,sym:"Ra", navn:"Radium",       masse:226,    g:2,  p:7,  type:"alkaline",   col:2,  row:7,  skall:[2,8,18,32,18,8,2],val:2},
+  {nr:89,sym:"Ac", navn:"Aktinium",     masse:227,    g:3,  p:7,  type:"actinide",   col:3,  row:10, skall:[2,8,18,32,18,9,2],val:2, acRow:true},
+  {nr:104,sym:"Rf",navn:"Rutherfordium",masse:267,    g:4,  p:7,  type:"transition", col:4,  row:7,  skall:[2,8,18,32,32,10,2],val:2},
+  {nr:105,sym:"Db",navn:"Dubnium",      masse:268,    g:5,  p:7,  type:"transition", col:5,  row:7,  skall:[2,8,18,32,32,11,2],val:2},
+  {nr:106,sym:"Sg",navn:"Seaborgium",   masse:271,    g:6,  p:7,  type:"transition", col:6,  row:7,  skall:[2,8,18,32,32,12,2],val:2},
+  {nr:107,sym:"Bh",navn:"Bohrium",      masse:272,    g:7,  p:7,  type:"transition", col:7,  row:7,  skall:[2,8,18,32,32,13,2],val:2},
+  {nr:108,sym:"Hs",navn:"Hassium",      masse:270,    g:8,  p:7,  type:"transition", col:8,  row:7,  skall:[2,8,18,32,32,14,2],val:2},
+  {nr:109,sym:"Mt",navn:"Meitnerium",   masse:276,    g:9,  p:7,  type:"unknown",    col:9,  row:7,  skall:[],val:0},
+  {nr:110,sym:"Ds",navn:"Darmstadtium", masse:281,    g:10, p:7,  type:"unknown",    col:10, row:7,  skall:[],val:0},
+  {nr:111,sym:"Rg",navn:"Roentgenium",  masse:280,    g:11, p:7,  type:"unknown",    col:11, row:7,  skall:[],val:0},
+  {nr:112,sym:"Cn",navn:"Kopernikium",  masse:285,    g:12, p:7,  type:"unknown",    col:12, row:7,  skall:[],val:0},
+  {nr:113,sym:"Nh",navn:"Nihonium",     masse:284,    g:13, p:7,  type:"unknown",    col:13, row:7,  skall:[],val:0},
+  {nr:114,sym:"Fl",navn:"Flerovium",    masse:289,    g:14, p:7,  type:"unknown",    col:14, row:7,  skall:[],val:0},
+  {nr:115,sym:"Mc",navn:"Moskovi",      masse:288,    g:15, p:7,  type:"unknown",    col:15, row:7,  skall:[],val:0},
+  {nr:116,sym:"Lv",navn:"Livermori",    masse:293,    g:16, p:7,  type:"unknown",    col:16, row:7,  skall:[],val:0},
+  {nr:117,sym:"Ts",navn:"Tennessine",   masse:294,    g:17, p:7,  type:"unknown",    col:17, row:7,  skall:[],val:0},
+  {nr:118,sym:"Og",navn:"Oganesson",    masse:294,    g:18, p:7,  type:"unknown",    col:18, row:7,  skall:[],val:0},
+  // Lantanoider 58-71
+  {nr:58, sym:"Ce",navn:"Cerium",       masse:140.12, g:3, p:6,  type:"lanthanide", col:4,  row:9,  skall:[2,8,18,19,9,2],val:2},
+  {nr:59, sym:"Pr",navn:"Praseodym",    masse:140.91, g:3, p:6,  type:"lanthanide", col:5,  row:9,  skall:[2,8,18,21,8,2],val:2},
+  {nr:60, sym:"Nd",navn:"Neodym",       masse:144.24, g:3, p:6,  type:"lanthanide", col:6,  row:9,  skall:[2,8,18,22,8,2],val:2},
+  {nr:61, sym:"Pm",navn:"Promethium",   masse:145,    g:3, p:6,  type:"lanthanide", col:7,  row:9,  skall:[2,8,18,23,8,2],val:2},
+  {nr:62, sym:"Sm",navn:"Samarium",     masse:150.36, g:3, p:6,  type:"lanthanide", col:8,  row:9,  skall:[2,8,18,24,8,2],val:2},
+  {nr:63, sym:"Eu",navn:"Europium",     masse:151.96, g:3, p:6,  type:"lanthanide", col:9,  row:9,  skall:[2,8,18,25,8,2],val:2},
+  {nr:64, sym:"Gd",navn:"Gadolinium",   masse:157.25, g:3, p:6,  type:"lanthanide", col:10, row:9,  skall:[2,8,18,25,9,2],val:2},
+  {nr:65, sym:"Tb",navn:"Terbium",      masse:158.93, g:3, p:6,  type:"lanthanide", col:11, row:9,  skall:[2,8,18,27,8,2],val:2},
+  {nr:66, sym:"Dy",navn:"Dysprosium",   masse:162.50, g:3, p:6,  type:"lanthanide", col:12, row:9,  skall:[2,8,18,28,8,2],val:2},
+  {nr:67, sym:"Ho",navn:"Holmium",      masse:164.93, g:3, p:6,  type:"lanthanide", col:13, row:9,  skall:[2,8,18,29,8,2],val:2},
+  {nr:68, sym:"Er",navn:"Erbium",       masse:167.26, g:3, p:6,  type:"lanthanide", col:14, row:9,  skall:[2,8,18,30,8,2],val:2},
+  {nr:69, sym:"Tm",navn:"Thulium",      masse:168.93, g:3, p:6,  type:"lanthanide", col:15, row:9,  skall:[2,8,18,31,8,2],val:2},
+  {nr:70, sym:"Yb",navn:"Ytterbium",    masse:173.04, g:3, p:6,  type:"lanthanide", col:16, row:9,  skall:[2,8,18,32,8,2],val:2},
+  {nr:71, sym:"Lu",navn:"Lutetium",     masse:174.97, g:3, p:6,  type:"lanthanide", col:17, row:9,  skall:[2,8,18,32,9,2],val:2},
+  // Aktinoider 90-103
+  {nr:90, sym:"Th",navn:"Thorium",      masse:232.04, g:3, p:7,  type:"actinide",   col:4,  row:10, skall:[2,8,18,32,18,10,2],val:2},
+  {nr:91, sym:"Pa",navn:"Protaktinium", masse:231.04, g:3, p:7,  type:"actinide",   col:5,  row:10, skall:[2,8,18,32,20,9,2],val:2},
+  {nr:92, sym:"U", navn:"Uran",         masse:238.03, g:3, p:7,  type:"actinide",   col:6,  row:10, skall:[2,8,18,32,21,9,2],val:2},
+  {nr:93, sym:"Np",navn:"Neptunium",    masse:237,    g:3, p:7,  type:"actinide",   col:7,  row:10, skall:[2,8,18,32,22,9,2],val:2},
+  {nr:94, sym:"Pu",navn:"Plutonium",    masse:244,    g:3, p:7,  type:"actinide",   col:8,  row:10, skall:[2,8,18,32,24,8,2],val:2},
+  {nr:95, sym:"Am",navn:"Americium",    masse:243,    g:3, p:7,  type:"actinide",   col:9,  row:10, skall:[2,8,18,32,25,8,2],val:2},
+  {nr:96, sym:"Cm",navn:"Curium",       masse:247,    g:3, p:7,  type:"actinide",   col:10, row:10, skall:[2,8,18,32,25,9,2],val:2},
+  {nr:97, sym:"Bk",navn:"Berkelium",    masse:247,    g:3, p:7,  type:"actinide",   col:11, row:10, skall:[2,8,18,32,27,8,2],val:2},
+  {nr:98, sym:"Cf",navn:"Californium",  masse:251,    g:3, p:7,  type:"actinide",   col:12, row:10, skall:[2,8,18,32,28,8,2],val:2},
+  {nr:99, sym:"Es",navn:"Einsteinium",  masse:252,    g:3, p:7,  type:"actinide",   col:13, row:10, skall:[2,8,18,32,29,8,2],val:2},
+  {nr:100,sym:"Fm",navn:"Fermium",      masse:257,    g:3, p:7,  type:"actinide",   col:14, row:10, skall:[2,8,18,32,30,8,2],val:2},
+  {nr:101,sym:"Md",navn:"Mendelevium",  masse:258,    g:3, p:7,  type:"actinide",   col:15, row:10, skall:[2,8,18,32,31,8,2],val:2},
+  {nr:102,sym:"No",navn:"Nobelium",     masse:259,    g:3, p:7,  type:"actinide",   col:16, row:10, skall:[2,8,18,32,32,8,2],val:2},
+  {nr:103,sym:"Lr",navn:"Lawrencium",   masse:262,    g:3, p:7,  type:"actinide",   col:17, row:10, skall:[2,8,18,32,32,8,3],val:3},
+];
+
+// Type-navn på norsk
+const TYPE_NAVN = {
+  alkali:"alkalimetall", alkaline:"jordalkalimetall", transition:"overgangsmetall",
+  post:"etterovergangsmetall", metalloid:"halvmetall", nonmetal:"ikke-metall",
+  halogen:"halogen", noble:"edelgass", lanthanide:"lantanoid", actinide:"aktinoid", unknown:"ukjent"
+};
+
+// ════════════════════════════════════════════════════════
+//  BUILD PERIODESYSTEM
+// ════════════════════════════════════════════════════════
+function byggPS(){
+  const grid = document.getElementById('ps-grid');
+  const laRad = document.getElementById('la-rad');
+  grid.innerHTML = '';
+  laRad.innerHTML = '';
+
+  // Gruppe-header rad
+  for(let g=1;g<=18;g++){
+    const d = document.createElement('div');
+    d.className = 'ps-gruppe-nr';
+    d.textContent = g;
+    grid.appendChild(d);
+  }
+
+  // Bygg 7 perioder (rad 1-7)
+  // Lag lookup: col+row -> element
+  const lookup = {};
+  EL.forEach(e => {
+    if(!e.laRow && !e.acRow){
+      const key = e.row+','+e.col;
+      lookup[key] = e;
+    }
+  });
+
+  for(let row=1; row<=7; row++){
+    for(let col=1; col<=18; col++){
+      const key = row+','+col;
+      const e = lookup[key];
+      if(e){
+        grid.appendChild(lagCelle(e));
+      } else {
+        // Sjekk om dette er La/Ac gap (row 6 col 3, row 7 col 3)
+        if((row===6||row===7) && col===3){
+          const gap = document.createElement('div');
+          gap.className = 'ps-gap-tekst el-celle';
+          gap.style.opacity='.4';
+          gap.style.fontSize='.5rem';
+          gap.style.color='var(--dim)';
+          gap.textContent = row===6?'57–71':'89–103';
+          gap.style.border='1px dashed rgba(255,255,255,.1)';
+          gap.style.background='transparent';
+          grid.appendChild(gap);
+        } else {
+          const blank = document.createElement('div');
+          blank.className='ps-blank';
+          grid.appendChild(blank);
+        }
+      }
+    }
+  }
+
+  // Lantanoid rad (row=9)
+  const laLabel = document.createElement('div');
+  laLabel.style.gridColumn='span 3';
+  laLabel.style.display='flex';
+  laLabel.style.alignItems='center';
+  laLabel.style.justifyContent='flex-end';
+  laLabel.style.paddingRight='6px';
+  laLabel.innerHTML='<span style="font-family:var(--mono);font-size:.55rem;color:var(--dim);letter-spacing:.04em">Lantanoider</span>';
+  laRad.appendChild(laLabel);
+
+  const laEls = EL.filter(e=>e.type==='lanthanide').sort((a,b)=>a.nr-b.nr);
+  laEls.forEach(e=>laRad.appendChild(lagCelle(e)));
+  // fyll ut til 18 kolonner
+  const laBlank = 18 - 3 - laEls.length;
+  for(let i=0;i<laBlank;i++){const b=document.createElement('div');b.className='ps-blank';laRad.appendChild(b);}
+
+  // Aktinoid rad
+  const acRadEl = document.createElement('div');
+  acRadEl.style.cssText='display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));gap:3px;margin-top:3px;min-width:960px;';
+  const acLabel = document.createElement('div');
+  acLabel.style.gridColumn='span 3';
+  acLabel.style.display='flex';
+  acLabel.style.alignItems='center';
+  acLabel.style.justifyContent='flex-end';
+  acLabel.style.paddingRight='6px';
+  acLabel.innerHTML='<span style="font-family:var(--mono);font-size:.55rem;color:var(--dim);letter-spacing:.04em">Aktinoider</span>';
+  acRadEl.appendChild(acLabel);
+
+  const acEls = EL.filter(e=>e.type==='actinide').sort((a,b)=>a.nr-b.nr);
+  acEls.forEach(e=>acRadEl.appendChild(lagCelle(e)));
+  const acBlank = 18 - 3 - acEls.length;
+  for(let i=0;i<acBlank;i++){const b=document.createElement('div');b.className='ps-blank';acRadEl.appendChild(b);}
+  laRad.parentElement.appendChild(acRadEl);
+}
+
+function lagCelle(e){
+  const d = document.createElement('div');
+  d.className = 'el-celle';
+  d.id = 'el-'+e.nr;
+  d.setAttribute('data-type', e.type);
+  d.setAttribute('data-nr', e.nr);
+  d.innerHTML = `
+    <div class="el-nr">${e.nr}</div>
+    <div class="el-sym">${e.sym}</div>
+    <div class="el-navn">${e.navn}</div>
+    <div class="el-masse">${e.masse}</div>
+  `;
+  d.addEventListener('click', ()=>svarKlikk(e.nr));
+  d.setAttribute('title', `${e.navn} – ${TYPE_NAVN[e.type]}, periode ${e.p}, gruppe ${e.g}`);
+  return d;
+}
+
+// ════════════════════════════════════════════════════════
+//  SPØRSMÅLSGENERATOR
+// ════════════════════════════════════════════════════════
+function lagSporsmal(e){
+  const mulige = [];
+  const ant = e.skall.length;
+  const val = e.val;
+  const typ = TYPE_NAVN[e.type] || e.type;
+
+  // 1. Protoner/atomnummer
+  mulige.push({
+    tekst: `Jeg har <span class="hint-ord">${e.nr} protoner</span>. Hvem er jeg?`,
+    hint: `Atomnummer = antall protoner`
+  });
+
+  // 2. Elektronskall
+  if(ant>0 && e.skall.length>0){
+    mulige.push({
+      tekst: `Jeg har <span class="hint-ord">${ant} elektronskall</span>. Mitt symbol er <span class="hint-ord">${e.sym}</span>.`,
+      hint: `Antall skall = periode`
+    });
+  }
+
+  // 3. Valenselektroner
+  if(val>0 && ant>0){
+    mulige.push({
+      tekst: `Jeg har <span class="hint-ord">${ant} elektronskall</span> og <span class="hint-ord">${val} valenselektroner</span>. Hvem er jeg?`,
+      hint: `Valenselektroner = ytterste skall`
+    });
+  }
+
+  // 4. Elementtype + periode
+  if(ant <= 5){
+    mulige.push({
+      tekst: `Jeg er et <span class="hint-ord">${typ}</span> i <span class="hint-ord">periode ${e.p}</span>. Hvem er jeg?`,
+      hint: `Se farge og rad i periodesystemet`
+    });
+  }
+
+  // 5. Kjemiske egenskaper
+  if(e.nr===1)  mulige.push({tekst:`Jeg er det <span class="hint-ord">letteste grunnstoffet</span> og finnes i <span class="hint-ord">vann</span> (H₂O). Hvem er jeg?`,hint:`Atomnummer 1`});
+  if(e.nr===2)  mulige.push({tekst:`Jeg er en <span class="hint-ord">edelgass</span> som brukes i <span class="hint-ord">ballonger</span> – lettere enn luft!`,hint:`Gruppe 18, periode 1`});
+  if(e.nr===6)  mulige.push({tekst:`Alle levende organismer er bygget på <span class="hint-ord">meg</span>. Jeg er <span class="hint-ord">grunnlaget for organisk kjemi</span>.`,hint:`Periode 2, gruppe 14`});
+  if(e.nr===7)  mulige.push({tekst:`Jeg utgjør <span class="hint-ord">78%</span> av jordens atmosfære. Jeg er en <span class="hint-ord">ikke-metall</span> i periode 2.`,hint:`N₂ i luften`});
+  if(e.nr===8)  mulige.push({tekst:`<span class="hint-ord">2 hydrogenatomer</span> binder seg til meg og danner <span class="hint-ord">vann</span>. Hvem er jeg?`,hint:`H₂O – vann`});
+  if(e.nr===11) mulige.push({tekst:`Jeg er et <span class="hint-ord">alkalimetall</span> som reagerer <span class="hint-ord">voldsomt med vann</span> og er med i <span class="hint-ord">bordsalt</span> (NaCl).`,hint:`Na i NaCl`});
+  if(e.nr===17) mulige.push({tekst:`Jeg er et <span class="hint-ord">halogen</span> som binder meg til natrium og danner <span class="hint-ord">bordsalt</span> (NaCl).`,hint:`Cl i NaCl`});
+  if(e.nr===26) mulige.push({tekst:`Jeg er det viktigste <span class="hint-ord">metallet i stål</span>, og blodet ditt er rødt på grunn av meg.`,hint:`Fe – jern`});
+  if(e.nr===47) mulige.push({tekst:`Jeg er et edles <span class="hint-ord">hvitt metall</span> brukt i smykker, bestikk og mynter.`,hint:`Ag – sølv`});
+  if(e.nr===79) mulige.push({tekst:`Jeg er det <span class="hint-ord">gule edelmetallet</span> som har blitt verdsatt av mennesker i årtusener.`,hint:`Au – gull`});
+  if(e.nr===29) mulige.push({tekst:`Jeg er et <span class="hint-ord">rødlig metall</span> brukt i <span class="hint-ord">elektriske kabler</span>. Jeg leder strøm svært godt.`,hint:`Cu – kobber`});
+  if(e.nr===6)  mulige.push({tekst:`Jeg finnes som <span class="hint-ord">diamant</span> og <span class="hint-ord">grafitt</span>. Jeg er det viktigste grunnstoffet i <span class="hint-ord">organisk kjemi</span>.`,hint:`C – karbon`});
+  if(e.nr===10) mulige.push({tekst:`Jeg gir de <span class="hint-ord">oransje lysene</span> i reklameskilt. Jeg er en <span class="hint-ord">edelgass</span> i periode 2.`,hint:`Ne – neon`});
+  if(e.nr===18) mulige.push({tekst:`Jeg er en <span class="hint-ord">edelgass</span> som brukes i <span class="hint-ord">lyspærer</span> og er den tredje vanligste gassen i luften.`,hint:`Ar – argon`});
+  if(e.nr===14) mulige.push({tekst:`Jeg er det viktigste grunnstoffet i <span class="hint-ord">sand</span> og <span class="hint-ord">mikroprosessorer</span>. Jeg er et <span class="hint-ord">halvmetall</span>.`,hint:`Si – silisium`});
+  if(e.nr===20) mulige.push({tekst:`Jeg er viktig for <span class="hint-ord">bein og tenner</span>. Jeg er et <span class="hint-ord">jordalkalimetall</span> i periode 4.`,hint:`Ca – kalsium`});
+  if(e.nr===19) mulige.push({tekst:`Jeg er et <span class="hint-ord">alkalimetall</span> viktig for <span class="hint-ord">nervesystemet</span> og er i samme gruppe som natrium.`,hint:`K – kalium`});
+  if(e.nr===15) mulige.push({tekst:`Jeg er viktig for <span class="hint-ord">DNA</span> og <span class="hint-ord">ATP</span> (kroppens energivaluta). Jeg er en ikke-metall i periode 3.`,hint:`P – fosfor`});
+  if(e.nr===16) mulige.push({tekst:`Jeg lukter vondt som råtne egg når jeg er i form av H₂S. Jeg er en <span class="hint-ord">ikke-metall</span> i gruppe 16.`,hint:`S – svovel`});
+  if(e.nr===9)  mulige.push({tekst:`Jeg er det <span class="hint-ord">mest reaktive ikke-metallet</span> og det <span class="hint-ord">sterkeste oksiderende middelet</span> av alle grunnstoffer.`,hint:`F – fluor, gruppe 17`});
+  if(e.nr===4)  mulige.push({tekst:`Jeg er det <span class="hint-ord">letteste jordalkalimetallet</span> og brukes i <span class="hint-ord">røntgenrør</span>. Jeg har 2 elektronskall.`,hint:`Be – beryllium`});
+  if(e.nr===3)  mulige.push({tekst:`Jeg er det <span class="hint-ord">letteste alkalimetallet</span> og brukes i <span class="hint-ord">batterier</span> til mobiltelefoner.`,hint:`Li – litium, gruppe 1`});
+  if(e.nr===92) mulige.push({tekst:`Jeg er et <span class="hint-ord">radioaktivt grunnstoff</span> brukt i <span class="hint-ord">kjernekraftverk</span> og atombomber.`,hint:`U – uran`});
+  if(e.nr===78) mulige.push({tekst:`Jeg er et <span class="hint-ord">edelmetall</span> brukt i <span class="hint-ord">katalysatorer i biler</span> og smykker.`,hint:`Pt – platina`});
+
+  // Elektronskallfordeling
+  if(e.skall.length>0){
+    const skallStr = e.skall.join(', ');
+    mulige.push({
+      tekst:`Fordelingen av mine elektroner per skall er <span class="hint-ord">${skallStr}</span>. Hvem er jeg?`,
+      hint:`Fra innerste til ytterste skall`
+    });
+  }
+
+  // Masse
+  mulige.push({
+    tekst:`Min <span class="hint-ord">atommasse</span> er omtrent <span class="hint-ord">${Math.round(e.masse)}</span> u. Mitt symbol er <span class="hint-ord">${e.sym}</span>. Hvem er jeg?`,
+    hint:`Atommassen står nederst i cellen`
+  });
+
+  // Velg tilfeldig
+  return mulige[Math.floor(Math.random()*mulige.length)];
+}
+
+// ════════════════════════════════════════════════════════
+//  QUIZ LOGIKK
+// ════════════════════════════════════════════════════════
+let vanskelig = 1;
+let sporsmalsliste = [];
+let aktivtIndex = 0;
+let maalNr = null;
+let streak = 0;
+let maxStreak = 0;
+let score = 0;
+let riktige = 0;
+let totalt = 0;
+let svartPaaAktivt = false;
+let quizAktiv = false;
+
+const ANTALL_SP = 15;
+
+function settVanskelig(v, btn){
+  vanskelig = v;
+  document.querySelectorAll('.vansk-knapp').forEach(b=>b.classList.remove('aktiv'));
+  btn.classList.add('aktiv');
+}
+
+function filtrerElemeter(){
+  if(vanskelig===1) return EL.filter(e=>e.p<=3 && e.skall.length>0);
+  if(vanskelig===2) return EL.filter(e=>e.p<=5 && e.skall.length>0);
+  return EL.filter(e=>e.skall.length>0);
+}
+
+function startQuiz(){
+  document.getElementById('start-overlay').style.display='none';
+  document.getElementById('slutt-overlay').classList.remove('vis');
+
+  const pool = filtrerElemeter();
+  // Bland og velg ANTALL_SP unike elementer
+  const blandet = [...pool].sort(()=>Math.random()-.5);
+  sporsmalsliste = blandet.slice(0, ANTALL_SP).map(e=>({el:e, sp:lagSporsmal(e)}));
+
+  aktivtIndex = 0;
+  streak = 0; maxStreak = 0; score = 0; riktige = 0; totalt = 0;
+  svartPaaAktivt = false;
+  quizAktiv = true;
+
+  oppdaterStats();
+  byggFremgang();
+  visSporsmal();
+  oppdaterDimming();
+}
+
+function visSporsmal(){
+  if(aktivtIndex >= sporsmalsliste.length){
+    visSluttskjerm(); return;
+  }
+  const {el,sp} = sporsmalsliste[aktivtIndex];
+  maalNr = el.nr;
+  svartPaaAktivt = false;
+
+  document.getElementById('quiz-sporsmal').innerHTML = sp.tekst;
+  document.getElementById('quiz-hint').textContent = '💡 ' + sp.hint;
+  document.getElementById('sp-nr').textContent = aktivtIndex+1;
+  document.getElementById('sp-tot').textContent = sporsmalsliste.length;
+  document.getElementById('neste-knapp').classList.remove('vis');
+
+  // Fjern gamle state-klasser
+  document.querySelectorAll('.el-celle').forEach(c=>{
+    c.classList.remove('maal','riktig-flash','feil-flash','avslort');
+  });
+
+  // Marker ikke målet (ikke gi svaret!), men la dem klikke
+  oppdaterDimming();
+
+  const fb = document.getElementById('feedback-bar');
+  fb.style.width='0'; fb.style.background='var(--border)';
+
+  oppdaterFremgang();
+}
+
+function svarKlikk(nr){
+  if(!quizAktiv || svartPaaAktivt) return;
+  svartPaaAktivt = true;
+  totalt++;
+
+  const celle = document.getElementById('el-'+nr);
+  const maalCelle = document.getElementById('el-'+maalNr);
+
+  if(nr === maalNr){
+    // RIKTIG
+    riktige++;
+    streak++;
+    if(streak>maxStreak) maxStreak=streak;
+    const streakBonus = Math.min(streak-1,5)*2;
+    score += 10 + streakBonus;
+
+    celle.classList.add('riktig-flash');
+    visSporsmalFeedback(true, sporsmalsliste[aktivtIndex].el.navn);
+    oppdaterFremgang('riktig');
+
+    const fb = document.getElementById('feedback-bar');
+    fb.style.width='100%'; fb.style.background='var(--correct)';
+
+  } else {
+    // FEIL
+    streak = 0;
+    celle.classList.add('feil-flash');
+    maalCelle.classList.add('avslort');
+    visSporsmalFeedback(false, sporsmalsliste[aktivtIndex].el.navn);
+    oppdaterFremgang('feil');
+
+    const fb = document.getElementById('feedback-bar');
+    fb.style.width='100%'; fb.style.background='var(--wrong)';
+  }
+
+  oppdaterStats();
+  document.getElementById('neste-knapp').classList.add('vis');
+
+  // Auto-neste etter 2 sek ved riktig
+  if(nr===maalNr){
+    setTimeout(()=>{
+      if(svartPaaAktivt) nesteSporsmal();
+    }, 1800);
+  }
+}
+
+function nesteSporsmal(){
+  aktivtIndex++;
+  visSporsmal();
+}
+
+function oppdaterStats(){
+  document.getElementById('streak-tall').textContent = streak;
+  document.getElementById('score-tall').textContent = score;
+  document.getElementById('riktig-tall').textContent = riktige+'/'+totalt;
+
+  // Streak flames
+  const f = document.getElementById('streak-flames');
+  if(streak===0) f.textContent='';
+  else if(streak<3) f.textContent='🔥';
+  else if(streak<6) f.textContent='🔥🔥';
+  else if(streak<10) f.textContent='🔥🔥🔥';
+  else f.textContent='⚡🔥⚡';
+}
+
+function oppdaterDimming(){
+  // Dimm elementer som ikke er i aktiv pool
+  const pool = filtrerElemeter().map(e=>e.nr);
+  document.querySelectorAll('.el-celle').forEach(c=>{
+    const nr = parseInt(c.getAttribute('data-nr'));
+    if(pool.includes(nr)){
+      c.classList.remove('dimmet');
+    } else {
+      c.classList.add('dimmet');
+    }
+  });
+}
+
+function byggFremgang(){
+  const wrap = document.getElementById('fremgang');
+  wrap.innerHTML='';
+  for(let i=0;i<sporsmalsliste.length;i++){
+    const p=document.createElement('div');
+    p.className='fremgang-prikk';
+    p.id='fp-'+i;
+    wrap.appendChild(p);
+  }
+}
+
+function oppdaterFremgang(res){
+  // Merk forrige som aktiv, sett nå
+  for(let i=0;i<sporsmalsliste.length;i++){
+    const p=document.getElementById('fp-'+i);
+    if(!p) continue;
+    if(i<aktivtIndex) p.classList.add(p.dataset.res||'riktig');
+    else if(i===aktivtIndex){
+      p.classList.add('aktiv');
+      if(res){
+        p.classList.remove('aktiv');
+        p.dataset.res=res;
+        p.classList.add(res);
+      }
+    } else {
+      p.classList.remove('riktig','feil','aktiv');
+    }
+  }
+}
+
+function visSporsmalFeedback(riktig, navn){
+  const msg = document.getElementById('feedback-msg');
+  msg.className='feedback-msg';
+  if(riktig){
+    msg.textContent = `✓ Riktig! Det var ${navn}`;
+    msg.classList.add('riktig');
+    const s = document.getElementById('streak-tall');
+    s.style.transform='scale(1.3)';
+    setTimeout(()=>s.style.transform='scale(1)',300);
+  } else {
+    msg.textContent = `✗ Feil – det var ${navn}`;
+    msg.classList.add('feil');
+  }
+  msg.classList.add('vis');
+  setTimeout(()=>msg.classList.remove('vis'), 2200);
+}
+
+function visSluttskjerm(){
+  quizAktiv = false;
+  const pct = Math.round((riktige/totalt)*100)||0;
+  let emoji='🏆', tittel='UTMERKET!';
+  if(pct<50){emoji='😅';tittel='ØVELSE GJØR MESTER';}
+  else if(pct<70){emoji='👍';tittel='BRA JOBBET!';}
+  else if(pct<90){emoji='🌟';tittel='IMPONERENDE!';}
+
+  document.getElementById('slutt-emoji').textContent=emoji;
+  document.getElementById('slutt-tittel').textContent=tittel;
+  document.getElementById('slutt-score').innerHTML=
+    `<strong>${riktige}</strong> av <strong>${totalt}</strong> riktige &nbsp;(${pct}%)<br>`+
+    `Poeng: <strong>${score}</strong> &nbsp;|&nbsp; Beste streak: <strong>${maxStreak} 🔥</strong>`;
+  document.getElementById('slutt-overlay').classList.add('vis');
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+byggPS();
+</script>
+</body>
+</html>
