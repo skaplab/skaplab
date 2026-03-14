@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Organisk kjemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c0f;--surface:#111418;--card:#161a1f;--border:rgba(255,200,50,.08);
+  --text:#f0e8d0;--dim:#5a5040;
+  --accent:#f0c040;--accent2:#60d080;--accent3:#60a8f0;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 30% 20%,rgba(240,192,64,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,128,.03),transparent)}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(10,12,15,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.8rem;font-weight:500;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent)}
+
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.62rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:24px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;font-weight:600}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+  padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,2rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.86rem;line-height:1.72;color:rgba(240,232,208,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(255,255,255,.025);border:1px solid var(--border);font-size:.8rem;line-height:1.6;color:rgba(240,232,208,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text);font-weight:600}
+.k-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:4px}
+.k-kort{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.k-kort-formel{font-family:var(--font-d);font-size:1.3rem;font-weight:700;color:var(--accent);margin-bottom:3px}
+.k-kort-navn{font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.k-kort-eks{font-size:.72rem;color:rgba(240,232,208,.5)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+
+/* MOLEKYL-KORT */
+.mol-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:20px}
+.mol-kort{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;transition:all .2s}
+.mol-kort:hover{border-color:rgba(240,192,64,.3);transform:translateY(-2px)}
+.mol-formel{font-family:var(--font-d);font-size:1.4rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+.mol-navn{font-size:.8rem;font-weight:600;margin-bottom:6px;color:var(--text)}
+.mol-type{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.mol-tekst{font-size:.76rem;line-height:1.6;color:rgba(240,232,208,.55)}
+
+/* LINK-KNAPP */
+.til-oppgaver{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:12px 24px;
+  background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.3);border-radius:12px;
+  color:var(--accent);font-weight:600;font-size:.85rem;text-decoration:none;transition:all .2s}
+.til-oppgaver:hover{background:rgba(240,192,64,.18);border-color:rgba(240,192,64,.5)}
+
+/* SEP */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+
+@media(max-width:700px){
+  .k-slide{grid-template-columns:1fr}
+  .k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}
+  .k-anim{min-height:160px}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Organisk kjemi</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Karbonkjemi</div>
+    <h1>Organisk<br><em>kjemi</em></h1>
+    <p class="hero-sub">Karbonatomer som grunnlag for alt liv – fra enkle hydrokarboner til komplekse proteiner og DNA</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Hva er organisk kjemi -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 08</div>
+          <div class="k-kat" style="background:rgba(240,192,64,.1);color:#f0c040;border:1px solid rgba(240,192,64,.2)">⚗️ Grunnlag</div>
+          <h3 class="k-tittel">Hva er organisk kjemi?</h3>
+          <p class="k-ingress">Organisk kjemi er studiet av karbonforbindelser. Karbon er unikt fordi det kan danne 4 bindinger og lange kjeder – grunnlaget for alt kjent liv.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>4 bindinger:</strong> Karbon (C) danner alltid 4 bindinger – til andre karbonatomer eller H, O, N, S, haloger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⛓️</span><div><strong>Kjededannelse:</strong> Karbon kan binde seg til seg selv i lange kjeder, forgrenede strukturer og ringer – millioner av muligheter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Livets kjemi:</strong> Proteiner, fett, karbohydrater, DNA – alle er organiske forbindelser. ~10 millioner kjente organiske stoffer.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <!-- Karbonatom sentralt -->
+            <circle cx="140" cy="120" r="22" fill="rgba(240,192,64,.15)" stroke="#f0c040" stroke-width="2"/>
+            <text x="140" y="125" text-anchor="middle" font-family="Fraunces" font-size="18" fill="#f0c040" font-weight="700">C</text>
+            <!-- 4 bindinger -->
+            <line x1="118" y1="120" x2="72" y2="120" stroke="#60d080" stroke-width="2.5"/>
+            <line x1="162" y1="120" x2="208" y2="120" stroke="#60d080" stroke-width="2.5"/>
+            <line x1="140" y1="98" x2="140" y2="54" stroke="#60a8f0" stroke-width="2.5"/>
+            <line x1="140" y1="142" x2="140" y2="186" stroke="#60a8f0" stroke-width="2.5"/>
+            <!-- Atomer bundet til C -->
+            <circle cx="56" cy="120" r="16" fill="rgba(96,208,128,.15)" stroke="#60d080" stroke-width="1.5"/>
+            <text x="56" y="125" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#60d080" font-weight="700">H</text>
+            <circle cx="224" cy="120" r="16" fill="rgba(96,208,128,.15)" stroke="#60d080" stroke-width="1.5"/>
+            <text x="224" y="125" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#60d080" font-weight="700">H</text>
+            <circle cx="140" cy="38" r="16" fill="rgba(96,168,240,.15)" stroke="#60a8f0" stroke-width="1.5"/>
+            <text x="140" y="43" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#60a8f0" font-weight="700">O</text>
+            <circle cx="140" cy="202" r="16" fill="rgba(96,168,240,.15)" stroke="#60a8f0" stroke-width="1.5"/>
+            <text x="140" y="207" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#60a8f0" font-weight="700">N</text>
+            <!-- Labels -->
+            <text x="140" y="228" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,192,64,.5)" letter-spacing=".08em">4 BINDINGER – ALLTID</text>
+            <text x="48" y="148" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,128,.5)">σ-binding</text>
+            <text x="154" y="78" font-family="DM Sans" font-size="7.5" fill="rgba(96,168,240,.5)">σ-binding</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Hydrokarboner -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,128,.1);color:#60d080;border:1px solid rgba(96,208,128,.2)">🔥 Hydrokarboner</div>
+          <h3 class="k-tittel">Alkaner, alkener og alkyner</h3>
+          <p class="k-ingress">Hydrokarboner inneholder bare C og H. Bindingstypen bestemmer reaktivitet og egenskaper.</p>
+          <div class="k-grid">
+            <div class="k-kort"><div class="k-kort-formel">C–C</div><div class="k-kort-navn">Alkan</div><div class="k-kort-eks">Enkelthinding · Metan, Butan · Bensin</div></div>
+            <div class="k-kort"><div class="k-kort-formel">C=C</div><div class="k-kort-navn">Alken</div><div class="k-kort-eks">Dobbeltbinding · Eten, Propen · Plast</div></div>
+            <div class="k-kort"><div class="k-kort-formel">C≡C</div><div class="k-kort-navn">Alkyn</div><div class="k-kort-eks">Trippelbinding · Etyn · Sveisebrennere</div></div>
+            <div class="k-kort"><div class="k-kort-formel">⬡</div><div class="k-kort-navn">Aromatisk</div><div class="k-kort-eks">Bensenring · Toluen · Legemidler</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <!-- Metan CH4 -->
+            <text x="60" y="22" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,192,64,.6)" letter-spacing=".06em">METAN CH₄</text>
+            <circle cx="60" cy="55" r="14" fill="rgba(240,192,64,.12)" stroke="#f0c040" stroke-width="1.5"/>
+            <text x="60" y="60" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0c040" font-weight="700">C</text>
+            <g fill="rgba(96,208,128,.12)" stroke="#60d080" stroke-width="1.2">
+              <circle cx="36" cy="55" r="10"/><circle cx="84" cy="55" r="10"/>
+              <circle cx="60" cy="31" r="10"/><circle cx="60" cy="79" r="10"/>
+            </g>
+            <g font-family="Fraunces" font-size="10" fill="#60d080" font-weight="600" text-anchor="middle">
+              <text x="36" y="59">H</text><text x="84" y="59">H</text>
+              <text x="60" y="35">H</text><text x="60" y="83">H</text>
+            </g>
+            <g stroke="#60d080" stroke-width="1.5">
+              <line x1="46" y1="55" x2="56" y2="55"/><line x1="74" y1="55" x2="64" y2="55"/>
+              <line x1="60" y1="41" x2="60" y2="51"/><line x1="60" y1="69" x2="60" y2="59"/>
+            </g>
+            <!-- Eten C2H4 -->
+            <text x="200" y="22" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,128,.6)" letter-spacing=".06em">ETEN C₂H₄</text>
+            <circle cx="176" cy="55" r="14" fill="rgba(240,192,64,.12)" stroke="#f0c040" stroke-width="1.5"/>
+            <text x="176" y="60" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0c040" font-weight="700">C</text>
+            <circle cx="224" cy="55" r="14" fill="rgba(240,192,64,.12)" stroke="#f0c040" stroke-width="1.5"/>
+            <text x="224" y="60" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0c040" font-weight="700">C</text>
+            <!-- Dobbeltbinding -->
+            <line x1="190" y1="52" x2="210" y2="52" stroke="#f0c040" stroke-width="2"/>
+            <line x1="190" y1="58" x2="210" y2="58" stroke="#f0c040" stroke-width="2"/>
+            <g fill="rgba(96,208,128,.12)" stroke="#60d080" stroke-width="1.2">
+              <circle cx="154" cy="44" r="9"/><circle cx="154" cy="66" r="9"/>
+              <circle cx="246" cy="44" r="9"/><circle cx="246" cy="66" r="9"/>
+            </g>
+            <g font-family="Fraunces" font-size="9" fill="#60d080" font-weight="600" text-anchor="middle">
+              <text x="154" y="48">H</text><text x="154" y="70">H</text>
+              <text x="246" y="48">H</text><text x="246" y="70">H</text>
+            </g>
+            <g stroke="#60d080" stroke-width="1.2">
+              <line x1="163" y1="47" x2="172" y2="52"/><line x1="163" y1="63" x2="172" y2="58"/>
+              <line x1="237" y1="47" x2="228" y2="52"/><line x1="237" y1="63" x2="228" y2="58"/>
+            </g>
+            <!-- Bensen-ring -->
+            <text x="140" y="118" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,168,240,.6)" letter-spacing=".06em">BENSEN C₆H₆</text>
+            <polygon points="140,130 162,143 162,169 140,182 118,169 118,143" fill="none" stroke="#60a8f0" stroke-width="2"/>
+            <circle cx="140" cy="156" r="14" fill="none" stroke="#60a8f0" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <g font-family="Fraunces" font-size="8" fill="#60d080" font-weight="600" text-anchor="middle">
+              <text x="140" y="120">H</text><text x="170" y="140">H</text><text x="170" y="178">H</text>
+              <text x="140" y="196">H</text><text x="110" y="178">H</text><text x="110" y="140">H</text>
+            </g>
+            <!-- Homologrekke under -->
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,192,64,.4)" letter-spacing=".06em">Metyl → Etyl → Propyl → Butyl…</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Funksjonelle grupper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 08</div>
+          <div class="k-kat" style="background:rgba(96,168,240,.1);color:#60a8f0;border:1px solid rgba(96,168,240,.2)">🧪 Funksjonelle grupper</div>
+          <h3 class="k-tittel">Funksjonelle grupper</h3>
+          <p class="k-ingress">Atomer eller grupper koblet til et karbonskelett som bestemmer stoffets kjemiske egenskaper og reaktivitet.</p>
+          <div class="k-grid">
+            <div class="k-kort"><div class="k-kort-formel">–OH</div><div class="k-kort-navn">Hydroksyl</div><div class="k-kort-eks">Alkohol · Etanol · Glukose</div></div>
+            <div class="k-kort"><div class="k-kort-formel">–COOH</div><div class="k-kort-navn">Karboksyl</div><div class="k-kort-eks">Syre · Eddiksyre · Aminosyrer</div></div>
+            <div class="k-kort"><div class="k-kort-formel">–NH₂</div><div class="k-kort-navn">Amino</div><div class="k-kort-eks">Base · Aminosyrer · DNA</div></div>
+            <div class="k-kort"><div class="k-kort-formel">C=O</div><div class="k-kort-navn">Karbonyl</div><div class="k-kort-eks">Aldehyd/Keton · Aceton</div></div>
+            <div class="k-kort"><div class="k-kort-formel">–O–</div><div class="k-kort-navn">Eter</div><div class="k-kort-eks">Narkose · Dioksaner</div></div>
+            <div class="k-kort"><div class="k-kort-formel">–SH</div><div class="k-kort-navn">Tiol</div><div class="k-kort-eks">Protein-folding · Cysteinbindinger</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <!-- Etanol CH3CH2OH -->
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,192,64,.6)" letter-spacing=".06em">ETANOL CH₃CH₂OH</text>
+            <!-- C1 -->
+            <circle cx="60" cy="65" r="14" fill="rgba(240,192,64,.12)" stroke="#f0c040" stroke-width="1.5"/>
+            <text x="60" y="70" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0c040" font-weight="700">C</text>
+            <!-- C2 -->
+            <circle cx="120" cy="65" r="14" fill="rgba(240,192,64,.12)" stroke="#f0c040" stroke-width="1.5"/>
+            <text x="120" y="70" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0c040" font-weight="700">C</text>
+            <!-- O -->
+            <circle cx="180" cy="65" r="14" fill="rgba(240,80,80,.15)" stroke="#f06060" stroke-width="1.5"/>
+            <text x="180" y="70" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f06060" font-weight="700">O</text>
+            <!-- H på O -->
+            <circle cx="220" cy="65" r="10" fill="rgba(96,208,128,.12)" stroke="#60d080" stroke-width="1.2"/>
+            <text x="220" y="69" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#60d080" font-weight="600">H</text>
+            <!-- OH-gruppe label -->
+            <path d="M164,50 L180,50 L220,50" fill="none" stroke="rgba(240,80,80,.4)" stroke-width="1" stroke-dasharray="3 2"/>
+            <rect x="164" y="36" width="66" height="14" rx="5" fill="rgba(240,80,80,.12)" stroke="rgba(240,80,80,.3)" stroke-width="1"/>
+            <text x="197" y="46" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#f06060" font-weight="700">HYDROKSYL -OH</text>
+            <!-- Bindingslinjer -->
+            <line x1="74" y1="65" x2="106" y2="65" stroke="#f0c040" stroke-width="2"/>
+            <line x1="134" y1="65" x2="166" y2="65" stroke="#60a8f0" stroke-width="2"/>
+            <line x1="194" y1="65" x2="210" y2="65" stroke="#f06060" stroke-width="2"/>
+            <!-- H-atomer -->
+            <g fill="rgba(96,208,128,.1)" stroke="#60d080" stroke-width="1" font-family="Fraunces" font-size="9" font-weight="600" fill-opacity="1">
+              <circle cx="42" cy="50" r="9"/><text x="42" y="54" text-anchor="middle" fill="#60d080">H</text>
+              <circle cx="42" cy="80" r="9"/><text x="42" y="84" text-anchor="middle" fill="#60d080">H</text>
+              <circle cx="60" cy="88" r="9"/><text x="60" y="92" text-anchor="middle" fill="#60d080">H</text>
+              <circle cx="120" cy="42" r="9"/><text x="120" y="46" text-anchor="middle" fill="#60d080">H</text>
+              <circle cx="120" cy="88" r="9"/><text x="120" y="92" text-anchor="middle" fill="#60d080">H</text>
+            </g>
+            <g stroke="#60d080" stroke-width="1.2">
+              <line x1="51" y1="53" x2="57" y2="60"/><line x1="51" y1="77" x2="57" y2="70"/>
+              <line x1="60" y1="79" x2="60" y2="73"/><line x1="120" y1="51" x2="120" y2="57"/><line x1="120" y1="79" x2="120" y2="73"/>
+            </g>
+            <!-- Eddiksyre -->
+            <text x="140" y="128" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,168,240,.6)" letter-spacing=".06em">EDDIKSYRE CH₃COOH</text>
+            <text x="140" y="148" text-anchor="middle" font-family="Fraunces" font-size="22" fill="#60a8f0" font-weight="300">CH₃—C(=O)—OH</text>
+            <!-- Karboksylgruppe label -->
+            <rect x="80" y="158" width="120" height="16" rx="6" fill="rgba(96,168,240,.1)" stroke="rgba(96,168,240,.3)" stroke-width="1"/>
+            <text x="140" y="169" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#60a8f0" font-weight="700">KARBOKSYL -COOH</text>
+            <!-- Aminosyre-struktur hint -->
+            <text x="140" y="200" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(240,192,64,.4)">NH₂—CHR—COOH</text>
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,192,64,.3)" letter-spacing=".06em">AMINOSYRE – byggestein i proteiner</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Isomerer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 08</div>
+          <div class="k-kat" style="background:rgba(200,100,240,.1);color:#c864f0;border:1px solid rgba(200,100,240,.2)">🔄 Isomeri</div>
+          <h3 class="k-tittel">Isomerer – samme formel, ulike egenskaper</h3>
+          <p class="k-ingress">Isomerer har samme molekylformel men ulik struktur. Dette kan gi dramatisk forskjellige smak, lukt og kjemiske egenskaper.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⛓️</span><div><strong>Strukturisomeri:</strong> Ulik rekkefølge av atomer – n-butan (rett) og isobutan (forgreinet) har begge C₄H₁₀.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🪞</span><div><strong>Stereoisomeri:</strong> Same bindinger, ulik romlig orientering – speilvende isomerer (enantiomerer).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍋</span><div><strong>Biologisk konsekvens:</strong> Limonen lukter sitron (R) og appelsin (S) – to enantiomerer av nøyaktig samme formel!</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💊</span><div><strong>Legemidler:</strong> Talidomid – én enantiomer bekjempet svangerskapskvalme, den andre var teratogen. Kiralt separasjon er kritisk.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,192,64,.5)" letter-spacing=".08em">C₄H₁₀ – TO STRUKTURISOMERER</text>
+            <!-- n-Butan (rett kjede) -->
+            <text x="70" y="36" text-anchor="middle" font-family="Fraunces" font-size="8.5" fill="rgba(96,208,128,.6)">n-BUTAN (rett)</text>
+            <g fill="rgba(240,192,64,.1)" stroke="#f0c040" stroke-width="1.3">
+              <circle cx="28" cy="65" r="12"/><circle cx="68" cy="65" r="12"/>
+              <circle cx="108" cy="65" r="12"/><circle cx="148" cy="65" r="12"/>
+            </g>
+            <g font-family="Fraunces" font-size="11" fill="#f0c040" font-weight="700" text-anchor="middle">
+              <text x="28" y="69">C</text><text x="68" y="69">C</text><text x="108" y="69">C</text><text x="148" y="69">C</text>
+            </g>
+            <g stroke="#f0c040" stroke-width="1.8">
+              <line x1="40" y1="65" x2="56" y2="65"/><line x1="80" y1="65" x2="96" y2="65"/><line x1="120" y1="65" x2="136" y2="65"/>
+            </g>
+            <text x="88" y="92" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,192,64,.4)">Kokepunkt: –1°C</text>
+            <!-- Isobutan (forgreinet) -->
+            <text x="200" y="36" text-anchor="middle" font-family="Fraunces" font-size="8.5" fill="rgba(96,168,240,.6)">ISOBUTAN (forgreint)</text>
+            <circle cx="220" cy="65" r="12" fill="rgba(240,192,64,.1)" stroke="#f0c040" stroke-width="1.3"/>
+            <text x="220" y="69" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#f0c040" font-weight="700">C</text>
+            <g fill="rgba(240,192,64,.1)" stroke="#f0c040" stroke-width="1.3">
+              <circle cx="220" cy="35" r="12"/><circle cx="248" cy="82" r="12"/>
+              <circle cx="192" cy="82" r="12"/><circle cx="220" cy="100" r="12"/>
+            </g>
+            <g font-family="Fraunces" font-size="11" fill="#f0c040" font-weight="700" text-anchor="middle">
+              <text x="220" y="39">C</text><text x="248" y="86">C</text>
+              <text x="192" y="86">C</text><text x="220" y="104">C</text>
+            </g>
+            <g stroke="#f0c040" stroke-width="1.8">
+              <line x1="220" y1="53" x2="220" y2="59"/><line x1="228" y1="72" x2="238" y2="76"/>
+              <line x1="212" y1="72" x2="202" y2="76"/><line x1="220" y1="77" x2="220" y2="88"/>
+            </g>
+            <text x="220" y="122" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,168,240,.4)">Kokepunkt: –12°C</text>
+            <!-- Kiralt senter -->
+            <text x="140" y="148" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(200,100,240,.6)" letter-spacing=".06em">KIRALT SENTER</text>
+            <circle cx="140" cy="175" r="16" fill="rgba(200,100,240,.12)" stroke="#c864f0" stroke-width="2"/>
+            <text x="140" y="180" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#c864f0" font-weight="700">C*</text>
+            <g stroke="#c864f0" stroke-width="1.5">
+              <line x1="140" y1="159" x2="140" y2="148"/><line x1="156" y1="175" x2="168" y2="175"/>
+              <line x1="124" y1="175" x2="112" y2="175"/>
+            </g>
+            <g font-family="Fraunces" font-size="9" fill="#c864f0" text-anchor="middle">
+              <text x="140" y="144">A</text><text x="174" y="179">B</text>
+              <text x="106" y="179">C</text>
+            </g>
+            <path d="M140,191 L130,204 L150,204 Z" fill="rgba(200,100,240,.3)" stroke="#c864f0" stroke-width="1"/>
+            <text x="140" y="208" text-anchor="middle" font-family="Fraunces" font-size="9" fill="#c864f0">D</text>
+            <text x="140" y="228" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,100,240,.4)">4 ulike grupper = kiralt = speilvende isomerer</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Polymerer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 08</div>
+          <div class="k-kat" style="background:rgba(240,100,60,.1);color:#f06440;border:1px solid rgba(240,100,60,.2)">🔗 Polymerer</div>
+          <h3 class="k-tittel">Polymerer – gigantmolekyler</h3>
+          <p class="k-ingress">Polymerer er lange kjeder av repeterende enheter (monomerer). De er overalt – i kroppen din, i plastikk, i klærne.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Biopolymerer:</strong> DNA (nukleotider), proteiner (aminosyrer), cellulose/stivelse (glukose), gummi (isopren).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧴</span><div><strong>Syntetiske polymerer:</strong> Polyeten (plastposer), nylon (klær), silikon, teflon, PVC. Lages av olje-deriverte monomerer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">♻️</span><div><strong>Nedbrytbarhet:</strong> Biopolymerer brytes ned enzymatisk. De fleste syntetiske polymerer er persistent i naturen i hundrevis av år.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,100,60,.6)" letter-spacing=".06em">POLYMERISERING</text>
+            <!-- Monomerer -->
+            <g fill="rgba(240,192,64,.1)" stroke="#f0c040" stroke-width="1.3">
+              <circle cx="30" cy="55" r="16"/><circle cx="80" cy="55" r="16"/><circle cx="130" cy="55" r="16"/>
+            </g>
+            <g font-family="Fraunces" font-size="11" fill="#f0c040" font-weight="600" text-anchor="middle">
+              <text x="30" y="59">M</text><text x="80" y="59">M</text><text x="130" y="59">M</text>
+            </g>
+            <text x="148" y="59" font-family="DM Sans" font-size="12" fill="rgba(240,100,60,.6)">…</text>
+            <g fill="rgba(240,100,60,.5)" font-family="DM Sans" font-size="8" text-anchor="middle">
+              <text x="30" y="78">monomer</text><text x="80" y="78">monomer</text><text x="130" y="78">monomer</text>
+            </g>
+            <!-- Pil ned -->
+            <line x1="90" y1="88" x2="90" y2="100" stroke="rgba(240,100,60,.5)" stroke-width="2"/>
+            <polygon points="86,100 90,110 94,100" fill="rgba(240,100,60,.5)"/>
+            <text x="115" y="96" font-family="DM Sans" font-size="8" fill="rgba(240,100,60,.5)">polymerisering</text>
+            <!-- Polymer-kjede -->
+            <g fill="rgba(240,192,64,.1)" stroke="#f0c040" stroke-width="1.5">
+              <circle cx="22" cy="130" r="13"/><circle cx="56" cy="130" r="13"/><circle cx="90" cy="130" r="13"/>
+              <circle cx="124" cy="130" r="13"/><circle cx="158" cy="130" r="13"/><circle cx="192" cy="130" r="13"/>
+            </g>
+            <g font-family="Fraunces" font-size="10" fill="#f0c040" font-weight="700" text-anchor="middle">
+              <text x="22" y="134">M</text><text x="56" y="134">M</text><text x="90" y="134">M</text>
+              <text x="124" y="134">M</text><text x="158" y="134">M</text><text x="192" y="134">M</text>
+            </g>
+            <g stroke="#f0c040" stroke-width="2">
+              <line x1="35" y1="130" x2="43" y2="130"/><line x1="69" y1="130" x2="77" y2="130"/>
+              <line x1="103" y1="130" x2="111" y2="130"/><line x1="137" y1="130" x2="145" y2="130"/>
+              <line x1="171" y1="130" x2="179" y2="130"/>
+            </g>
+            <text x="212" y="134" font-family="DM Sans" font-size="13" fill="rgba(240,192,64,.6)">]ₙ</text>
+            <text x="116" y="152" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,100,60,.5)">POLYMER – n = tusenvis</text>
+            <!-- Eksempler -->
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(240,192,64,.5)">
+              <text x="14" y="172">Polyeten: [ CH₂–CH₂ ]ₙ → plastposer</text>
+              <text x="14" y="186">Nylon: [ NH–(CH₂)₆–CO ]ₙ → klær</text>
+              <text x="14" y="200">Cellulose: [ glukose ]ₙ → plantecellevegg</text>
+              <text x="14" y="214">DNA: [ nukleotid ]ₙ → arvemateriale</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Biomolekyler -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,128,.1);color:#60d080;border:1px solid rgba(96,208,128,.2)">🌱 Biomolekyler</div>
+          <h3 class="k-tittel">De fire biomolekylklassene</h3>
+          <p class="k-ingress">Alt levende er bygd av fire klasser organiske makromolekyler – hver med sin spesialfunksjon.</p>
+          <div class="k-grid">
+            <div class="k-kort"><div class="k-kort-formel">🍬</div><div class="k-kort-navn">Karbohydrater</div><div class="k-kort-eks">CₙH₂ₙOₙ · Energi, cellevegg · Glukose, stivelse, cellulose</div></div>
+            <div class="k-kort"><div class="k-kort-formel">🥑</div><div class="k-kort-navn">Lipider</div><div class="k-kort-eks">Fettsyrer + glyserol · Energilager, cellemembran, hormoner</div></div>
+            <div class="k-kort"><div class="k-kort-formel">🧬</div><div class="k-kort-navn">Proteiner</div><div class="k-kort-eks">Aminosyrer · Enzymer, antistoff, muskel, transport</div></div>
+            <div class="k-kort"><div class="k-kort-formel">🔬</div><div class="k-kort-navn">Nukleinsyrer</div><div class="k-kort-eks">Nukleotider · DNA/RNA · Arv og proteinsyntese</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <!-- Glukose-ring -->
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,192,64,.6)" letter-spacing=".06em">GLUKOSE C₆H₁₂O₆</text>
+            <polygon points="80,38 110,28 140,38 140,62 110,72 80,62" fill="none" stroke="#f0c040" stroke-width="2"/>
+            <line x1="80" y1="50" x2="62" y2="50" stroke="#f0c040" stroke-width="2"/>
+            <circle cx="54" cy="50" r="8" fill="rgba(240,80,80,.15)" stroke="#f06060" stroke-width="1.5"/>
+            <text x="54" y="54" text-anchor="middle" font-family="Fraunces" font-size="8" fill="#f06060" font-weight="700">O</text>
+            <g font-family="Fraunces" font-size="8" fill="#f0c040" font-weight="700" text-anchor="middle">
+              <text x="80" y="38">C</text><text x="110" y="27">C</text><text x="140" y="38">C</text>
+              <text x="140" y="63">C</text><text x="110" y="73">C</text><text x="80" y="63">C</text>
+            </g>
+            <!-- OH-grupper -->
+            <g fill="rgba(240,80,80,.15)" stroke="#f06060" stroke-width="1">
+              <circle cx="70" cy="22" r="10"/><circle cx="140" cy="20" r="10"/>
+              <circle cx="158" cy="50" r="10"/><circle cx="140" cy="80" r="10"/>
+            </g>
+            <g font-family="Fraunces" font-size="8" fill="#f06060" font-weight="600" text-anchor="middle">
+              <text x="70" y="26">OH</text><text x="140" y="24">OH</text>
+              <text x="158" y="54">OH</text><text x="140" y="84">OH</text>
+            </g>
+            <!-- Fettsyre-kjede -->
+            <text x="140" y="105" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,128,.6)" letter-spacing=".06em">PALMITINSYRE C₁₆H₃₂O₂</text>
+            <text x="14" y="122" font-family="Fraunces" font-size="10" fill="#60d080">CH₃–(CH₂)₁₄–COOH</text>
+            <text x="14" y="136" font-family="DM Sans" font-size="8" fill="rgba(96,208,128,.45)">Mettefattig • fast ved romtemp • smør, talg</text>
+            <!-- Aminosyre -->
+            <text x="140" y="158" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,168,240,.6)" letter-spacing=".06em">AMINOSYRE (generell)</text>
+            <text x="14" y="174" font-family="Fraunces" font-size="13" fill="#60a8f0">H₂N—C(R)(H)—COOH</text>
+            <g font-family="DM Sans" font-size="8" fill="rgba(96,168,240,.45)">
+              <text x="14" y="188">NH₂ = aminogruppe (basisk)</text>
+              <text x="14" y="200">COOH = karboksylgruppe (sur)</text>
+              <text x="14" y="212">R = sidekjede (20 ulike)</text>
+            </g>
+            <text x="14" y="228" font-family="DM Sans" font-size="8" fill="rgba(96,168,240,.35)">20 aminosyrer → uendelig mange proteiner</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Reaksjonstyper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 08</div>
+          <div class="k-kat" style="background:rgba(240,192,64,.1);color:#f0c040;border:1px solid rgba(240,192,64,.2)">⚡ Reaksjoner</div>
+          <h3 class="k-tittel">Viktige reaksjonstyper</h3>
+          <p class="k-ingress">Organisk kjemi har karakteristiske reaksjonsmønstre – lær deg disse og du forstår det meste.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Addisjonsreaksjoner:</strong> To molekyler slår seg sammen. Alken + H₂ → alkan (hydrogenering). Alkener adderer lett pga. π-binding.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Substitusjonsreaksjoner:</strong> Ett atom byttes ut. CH₄ + Cl₂ → CH₃Cl + HCl. Viktig i alkaner og arener.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Kondensasjon/hydrolys:</strong> To molekyler kobles (–H₂O) eller brytes av vann. Peptidbin-dinger, estere, glykosidbindinger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Forbrenning:</strong> CₙHₘ + O₂ → CO₂ + H₂O + energi. Bensin, naturgass, mat – all cellulær respirasjon er kontrollert forbrenning.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0e0c08"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,192,64,.6)" letter-spacing=".06em">ADDISJON AV H₂ TIL ALKEN</text>
+            <!-- CH2=CH2 + H2 → CH3-CH3 -->
+            <text x="30" y="42" font-family="Fraunces" font-size="14" fill="#60a8f0">CH₂=CH₂</text>
+            <text x="116" y="42" font-family="DM Sans" font-size="16" fill="rgba(240,192,64,.5)">+</text>
+            <text x="132" y="42" font-family="Fraunces" font-size="14" fill="#60d080">H₂</text>
+            <line x1="14" y1="50" x2="166" y2="50" stroke="rgba(240,192,64,.3)" stroke-width="1"/>
+            <text x="168" y="46" font-family="DM Sans" font-size="10" fill="rgba(240,192,64,.5)">Ni-katalysator</text>
+            <text x="14" y="68" font-family="Fraunces" font-size="14" fill="#f0c040">CH₃–CH₃</text>
+            <text x="110" y="68" font-family="DM Sans" font-size="10" fill="rgba(240,192,64,.4)">etan (mett.)</text>
+            <!-- Kondensasjon -->
+            <text x="140" y="100" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,168,240,.6)" letter-spacing=".06em">KONDENSASJON (peptidbin.)</text>
+            <text x="14" y="118" font-family="Fraunces" font-size="11" fill="#60a8f0">R₁–COOH  +  H₂N–R₂</text>
+            <polygon points="140,122 150,128 140,134" fill="rgba(96,168,240,.5)"/>
+            <text x="14" y="148" font-family="Fraunces" font-size="11" fill="#f0c040">R₁–CO–NH–R₂  +  H₂O</text>
+            <rect x="14" y="152" width="90" height="13" rx="4" fill="rgba(240,192,64,.1)" stroke="rgba(240,192,64,.3)" stroke-width="1"/>
+            <text x="59" y="161" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#f0c040" font-weight="700">PEPTIDBINDING</text>
+            <!-- Forbrenning -->
+            <text x="140" y="185" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,100,60,.6)" letter-spacing=".06em">FORBRENNING</text>
+            <text x="14" y="202" font-family="Fraunces" font-size="11" fill="#f06440">CH₄ + 2O₂ → CO₂ + 2H₂O + △</text>
+            <text x="14" y="218" font-family="DM Sans" font-size="8" fill="rgba(240,100,60,.4)">ΔH = –890 kJ/mol · Eksoterm · Frigjør energi</text>
+            <text x="14" y="232" font-family="DM Sans" font-size="8" fill="rgba(240,100,60,.35)">Samme reaksjon som i kroppen: C₆H₁₂O₆ + 6O₂</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Gå til molekylbyggesett -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center;gap:20px">
+          <div class="k-nr">08 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,128,.1);color:#60d080;border:1px solid rgba(96,208,128,.2)">🧪 Praktisk</div>
+          <h3 class="k-tittel" style="max-width:600px">Klar for å bygge molekyler?</h3>
+          <p class="k-ingress" style="max-width:560px">Bruk det interaktive molekylbyggesettet til å tegne strukturformler, teste bindingsregler og løse 20 oppgaver om organisk kjemi – fra enkle hydrokarboner til komplekse biomolekyler.</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:560px;margin:0 auto">
+            <div style="padding:14px;background:rgba(240,192,64,.06);border:1px solid rgba(240,192,64,.2);border-radius:12px;font-size:.78rem;color:var(--dim);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">🏗️</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">Bygg fritt</div>
+              Dra atomer til brettet og koble med bindinger
+            </div>
+            <div style="padding:14px;background:rgba(96,208,128,.06);border:1px solid rgba(96,208,128,.2);border-radius:12px;font-size:.78rem;color:var(--dim);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">✅</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">20 oppgaver</div>
+              Steg-for-steg med hint og forklaring
+            </div>
+            <div style="padding:14px;background:rgba(96,168,240,.06);border:1px solid rgba(96,168,240,.2);border-radius:12px;font-size:.78rem;color:var(--dim);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">📐</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">Valideringsmotor</div>
+              Sjekker bindingsregler og korrekthet automatisk
+            </div>
+          </div>
+          <a href="organisk_kjemi.html" class="til-oppgaver">
+            🧪 Åpne molekylbyggesettet →
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /k-slides -->
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- Utvalgte molekyler -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Kjente organiske molekyler</div><div class="sep-r"></div></div>
+  <div class="mol-grid">
+    <div class="mol-kort"><div class="mol-formel">C₂H₅OH</div><div class="mol-navn">Etanol</div><div class="mol-type">Alkohol</div><div class="mol-tekst">Finnes i alkoholholdige drikker. Produseres ved gjæring av sukker. Brukes som løsemiddel og drivstoff.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₆H₁₂O₆</div><div class="mol-navn">Glukose</div><div class="mol-type">Monosakkarid</div><div class="mol-tekst">Kroppens viktigste energikilde. Produkt av fotosyntesen. Oksideres i celleånding til CO₂ og H₂O.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₁₆H₁₈N₂O₄S</div><div class="mol-navn">Penicillin G</div><div class="mol-type">β-laktamantibiotikum</div><div class="mol-tekst">Verdens første antibiotikum. Inneholder β-laktamring. Dreper bakterier ved å hemme cellevegg-syntese.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₈H₁₁NO₂</div><div class="mol-navn">Dopamin</div><div class="mol-type">Nevrotransmitter</div><div class="mol-tekst">Belønning og motivasjon i hjernen. Mangel gir Parkinsons sykdom. Kokain hemmer gjenopptak av dopamin.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₉H₁₃NO₃</div><div class="mol-navn">Adrenalin</div><div class="mol-type">Hormon / NT</div><div class="mol-tekst">«Kamp-eller-flukt»-hormon. Frigjøres fra binyrene. Øker puls, blodtrykk og blodsukkernivå.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₁₀H₁₄N₂</div><div class="mol-navn">Nikotin</div><div class="mol-type">Alkaloid</div><div class="mol-tekst">Sterkt avhengighetsskapende alkaloid i tobakk. Binder til acetylkolin-reseptorer i hjernen.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₆H₅–OH</div><div class="mol-navn">Fenol</div><div class="mol-type">Aromatisk alkohol</div><div class="mol-tekst">Brukt som antiseptikum av Lister (1867). Grunnstoff i mange legemidler, plastikk og fargestoffer.</div></div>
+    <div class="mol-kort"><div class="mol-formel">C₂H₄</div><div class="mol-navn">Eten (etylen)</div><div class="mol-type">Alken</div><div class="mol-tekst">Plantehormon som modner frukt. Industriell bruk: polyeten-plast, etanol. Enkleste alkenet.</div></div>
+  </div>
+
+</div>
+
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, {passive:true});
+goTo(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Mikrobiologi</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#040a0e;--surface:#071018;--card:#091420;--border:rgba(0,200,160,.08);
+  --text:#d0ede8;--dim:#2a5048;
+  --accent:#00c8a0;--accent2:#e06040;--accent3:#60a0f0;
+  --font-d:'Libre Caslon Text',serif;--font-m:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-m);min-height:100vh;overflow-x:hidden;font-size:16px}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 20% 30%,rgba(0,200,160,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 70%,rgba(224,96,64,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(4,10,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.75rem;color:var(--dim);text-decoration:none;letter-spacing:.04em}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;line-height:1.1;margin-bottom:14px}
+.hero h1 em{font-style:italic;font-weight:400;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8;letter-spacing:.02em}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.83rem;line-height:1.72;color:rgba(208,237,232,.58);margin-bottom:16px;letter-spacing:.02em}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(0,200,160,.03);border:1px solid var(--border);font-size:.78rem;line-height:1.6;color:rgba(208,237,232,.7);letter-spacing:.02em}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* Mikrobe-kort */
+.mikro-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:20px}
+.mikro-kort{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;transition:all .2s}
+.mikro-kort:hover{border-color:rgba(0,200,160,.3);transform:translateY(-2px)}
+.mk-navn{font-family:var(--font-d);font-size:1.05rem;font-style:italic;color:var(--accent);margin-bottom:4px}
+.mk-type{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;font-weight:500}
+.mk-tekst{font-size:.76rem;line-height:1.6;color:rgba(208,237,232,.55);letter-spacing:.01em}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.k-anim{min-height:160px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Mikrobiologi</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Mikrobiologi</div>
+    <h1>Den usynlige<br><em>verden</em></h1>
+    <p class="hero-sub">Bakterier, virus, sopp og protister – mikroorganismene som driver alt liv på jorda og er langt mer enn bare sykdomskilder</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Mikrolivets mangfold -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 09</div>
+          <div class="k-kat" style="background:rgba(0,200,160,.1);color:#00c8a0;border:1px solid rgba(0,200,160,.2)">🔬 Oversikt</div>
+          <h3 class="k-tittel">Mikrolivets fire grupper</h3>
+          <p class="k-ingress">Mikroorganismer er levende vesener for små til å sees med det blotte øye. De deles i fire hovedgrupper med vidt ulike egenskaper.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🦠</span><div><strong>Bakterier:</strong> Prokaryote (ingen kjerne). 1–10 µm. 10³⁰ individer på jorda. Essensielle for næringsstoffer og fordøyelse.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Virus:</strong> Ikke-levende uten en vertscelle. 20–300 nm. Bare nukleinsyre + proteinkapsid. Kan infisere alt levende.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍄</span><div><strong>Sopp (mikrosopp):</strong> Eukaryote. Gjær (encellet) og muggsopp. Nedbrytere og symbionter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Protister:</strong> Eukaryote enkeltcellede som ikke er dyr, plante eller sopp. Inkl. alger, amøber og Plasmodium (malaria).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <!-- Størrelsessammenligning -->
+            <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(0,200,160,.6)" letter-spacing=".08em">RELATIVE STØRRELSER</text>
+            <!-- Menneskecelle -->
+            <ellipse cx="140" cy="90" rx="55" ry="44" fill="rgba(96,160,240,.06)" stroke="#60a0f0" stroke-width="1.5"/>
+            <text x="140" y="94" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#60a0f0">Menneskecelle</text>
+            <text x="140" y="104" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,160,240,.5)">~20–100 µm</text>
+            <!-- Bakterie -->
+            <ellipse cx="92" cy="90" rx="10" ry="8" fill="rgba(0,200,160,.15)" stroke="#00c8a0" stroke-width="1.5"/>
+            <text x="92" y="110" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#00c8a0">Bakterie</text>
+            <text x="92" y="120" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(0,200,160,.5)">~2 µm</text>
+            <!-- Virus -->
+            <circle cx="175" cy="90" r="3.5" fill="rgba(224,96,64,.4)" stroke="#e06040" stroke-width="1.2"/>
+            <text x="175" y="110" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#e06040">Virus</text>
+            <text x="175" y="120" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(224,96,64,.5)">~0.1 µm</text>
+            <!-- Linjal -->
+            <line x1="30" y1="150" x2="250" y2="150" stroke="rgba(0,200,160,.3)" stroke-width="1"/>
+            <g stroke="rgba(0,200,160,.3)" stroke-width="1">
+              <line x1="30" y1="145" x2="30" y2="155"/><line x1="80" y1="145" x2="80" y2="155"/>
+              <line x1="130" y1="145" x2="130" y2="155"/><line x1="180" y1="145" x2="180" y2="155"/>
+              <line x1="250" y1="145" x2="250" y2="155"/>
+            </g>
+            <g font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.5)" text-anchor="middle">
+              <text x="30" y="163">1 nm</text><text x="80" y="163">10 nm</text>
+              <text x="130" y="163">100 nm</text><text x="180" y="163">1 µm</text>
+              <text x="250" y="163">10 µm</text>
+            </g>
+            <text x="140" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(0,200,160,.4)">1 µm = 0.001 mm = 10⁻⁶ m</text>
+            <text x="140" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(0,200,160,.35)">1 nm = 10⁻⁹ m (atomstørrelse)</text>
+            <text x="140" y="220" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(0,200,160,.5)">~10³⁰ bakterier på jorda</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Bakterier -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 09</div>
+          <div class="k-kat" style="background:rgba(0,200,160,.1);color:#00c8a0;border:1px solid rgba(0,200,160,.2)">🦠 Bakterier</div>
+          <h3 class="k-tittel">Bakterier – livet selv</h3>
+          <p class="k-ingress">Bakterier er de mest tallrike og mangfoldige livsformene på jorda. De var de første – og vil trolig bli de siste.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧫</span><div><strong>Celletyper:</strong> Gram-positive (tykt peptidoglykanlag, lilla ved Gram-farging) og Gram-negative (tynt lag + ytre membran, rosa). Viktig for antibiotika-valg.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Formering:</strong> Binær fisjon – én celle deler seg til to på 20 min til flere timer. En celle kan bli 2⁷² = 4,7 × 10²¹ på 24 timer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Stoffskifte:</strong> Aerobe (trenger O₂), anaerobe (uten O₂), heterotrofe (spiser organisk) og autotrofe (fotosyntese/kjemosyntese).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🤝</span><div><strong>Symbiose:</strong> 38 billioner bakterier i menneskets tarm. Produserer vitaminer (K₂, B₁₂), bryter ned fiber, trener immunsystemet.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(0,200,160,.6)" letter-spacing=".08em">BAKTERIECELLE (GRAM-NEGATIV)</text>
+            <!-- Bakteriecelle -->
+            <ellipse cx="140" cy="110" rx="90" ry="52" fill="rgba(0,200,160,.05)" stroke="#00c8a0" stroke-width="1.8"/>
+            <!-- Ytre membran -->
+            <ellipse cx="140" cy="110" rx="90" ry="52" fill="none" stroke="rgba(0,200,160,.4)" stroke-width="4" stroke-dasharray="0"/>
+            <!-- Cellevegg (peptidoglykan) -->
+            <ellipse cx="140" cy="110" rx="84" ry="46" fill="none" stroke="rgba(96,200,120,.5)" stroke-width="3"/>
+            <!-- Indre membran -->
+            <ellipse cx="140" cy="110" rx="78" ry="40" fill="rgba(0,200,160,.04)" stroke="rgba(0,200,160,.6)" stroke-width="1.5"/>
+            <!-- Nukleoid (DNA) -->
+            <path d="M120,100 Q128,88 140,92 Q152,88 160,100 Q158,114 148,118 Q140,120 132,118 Q122,114 120,100Z" fill="rgba(96,160,240,.2)" stroke="#60a0f0" stroke-width="1.2"/>
+            <text x="140" y="108" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#60a0f0">DNA</text>
+            <!-- Ribosomer -->
+            <g fill="rgba(240,192,64,.6)">
+              <circle cx="105" cy="95" r="3.5"/><circle cx="115" cy="88" r="3.5"/>
+              <circle cx="165" cy="90" r="3.5"/><circle cx="175" cy="99" r="3.5"/>
+              <circle cx="108" cy="126" r="3"/><circle cx="170" cy="124" r="3"/>
+              <circle cx="125" cy="130" r="3"/><circle cx="155" cy="130" r="3"/>
+            </g>
+            <!-- Flagell -->
+            <path d="M230,110 Q244,98 248,86 Q252,74 244,68 Q236,62 232,74 Q228,86 236,94 Q244,102 240,114 Q236,126 244,130" fill="none" stroke="#00c8a0" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- Pili -->
+            <g stroke="rgba(0,200,160,.5)" stroke-width="1" fill="none">
+              <line x1="140" y1="58" x2="140" y2="40"/><line x1="115" y1="64" x2="108" y2="46"/>
+              <line x1="165" y1="64" x2="172" y2="46"/><line x1="90" y1="90" x2="72" y2="84"/>
+              <line x1="90" y1="130" x2="72" y2="136"/>
+            </g>
+            <!-- Labels -->
+            <g font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.55)">
+              <text x="36" y="88">← ytre membran</text>
+              <text x="36" y="100">← peptidoglykan</text>
+              <text x="36" y="112">← indre membran</text>
+            </g>
+            <text x="248" y="100" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.5)">flagell</text>
+            <text x="140" y="42" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.5)">pili</text>
+            <text x="150" y="156" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(240,192,64,.5)">ribosomer (70S)</text>
+            <!-- Størrelsesmarkering -->
+            <line x1="50" y1="168" x2="230" y2="168" stroke="rgba(0,200,160,.3)" stroke-width="1"/>
+            <line x1="50" y1="163" x2="50" y2="173" stroke="rgba(0,200,160,.3)" stroke-width="1"/>
+            <line x1="230" y1="163" x2="230" y2="173" stroke="rgba(0,200,160,.3)" stroke-width="1"/>
+            <text x="140" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(0,200,160,.5)">~2 µm</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Virus -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 09</div>
+          <div class="k-kat" style="background:rgba(224,96,64,.1);color:#e06040;border:1px solid rgba(224,96,64,.2)">🔴 Virus</div>
+          <h3 class="k-tittel">Virus – levende eller ikke?</h3>
+          <p class="k-ingress">Virus er på grensen av livet – de har arvemateriale og evolusjonerer, men kan ikke reprodusere uten en vertscelle.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📦</span><div><strong>Struktur:</strong> Nukleinsyre (DNA eller RNA) pakket i proteinkapsid. Noen har lipidmembran (kappe) fra vertscellen – SARS-CoV-2 er et eksempel.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔓</span><div><strong>Infeksjonssyklus:</strong> Festing → injeksjon → replikasjon → montering → frigjøring (lytisk) eller integrering i vertens DNA (lysogen).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💉</span><div><strong>Vaksiner:</strong> Levende svekket, inaktivert, subunit, eller mRNA (COVID-19). Trener immunsystemet uten å forårsake sykdom.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Evolusjon:</strong> RNA-virus (influensa, HIV) muterer svært raskt – ny feil per replikasjon fordi RNA-polymerase mangler korrekturlesing.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <!-- Koronavirus -->
+            <text x="85" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="rgba(224,96,64,.6)" letter-spacing=".06em">KORONAVIRUS</text>
+            <circle cx="85" cy="72" r="38" fill="rgba(224,96,64,.08)" stroke="#e06040" stroke-width="1.5"/>
+            <!-- Lipidmembran -->
+            <circle cx="85" cy="72" r="38" fill="none" stroke="rgba(224,96,64,.3)" stroke-width="5"/>
+            <!-- RNA (spiral inne) -->
+            <path d="M72,60 Q78,54 84,60 Q90,66 96,60 Q90,72 84,78 Q78,72 72,60Z" fill="rgba(224,192,64,.2)" stroke="rgba(224,192,64,.5)" stroke-width="1"/>
+            <!-- Spike-proteiner -->
+            <g fill="#e06040">
+              <ellipse cx="85" cy="31" rx="4" ry="7" transform="rotate(0,85,31)"/>
+              <ellipse cx="116" cy="41" rx="4" ry="7" transform="rotate(67,116,41)"/>
+              <ellipse cx="123" cy="72" rx="4" ry="7" transform="rotate(90,123,72)"/>
+              <ellipse cx="116" cy="103" rx="4" ry="7" transform="rotate(113,116,103)"/>
+              <ellipse cx="85" cy="113" rx="4" ry="7" transform="rotate(180,85,113)"/>
+              <ellipse cx="54" cy="103" rx="4" ry="7" transform="rotate(-113,54,103)"/>
+              <ellipse cx="47" cy="72" rx="4" ry="7" transform="rotate(-90,47,72)"/>
+              <ellipse cx="54" cy="41" rx="4" ry="7" transform="rotate(-67,54,41)"/>
+            </g>
+            <!-- Spike label -->
+            <line x1="123" y1="65" x2="148" y2="58" stroke="rgba(224,96,64,.4)" stroke-width="1"/>
+            <text x="150" y="56" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(224,96,64,.6)">spike-protein</text>
+            <text x="150" y="66" font-family="IBM Plex Mono" font-size="7" fill="rgba(224,96,64,.45)">(binder ACE2)</text>
+            <!-- Kappe -->
+            <line x1="47" y1="72" x2="24" y2="72" stroke="rgba(224,96,64,.3)" stroke-width="1"/>
+            <text x="6" y="70" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(224,96,64,.5)">kappe</text>
+            <!-- RNA -->
+            <line x1="85" y1="90" x2="85" y2="120" stroke="rgba(224,192,64,.4)" stroke-width="1"/>
+            <text x="85" y="128" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(224,192,64,.5)">RNA-genom</text>
+            <!-- Bakteriofag -->
+            <text x="210" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="rgba(96,160,240,.6)" letter-spacing=".06em">BAKTERIOFAG</text>
+            <!-- Hode -->
+            <polygon points="210,28 228,38 228,58 210,68 192,58 192,38" fill="rgba(96,160,240,.1)" stroke="#60a0f0" stroke-width="1.5"/>
+            <text x="210" y="50" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#60a0f0">DNA</text>
+            <!-- Hals -->
+            <line x1="210" y1="68" x2="210" y2="80" stroke="#60a0f0" stroke-width="2"/>
+            <!-- Hale-struktur -->
+            <rect x="205" y="80" width="10" height="28" fill="rgba(96,160,240,.1)" stroke="#60a0f0" stroke-width="1.2"/>
+            <!-- Benplater og fibre -->
+            <g stroke="#60a0f0" stroke-width="1.2">
+              <line x1="210" y1="108" x2="196" y2="118"/><line x1="210" y1="108" x2="224" y2="118"/>
+              <line x1="210" y1="108" x2="196" y2="130"/><line x1="210" y1="108" x2="224" y2="130"/>
+            </g>
+            <!-- Injeksjon i membran -->
+            <ellipse cx="210" cy="148" rx="22" ry="5" fill="rgba(0,200,160,.08)" stroke="#00c8a0" stroke-width="1.2" stroke-dasharray="4 2"/>
+            <text x="210" y="160" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.5)">bakteriemembran</text>
+            <!-- Størrelser -->
+            <text x="85" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(224,96,64,.4)">~100 nm (0.1 µm)</text>
+            <text x="210" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(96,160,240,.4)">~200 nm</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Immunforsvaret -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 09</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.2)">🛡️ Immunforsvar</div>
+          <h3 class="k-tittel">Immunforsvarets to lag</h3>
+          <p class="k-ingress">Immunforsvaret er kroppens hær mot patogener – med et raskt, uspesifikt førstelinjeforsvar og et langsomt, presist andrelinjerespons.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚧</span><div><strong>Medfødt (uspesifikt):</strong> Hud, slim, feber, betennelse, naturlige dreperceller (NK-celler), fagocytter som nøytrofiler og makrofager. Reagerer innen minutter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Adaptivt (spesifikt):</strong> B-celler (antistoff) og T-celler (drep-T og hjelper-T). Tar 5–14 dager å mobilisere første gang. Danner hukommelse.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔑</span><div><strong>Antigener og antistoff:</strong> Antigen = fremmed molekyl. Antistoff (IgG, IgM, IgA…) binder til spesifikt antigen som nøkkel-i-lås.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Immunhukommelse:</strong> Etter infeksjon/vaksinasjon overlever hukommelses-B og T-celler i årevis → raskere og kraftigere respons ved ny eksponering.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="15" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(96,160,240,.6)" letter-spacing=".06em">IMMUNRESPONS</text>
+            <!-- Antigen (bakterie) -->
+            <ellipse cx="60" cy="80" rx="22" ry="16" fill="rgba(224,96,64,.1)" stroke="#e06040" stroke-width="1.5"/>
+            <text x="60" y="84" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#e06040">ANTIGEN</text>
+            <!-- Epitoper på antigen -->
+            <g fill="#e06040">
+              <circle cx="42" cy="74" r="3.5"/><circle cx="54" cy="66" r="3.5"/>
+              <circle cx="68" cy="66" r="3.5"/><circle cx="78" cy="74" r="3.5"/>
+            </g>
+            <!-- Makrofag spiser det -->
+            <path d="M60,100 Q44,112 48,128 Q60,138 76,134 Q90,128 86,112 Q80,100 60,100Z" fill="rgba(0,200,160,.08)" stroke="#00c8a0" stroke-width="1.2"/>
+            <text x="67" y="120" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#00c8a0">makrofag</text>
+            <!-- MHC-presentasjon -->
+            <line x1="86" y1="116" x2="114" y2="116" stroke="rgba(0,200,160,.4)" stroke-width="1.5" marker-end="url(#arr)"/>
+            <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(0,200,160,.6)"/></marker></defs>
+            <text x="100" y="110" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(0,200,160,.5)">MHC-pres.</text>
+            <!-- T-hjelper-celle -->
+            <circle cx="140" cy="90" r="20" fill="rgba(96,160,240,.1)" stroke="#60a0f0" stroke-width="1.5"/>
+            <text x="140" y="87" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#60a0f0">T-hjelper</text>
+            <text x="140" y="98" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,160,240,.5)">CD4⁺</text>
+            <!-- Signaler til B-celle og drep-T -->
+            <line x1="158" y1="82" x2="184" y2="68" stroke="rgba(96,160,240,.4)" stroke-width="1.2" marker-end="url(#arr)"/>
+            <line x1="158" y1="98" x2="184" y2="116" stroke="rgba(96,160,240,.4)" stroke-width="1.2" marker-end="url(#arr)"/>
+            <!-- B-celle -->
+            <circle cx="210" cy="58" r="20" fill="rgba(96,208,128,.08)" stroke="#60d080" stroke-width="1.5"/>
+            <text x="210" y="55" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#60d080">B-celle</text>
+            <text x="210" y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,208,128,.5)">antistoff</text>
+            <!-- Antistoff (Y-form) -->
+            <g fill="none" stroke="#60d080" stroke-width="1.5">
+              <line x1="210" y1="78" x2="210" y2="92"/>
+              <line x1="210" y1="92" x2="200" y2="106"/><line x1="210" y1="92" x2="220" y2="106"/>
+            </g>
+            <text x="210" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,208,128,.5)">IgG</text>
+            <!-- Drep-T -->
+            <circle cx="210" cy="138" r="20" fill="rgba(224,96,64,.08)" stroke="#e06040" stroke-width="1.5"/>
+            <text x="210" y="135" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#e06040">Drep-T</text>
+            <text x="210" y="146" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(224,96,64,.5)">CD8⁺</text>
+            <!-- Hukommelse -->
+            <text x="140" y="178" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(96,160,240,.5)">→ IMMUNHUKOMMELSE</text>
+            <text x="140" y="192" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(96,160,240,.4)">Hukommelses-B og T-celler overlever i årevis</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Antibiotika og resistens -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 09</div>
+          <div class="k-kat" style="background:rgba(224,96,64,.1);color:#e06040;border:1px solid rgba(224,96,64,.2)">⚠️ Antibiotikaresistens</div>
+          <h3 class="k-tittel">Antibiotika og den store trusselen</h3>
+          <p class="k-ingress">Antibiotika er en av medisinens største oppdagelser – men overforbruk driver frem resistens som kan bli 1900-tallets svøpe i revers.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Penicillin (1928):</strong> Alexander Fleming oppdaget at Penicillium-sopp drepte bakterier rundt seg. Industrielt tilgjengelig 1945 – reddet millioner i 2. verdenskrig.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Virkningsmekanismer:</strong> Hemmer cellevegg-syntese (penicillin, vankomycin), proteinsyntese (erytromycin, tetracyklin) eller DNA-replikasjon (fluorokinoloner).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Resistens:</strong> Naturlig seleksjon – bakterier med tilfeldige mutasjoner som gir resistens overlever og formerer seg. Spres via plasmider mellom ulike bakteriearter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💀</span><div><strong>AMR-krisen:</strong> Ca. 1,3 mill. dør/år av antibiotikaresistente infeksjoner. WHO kaller det en av de største helsetruslene i vår tid.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(224,96,64,.6)" letter-spacing=".06em">RESISTENS-UTVIKLING</text>
+            <!-- Bakteriepopulasjon før -->
+            <text x="50" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(0,200,160,.5)">FØR</text>
+            <g fill="rgba(0,200,160,.4)" stroke="#00c8a0" stroke-width="1">
+              <ellipse cx="24" cy="55" rx="8" ry="5"/><ellipse cx="42" cy="50" rx="8" ry="5"/>
+              <ellipse cx="60" cy="55" rx="8" ry="5"/><ellipse cx="30" cy="65" rx="8" ry="5"/>
+              <ellipse cx="50" cy="68" rx="8" ry="5"/><ellipse cx="70" cy="62" rx="8" ry="5"/>
+              <ellipse cx="36" cy="75" rx="8" ry="5"/><ellipse cx="58" cy="78" rx="8" ry="5"/>
+            </g>
+            <!-- En mutert (rød) -->
+            <ellipse cx="68" cy="50" rx="8" ry="5" fill="rgba(224,96,64,.5)" stroke="#e06040" stroke-width="1.5"/>
+            <!-- Antibiotika-pil -->
+            <rect x="88" y="48" width="70" height="22" rx="6" fill="rgba(240,192,64,.1)" stroke="rgba(240,192,64,.3)" stroke-width="1"/>
+            <text x="123" y="58" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(240,192,64,.7)">ANTIBIOTIKA</text>
+            <text x="123" y="67" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(240,192,64,.5)">→</text>
+            <!-- Bakterier etter -->
+            <text x="210" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(224,96,64,.5)">ETTER</text>
+            <!-- Bare resistente overlever -->
+            <g fill="rgba(224,96,64,.5)" stroke="#e06040" stroke-width="1.2">
+              <ellipse cx="188" cy="55" rx="8" ry="5"/><ellipse cx="210" cy="50" rx="8" ry="5"/>
+              <ellipse cx="230" cy="58" rx="8" ry="5"/><ellipse cx="200" cy="68" rx="8" ry="5"/>
+              <ellipse cx="222" cy="65" rx="8" ry="5"/><ellipse cx="194" cy="75" rx="8" ry="5"/>
+            </g>
+            <!-- X på sensible -->
+            <g stroke="rgba(0,200,160,.3)" stroke-width="1.5">
+              <line x1="18" y1="88" x2="78" y2="88"/>
+              <text x="48" y="98" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.4)">alle døde</text>
+            </g>
+            <!-- Resistensmekanismer -->
+            <text x="140" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="rgba(224,96,64,.55)" letter-spacing=".06em">RESISTENSMEKANISMER</text>
+            <g font-family="IBM Plex Mono" font-size="8" fill="rgba(224,96,64,.55)">
+              <text x="14" y="132">1. Enzym bryter ned antibiotikum (β-laktamase)</text>
+              <text x="14" y="146">2. Pumper ut antibiotikum (efflukspumpe)</text>
+              <text x="14" y="160">3. Endret målmolekyl (penicillin-bindende prot.)</text>
+              <text x="14" y="174">4. Redusert permeabilitet (mindre opptak)</text>
+            </g>
+            <!-- Plasmid-overføring -->
+            <text x="140" y="196" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="rgba(96,160,240,.5)" letter-spacing=".04em">Plasmider med resistensgener spres</text>
+            <text x="140" y="210" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(96,160,240,.4)">horisontalt mellom ulike bakteriearter!</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Mikrober og helse -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 09</div>
+          <div class="k-kat" style="background:rgba(0,200,160,.1);color:#00c8a0;border:1px solid rgba(0,200,160,.2)">🌱 Mikrobiom</div>
+          <h3 class="k-tittel">Tarmfloraen – «det andre hjernen»</h3>
+          <p class="k-ingress">38 billioner mikrober bor i og på kroppen din – de fleste i tykktarmen. De er ikke parasitter, de er nødvendige partnere.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Mikrobiomet:</strong> 500–1000 bakteriearter i tarmen. Veid mot hverandre utgjør de ~200 gram. 3 millioner unike mikrobielle gener – vs. ~22 000 humane.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍏</span><div><strong>Funksjoner:</strong> Produserer vitamin K og B₁₂, bryter ned plantefiber til kortkjedede fettsyrer, trener immunsystemet, hindrer patogene bakterier.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Tarm-hjerne-aksen:</strong> Tarmfloraen kommuniserer med hjernen via vagusnerven og hormonelle signaler. Påvirker humør, angst og kognitiv funksjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Dysbiose:</strong> Ubalanse i tarmfloraen er assosiert med IBD, overvekt, diabetes type 2, autoimmune sykdommer og depresjon.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(0,200,160,.6)" letter-spacing=".08em">TARMFLORAENS SAMMENSETNING</text>
+            <!-- Kakediagram (forenklet) -->
+            <circle cx="140" cy="110" r="70" fill="rgba(0,200,160,.05)" stroke="rgba(0,200,160,.2)" stroke-width="1"/>
+            <!-- Firmicutes ~60% -->
+            <path d="M140,110 L210,110 A70,70 0,1,0,140,40 Z" fill="rgba(96,160,240,.35)"/>
+            <!-- Bacteroidetes ~25% -->
+            <path d="M140,110 L140,40 A70,70 0,0,1,210,110 Z" fill="rgba(0,200,160,.35)"/>
+            <!-- Andre ~15% -->
+            <path d="M140,110 L210,110 A70,70 0,0,1,192,162 Z" fill="rgba(240,192,64,.35)"/>
+            <path d="M140,110 L192,162 A70,70 0,0,1,140,180 Z" fill="rgba(224,96,64,.3)"/>
+            <path d="M140,110 L140,180 A70,70 0,0,1,100,168 Z" fill="rgba(200,100,240,.25)"/>
+            <path d="M140,110 L100,168 A70,70 0,0,1,88,88 Z" fill="rgba(100,220,180,.25)"/>
+            <!-- Indre sirkel -->
+            <circle cx="140" cy="110" r="28" fill="#040a0c"/>
+            <text x="140" y="107" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(0,200,160,.6)">500–1000</text>
+            <text x="140" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.5)">bakteriearter</text>
+            <!-- Legends -->
+            <g font-family="IBM Plex Mono" font-size="7.5">
+              <rect x="14" y="192" width="10" height="8" fill="rgba(96,160,240,.6)"/>
+              <text x="28" y="200" fill="rgba(96,160,240,.7)">Firmicutes ~60%</text>
+              <rect x="14" y="204" width="10" height="8" fill="rgba(0,200,160,.6)"/>
+              <text x="28" y="212" fill="rgba(0,200,160,.7)">Bacteroidetes ~25%</text>
+              <rect x="148" y="192" width="10" height="8" fill="rgba(240,192,64,.6)"/>
+              <text x="162" y="200" fill="rgba(240,192,64,.7)">Proteobacteria ~5%</text>
+              <rect x="148" y="204" width="10" height="8" fill="rgba(200,100,240,.5)"/>
+              <text x="162" y="212" fill="rgba(200,100,240,.7)">Andre ~10%</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Mikrober i naturen -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 09</div>
+          <div class="k-kat" style="background:rgba(96,208,128,.1);color:#60d080;border:1px solid rgba(96,208,128,.2)">🌍 Biogeokjemi</div>
+          <h3 class="k-tittel">Mikrober driver planetens kretsløp</h3>
+          <p class="k-ingress">Uten mikrober ville livet på jorda stanse. De driver karbonets, nitrogenets og svovelkretsløpene.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Nitrogenfiksering:</strong> N₂ i luft er utilgjengelig for planter. Rhizobium-bakterier i rotknollene til belgvekster omdanner N₂ → NH₃ – naturens gjødsel.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Oksygenproduksjon:</strong> Cyanobakterier (blågrønnalger) skapte jordens oksygenatmosfære for 2,4 mrd år siden via fotosyntese. Produserer 50% av O₂ i dag.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍂</span><div><strong>Nedbrytning:</strong> Sopp og bakterier er jordens resirkuleringsanlegg. Uten dem ville vi ligge begravd i organisk avfall – ingen næringsstoffer frigjøres.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Metan:</strong> Metanogene bakterier produserer CH₄ i søppelfyllinger, tarmene til kyr og sumpmark. Kraftig klimagass – men også potensiell bioenergi.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(96,208,128,.6)" letter-spacing=".08em">NITROGENKRETSLØPET</text>
+            <!-- N2 i luft -->
+            <text x="140" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="rgba(96,160,240,.7)">N₂</text>
+            <text x="140" y="48" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(96,160,240,.4)">atmosfæren (78%)</text>
+            <!-- Nitrogenfiksering ned -->
+            <line x1="140" y1="52" x2="140" y2="74" stroke="rgba(96,208,128,.5)" stroke-width="1.5" marker-end="url(#arr2)"/>
+            <defs><marker id="arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,208,128,.6)"/></marker></defs>
+            <text x="152" y="64" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,208,128,.5)">nitrogenfiksering</text>
+            <text x="152" y="73" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,208,128,.4)">Rhizobium</text>
+            <!-- NH3/NO3 i jord -->
+            <text x="80" y="90" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="rgba(240,192,64,.7)">NH₃</text>
+            <text x="80" y="102" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(240,192,64,.4)">ammonium</text>
+            <!-- Nitrifikasjon -->
+            <line x1="100" y1="90" x2="160" y2="90" stroke="rgba(240,192,64,.4)" stroke-width="1.2" marker-end="url(#arr3)"/>
+            <defs><marker id="arr3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,192,64,.5)"/></marker></defs>
+            <text x="130" y="84" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(240,192,64,.4)">Nitrosomonas</text>
+            <text x="190" y="90" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="rgba(240,192,64,.7)">NO₃⁻</text>
+            <text x="190" y="102" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(240,192,64,.4)">nitrat</text>
+            <!-- Plante tar opp -->
+            <line x1="160" y1="106" x2="140" y2="126" stroke="rgba(96,208,128,.4)" stroke-width="1.2" marker-end="url(#arr2)"/>
+            <text x="108" y="122" font-family="IBM Plex Mono" font-size="7" fill="rgba(96,208,128,.4)">planter</text>
+            <!-- Denitrifikasjon tilbake til N2 -->
+            <line x1="190" y1="106" x2="190" y2="126" stroke="rgba(96,160,240,.4)" stroke-width="1.2"/>
+            <line x1="190" y1="126" x2="155" y2="46" stroke="rgba(96,160,240,.3)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+            <text x="205" y="118" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(96,160,240,.4)">denitrifi-</text>
+            <text x="205" y="127" font-family="IBM Plex Mono" font-size="6.5" fill="rgba(96,160,240,.4)">kasjon</text>
+            <!-- Protein -->
+            <rect x="118" y="128" width="44" height="20" rx="5" fill="rgba(96,208,128,.08)" stroke="rgba(96,208,128,.3)" stroke-width="1"/>
+            <text x="140" y="141" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="rgba(96,208,128,.6)">protein</text>
+            <!-- Nedbrytning -->
+            <line x1="118" y1="148" x2="98" y2="164" stroke="rgba(0,200,160,.4)" stroke-width="1.2" marker-end="url(#arr2)"/>
+            <text x="72" y="174" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.4)">bakterier/sopp</text>
+            <text x="72" y="184" font-family="IBM Plex Mono" font-size="7" fill="rgba(0,200,160,.35)">bryter ned → NH₄⁺</text>
+            <line x1="98" y1="188" x2="75" y2="106" stroke="rgba(0,200,160,.3)" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arr2)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Sopp og protister -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">08 / 09</div>
+          <div class="k-kat" style="background:rgba(200,100,240,.1);color:#c864f0;border:1px solid rgba(200,100,240,.2)">🍄 Sopp & protister</div>
+          <h3 class="k-tittel">Sopp og protister</h3>
+          <p class="k-ingress">Sopp er verken plante eller dyr – og noen protister er de farligste parasittene kjent for mennesker.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🍄</span><div><strong>Gjær (Saccharomyces):</strong> Brukes til brødbaking og alkohol. Omformer sukker → CO₂ (hever deig) + etanol (gjæring). Også modellorganisme i cellebiologi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧀</span><div><strong>Muggsopp:</strong> Penicillium gir ost blåårer og penicillin. Aspergillus produserer aflatoksiner (karsinogen). Mykorriza-sopp hjelper planterøtter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦟</span><div><strong>Plasmodium (malaria):</strong> Protist overført av Anopheles-mygg. Infiserer røde blodlegemer. 600 000 dødsfall/år – mest barn i Afrika. Har kompleks livssyklus med to verter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Alger og kiselalger:</strong> Fotosyntetiserende protister. Produserer ~20% av jordens O₂. Grunnlag for havets næringskjeder. Kiselalger danner en silikonskal.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#040a0c"/>
+            <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(200,100,240,.6)" letter-spacing=".06em">GJÆRCELLE (Saccharomyces)</text>
+            <!-- Gjærcelle med organeller (eukaryot) -->
+            <ellipse cx="100" cy="90" rx="52" ry="44" fill="rgba(200,100,240,.05)" stroke="#c864f0" stroke-width="1.8"/>
+            <!-- Kjerne -->
+            <ellipse cx="96" cy="84" rx="18" ry="14" fill="rgba(96,160,240,.1)" stroke="#60a0f0" stroke-width="1.2"/>
+            <text x="96" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#60a0f0">kjerne</text>
+            <!-- Mitokondrie -->
+            <ellipse cx="120" cy="102" rx="12" ry="7" fill="rgba(224,96,64,.12)" stroke="#e06040" stroke-width="1"/>
+            <text x="120" y="106" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="#e06040">mito.</text>
+            <!-- Vakuole -->
+            <circle cx="78" cy="106" r="12" fill="rgba(96,208,128,.08)" stroke="#60d080" stroke-width="1"/>
+            <text x="78" y="110" text-anchor="middle" font-family="IBM Plex Mono" font-size="6.5" fill="#60d080">vakuole</text>
+            <!-- Cellevegg -->
+            <text x="100" y="144" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(200,100,240,.5)">cellevegg (kitin)</text>
+            <!-- Knoppskyting -->
+            <ellipse cx="148" cy="75" rx="20" ry="16" fill="rgba(200,100,240,.05)" stroke="#c864f0" stroke-width="1.2" stroke-dasharray="4 2"/>
+            <text x="148" y="79" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(200,100,240,.5)">knopp-</text>
+            <text x="148" y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="rgba(200,100,240,.5)">skyting</text>
+            <!-- Gjæringsligning -->
+            <text x="140" y="116" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="rgba(200,100,240,.5)" letter-spacing=".04em">GJÆRING</text>
+            <text x="14" y="132" font-family="IBM Plex Mono" font-size="8.5" fill="rgba(240,192,64,.6)">C₆H₁₂O₆ → 2C₂H₅OH + 2CO₂</text>
+            <text x="14" y="146" font-family="IBM Plex Mono" font-size="8" fill="rgba(240,192,64,.4)">glukose → etanol + karbondioksid</text>
+            <!-- Plasmodium -->
+            <text x="140" y="168" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="rgba(224,96,64,.55)" letter-spacing=".06em">PLASMODIUM (malaria)</text>
+            <g font-family="IBM Plex Mono" font-size="8" fill="rgba(224,96,64,.5)">
+              <text x="14" y="184">Gametocytter i mygg → sporozoitter</text>
+              <text x="14" y="198">→ leverinfeksjon → merozoitter</text>
+              <text x="14" y="212">→ røde blodlegemer brister → feber</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S9: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">09 / 09</div>
+          <div class="k-kat" style="background:rgba(0,200,160,.1);color:#00c8a0;border:1px solid rgba(0,200,160,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Mikroorganismer – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:760px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(0,200,160,.04);border:1px solid rgba(0,200,160,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#00c8a0;display:block;margin-bottom:4px">🦠 Bakterier</strong>Prokaryote · ingen kjerne · 1–10 µm · binær fisjon · gram+ og gram- · avgjørende for kretsløp og tarmhelse</div>
+            <div style="padding:14px;background:rgba(224,96,64,.04);border:1px solid rgba(224,96,64,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#e06040;display:block;margin-bottom:4px">🔴 Virus</strong>Ikke-levende · DNA eller RNA · kapsid ± kappe · lytisk og lysogen syklus · immunhukommelse og vaksiner</div>
+            <div style="padding:14px;background:rgba(200,100,240,.04);border:1px solid rgba(200,100,240,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#c864f0;display:block;margin-bottom:4px">🍄 Sopp</strong>Eukaryote · kitin-cellevegg · gjær (encellet) og hyfer · gjæring · penicillin · mykorriza</div>
+            <div style="padding:14px;background:rgba(96,208,128,.04);border:1px solid rgba(96,208,128,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#60d080;display:block;margin-bottom:4px">🌊 Protister</strong>Eukaryote enkeltcellede · alger (O₂) · amøber · Plasmodium (malaria) · grunnlag i næringskjeder</div>
+            <div style="padding:14px;background:rgba(96,160,240,.04);border:1px solid rgba(96,160,240,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#60a0f0;display:block;margin-bottom:4px">🛡️ Immunforsvar</strong>Medfødt (minutter) + adaptivt (dager) · B-celler og T-celler · antistoff · hukommelse og vaksiner</div>
+            <div style="padding:14px;background:rgba(240,192,64,.04);border:1px solid rgba(240,192,64,.15);border-radius:12px;font-size:.78rem;color:rgba(208,237,232,.65);line-height:1.6"><strong style="color:#f0c040;display:block;margin-bottom:4px">⚠️ AMR-krisen</strong>Overforbruk av antibiotika → resistens via naturlig seleksjon og plasmider · 1,3 mill. dødsfall/år</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- Kjente mikroorganismer -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Kjente mikroorganismer</div><div class="sep-r"></div></div>
+  <div class="mikro-grid">
+    <div class="mikro-kort"><div class="mk-navn">E. coli</div><div class="mk-type">Gram-negativ bakterie</div><div class="mk-tekst">Finnes normalt i tarmen. Noen stammer forårsaker matforgiftning. Viktigste modellorganisme i molekylærbiologi.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">SARS-CoV-2</div><div class="mk-type">Koronavirus (RNA-virus)</div><div class="mk-tekst">Forårsaket COVID-19-pandemien. Spike-protein binder ACE2-reseptoren. mRNA-vaksine ga raskere immunitet.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Streptococcus</div><div class="mk-type">Gram-positiv bakterie</div><div class="mk-tekst">Streptokokker forårsaker halsbetennelse, lungebetennelse og skarlagensfeber. Behandles med penicillin.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Saccharomyces cerevisiae</div><div class="mk-type">Gjær (sopp)</div><div class="mk-tekst">Brukes til brødbaking og ølbrygging i tusenvis av år. En av de viktigste modellorganismene for genetikk.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Plasmodium falciparum</div><div class="mk-type">Protist (apicomplexan)</div><div class="mk-tekst">Farligste malariaparasitt. Overføres av Anopheles-mygg. Drap ~600 000 hvert år, primært barn under 5 år.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Mycobacterium tuberculosis</div><div class="mk-type">Gram-positiv bakterie</div><div class="mk-tekst">Tuberkulose. Infiserer ~1/3 av jordens befolkning latent. 10 millioner aktive tilfeller/år. Vanskelig å behandle.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Cyanobakterier</div><div class="mk-type">Fotosynteserende bakterie</div><div class="mk-tekst">Skapte jordens oksygenatmosfære for 2.4 mrd år siden. Produserer ~50% av O₂ i dag. Grunnlag for kloroplaster.</div></div>
+    <div class="mikro-kort"><div class="mk-navn">Rhizobium</div><div class="mk-type">Gram-negativ bakterie</div><div class="mk-tekst">Symbiot i rotknollene til belgvekster. Fikserer N₂ → ammonium. Erstatter kunstgjødsel og er klimavennlig.</div></div>
+  </div>
+</div>
+
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, {passive:true});
+goTo(0);
+</script>
+</body>
+</html>

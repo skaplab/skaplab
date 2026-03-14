@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Evolusjon</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a04;--surface:#0c1208;--card:#101808;--border:rgba(100,200,80,.08);
+  --text:#e8f0d8;--dim:#3a5828;
+  --accent:#80d040;--accent2:#f0a030;--accent3:#60b8f0;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 30% 20%,rgba(128,208,64,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(240,160,48,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,4,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,240,216,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(128,208,64,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,240,216,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.evo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.evo-kort{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;transition:all .2s}
+.evo-kort:hover{border-color:rgba(128,208,64,.3);transform:translateY(-2px)}
+.evo-navn{font-family:var(--font-d);font-size:1rem;color:var(--accent);margin-bottom:3px;font-style:italic}
+.evo-tid{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.evo-tekst{font-size:.76rem;line-height:1.6;color:rgba(232,240,216,.55)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Evolusjon</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Evolusjonsteori</div>
+    <h1>Livet i<br><em>endring</em></h1>
+    <p class="hero-sub">Darwin, Wallace og naturlig seleksjon – hvordan kontinentaldrift, tilpasning og arv former alt levende over millioner av år</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Darwin og Wallace -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 09</div>
+          <div class="k-kat" style="background:rgba(128,208,64,.1);color:#80d040;border:1px solid rgba(128,208,64,.2)">🔭 Oppdagelse</div>
+          <h3 class="k-tittel">Darwin og Wallace – to menn, én idé</h3>
+          <p class="k-ingress">Evolusjon ved naturlig seleksjon ble oppdaget uavhengig av to britiske naturforskere. Historien om dem er like fascinerende som teorien selv.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚢</span><div><strong>Charles Darwin (1809–1882):</strong> Reiste med HMS Beagle (1831–36). Samlet data i 20 år før publisering. <em>On the Origin of Species</em> (1859) – sannsynligvis den mest innflytelsesrike vitenskapsboken noensinne.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌴</span><div><strong>Alfred Russel Wallace (1823–1913):</strong> Selvlært naturalist fra arbeiderklassen. Reiste alene til Amazonas og Malay-arkipelet. Sendte Darwin et brev i 1858 med nøyaktig den samme teorien – Darwin publiserte umiddelbart.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Prioritetsspørsmålet:</strong> En felles presentasjon ble holdt for Linnean Society 1. juli 1858 – begge kreditert. Wallace var stoisk og aldri bitter. Han kalte Darwin «mesteren» livet ut.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦋</span><div><strong>Wallace-linjen:</strong> Wallace oppdaget den skarpe biogeografiske grensen mellom asiatisk og australsk fauna i Indonesia. Linjen bærer hans navn den dag i dag.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.6)" letter-spacing=".08em">DARWIN OG WALLACE – REISERUTER</text>
+            <!-- Forenklet verdenskart -->
+            <!-- Kontinenter (stiliserte) -->
+            <path d="M10,80 Q20,60 50,58 Q80,56 95,70 Q105,82 100,100 Q95,118 80,122 Q55,126 35,115 Q15,104 10,80Z" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <!-- Europa/Afrika -->
+            <path d="M105,55 Q120,50 135,58 Q142,68 138,85 Q134,100 125,110 Q115,120 108,115 Q100,108 102,90 Q104,72 105,55Z" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <path d="M108,115 Q115,120 120,140 Q125,162 120,180 Q115,196 108,200 Q100,198 98,180 Q96,160 100,140 Q104,122 108,115Z" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <!-- Asia -->
+            <path d="M140,50 Q165,44 190,50 Q210,56 220,70 Q228,84 222,100 Q215,115 200,118 Q180,122 160,115 Q142,108 140,90 Q138,72 140,50Z" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <!-- Malay-arkipelet -->
+            <g fill="rgba(128,208,64,.12)" stroke="rgba(128,208,64,.2)" stroke-width=".8">
+              <ellipse cx="210" cy="130" rx="8" ry="5"/><ellipse cx="222" cy="138" rx="6" ry="4"/>
+              <ellipse cx="215" cy="148" rx="7" ry="4.5"/><ellipse cx="228" cy="148" rx="5" ry="3"/>
+            </g>
+            <!-- Australia -->
+            <path d="M220,165 Q245,158 258,168 Q266,178 263,195 Q258,210 242,215 Q225,218 215,206 Q207,194 210,178 Q213,166 220,165Z" fill="rgba(240,160,48,.08)" stroke="rgba(240,160,48,.2)" stroke-width="1"/>
+            <!-- Sør-Amerika -->
+            <path d="M60,120 Q75,115 85,128 Q90,145 85,170 Q78,192 68,200 Q56,205 48,192 Q40,175 44,152 Q48,130 60,120Z" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <!-- Galapagos -->
+            <g fill="rgba(128,208,64,.2)" stroke="rgba(128,208,64,.4)" stroke-width=".8">
+              <circle cx="44" cy="142" r="3.5"/><circle cx="40" cy="150" r="2.5"/>
+            </g>
+            <!-- Beagle-rute (Darwin) -->
+            <path d="M115,72 Q80,100 70,142 Q65,165 72,185 Q80,200 80,200 Q72,195 68,180 Q55,155 58,128 Q62,105 50,95 Q38,85 30,85 Q60,70 90,65 Q102,62 115,72Z" fill="none" stroke="#80d040" stroke-width="1.8" stroke-dasharray="5 3"/>
+            <text x="20" y="108" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.7)">Darwin</text>
+            <text x="20" y="118" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.5)">HMS Beagle</text>
+            <!-- Wallace-rute -->
+            <path d="M115,72 Q148,60 170,80 Q190,100 205,125 Q215,142 210,158" fill="none" stroke="#f0a030" stroke-width="1.8" stroke-dasharray="5 3"/>
+            <text x="185" y="105" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.7)">Wallace</text>
+            <text x="185" y="115" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.5)">Malay-ark.</text>
+            <!-- Wallace-linjen -->
+            <line x1="218" y1="120" x2="225" y2="165" stroke="#f0a030" stroke-width="2" stroke-dasharray="8 4"/>
+            <text x="230" y="140" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.6)">Wallace-</text>
+            <text x="230" y="150" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.6)">linjen</text>
+            <!-- Galapagos-label -->
+            <text x="10" y="148" font-family="DM Sans" font-size="6.5" fill="rgba(128,208,64,.6)">Galápagos</text>
+            <!-- Legend -->
+            <line x1="14" y1="230" x2="36" y2="230" stroke="#80d040" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="40" y="234" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.6)">Darwins reise</text>
+            <line x1="130" y1="230" x2="152" y2="230" stroke="#f0a030" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="156" y="234" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.6)">Wallace reise</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Naturlig seleksjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 09</div>
+          <div class="k-kat" style="background:rgba(128,208,64,.1);color:#80d040;border:1px solid rgba(128,208,64,.2)">⚙️ Mekanisme</div>
+          <h3 class="k-tittel">Naturlig seleksjon – motoren</h3>
+          <p class="k-ingress">Naturlig seleksjon er den mekanismen som driver evolusjon. Den krever bare fire ingredienser – og er nærmest uunngåelig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🎲</span><div><strong>Variasjon:</strong> Individer i en populasjon er ikke identiske – de varierer i egenskaper. Variasjon stammer fra mutasjoner og seksuell rekombinasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Arvelighet:</strong> Variasjonene er (delvis) arvelige – de overføres fra foreldre til avkom via DNA.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚔️</span><div><strong>Kamp for tilværelsen:</strong> Det produseres langt flere avkom enn som kan overleve. Ressurser (mat, plass, partnere) er begrenset.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">✅</span><div><strong>Differensiell overlevelse:</strong> Individer med gunstige egenskaper overlever og reproduserer bedre – gir dem videre. Genene «spres» i populasjonen over generasjoner.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.6)" letter-spacing=".08em">NATURLIG SELEKSJON – EKSEMPEL</text>
+            <!-- Bjørkehumler på lys/mørk bakgrunn -->
+            <text x="70" y="36" text-anchor="middle" font-family="Fraunces" font-size="8" fill="rgba(128,208,64,.5)">FØR industri</text>
+            <text x="210" y="36" text-anchor="middle" font-family="Fraunces" font-size="8" fill="rgba(128,208,64,.5)">ETTER industri</text>
+            <!-- Lys trebark -->
+            <rect x="14" y="42" width="112" height="100" rx="8" fill="rgba(200,190,170,.1)" stroke="rgba(200,190,170,.2)" stroke-width="1"/>
+            <!-- Mørk trebark -->
+            <rect x="154" y="42" width="112" height="100" rx="8" fill="rgba(40,30,20,.4)" stroke="rgba(80,60,40,.3)" stroke-width="1"/>
+            <!-- Lyse humler (mange, synlige) -->
+            <g fill="rgba(220,210,190,.6)">
+              <ellipse cx="36" cy="70" rx="8" ry="4"/><ellipse cx="58" cy="82" rx="8" ry="4"/>
+              <ellipse cx="80" cy="65" rx="8" ry="4"/><ellipse cx="98" cy="90" rx="8" ry="4"/>
+              <ellipse cx="44" cy="100" rx="8" ry="4"/><ellipse cx="70" cy="112" rx="8" ry="4"/>
+              <ellipse cx="100" cy="118" rx="8" ry="4"/>
+            </g>
+            <!-- Mørke humler (2, synlige på lys) -->
+            <g fill="rgba(40,30,20,.8)" stroke="rgba(128,208,64,.3)" stroke-width="1">
+              <ellipse cx="52" cy="118" rx="8" ry="4"/><ellipse cx="88" cy="76" rx="8" ry="4"/>
+            </g>
+            <!-- Etter industri: lyse er borte, mørke overlever -->
+            <!-- Mørke humler (mange) -->
+            <g fill="rgba(40,30,20,.85)" stroke="rgba(240,160,48,.3)" stroke-width="1">
+              <ellipse cx="176" cy="68" rx="8" ry="4"/><ellipse cx="198" cy="80" rx="8" ry="4"/>
+              <ellipse cx="220" cy="65" rx="8" ry="4"/><ellipse cx="238" cy="92" rx="8" ry="4"/>
+              <ellipse cx="184" cy="100" rx="8" ry="4"/><ellipse cx="210" cy="112" rx="8" ry="4"/>
+              <ellipse cx="240" cy="118" rx="8" ry="4"/>
+            </g>
+            <!-- Lyse (1, lett synlig = lett å spises) -->
+            <ellipse cx="200" cy="96" rx="8" ry="4" fill="rgba(220,210,190,.5)" stroke="#e06060" stroke-width="1.5"/>
+            <!-- Pil -->
+            <line x1="130" y1="92" x2="150" y2="92" stroke="rgba(128,208,64,.4)" stroke-width="2"/>
+            <polygon points="150,88 158,92 150,96" fill="rgba(128,208,64,.5)"/>
+            <text x="140" y="88" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.5)">forurensning</text>
+            <!-- Steg-vis seleksjon under -->
+            <text x="140" y="162" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.55)" letter-spacing=".06em">FIRE BETINGELSER</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.55)">
+              <text x="14" y="178">1. Variasjon i farve: lys / mørk</text>
+              <text x="14" y="192">2. Arvelighet: farven arves av avkom</text>
+              <text x="14" y="206">3. Ressurskonkurranse: fugler spiser humler</text>
+              <text x="14" y="220">4. Mørke = bedre kamuflasje på sot-bark</text>
+            </g>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.45)">→ Frekvensen av mørke humler øker – evolusjon!</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Tilpasning og artsdannelse -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 09</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🦅 Tilpasning</div>
+          <h3 class="k-tittel">Tilpasning og artsdannelse</h3>
+          <p class="k-ingress">Over tid fører seleksjon til tilpasning – og isolerte populasjoner kan utvikle seg til separate arter som ikke lenger kan krysse seg.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🐦</span><div><strong>Darwins finker:</strong> 14 finkearter på Galápagos – alle fra én stamfar. Nebbet er tilpasset ulik føde: frø (tykt nebb), insekter (spist, spydd), kaktus. Klassisk adaptiv radiasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌋</span><div><strong>Geografisk isolasjon:</strong> Allopatrisk artsdannelse – en populasjon deles av hav, fjell eller kontinentaldrift. Over tid samler de seg nok genetisk avstand til å bli ulike arter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔒</span><div><strong>Reproduktiv isolasjon:</strong> Artsdannelse er fullbyrdet når to populasjoner ikke lenger kan produsere fruktbart avkom. Kan være geografisk, atferds- eller genetisk isolasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Kontinentaldrift og evolusjon:</strong> Pangeas oppbrudd isolerte populasjoner over millioner av år. Pungdyr finnes i Australia fordi det brøt løs – ikke fordi pungdyr er «dårligere», men fordi der hadde de ingen konkurrenter.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">ADAPTIV RADIASJON – DARWINS FINKER</text>
+            <!-- Stamfar -->
+            <circle cx="140" cy="44" r="16" fill="rgba(240,160,48,.12)" stroke="#f0a030" stroke-width="1.8"/>
+            <text x="140" y="40" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#f0a030" font-weight="600">Stamfar</text>
+            <text x="140" y="52" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.5)">finke</text>
+            <!-- Greiner til ulike arter -->
+            <line x1="130" y1="60" x2="52" y2="90" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <line x1="135" y1="60" x2="96" y2="90" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <line x1="140" y1="60" x2="140" y2="90" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <line x1="145" y1="60" x2="184" y2="90" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <line x1="150" y1="60" x2="228" y2="90" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <!-- Finker med ulike nebb-former -->
+            <!-- Frøknekker (tykt nebb) -->
+            <ellipse cx="52" cy="106" rx="22" ry="16" fill="rgba(128,208,64,.08)" stroke="#80d040" stroke-width="1.2"/>
+            <path d="M40,106 L52,100 L58,106 L52,112 Z" fill="#f0a030"/>
+            <text x="52" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">Frø-</text>
+            <text x="52" y="140" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">knekker</text>
+            <!-- Insektspisende (pinsettformet) -->
+            <ellipse cx="96" cy="106" rx="22" ry="16" fill="rgba(128,208,64,.08)" stroke="#80d040" stroke-width="1.2"/>
+            <path d="M84,106 L96,104 L108,106 L96,108 Z" fill="#f0a030"/>
+            <text x="96" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">Insekt-</text>
+            <text x="96" y="140" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">spiser</text>
+            <!-- Kaktus (lang, bøyd) -->
+            <ellipse cx="140" cy="106" rx="22" ry="16" fill="rgba(128,208,64,.08)" stroke="#80d040" stroke-width="1.2"/>
+            <path d="M128,108 Q136,100 148,104" fill="none" stroke="#f0a030" stroke-width="3" stroke-linecap="round"/>
+            <text x="140" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">Kaktus-</text>
+            <text x="140" y="140" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">finke</text>
+            <!-- Nektar -->
+            <ellipse cx="184" cy="106" rx="22" ry="16" fill="rgba(128,208,64,.08)" stroke="#80d040" stroke-width="1.2"/>
+            <path d="M172,108 Q184,98 196,106 Q190,112 184,114" fill="none" stroke="#f0a030" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="184" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">Nektar-</text>
+            <text x="184" y="140" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">suger</text>
+            <!-- Jordspisende -->
+            <ellipse cx="228" cy="106" rx="22" ry="16" fill="rgba(128,208,64,.08)" stroke="#80d040" stroke-width="1.2"/>
+            <path d="M218,103 L228,107 L236,103" fill="#f0a030" stroke="#c07820" stroke-width="1"/>
+            <text x="228" y="130" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">Jord-</text>
+            <text x="228" y="140" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.5)">finke</text>
+            <!-- Artsdannelse forklart -->
+            <rect x="14" y="154" width="252" height="96" rx="10" fill="rgba(128,208,64,.03)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <text x="140" y="170" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.55)" letter-spacing=".06em">ARTSDANNELSE OG KONTINENTALDRIFT</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.55)">
+              <text x="24" y="186">Pangea brøt opp → populasjoner isolert</text>
+              <text x="24" y="200">→ ulik seleksjon i ulike miljøer</text>
+              <text x="24" y="214">→ genetisk drift og mutasjoner akkumuleres</text>
+              <text x="24" y="228">→ reproduktiv isolasjon → nye arter</text>
+              <text x="24" y="242">Eks: pungdyr (Australia) vs. placentale (rest)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Wallace-linjen og biogeografi -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 09</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🗺️ Wallace</div>
+          <h3 class="k-tittel">Wallace-linjen og biogeografi</h3>
+          <p class="k-ingress">Alfred Russel Wallace oppdaget at dyr-fauna plutselig endret seg mellom naboøyer i Indonesia – en av vitenskapens mest elegante observasjoner.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Wallace-linjen:</strong> En usynlig biogeografisk grense mellom øyene Bali og Lombok (bare 35 km fra hverandre!). Vest for linjen: asiatisk fauna (tigre, neshornsfugler, aper). Øst: australsk (pungdyr, paradisfugler, kakaduer).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦘</span><div><strong>Årsaken:</strong> Under istiden var havnivået lavt – Bali var forbundet med Asia, men Lombok med Australia. Grensen er faktisk den gamle kystlinjen fra Pangea-splittingen for ~180 millioner år siden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📚</span><div><strong>Wallace og kontinentaldrift:</strong> Wallace ante noe, men platetektonikk var ikke oppdaget ennå. Hans observasjoner ble en av de sterkeste bevisene FOR kontinentaldrift da Wegener lanserte teorien i 1912.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Biogeografi som bevis:</strong> Strusefugler finnes i Afrika, Sør-Amerika og Australia – men ikke på veien mellom dem. Kontinentene lå en gang sammenhengende. Fossil av samme art finnes på ulike kontinenter.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">WALLACE-LINJEN</text>
+            <!-- Stilisert kart over Sørøst-Asia -->
+            <!-- Borneo (vest for linjen) -->
+            <path d="M60,60 Q80,50 100,62 Q115,75 110,100 Q105,125 88,135 Q70,140 55,125 Q42,108 48,82 Q52,65 60,60Z" fill="rgba(128,208,64,.1)" stroke="rgba(128,208,64,.25)" stroke-width="1.2"/>
+            <text x="80" y="100" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.6)">Borneo</text>
+            <!-- Bali (vest) -->
+            <ellipse cx="92" cy="155" rx="12" ry="7" fill="rgba(128,208,64,.12)" stroke="rgba(128,208,64,.3)" stroke-width="1"/>
+            <text x="92" y="172" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(128,208,64,.6)">Bali</text>
+            <!-- Wallace-linje -->
+            <line x1="120" y1="40" x2="140" y2="200" stroke="#f0a030" stroke-width="2.5" stroke-dasharray="7 4"/>
+            <text x="150" y="56" font-family="DM Sans" font-size="8.5" fill="#f0a030" font-weight="600">Wallace-linjen</text>
+            <!-- Lombok (øst) -->
+            <ellipse cx="148" cy="155" rx="10" ry="6" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.3)" stroke-width="1"/>
+            <text x="148" y="170" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,160,48,.6)">Lombok</text>
+            <!-- Sulawesi (øst) -->
+            <path d="M160,55 Q175,48 188,58 Q198,70 194,88 Q190,105 178,115 Q165,122 155,110 Q148,98 152,78 Q155,62 160,55Z" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.25)" stroke-width="1.2"/>
+            <text x="174" y="88" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.6)">Sulawesi</text>
+            <!-- Fauna vest (asiatisk) -->
+            <text x="70" y="45" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">🐒 🦅 🐆</text>
+            <text x="55" y="180" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">Asiatisk fauna</text>
+            <!-- Fauna øst (australsk) -->
+            <text x="198" y="45" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">🦘 🦜 🦫</text>
+            <text x="180" y="180" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">Australsk fauna</text>
+            <!-- 35 km markering -->
+            <line x1="105" y1="155" x2="136" y2="155" stroke="rgba(237,232,248,.3)" stroke-width="1"/>
+            <text x="120" y="150" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(237,232,248,.4)">35 km!</text>
+            <!-- Biogeografi-bevis under -->
+            <rect x="14" y="196" width="252" height="55" rx="10" fill="rgba(240,160,48,.04)" stroke="rgba(240,160,48,.2)" stroke-width="1"/>
+            <text x="140" y="212" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.55)" letter-spacing=".06em">BIOGEOGRAFI SOM BEVIS FOR EVOLUSJON</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.5)">
+              <text x="24" y="226">Strusefugler: Afrika, S-Amerika, Australia</text>
+              <text x="24" y="238">Samme fossiler funnet på ulike kontinenter</text>
+              <text x="24" y="250">Øyendemisme: unike arter på isolerte øyer</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Evolusjon og kontinentaldrift -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 09</div>
+          <div class="k-kat" style="background:rgba(96,184,240,.1);color:#60b8f0;border:1px solid rgba(96,184,240,.2)">🌍 Geologi</div>
+          <h3 class="k-tittel">Kontinentaldrift former livet</h3>
+          <p class="k-ingress">Kontinentaldrift er ikke bare geografi – det er den største driveren for evolusjonær diversitet på jorda. Plater separerer og samler populasjoner over geologisk tid.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🦕</span><div><strong>Mesozoikum (252–66 mya):</strong> Dinosaurene spredte seg over hele Pangea. Da Pangea brøt opp, ble dinosaurpopulasjoner isolert – derav ulike arter på ulike kontinenter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐘</span><div><strong>Gondwana og pattedyr:</strong> Da Gondwana (sørhalvkule) brøt opp, divergerte afrikanske, sørasiatiske og australske pattedyr. Elefanter og nebbdyr var en gang samme stamfar!</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏔️</span><div><strong>Kollisjon skaper diversitet:</strong> Når kontinenter kolliderer dannes fjellkjeder (Himalaya: India + Asia). Fjell lager klimabarrierer → populasjoner isoleres → nye arter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌉</span><div><strong>Landbroer:</strong> Panama-landbroen (3 mya) koblet Nord- og Sør-Amerika. Dyr vandret begge veier – «Den store amerikanske biotiske utvekslingen». Skapte enorm diversitet og utryddelse.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,184,240,.6)" letter-spacing=".08em">PANGEA-OPPBRUDD OG EVOLUSJON</text>
+            <!-- Pangea-sammenligning -->
+            <text x="70" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,184,240,.5)">~200 mya (Pangea)</text>
+            <text x="210" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">I dag</text>
+            <!-- Pangea -->
+            <path d="M36,50 Q60,42 80,50 Q105,60 110,80 Q115,105 100,120 Q80,132 60,130 Q38,125 28,105 Q18,82 36,50Z" fill="rgba(96,184,240,.1)" stroke="#60b8f0" stroke-width="1.5"/>
+            <text x="69" y="92" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(96,184,240,.5)" font-style="italic">Pangea</text>
+            <!-- Dyr på Pangea (spredt over hele) -->
+            <text x="52" y="75" font-family="DM Sans" font-size="9" fill="rgba(96,184,240,.5)">🦕</text>
+            <text x="76" y="88" font-family="DM Sans" font-size="9" fill="rgba(96,184,240,.5)">🦕</text>
+            <text x="62" y="108" font-family="DM Sans" font-size="9" fill="rgba(96,184,240,.5)">🦕</text>
+            <!-- Pil -->
+            <text x="140" y="92" text-anchor="middle" font-family="DM Sans" font-size="20" fill="rgba(128,208,64,.3)">→</text>
+            <text x="140" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.35)">180 mill. år</text>
+            <!-- Dagens verden: separate kontinenter -->
+            <!-- N-Amerika -->
+            <path d="M160,48 Q175,42 188,52 Q196,64 192,82 Q187,98 174,104 Q160,108 154,92 Q150,74 160,48Z" fill="rgba(128,208,64,.1)" stroke="rgba(128,208,64,.25)" stroke-width="1"/>
+            <text x="174" y="78" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.5)">Amerika</text>
+            <!-- Europa/Afrika -->
+            <path d="M202,50 Q215,44 225,55 Q232,68 226,88 Q220,108 208,115 Q196,118 190,104 Q186,88 192,68 Q196,54 202,50Z" fill="rgba(128,208,64,.1)" stroke="rgba(128,208,64,.25)" stroke-width="1"/>
+            <text x="210" y="84" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.5)">Afrika</text>
+            <!-- Australia -->
+            <ellipse cx="244" cy="100" rx="18" ry="14" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.25)" stroke-width="1"/>
+            <text x="244" y="104" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.5)">Austr.</text>
+            <!-- Ulike dyr på ulike kontinenter -->
+            <text x="174" y="122" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(128,208,64,.5)">🦌</text>
+            <text x="210" y="130" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(128,208,64,.5)">🦁</text>
+            <text x="244" y="120" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.5)">🦘</text>
+            <!-- Forklaring under -->
+            <rect x="14" y="148" width="252" height="102" rx="10" fill="rgba(96,184,240,.03)" stroke="rgba(96,184,240,.2)" stroke-width="1"/>
+            <text x="140" y="164" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,184,240,.55)" letter-spacing=".06em">MEKANISME</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.55)">
+              <text x="24" y="180">1. Pangea delte seg → populasjoner isolert</text>
+              <text x="24" y="195">2. Ulik seleksjon i ulike miljøer</text>
+              <text x="24" y="210">3. Genetisk drift og mutasjoner</text>
+              <text x="24" y="225">4. Reproduktiv isolasjon → nye arter</text>
+              <text x="24" y="240">Eks: pungdyr (Australia) ble ikke «utkonkurrert»</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Bevis for evolusjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 09</div>
+          <div class="k-kat" style="background:rgba(128,208,64,.1);color:#80d040;border:1px solid rgba(128,208,64,.2)">🔬 Bevis</div>
+          <h3 class="k-tittel">Bevisene for evolusjon</h3>
+          <p class="k-ingress">Evolusjon er en av de best dokumenterte teoriene i naturvitenskapen. Bevisene kommer fra fem uavhengige fagfelt.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🦴</span><div><strong>Fossiler:</strong> Viser en klar progresjon fra enkle til komplekse former over geologisk tid. Overgangsformer som Tiktaalik (fisk→landlevende), Archaeopteryx (dinosaur→fugl).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Molekylær biologi:</strong> DNA-sekvenser viser slektskap. Mennesket deler 98.7% DNA med sjimpanser, 85% med mus, 60% med bananfluer – og 50% med bananer!</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦴</span><div><strong>Homologe strukturer:</strong> Menneskehånd, flaggermusevinge, hvalefinne og hestehov har samme beinstruktur (humerus-radius-ulna). Felles stamfar – ulik funksjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Direkte observasjon:</strong> Antibiotikaresistens, peppered moths, Darwins finker etter El Niño (1977). Vi ser evolusjon skje i sanntid hos organismer med korte generasjoner.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.6)" letter-spacing=".08em">HOMOLOGE STRUKTURER</text>
+            <!-- Felles beinstruktur hos ulike dyr -->
+            <!-- Menneskehånd -->
+            <text x="38" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">Menneske</text>
+            <g stroke="#80d040" stroke-width="2" stroke-linecap="round" fill="none">
+              <!-- Overarm -->
+              <line x1="38" y1="42" x2="38" y2="70"/>
+              <!-- Underarm -->
+              <line x1="38" y1="70" x2="30" y2="95"/>
+              <line x1="38" y1="70" x2="46" y2="95"/>
+              <!-- Håndrot -->
+              <ellipse cx="38" cy="100" rx="10" ry="6"/>
+              <!-- Fingre -->
+              <line x1="30" y1="106" x2="26" y2="128"/><line x1="34" y1="107" x2="31" y2="130"/>
+              <line x1="38" y1="107" x2="36" y2="132"/><line x1="42" y1="107" x2="42" y2="130"/>
+              <line x1="46" y1="106" x2="50" y2="126"/>
+            </g>
+            <!-- Flaggermusevinge -->
+            <text x="102" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">Flaggermus</text>
+            <g stroke="#f0a030" stroke-width="2" stroke-linecap="round" fill="none">
+              <line x1="102" y1="42" x2="102" y2="70"/>
+              <line x1="102" y1="70" x2="92" y2="95"/><line x1="102" y1="70" x2="112" y2="95"/>
+              <ellipse cx="102" cy="100" rx="10" ry="6"/>
+              <!-- Lange fingre for vingemembranen -->
+              <line x1="94" y1="106" x2="80" y2="138"/><line x1="98" y1="107" x2="90" y2="140"/>
+              <line x1="102" y1="107" x2="102" y2="142"/><line x1="106" y1="107" x2="114" y2="140"/>
+              <line x1="110" y1="106" x2="124" y2="138"/>
+            </g>
+            <!-- Hvalefinne -->
+            <text x="178" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(128,208,64,.5)">Hval</text>
+            <g stroke="#60b8f0" stroke-width="2.5" stroke-linecap="round" fill="none">
+              <line x1="178" y1="42" x2="178" y2="62"/>
+              <line x1="178" y1="62" x2="164" y2="78"/><line x1="178" y1="62" x2="192" y2="78"/>
+              <ellipse cx="178" cy="85" rx="16" ry="7"/>
+              <!-- Korte, fusjonerte «fingre» -->
+              <line x1="164" y1="92" x2="158" y2="115"/><line x1="170" y1="93" x2="167" y2="118"/>
+              <line x1="178" y1="94" x2="178" y2="120"/><line x1="186" y1="93" x2="189" y2="118"/>
+              <line x1="192" y1="92" x2="198" y2="115"/>
+            </g>
+            <!-- Labels -->
+            <g font-family="DM Sans" font-size="7" fill="rgba(232,240,216,.35)">
+              <text x="38" y="76" text-anchor="middle">humerus</text>
+              <text x="102" y="76" text-anchor="middle">humerus</text>
+              <text x="178" y="68" text-anchor="middle">humerus</text>
+              <text x="38" y="144" text-anchor="middle">fingre</text>
+              <text x="102" y="148" text-anchor="middle">forlengede fingre</text>
+              <text x="178" y="128" text-anchor="middle">fusjonert</text>
+            </g>
+            <!-- Felles stamfar -->
+            <line x1="38" y1="162" x2="140" y2="176" stroke="rgba(128,208,64,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <line x1="102" y1="162" x2="140" y2="176" stroke="rgba(128,208,64,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <line x1="178" y1="162" x2="140" y2="176" stroke="rgba(128,208,64,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <ellipse cx="140" cy="185" rx="32" ry="14" fill="rgba(128,208,64,.08)" stroke="rgba(128,208,64,.3)" stroke-width="1.2"/>
+            <text x="140" y="183" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(128,208,64,.6)">Felles stamfar</text>
+            <text x="140" y="193" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.45)">~375 mya</text>
+            <!-- DNA-fakta -->
+            <text x="140" y="216" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,184,240,.5)" letter-spacing=".04em">DNA-SLEKTSKAP MED MENNESKER</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.5)">
+              <text x="14" y="232">Sjimpanse: 98.7%  ·  Gorilla: 98.3%</text>
+              <text x="14" y="246">Mus: 85%  ·  Bananflue: 60%  ·  Banan: 50%</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Evolusjonsteori i dag -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 09</div>
+          <div class="k-kat" style="background:rgba(128,208,64,.1);color:#80d040;border:1px solid rgba(128,208,64,.2)">🔬 Moderne</div>
+          <h3 class="k-tittel">Den moderne synteseteorien</h3>
+          <p class="k-ingress">Darwin kjente ikke til Mendel eller DNA – den moderne synteseteorien kombinerer naturlig seleksjon med genetikk og molekylærbiologi.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Genetisk drift:</strong> Tilfeldig endring i allelfrekvenser – spesielt viktig i små populasjoner. «Founder effect»: Amish-samfunn har uvanlig høy frekvens av visse sjeldne sykdommer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Genetisk flyt (gene flow):</strong> Individer vandrer inn/ut av populasjoner og bringer sine alleler. Forhindrer artsdannelse – øker variasjon. Isolasjon stopper genflyten.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Seksuell seleksjon:</strong> Egenskaper som øker paringsuksess selv om de er kostbare (påfuglhalen). Darwin oppdaget dette – forklarer eksesser naturen ellers ikke ville favorisere.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Epigenetisk arv:</strong> Miljøpåvirkning kan endre genuttrykk og arves over generasjoner uten å endre DNA-sekvensen. Utfordrer det klassiske bildet av arv.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.6)" letter-spacing=".08em">KREFTER SOM DRIVER EVOLUSJON</text>
+            <!-- Sentralt: Allelfrekvenser -->
+            <ellipse cx="140" cy="120" rx="42" ry="32" fill="rgba(128,208,64,.06)" stroke="#80d040" stroke-width="2"/>
+            <text x="140" y="116" text-anchor="middle" font-family="Fraunces" font-size="9" fill="#80d040" font-weight="600">Allel-</text>
+            <text x="140" y="128" text-anchor="middle" font-family="Fraunces" font-size="9" fill="#80d040" font-weight="600">frekvenser</text>
+            <!-- Piler inn mot sentrum -->
+            <!-- Naturlig seleksjon -->
+            <path d="M44,68 L100,100" stroke="#f0a030" stroke-width="1.8" marker-end="url(#ev-arr)"/>
+            <defs><marker id="ev-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,160,48,.7)"/></marker></defs>
+            <text x="14" y="56" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.7)" font-weight="600">Naturlig</text>
+            <text x="14" y="66" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.7)" font-weight="600">seleksjon</text>
+            <!-- Mutasjon -->
+            <path d="M44,174 L100,140" stroke="#e06060" stroke-width="1.8" marker-end="url(#ev-arr2)"/>
+            <defs><marker id="ev-arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(224,96,96,.7)"/></marker></defs>
+            <text x="14" y="168" font-family="DM Sans" font-size="8" fill="rgba(224,96,96,.7)" font-weight="600">Mutasjon</text>
+            <!-- Genetisk drift -->
+            <path d="M236,68 L180,100" stroke="#60b8f0" stroke-width="1.8" marker-end="url(#ev-arr3)"/>
+            <defs><marker id="ev-arr3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,184,240,.7)"/></marker></defs>
+            <text x="220" y="56" font-family="DM Sans" font-size="8" fill="rgba(96,184,240,.7)" font-weight="600">Genetisk</text>
+            <text x="220" y="66" font-family="DM Sans" font-size="8" fill="rgba(96,184,240,.7)" font-weight="600">drift</text>
+            <!-- Genflyt -->
+            <path d="M236,174 L180,140" stroke="#b060ff" stroke-width="1.8" marker-end="url(#ev-arr4)"/>
+            <defs><marker id="ev-arr4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(176,96,255,.7)"/></marker></defs>
+            <text x="220" y="168" font-family="DM Sans" font-size="8" fill="rgba(176,96,255,.7)" font-weight="600">Genflyt</text>
+            <text x="220" y="178" font-family="DM Sans" font-size="8" fill="rgba(176,96,255,.7)" font-weight="600">(migrasjon)</text>
+            <!-- Hardy-Weinberg -->
+            <rect x="14" y="196" width="252" height="58" rx="10" fill="rgba(128,208,64,.03)" stroke="rgba(128,208,64,.2)" stroke-width="1"/>
+            <text x="140" y="212" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(128,208,64,.55)" letter-spacing=".06em">HARDY-WEINBERG LIKEVEKT</text>
+            <text x="140" y="228" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(128,208,64,.7)">p² + 2pq + q² = 1</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,240,216,.4)">Ingen evolusjon hvis: stor pop., tilfeldig paring, ingen mutasjon/drift/seleksjon</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Menneskets evolusjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">08 / 09</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🦍 Hominider</div>
+          <h3 class="k-tittel">Menneskets evolusjon</h3>
+          <p class="k-ingress">Homo sapiens er ikke toppen av evolusjonens stige – vi er en av mange pattedyrgrener, og var ikke den eneste Homo-arten for bare 40 000 år siden.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Ut av Afrika:</strong> Homo sapiens oppsto i Afrika for ~300 000 år siden. Spredte seg til Midt-Østen (~100 000 ya), Europa (~45 000 ya), Amerika (~15 000 ya).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦴</span><div><strong>Neandertaler (H. neanderthalensis):</strong> Ikke forfedre – «søskenart». Levde i Europa og Vest-Asia. Moderne europeere bærer 1–4% neandertal-DNA fra krysning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Hjernens størrelse:</strong> Ikke entydig. Neandertaler hadde faktisk litt større hjerne enn H. sapiens. Det er koblingene og sosial kompleksitet som skilte oss – ikke størrelsen alene.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐒</span><div><strong>Felles stamfar:</strong> Vi deler siste felles forfar med sjimpansen for ~6–7 millioner år siden. Vi er ikke «utviklet fra» sjimpanser – vi er søskenarter med felles opphav.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a04"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">HOMINID-TIDSLINJE</text>
+            <!-- Tidslinje -->
+            <line x1="30" y1="140" x2="260" y2="140" stroke="rgba(232,240,216,.2)" stroke-width="1.5"/>
+            <!-- Tidsmerker -->
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(232,240,216,.35)" text-anchor="middle">
+              <line x1="30" y1="136" x2="30" y2="144" stroke="rgba(232,240,216,.3)" stroke-width="1"/>
+              <text x="30" y="154">7 mya</text>
+              <line x1="80" y1="136" x2="80" y2="144" stroke="rgba(232,240,216,.3)" stroke-width="1"/>
+              <text x="80" y="154">4 mya</text>
+              <line x1="130" y1="136" x2="130" y2="144" stroke="rgba(232,240,216,.3)" stroke-width="1"/>
+              <text x="130" y="154">2 mya</text>
+              <line x1="180" y1="136" x2="180" y2="144" stroke="rgba(232,240,216,.3)" stroke-width="1"/>
+              <text x="180" y="154">300 kya</text>
+              <line x1="230" y1="136" x2="230" y2="144" stroke="rgba(232,240,216,.3)" stroke-width="1"/>
+              <text x="230" y="154">40 kya</text>
+              <text x="260" y="154">nå</text>
+            </g>
+            <!-- Sjimpanse-linje (nedover) -->
+            <line x1="30" y1="140" x2="260" y2="180" stroke="rgba(176,96,255,.3)" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="262" y="184" font-family="DM Sans" font-size="7.5" fill="rgba(176,96,255,.5)">Pan</text>
+            <!-- Ardipithecus -->
+            <circle cx="48" cy="122" r="5" fill="rgba(240,160,48,.3)" stroke="#f0a030" stroke-width="1"/>
+            <text x="48" y="112" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.5)">Ardi.</text>
+            <!-- Australopithecus -->
+            <circle cx="88" cy="118" r="6" fill="rgba(128,208,64,.25)" stroke="#80d040" stroke-width="1"/>
+            <text x="88" y="107" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.5)">Austral.</text>
+            <!-- Homo habilis -->
+            <circle cx="128" cy="110" r="6" fill="rgba(96,184,240,.25)" stroke="#60b8f0" stroke-width="1"/>
+            <text x="128" y="99" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,184,240,.5)">H. habilis</text>
+            <!-- Homo erectus -->
+            <circle cx="155" cy="100" r="7" fill="rgba(240,160,48,.25)" stroke="#f0a030" stroke-width="1"/>
+            <text x="155" y="88" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.5)">H. erectus</text>
+            <!-- Neandertal -->
+            <circle cx="210" cy="88" r="7" fill="rgba(224,96,96,.25)" stroke="#e06060" stroke-width="1.5"/>
+            <text x="210" y="76" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,96,96,.6)">Neandertal</text>
+            <!-- Homo sapiens -->
+            <circle cx="230" cy="78" r="10" fill="rgba(128,208,64,.2)" stroke="#80d040" stroke-width="2"/>
+            <text x="230" y="75" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#80d040" font-weight="600">H. sapiens</text>
+            <!-- Krysning -->
+            <path d="M215,88 Q222,83 226,82" fill="none" stroke="rgba(240,160,48,.5)" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="218" y="78" font-family="DM Sans" font-size="6.5" fill="rgba(240,160,48,.5)">krysning</text>
+            <!-- DNA-prosent -->
+            <text x="248" y="72" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.45)">1-4%</text>
+            <text x="248" y="80" font-family="DM Sans" font-size="7" fill="rgba(128,208,64,.35)">neandertal</text>
+            <!-- Forklaring -->
+            <rect x="14" y="166" width="252" height="84" rx="10" fill="rgba(240,160,48,.03)" stroke="rgba(240,160,48,.2)" stroke-width="1"/>
+            <text x="140" y="182" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.55)" letter-spacing=".06em">VIKTIG Å FORSTÅ</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,240,216,.55)">
+              <text x="24" y="198">Vi er IKKE utviklet fra sjimpanser</text>
+              <text x="24" y="212">Vi er søskenarter med FELLES stamfar</text>
+              <text x="24" y="226">Evolusjonstre, ikke evolusjonsstige</text>
+              <text x="24" y="240">Neandertal: søskenart, ikke forfar</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S9: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">09 / 09</div>
+          <div class="k-kat" style="background:rgba(128,208,64,.1);color:#80d040;border:1px solid rgba(128,208,64,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Evolusjon – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:760px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(128,208,64,.04);border:1px solid rgba(128,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#80d040;display:block;margin-bottom:4px">🔭 Darwin og Wallace</strong>Uavhengig oppdagelse 1858 · Wallace-linjen · Beagle-reisen · Galápagos-finker · felles presentasjon Linnean Society</div>
+            <div style="padding:14px;background:rgba(240,160,48,.04);border:1px solid rgba(240,160,48,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#f0a030;display:block;margin-bottom:4px">⚙️ Naturlig seleksjon</strong>Variasjon · arvelighet · kamp om ressurser · differensiell overlevelse · akkumulasjon over generasjoner</div>
+            <div style="padding:14px;background:rgba(96,184,240,.04);border:1px solid rgba(96,184,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#60b8f0;display:block;margin-bottom:4px">🌍 Kontinentaldrift</strong>Pangea → isolasjon → artsdannelse · pungdyr (Australia) · Wallace-linjen · biogeografi som bevis</div>
+            <div style="padding:14px;background:rgba(128,208,64,.04);border:1px solid rgba(128,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#80d040;display:block;margin-bottom:4px">🔬 Bevis</strong>Fossiler · DNA (98.7% felles med sjimpanse) · homologe strukturer · direkte observasjon · biogeografi</div>
+            <div style="padding:14px;background:rgba(240,160,48,.04);border:1px solid rgba(240,160,48,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#f0a030;display:block;margin-bottom:4px">🦍 Mennesket</strong>H. sapiens fra Afrika · 300 000 år · søskenart med sjimpanse (ikke etterkommer) · neandertal-DNA i europeere</div>
+            <div style="padding:14px;background:rgba(128,208,64,.04);border:1px solid rgba(128,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(232,240,216,.65);line-height:1.6"><strong style="color:#80d040;display:block;margin-bottom:4px">🔄 Moderne syntese</strong>Seleksjon + genetikk + drift + genflyt · Hardy-Weinberg · epigenetikk · seksuell seleksjon</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- EVOLUSJONSHISTORIENS NØKKELFIGURER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sentrale skikkelser</div><div class="sep-r"></div></div>
+  <div class="evo-grid">
+    <div class="evo-kort"><div class="evo-navn">Charles Darwin</div><div class="evo-tid">1809–1882 · Storbritannia</div><div class="evo-tekst">HMS Beagle-ekspedisjonen (1831–36), Galápagos-observasjoner, 20 år å samle bevis. On the Origin of Species (1859). Far av evolusjonslæren.</div></div>
+    <div class="evo-kort"><div class="evo-navn">Alfred Russel Wallace</div><div class="evo-tid">1823–1913 · Storbritannia</div><div class="evo-tekst">Selvlært naturalist. Oppdaget teorien uavhengig mens han lå febersyk på Ternate (1858). Oppdaget Wallace-linjen i Indonesia. Underkreditert i historien.</div></div>
+    <div class="evo-kort"><div class="evo-navn">Gregor Mendel</div><div class="evo-tid">1822–1884 · Østerrike-Ungarn</div><div class="evo-tekst">Arvelover fra ertekryss 1856–63. Ukjent i sin tid – rediscovered 1900 av tre forskere uavhengig. Manglende leddet mellom Darwin og molekylærbiologi.</div></div>
+    <div class="evo-kort"><div class="evo-navn">Ernst Mayr</div><div class="evo-tid">1904–2005 · Tyskland/USA</div><div class="evo-tekst">Definerte biologisk artsbegrep (1942): populasjoner som kan kryse seg og gi fruktbart avkom. Arkitekt bak «den moderne syntese».</div></div>
+    <div class="evo-kort"><div class="evo-navn">Svante Pääbo</div><div class="evo-tid">f. 1955 · Sverige</div><div class="evo-tekst">Nobel 2022 for sekvensering av neandertalgenomer. Oppdaget at moderne europeere bærer 1–4% neandertal-DNA. Grunnlegger av paleogenetikk.</div></div>
+    <div class="evo-kort"><div class="evo-navn">Lynn Margulis</div><div class="evo-tid">1938–2011 · USA</div><div class="evo-tekst">Endosymbioseteorien: mitokondrier og kloroplaster stammer fra oppslukte bakterier. Revolusjonerte forståelsen av eukaryot celleevolusjon.</div></div>
+  </div>
+
+</div>
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e=>tx=e.touches[0].clientX,{passive:true});
+document.getElementById('karusell').addEventListener('touchend', e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>50)kGo(dx<0?1:-1);
+},{passive:true});
+goTo(0);
+</script>
+</body>
+</html>

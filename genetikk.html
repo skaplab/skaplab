@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Genetikk og arv</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07040f;--surface:#0e0818;--card:#130c1e;--border:rgba(180,100,255,.08);
+  --text:#ede8f8;--dim:#4a3868;
+  --accent:#b060ff;--accent2:#60d0a0;--accent3:#f0a040;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(176,96,255,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,160,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(7,4,15,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;font-weight:500;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(237,232,248,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(176,96,255,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(237,232,248,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:4px}
+.k-kort{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.k-kort-hoved{font-family:var(--font-d);font-size:1.15rem;font-weight:700;margin-bottom:3px}
+.k-kort-navn{font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.k-kort-eks{font-size:.72rem;color:rgba(237,232,248,.45);line-height:1.5}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* Punnett-kalkulator */
+.punnett-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.punnett-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);margin-bottom:18px;text-align:center}
+.punnett-input{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:18px}
+.punnett-input label{font-size:.78rem;color:var(--dim);letter-spacing:.08em}
+.punnett-input input{width:48px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-d);font-size:1rem;text-align:center}
+.punnett-input input:focus{outline:none;border-color:var(--accent)}
+.punnett-btn{padding:8px 20px;border-radius:8px;border:1px solid rgba(176,96,255,.3);background:rgba(176,96,255,.08);color:var(--accent);font-family:var(--font-b);font-size:.82rem;cursor:pointer;transition:all .18s}
+.punnett-btn:hover{background:rgba(176,96,255,.16)}
+.punnett-tabell{display:grid;grid-template-columns:auto auto auto auto;gap:2px;max-width:300px;margin:0 auto 14px;font-family:var(--font-d);font-size:1rem}
+.p-celle{padding:10px 14px;border-radius:6px;text-align:center;font-weight:700}
+.p-header{background:rgba(176,96,255,.1);color:var(--dim);font-size:.85rem}
+.p-dom{background:rgba(96,208,160,.12);color:#60d0a0}
+.p-het{background:rgba(240,160,64,.1);color:#f0a040}
+.p-res{background:rgba(224,64,64,.1);color:#e06060}
+.punnett-resultat{font-size:.82rem;text-align:center;color:rgba(237,232,248,.6);line-height:1.8}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.begrep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:4px}
+.begrep-kort{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.begrep-ord{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:4px;font-style:italic}
+.begrep-def{font-size:.76rem;line-height:1.6;color:rgba(237,232,248,.55)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.punnett-tabell{font-size:.9rem}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Genetikk og arv</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Genetikk</div>
+    <h1>Genetikk<br>og <em>arv</em></h1>
+    <p class="hero-sub">Fra Mendels erter til CRISPR – hvordan egenskaper arves, muteres og styrer alt levende</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: DNA og gener -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 09</div>
+          <div class="k-kat" style="background:rgba(176,96,255,.1);color:#b060ff;border:1px solid rgba(176,96,255,.2)">🧬 DNA</div>
+          <h3 class="k-tittel">DNA – livets oppskrift</h3>
+          <p class="k-ingress">DNA (deoksyribonukleinsyre) er den kjemiske koden for alt levende. Den lagres i cellekjernen og inneholder instruksjoner for å bygge og drive organismer.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Dobbel helix:</strong> To komplementære strenges spiralform oppdaget av Watson og Crick i 1953 – basert på røntgendata fra Rosalind Franklin.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔤</span><div><strong>Baseparene:</strong> Fire baser – Adenin (A), Tymin (T), Guanin (G), Cytosin (C). A parer alltid med T, G alltid med C. Sekvensen er koden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Mengde:</strong> Hvert menneskecelle inneholder ~3 milliarder basepar, fordelt på 23 kromosompar. Strukket ut: ~2 meter DNA per celle.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🗂️</span><div><strong>Gen:</strong> En DNA-sekvens som koder for et protein. Mennesket har ~22 000 gener – bare ~2% av DNA er proteinkodende.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(176,96,255,.6)" letter-spacing=".08em">DNA DOBBEL HELIX</text>
+            <!-- Helix-strenger -->
+            <path d="M90,30 Q120,50 90,80 Q60,110 90,140 Q120,170 90,200 Q60,230 90,252" fill="none" stroke="#b060ff" stroke-width="3" stroke-linecap="round"/>
+            <path d="M190,30 Q160,50 190,80 Q220,110 190,140 Q160,170 190,200 Q220,230 190,252" fill="none" stroke="#60d0a0" stroke-width="3" stroke-linecap="round"/>
+            <!-- Basepar-broer (A-T og G-C) -->
+            <g stroke-width="2" stroke-linecap="round">
+              <!-- A-T par (lilla-grønn) -->
+              <line x1="96" y1="44" x2="184" y2="44" stroke="rgba(176,96,255,.5)"/>
+              <line x1="84" y1="66" x2="196" y2="66" stroke="rgba(96,208,160,.5)"/>
+              <line x1="96" y1="94" x2="184" y2="94" stroke="rgba(240,160,64,.5)"/>
+              <line x1="84" y1="118" x2="196" y2="118" stroke="rgba(176,96,255,.5)"/>
+              <line x1="96" y1="142" x2="184" y2="142" stroke="rgba(96,208,160,.5)"/>
+              <line x1="84" y1="166" x2="196" y2="166" stroke="rgba(240,160,64,.5)"/>
+              <line x1="96" y1="194" x2="184" y2="194" stroke="rgba(176,96,255,.5)"/>
+              <line x1="84" y1="218" x2="196" y2="218" stroke="rgba(96,208,160,.5)"/>
+              <line x1="96" y1="242" x2="184" y2="242" stroke="rgba(240,160,64,.5)"/>
+            </g>
+            <!-- Base-labels -->
+            <g font-family="Fraunces" font-size="9" font-weight="700">
+              <text x="85" y="48" fill="#b060ff">A</text><text x="186" y="48" fill="#60d0a0">T</text>
+              <text x="74" y="70" fill="#60d0a0">G</text><text x="196" y="70" fill="#f0a040">C</text>
+              <text x="85" y="98" fill="#f0a040">T</text><text x="186" y="98" fill="#b060ff">A</text>
+              <text x="74" y="122" fill="#b060ff">A</text><text x="196" y="122" fill="#60d0a0">T</text>
+              <text x="85" y="146" fill="#60d0a0">G</text><text x="186" y="146" fill="#f0a040">C</text>
+              <text x="74" y="170" fill="#f0a040">C</text><text x="196" y="170" fill="#60d0a0">G</text>
+              <text x="85" y="198" fill="#b060ff">A</text><text x="186" y="198" fill="#60d0a0">T</text>
+              <text x="74" y="222" fill="#60d0a0">T</text><text x="196" y="222" fill="#b060ff">A</text>
+              <text x="85" y="246" fill="#f0a040">G</text><text x="186" y="246" fill="#60d0a0">C</text>
+            </g>
+            <!-- Forklaring -->
+            <g font-family="DM Sans" font-size="8">
+              <rect x="8" y="8" width="10" height="8" rx="2" fill="#b060ff" opacity=".5"/>
+              <text x="22" y="15" fill="rgba(237,232,248,.5)">Adenin (A)</text>
+              <rect x="8" y="20" width="10" height="8" rx="2" fill="#60d0a0" opacity=".5"/>
+              <text x="22" y="27" fill="rgba(237,232,248,.5)">Guanin (G)</text>
+              <rect x="148" y="8" width="10" height="8" rx="2" fill="#f0a040" opacity=".5"/>
+              <text x="162" y="15" fill="rgba(237,232,248,.5)">Cytosin (C)</text>
+              <rect x="148" y="20" width="10" height="8" rx="2" fill="rgba(237,232,248,.3)"/>
+              <text x="162" y="27" fill="rgba(237,232,248,.5)">Tymin (T)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Mendel og arvelover -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 09</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.2)">🌱 Mendel</div>
+          <h3 class="k-tittel">Mendels arvelover</h3>
+          <p class="k-ingress">Gregor Mendel oppdaget arvelovene på 1860-tallet ved å krysse erter – uten å kjenne til DNA, kromosomer eller gener.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">1️⃣</span><div><strong>1. arvelov – Segregasjon:</strong> Hvert individ bærer to alleler per gen. Ved kjønnscellendannelse (meiose) skilles allelene – hvert egg/sperm får ett allel.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">2️⃣</span><div><strong>2. arvelov – Uavhengig fordeling:</strong> Gener på ulike kromosomer fordeles uavhengig av hverandre. Gjelder ikke for koblede gener (på samme kromosom).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👑</span><div><strong>Dominant/recessiv:</strong> Dominant allel (stor bokstav, A) uttrykkes alltid. Recessivt allel (liten bokstav, a) skjules av dominant. aa = recessiv fenotype.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧮</span><div><strong>Monohybridkryss F2:</strong> Aa × Aa gir 3:1 ratio (3 dominant fenotype : 1 recessiv). Punnett-rute viser alle kombinasjoner.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.6)" letter-spacing=".08em">MONOHYBRIDKRYSS Aa × Aa</text>
+            <!-- Foreldre -->
+            <rect x="50" y="24" width="60" height="28" rx="8" fill="rgba(96,208,160,.1)" stroke="#60d0a0" stroke-width="1.5"/>
+            <text x="80" y="42" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#60d0a0" font-weight="700">Aa</text>
+            <rect x="170" y="24" width="60" height="28" rx="8" fill="rgba(96,208,160,.1)" stroke="#60d0a0" stroke-width="1.5"/>
+            <text x="200" y="42" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#60d0a0" font-weight="700">Aa</text>
+            <text x="140" y="42" text-anchor="middle" font-family="DM Sans" font-size="14" fill="rgba(237,232,248,.3)">×</text>
+            <!-- Pil ned -->
+            <line x1="140" y1="56" x2="140" y2="70" stroke="rgba(176,96,255,.4)" stroke-width="1.5"/>
+            <polygon points="135,70 140,78 145,70" fill="rgba(176,96,255,.4)"/>
+            <!-- Punnett-rute -->
+            <text x="100" y="94" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(96,208,160,.6)" font-weight="700">A</text>
+            <text x="158" y="94" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(96,208,160,.4)">a</text>
+            <text x="72" y="122" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(96,208,160,.6)" font-weight="700">A</text>
+            <text x="72" y="162" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(96,208,160,.4)">a</text>
+            <!-- Celler -->
+            <rect x="82" y="99" width="56" height="44" rx="4" fill="rgba(96,208,160,.12)" stroke="rgba(96,208,160,.3)" stroke-width="1"/>
+            <text x="110" y="126" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#60d0a0" font-weight="700">AA</text>
+            <rect x="140" y="99" width="56" height="44" rx="4" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.25)" stroke-width="1"/>
+            <text x="168" y="126" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#60d0a0">Aa</text>
+            <rect x="82" y="145" width="56" height="44" rx="4" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.25)" stroke-width="1"/>
+            <text x="110" y="172" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#60d0a0">Aa</text>
+            <rect x="140" y="145" width="56" height="44" rx="4" fill="rgba(224,64,64,.1)" stroke="rgba(224,64,64,.25)" stroke-width="1"/>
+            <text x="168" y="172" text-anchor="middle" font-family="Fraunces" font-size="16" fill="#e06060">aa</text>
+            <!-- Ratio -->
+            <text x="140" y="210" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(237,232,248,.5)">Genotype: 1 AA : 2 Aa : 1 aa</text>
+            <text x="140" y="224" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.6)">Fenotype: 3 dominant : 1 recessiv</text>
+            <!-- Forklaring -->
+            <g font-family="DM Sans" font-size="8">
+              <rect x="20" y="234" width="10" height="8" rx="2" fill="rgba(96,208,160,.4)"/>
+              <text x="34" y="241" fill="rgba(237,232,248,.45)">Dominant (A)</text>
+              <rect x="140" y="234" width="10" height="8" rx="2" fill="rgba(224,64,64,.4)"/>
+              <text x="154" y="241" fill="rgba(237,232,248,.45)">Recessiv (aa)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Genotype og fenotype -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 09</div>
+          <div class="k-kat" style="background:rgba(240,160,64,.1);color:#f0a040;border:1px solid rgba(240,160,64,.2)">🎭 Uttrykk</div>
+          <h3 class="k-tittel">Genotype, fenotype og alleler</h3>
+          <p class="k-ingress">Genotypen er den faktiske DNA-sekvensen. Fenotypen er den observerbare egenskapen – resultatet av genotype pluss miljø.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Alleler:</strong> Ulike varianter av samme gen. Eks: blodtype-genet har allelene Iᴬ, Iᴮ og i. Kombinasjonen avgjør blodtype A, B, AB eller O.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Miljøets rolle:</strong> Identiske tvillinger har samme genotype men kan ha ulik fenotype (høyde, vekt, sykdom). Epigenetikk: miljø kan slå gener av/på uten å endre DNA.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Kodominans:</strong> Begge alleler uttrykkes – blodtype AB er kodominant (både Iᴬ og Iᴮ uttrykkes). Ingen er dominant over den andre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Polygeni:</strong> De fleste menneskelige egenskaper (høyde, hudfarge, intelligens) styres av mange gener samtidig – ikke av ett enkelt gen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,64,.6)" letter-spacing=".08em">BLODTYPE-GENETIKK (ABO)</text>
+            <!-- ABO-tabell -->
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(240,160,64,.6)" font-weight="600">
+              <text x="40" y="36">Genotype</text><text x="130" y="36">Fenotype</text><text x="205" y="36">Blodtype</text>
+            </g>
+            <line x1="14" y1="40" x2="266" y2="40" stroke="rgba(240,160,64,.2)" stroke-width="1"/>
+            <g font-family="Fraunces" font-size="13" font-weight="700">
+              <text x="50" y="62" fill="rgba(237,232,248,.7)">IᴬIᴬ</text><text x="135" y="62" fill="#f0a040">A-antigen</text><text x="218" y="62" fill="#f0a040">A</text>
+              <text x="50" y="84" fill="rgba(237,232,248,.7)">Iᴬi</text><text x="135" y="84" fill="#f0a040">A-antigen</text><text x="218" y="84" fill="#f0a040">A</text>
+              <text x="50" y="106" fill="rgba(237,232,248,.7)">IᴮIᴮ</text><text x="135" y="106" fill="#60d0a0">B-antigen</text><text x="218" y="106" fill="#60d0a0">B</text>
+              <text x="50" y="128" fill="rgba(237,232,248,.7)">Iᴮi</text><text x="135" y="128" fill="#60d0a0">B-antigen</text><text x="218" y="128" fill="#60d0a0">B</text>
+              <text x="50" y="150" fill="rgba(237,232,248,.7)">IᴬIᴮ</text><text x="135" y="150" fill="#b060ff">A+B begge</text><text x="218" y="150" fill="#b060ff">AB</text>
+              <text x="50" y="172" fill="rgba(237,232,248,.7)">ii</text><text x="135" y="172" fill="rgba(237,232,248,.4)">Ingen</text><text x="218" y="172" fill="rgba(237,232,248,.6)">O</text>
+            </g>
+            <text x="218" y="150" text-anchor="start" font-family="DM Sans" font-size="7.5" fill="rgba(176,96,255,.5)"> ← kodominant</text>
+            <!-- Forklaring miljø -->
+            <rect x="14" y="186" width="252" height="66" rx="10" fill="rgba(240,160,64,.04)" stroke="rgba(240,160,64,.2)" stroke-width="1"/>
+            <text x="140" y="202" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,64,.6)" letter-spacing=".06em">GENOTYPE + MILJØ = FENOTYPE</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(237,232,248,.5)">
+              <text x="24" y="218">Eks 1: Høyde – gener (80%) + ernæring (20%)</text>
+              <text x="24" y="232">Eks 2: Fenyketonuri – gen + kosthold (PKU-test)</text>
+              <text x="24" y="246">Eks 3: Hudtone – melanin-gener + UV-eksponering</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Mutasjoner -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 09</div>
+          <div class="k-kat" style="background:rgba(224,64,64,.1);color:#e06060;border:1px solid rgba(224,64,64,.2)">⚡ Mutasjoner</div>
+          <h3 class="k-tittel">Mutasjoner – endringer i DNA</h3>
+          <p class="k-ingress">Mutasjoner er permanente endringer i DNA-sekvensen. De er den ultimate kilden til all genetisk variasjon – og dermed til evolusjon.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔁</span><div><strong>Punktmutasjon:</strong> Ett enkelt basepar endres. Eks: HbS-mutasjonen i hemoglobin (A→T) gir sigdcelleanemi. En enkelt base kan endre alt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Innsetting/sletting:</strong> En eller flere baser legges til eller fjernes. Forskyver leserammen – frameshift-mutasjon. Kan gjøre hele proteinet ubrukelig.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☢️</span><div><strong>Årsaker:</strong> UV-stråling, kjemiske mutagener (tobakk), radioaktivitet, feil under DNA-kopiering. ~10⁹ kopieringer/dag i kroppen – de fleste repareres.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎰</span><div><strong>Effekter:</strong> Nøytral (ingen effekt), gunstig (sjelden – evolusjon!), skadelig (kreft, arvelidelse). 99% er nøytrale eller reparerte.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,64,64,.6)" letter-spacing=".08em">MUTASJONSTYPER</text>
+            <!-- Normal sekvens -->
+            <text x="14" y="36" font-family="DM Sans" font-size="8.5" fill="rgba(237,232,248,.5)" font-weight="600">Normal:</text>
+            <g font-family="Fraunces" font-size="13" font-weight="700">
+              <text x="70" y="36" fill="#60d0a0">A</text><text x="90" y="36" fill="#b060ff">T</text>
+              <text x="110" y="36" fill="#f0a040">G</text><text x="130" y="36" fill="#60d0a0">C</text>
+              <text x="150" y="36" fill="#b060ff">A</text><text x="170" y="36" fill="#f0a040">T</text>
+              <text x="190" y="36" fill="#60d0a0">G</text>
+            </g>
+            <!-- Punktmutasjon -->
+            <text x="14" y="72" font-family="DM Sans" font-size="8.5" fill="rgba(224,64,64,.6)" font-weight="600">Punkt:</text>
+            <g font-family="Fraunces" font-size="13" font-weight="700">
+              <text x="70" y="72" fill="#60d0a0">A</text><text x="90" y="72" fill="#b060ff">T</text>
+              <text x="110" y="72" fill="#e06060">C</text><!-- Endret fra G til C -->
+              <text x="130" y="72" fill="#60d0a0">C</text>
+              <text x="150" y="72" fill="#b060ff">A</text><text x="170" y="72" fill="#f0a040">T</text>
+              <text x="190" y="72" fill="#60d0a0">G</text>
+            </g>
+            <ellipse cx="115" cy="68" rx="12" ry="10" fill="none" stroke="#e06060" stroke-width="1.8" stroke-dasharray="3 2"/>
+            <text x="115" y="86" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,64,64,.6)">G→C bytte</text>
+            <!-- Innsetting -->
+            <text x="14" y="114" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,64,.6)" font-weight="600">Innsetting:</text>
+            <g font-family="Fraunces" font-size="13" font-weight="700">
+              <text x="70" y="114" fill="#60d0a0">A</text><text x="90" y="114" fill="#b060ff">T</text>
+              <text x="110" y="114" fill="#f0a040">G</text>
+              <text x="130" y="114" fill="#f0c040">X</text><!-- Ny base -->
+              <text x="150" y="114" fill="#60d0a0">C</text>
+              <text x="170" y="114" fill="#b060ff">A</text><text x="190" y="114" fill="#f0a040">T</text>
+            </g>
+            <ellipse cx="135" cy="110" rx="12" ry="10" fill="rgba(240,192,64,.15)" stroke="#f0c040" stroke-width="1.8"/>
+            <text x="135" y="128" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,192,64,.6)">Ny base inn</text>
+            <!-- Frameshift konsekvens -->
+            <rect x="14" y="142" width="252" height="50" rx="10" fill="rgba(224,64,64,.04)" stroke="rgba(224,64,64,.2)" stroke-width="1"/>
+            <text x="140" y="158" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,64,64,.6)" letter-spacing=".06em">FRAMESHIFT-EFFEKT</text>
+            <text x="24" y="172" font-family="DM Sans" font-size="8" fill="rgba(237,232,248,.5)">Normal:     ATG · CAT · GAC · TAG</text>
+            <text x="24" y="184" font-family="DM Sans" font-size="8" fill="rgba(224,64,64,.5)">+1 inns.:  ATG · XCA · TGA · CTA  ← feil!</text>
+            <!-- Sigdcelleanemi -->
+            <text x="140" y="212" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.55)" letter-spacing=".06em">SIGDCELLEANEMI – ETT BASEPAR</text>
+            <g font-family="DM Sans" font-size="8" fill="rgba(237,232,248,.5)">
+              <text x="14" y="228">Normalt hemoglobin: …GAG… → Glutamat</text>
+              <text x="14" y="242">Sigdcelle:          …GTG… → Valin (A→T)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Kromosomer og meiose -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 09</div>
+          <div class="k-kat" style="background:rgba(176,96,255,.1);color:#b060ff;border:1px solid rgba(176,96,255,.2)">🔬 Kromosomer</div>
+          <h3 class="k-tittel">Kromosomer og meiose</h3>
+          <p class="k-ingress">Kromosomer er tett pakket DNA. Meiose er den spesielle celledeling som produserer kjønnsceller med halv kromosom-mengde.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Diploid (2n) vs. haploid (n):</strong> Menneskeceller er diploide (2n=46 – 23 par). Kjønnsceller (egg, sperm) er haploide (n=23). Befruktning gjenoppretter 2n.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Crossing over:</strong> Under meiose I bytter homologe kromosomer deler med hverandre. Skaper ny kombinsajoner av alleler – rekombinasjon. Viktig for variasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚥</span><div><strong>Kjønnskromosomer:</strong> XX = jente, XY = gutt. Y-kromosomet er lite og bærer SRY-genet (testisbestemmelse). X-bundne sykdommer: fargblindhet, hemofili.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔢</span><div><strong>Kromosom-anomalier:</strong> Downs syndrom = trisomi 21 (ett ekstra kromosom 21). Oppstår ved feil i meiose (non-disjunction). Vanligere ved høy mors alder.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(176,96,255,.6)" letter-spacing=".08em">MEIOSE – OVERSIKT</text>
+            <!-- Modercelle 2n -->
+            <ellipse cx="140" cy="46" rx="30" ry="22" fill="rgba(176,96,255,.08)" stroke="#b060ff" stroke-width="1.5"/>
+            <text x="140" y="42" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#b060ff" font-weight="700">2n</text>
+            <text x="140" y="54" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(176,96,255,.5)">modercelle</text>
+            <!-- Meiose I-pil -->
+            <line x1="140" y1="68" x2="100" y2="92" stroke="rgba(176,96,255,.4)" stroke-width="1.5"/>
+            <line x1="140" y1="68" x2="180" y2="92" stroke="rgba(176,96,255,.4)" stroke-width="1.5"/>
+            <text x="70" y="82" font-family="DM Sans" font-size="7" fill="rgba(176,96,255,.4)">Meiose I</text>
+            <!-- 2 celler etter meiose I -->
+            <ellipse cx="90" cy="106" rx="24" ry="18" fill="rgba(96,208,160,.08)" stroke="#60d0a0" stroke-width="1.2"/>
+            <text x="90" y="110" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#60d0a0">n</text>
+            <ellipse cx="190" cy="106" rx="24" ry="18" fill="rgba(96,208,160,.08)" stroke="#60d0a0" stroke-width="1.2"/>
+            <text x="190" y="110" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#60d0a0">n</text>
+            <!-- Meiose II-piler -->
+            <line x1="90" y1="124" x2="60" y2="148" stroke="rgba(240,160,64,.4)" stroke-width="1.2"/>
+            <line x1="90" y1="124" x2="120" y2="148" stroke="rgba(240,160,64,.4)" stroke-width="1.2"/>
+            <line x1="190" y1="124" x2="160" y2="148" stroke="rgba(240,160,64,.4)" stroke-width="1.2"/>
+            <line x1="190" y1="124" x2="220" y2="148" stroke="rgba(240,160,64,.4)" stroke-width="1.2"/>
+            <text x="140" y="138" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,64,.4)">Meiose II</text>
+            <!-- 4 haploide celler -->
+            <g>
+              <ellipse cx="52" cy="164" rx="18" ry="14" fill="rgba(240,160,64,.1)" stroke="#f0a040" stroke-width="1.2"/>
+              <text x="52" y="168" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">n</text>
+              <ellipse cx="116" cy="164" rx="18" ry="14" fill="rgba(240,160,64,.1)" stroke="#f0a040" stroke-width="1.2"/>
+              <text x="116" y="168" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">n</text>
+              <ellipse cx="164" cy="164" rx="18" ry="14" fill="rgba(240,160,64,.1)" stroke="#f0a040" stroke-width="1.2"/>
+              <text x="164" y="168" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">n</text>
+              <ellipse cx="228" cy="164" rx="18" ry="14" fill="rgba(240,160,64,.1)" stroke="#f0a040" stroke-width="1.2"/>
+              <text x="228" y="168" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">n</text>
+            </g>
+            <text x="140" y="190" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,64,.5)">4 haploide kjønnsceller</text>
+            <!-- Befruktning -->
+            <line x1="52" y1="178" x2="70" y2="208" stroke="rgba(176,96,255,.3)" stroke-width="1.2" stroke-dasharray="4 2"/>
+            <line x1="228" y1="178" x2="210" y2="208" stroke="rgba(176,96,255,.3)" stroke-width="1.2" stroke-dasharray="4 2"/>
+            <text x="140" y="206" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(176,96,255,.4)">Befruktning (egg + sperm)</text>
+            <ellipse cx="140" cy="232" rx="26" ry="18" fill="rgba(176,96,255,.1)" stroke="#b060ff" stroke-width="1.5"/>
+            <text x="140" y="228" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#b060ff" font-weight="700">2n</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(176,96,255,.5)">zygote</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Proteinsyntese -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 09</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.2)">🏭 Proteinsyntese</div>
+          <h3 class="k-tittel">Fra gen til protein</h3>
+          <p class="k-ingress">Genet i DNA avleses og oversettes til aminosyresekvens – proteinsyntesen er livets mest grunnleggende prosess.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📋</span><div><strong>Transkripsjon:</strong> DNA → mRNA. RNA-polymerase leser DNA og lager en komplementær mRNA-streng i cellekjernen. U erstatter T i RNA.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔡</span><div><strong>Den genetiske koden:</strong> Tre baser (kodon) = én aminosyre. 64 kodoner koder for 20 aminosyrer + 3 stoppkodoner. Koden er universell – lik i alle levende organismer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏗️</span><div><strong>Translasjon:</strong> mRNA → protein. Ribosomer leser mRNA-kodoner. tRNA bringer riktig aminosyre. Aminosyrene kobles til en polypeptidkjede.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">✂️</span><div><strong>Introns og exons:</strong> Hos eukaryote er bare exons proteinkodende. Introns klippes bort (splicing) før translasjon. Alternativ splicing → ulike proteiner fra ett gen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.6)" letter-spacing=".08em">DNA → mRNA → PROTEIN</text>
+            <!-- DNA-streng -->
+            <text x="14" y="38" font-family="DM Sans" font-size="8.5" fill="rgba(176,96,255,.6)" font-weight="600">DNA:</text>
+            <g font-family="Fraunces" font-size="12" font-weight="700">
+              <text x="50" y="38" fill="#b060ff">A</text><text x="66" y="38" fill="#b060ff">T</text>
+              <text x="82" y="38" fill="#b060ff">G</text><text x="98" y="38" fill="#b060ff">C</text>
+              <text x="114" y="38" fill="#b060ff">A</text><text x="130" y="38" fill="#b060ff">T</text>
+              <text x="146" y="38" fill="#b060ff">G</text><text x="162" y="38" fill="#b060ff">C</text>
+              <text x="178" y="38" fill="#b060ff">A</text>
+            </g>
+            <!-- RNA-polymerase -->
+            <rect x="50" y="44" width="142" height="10" rx="3" fill="rgba(176,96,255,.08)" stroke="rgba(176,96,255,.3)" stroke-width="1"/>
+            <text x="121" y="52" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(176,96,255,.5)">RNA-polymerase</text>
+            <!-- Pil transkripsjon -->
+            <line x1="140" y1="58" x2="140" y2="72" stroke="rgba(176,96,255,.4)" stroke-width="1.5"/>
+            <polygon points="135,72 140,80 145,72" fill="rgba(176,96,255,.4)"/>
+            <text x="155" y="68" font-family="DM Sans" font-size="8" fill="rgba(176,96,255,.4)">Transkripsjon</text>
+            <!-- mRNA -->
+            <text x="14" y="96" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,64,.6)" font-weight="600">mRNA:</text>
+            <g font-family="Fraunces" font-size="12" font-weight="700">
+              <text x="50" y="96" fill="#f0a040">U</text><text x="66" y="96" fill="#f0a040">A</text>
+              <text x="82" y="96" fill="#f0a040">C</text><text x="98" y="96" fill="#f0a040">G</text>
+              <text x="114" y="96" fill="#f0a040">U</text><text x="130" y="96" fill="#f0a040">A</text>
+              <text x="146" y="96" fill="#f0a040">C</text><text x="162" y="96" fill="#f0a040">G</text>
+              <text x="178" y="96" fill="#f0a040">U</text>
+            </g>
+            <!-- Kodon-inndeling -->
+            <rect x="48" y="100" width="50" height="6" rx="2" fill="rgba(240,160,64,.15)" stroke="rgba(240,160,64,.3)" stroke-width="1"/>
+            <rect x="100" y="100" width="50" height="6" rx="2" fill="rgba(96,208,160,.15)" stroke="rgba(96,208,160,.3)" stroke-width="1"/>
+            <rect x="152" y="100" width="34" height="6" rx="2" fill="rgba(176,96,255,.15)" stroke="rgba(176,96,255,.3)" stroke-width="1"/>
+            <g font-family="DM Sans" font-size="7" text-anchor="middle">
+              <text x="73" y="113" fill="rgba(240,160,64,.5)">kodon 1</text>
+              <text x="125" y="113" fill="rgba(96,208,160,.5)">kodon 2</text>
+              <text x="169" y="113" fill="rgba(176,96,255,.5)">kodon 3</text>
+            </g>
+            <!-- Pil translasjon -->
+            <line x1="140" y1="118" x2="140" y2="132" stroke="rgba(96,208,160,.4)" stroke-width="1.5"/>
+            <polygon points="135,132 140,140 145,132" fill="rgba(96,208,160,.4)"/>
+            <text x="155" y="128" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.4)">Translasjon</text>
+            <!-- Protein (aminosyrekjede) -->
+            <text x="14" y="158" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.6)" font-weight="600">Protein:</text>
+            <g>
+              <circle cx="64" cy="152" r="12" fill="rgba(240,160,64,.15)" stroke="#f0a040" stroke-width="1.5"/>
+              <text x="64" y="156" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#f0a040" font-weight="600">aa1</text>
+              <line x1="76" y1="152" x2="88" y2="152" stroke="rgba(237,232,248,.2)" stroke-width="1.5"/>
+              <circle cx="100" cy="152" r="12" fill="rgba(96,208,160,.15)" stroke="#60d0a0" stroke-width="1.5"/>
+              <text x="100" y="156" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#60d0a0" font-weight="600">aa2</text>
+              <line x1="112" y1="152" x2="124" y2="152" stroke="rgba(237,232,248,.2)" stroke-width="1.5"/>
+              <circle cx="136" cy="152" r="12" fill="rgba(176,96,255,.15)" stroke="#b060ff" stroke-width="1.5"/>
+              <text x="136" y="156" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#b060ff" font-weight="600">aa3</text>
+              <text x="165" y="156" font-family="DM Sans" font-size="12" fill="rgba(237,232,248,.3)">···</text>
+            </g>
+            <!-- Kodon-tabell hint -->
+            <text x="140" y="186" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,64,.55)" letter-spacing=".06em">GENETISK KODE (eksempler)</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <text x="14" y="202" fill="rgba(237,232,248,.5)">AUG = Metionin (START)</text>
+              <text x="14" y="216" fill="rgba(237,232,248,.5)">UUU/UUC = Fenylalanin</text>
+              <text x="14" y="230" fill="rgba(237,232,248,.5)">UAA / UAG / UGA = STOPP</text>
+              <text x="14" y="244" fill="rgba(237,232,248,.4)">64 kodoner → 20 aminosyrer (degenerert kode)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Arvelidelser og genetisk testing -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 09</div>
+          <div class="k-kat" style="background:rgba(224,64,64,.1);color:#e06060;border:1px solid rgba(224,64,64,.2)">🏥 Medisinsk</div>
+          <h3 class="k-tittel">Arvelidelser og genetisk testing</h3>
+          <p class="k-ingress">Forståelse av genetikk er grunnlaget for moderne medisin – fra diagnose av arvelige sykdommer til skreddersydd behandling.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Dominant arvegang:</strong> Én kopi holder (Aa = syk). Eks: Huntingtons sykdom, akondroplasi (dvergvekst). Forelder med sykdommen har 50% sjanse for å gi det videre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👥</span><div><strong>Recessiv arvegang:</strong> To kopier trengs (aa = syk). Begge foreldre kan være bærere uten å vise symptomer. Eks: cystisk fibrose, PKU, sigdcelleanemi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>X-bundet arvegang:</strong> Gen på X-kromosomet. Gutter (XY) rammes oftere siden de ikke har en «backup»-kopi. Eks: fargblindhet (~8% av gutter), hemofili.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔭</span><div><strong>Genetisk testing:</strong> Fosterdiagnostikk (amniocentese), preimplantasjonsdiagnostikk (IVF), bærertesting, prediktiv testing (BRCA1/2 for brystkreft).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,64,64,.6)" letter-spacing=".08em">RECESSIV ARVEGANG – STAMTRE</text>
+            <!-- Stamtre for cystisk fibrose -->
+            <!-- Generasjon I: begge bærere -->
+            <text x="14" y="36" font-family="DM Sans" font-size="8" fill="rgba(237,232,248,.35)">I</text>
+            <!-- Far (Aa) -->
+            <rect x="80" y="28" width="28" height="28" rx="4" fill="rgba(240,160,64,.15)" stroke="#f0a040" stroke-width="1.8"/>
+            <text x="94" y="46" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#f0a040">Aa</text>
+            <!-- Mor (Aa) -->
+            <circle cx="186" cy="42" r="14" fill="rgba(240,160,64,.15)" stroke="#f0a040" stroke-width="1.8"/>
+            <text x="186" y="46" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#f0a040">Aa</text>
+            <!-- Forbindelseslinje -->
+            <line x1="108" y1="42" x2="172" y2="42" stroke="rgba(237,232,248,.2)" stroke-width="1.5"/>
+            <line x1="140" y1="42" x2="140" y2="60" stroke="rgba(237,232,248,.2)" stroke-width="1.5"/>
+            <!-- Generasjon II-label -->
+            <text x="14" y="90" font-family="DM Sans" font-size="8" fill="rgba(237,232,248,.35)">II</text>
+            <!-- 4 barn-linjer -->
+            <line x1="140" y1="60" x2="44" y2="76" stroke="rgba(237,232,248,.15)" stroke-width="1"/>
+            <line x1="140" y1="60" x2="100" y2="76" stroke="rgba(237,232,248,.15)" stroke-width="1"/>
+            <line x1="140" y1="60" x2="180" y2="76" stroke="rgba(237,232,248,.15)" stroke-width="1"/>
+            <line x1="140" y1="60" x2="236" y2="76" stroke="rgba(237,232,248,.15)" stroke-width="1"/>
+            <!-- Barn 1: AA (frisk, ikke bærer) -->
+            <rect x="30" y="76" width="28" height="28" rx="4" fill="rgba(96,208,160,.12)" stroke="#60d0a0" stroke-width="1.5"/>
+            <text x="44" y="94" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#60d0a0">AA</text>
+            <!-- Barn 2: Aa (bærer) -->
+            <rect x="86" y="76" width="28" height="28" rx="4" fill="rgba(240,160,64,.12)" stroke="#f0a040" stroke-width="1.5"/>
+            <text x="100" y="94" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">Aa</text>
+            <!-- Barn 3: Aa (bærer) -->
+            <circle cx="180" cy="90" r="14" fill="rgba(240,160,64,.12)" stroke="#f0a040" stroke-width="1.5"/>
+            <text x="180" y="94" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#f0a040">Aa</text>
+            <!-- Barn 4: aa (syk) -->
+            <circle cx="236" cy="90" r="14" fill="rgba(224,64,64,.2)" stroke="#e06060" stroke-width="2"/>
+            <text x="236" y="94" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#e06060">aa</text>
+            <!-- Legend -->
+            <g font-family="DM Sans" font-size="8">
+              <rect x="14" y="118" width="10" height="8" rx="2" fill="rgba(96,208,160,.4)"/>
+              <text x="28" y="125" fill="rgba(237,232,248,.45)">Frisk (AA)</text>
+              <rect x="90" y="118" width="10" height="8" rx="2" fill="rgba(240,160,64,.4)"/>
+              <text x="104" y="125" fill="rgba(237,232,248,.45)">Bærer (Aa)</text>
+              <rect x="170" y="118" width="10" height="8" rx="2" fill="rgba(224,64,64,.5)"/>
+              <text x="184" y="125" fill="rgba(237,232,248,.45)">Syk (aa)</text>
+            </g>
+            <text x="140" y="144" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(237,232,248,.4)">Sannsynlighet: 25% syk · 50% bærer · 25% frisk</text>
+            <!-- X-koblet forklaring -->
+            <rect x="14" y="158" width="252" height="92" rx="10" fill="rgba(176,96,255,.04)" stroke="rgba(176,96,255,.2)" stroke-width="1"/>
+            <text x="140" y="174" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(176,96,255,.6)" letter-spacing=".06em">X-BUNDET (FARGBLINDHET)</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <text x="24" y="190" fill="rgba(237,232,248,.5)">Mor (bærer): XᴺX^f   ← frisk, bærer</text>
+              <text x="24" y="204" fill="rgba(237,232,248,.5)">Far (normal): XᴺY    ← normalt syn</text>
+              <text x="24" y="218" fill="rgba(237,232,248,.45)">Sønner: 50% XᴺY (norm.) · 50% X^fY (fargeblidd)</text>
+              <text x="24" y="232" fill="rgba(237,232,248,.45)">Døtre: 50% XᴺX^f (bærer) · 50% XᴺXᴺ (norm.)</text>
+              <text x="24" y="244" fill="rgba(237,232,248,.35)">Gutter rammes 8× oftere enn jenter</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: CRISPR og genteknologi -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">08 / 09</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.2)">✂️ Genteknologi</div>
+          <h3 class="k-tittel">CRISPR og genteknologi</h3>
+          <p class="k-ingress">CRISPR-Cas9 er en revolusjonerende «genetisk saks» som lar oss redigere DNA med presisjon vi aldri før har hatt.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">✂️</span><div><strong>CRISPR-Cas9:</strong> Bakteriers naturlige immunforsvar mot virus. En guide-RNA leder Cas9-proteinet til riktig sted i DNA-et og kutter det. Nobelpris 2020 (Charpentier og Doudna).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💊</span><div><strong>Medisinske muligheter:</strong> Behandling av sigdcelleanemi og beta-thalassemi (godkjent 2023!). Mulige kurer mot HIV, kreft og arvelige blindhetsformer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>GMO og landbruk:</strong> Genmodifiserte organismer – virus-resistente avlinger, gullris (vitamin A), hornløse storfe. Debattert etisk og juridisk.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Etiske grenser:</strong> He Jiankui-skandalen (2018): CRISPR-redigerte menneskebabyer. Internasjonalt forbud mot kimbane-redigering. Vanskelige avveininger.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#08041a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.6)" letter-spacing=".08em">CRISPR-Cas9 PRINSIPP</text>
+            <!-- DNA-target -->
+            <path d="M20,80 Q60,68 100,80 Q140,92 180,80 Q220,68 260,80" fill="none" stroke="#b060ff" stroke-width="3" stroke-linecap="round"/>
+            <path d="M20,96 Q60,84 100,96 Q140,108 180,96 Q220,84 260,96" fill="none" stroke="#60d0a0" stroke-width="3" stroke-linecap="round"/>
+            <!-- Basepar-broer -->
+            <g stroke="rgba(237,232,248,.15)" stroke-width="1.5">
+              <line x1="38" y1="83" x2="38" y2="93"/><line x1="62" y1="77" x2="62" y2="91"/>
+              <line x1="86" y1="81" x2="86" y2="94"/><line x1="110" y1="86" x2="110" y2="96"/>
+              <line x1="134" y1="88" x2="134" y2="98"/><line x1="158" y1="86" x2="158" y2="94"/>
+              <line x1="182" y1="81" x2="182" y2="92"/><line x1="206" y1="77" x2="206" y2="89"/>
+              <line x1="230" y1="80" x2="230" y2="91"/><line x1="254" y1="83" x2="254" y2="93"/>
+            </g>
+            <!-- guide-RNA -->
+            <path d="M140,40 Q132,50 128,60 Q124,72 128,82" fill="none" stroke="#f0a040" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5 3"/>
+            <text x="155" y="52" font-family="DM Sans" font-size="8" fill="rgba(240,160,64,.6)">guide-RNA</text>
+            <text x="155" y="62" font-family="DM Sans" font-size="7.5" fill="rgba(240,160,64,.4)">(finner riktig sted)</text>
+            <!-- Cas9 protein -->
+            <ellipse cx="140" cy="60" rx="24" ry="18" fill="rgba(240,160,64,.12)" stroke="#f0a040" stroke-width="1.8"/>
+            <text x="140" y="57" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#f0a040" font-weight="600">Cas9</text>
+            <text x="140" y="68" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,64,.5)">nuklease</text>
+            <!-- Snipp-symboler -->
+            <text x="120" y="110" font-family="DM Sans" font-size="18" fill="#e06060" opacity=".8">✂</text>
+            <!-- Kuttet DNA -->
+            <text x="140" y="132" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,64,64,.6)" letter-spacing=".06em">DNA KUTTET – tre muligheter:</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <text x="14" y="150" fill="rgba(237,232,248,.55)">1. NHEJ: feil-reparasjon → gen slått av</text>
+              <text x="14" y="164" fill="rgba(237,232,248,.55)">2. HDR: ny mal → presist gen satt inn</text>
+              <text x="14" y="178" fill="rgba(237,232,248,.55)">3. Base editing: enkelt basepar endret</text>
+            </g>
+            <!-- Resultater -->
+            <rect x="14" y="190" width="252" height="60" rx="10" fill="rgba(96,208,160,.04)" stroke="rgba(96,208,160,.2)" stroke-width="1"/>
+            <text x="140" y="206" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.55)" letter-spacing=".06em">GODKJENTE CRISPR-BEHANDLINGER</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <text x="24" y="222" fill="rgba(237,232,248,.5)">Casgevy (2023): sigdcelleanemi + β-thalassemi</text>
+              <text x="24" y="236" fill="rgba(237,232,248,.45)">Kliniske studier: HIV, Lebers medfødte amaurose</text>
+              <text x="24" y="248" fill="rgba(237,232,248,.4)">Nobel 2020: Charpentier &amp; Doudna</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S9: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">09 / 09</div>
+          <div class="k-kat" style="background:rgba(176,96,255,.1);color:#b060ff;border:1px solid rgba(176,96,255,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Genetikk – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:760px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(176,96,255,.04);border:1px solid rgba(176,96,255,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#b060ff;display:block;margin-bottom:4px">🧬 DNA</strong>Dobbel helix · A-T, G-C · 3 mrd basepar per celle · ~22 000 gener · 2 meter per celle</div>
+            <div style="padding:14px;background:rgba(96,208,160,.04);border:1px solid rgba(96,208,160,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#60d0a0;display:block;margin-bottom:4px">🌱 Mendel</strong>Segregasjon og uavhengig fordeling · Dominant og recessiv · Punnett-rute · 3:1 i F2</div>
+            <div style="padding:14px;background:rgba(240,160,64,.04);border:1px solid rgba(240,160,64,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#f0a040;display:block;margin-bottom:4px">🎭 Uttrykk</strong>Genotype vs. fenotype · Alleler · Kodominans (blodtype) · Miljøets rolle · Polygeni</div>
+            <div style="padding:14px;background:rgba(224,64,64,.04);border:1px solid rgba(224,64,64,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#e06060;display:block;margin-bottom:4px">⚡ Mutasjoner</strong>Punkt og frameshift · UV, kjemisk, feil i kopiering · 99% nøytrale · Sigdcelleanemi som eksempel</div>
+            <div style="padding:14px;background:rgba(176,96,255,.04);border:1px solid rgba(176,96,255,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#b060ff;display:block;margin-bottom:4px">🔬 Kromosomer</strong>Diploid 2n=46 · Haploid n=23 · Meiose I+II · Crossing over · XX/XY · Trisomi 21</div>
+            <div style="padding:14px;background:rgba(96,208,160,.04);border:1px solid rgba(96,208,160,.15);border-radius:12px;font-size:.78rem;color:rgba(237,232,248,.65);line-height:1.6"><strong style="color:#60d0a0;display:block;margin-bottom:4px">🏭 Proteinsyntese</strong>DNA→mRNA (transkripsjon) → protein (translasjon) · Kodon = 3 baser = 1 aminosyre · Universell kode</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- INTERAKTIV PUNNETT-KALKULATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Interaktiv Punnett-kalkulator</div><div class="sep-r"></div></div>
+  <div class="punnett-wrap">
+    <div class="punnett-tittel">Tast inn foreldres genotyper og se avkommet</div>
+    <div class="punnett-input">
+      <label>FORELDER 1</label>
+      <input type="text" id="p1" value="Aa" maxlength="2" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').slice(0,2)">
+      <span style="color:var(--dim);font-size:1.2rem">×</span>
+      <label>FORELDER 2</label>
+      <input type="text" id="p2" value="Aa" maxlength="2" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').slice(0,2)">
+      <button class="punnett-btn" onclick="beregnPunnett()">Beregn →</button>
+    </div>
+    <div class="punnett-tabell" id="punnett-tabell"></div>
+    <div class="punnett-resultat" id="punnett-resultat"></div>
+  </div>
+
+  <!-- NØKKELBEGREPER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Nøkkelbegreper</div><div class="sep-r"></div></div>
+  <div class="begrep-grid">
+    <div class="begrep-kort"><div class="begrep-ord">Allel</div><div class="begrep-def">Variant av et gen. Eks: A (brun øyefarge) og a (blå) er alleler av øyefarge-genet.</div></div>
+    <div class="begrep-kort"><div class="begrep-ord">Locus (pl. loci)</div><div class="begrep-def">Genets faste posisjon på kromosomet. Homologe kromosomer har loci for de samme genene.</div></div>
+    <div class="begrep-kort"><div class="begrep-ord">Homozygot</div><div class="begrep-def">Har to like alleler: AA eller aa. Heterozygot = to ulike alleler: Aa.</div></div>
+    <div class="begrep-kort"><div class="begrep-ord">Penetrans</div><div class="begrep-def">Andel individer med genotypen som faktisk viser fenotypen. Noen dominant-sykdommer har lav penetrans.</div></div>
+    <div class="begrep-kort"><div class="begrep-ord">Epigenetikk</div><div class="begrep-def">Endringer i genuttrykk uten å endre DNA-sekvensen. Metylering av DNA slår gener av, acetylerting slår på.</div></div>
+    <div class="begrep-kort"><div class="begrep-ord">Haplotype</div><div class="begrep-def">Et sett alleler på samme kromosom som arves sammen. Viktig for stamtavlestudier og medisinsk genetikk.</div></div>
+  </div>
+
+</div>
+<script>
+// KARUSELL
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, {passive:true});
+goTo(0);
+
+// PUNNETT-KALKULATOR
+function sorterGenotype(g1, g2) {
+  // Dominant (stor bokstav) alltid først i par
+  // Hvis ulike gener: alfabetisk på uppercase
+  const u1 = g1.toUpperCase(), u2 = g2.toUpperCase();
+  if (u1 !== u2) return u1 < u2 ? g1 + g2 : g2 + g1;
+  // Samme gen: dominant (stor) før recessiv (liten)
+  if (g1 === g1.toUpperCase() && g2 !== g2.toUpperCase()) return g1 + g2;
+  if (g2 === g2.toUpperCase() && g1 !== g1.toUpperCase()) return g2 + g1;
+  return g1 + g2;
+}
+
+function beregnPunnett() {
+  const p1 = document.getElementById('p1').value.trim();
+  const p2 = document.getElementById('p2').value.trim();
+  if (p1.length !== 2 || p2.length !== 2) {
+    document.getElementById('punnett-resultat').textContent = 'Skriv inn to bokstaver per forelder (eks: Aa)';
+    return;
+  }
+  const a1 = p1[0], a2 = p1[1]; // forelder 1 alleler (rad)
+  const b1 = p2[0], b2 = p2[1]; // forelder 2 alleler (kolonne)
+
+  const tabell = document.getElementById('punnett-tabell');
+  tabell.style.gridTemplateColumns = 'auto auto auto';
+  tabell.innerHTML = '';
+
+  // Rad 0: tom hjørne + kolonne-header (forelder 2 alleler)
+  const blank = document.createElement('div');
+  blank.className = 'p-celle p-header'; blank.textContent = '';
+  tabell.appendChild(blank);
+
+  [b1, b2].forEach(g => {
+    const d = document.createElement('div');
+    d.className = 'p-celle p-header';
+    d.textContent = g;
+    tabell.appendChild(d);
+  });
+
+  // Rad 1 og 2: rad-header (forelder 1 alleler) + celler
+  const alle = [];
+  [a1, a2].forEach(ra => {
+    // Rad-header
+    const rh = document.createElement('div');
+    rh.className = 'p-celle p-header';
+    rh.textContent = ra;
+    tabell.appendChild(rh);
+
+    // To celler i denne raden: ra×b1 og ra×b2
+    [b1, b2].forEach(ca => {
+      const gt = sorterGenotype(ra, ca);
+      alle.push(gt);
+
+      const isHomDom = gt[0] === gt[0].toUpperCase() && gt[0].toUpperCase() === gt[1].toUpperCase();
+      const isHet    = gt[0].toUpperCase() === gt[1].toUpperCase() && gt[0] !== gt[1];
+      const isHomRec = gt[0] === gt[0].toLowerCase() && gt[1] === gt[1].toLowerCase();
+
+      const d = document.createElement('div');
+      d.className = 'p-celle ' + (isHomDom ? 'p-dom' : isHomRec ? 'p-res' : 'p-het');
+      d.textContent = gt;
+      tabell.appendChild(d);
+    });
+  });
+
+  // Genotype-ratio
+  const gtCounts = {};
+  alle.forEach(g => { gtCounts[g] = (gtCounts[g]||0) + 1; });
+  const gtStr = Object.entries(gtCounts).map(([k,v]) => `${v} ${k}`).join(' : ');
+
+  // Fenotype-ratio (dominant vs recessiv)
+  const ftCounts = {};
+  alle.forEach(g => {
+    const isRec = g[0] === g[0].toLowerCase() && g[1] === g[1].toLowerCase();
+    const key = isRec ? 'recessiv' : 'dominant';
+    ftCounts[key] = (ftCounts[key]||0) + 1;
+  });
+  const ftStr = Object.entries(ftCounts).map(([k,v]) => `${v} ${k}`).join(' : ');
+
+  document.getElementById('punnett-resultat').innerHTML =
+    `<strong>Genotype:</strong> ${gtStr}<br><strong>Fenotype:</strong> ${ftStr}`;
+}
+beregnPunnett();
+</script>
+</body>
+</html>

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Syre, base og pH</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,600;0,700;1,300;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07050f;--surface:#0e0a1a;--card:#130f20;--border:rgba(160,100,255,.08);
+  --text:#ece8f8;--dim:#483860;
+  --syre:#e04040;--base:#3090e0;--nøytral:#40c880;--accent:#c880ff;
+  --font-d:'Spectral',serif;--font-b:'Sora',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(224,64,64,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(48,144,224,.04),transparent)}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(7,5,15,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;font-weight:500;color:var(--dim);text-decoration:none;letter-spacing:.04em}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;line-height:1.1;margin-bottom:14px}
+.hero h1 .syre{color:var(--syre)}.hero h1 .base{color:var(--base)}.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+
+/* INTERAKTIV pH-SKALA */
+.ph-skala-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.ph-skala-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);margin-bottom:16px;text-align:center}
+.ph-gradient{
+  height:36px;border-radius:18px;margin-bottom:8px;
+  background:linear-gradient(90deg,
+    #e02020 0%, #e06020 7.1%, #e0a020 14.3%, #e0e020 21.4%,
+    #a0e020 28.6%, #40c880 35.7%, #40c880 42.9%,
+    #40a8c0 50%, #4080e0 57.1%, #3060d0 64.3%,
+    #4040c0 71.4%, #6030b0 78.6%, #8020a0 85.7%,
+    #a01090 92.9%, #c00080 100%);
+  position:relative;cursor:pointer;
+}
+.ph-marker{position:absolute;top:-10px;transform:translateX(-50%);
+  width:4px;height:56px;background:rgba(255,255,255,.8);border-radius:2px;transition:left .15s;pointer-events:none}
+.ph-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--dim);font-family:var(--font-b);letter-spacing:.04em;margin-bottom:12px}
+.ph-info-boks{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;
+  display:flex;align-items:center;gap:16px;min-height:56px;transition:all .2s}
+.ph-info-nr{font-family:var(--font-d);font-size:2rem;font-weight:700;min-width:48px;text-align:center}
+.ph-info-tekst{font-size:.8rem;color:rgba(236,232,248,.7);line-height:1.5}
+.ph-eksempler{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:12px}
+.ph-eks{padding:6px 8px;border-radius:8px;border:1px solid var(--border);text-align:center;cursor:pointer;transition:all .18s;background:rgba(255,255,255,.02)}
+.ph-eks:hover{border-color:rgba(160,100,255,.3);background:rgba(160,100,255,.04)}
+.ph-eks-val{font-family:var(--font-d);font-size:1rem;font-weight:700}
+.ph-eks-navn{font-size:.6rem;color:var(--dim);letter-spacing:.04em;margin-top:1px}
+
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(236,232,248,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(160,100,255,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(236,232,248,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:4px}
+.k-kort{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.k-kort-formel{font-family:var(--font-d);font-size:1.2rem;font-weight:700;margin-bottom:3px}
+.k-kort-navn{font-size:.7rem;color:var(--dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.k-kort-eks{font-size:.7rem;color:rgba(236,232,248,.45)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+
+/* QUIZ */
+.quiz-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-top:20px}
+.quiz-tittel{font-family:var(--font-d);font-size:1.1rem;font-style:italic;color:var(--dim);margin-bottom:16px}
+.quiz-spørsmål{font-size:.9rem;color:var(--text);margin-bottom:14px;line-height:1.6;min-height:40px}
+.quiz-alternativer{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.quiz-btn{padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.02);color:var(--text);font-family:var(--font-b);
+  font-size:.82rem;cursor:pointer;text-align:left;transition:all .18s;line-height:1.4}
+.quiz-btn:hover:not([disabled]){border-color:rgba(160,100,255,.4);background:rgba(160,100,255,.04)}
+.quiz-btn.riktig{border-color:#40c880;background:rgba(64,200,128,.1);color:#40c880}
+.quiz-btn.feil{border-color:#e04040;background:rgba(224,64,64,.1);color:#e06060}
+.quiz-btn.valgt{border-color:rgba(255,255,255,.4)}
+.quiz-tilbakemelding{font-size:.82rem;min-height:32px;color:rgba(236,232,248,.6);line-height:1.6}
+.quiz-progress{font-size:.7rem;color:var(--dim);letter-spacing:.08em;text-align:right;margin-bottom:8px}
+
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.quiz-alternativer{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Syre, base og pH</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Syre-base-kjemi</div>
+    <h1><span class="syre">Syre</span>, <span class="base">base</span><br>og <em>pH</em></h1>
+    <p class="hero-sub">Fra sitronjuice til natronlut – forstå protonoverføring, logaritmisk pH-skala og syrer og baser i hverdagen</p>
+  </div>
+
+  <!-- INTERAKTIV pH-SKALA -->
+  <div class="ph-skala-wrap">
+    <div class="ph-skala-tittel">Klikk på pH-skalaen for å utforske</div>
+    <div class="ph-gradient" id="ph-gradient">
+      <div class="ph-marker" id="ph-marker" style="left:35.7%"></div>
+    </div>
+    <div class="ph-labels">
+      <span>pH 0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+      <span>6</span><span style="color:var(--nøytral)">7</span><span>8</span><span>9</span>
+      <span>10</span><span>11</span><span>12</span><span>13</span><span>pH 14</span>
+    </div>
+    <div class="ph-info-boks" id="ph-info-boks">
+      <div class="ph-info-nr" id="ph-info-nr" style="color:var(--nøytral)">7</div>
+      <div class="ph-info-tekst" id="ph-info-tekst">Nøytralt vann – [H⁺] = [OH⁻] = 10⁻⁷ mol/L</div>
+    </div>
+    <div class="ph-eksempler" id="ph-eksempler"></div>
+  </div>
+
+  <!-- KARUSELL -->
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Hva er syre og base -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(200,128,255,.1);color:#c880ff;border:1px solid rgba(200,128,255,.2)">⚗️ Definisjon</div>
+          <h3 class="k-tittel">Syre og base – tre definisjoner</h3>
+          <p class="k-ingress">Syrer og baser er definert på tre måter av stigende generalitet. Brønsted-Lowry er den vanligste i skolen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:var(--syre)">🔴</span><div><strong>Arrhenius (1884):</strong> Syre avgir H⁺ i vann. Base avgir OH⁻. Enkel, men fungerer bare i vannløsning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:var(--base)">🔵</span><div><strong>Brønsted-Lowry (1923):</strong> Syre er protondonor (avgir H⁺). Base er protonakseptor (tar imot H⁺). Fungerer i alle løsemidler.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:var(--accent)">🟣</span><div><strong>Lewis (1923):</strong> Syre aksepterer elektronpar. Base donerer elektronpar. Bredest – dekker reaksjoner uten H⁺.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Konjugerte par:</strong> HA → H⁺ + A⁻. HA er syre, A⁻ er konjugert base. Sterke syrer har svake konjugerte baser og vice versa.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(200,128,255,.6)" letter-spacing=".08em">BRØNSTED-LOWRY PROTONOVERFØRING</text>
+            <!-- HCl + H2O → H3O+ + Cl- -->
+            <text x="140" y="36" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(236,232,248,.5)">HCl + H₂O → H₃O⁺ + Cl⁻</text>
+            <!-- HCl (syre) -->
+            <circle cx="52" cy="80" r="16" fill="rgba(224,64,64,.12)" stroke="#e04040" stroke-width="1.8"/>
+            <text x="52" y="76" text-anchor="middle" font-family="Spectral" font-size="11" fill="#e04040" font-weight="700">H</text>
+            <text x="52" y="89" text-anchor="middle" font-family="Spectral" font-size="9" fill="#e04040">Cl</text>
+            <rect x="18" y="100" width="68" height="14" rx="5" fill="rgba(224,64,64,.1)" stroke="rgba(224,64,64,.3)" stroke-width="1"/>
+            <text x="52" y="110" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#e04040" font-weight="700">SYRE (donerer H⁺)</text>
+            <!-- + -->
+            <text x="86" y="84" font-family="Sora" font-size="16" fill="rgba(236,232,248,.3)">+</text>
+            <!-- H2O (base) -->
+            <circle cx="120" cy="80" r="16" fill="rgba(48,144,224,.12)" stroke="#3090e0" stroke-width="1.8"/>
+            <text x="120" y="84" text-anchor="middle" font-family="Spectral" font-size="11" fill="#3090e0" font-weight="700">H₂O</text>
+            <rect x="86" y="100" width="68" height="14" rx="5" fill="rgba(48,144,224,.1)" stroke="rgba(48,144,224,.3)" stroke-width="1"/>
+            <text x="120" y="110" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#3090e0" font-weight="700">BASE (tar H⁺)</text>
+            <!-- Pil med H+ -->
+            <path d="M68,72 Q94,54 110,72" fill="none" stroke="rgba(200,128,255,.6)" stroke-width="1.8" marker-end="url(#ph-arr)"/>
+            <defs><marker id="ph-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(200,128,255,.7)"/></marker></defs>
+            <text x="89" y="52" text-anchor="middle" font-family="Spectral" font-size="10" fill="rgba(200,128,255,.8)" font-weight="700">H⁺</text>
+            <!-- → -->
+            <text x="152" y="84" font-family="Sora" font-size="16" fill="rgba(236,232,248,.3)">→</text>
+            <!-- H3O+ -->
+            <circle cx="190" cy="80" r="16" fill="rgba(64,200,128,.12)" stroke="#40c880" stroke-width="1.8"/>
+            <text x="190" y="84" text-anchor="middle" font-family="Spectral" font-size="10" fill="#40c880" font-weight="700">H₃O⁺</text>
+            <rect x="158" y="100" width="64" height="14" rx="5" fill="rgba(64,200,128,.1)" stroke="rgba(64,200,128,.3)" stroke-width="1"/>
+            <text x="190" y="110" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#40c880" font-weight="700">konjugert syre</text>
+            <!-- Cl- -->
+            <text x="232" y="84" font-family="Sora" font-size="14" fill="rgba(236,232,248,.3)">+</text>
+            <circle cx="258" cy="80" r="12" fill="rgba(224,64,64,.1)" stroke="#e04040" stroke-width="1.5"/>
+            <text x="258" y="84" text-anchor="middle" font-family="Spectral" font-size="10" fill="#e04040" font-weight="700">Cl⁻</text>
+            <text x="258" y="100" text-anchor="middle" font-family="Sora" font-size="7.5" fill="rgba(224,64,64,.5)">konj.base</text>
+            <!-- Sterke vs svake syrer -->
+            <text x="140" y="132" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(200,128,255,.55)" letter-spacing=".06em">STERK vs. SVAK SYRE</text>
+            <g font-family="Sora" font-size="8.5">
+              <text x="14" y="148" fill="rgba(224,64,64,.65)">Sterk: HCl → H⁺ + Cl⁻ (100% dissosiert)</text>
+              <text x="14" y="162" fill="rgba(64,200,128,.65)">Svak:  CH₃COOH ⇌ H⁺ + CH₃COO⁻ (delvis)</text>
+            </g>
+            <text x="140" y="184" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(200,128,255,.4)">Ka = [H⁺][A⁻] / [HA]   (syrekonstant)</text>
+            <text x="140" y="200" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(200,128,255,.35)">pKa = –log(Ka) · lav pKa = sterk syre</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: pH-skalaen og logaritmer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(64,200,128,.1);color:#40c880;border:1px solid rgba(64,200,128,.2)">📊 pH-skalaen</div>
+          <h3 class="k-tittel">pH – den logaritmiske skalaen</h3>
+          <p class="k-ingress">pH er en logaritmisk skala for hydrogenionkonsentrasjon. Hvert enkelt steg er en tidobling – pH 5 er 10× surere enn pH 6.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔢</span><div><strong>Definisjonen:</strong> pH = –log₁₀[H⁺]. Reint vann: [H⁺] = 10⁻⁷ mol/L → pH = 7. Syre: [H⁺] høy → pH lav.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Logaritmisk:</strong> pH 4 har 10× mer H⁺ enn pH 5, og 100× mer enn pH 6. Magesyre (pH 1) er 1 million ganger surere enn reint vann (pH 7).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Vannets ionprodukt:</strong> Kw = [H⁺][OH⁻] = 10⁻¹⁴ ved 25°C. Gjelder alltid. pH + pOH = 14. Syre gir mye H⁺ og lite OH⁻.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Temperaturavhengig:</strong> Kw endres med temp. Kokt vann har pH ~6,5 – men er fortsatt nøytralt fordi [H⁺] = [OH⁻].</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(200,128,255,.6)" letter-spacing=".08em">pH OG [H⁺] SAMMENHENG</text>
+            <!-- Tabell -->
+            <g font-family="Sora" font-size="8.5">
+              <text x="30" y="36" fill="rgba(200,128,255,.5)" font-weight="600">pH</text>
+              <text x="100" y="36" fill="rgba(200,128,255,.5)" font-weight="600">[H⁺] mol/L</text>
+              <text x="210" y="36" fill="rgba(200,128,255,.5)" font-weight="600">Eksempel</text>
+              <line x1="14" y1="40" x2="266" y2="40" stroke="rgba(200,128,255,.2)" stroke-width="1"/>
+              <!-- Rader -->
+              <text x="30" y="54" fill="#e04040" font-weight="700">0</text>
+              <text x="100" y="54" fill="rgba(224,64,64,.7)">1 × 10⁰</text>
+              <text x="210" y="54" fill="rgba(236,232,248,.5)">Saltsyre konsentrert</text>
+              <text x="30" y="68" fill="#e06040" font-weight="700">1</text>
+              <text x="100" y="68" fill="rgba(224,96,64,.7)">1 × 10⁻¹</text>
+              <text x="210" y="68" fill="rgba(236,232,248,.5)">Magesyre</text>
+              <text x="30" y="82" fill="#e0a020" font-weight="700">3</text>
+              <text x="100" y="82" fill="rgba(224,160,32,.7)">1 × 10⁻³</text>
+              <text x="210" y="82" fill="rgba(236,232,248,.5)">Eddik, sitronjuice</text>
+              <text x="30" y="96" fill="#a0e020" font-weight="700">5</text>
+              <text x="100" y="96" fill="rgba(160,224,32,.7)">1 × 10⁻⁵</text>
+              <text x="210" y="96" fill="rgba(236,232,248,.5)">Kaffe, regnvann</text>
+              <text x="30" y="110" fill="#40c880" font-weight="700">7</text>
+              <text x="100" y="110" fill="rgba(64,200,128,.8)">1 × 10⁻⁷</text>
+              <text x="210" y="110" fill="rgba(236,232,248,.5)">Reint vann</text>
+              <text x="30" y="124" fill="#40a8c0" font-weight="700">9</text>
+              <text x="100" y="124" fill="rgba(64,168,192,.7)">1 × 10⁻⁹</text>
+              <text x="210" y="124" fill="rgba(236,232,248,.5)">Natron, bikarbonat</text>
+              <text x="30" y="138" fill="#3060d0" font-weight="700">11</text>
+              <text x="100" y="138" fill="rgba(48,96,208,.7)">1 × 10⁻¹¹</text>
+              <text x="210" y="138" fill="rgba(236,232,248,.5)">Ammoniakk</text>
+              <text x="30" y="152" fill="#8020a0" font-weight="700">13</text>
+              <text x="100" y="152" fill="rgba(128,32,160,.7)">1 × 10⁻¹³</text>
+              <text x="210" y="152" fill="rgba(236,232,248,.5)">Natronlut</text>
+              <text x="30" y="166" fill="#c00080" font-weight="700">14</text>
+              <text x="100" y="166" fill="rgba(192,0,128,.7)">1 × 10⁻¹⁴</text>
+              <text x="210" y="166" fill="rgba(236,232,248,.5)">KOH konsentrert</text>
+            </g>
+            <!-- Formula -->
+            <rect x="14" y="180" width="252" height="50" rx="10" fill="rgba(200,128,255,.05)" stroke="rgba(200,128,255,.2)" stroke-width="1"/>
+            <text x="140" y="196" text-anchor="middle" font-family="Spectral" font-size="14" fill="rgba(200,128,255,.8)" font-weight="700">pH = –log₁₀[H⁺]</text>
+            <text x="140" y="212" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(200,128,255,.5)">Hvert pH-steg = 10× endring i [H⁺]</text>
+            <text x="140" y="224" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(200,128,255,.4)">pH + pOH = 14 (ved 25°C)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Sterke og svake syrer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(224,64,64,.1);color:#e04040;border:1px solid rgba(224,64,64,.2)">🔴 Syrer</div>
+          <h3 class="k-tittel">Syrer – sterke og svake</h3>
+          <p class="k-ingress">Syrestyrken avhenger av hvor lett syren avgir H⁺ – sterke syrer dissosiserer fullstendig, svake bare delvis.</p>
+          <div class="k-grid">
+            <div class="k-kort" style="border-color:rgba(224,64,64,.2)">
+              <div class="k-kort-formel" style="color:#e04040">HCl</div>
+              <div class="k-kort-navn">Saltsyre</div>
+              <div class="k-kort-eks">Sterk · pH~0 konsentrert · Magesyre, rengjøring</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(224,64,64,.2)">
+              <div class="k-kort-formel" style="color:#e04040">H₂SO₄</div>
+              <div class="k-kort-navn">Svovelsyre</div>
+              <div class="k-kort-eks">Sterk, diprotisk · Bilbatterier, industri</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(224,64,64,.2)">
+              <div class="k-kort-formel" style="color:#e04040">HNO₃</div>
+              <div class="k-kort-navn">Salpetersyre</div>
+              <div class="k-kort-eks">Sterk, oksiderende · Gjødselsproduksjon</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(224,160,32,.3)">
+              <div class="k-kort-formel" style="color:#e0a020">CH₃COOH</div>
+              <div class="k-kort-navn">Eddiksyre</div>
+              <div class="k-kort-eks">Svak · pKa 4.76 · Eddik, mat</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(224,160,32,.3)">
+              <div class="k-kort-formel" style="color:#e0a020">H₂CO₃</div>
+              <div class="k-kort-navn">Karbonsyre</div>
+              <div class="k-kort-eks">Svak · Kullsyre i brus, blodbuffer</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(224,160,32,.3)">
+              <div class="k-kort-formel" style="color:#e0a020">H₃PO₄</div>
+              <div class="k-kort-navn">Fosforsyre</div>
+              <div class="k-kort-eks">Svak, triprotisk · Cola, DNA-ryggrad</div>
+            </div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(224,64,64,.6)" letter-spacing=".08em">STERK vs. SVAK SYRE</text>
+            <!-- Sterk syre - full dissosiasjon -->
+            <text x="70" y="34" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(224,64,64,.6)">STERK: HCl</text>
+            <rect x="14" y="40" width="112" height="80" rx="8" fill="rgba(224,64,64,.04)" stroke="rgba(224,64,64,.2)" stroke-width="1"/>
+            <!-- HCl-molekyler (alle dissosiert) -->
+            <g fill="#e04040" font-family="Spectral" font-size="10" font-weight="700" text-anchor="middle">
+              <text x="36" y="68">H⁺</text><text x="60" y="60">H⁺</text><text x="84" y="68">H⁺</text><text x="48" y="84">H⁺</text><text x="72" y="80">H⁺</text><text x="96" y="76">H⁺</text>
+            </g>
+            <g fill="#e06040" font-family="Spectral" font-size="9" text-anchor="middle">
+              <text x="36" y="108">Cl⁻</text><text x="60" y="100">Cl⁻</text><text x="84" y="108">Cl⁻</text><text x="48" y="118">Cl⁻</text><text x="72" y="114">Cl⁻</text><text x="96" y="110">Cl⁻</text>
+            </g>
+            <text x="70" y="132" text-anchor="middle" font-family="Sora" font-size="7.5" fill="rgba(224,64,64,.5)">100% dissosiert</text>
+            <!-- Svak syre - delvis dissosiasjon -->
+            <text x="210" y="34" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(224,160,32,.6)">SVAK: CH₃COOH</text>
+            <rect x="154" y="40" width="112" height="80" rx="8" fill="rgba(224,160,32,.03)" stroke="rgba(224,160,32,.2)" stroke-width="1"/>
+            <!-- Noen HA, noen H+ og A- -->
+            <g fill="rgba(224,160,32,.8)" font-family="Spectral" font-size="9" text-anchor="middle">
+              <text x="176" y="65">HA</text><text x="220" y="62">HA</text><text x="198" y="80">HA</text><text x="245" y="72">HA</text>
+            </g>
+            <g fill="#e04040" font-family="Spectral" font-size="9" font-weight="700" text-anchor="middle">
+              <text x="200" y="100">H⁺</text><text x="240" y="96">H⁺</text>
+            </g>
+            <g fill="rgba(224,160,32,.7)" font-family="Spectral" font-size="8" text-anchor="middle">
+              <text x="176" y="114">A⁻</text><text x="220" y="110">A⁻</text>
+            </g>
+            <text x="210" y="132" text-anchor="middle" font-family="Sora" font-size="7.5" fill="rgba(224,160,32,.5)">~1% dissosiert</text>
+            <!-- pH sammenligning -->
+            <text x="140" y="156" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(200,128,255,.5)" letter-spacing=".06em">pH FOR 0.1 mol/L LØSNING</text>
+            <g font-family="Sora" font-size="8.5">
+              <text x="14" y="172" fill="rgba(224,64,64,.7)">HCl (sterk):       pH = 1.0   (–log 0.1)</text>
+              <text x="14" y="186" fill="rgba(224,160,32,.7)">CH₃COOH (svak): pH ≈ 2.9  (Ka = 1.8×10⁻⁵)</text>
+              <text x="14" y="200" fill="rgba(64,200,128,.7)">H₂O (nøytral):    pH = 7.0</text>
+            </g>
+            <text x="140" y="222" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(200,128,255,.35)">Bufferkapasitet: svake syrer motstår pH-endringer</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Baser -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(48,144,224,.1);color:#3090e0;border:1px solid rgba(48,144,224,.2)">🔵 Baser</div>
+          <h3 class="k-tittel">Baser – hydroksider og aminer</h3>
+          <p class="k-ingress">Baser aksepterer protoner eller avgir OH⁻. Sterke baser dissosiserer fullstendig i vann, svake baser bare delvis.</p>
+          <div class="k-grid">
+            <div class="k-kort" style="border-color:rgba(48,144,224,.2)">
+              <div class="k-kort-formel" style="color:#3090e0">NaOH</div>
+              <div class="k-kort-navn">Natronlut</div>
+              <div class="k-kort-eks">Sterk · pH~14 · Såpefremstilling, ovnsrens</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(48,144,224,.2)">
+              <div class="k-kort-formel" style="color:#3090e0">KOH</div>
+              <div class="k-kort-navn">Kaliumhydroksid</div>
+              <div class="k-kort-eks">Sterk · Biodiesel, batterier</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(48,144,224,.2)">
+              <div class="k-kort-formel" style="color:#3090e0">Ca(OH)₂</div>
+              <div class="k-kort-navn">Lesket kalk</div>
+              <div class="k-kort-eks">Sterk · Betong, nøytralisering av jord</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(64,168,192,.3)">
+              <div class="k-kort-formel" style="color:#40a8c0">NH₃</div>
+              <div class="k-kort-navn">Ammoniakk</div>
+              <div class="k-kort-eks">Svak · pKb 4.74 · Rengjøring, gjødsel</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(64,168,192,.3)">
+              <div class="k-kort-formel" style="color:#40a8c0">NaHCO₃</div>
+              <div class="k-kort-navn">Natron</div>
+              <div class="k-kort-eks">Svak · Baking, antacid, buffer</div>
+            </div>
+            <div class="k-kort" style="border-color:rgba(64,168,192,.3)">
+              <div class="k-kort-formel" style="color:#40a8c0">Mg(OH)₂</div>
+              <div class="k-kort-navn">Magnesia</div>
+              <div class="k-kort-eks">Svak · Antacid, avføringsmiddel</div>
+            </div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(48,144,224,.6)" letter-spacing=".08em">NØYTRALISERING</text>
+            <!-- Syre + Base → Salt + Vann -->
+            <text x="140" y="34" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(236,232,248,.5)">HCl + NaOH → NaCl + H₂O</text>
+            <!-- Syre-beaker -->
+            <path d="M34,56 L34,120 Q34,128 42,128 L82,128 Q90,128 90,120 L90,56 Z" fill="rgba(224,64,64,.08)" stroke="#e04040" stroke-width="1.5"/>
+            <path d="M34,56 Q42,50 62,50 Q82,50 90,56" fill="none" stroke="#e04040" stroke-width="1.5"/>
+            <path d="M34,96 Q62,92 90,96" fill="rgba(224,64,64,.2)"/>
+            <text x="62" y="80" text-anchor="middle" font-family="Spectral" font-size="14" fill="#e04040" font-weight="700">H⁺</text>
+            <text x="62" y="96" text-anchor="middle" font-family="Spectral" font-size="11" fill="rgba(224,64,64,.6)">Cl⁻</text>
+            <text x="62" y="116" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(224,64,64,.5)">HCl, pH~1</text>
+            <!-- + -->
+            <text x="105" y="96" font-family="Sora" font-size="20" fill="rgba(236,232,248,.25)">+</text>
+            <!-- Base-beaker -->
+            <path d="M124,56 L124,120 Q124,128 132,128 L172,128 Q180,128 180,120 L180,56 Z" fill="rgba(48,144,224,.08)" stroke="#3090e0" stroke-width="1.5"/>
+            <path d="M124,56 Q132,50 152,50 Q172,50 180,56" fill="none" stroke="#3090e0" stroke-width="1.5"/>
+            <text x="152" y="80" text-anchor="middle" font-family="Spectral" font-size="12" fill="#3090e0" font-weight="700">Na⁺</text>
+            <text x="152" y="96" text-anchor="middle" font-family="Spectral" font-size="11" fill="rgba(48,144,224,.7)">OH⁻</text>
+            <text x="152" y="116" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(48,144,224,.5)">NaOH, pH~13</text>
+            <!-- Pil ned -->
+            <text x="200" y="96" font-family="Sora" font-size="16" fill="rgba(236,232,248,.25)">→</text>
+            <!-- Produkt-beaker -->
+            <path d="M218,56 L218,120 Q218,128 226,128 L266,128 Q274,128 274,120 L274,56 Z" fill="rgba(64,200,128,.06)" stroke="#40c880" stroke-width="1.5"/>
+            <path d="M218,56 Q226,50 246,50 Q266,50 274,56" fill="none" stroke="#40c880" stroke-width="1.5"/>
+            <text x="246" y="76" text-anchor="middle" font-family="Spectral" font-size="12" fill="#40c880" font-weight="700">Na⁺</text>
+            <text x="246" y="90" text-anchor="middle" font-family="Spectral" font-size="11" fill="rgba(64,200,128,.7)">Cl⁻</text>
+            <text x="246" y="104" text-anchor="middle" font-family="Spectral" font-size="11" fill="rgba(64,200,128,.6)">H₂O</text>
+            <text x="246" y="118" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(64,200,128,.5)">NaCl, pH 7</text>
+            <!-- Indikator-farger -->
+            <text x="140" y="148" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(200,128,255,.55)" letter-spacing=".06em">INDIKATORER</text>
+            <g font-family="Sora" font-size="8.5">
+              <text x="14" y="164" fill="rgba(224,64,64,.7)">Lakmus: rød i syre (pH &lt;7), blå i base (pH &gt;7)</text>
+              <text x="14" y="178" fill="rgba(224,160,32,.7)">Fenolftalein: fargeløs (pH &lt;8.2), rosa (pH &gt;8.2)</text>
+              <text x="14" y="192" fill="rgba(64,200,128,.7)">Universalindikator: alle pH-farger 0–14</text>
+              <text x="14" y="206" fill="rgba(96,160,240,.6)">BTB: gul (syre) → grønn (nøytral) → blå (base)</text>
+            </g>
+            <text x="140" y="226" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(200,128,255,.35)">Endepunkt: indikatoren skifter farge ved titrering</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Buffere -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(64,200,128,.1);color:#40c880;border:1px solid rgba(64,200,128,.2)">🛡️ Buffere</div>
+          <h3 class="k-tittel">Buffere – pH-stabilisatorer</h3>
+          <p class="k-ingress">En buffer er en blanding av en svak syre og dens konjugerte base som motstår pH-endringer ved tilsetting av syre eller base.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🩸</span><div><strong>Blodets buffer:</strong> H₂CO₃/HCO₃⁻-systemet holder blodet på pH 7.35–7.45. Utenfor dette smalest intervallet inntrer acidose eller alkalose – begge livstruende.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚗️</span><div><strong>Henderson-Hasselbalch:</strong> pH = pKa + log([A⁻]/[HA]). Best buffer effekt når [A⁻] = [HA] → pH = pKa. Effektivt ±1 pH-enhet rundt pKa.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Fosfatbuffer:</strong> H₂PO₄⁻/HPO₄²⁻ (pKa 7.2) er viktig intracellulært. PBS (fosfatbufret saltvann) brukes til å oppbevare biologisk materiale.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Havets buffer:</strong> Havet bufres av karbonatsystemet (pH ~8.1). CO₂-utslipp øker [H₂CO₃] → havet surner → truer kalkskall-organismer.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(64,200,128,.6)" letter-spacing=".08em">BUFFERVIRKNING</text>
+            <!-- pH-akse -->
+            <text x="14" y="40" font-family="Sora" font-size="8.5" fill="rgba(236,232,248,.4)">pH</text>
+            <line x1="28" y1="36" x2="28" y2="140" stroke="rgba(200,128,255,.3)" stroke-width="1.5"/>
+            <g font-family="Sora" font-size="8" fill="rgba(236,232,248,.4)">
+              <text x="18" y="48">9</text><line x1="24" y1="44" x2="30" y2="44" stroke="rgba(200,128,255,.25)" stroke-width="1"/>
+              <text x="18" y="66">8</text><line x1="24" y1="62" x2="30" y2="62" stroke="rgba(200,128,255,.25)" stroke-width="1"/>
+              <text x="14" y="84">7.4</text><line x1="24" y1="80" x2="30" y2="80" stroke="rgba(64,200,128,.6)" stroke-width="1.5"/>
+              <text x="18" y="102">7</text><line x1="24" y1="98" x2="30" y2="98" stroke="rgba(200,128,255,.25)" stroke-width="1"/>
+              <text x="18" y="120">6</text><line x1="24" y1="116" x2="30" y2="116" stroke="rgba(200,128,255,.25)" stroke-width="1"/>
+              <text x="18" y="138">5</text>
+            </g>
+            <!-- Buffer-kurve (flat i midten) -->
+            <path d="M34,136 Q55,132 75,122 Q90,112 100,88 Q108,72 118,50 Q128,38 145,36 Q162,36 172,38 Q186,42 200,80 Q212,108 228,124 Q246,136 266,138"
+              fill="none" stroke="#40c880" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Bufferregion markert -->
+            <rect x="96" y="46" width="88" height="86" rx="6" fill="rgba(64,200,128,.05)" stroke="rgba(64,200,128,.25)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="140" y="96" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(64,200,128,.6)">BUFFERREGION</text>
+            <text x="140" y="108" text-anchor="middle" font-family="Sora" font-size="7.5" fill="rgba(64,200,128,.45)">pKa ± 1</text>
+            <!-- X-akse (tilsatt base) -->
+            <text x="148" y="154" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(236,232,248,.4)">Tilsatt base →</text>
+            <!-- Blodbuffer info -->
+            <rect x="14" y="166" width="252" height="66" rx="10" fill="rgba(64,200,128,.04)" stroke="rgba(64,200,128,.2)" stroke-width="1"/>
+            <text x="140" y="182" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(64,200,128,.6)" letter-spacing=".06em">BLODETS KARBONATSYSTEM</text>
+            <g font-family="Sora" font-size="8">
+              <text x="24" y="196" fill="rgba(236,232,248,.55)">CO₂ + H₂O ⇌ H₂CO₃ ⇌ H⁺ + HCO₃⁻</text>
+              <text x="24" y="210" fill="rgba(64,200,128,.6)">pH 7.35–7.45 (±0.05 = klinisk kritisk)</text>
+              <text x="24" y="224" fill="rgba(236,232,248,.4)">Nyrene justerer [HCO₃⁻], lungene justerer PCO₂</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Syre-base i hverdagen -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(200,128,255,.1);color:#c880ff;border:1px solid rgba(200,128,255,.2)">🏠 Hverdagen</div>
+          <h3 class="k-tittel">Syre-base i hverdagen</h3>
+          <p class="k-ingress">Syre-base-kjemi er overalt – fra matlaging til medisin til miljø.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:4px">
+            <div style="padding:14px;background:rgba(224,64,64,.04);border:1px solid rgba(224,64,64,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#e04040;display:block;margin-bottom:4px">🍋 Matlaging</strong>
+              Sitronjuice (pH 2–3) kurerer fisk fordi syren denaturerer proteinene. Natron i bakst reagerer med sure ingredienser og avgir CO₂ – hever deigen.
+            </div>
+            <div style="padding:14px;background:rgba(48,144,224,.04);border:1px solid rgba(48,144,224,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#3090e0;display:block;margin-bottom:4px">💊 Medisin</strong>
+              Antacider (Mg(OH)₂, CaCO₃) nøytraliserer magesyre. Aspirin er en svak syre (acetylsalisylsyre). pH-balansen i blod styres av nyrer og lunger.
+            </div>
+            <div style="padding:14px;background:rgba(64,200,128,.04);border:1px solid rgba(64,200,128,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#40c880;display:block;margin-bottom:4px">🌱 Hagebruk</strong>
+              Kalk (CaCO₃) nøytraliserer sur jord. Blåbær trives ved pH 4–5. De fleste grønnsaker foretrekker pH 6–7. Mold i hagestuen senker pH.
+            </div>
+            <div style="padding:14px;background:rgba(224,160,32,.04);border:1px solid rgba(224,160,32,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#e0a020;display:block;margin-bottom:4px">🌧️ Sur nedbør</strong>
+              SO₂ og NOₓ fra forbrenning → H₂SO₄ og HNO₃ i atmosfæren → sur nedbør (pH 4–5). Skader skog, innsjøer og steinbygninger.
+            </div>
+            <div style="padding:14px;background:rgba(200,128,255,.04);border:1px solid rgba(200,128,255,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#c880ff;display:block;margin-bottom:4px">🏊 Svømmebasseng</strong>
+              pH 7.2–7.6 er optimalt. For sur → irriterende for øyne. For basisk → klorin blir mindre effektivt. Klor-tilsetting senker pH.
+            </div>
+            <div style="padding:14px;background:rgba(96,160,240,.04);border:1px solid rgba(96,160,240,.15);border-radius:12px;font-size:.78rem;line-height:1.6;color:rgba(236,232,248,.65)">
+              <strong style="color:#60a0f0;display:block;margin-bottom:4px">🌊 Havforsuring</strong>
+              CO₂ + H₂O → H₂CO₃ → H⁺ + HCO₃⁻. Havets pH har sunket fra 8.2 til 8.1. Truer kalkdannende dyr som koraller og mollusker.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S7: Titrering og beregninger -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(224,160,32,.1);color:#e0a020;border:1px solid rgba(224,160,32,.2)">🧮 Beregninger</div>
+          <h3 class="k-tittel">Titrering og pH-beregninger</h3>
+          <p class="k-ingress">Titrering bestemmer konsentrasjonen av en syre eller base – en grunnleggende laboratoriemetode.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Titrering:</strong> Kjent konsentrasjon base/syre tilsettes sakte til indikator skifter. Ved ekvivalenspunktet: n(H⁺) = n(OH⁻) → c₁V₁ = c₂V₂.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>pH-beregning, sterk syre:</strong> pH = –log[H⁺]. HCl 0.01 mol/L → [H⁺] = 0.01 → pH = –log(0.01) = 2.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>pH-beregning, sterk base:</strong> pOH = –log[OH⁻], pH = 14 – pOH. NaOH 0.001 mol/L → pOH = 3 → pH = 11.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Svak syre:</strong> Ka = [H⁺]²/[HA]. Løs for [H⁺] = √(Ka · c). CH₃COOH 0.1 mol/L: [H⁺] = √(1.8×10⁻⁵ × 0.1) = 1.34×10⁻³ → pH ≈ 2.9.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 240" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="240" fill="#0c0a14"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Spectral" font-size="9" fill="rgba(224,160,32,.6)" letter-spacing=".08em">TITRERINGSKURVE</text>
+            <!-- Akser -->
+            <line x1="34" y1="20" x2="34" y2="170" stroke="rgba(200,128,255,.3)" stroke-width="1.5"/>
+            <line x1="34" y1="170" x2="260" y2="170" stroke="rgba(200,128,255,.3)" stroke-width="1.5"/>
+            <text x="20" y="170" font-family="Sora" font-size="7.5" fill="rgba(200,128,255,.4)">pH</text>
+            <text x="148" y="186" text-anchor="middle" font-family="Sora" font-size="8" fill="rgba(200,128,255,.4)">mL NaOH tilsatt →</text>
+            <!-- pH-verdier Y -->
+            <g font-family="Sora" font-size="7.5" fill="rgba(236,232,248,.35)">
+              <text x="20" y="170">1</text><text x="20" y="144">4</text><text x="20" y="118">7</text>
+              <text x="20" y="92">10</text><text x="20" y="66">13</text>
+            </g>
+            <g stroke="rgba(200,128,255,.1)" stroke-width="1">
+              <line x1="30" y1="166" x2="260" y2="166"/><line x1="30" y1="140" x2="260" y2="140"/>
+              <line x1="30" y1="114" x2="260" y2="114"/><line x1="30" y1="88" x2="260" y2="88"/>
+              <line x1="30" y1="62" x2="260" y2="62"/>
+            </g>
+            <!-- Titreringskurve for sterk syre med sterk base -->
+            <path d="M36,164 Q60,162 84,158 Q104,154 116,148 Q126,140 130,126 Q132,116 136,68 Q139,48 145,42 Q152,40 158,50 Q162,62 170,96 Q180,126 196,146 Q216,158 240,164 Q252,166 260,166"
+              fill="none" stroke="#e0a020" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Ekvivalenspunkt -->
+            <circle cx="136" cy="114" r="6" fill="rgba(64,200,128,.4)" stroke="#40c880" stroke-width="1.5"/>
+            <line x1="136" y1="108" x2="136" y2="40" stroke="rgba(64,200,128,.35)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="146" y="50" font-family="Sora" font-size="7.5" fill="rgba(64,200,128,.6)">Ekvivalenspunkt</text>
+            <text x="146" y="60" font-family="Sora" font-size="7.5" fill="rgba(64,200,128,.5)">pH = 7 (sterk/sterk)</text>
+            <!-- Halvtitrerings-punkt (pKa for svak syre) -->
+            <circle cx="92" cy="140" r="4" fill="rgba(224,160,32,.4)" stroke="#e0a020" stroke-width="1.2"/>
+            <text x="14" y="130" font-family="Sora" font-size="7" fill="rgba(224,160,32,.5)">½-punkt</text>
+            <text x="14" y="140" font-family="Sora" font-size="7" fill="rgba(224,160,32,.45)">pH = pKa</text>
+            <!-- Formel -->
+            <rect x="14" y="192" width="252" height="42" rx="8" fill="rgba(224,160,32,.05)" stroke="rgba(224,160,32,.2)" stroke-width="1"/>
+            <text x="140" y="208" text-anchor="middle" font-family="Spectral" font-size="13" fill="rgba(224,160,32,.8)" font-weight="600">c₁V₁ = c₂V₂</text>
+            <text x="140" y="225" text-anchor="middle" font-family="Sora" font-size="8.5" fill="rgba(224,160,32,.5)">Konsentrasjon × volum = konsentrasjon × volum</text>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- MINI-QUIZ -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Test deg selv</div><div class="sep-r"></div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-tittel">Syre-base quiz – 8 spørsmål</div>
+    <div class="quiz-progress" id="quiz-progress">Spørsmål 1 av 8</div>
+    <div class="quiz-spørsmål" id="quiz-spørsmål"></div>
+    <div class="quiz-alternativer" id="quiz-alternativer"></div>
+    <div class="quiz-tilbakemelding" id="quiz-tilbakemelding"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <span id="quiz-score" style="font-size:.8rem;color:var(--dim)">Poeng: 0</span>
+      <button id="quiz-neste" onclick="quizNeste()" style="padding:8px 18px;border-radius:8px;border:1px solid rgba(200,128,255,.3);background:rgba(200,128,255,.08);color:var(--accent);font-family:var(--font-b);font-size:.82rem;cursor:pointer;display:none">Neste →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i===0?' on':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i*100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d,j) => d.classList.toggle('on', j===i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N-1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N-1, cur+d))); }
+let tx=0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx=e.touches[0].clientX, {passive:true});
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, {passive:true});
+goTo(0);
+
+// ═══ INTERAKTIV pH-SKALA ═══
+const PH_DATA = [
+  {ph:0,  farge:'#e02020', navn:'Konsentrert HCl / magesyre (ekstremt)', eks:'Batterisyre, saltsyre konsentrert'},
+  {ph:1,  farge:'#e04020', navn:'Magesyre / bilbatterisyre', eks:'Magesyre (pH 1–2), konsentrert HCl'},
+  {ph:2,  farge:'#e06020', navn:'Sitronjuice, eddik, cola', eks:'Sitronjuice pH 2–3, cola pH 2.5, vin pH 3–4'},
+  {ph:3,  farge:'#e08020', navn:'Eddik, appelsinjuice', eks:'Appelsinjuice, tomater, øl'},
+  {ph:4,  farge:'#e0a020', navn:'Sur regnvann, svart te', eks:'Sur regnvann, øl, svart te'},
+  {ph:5,  farge:'#c0c020', navn:'Kaffe, regnvann, bananer', eks:'Svart kaffe pH 5, regnvann pH 5.6'},
+  {ph:6,  farge:'#80c030', navn:'Spytt, melk, urin (normalt)', eks:'Spytt pH 6.2–7.6, melk pH 6.5–6.8'},
+  {ph:7,  farge:'#40c880', navn:'Reint vann – nøytralt', eks:'Destillert vann, reint vann'},
+  {ph:8,  farge:'#40a8c0', navn:'Sjøvann, bikarbonat', eks:'Sjøvann pH 8.1, natron-løsning'},
+  {ph:9,  farge:'#4080e0', navn:'Natron, borsyre', eks:'Natron (NaHCO₃), håndsåpe'},
+  {ph:10, farge:'#4060d0', navn:'Magnesia, ammoniakk (svak)', eks:'Magnesia, mildt vaskemiddel'},
+  {ph:11, farge:'#5040c0', navn:'Ammoniakk, hårbleking', eks:'Husholdsningsammoniakk, hårblekning'},
+  {ph:12, farge:'#7030b0', navn:'Sterke såpeløsninger', eks:'Kalkvann, sterke rengjøringsmidler'},
+  {ph:13, farge:'#9020a0', navn:'Natronlut (fortynnet)', eks:'Ovnsrens, natronlut (fortynnet)'},
+  {ph:14, farge:'#c00080', navn:'Konsentrert NaOH / KOH', eks:'Konsentrert natronlut, sterke industrielle baser'},
+];
+
+const PH_EKSEMPLER = [
+  {ph:1, navn:'Magesyre', emoji:'🫁'},
+  {ph:2.5, navn:'Cola', emoji:'🥤'},
+  {ph:3, navn:'Sitron', emoji:'🍋'},
+  {ph:5, navn:'Kaffe', emoji:'☕'},
+  {ph:6.5, navn:'Melk', emoji:'🥛'},
+  {ph:7, navn:'Vann', emoji:'💧'},
+  {ph:7.4, navn:'Blod', emoji:'🩸'},
+  {ph:8.1, navn:'Sjøvann', emoji:'🌊'},
+  {ph:9, navn:'Natron', emoji:'🧂'},
+  {ph:11, navn:'Ammoniakk', emoji:'🧹'},
+  {ph:13, navn:'Natronlut', emoji:'🧴'},
+];
+
+const eksEl = document.getElementById('ph-eksempler');
+PH_EKSEMPLER.forEach(e => {
+  const div = document.createElement('div');
+  div.className = 'ph-eks';
+  const phData = PH_DATA[Math.min(14, Math.round(e.ph))];
+  div.style.borderColor = phData.farge + '44';
+  div.innerHTML = `<div class="ph-eks-val" style="color:${phData.farge}">${e.ph}</div>
+    <div style="font-size:1.1rem">${e.emoji}</div>
+    <div class="ph-eks-navn">${e.navn}</div>`;
+  div.onclick = () => visPH(e.ph);
+  eksEl.appendChild(div);
+});
+
+const gradient = document.getElementById('ph-gradient');
+gradient.addEventListener('click', e => {
+  const rect = gradient.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const ph = Math.max(0, Math.min(14, (x / rect.width) * 14));
+  visPH(ph);
+});
+
+function visPH(ph) {
+  const pct = (ph / 14) * 100;
+  document.getElementById('ph-marker').style.left = pct + '%';
+  const idx = Math.min(14, Math.round(ph));
+  const data = PH_DATA[idx];
+  const boks = document.getElementById('ph-info-boks');
+  boks.style.borderColor = data.farge + '44';
+  document.getElementById('ph-info-nr').textContent = ph % 1 === 0 ? ph : ph.toFixed(1);
+  document.getElementById('ph-info-nr').style.color = data.farge;
+  const surhet = ph < 7 ? `Sur – [H⁺] = 10⁻${ph.toFixed(0)} mol/L` : ph === 7 ? 'Nøytral – [H⁺] = [OH⁻] = 10⁻⁷ mol/L' : `Basisk – [OH⁻] = 10⁻${(14-ph).toFixed(0)} mol/L`;
+  document.getElementById('ph-info-tekst').innerHTML = `<strong style="color:${data.farge}">${data.navn}</strong><br>${surhet}<br><span style="opacity:.6">${data.eks}</span>`;
+}
+visPH(7);
+
+// ═══ QUIZ ═══
+const QUIZ = [
+  {spørsmål:'Hva er pH til reint vann ved 25°C?', alternativer:['pH 5','pH 6','pH 7','pH 8'], riktig:2, forklaring:'Reint vann er nøytralt med pH = 7 fordi [H⁺] = [OH⁻] = 10⁻⁷ mol/L.'},
+  {spørsmål:'HCl er en sterk syre. Hva betyr det?', alternativer:['Den er farlig å ta på','Den dissosiserer fullstendig i vann','Den har lav pH uansett konsentrasjon','Den smaker surt'], riktig:1, forklaring:'Sterke syrer dissosiserer (spaltes) 100% i vann: HCl → H⁺ + Cl⁻. Svake syrer gjør det bare delvis.'},
+  {spørsmål:'pH = –log[H⁺]. Hva er pH til en løsning med [H⁺] = 0.001 mol/L?', alternativer:['pH 1','pH 2','pH 3','pH 4'], riktig:2, forklaring:'pH = –log(0.001) = –log(10⁻³) = 3.'},
+  {spørsmål:'Hvilken av disse er en buffer?', alternativer:['NaCl i vann','HCl i vann','CH₃COOH + CH₃COONa','NaOH i vann'], riktig:2, forklaring:'En buffer er en blanding av svak syre og dens konjugerte base (natriumsalt). CH₃COOH/CH₃COO⁻ er et klassisk eksempel.'},
+  {spørsmål:'pH i blod holdes normalt mellom:', alternativer:['6.5–7.0','7.0–7.2','7.35–7.45','7.5–8.0'], riktig:2, forklaring:'Blodet holdes mellom pH 7.35–7.45 av karbonatsystemet. Utenfor dette intervallet inntrer acidose eller alkalose.'},
+  {spørsmål:'Hva skjer kjemisk ved nøytralisering?', alternativer:['H⁺ + OH⁻ → H₂O','Na⁺ + Cl⁻ → NaCl','CO₂ + H₂O → H₂CO₃','H₂ + O₂ → H₂O'], riktig:0, forklaring:'Nøytralisering er reaksjonen H⁺ + OH⁻ → H₂O. Saltet (NaCl) dannes som biprodukt.'},
+  {spørsmål:'Hva er pOH til en løsning med pH = 4?', alternativer:['pOH = 4','pOH = 7','pOH = 10','pOH = 14'], riktig:2, forklaring:'pH + pOH = 14. Så pOH = 14 – 4 = 10. (Merk: [OH⁻] = 10⁻¹⁰ mol/L, svært lavt i en sur løsning.)'},
+  {spørsmål:'Sur nedbør dannes primært av:', alternativer:['CO₂ og H₂O','SO₂ og NOₓ fra forbrenning','HCl fra industri','O₃ fra atmosfæren'], riktig:1, forklaring:'SO₂ og NOₓ reagerer med vann i atmosfæren og danner H₂SO₄ og HNO₃ – surnedbørens hoveddrivkrefter.'},
+];
+let quizIdx = 0, quizScore = 0, quizBesvart = false;
+
+function visSpm() {
+  const q = QUIZ[quizIdx];
+  document.getElementById('quiz-progress').textContent = `Spørsmål ${quizIdx+1} av ${QUIZ.length}`;
+  document.getElementById('quiz-spørsmål').textContent = q.spørsmål;
+  document.getElementById('quiz-tilbakemelding').textContent = '';
+  document.getElementById('quiz-neste').style.display = 'none';
+  quizBesvart = false;
+  const altEl = document.getElementById('quiz-alternativer');
+  altEl.innerHTML = '';
+  q.alternativer.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-btn';
+    btn.textContent = a;
+    btn.onclick = () => svarQuiz(i, btn);
+    altEl.appendChild(btn);
+  });
+}
+
+function svarQuiz(idx, btn) {
+  if (quizBesvart) return;
+  quizBesvart = true;
+  const q = QUIZ[quizIdx];
+  const btns = document.querySelectorAll('.quiz-btn');
+  btns.forEach(b => b.disabled = true);
+  btn.classList.add('valgt');
+  if (idx === q.riktig) {
+    btn.classList.add('riktig');
+    quizScore++;
+    document.getElementById('quiz-score').textContent = `Poeng: ${quizScore}`;
+    document.getElementById('quiz-tilbakemelding').innerHTML = `✅ Riktig! ${q.forklaring}`;
+    document.getElementById('quiz-tilbakemelding').style.color = '#40c880';
+  } else {
+    btn.classList.add('feil');
+    btns[q.riktig].classList.add('riktig');
+    document.getElementById('quiz-tilbakemelding').innerHTML = `❌ Feil. Riktig svar: <strong>${q.alternativer[q.riktig]}</strong>. ${q.forklaring}`;
+    document.getElementById('quiz-tilbakemelding').style.color = 'rgba(236,232,248,.65)';
+  }
+  if (quizIdx < QUIZ.length - 1) {
+    document.getElementById('quiz-neste').style.display = 'block';
+  } else {
+    document.getElementById('quiz-tilbakemelding').innerHTML += `<br><br>🎉 Quiz ferdig! Du fikk ${quizScore} av ${QUIZ.length} poeng.`;
+    document.getElementById('quiz-neste').textContent = '🔄 Start på nytt';
+    document.getElementById('quiz-neste').style.display = 'block';
+    document.getElementById('quiz-neste').onclick = () => { quizIdx = 0; quizScore = 0; document.getElementById('quiz-score').textContent = 'Poeng: 0'; visSpm(); document.getElementById('quiz-neste').onclick = quizNeste; };
+  }
+}
+
+function quizNeste() {
+  quizIdx++;
+  visSpm();
+}
+
+visSpm();
+</script>
+</body>
+</html>

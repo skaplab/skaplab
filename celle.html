@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Cellens anatomi (organeller)</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f7f4;--surface:#ffffff;--card:#f7faf9;
+  --border:#ddeee8;--text:#1a2e26;--dim:#6a8c7e;
+  --accent:#2d9e6b;--accent2:#1a6b48;
+  --font-d:'Lora',serif;--font-b:'Mulish',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 35% 40%,rgba(45,158,107,.06),transparent),
+             radial-gradient(ellipse 50% 40% at 80% 70%,rgba(26,107,72,.04),transparent);}
+
+nav{position:sticky;top:0;z-index:300;background:rgba(240,247,244,.96);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;font-weight:600;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-weight:600}
+.cellebytte{display:flex;gap:4px}
+.ctab{font-size:.72rem;font-weight:600;padding:5px 14px;border-radius:20px;
+  border:1.5px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .18s}
+.ctab:hover{border-color:var(--accent);color:var(--text)}
+.ctab.on{background:rgba(45,158,107,.12);border-color:var(--accent);color:var(--accent2)}
+
+.layout{position:relative;z-index:1;display:grid;grid-template-columns:180px 1fr 300px;
+  height:calc(100vh - 44px);overflow:hidden}
+
+/* Venstre knappepanel */
+.side-panel{padding:14px 0;display:flex;flex-direction:column;gap:5px;
+  border-right:1px solid var(--border);background:rgba(255,255,255,.6);overflow-y:auto}
+.side-panel::-webkit-scrollbar{width:3px}
+.side-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.side-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);padding:10px 14px 4px}
+.del-knapp{font-family:var(--font-b);font-size:.76rem;font-weight:600;
+  padding:7px 14px;border:none;background:transparent;color:var(--dim);
+  cursor:pointer;text-align:left;transition:all .18s;
+  display:flex;align-items:center;gap:8px;border-radius:0;}
+.del-knapp:hover{background:rgba(45,158,107,.07);color:var(--text)}
+.del-knapp.aktiv{background:rgba(45,158,107,.12);color:var(--accent2);font-weight:700}
+.del-knapp .dot{width:7px;height:7px;border-radius:50%;background:var(--farge,var(--accent));flex-shrink:0}
+.del-knapp.aktiv .dot{box-shadow:0 0 5px var(--farge,var(--accent))}
+
+/* SVG-senter */
+.celle-wrap{position:relative;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;background:var(--bg);}
+.celle-svg{width:100%;height:100%;max-width:600px;max-height:600px}
+.hotspot{cursor:pointer;transition:all .2s}
+.hotspot:hover .hs-el{filter:brightness(1.3) saturate(1.2)}
+.hotspot.aktiv .hs-el{filter:brightness(1.5) saturate(1.4)}
+
+/* Tooltip */
+.tooltip{position:absolute;background:rgba(26,46,38,.92);border:1px solid rgba(45,158,107,.3);
+  border-radius:8px;padding:5px 11px;font-size:.75rem;color:#e8f5f0;
+  pointer-events:none;white-space:nowrap;transform:translate(-50%,-110%);z-index:10;
+  transition:opacity .15s}
+
+/* Info panel */
+.info-panel{border-left:1px solid var(--border);background:var(--surface);
+  display:flex;flex-direction:column;overflow-y:auto}
+.info-panel::-webkit-scrollbar{width:3px}
+.info-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.info-tom{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;color:var(--dim);text-align:center;padding:28px;gap:10px}
+.info-tom-ikon{font-size:2.5rem;opacity:.3}
+.info-tom-tekst{font-size:.75rem;color:var(--dim);line-height:1.6}
+.info-header{padding:22px 22px 14px;border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden}
+.info-header::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,var(--pglow,rgba(45,158,107,.06)),transparent);
+  pointer-events:none}
+.del-emoji{font-size:2rem;display:block;margin-bottom:6px}
+.del-navn{font-family:var(--font-d);font-size:1.4rem;font-weight:700;color:var(--farge,var(--accent));line-height:1}
+.del-latinsk{font-size:.74rem;color:var(--dim);font-style:italic;margin-top:2px;font-family:var(--font-d)}
+.info-body{padding:16px 22px;display:flex;flex-direction:column;gap:12px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.info-boks{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+.info-boks-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.info-boks-verdi{font-size:.78rem;font-weight:600;color:var(--text);line-height:1.4}
+.del-seksjontittel{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.del-tekst{font-size:.81rem;line-height:1.7;color:rgba(26,46,38,.75)}
+.visste-boks{background:rgba(45,158,107,.06);border:1px solid rgba(45,158,107,.18);
+  border-radius:9px;padding:11px 13px;border-left:3px solid var(--accent)}
+.visste-boks p{font-size:.78rem;line-height:1.65;color:rgba(26,46,38,.75)}
+
+/* Animasjoner */
+@keyframes celle-puls{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes mitokondrie-puls{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes flagell{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
+@keyframes ribosom-blink{0%,100%{opacity:.5}50%{opacity:1}}
+.ar-celle{animation:celle-puls 3s ease-in-out infinite}
+.ar-mitokondrie{animation:mitokondrie-puls 2s ease-in-out infinite}
+
+@media(max-width:960px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .side-panel{flex-direction:row;flex-wrap:wrap;overflow-x:auto;border-right:none;
+    border-bottom:1px solid var(--border);padding:8px;height:auto}
+  .side-label{display:none}.del-knapp{font-size:.68rem;padding:5px 10px}
+  .info-panel{height:280px;border-left:none;border-top:1px solid var(--border)}
+  .info-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-tittel">Cellens anatomi</span>
+  </div>
+  <div class="cellebytte">
+    <button class="ctab on" onclick="byttCelle('dyre',this)">🐭 Dyrецelle</button>
+    <button class="ctab" onclick="byttCelle('plante',this)">🌿 Plantecelle</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- Venstre panel -->
+  <div class="side-panel" id="side-panel"></div>
+
+  <!-- SVG celle -->
+  <div class="celle-wrap" id="celle-wrap">
+    <svg class="celle-svg" id="celle-svg" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="tooltip" id="tooltip" style="opacity:0;left:0;top:0"></div>
+  </div>
+
+  <!-- Info panel -->
+  <div class="info-panel" id="info-panel">
+    <div class="info-tom" id="info-tom">
+      <div class="info-tom-ikon">🔬</div>
+      <div class="info-tom-tekst">Klikk på en celledelene<br>for å lære mer</div>
+    </div>
+    <div id="info-innhold" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  CELLEDATA
+// ═══════════════════════════════════════════
+const CELLE_DELER = {
+  dyre: [
+    {id:'cellememb', navn:'Cellemembranen', latin:'Plasma membrana', emoji:'🧱', farge:'#2d9e6b',
+     fakta:[{l:'Tykkelse',v:'7–10 nm'},{l:'Struktur',v:'Dobbelt fosfolipidlag'},{l:'Funksjon',v:'Kontroll inn/ut'}],
+     tekst:'Cellemembranen er cellens yttergrense – et dobbelt lag av fosfolipider med proteiner innbakt. Den regulerer hva som kommer inn og ut av cellen (selektiv permeabilitet). Proteiner i membranen fungerer som porter, reseptorer og enzymer.',
+     morsomt:'Cellemembranen er så tynn at du ville trenge 10 000 slike lag for å nå tykkelsen på ett papirark!'},
+    {id:'kjerne', navn:'Cellekjernen', latin:'Nucleus', emoji:'🔵', farge:'#4f46e5',
+     fakta:[{l:'Størrelse',v:'5–10 μm'},{l:'Innhold',v:'DNA + proteiner'},{l:'Lagrede gener',v:'~20 000'}],
+     tekst:'Cellekjernen er cellens kontrollsenter og inneholder arvestoffet (DNA) organisert i kromosomer. Den styrer cellens aktiviteter ved å sende ut instruksjoner via mRNA. Kjernen er omgitt av en dobbel membran (kjernemembran) med porer.',
+     morsomt:'Hvis du strakk ut alt DNA-et i én enkelt menneskecelle, ville tråden bli ca. 2 meter lang!'},
+    {id:'mitokondrie', navn:'Mitokondriet', latin:'Mitochondrium', emoji:'⚡', farge:'#f59e0b',
+     fakta:[{l:'Størrelse',v:'0,5–10 μm'},{l:'Antall per celle',v:'100–2000'},{l:'Funksjon',v:'ATP-produksjon'}],
+     tekst:'Mitokondriet er "kraftverket" i cellen og produserer ATP (energivaluta) via celleånding. De har sin egen DNA og formerer seg uavhengig – bevis på at de en gang var egne bakterier (endosymbiont-teorien). Celler som bruker mye energi (som muskler) har flest mitokondrier.',
+     morsomt:'Mitokondrier stammer sannsynligvis fra en bakterie som for ~2 milliarder år siden ble svelget av en annen celle – og ble der permanent!'},
+    {id:'er-ruff', navn:'Ru ER', latin:'Rough Endoplasmic Reticulum', emoji:'📦', farge:'#8b5cf6',
+     fakta:[{l:'Type',v:'Membransystem'},{l:'Ribosomer',v:'Ja – "det ru"'},{l:'Funksjon',v:'Proteinsyntese'}],
+     tekst:'Det ru endoplasmatiske nettverket (ru ER) er dekket av ribosomer og spesialisert i å produsere og modifisere proteiner. Proteinene fraktes videre til Golgi-apparatet for videre bearbeiding og pakking.',
+     morsomt:'Navnet "ru" kommer av ribosomene på overflaten – det ser ut som sandpapir under mikroskop!'},
+    {id:'er-glatt', navn:'Glatt ER', latin:'Smooth Endoplasmic Reticulum', emoji:'🌀', farge:'#06b6d4',
+     fakta:[{l:'Type',v:'Membransystem'},{l:'Ribosomer',v:'Nei'},{l:'Funksjon',v:'Lipider og avgiftning'}],
+     tekst:'Det glatte ER (uten ribosomer) produserer lipider og steroidhormoner, bryter ned giftstoffer og regulerer kalsiumlagrene i cellen. Leverceller har mye glatt ER for å bryte ned alkohol og medikamenter.',
+     morsomt:'Levercellene dine kan faktisk lage mer glatt ER som respons på alkohol – det er en del av kroppens avgiftningssystem!'},
+    {id:'golgi', navn:'Golgi-apparatet', latin:'Apparatus Golgi', emoji:'📮', farge:'#ec4899',
+     fakta:[{l:'Antall cisternae',v:'4–8 lag'},{l:'Funksjon',v:'Sorterer og pakker proteiner'},{l:'Navngitt av',v:'Camillo Golgi, 1898'}],
+     tekst:'Golgi-apparatet er cellens "postkontor" – det mottar proteiner fra ER, modifiserer dem (legger til sukkermolekyler, klipper av deler) og pakker dem i vesikler for transport til riktig destinasjon inne eller utenfor cellen.',
+     morsomt:'Camillo Golgi oppdaget organellen i 1898, men mange trodde han tok feil – de mente strukturen var for sammensatt til å eksistere. Han fikk Nobelprisen i 1906!'},
+    {id:'lysosom', navn:'Lysosomet', latin:'Lysosome', emoji:'💊', farge:'#ef4444',
+     fakta:[{l:'Innhold',v:'~50 fordøyelsesenzymer'},{l:'pH',v:'~4,8 (surt)'},{l:'Funksjon',v:'Cellulær fordøyelse'}],
+     tekst:'Lysosomer er cellens "mage" – de inneholder sure enzymer som bryter ned avfall, utbrukte organeller og innkommende partikler via fagocytose. De holder pH nede (surt) for å holde enzymene aktive. Hvis lysosomene sprekker, kan de fordøye selve cellen.',
+     morsomt:'Surt miljø i lysosomet beskytter resten av cellen – hvis enzymene lekker ut i det nøytrale cytoplasmaet, mister de aktiviteten sin!'},
+    {id:'ribosom', navn:'Ribosomet', latin:'Ribosome', emoji:'🔴', farge:'#f97316',
+     fakta:[{l:'Størrelse',v:'~25 nm'},{l:'Sammensatt av',v:'rRNA + proteiner'},{l:'Funksjon',v:'Proteinsyntese'}],
+     tekst:'Ribosomene er cellens "fabrikker" som oversetter mRNA til proteiner. De finnes fritt i cytoplasmaet eller festet til ru ER. Et ribosom består av to underenheter og leser av mRNA tre baser om gangen (et kodon) for å feste riktig aminosyre.',
+     morsomt:'En enkelt celle kan ha opp mot 10 millioner ribosomer – og hvert ribosom kan produsere ett protein per 20 sekunder!'},
+    {id:'sentrosom', navn:'Sentrosomet', latin:'Centrosome', emoji:'🎯', farge:'#14b8a6',
+     fakta:[{l:'Innhold',v:'To sentrioler'},{l:'Funksjon',v:'Celledeling'},{l:'Finnes i',v:'Bare dyreceller'}],
+     tekst:'Sentrosomet inneholder to sentrioler og styrer dannelsen av spindelen under celledeling. Det er organisasjonssenteret for mikrotubuli. Planteceller har ikke sentrosom – de bruker andre strukturer under celledeling.',
+     morsomt:'Sentrosomet er avgjørende for at kromosome deles likt mellom to datterceller – feil her kan føre til kreft!'},
+    {id:'cytoplasma', navn:'Cytoplasmaet', latin:'Cytoplasma', emoji:'🫧', farge:'#a3e635',
+     fakta:[{l:'Innhold',v:'~70% vann'},{l:'pH',v:'~7,2'},{l:'Funksjon',v:'Fyller cellen, transport'}],
+     tekst:'Cytoplasmaet er geléaktig væske som fyller cellen utenfor kjernen. Det inneholder løste mineraler, enzymer og næringsstoffer, og fungerer som medium for transport mellom organeller. Cytoplasmaet er i konstant bevegelse (cytoplasmastrøm).',
+     morsomt:'Cytoplasmaet er ikke bare vann – det er mer som en tykk gelé full av molekyler, og oppfører seg både som væske og fast stoff avhengig av trykk!'},
+  ],
+  plante: [
+    {id:'cellevegg', navn:'Celleveggen', latin:'Paries cellulae', emoji:'🧱', farge:'#65a30d',
+     fakta:[{l:'Materiale',v:'Cellulose + pektin'},{l:'Tykkelse',v:'0,1–10 μm'},{l:'Funksjon',v:'Støtte og beskyttelse'}],
+     tekst:'Planteceller har en stiv cellevegg av cellulose utenfor cellemembranen. Den gir mekanisk støtte (holder planten oppreist), beskytter mot ytre trykk og bidrar til å holde på turgortrykket. Cellulose er den mest tallrike organiske forbindelsen på jorda.',
+     morsomt:'Treverket i et tre er nesten utelukkende cellevegger – cellene selv er døde, og det er de stive veggene som holder treet oppe!'},
+    {id:'kloroplast', navn:'Kloroplastet', latin:'Chloroplastum', emoji:'🌿', farge:'#16a34a',
+     fakta:[{l:'Størrelse',v:'3–10 μm'},{l:'Pigment',v:'Klorofyll a og b'},{l:'Antall per celle',v:'20–100'}],
+     tekst:'Kloroplastene er "solcellepanelene" til planter og utfører fotosyntese: CO₂ + H₂O → glukose + O₂. De har sine egne DNA og ribosomer – som mitokondrier stammer de sannsynligvis fra cyanobakterier. Klorofyll gir planter sin grønne farge.',
+     morsomt:'Alt oksygenet du puster er produsert av kloroplaster – i planter, alger og cyanobakterier!'},
+    {id:'vakuole', navn:'Sentralvakuolen', latin:'Vacuola centralis', emoji:'💧', farge:'#0ea5e9',
+     fakta:[{l:'Størrelse',v:'Opp til 90% av cellen'},{l:'Innhold',v:'Cellesaft, avfallsstoffer'},{l:'Funksjon',v:'Turgortrykk, lagring'}],
+     tekst:'Plantecellers store sentralvakuole kan oppta mesteparten av cellens volum. Den lagrer vann, næringsstoffer og avfallsstoffer, og bidrar til turgortrykket som holder bladene stive. Farger i blomster og frukter (antocyaner) lagres i vakuolen.',
+     morsomt:'Når en plante visner, er det fordi vakuolene tømmes for vann og cellen mister turgortrykket – som en luftballong som mister luft!'},
+    {id:'plasmodesmata', navn:'Plasmodesmata', latin:'Plasmodesmata', emoji:'🔗', farge:'#d97706',
+     fakta:[{l:'Størrelse',v:'~40 nm diameter'},{l:'Funksjon',v:'Celletilcelletransport'},{l:'Unikt for',v:'Planteceller'}],
+     tekst:'Plasmodesmata er kanalene som forbinder naboplanteceller gjennom celleveggen. De tillater direkte transport av vann, næringsstoffer og signalmolekyler mellom celler – planter kan kommunisere raskt via dette nettverket.',
+     morsomt:'Plasmodesmata er som tunneler mellom cellene – viruset TMV (tobakksmosaikkvirus) har "lært seg" å klatre gjennom disse tunnelene for å spre seg!'},
+    {id:'cellememb-p', navn:'Cellemembranen', latin:'Plasma membrana', emoji:'🧱', farge:'#2d9e6b',
+     fakta:[{l:'Tykkelse',v:'7–10 nm'},{l:'Struktur',v:'Dobbelt fosfolipidlag'},{l:'Funksjon',v:'Kontroll inn/ut'}],
+     tekst:'Som i dyreceller er cellemembranen et selektivt lag som kontrollerer transport. Den sitter innvendig mot celleveggen i planteceller. Protonpumper i plantecellemembranen hjelper til med å ta opp næringsstoffer fra jorda.',
+     morsomt:'Cellemembranen er flytende – lipidene og proteinene flyter rundt i den, litt som isflak i havet. Modellen kalles "flytende mosaikk-modellen"!'},
+    {id:'kjerne-p', navn:'Cellekjernen', latin:'Nucleus', emoji:'🔵', farge:'#4f46e5',
+     fakta:[{l:'Størrelse',v:'5–10 μm'},{l:'Innhold',v:'DNA + proteiner'},{l:'Lagrede gener',v:'~25 000 (Arabidopsis)'}],
+     tekst:'Plantecellekjernen fungerer som i dyreceller – den inneholder DNA og styrer genuttrykkingen. Plantegener koder bl.a. for fotosyntese-proteiner, cellevekst og respons på lys og gravitasjon.',
+     morsomt:'Hveteplanten har fem ganger mer DNA i kjernen sin enn et menneske – mer DNA betyr ikke alltid mer kompleks organisme!'},
+    {id:'mitokondrie-p', navn:'Mitokondriet', latin:'Mitochondrium', emoji:'⚡', farge:'#f59e0b',
+     fakta:[{l:'Funksjon',v:'ATP via celleånding'},{l:'Finnes i',v:'Alle eukaryote celler'},{l:'Eget DNA',v:'Ja'}],
+     tekst:'Planteceller har både kloroplaster og mitokondrier. Om natten (når fotosyntesen stopper) bruker planter mitokondrier for å produsere energi fra lagret glukose, akkurat som dyreceller.',
+     morsomt:'Planter puster! Om natten bruker de oksygen og produserer CO₂ via mitokondrienes celleånding – det er motsatt av fotosyntese!'},
+    {id:'er-ruff-p', navn:'Ru ER + Golgi', latin:'ER + Apparatus Golgi', emoji:'📦', farge:'#8b5cf6',
+     fakta:[{l:'Funksjon ER',v:'Proteinsyntese og lipider'},{l:'Funksjon Golgi',v:'Sorterer og pakker'},{l:'Viktig for',v:'Celleveggbygging'}],
+     tekst:'I planteceller spiller Golgi-apparatet en spesiell rolle i å produsere polysakkaridet pektin og hemicellulose til celleveggen. Under celledeling dannes celleplateten som blir til ny cellevegg, koordinert av Golgi-vesikler.',
+     morsomt:'Pektin som Golgi produserer er det samme stoffet som gjør syltetøy tykt – planter lager det til celleveggene sine!'},
+    {id:'ribosom-p', navn:'Ribosomer', latin:'Ribosomata', emoji:'🔴', farge:'#f97316',
+     fakta:[{l:'Størrelse',v:'~25 nm'},{l:'Antall',v:'Millioner per celle'},{l:'Funksjon',v:'Proteinsyntese'}],
+     tekst:'Ribosomene i planteceller er identiske i funksjon med dyrecellers. I tillegg har kloroplaster og mitokondrier egne, litt mindre ribosomer (70S-type, som bakteriers) – bevis på deres bakterielle opprinnelse.',
+     morsomt:'Antibiotika virker ofte ved å stoppe bakterienes 70S-ribosomer – de påvirker ikke våre egne 80S-ribosomer. Men de kan forstyrre mitokondrie-ribosomene litt!'},
+    {id:'cytoplasma-p', navn:'Cytoplasmaet', latin:'Cytoplasma', emoji:'🫧', farge:'#a3e635',
+     fakta:[{l:'Innhold',v:'~70% vann'},{l:'Bevegelse',v:'Cytoplasmastrøm'},{l:'Funksjon',v:'Transport mellom organeller'}],
+     tekst:'Plantecellens cytoplasma roterer aktivt (cytoplasmastrøm / cyclosis) for å flytte rundt næringsstoffer og organeller. Denne strømmen er mer synlig i planteceller enn dyreceller og kan ses under lysmikroskop.',
+     morsomt:'I store planteceller som i stengel og blader kan du faktisk SE cytoplasmastrømmen under vanlig lysmikroskop – det er ganske spektakulært!'},
+  ]
+};
+
+// SVG-data: posisjon og form for hvert element
+const SVG_DYRE = `
+<defs>
+  <radialGradient id="bg-celle" cx="50%" cy="45%" r="55%">
+    <stop offset="0%" stop-color="#e8f5e9"/><stop offset="100%" stop-color="#c8e6c9"/>
+  </radialGradient>
+  <radialGradient id="kjerne-grd" cx="38%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#3730a3"/>
+  </radialGradient>
+  <radialGradient id="mito-grd" cx="35%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#b45309"/>
+  </radialGradient>
+  <filter id="blur-glow"><feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<!-- Cellemembran -->
+<g class="hotspot" data-id="cellememb" onclick="velg('cellememb','dyre')">
+  <ellipse class="hs-el" cx="280" cy="278" rx="245" ry="238" fill="url(#bg-celle)" stroke="#2d9e6b" stroke-width="3" opacity=".92"/>
+  <ellipse cx="280" cy="278" rx="248" ry="241" fill="none" stroke="rgba(45,158,107,.3)" stroke-width="2"/>
+</g>
+<!-- Cytoplasma (bakgrunn) -->
+<g class="hotspot" data-id="cytoplasma" onclick="velg('cytoplasma','dyre')">
+  <ellipse class="hs-el" cx="280" cy="278" rx="235" ry="226" fill="rgba(232,245,233,.6)" opacity=".5"/>
+</g>
+<!-- Kjerne -->
+<g class="hotspot" data-id="kjerne" onclick="velg('kjerne','dyre')">
+  <ellipse class="hs-el ar-mitokondrie" cx="270" cy="265" rx="72" ry="64" fill="url(#kjerne-grd)" stroke="#6366f1" stroke-width="2" opacity=".9" filter="url(#blur-glow)"/>
+  <!-- Nukleolus -->
+  <ellipse cx="266" cy="260" rx="22" ry="18" fill="rgba(167,139,250,.6)"/>
+  <!-- Kjerneporer -->
+  <circle cx="202" cy="270" r="4" fill="rgba(99,102,241,.5)"/>
+  <circle cx="338" cy="255" r="4" fill="rgba(99,102,241,.5)"/>
+  <circle cx="268" cy="202" r="4" fill="rgba(99,102,241,.5)"/>
+  <circle cx="265" cy="328" r="4" fill="rgba(99,102,241,.5)"/>
+</g>
+<!-- Ru ER -->
+<g class="hotspot" data-id="er-ruff" onclick="velg('er-ruff','dyre')">
+  <path class="hs-el" d="M355,230 Q380,240 388,262 Q395,282 380,300 Q368,315 350,318 Q330,322 318,308 Q305,294 312,274 Q320,252 340,242 Z"
+    fill="rgba(139,92,246,.25)" stroke="#8b5cf6" stroke-width="1.5"/>
+  <!-- Ru ribosomer på ER -->
+  <circle cx="365" cy="245" r="3" fill="#f97316" opacity=".7"/>
+  <circle cx="378" cy="262" r="3" fill="#f97316" opacity=".7"/>
+  <circle cx="375" cy="283" r="3" fill="#f97316" opacity=".7"/>
+  <circle cx="362" cy="300" r="3" fill="#f97316" opacity=".7"/>
+  <circle cx="344" cy="312" r="3" fill="#f97316" opacity=".7"/>
+</g>
+<!-- Glatt ER -->
+<g class="hotspot" data-id="er-glatt" onclick="velg('er-glatt','dyre')">
+  <path class="hs-el" d="M160,310 Q145,290 148,268 Q152,248 168,238 Q185,228 202,238 Q218,248 216,270 Q214,292 198,306 Q180,320 160,310 Z"
+    fill="rgba(6,182,212,.2)" stroke="#06b6d4" stroke-width="1.5"/>
+</g>
+<!-- Golgi -->
+<g class="hotspot" data-id="golgi" onclick="velg('golgi','dyre')">
+  <path class="hs-el" d="M185,170 Q230,158 255,168 Q262,175 255,185 Q230,196 185,185 Q177,179 185,170Z" fill="rgba(236,72,153,.3)" stroke="#ec4899" stroke-width="1.5"/>
+  <path d="M188,185 Q230,174 253,185 Q260,191 253,200 Q230,210 188,200 Q181,194 188,185Z" fill="rgba(236,72,153,.25)" stroke="#ec4899" stroke-width="1.2"/>
+  <path d="M192,200 Q230,190 251,200 Q257,206 251,214 Q230,223 192,214 Q186,208 192,200Z" fill="rgba(236,72,153,.2)" stroke="#ec4899" stroke-width="1"/>
+  <!-- Vesikler -->
+  <circle cx="272" cy="186" r="7" fill="rgba(236,72,153,.4)" stroke="#ec4899" stroke-width="1"/>
+  <circle cx="280" cy="202" r="6" fill="rgba(236,72,153,.35)" stroke="#ec4899" stroke-width="1"/>
+</g>
+<!-- Mitokondrier -->
+<g class="hotspot" data-id="mitokondrie" onclick="velg('mitokondrie','dyre')">
+  <ellipse class="hs-el ar-mitokondrie" cx="170" cy="370" rx="38" ry="22" fill="url(#mito-grd)" stroke="#f59e0b" stroke-width="1.5"/>
+  <path d="M140,370 Q158,358 175,370 Q158,382 140,370Z" fill="rgba(253,211,77,.3)"/>
+  <path d="M168,350 Q186,348 202,350 Q188,365 172,365 Q170,357 168,350Z" fill="url(#mito-grd)" stroke="#f59e0b" stroke-width="1.2" opacity=".8"/>
+</g>
+<g class="hotspot" data-id="mitokondrie" onclick="velg('mitokondrie','dyre')">
+  <ellipse class="hs-el ar-mitokondrie" cx="390" cy="340" rx="32" ry="18" fill="url(#mito-grd)" stroke="#f59e0b" stroke-width="1.5" style="animation-delay:.8s"/>
+  <path d="M365,340 Q382,330 396,340 Q382,350 365,340Z" fill="rgba(253,211,77,.25)"/>
+</g>
+<!-- Lysosom -->
+<g class="hotspot" data-id="lysosom" onclick="velg('lysosom','dyre')">
+  <circle class="hs-el" cx="400" cy="200" r="24" fill="rgba(239,68,68,.25)" stroke="#ef4444" stroke-width="1.5"/>
+  <circle cx="400" cy="200" r="14" fill="rgba(239,68,68,.35)"/>
+  <text x="400" y="204" text-anchor="middle" font-size="10" fill="rgba(239,68,68,.8)">H⁺</text>
+</g>
+<!-- Sentrosom -->
+<g class="hotspot" data-id="sentrosom" onclick="velg('sentrosom','dyre')">
+  <rect class="hs-el" x="204" y="348" width="22" height="10" rx="3" fill="rgba(20,184,166,.6)" stroke="#14b8a6" stroke-width="1"/>
+  <rect x="202" y="342" width="10" height="22" rx="3" fill="rgba(20,184,166,.6)" stroke="#14b8a6" stroke-width="1"/>
+</g>
+<!-- Ribosomer (frie) -->
+<g class="hotspot" data-id="ribosom" onclick="velg('ribosom','dyre')">
+  <circle class="hs-el" cx="430" cy="260" r="5" fill="#f97316" opacity=".8"/>
+  <circle cx="450" cy="290" r="5" fill="#f97316" opacity=".8"/>
+  <circle cx="415" cy="300" r="5" fill="#f97316" opacity=".8"/>
+  <circle cx="145" cy="240" r="5" fill="#f97316" opacity=".7"/>
+  <circle cx="160" cy="200" r="5" fill="#f97316" opacity=".7"/>
+  <circle cx="140" cy="430" r="4" fill="#f97316" opacity=".6"/>
+  <circle cx="420" cy="400" r="4" fill="#f97316" opacity=".6"/>
+</g>
+<!-- Etikettlinjer -->
+<line x1="270" y1="201" x2="270" y2="165" stroke="rgba(99,102,241,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="270" y="158" text-anchor="middle" font-family="Mulish,sans-serif" font-size="9" fill="rgba(99,102,241,.6)">Kjerne</text>
+<line x1="235" y1="178" x2="215" y2="155" stroke="rgba(236,72,153,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="205" y="150" text-anchor="end" font-family="Mulish,sans-serif" font-size="9" fill="rgba(236,72,153,.6)">Golgi</text>
+<line x1="385" y1="220" x2="415" y2="195" stroke="rgba(239,68,68,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="420" y="192" font-family="Mulish,sans-serif" font-size="9" fill="rgba(239,68,68,.6)">Lysosom</text>
+<line x1="170" y1="350" x2="140" y2="330" stroke="rgba(245,158,11,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="135" y="326" text-anchor="end" font-family="Mulish,sans-serif" font-size="9" fill="rgba(245,158,11,.6)">Mitokondrie</text>
+`;
+
+const SVG_PLANTE = `
+<defs>
+  <radialGradient id="bg-plante" cx="50%" cy="45%" r="55%">
+    <stop offset="0%" stop-color="#dcfce7"/><stop offset="100%" stop-color="#bbf7d0"/>
+  </radialGradient>
+  <radialGradient id="vakuole-grd" cx="50%" cy="45%" r="55%">
+    <stop offset="0%" stop-color="#bae6fd"/><stop offset="100%" stop-color="#0369a1" stop-opacity=".5"/>
+  </radialGradient>
+  <radialGradient id="klorop-grd" cx="35%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#86efac"/><stop offset="100%" stop-color="#15803d"/>
+  </radialGradient>
+  <radialGradient id="kjerne-grd2" cx="38%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#3730a3"/>
+  </radialGradient>
+</defs>
+<!-- Cellevegg (rektangulær form) -->
+<g class="hotspot" data-id="cellevegg" onclick="velg('cellevegg','plante')">
+  <rect class="hs-el" x="52" y="52" width="456" height="456" rx="12" fill="rgba(101,163,13,.15)" stroke="#65a30d" stroke-width="6" opacity=".9"/>
+  <rect x="58" y="58" width="444" height="444" rx="10" fill="none" stroke="rgba(101,163,13,.4)" stroke-width="2"/>
+</g>
+<!-- Cellemembranen (innenfor veggen) -->
+<g class="hotspot" data-id="cellememb-p" onclick="velg('cellememb-p','plante')">
+  <rect class="hs-el" x="70" y="70" width="420" height="420" rx="8" fill="url(#bg-plante)" stroke="#2d9e6b" stroke-width="2.5" opacity=".88"/>
+</g>
+<!-- Sentralvakuole (stor) -->
+<g class="hotspot" data-id="vakuole" onclick="velg('vakuole','plante')">
+  <ellipse class="hs-el" cx="290" cy="295" rx="148" ry="138" fill="url(#vakuole-grd)" stroke="#0ea5e9" stroke-width="1.5" opacity=".7"/>
+</g>
+<!-- Kloroplaster -->
+<g class="hotspot" data-id="kloroplast" onclick="velg('kloroplast','plante')">
+  <ellipse class="hs-el" cx="140" cy="160" rx="42" ry="26" fill="url(#klorop-grd)" stroke="#16a34a" stroke-width="1.5"/>
+  <path d="M105,160 Q123,148 140,160 Q123,172 105,160Z" fill="rgba(134,239,172,.4)"/>
+  <ellipse cx="140" cy="160" rx="30" ry="17" fill="none" stroke="rgba(21,128,61,.4)" stroke-width=".8" stroke-dasharray="3 2"/>
+</g>
+<g class="hotspot" data-id="kloroplast" onclick="velg('kloroplast','plante')">
+  <ellipse class="hs-el" cx="430" cy="155" rx="40" ry="24" fill="url(#klorop-grd)" stroke="#16a34a" stroke-width="1.5"/>
+  <path d="M396,155 Q414,144 430,155 Q414,166 396,155Z" fill="rgba(134,239,172,.4)"/>
+</g>
+<g class="hotspot" data-id="kloroplast" onclick="velg('kloroplast','plante')">
+  <ellipse class="hs-el" cx="115" cy="400" rx="38" ry="23" fill="url(#klorop-grd)" stroke="#16a34a" stroke-width="1.5"/>
+</g>
+<!-- Kjerne (i cytoplasma ved siden) -->
+<g class="hotspot" data-id="kjerne-p" onclick="velg('kjerne-p','plante')">
+  <ellipse class="hs-el ar-mitokondrie" cx="445" cy="340" rx="50" ry="44" fill="url(#kjerne-grd2)" stroke="#6366f1" stroke-width="1.5" opacity=".88"/>
+  <ellipse cx="442" cy="336" rx="16" ry="13" fill="rgba(167,139,250,.6)"/>
+</g>
+<!-- Mitokondrie -->
+<g class="hotspot" data-id="mitokondrie-p" onclick="velg('mitokondrie-p','plante')">
+  <ellipse class="hs-el ar-mitokondrie" cx="430" cy="440" rx="32" ry="18" fill="rgba(245,158,11,.7)" stroke="#f59e0b" stroke-width="1.2"/>
+  <path d="M405,440 Q422,430 438,440 Q422,450 405,440Z" fill="rgba(253,211,77,.3)"/>
+</g>
+<!-- Plasmodesmata -->
+<g class="hotspot" data-id="plasmodesmata" onclick="velg('plasmodesmata','plante')">
+  <circle class="hs-el" cx="65" cy="280" r="6" fill="rgba(217,119,6,.6)" stroke="#d97706" stroke-width="1.5"/>
+  <circle cx="65" cy="310" r="6" fill="rgba(217,119,6,.6)" stroke="#d97706" stroke-width="1.5"/>
+  <circle cx="65" cy="250" r="6" fill="rgba(217,119,6,.6)" stroke="#d97706" stroke-width="1.5"/>
+  <circle cx="495" cy="280" r="6" fill="rgba(217,119,6,.5)" stroke="#d97706" stroke-width="1.2"/>
+  <circle cx="495" cy="300" r="6" fill="rgba(217,119,6,.5)" stroke="#d97706" stroke-width="1.2"/>
+</g>
+<!-- Ribosomer -->
+<g class="hotspot" data-id="ribosom-p" onclick="velg('ribosom-p','plante')">
+  <circle class="hs-el" cx="132" cy="248" r="4.5" fill="#f97316" opacity=".8"/>
+  <circle cx="118" cy="268" r="4.5" fill="#f97316" opacity=".8"/>
+  <circle cx="455" cy="248" r="4" fill="#f97316" opacity=".7"/>
+  <circle cx="465" cy="270" r="4" fill="#f97316" opacity=".7"/>
+</g>
+<!-- ER + Golgi -->
+<g class="hotspot" data-id="er-ruff-p" onclick="velg('er-ruff-p','plante')">
+  <path class="hs-el" d="M100,180 Q118,168 136,178 Q144,192 136,208 Q118,218 100,208 Q92,194 100,180Z"
+    fill="rgba(139,92,246,.3)" stroke="#8b5cf6" stroke-width="1.2"/>
+  <circle cx="100" cy="188" r="3" fill="#f97316" opacity=".6"/>
+  <circle cx="106" cy="203" r="3" fill="#f97316" opacity=".6"/>
+  <circle cx="128" cy="177" r="3" fill="#f97316" opacity=".6"/>
+</g>
+<!-- Cytoplasma -->
+<g class="hotspot" data-id="cytoplasma-p" onclick="velg('cytoplasma-p','plante')">
+  <ellipse class="hs-el" cx="280" cy="140" rx="90" ry="30" fill="rgba(163,230,53,.2)" stroke="rgba(163,230,53,.4)" stroke-width="1"/>
+</g>
+<!-- Etiketter -->
+<line x1="142" y1="136" x2="142" y2="112" stroke="rgba(22,163,74,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="142" y="107" text-anchor="middle" font-family="Mulish,sans-serif" font-size="9" fill="rgba(22,163,74,.7)">Kloroplast</text>
+<line x1="290" y1="164" x2="290" y2="145" stroke="rgba(14,165,233,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="290" y="140" text-anchor="middle" font-family="Mulish,sans-serif" font-size="9" fill="rgba(14,165,233,.6)">Vakuole</text>
+<line x1="447" y1="298" x2="470" y2="278" stroke="rgba(99,102,241,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="474" y="275" font-family="Mulish,sans-serif" font-size="9" fill="rgba(99,102,241,.6)">Kjerne</text>
+<line x1="62" y1="270" x2="38" y2="258" stroke="rgba(217,119,6,.3)" stroke-width=".8" stroke-dasharray="3 3"/>
+<text x="34" y="254" text-anchor="end" font-family="Mulish,sans-serif" font-size="9" fill="rgba(217,119,6,.6)">Plasmodesmata</text>
+`;
+
+let aktivCelle = 'dyre';
+
+function byttCelle(type, btn){
+  aktivCelle = type;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  // Reset info
+  document.getElementById('info-tom').style.display='flex';
+  document.getElementById('info-innhold').style.display='none';
+  // Render SVG og panel
+  renderCelle();
+}
+
+function renderCelle(){
+  const svg = document.getElementById('celle-svg');
+  svg.innerHTML = aktivCelle==='dyre' ? SVG_DYRE : SVG_PLANTE;
+  // Bind tooltip
+  svg.querySelectorAll('.hotspot').forEach(el=>{
+    const id = el.dataset.id;
+    const deler = CELLE_DELER[aktivCelle];
+    const del = deler.find(d=>d.id===id);
+    if(!del) return;
+    const tt = document.getElementById('tooltip');
+    el.addEventListener('mouseenter', ()=>{ tt.textContent=del.navn; tt.style.opacity='1'; });
+    el.addEventListener('mousemove', e=>{
+      const r = document.getElementById('celle-wrap').getBoundingClientRect();
+      tt.style.left=(e.clientX-r.left)+'px';
+      tt.style.top=(e.clientY-r.top)+'px';
+    });
+    el.addEventListener('mouseleave', ()=>{ tt.style.opacity='0'; });
+  });
+
+  // Sideknapper
+  const sp = document.getElementById('side-panel');
+  const deler = CELLE_DELER[aktivCelle];
+  const sett = new Set();
+  sp.innerHTML = `<div class="side-label">${aktivCelle==='dyre'?'Dyrecelle':'Plantecelle'}</div>` +
+    deler.filter(d=>{ if(sett.has(d.id)) return false; sett.add(d.id); return true; })
+    .map(d=>`<button class="del-knapp" id="kb-${d.id}" style="--farge:${d.farge}" onclick="velg('${d.id}','${aktivCelle}')">
+      <span class="dot"></span>${d.navn}
+    </button>`).join('');
+}
+
+function velg(id, celleType){
+  const deler = CELLE_DELER[celleType];
+  const del = deler.find(d=>d.id===id);
+  if(!del) return;
+
+  document.querySelectorAll('.hotspot').forEach(h=>h.classList.toggle('aktiv', h.dataset.id===id));
+  document.querySelectorAll('.del-knapp').forEach(b=>b.classList.toggle('aktiv', b.id==='kb-'+id));
+
+  document.getElementById('info-tom').style.display='none';
+  const innhold = document.getElementById('info-innhold');
+  innhold.style.display='block';
+
+  innhold.innerHTML = `
+    <div class="info-header" style="--pglow:${del.farge}18">
+      <span class="del-emoji">${del.emoji}</span>
+      <div class="del-navn" style="color:${del.farge}">${del.navn}</div>
+      <div class="del-latinsk">${del.latin}</div>
+    </div>
+    <div class="info-body">
+      <div>
+        <div class="del-seksjontittel">Nøkkeltall</div>
+        <div class="info-grid">
+          ${del.fakta.map(f=>`<div class="info-boks">
+            <div class="info-boks-label">${f.l}</div>
+            <div class="info-boks-verdi">${f.v}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="del-seksjontittel">Funksjon og oppbygging</div>
+        <p class="del-tekst">${del.tekst}</p>
+      </div>
+      <div class="visste-boks">
+        <div class="del-seksjontittel" style="color:var(--accent)">💡 Visste du?</div>
+        <p>${del.morsomt}</p>
+      </div>
+    </div>`;
+  if(window.innerWidth<960) document.getElementById('info-panel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// Init
+renderCelle();
+</script>
+</body>
+</html>

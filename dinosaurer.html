@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Dinosaurer</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0a06;--surface:#14100a;--card:#1c1610;--border:rgba(210,160,80,.1);
+  --text:#f0e8d8;--dim:#7a6a4a;
+  --guld:#d4a843;--oransje:#c8601a;--rød:#a83020;--grønn:#4a7a3a;
+  --font-d:'Cinzel',serif;--font-b:'Crimson Pro',serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden;font-size:17px}
+
+/* Jordlag-tekstur */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 100% 40% at 50% 100%,rgba(139,69,19,.12) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 30% at 20% 60%,rgba(180,100,20,.04) 0%,transparent 50%),
+    radial-gradient(ellipse 40% 20% at 80% 30%,rgba(100,60,20,.04) 0%,transparent 50%);}
+
+nav{position:sticky;top:0;z-index:300;background:rgba(13,10,6,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.72rem;color:var(--dim);text-decoration:none;letter-spacing:.06em;font-family:var(--font-d)}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.85rem;color:var(--guld);letter-spacing:.08em}
+
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px 100px}
+
+/* HERO */
+.hero{text-align:center;padding:48px 0 56px;position:relative}
+.hero-fossil{position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  font-size:6rem;opacity:.04;pointer-events:none;letter-spacing:-.05em;white-space:nowrap}
+.hero-over{font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;font-family:var(--font-d)}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,6vw,4.4rem);font-weight:900;
+  line-height:1.06;margin-bottom:14px;letter-spacing:.02em}
+.hero h1 em{font-style:italic;color:var(--guld);font-family:'Crimson Pro',serif;font-weight:300;font-size:1.1em}
+.hero-sub{font-size:1rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.75;font-style:italic}
+
+/* SEKSJON */
+.seksjon{margin-bottom:60px}
+.sep{display:flex;align-items:center;gap:16px;margin-bottom:26px}
+.sep-l{flex:1;height:1px;background:var(--border)}
+.sep-t{font-family:var(--font-d);font-size:.88rem;color:var(--dim);white-space:nowrap;letter-spacing:.1em}
+
+/* TIDSLINJE */
+.tidslinje-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:14px}
+.tidslinje-svg{display:block;width:100%;height:auto}
+
+/* EPOKE-KORT under tidslinja */
+.epoke-info{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:22px 26px;display:none;margin-top:12px}
+.epoke-info.synlig{display:block}
+.ei-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.ei-farge{width:14px;height:52px;border-radius:3px;flex-shrink:0}
+.ei-tittel{font-family:var(--font-d);font-size:1.3rem;letter-spacing:.05em}
+.ei-tid{font-size:.82rem;color:var(--dim);margin-top:2px;font-style:italic}
+.ei-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.ei-felt{background:rgba(212,168,67,.04);border:1px solid rgba(212,168,67,.08);border-radius:8px;padding:9px 12px}
+.ei-felt-l{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:2px;font-family:var(--font-d)}
+.ei-felt-v{font-size:.84rem;color:var(--text)}
+.ei-tekst{font-size:.9rem;line-height:1.75;color:rgba(240,232,216,.7)}
+.ei-dino{margin-top:12px;padding:10px 14px;background:rgba(212,168,67,.05);
+  border-left:3px solid var(--guld);border-radius:0 8px 8px 0;font-size:.84rem;line-height:1.6;color:var(--dim);font-style:italic}
+
+/* DINOSAUR-GRID */
+.dino-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.dino-kort{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:0;cursor:pointer;transition:all .22s;overflow:hidden;position:relative}
+.dino-kort::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,var(--dk-glow,rgba(212,168,67,.04)),transparent);
+  pointer-events:none}
+.dino-kort:hover{transform:translateY(-3px);border-color:var(--dk-farge,var(--guld));
+  box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.dino-kort.aktiv{border-color:var(--dk-farge,var(--guld))}
+.dk-svg{width:100%;height:200px;display:block;background:rgba(255,255,255,.015);border-radius:12px 12px 0 0;overflow:hidden}
+.dk-body{padding:18px 20px}
+.dk-periode{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-d);
+  color:var(--dk-farge,var(--guld));margin-bottom:6px}
+.dk-navn{font-family:var(--font-d);font-size:1.15rem;letter-spacing:.04em;margin-bottom:2px}
+.dk-latin{font-size:.78rem;color:var(--dim);font-style:italic;margin-bottom:8px}
+.dk-fakta{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.dk-f{padding:6px 8px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px}
+.dk-fl{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-family:var(--font-d)}
+.dk-fv{font-size:.76rem;color:var(--text)}
+.dk-desc{font-size:.82rem;color:rgba(240,232,216,.6);line-height:1.65;margin-top:10px;font-style:italic}
+
+/* INFO-PANEL */
+.dino-info{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:28px;margin-top:14px;display:none}
+.dino-info.synlig{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.di-tittel{font-family:var(--font-d);font-size:1.8rem;letter-spacing:.04em;margin-bottom:4px}
+.di-latin{font-size:.88rem;font-style:italic;color:var(--dim);margin-bottom:16px}
+.di-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px}
+.di-felt{padding:10px 13px;background:rgba(212,168,67,.04);border:1px solid rgba(212,168,67,.08);border-radius:10px}
+.di-fl{font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-family:var(--font-d);margin-bottom:2px}
+.di-fv{font-size:.82rem;color:var(--text)}
+.di-tekst{font-size:.9rem;line-height:1.78;color:rgba(240,232,216,.72);margin-bottom:14px}
+.di-morsomt{padding:12px 14px;background:rgba(212,168,67,.06);
+  border-left:3px solid var(--guld);border-radius:0 10px 10px 0;font-size:.84rem;line-height:1.65;color:var(--dim)}
+
+/* STØRRELSE-SAMMENLIGNING */
+.sammenligning-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.sammenligning-svg{display:block;width:100%;height:auto}
+
+/* UTDØING */
+.utdøing-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+
+/* ANATOMIKORT */
+.anatomi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.anatomi-kort{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.ak-ikon{font-size:1.6rem;margin-bottom:8px}
+.ak-tittel{font-family:var(--font-d);font-size:.88rem;letter-spacing:.04em;margin-bottom:5px;color:var(--guld)}
+.ak-tekst{font-size:.82rem;color:rgba(240,232,216,.6);line-height:1.6}
+
+/* Animasjoner */
+@keyframes dino-walk{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+@keyframes meteor-fall{from{transform:translate(0,0) rotate(-30deg);opacity:1}to{transform:translate(180px,260px) rotate(-30deg);opacity:0}}
+@keyframes explosion{0%{r:0;opacity:1}100%{r:80;opacity:0}}
+@keyframes dust-rise{0%{transform:translateY(0);opacity:0}20%{opacity:.6}100%{transform:translateY(-80px);opacity:0}}
+@keyframes tail-sway{0%,100%{transform:rotate(0deg)}50%{transform:rotate(4deg)}}
+.dino-anim{animation:dino-walk 2s ease-in-out infinite}
+.tail-anim{transform-origin:right center;animation:tail-sway 1.5s ease-in-out infinite}
+
+@media(max-width:700px){
+  .dino-info.synlig{grid-template-columns:1fr}
+  .dino-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Dinosaurer</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-fossil">🦕🦖🦴</div>
+    <div class="hero-over">Paleontologi · Mesozoikum</div>
+    <h1>Dinosaurenes<br><em>verden</em></h1>
+    <p class="hero-sub">Fra de første reptilene for 252 millioner år siden til den store utdøingen – utforsk livet på jorda før menneskene</p>
+  </div>
+
+  <!-- GEOLOGISK TIDSLINJE -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Geologisk tidslinje</div><div class="sep-l"></div></div>
+    <div class="tidslinje-wrap">
+      <svg id="tidslinje-svg" class="tidslinje-svg" viewBox="0 0 1060 180" xmlns="http://www.w3.org/2000/svg" style="cursor:pointer">
+        <defs>
+          <linearGradient id="t-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1a1208"/><stop offset="100%" stop-color="#0d0a06"/>
+          </linearGradient>
+        </defs>
+        <rect width="1060" height="180" fill="url(#t-bg)"/>
+        <!-- Epoker som blokker -->
+        <!-- PREKAMBRIUM -->
+        <rect id="ep-prekambrium" x="10" y="30" width="70" height="90" rx="6" fill="rgba(100,80,40,.25)" stroke="rgba(100,80,40,.4)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="45" y="68" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(200,160,80,.7)" letter-spacing=".08em">PREKA-</text>
+        <text x="45" y="80" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(200,160,80,.7)" letter-spacing=".08em">MBRIUM</text>
+        <text x="45" y="94" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(150,120,60,.6)" font-style="italic">4000–541</text>
+        <text x="45" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(150,120,60,.5)">mya</text>
+
+        <!-- PALEOZOIKUM -->
+        <rect id="ep-paleozoikum" x="85" y="30" width="130" height="90" rx="6" fill="rgba(80,120,60,.2)" stroke="rgba(80,120,60,.35)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="150" y="68" text-anchor="middle" font-family="Cinzel" font-size="8" fill="rgba(120,180,80,.75)" letter-spacing=".08em">PALEOZOIKUM</text>
+        <text x="150" y="82" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(90,140,60,.6)" font-style="italic">541–252 mya</text>
+        <text x="150" y="98" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(90,140,60,.5)">Første liv på land</text>
+        <text x="150" y="110" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(90,140,60,.45)">Triolobitter · Fisk</text>
+
+        <!-- TRIAS -->
+        <rect id="ep-trias" x="220" y="30" width="140" height="90" rx="6" fill="rgba(180,80,30,.2)" stroke="rgba(180,80,30,.4)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="290" y="60" text-anchor="middle" font-family="Cinzel" font-size="9" fill="rgba(220,120,60,.85)" letter-spacing=".1em">TRIAS</text>
+        <text x="290" y="76" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(180,100,50,.7)" font-style="italic">252–201 mya</text>
+        <text x="290" y="92" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(160,90,40,.65)">Første dinosaurer</text>
+        <text x="290" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(160,90,40,.55)">Pangea deles</text>
+
+        <!-- JURA -->
+        <rect id="ep-jura" x="365" y="30" width="190" height="90" rx="6" fill="rgba(60,120,60,.22)" stroke="rgba(60,120,60,.4)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="460" y="60" text-anchor="middle" font-family="Cinzel" font-size="9.5" fill="rgba(80,180,80,.85)" letter-spacing=".1em">JURA</text>
+        <text x="460" y="76" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(60,150,60,.7)" font-style="italic">201–145 mya</text>
+        <text x="460" y="92" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(60,140,60,.65)">Diplodocus · Stegosaurus</text>
+        <text x="460" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(60,130,60,.55)">Allosaurus · Første fugler</text>
+
+        <!-- KRITT -->
+        <rect id="ep-kritt" x="560" y="30" width="240" height="90" rx="6" fill="rgba(40,100,160,.22)" stroke="rgba(40,100,160,.4)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="680" y="60" text-anchor="middle" font-family="Cinzel" font-size="9.5" fill="rgba(80,160,230,.85)" letter-spacing=".1em">KRITT</text>
+        <text x="680" y="76" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(60,140,210,.7)" font-style="italic">145–66 mya</text>
+        <text x="680" y="92" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(60,130,200,.65)">T. rex · Triceratops · Velociraptor</text>
+        <text x="680" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(60,120,190,.55)">Blomsterplanter · Utdøing ved slutten</text>
+
+        <!-- KENOZOIKUM -->
+        <rect id="ep-kenozoikum" x="805" y="30" width="245" height="90" rx="6" fill="rgba(120,80,160,.2)" stroke="rgba(120,80,160,.35)" stroke-width="1.5" style="cursor:pointer"/>
+        <text x="927" y="60" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(180,130,230,.8)" letter-spacing=".08em">KENOZOIKUM</text>
+        <text x="927" y="76" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(150,100,200,.65)" font-style="italic">66 mya – nå</text>
+        <text x="927" y="92" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(140,90,190,.6)">Pattedyr dominerer</text>
+        <text x="927" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(130,80,180,.5)">Homo sapiens de siste 0,3 mya</text>
+
+        <!-- Tidspil -->
+        <line x1="10" y1="140" x2="1050" y2="140" stroke="rgba(212,168,67,.25)" stroke-width="1.5"/>
+        <polygon points="1050,136 1058,140 1050,144" fill="rgba(212,168,67,.4)"/>
+        <text x="1052" y="155" font-family="Cinzel" font-size="7" fill="rgba(212,168,67,.5)" letter-spacing=".06em">NÅ</text>
+
+        <!-- Tick-merker -->
+        <g font-family="Crimson Pro" font-size="7" fill="rgba(212,168,67,.35)" text-anchor="middle">
+          <line x1="45" y1="138" x2="45" y2="145" stroke="rgba(212,168,67,.3)" stroke-width="1"/>
+          <text x="45" y="158">4000</text>
+          <line x1="150" y1="138" x2="150" y2="145" stroke="rgba(212,168,67,.3)" stroke-width="1"/>
+          <text x="150" y="158">541</text>
+          <line x1="290" y1="138" x2="290" y2="145" stroke="rgba(212,168,67,.3)" stroke-width="1"/>
+          <text x="290" y="158">252</text>
+          <line x1="460" y1="138" x2="460" y2="145" stroke="rgba(212,168,67,.3)" stroke-width="1"/>
+          <text x="460" y="158">201</text>
+          <line x1="680" y1="138" x2="680" y2="145" stroke="rgba(212,168,67,.3)" stroke-width="1"/>
+          <text x="680" y="158">145</text>
+          <line x1="805" y1="138" x2="805" y2="145" stroke="rgba(212,168,67,.4)" stroke-width="1.5"/>
+          <text x="805" y="158" fill="rgba(212,168,67,.5)">66</text>
+          <text x="540" y="170" fill="rgba(212,168,67,.25)" font-size="8" font-style="italic">Millioner år siden (mya)</text>
+        </g>
+
+        <!-- Mesozoikum-bue -->
+        <path d="M220,22 Q490,8 800,22" fill="none" stroke="rgba(212,168,67,.2)" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="510" y="18" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.35)" letter-spacing=".1em">MESOZOIKUM – DINOSAURENES TIDSALDER</text>
+      </svg>
+    </div>
+    <div class="epoke-info" id="epoke-info"></div>
+  </div>
+
+  <!-- DINOSAUR-PROFILER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Kjente dinosaurer</div><div class="sep-l"></div></div>
+    <div class="dino-grid" id="dino-grid"></div>
+    <div class="dino-info" id="dino-info"></div>
+  </div>
+
+  <!-- STØRRELSE-SAMMENLIGNING -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Størrelsesammenligning</div><div class="sep-l"></div></div>
+    <div class="sammenligning-wrap">
+      <svg viewBox="0 0 1060 280" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
+        <defs>
+          <linearGradient id="jord-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0d0a06"/><stop offset="100%" stop-color="#1a1208"/>
+          </linearGradient>
+        </defs>
+        <rect width="1060" height="280" fill="url(#jord-bg)"/>
+        <!-- Bakkestripe -->
+        <rect x="0" y="245" width="1060" height="35" fill="rgba(139,90,40,.18)"/>
+        <line x1="0" y1="245" x2="1060" y2="245" stroke="rgba(139,90,40,.3)" stroke-width="1.5"/>
+        <!-- Menneske (1,75m) -->
+        <g>
+          <rect x="30" y="220" width="14" height="25" rx="4" fill="rgba(255,200,150,.6)"/>
+          <circle cx="37" cy="216" r="7" fill="rgba(255,200,150,.6)"/>
+          <text x="37" y="258" text-anchor="middle" font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.6)">Menneske</text>
+          <text x="37" y="268" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.4)">1,75 m</text>
+        </g>
+        <!-- Velociraptor (0,6m høy, 2m lang) -->
+        <g>
+          <!-- kropp -->
+          <ellipse cx="110" cy="234" rx="22" ry="9" fill="rgba(180,120,60,.55)" stroke="rgba(212,168,67,.2)" stroke-width="1"/>
+          <!-- hode -->
+          <ellipse cx="132" cy="230" rx="10" ry="7" fill="rgba(180,120,60,.55)" stroke="rgba(212,168,67,.2)" stroke-width="1"/>
+          <!-- øyne -->
+          <circle cx="136" cy="229" r="2" fill="rgba(212,168,67,.7)"/>
+          <!-- ben -->
+          <line x1="98" y1="243" x2="94" y2="252" stroke="rgba(180,120,60,.6)" stroke-width="2.5"/>
+          <line x1="108" y1="243" x2="112" y2="252" stroke="rgba(180,120,60,.6)" stroke-width="2.5"/>
+          <!-- hale -->
+          <path d="M88,234 Q76,236 70,232" fill="none" stroke="rgba(180,120,60,.5)" stroke-width="4" stroke-linecap="round"/>
+          <text x="100" y="262" text-anchor="middle" font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.6)">Velociraptor</text>
+          <text x="100" y="272" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.4)">2 m</text>
+        </g>
+        <!-- Triceratops (3m høy, 9m lang) -->
+        <g>
+          <ellipse cx="248" cy="228" rx="55" ry="17" fill="rgba(100,140,80,.4)" stroke="rgba(100,140,80,.3)" stroke-width="1"/>
+          <!-- hode med horn -->
+          <ellipse cx="300" cy="224" rx="20" ry="16" fill="rgba(100,140,80,.45)" stroke="rgba(100,140,80,.3)" stroke-width="1"/>
+          <!-- nakke-plate (frill) -->
+          <ellipse cx="292" cy="210" rx="16" ry="12" fill="rgba(80,120,60,.35)" stroke="rgba(100,140,80,.25)" stroke-width="1"/>
+          <!-- horn -->
+          <line x1="308" y1="214" x2="320" y2="204" stroke="rgba(200,180,120,.5)" stroke-width="2.5"/>
+          <line x1="304" y1="211" x2="314" y2="200" stroke="rgba(200,180,120,.5)" stroke-width="2"/>
+          <line x1="296" y1="208" x2="296" y2="196" stroke="rgba(200,180,120,.45)" stroke-width="2"/>
+          <!-- ben -->
+          <line x1="218" y1="245" x2="215" y2="255" stroke="rgba(100,140,80,.5)" stroke-width="3.5"/>
+          <line x1="236" y1="245" x2="234" y2="255" stroke="rgba(100,140,80,.5)" stroke-width="3.5"/>
+          <line x1="258" y1="245" x2="260" y2="255" stroke="rgba(100,140,80,.5)" stroke-width="3.5"/>
+          <line x1="276" y1="245" x2="278" y2="255" stroke="rgba(100,140,80,.5)" stroke-width="3.5"/>
+          <!-- hale -->
+          <path d="M193,230 Q178,228 170,222" fill="none" stroke="rgba(100,140,80,.45)" stroke-width="6" stroke-linecap="round"/>
+          <text x="245" y="264" text-anchor="middle" font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.6)">Triceratops</text>
+          <text x="245" y="274" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.4)">9 m lang</text>
+        </g>
+        <!-- T. rex (4m høy, 12m lang) -->
+        <g>
+          <!-- kropp -->
+          <ellipse cx="490" cy="216" rx="60" ry="26" fill="rgba(160,60,30,.4)" stroke="rgba(200,80,40,.3)" stroke-width="1"/>
+          <!-- hode -->
+          <ellipse cx="545" cy="208" rx="28" ry="18" fill="rgba(160,60,30,.5)" stroke="rgba(200,80,40,.3)" stroke-width="1"/>
+          <!-- kjeve -->
+          <path d="M522,210 L560,216 L550,224 Q530,228 522,222 Z" fill="rgba(140,50,25,.6)"/>
+          <!-- tenner -->
+          <g fill="rgba(240,220,180,.6)" stroke="none">
+            <path d="M530,210 L533,216 L536,210 Z"/>
+            <path d="M538,209 L541,215 L544,209 Z"/>
+            <path d="M548,210 L550,216 L553,210 Z"/>
+          </g>
+          <!-- øyne -->
+          <circle cx="548" cy="205" r="3" fill="rgba(255,180,30,.6)"/>
+          <circle cx="549" cy="205" r="1.5" fill="#000"/>
+          <!-- mini-armer -->
+          <path d="M515,220 Q510,225 506,228" fill="none" stroke="rgba(140,50,25,.5)" stroke-width="2"/>
+          <!-- ben -->
+          <line x1="464" y1="242" x2="458" y2="258" stroke="rgba(140,50,25,.6)" stroke-width="5"/>
+          <line x1="480" y1="244" x2="478" y2="260" stroke="rgba(140,50,25,.6)" stroke-width="5"/>
+          <line x1="500" y1="242" x2="505" y2="258" stroke="rgba(140,50,25,.6)" stroke-width="5"/>
+          <line x1="516" y1="240" x2="520" y2="255" stroke="rgba(140,50,25,.6)" stroke-width="4"/>
+          <!-- hale -->
+          <path d="M430,222 Q415,225 405,218 Q395,212 388,208" fill="none" stroke="rgba(140,50,25,.5)" stroke-width="8" stroke-linecap="round"/>
+          <text x="477" y="270" text-anchor="middle" font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.6)">Tyrannosaurus rex</text>
+          <text x="477" y="280" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.4)">12 m lang · 4 m høy</text>
+        </g>
+        <!-- Brachiosaurus (26m, 16m høy) -->
+        <g>
+          <!-- Kropp -->
+          <ellipse cx="770" cy="210" rx="75" ry="32" fill="rgba(60,100,120,.35)" stroke="rgba(80,130,160,.3)" stroke-width="1"/>
+          <!-- Hals -->
+          <path d="M838,190 Q855,160 865,120 Q868,90 870,60" fill="none" stroke="rgba(60,100,120,.6)" stroke-width="22" stroke-linecap="round"/>
+          <path d="M838,190 Q855,160 865,120 Q868,90 870,60" fill="none" stroke="rgba(80,130,160,.4)" stroke-width="20" stroke-linecap="round"/>
+          <!-- Hode -->
+          <ellipse cx="870" cy="52" rx="16" ry="9" fill="rgba(60,100,120,.65)" stroke="rgba(80,130,160,.35)" stroke-width="1"/>
+          <!-- Nesebor/øyne -->
+          <circle cx="880" cy="50" r="2" fill="rgba(80,130,160,.6)"/>
+          <!-- Ben -->
+          <line x1="718" y1="242" x2="714" y2="260" stroke="rgba(60,100,120,.55)" stroke-width="7"/>
+          <line x1="738" y1="244" x2="736" y2="262" stroke="rgba(60,100,120,.55)" stroke-width="7"/>
+          <line x1="798" y1="244" x2="802" y2="262" stroke="rgba(60,100,120,.55)" stroke-width="7"/>
+          <line x1="820" y1="242" x2="822" y2="260" stroke="rgba(60,100,120,.55)" stroke-width="7"/>
+          <!-- Hale -->
+          <path d="M695,218 Q680,222 668,216 Q658,210 650,205" fill="none" stroke="rgba(60,100,120,.5)" stroke-width="10" stroke-linecap="round"/>
+          <text x="760" y="275" text-anchor="middle" font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.6)">Brachiosaurus</text>
+          <text x="760" y="285" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.4)">26 m lang · 16 m høy</text>
+        </g>
+        <!-- Høyde-merker -->
+        <g stroke="rgba(212,168,67,.12)" stroke-width="1" stroke-dasharray="3 4">
+          <line x1="0" y1="193" x2="1060" y2="193"/>
+          <text x="1055" y="191" text-anchor="end" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.3)" font-style="italic">16 m</text>
+          <line x1="0" y1="233" x2="1060" y2="233"/>
+          <text x="1055" y="231" text-anchor="end" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.3)">4 m</text>
+        </g>
+        <!-- Tittel -->
+        <text x="530" y="20" text-anchor="middle" font-family="Cinzel" font-size="9" fill="rgba(212,168,67,.35)" letter-spacing=".12em">STØRRELSE I FORHOLD TIL MENNESKE</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- UTDØINGEN -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Den store utdøingen – K-Pg-grensen (66 mya)</div><div class="sep-l"></div></div>
+    <div class="utdøing-wrap">
+      <svg viewBox="0 0 1060 320" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
+        <defs>
+          <radialGradient id="impact-glow" cx="60%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(255,120,30,.35)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <radialGradient id="exp-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(255,200,50,.5)"/>
+            <stop offset="60%" stop-color="rgba(255,80,20,.2)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <linearGradient id="atm-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#040c1e"/><stop offset="100%" stop-color="#0d1830"/>
+          </linearGradient>
+        </defs>
+        <!-- Himmel -->
+        <rect width="1060" height="220" fill="url(#atm-grad)"/>
+        <!-- Jord -->
+        <rect y="220" width="1060" height="100" fill="#1a1208"/>
+        <rect y="220" width="1060" height="8" fill="rgba(139,90,40,.3)"/>
+        <!-- Sjø/hav i krater-sonen -->
+        <ellipse cx="660" cy="222" rx="200" ry="18" fill="rgba(30,60,100,.4)"/>
+
+        <!-- Bakgrunnsstjerner -->
+        <g fill="white" opacity=".4">
+          <circle cx="40" cy="25" r=".8"/><circle cx="120" cy="15" r="1"/><circle cx="200" cy="40" r=".7"/>
+          <circle cx="300" cy="12" r=".9"/><circle cx="450" cy="30" r=".8"/><circle cx="900" cy="18" r="1"/>
+          <circle cx="980" cy="35" r=".7"/><circle cx="1020" cy="10" r=".9"/>
+        </g>
+
+        <!-- Meteoritt -->
+        <g style="animation:meteor-fall 4s ease-in infinite">
+          <ellipse cx="700" cy="40" rx="18" ry="12" fill="rgba(180,100,40,.85)" stroke="rgba(220,140,60,.4)" stroke-width="1"/>
+          <!-- hale -->
+          <path d="M688,47 Q665,60 640,80" fill="none" stroke="rgba(255,160,60,.4)" stroke-width="6" stroke-linecap="round"/>
+          <path d="M688,47 Q668,58 646,76" fill="none" stroke="rgba(255,220,100,.3)" stroke-width="3" stroke-linecap="round"/>
+          <text x="695" y="28" text-anchor="middle" font-family="Cinzel" font-size="8" fill="rgba(220,140,60,.7)" letter-spacing=".08em">ASTEROIDE</text>
+          <text x="695" y="39" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(180,100,40,.6)" font-style="italic">~10 km diameter</text>
+        </g>
+
+        <!-- Eksplosjon / krater -->
+        <circle cx="660" cy="222" r="120" fill="url(#exp-glow)" opacity=".6"/>
+        <circle cx="660" cy="222" r="80" fill="url(#impact-glow)" opacity=".5"/>
+        <!-- Støv/debris -->
+        <g opacity=".5">
+          <path d="M580,200 Q560,160 540,110 Q535,95 525,80" fill="none" stroke="rgba(180,120,60,.5)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M620,195 Q610,150 605,100 Q603,85 600,65" fill="none" stroke="rgba(180,120,60,.45)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M700,195 Q715,150 730,100 Q738,80 745,60" fill="none" stroke="rgba(180,120,60,.4)" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M740,200 Q760,165 790,120 Q800,100 815,78" fill="none" stroke="rgba(180,120,60,.45)" stroke-width="4" stroke-linecap="round"/>
+        </g>
+
+        <!-- Røyk / aske-sky som sprer seg -->
+        <ellipse cx="500" cy="100" rx="160" ry="55" fill="rgba(80,60,40,.35)" stroke="rgba(100,80,50,.2)" stroke-width="1"/>
+        <ellipse cx="660" cy="80" rx="140" ry="45" fill="rgba(60,40,30,.4)" stroke="rgba(80,60,40,.2)" stroke-width="1"/>
+        <ellipse cx="820" cy="95" rx="130" ry="50" fill="rgba(80,60,40,.3)" stroke="rgba(100,80,50,.15)" stroke-width="1"/>
+
+        <!-- Forklaringstekster -->
+        <g font-family="Crimson Pro" font-size="9" fill="rgba(212,168,67,.55)" font-style="italic">
+          <text x="150" y="110">1. Asteroide treffer Yucatán-halvøya</text>
+          <text x="150" y="128">2. Frigjør energi = 1 milliard Hiroshima-bomber</text>
+          <text x="150" y="146">3. Støv og sot blokkerer sollyset i år</text>
+          <text x="150" y="164">4. Plantene dør → næringskjedene kollapser</text>
+          <text x="150" y="182">5. 76% av alle arter utryddes</text>
+        </g>
+
+        <!-- Konsekvens-boks -->
+        <rect x="10" y="230" width="280" height="80" rx="8" fill="rgba(13,10,6,.8)" stroke="rgba(212,168,67,.15)" stroke-width="1"/>
+        <text x="150" y="250" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".08em">HVEM OVERLEVDE?</text>
+        <text x="22" y="266" font-family="Crimson Pro" font-size="8.5" fill="rgba(212,168,67,.5)">✓  Fugler (fugledinosauer)</text>
+        <text x="22" y="280" font-family="Crimson Pro" font-size="8.5" fill="rgba(212,168,67,.5)">✓  Små pattedyr i huler/jordhull</text>
+        <text x="22" y="294" font-family="Crimson Pro" font-size="8.5" fill="rgba(212,168,67,.5)">✓  Krokodiller, skilpadder, slanger</text>
+
+        <rect x="300" y="230" width="280" height="80" rx="8" fill="rgba(13,10,6,.8)" stroke="rgba(212,168,67,.15)" stroke-width="1"/>
+        <text x="440" y="250" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(200,80,40,.7)" letter-spacing=".08em">BEVIS FOR KOLLISJONEN</text>
+        <text x="312" y="266" font-family="Crimson Pro" font-size="8.5" fill="rgba(200,80,40,.5)">Iridium-lag i berggrunnen globalt</text>
+        <text x="312" y="280" font-family="Crimson Pro" font-size="8.5" fill="rgba(200,80,40,.5)">Chicxulub-krateret (180 km diameter)</text>
+        <text x="312" y="294" font-family="Crimson Pro" font-size="8.5" fill="rgba(200,80,40,.5)">Sjokk-kvarts og tektitter</text>
+
+        <rect x="590" y="230" width="260" height="80" rx="8" fill="rgba(13,10,6,.8)" stroke="rgba(212,168,67,.15)" stroke-width="1"/>
+        <text x="720" y="250" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(80,160,80,.7)" letter-spacing=".08em">ETTER UTDØINGEN</text>
+        <text x="602" y="266" font-family="Crimson Pro" font-size="8.5" fill="rgba(80,160,80,.5)">Pattedyr diversifiserer seg raskt</text>
+        <text x="602" y="280" font-family="Crimson Pro" font-size="8.5" fill="rgba(80,160,80,.5)">Fugler – eneste levende dinosaurer</text>
+        <text x="602" y="294" font-family="Crimson Pro" font-size="8.5" fill="rgba(80,160,80,.5)">Primater dukker opp ~55 mya</text>
+      </svg>
+    </div>
+    <div style="margin-top:12px;font-size:.9rem;line-height:1.78;color:rgba(240,232,216,.55);font-style:italic;padding:0 4px">
+      Asteroiden som traff jorda for 66 millioner år siden var ikke den eneste årsaken – voldsomme vulkanutbrudd i India (Dekkan-trappene) svekket allerede klimaet. Men asteroiden var det siste nådestøtet. <strong style="color:var(--text);font-style:normal">Fugler er faktisk dinosaurer</strong> som overlevde – neste gang du ser en fugl, ser du en levende dinosaur.
+    </div>
+  </div>
+
+  <!-- DINOSAURENES ANATOMI OG TILPASNINGER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Anatomi og tilpasninger</div><div class="sep-l"></div></div>
+    <div class="anatomi-grid" id="anatomi-grid"></div>
+  
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Slik dannes et fossil</div><div class="sep-r"></div></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px">
+      <svg viewBox="0 0 780 240" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%">
+        <defs>
+          <linearGradient id="sed1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a3a18"/><stop offset="100%" stop-color="#3a2208"/></linearGradient>
+          <linearGradient id="sed2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7a5528"/><stop offset="100%" stop-color="#5a3a12"/></linearGradient>
+          <linearGradient id="sed3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9a7040"/><stop offset="100%" stop-color="#7a5525"/></linearGradient>
+          <linearGradient id="fossilgr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8a868"/><stop offset="100%" stop-color="#a08040"/></linearGradient>
+        </defs>
+        <rect width="780" height="240" fill="#0e0b07"/>
+        <!-- 5 steg side ved side -->
+        <!-- === STEG 1: Dyret dør === -->
+        <g transform="translate(10,0)">
+          <text x="73" y="22" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".1em">1. DYRET DØR</text>
+          <!-- Overflate (gress) -->
+          <rect x="8" y="30" width="130" height="8" fill="#2a4a18"/>
+          <g fill="#3a6020" stroke="none"><rect x="15" y="24" width="3" height="8"/><rect x="25" y="22" width="3" height="10"/><rect x="35" y="25" width="3" height="7"/><rect x="48" y="23" width="3" height="9"/><rect x="60" y="24" width="3" height="8"/><rect x="72" y="22" width="3" height="10"/><rect x="84" y="25" width="3" height="7"/><rect x="96" y="23" width="3" height="9"/><rect x="108" y="24" width="3" height="8"/><rect x="120" y="22" width="3" height="10"/></g>
+          <!-- Dinosaur-skjelett-silhuett -->
+          <g fill="none" stroke="#c4923a" stroke-width="1.5" stroke-linecap="round">
+            <ellipse cx="73" cy="56" rx="28" ry="14"/>
+            <path d="M55,50 Q48,38 44,32 Q40,28 43,26 Q46,24 50,29 L55,38"/>
+            <path d="M91,50 Q98,60 102,70 Q100,76 94,74 L90,64"/>
+            <path d="M65,68 L62,80 M73,70 L72,82 M81,68 L82,80"/>
+            <path d="M60,52 L54,64 M86,52 L92,64"/>
+          </g>
+          <text x="73" y="98" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.5)" font-style="italic">Kjøtt råtner</text>
+        </g>
+        <!-- === STEG 2: Begravelse === -->
+        <g transform="translate(160,0)">
+          <text x="73" y="22" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".1em">2. BEGRAVELSE</text>
+          <!-- Sedimentlag -->
+          <rect x="8" y="30" width="130" height="25" fill="url(#sed3)" opacity=".7"/>
+          <rect x="8" y="55" width="130" height="20" fill="url(#sed2)" opacity=".8"/>
+          <!-- Skjelett delvis begravd -->
+          <g fill="none" stroke="#d4a868" stroke-width="1.2" stroke-linecap="round" opacity=".7">
+            <ellipse cx="73" cy="58" rx="26" ry="12"/>
+            <path d="M57,52 Q51,42 48,36 L52,34 L57,44"/>
+            <path d="M89,52 Q95,62 98,70 L94,70 L90,62"/>
+            <path d="M66,68 L64,76 M73,69 L72,78 M80,68 L80,77"/>
+          </g>
+          <!-- Sediment-prikker (sand og grus) -->
+          <g fill="rgba(180,140,80,.4)"><circle cx="20" cy="38" r="2"/><circle cx="35" cy="42" r="1.5"/><circle cx="52" cy="36" r="2"/><circle cx="68" cy="40" r="1.5"/><circle cx="85" cy="37" r="2"/><circle cx="100" cy="41" r="1.5"/><circle cx="118" cy="39" r="2"/><circle cx="30" cy="52" r="1.5"/><circle cx="50" cy="50" r="2"/><circle cx="70" cy="53" r="1.5"/><circle cx="90" cy="51" r="2"/><circle cx="110" cy="54" r="1.5"/></g>
+          <text x="73" y="98" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.5)" font-style="italic">Rask tildekking</text>
+        </g>
+        <!-- === STEG 3: Permineralisering === -->
+        <g transform="translate(310,0)">
+          <text x="73" y="22" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".1em">3. MINERALISERING</text>
+          <rect x="8" y="30" width="130" height="60" fill="url(#sed1)" opacity=".9"/>
+          <rect x="8" y="30" width="130" height="20" fill="url(#sed2)" opacity=".6"/>
+          <!-- Skjelett nå mineralisert (steinbrun) -->
+          <g fill="none" stroke="url(#fossilgr)" stroke-width="1.8" stroke-linecap="round">
+            <ellipse cx="73" cy="55" rx="26" ry="12"/>
+            <path d="M57,49 Q51,39 48,33 L52,31 L57,41"/>
+            <path d="M89,49 Q95,59 98,67 L94,67 L90,59"/>
+            <path d="M66,65 L64,73 M73,66 L72,75 M80,65 L80,74"/>
+          </g>
+          <!-- Mineral-krystaller -->
+          <g fill="rgba(180,140,60,.3)"><polygon points="30,46 34,42 38,46 34,50"/><polygon points="100,44 104,40 108,44 104,48"/><polygon points="55,68 58,65 61,68 58,71"/></g>
+          <!-- Piler ned (vann trenger inn) -->
+          <g stroke="rgba(100,180,220,.3)" stroke-width=".8"><line x1="20" y1="30" x2="20" y2="50"/><line x1="40" y1="30" x2="40" y2="50"/><line x1="60" y1="30" x2="60" y2="48"/><line x1="80" y1="30" x2="80" y2="43"/><line x1="100" y1="30" x2="100" y2="48"/><line x1="120" y1="30" x2="120" y2="50"/></g>
+          <text x="73" y="103" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.5)" font-style="italic">Miner. erstatter ben</text>
+        </g>
+        <!-- === STEG 4: Løftes opp === -->
+        <g transform="translate(460,0)">
+          <text x="73" y="22" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".1em">4. GEOLOGISK LØFT</text>
+          <!-- Skråstilte berglag -->
+          <path d="M8,88 Q40,72 73,76 Q106,80 138,68 L138,88 Q106,100 73,96 Q40,92 8,108Z" fill="url(#sed1)" opacity=".8"/>
+          <path d="M8,68 Q40,52 73,56 Q106,60 138,48 L138,68 Q106,80 73,76 Q40,72 8,88Z" fill="url(#sed2)" opacity=".7"/>
+          <path d="M8,48 Q40,32 73,36 Q106,40 138,28 L138,48 Q106,60 73,56 Q40,52 8,68Z" fill="url(#sed3)" opacity=".6"/>
+          <!-- Skjelett synlig i kant -->
+          <g fill="none" stroke="url(#fossilgr)" stroke-width="1.6" stroke-linecap="round">
+            <ellipse cx="73" cy="52" rx="22" ry="10" transform="rotate(-8,73,52)"/>
+            <path d="M55,47 Q50,38 47,32" transform="rotate(-8,73,52)"/>
+            <path d="M88,47 Q94,57 96,64" transform="rotate(-8,73,52)"/>
+          </g>
+          <text x="73" y="103" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.5)" font-style="italic">Erosjon eksponerer</text>
+        </g>
+        <!-- === STEG 5: Utgravning === -->
+        <g transform="translate(610,0)">
+          <text x="73" y="22" text-anchor="middle" font-family="Cinzel" font-size="8.5" fill="rgba(212,168,67,.7)" letter-spacing=".1em">5. UTGRAVNING</text>
+          <!-- Bakke med utgraving -->
+          <rect x="8" y="60" width="130" height="50" fill="url(#sed2)" opacity=".7"/>
+          <path d="M28,60 Q50,45 73,48 Q96,51 118,44 L130,60 Q108,72 73,68 Q38,72 8,60Z" fill="url(#sed3)" opacity=".5"/>
+          <!-- Utgravet grop -->
+          <path d="M40,60 Q73,50 106,60 Q106,72 73,74 Q40,72 40,60Z" fill="#1a1008"/>
+          <!-- Eksponert fossil -->
+          <g fill="none" stroke="url(#fossilgr)" stroke-width="2" stroke-linecap="round">
+            <ellipse cx="73" cy="63" rx="25" ry="11"/>
+            <path d="M56,57 Q50,47 47,41 L51,39 L57,47"/>
+            <path d="M90,57 Q96,67 99,75 L95,75 L91,67"/>
+            <path d="M65,72 L63,80 M73,73 L72,82 M81,72 L81,81"/>
+          </g>
+          <!-- Paleontolog-verktøy -->
+          <path d="M20,55 L30,68" stroke="#a09060" stroke-width="2" stroke-linecap="round"/>
+          <path d="M110,52 L118,65" stroke="#a09060" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="20" cy="53" rx="5" ry="3" fill="#a09060"/>
+          <ellipse cx="110" cy="50" rx="4" ry="2.5" fill="#a09060"/>
+          <text x="73" y="103" text-anchor="middle" font-family="Crimson Pro" font-size="8" fill="rgba(212,168,67,.5)" font-style="italic">Millioner av år</text>
+        </g>
+        <!-- Piler mellom steg -->
+        <g fill="rgba(212,168,67,.35)" stroke="none">
+          <polygon points="152,68 159,72 152,76"/><polygon points="302,68 309,72 302,76"/>
+          <polygon points="452,68 459,72 452,76"/><polygon points="602,68 609,72 602,76"/>
+        </g>
+        <!-- Tidslinje -->
+        <text x="390" y="128" text-anchor="middle" font-family="Cinzel" font-size="8" fill="rgba(212,168,67,.4)" letter-spacing=".08em">PROSESSEN TAR TYPISK 10 000 – 100 MILLIONER ÅR</text>
+      </svg>
+    </div>
+    <!-- Berømte fossilfunn -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🦴 Sue – T. rex</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Funnet i South Dakota 1990. Fullstendig T. rex (~90%). 12,3 m lang. Solgt for $8,4 mill. i 1997. Utstilt i Field Museum, Chicago.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🪶 Archaeopteryx – Berlin</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Funnet i Bayern 1877. Viser fjær OG reptil-trekk. Avgjørende bevis for evolusjon av fugler fra dinosaurer. Ca. 150 millioner år gammelt.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">⚔️ «Stridende dinosaurer»</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Mongolia, 1971. Velociraptor og Protoceratops funnet låst i kamp – bevart i øyeblikket de ble begravd av et sandskred for 74 millioner år siden.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🛡️ Borealopelta</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Canada 2011. En ankylosaur så godt bevart at originalt hudpigment er analysert – den var rødbrun med countershading for kamuflasje.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FOSSILISERING ══ -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Slik dannes et fossil</div><div class="sep-r"></div></div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:14px">
+      <svg viewBox="0 0 780 120" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%">
+        <defs>
+          <linearGradient id="sl1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a3a18"/><stop offset="100%" stop-color="#3a2208"/></linearGradient>
+          <linearGradient id="sl2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7a5528"/><stop offset="100%" stop-color="#5a3a12"/></linearGradient>
+          <linearGradient id="sl3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9a7040"/><stop offset="100%" stop-color="#7a5525"/></linearGradient>
+          <linearGradient id="fgr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8a868"/><stop offset="100%" stop-color="#a08040"/></linearGradient>
+        </defs>
+        <rect width="780" height="120" fill="#0e0b07"/>
+        <!-- Steg 1 -->
+        <text x="73" y="14" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.7)">1. DYRET DØR</text>
+        <rect x="8" y="18" width="130" height="6" fill="#2a4a18"/>
+        <g fill="none" stroke="#c4923a" stroke-width="1.4" stroke-linecap="round">
+          <ellipse cx="73" cy="40" rx="24" ry="11"/><path d="M56,34 Q50,24 47,19 L50,17 L55,24"/>
+          <path d="M90,34 Q95,44 97,52 L93,52 L89,44"/><path d="M65,49 L63,58 M73,50 L72,59 M81,49 L81,58"/>
+        </g>
+        <text x="73" y="75" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(212,168,67,.45)" font-style="italic">Kjøtt råtner</text>
+        <!-- Pil -->
+        <polygon points="143,45 150,49 143,53" fill="rgba(212,168,67,.4)"/>
+        <!-- Steg 2 -->
+        <text x="225" y="14" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.7)">2. BEGRAVELSE</text>
+        <rect x="160" y="18" width="130" height="20" fill="url(#sl3)" opacity=".6"/>
+        <rect x="160" y="38" width="130" height="16" fill="url(#sl2)" opacity=".7"/>
+        <g fill="none" stroke="#d4a868" stroke-width="1.1" stroke-linecap="round" opacity=".65">
+          <ellipse cx="225" cy="38" rx="22" ry="10"/><path d="M210,32 Q205,23 202,18 L206,16 L211,23"/>
+          <path d="M240,32 Q245,42 247,50 L243,50 L239,42"/><path d="M217,46 L215,55 M225,47 L224,56 M233,46 L233,55"/>
+        </g>
+        <text x="225" y="75" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(212,168,67,.45)" font-style="italic">Sediment dekker</text>
+        <!-- Pil -->
+        <polygon points="295,45 302,49 295,53" fill="rgba(212,168,67,.4)"/>
+        <!-- Steg 3 -->
+        <text x="377" y="14" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.7)">3. MINERALISERING</text>
+        <rect x="312" y="18" width="130" height="56" fill="url(#sl1)" opacity=".85"/>
+        <rect x="312" y="18" width="130" height="18" fill="url(#sl2)" opacity=".5"/>
+        <g fill="none" stroke="url(#fgr)" stroke-width="1.6" stroke-linecap="round">
+          <ellipse cx="377" cy="38" rx="22" ry="10"/><path d="M362,32 Q357,23 354,18 L358,16 L362,23"/>
+          <path d="M392,32 Q397,42 399,50 L395,50 L391,42"/><path d="M370,46 L368,55 M377,47 L376,56 M385,46 L385,55"/>
+        </g>
+        <text x="377" y="85" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(212,168,67,.45)" font-style="italic">Mineral erstatter ben</text>
+        <!-- Pil -->
+        <polygon points="445,45 452,49 445,53" fill="rgba(212,168,67,.4)"/>
+        <!-- Steg 4 -->
+        <text x="529" y="14" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.7)">4. GEOLOGISK LØFT</text>
+        <path d="M464,72 Q496,55 529,58 Q562,61 596,50 L596,72 Q562,82 529,80 Q496,78 464,88Z" fill="url(#sl1)" opacity=".8"/>
+        <path d="M464,52 Q496,35 529,38 Q562,41 596,30 L596,52 Q562,62 529,60 Q496,58 464,72Z" fill="url(#sl2)" opacity=".65"/>
+        <g fill="none" stroke="url(#fgr)" stroke-width="1.5" stroke-linecap="round">
+          <ellipse cx="529" cy="38" rx="20" ry="9" transform="rotate(-7,529,38)"/>
+          <path d="M514,33 Q510,25 507,20" transform="rotate(-7,529,38)"/>
+          <path d="M544,33 Q549,42 551,49" transform="rotate(-7,529,38)"/>
+        </g>
+        <text x="529" y="85" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(212,168,67,.45)" font-style="italic">Erosjon avdekker</text>
+        <!-- Pil -->
+        <polygon points="597,45 604,49 597,53" fill="rgba(212,168,67,.4)"/>
+        <!-- Steg 5 -->
+        <text x="681" y="14" text-anchor="middle" font-family="Cinzel" font-size="7.5" fill="rgba(212,168,67,.7)">5. UTGRAVNING</text>
+        <rect x="616" y="50" width="130" height="44" fill="url(#sl2)" opacity=".7"/>
+        <path d="M636,50 Q660,38 681,41 Q702,44 726,36 L736,50 Q714,60 681,58 Q648,62 616,50Z" fill="url(#sl3)" opacity=".5"/>
+        <path d="M644,50 Q681,42 718,50 Q718,60 681,62 Q644,60 644,50Z" fill="#1a1008"/>
+        <g fill="none" stroke="url(#fgr)" stroke-width="1.8" stroke-linecap="round">
+          <ellipse cx="681" cy="52" rx="22" ry="9"/>
+          <path d="M665,46 Q660,37 657,32 L661,30 L665,37"/>
+          <path d="M697,46 Q702,56 703,63 L699,63 L697,56"/>
+          <path d="M673,59 L671,67 M681,60 L680,68 M689,59 L689,67"/>
+        </g>
+        <path d="M630,47 L638,58" stroke="#a09060" stroke-width="1.8" stroke-linecap="round"/>
+        <ellipse cx="629" cy="45" rx="4" ry="2.5" fill="#a09060"/>
+        <text x="681" y="106" text-anchor="middle" font-family="Crimson Pro" font-size="7.5" fill="rgba(212,168,67,.45)" font-style="italic">Paleontolog finner</text>
+      </svg>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🦴 Sue – T. rex</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Funnet i South Dakota 1990. ~90% komplett. 12,3 m lang. Solgt for $8,4 mill. Utstilt i Field Museum, Chicago.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🪶 Archaeopteryx</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Bayern 1877. Viser fjær OG reptil-trekk. ~150 millioner år. Avgjørende bevis for at fugler stammer fra dinosaurer.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">⚔️ «Stridende dinosaurer»</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Mongolia 1971. Velociraptor og Protoceratops bevart midt i kamp – begravd levende av sandskred for 74 millioner år siden.</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:5px">🛡️ Borealopelta</div>
+        <div style="font-size:.76rem;color:var(--dim);line-height:1.55">Canada 2011. Ankylosaur med bevart hudpigment – rødbrun med kamuflasje-countershading. 110 millioner år gammelt.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══ EPOKE-DATA ══
+const EPOKER = {
+  prekambrium:{
+    tittel:'Prekambrium',tid:'4 000–541 mya',farge:'#7a6040',
+    felt:[{l:'Varighet',v:'3 460 millioner år'},{l:'Første liv',v:'~3 700 mya'},{l:'Oksygen',v:'Øker fra ~2 400 mya'},{l:'Dyreliv',v:'Enkle flercellede mot slutten'}],
+    tekst:'Prekambrium utgjør 88% av jordas historie. De første bakteriene dukket opp for ~3,7 milliarder år siden. Oksygenproduserende cyanobakterier skapte gradvis en oksygenatmosfære – kalt «den store oksiderende hendelsen». Mot slutten: de første komplekse flercellede organismer (Ediacara-fauna).',
+    dino:'Ingen dinosaurer – men uten livet som utviklet seg her, ville ingen dyr eksistert.'
+  },
+  paleozoikum:{
+    tittel:'Paleozoikum',tid:'541–252 mya',farge:'#507840',
+    felt:[{l:'Varighet',v:'289 millioner år'},{l:'Kambrisk eksplosjon',v:'~539 mya'},{l:'Første land-planter',v:'~470 mya'},{l:'Slutt',v:'Perm-trias-utdøingen'}],
+    tekst:'Paleozoikum («gammel liv») startet med den kambriske eksplosjonen – en periode med ekstrem diversifisering av dyrelivet på relativt kort tid. De første fiskene, insektene, amfibiene og reptilene dukket opp. Perioden endte med den største masseuttydingen i historien: Perm-trias-utdøingen, der ~96% av alle marine arter og ~70% av landarter forsvant.',
+    dino:'Mot slutten av Perm dukket de første archosaur-forfedrene til dinosaurene opp.'
+  },
+  trias:{
+    tittel:'Trias',tid:'252–201 mya',farge:'#c86030',
+    felt:[{l:'Varighet',v:'51 millioner år'},{l:'Klima',v:'Varmt og tørt'},{l:'Kontinent',v:'Pangea samlet'},{l:'Første dinosaurer',v:'~235 mya'}],
+    tekst:'Etter den katastrofale Perm-trias-utdøingen startet livet på nytt i Trias. Kontinentene var samlet til superkontinentet Pangea. De første dinosaurene – som Eoraptor og Coelophysis – var relativt små og tobeinte. Pattedyrforfedrene (cynodontene) levde også i denne perioden. Trias endte med en ny masseutdøing.',
+    dino:'🦕 Første dinosaurer: Eoraptor (1m), Coelophysis (3m), Plateosaurus (7m). Små, tobeinte rovdyr dominerte.'
+  },
+  jura:{
+    tittel:'Jura',tid:'201–145 mya',farge:'#408040',
+    felt:[{l:'Varighet',v:'56 millioner år'},{l:'Klima',v:'Varmt, fuktig'},{l:'Pangea',v:'Begynner å dele seg'},{l:'Første fugler',v:'Archaeopteryx ~150 mya'}],
+    tekst:'Jura er dinosaurenes klassiske storhetstid. Enorme planteetere som Brachiosaurus, Diplodocus og Brontosaurus befolket de frodige skoger. Rovdyr som Allosaurus, Ceratosaurus og Megalosaurus jaktet dem. Mot slutten av Jura dukket Archaeopteryx opp – overgangsform mellom dinosaurer og fugler. Pattedyr fantes, men var små og marginale.',
+    dino:'🦕 Diplodocus (27m), Brachiosaurus (26m), Stegosaurus (9m), Allosaurus (12m), Archaeopteryx (50cm)'
+  },
+  kritt:{
+    tittel:'Kritt',tid:'145–66 mya',farge:'#3070b0',
+    felt:[{l:'Varighet',v:'79 millioner år – lengst!'},{l:'Klima',v:'Varmest i Mesozoikum'},{l:'Blomsterplanter',v:'Diversifiserer seg'},{l:'Slutt',v:'K-Pg masseuttydingen'}],
+    tekst:'Kritt var dinosaurenes siste og mest spektakulære akt. Tyrannosaurus rex, Triceratops, Velociraptor, Ankylosaurus og hundrevis av andre arter levde side om side. Blomsterplanter (angiospermer) spredde seg og skapte nye økosystemer. Havet var dominert av enorme mosasaurer og plesiosaurer. Perioden endte brått for 66 millioner år siden da en asteroide satte sluttstrek.',
+    dino:'🦖 T. rex (12m), Triceratops (9m), Velociraptor (2m), Ankylosaurus (10m), Spinosaurus (18m), Pteranodon'
+  },
+  kenozoikum:{
+    tittel:'Kenozoikum',tid:'66 mya – nå',farge:'#8050b0',
+    felt:[{l:'Varighet',v:'66 millioner år'},{l:'Pattedyr',v:'Eksplosiv diversifisering'},{l:'Homo sapiens',v:'Kun ~0,3 mya'},{l:'Nå',v:'Sjette masseuttydning?'}],
+    tekst:'Etter dinosaurenes utdøing overtok pattedyrene. I løpet av noen få millioner år diversifiserte de til alle nøkkelroller i økosystemene. Hester, hvaler, elefanter og primater dukket opp. Klimaet kjølte seg gradvis ned, og for ~2,6 millioner år siden begynte istidene. Homo sapiens er kun 300 000 år gammel – et blunk i geologisk tid.',
+    dino:'Fugler er de eneste overlevende dinosaurene. I dag finnes ~10 000 fuglearter – flere enn alle andre landvirveldyr til sammen.'
+  }
+};
+
+document.querySelectorAll('[id^="ep-"]').forEach(el => {
+  const key = el.id.replace('ep-','');
+  el.addEventListener('click', () => visEpoke(key));
+  el.addEventListener('mouseenter', () => { el.style.opacity = '.85'; });
+  el.addEventListener('mouseleave', () => { el.style.opacity = '1'; });
+});
+
+let aktivEpoke = null;
+function visEpoke(key) {
+  const info = document.getElementById('epoke-info');
+  if (aktivEpoke === key) {
+    aktivEpoke = null; info.classList.remove('synlig'); return;
+  }
+  aktivEpoke = key;
+  const e = EPOKER[key]; if (!e) return;
+  info.innerHTML = `
+    <div class="ei-header">
+      <div class="ei-farge" style="background:${e.farge}"></div>
+      <div>
+        <div class="ei-tittel" style="color:${e.farge}">${e.tittel}</div>
+        <div class="ei-tid">${e.tid}</div>
+      </div>
+    </div>
+    <div class="ei-grid">${e.felt.map(f=>`<div class="ei-felt"><div class="ei-felt-l">${f.l}</div><div class="ei-felt-v">${f.v}</div></div>`).join('')}</div>
+    <p class="ei-tekst">${e.tekst}</p>
+    <div class="ei-dino">🦕 ${e.dino}</div>`;
+  info.classList.add('synlig');
+  info.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══ DINOSAUR-DATA ══
+const DINOSAURER = [
+  {
+    id:'trex', navn:'Tyrannosaurus rex', latin:'Tyrannosaurus rex', periode:'Sen-Kritt (68–66 mya)',
+    type:'Kjøttetere (theropod)', farge:'#c84020', glow:'rgba(200,64,32,.06)',
+    fakta:[{l:'Lengde',v:'12 m'},{l:'Høyde',v:'4 m'},{l:'Vekt',v:'8–14 tonn'},{l:'Bitt',v:'57 000 N – kraftigst'}],
+    desc:'Kongen blant rovdyrene – men hadde latterlig korte armer.',
+    tekst:'T. rex var ett av de største kjøttetende dyrene som noensinne har levd. Bittekraften på 57 000 Newton er den kraftigste noensinne målt hos et landdyr – nok til å knuse bein. Hjernens luktesenter var enorm, noe som tyder på et fremragende luktesans. Forskere debatterer fortsatt om T. rex var en aktiv jeger, åtseleter – eller begge deler.',
+    morsomt:'T. rex hadde trolig fjær i ung alder – akkurat som mange moderne fugler. Det mektige dyret ble kanskje klekket fra et egg på størrelse med et fotball.',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="tx-dorsal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#4a6332"/><stop offset="100%" stop-color="#2d3e1c"/>
+  </linearGradient>
+  <linearGradient id="tx-lateral" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#5a7840"/><stop offset="60%" stop-color="#4a6332"/><stop offset="100%" stop-color="#2a3a1a"/>
+  </linearGradient>
+  <linearGradient id="tx-belly" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#8a9e60"/><stop offset="100%" stop-color="#6a7a48"/>
+  </linearGradient>
+  <linearGradient id="tx-head" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#567040"/><stop offset="100%" stop-color="#2e3e1e"/>
+  </linearGradient>
+  <radialGradient id="tx-eye" cx="38%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#d48020"/><stop offset="70%" stop-color="#a05810"/><stop offset="100%" stop-color="#602800"/>
+  </radialGradient>
+  <filter id="tx-shadow"><feDropShadow dx="4" dy="6" stdDeviation="4" flood-color="rgba(0,0,0,.5)"/></filter>
+  <radialGradient id="tx-bg" cx="30%" cy="40%" r="70%">
+    <stop offset="0%" stop-color="#121a0a"/><stop offset="100%" stop-color="#060a04"/>
+  </radialGradient>
+</defs>
+<rect width="520" height="300" fill="url(#tx-bg)"/>
+<!-- Jord/skygge under dyret -->
+<ellipse cx="260" cy="288" rx="200" ry="10" fill="rgba(0,0,0,.35)"/>
+<!-- HALE – lang, kraftig, avtagende mot spissen -->
+<path d="M348,170 Q385,152 418,132 Q448,114 472,100 Q490,90 502,84 Q508,88 500,96 Q484,106 460,118 Q434,132 404,148 Q374,164 352,176Z" fill="url(#tx-dorsal)" stroke="#1e2a10" stroke-width="1.2"/>
+<!-- Hale-underside -->
+<path d="M350,173 Q382,158 414,140 Q444,124 470,110 Q487,101 500,95 Q505,100 494,108 Q476,118 450,132 Q422,147 390,162 Q365,173 352,178Z" fill="url(#tx-belly)" opacity=".7"/>
+<!-- Hale-tekstur-folder -->
+<g fill="none" stroke="rgba(30,42,16,.5)" stroke-width="1">
+  <path d="M360,172 Q375,163 395,158"/><path d="M380,165 Q396,156 418,150"/>
+  <path d="M400,157 Q418,148 440,142"/><path d="M420,148 Q440,140 462,132"/>
+</g>
+<!-- Rygg-profil over haleryggen -->
+<path d="M220,110 Q255,100 290,96 Q325,92 360,90 Q395,88 430,86 Q462,85 490,86" fill="none" stroke="#3a4e28" stroke-width="3" stroke-linecap="round"/>
+<!-- KROPP – stor, muskuløs -->
+<ellipse cx="235" cy="185" rx="95" ry="68" fill="url(#tx-lateral)" stroke="#1e2a10" stroke-width="1.8" filter="url(#tx-shadow)"/>
+<!-- Kropp-overflate dorsal mørkere -->
+<ellipse cx="230" cy="158" rx="88" ry="38" fill="url(#tx-dorsal)" opacity=".6"/>
+<!-- Mage (lysere) -->
+<ellipse cx="225" cy="210" rx="65" ry="40" fill="url(#tx-belly)"/>
+<!-- Mage-tekstur (riller) -->
+<g fill="none" stroke="rgba(100,120,70,.3)" stroke-width=".8">
+  <path d="M175,208 Q200,202 228,205 Q252,208 268,214"/>
+  <path d="M170,220 Q196,214 228,217 Q256,220 272,226"/>
+  <path d="M172,232 Q200,226 232,229 Q258,232 274,238"/>
+</g>
+<!-- BAKBEIN venstre (bakre, delvis skjult) -->
+<path d="M270,228 Q264,252 258,268 Q253,280 245,278 Q236,274 238,263 L248,246Z" fill="#364822" stroke="#1e2a10" stroke-width="1.2"/>
+<path d="M238,263 Q230,274 224,282 Q218,289 212,287 Q205,282 208,272 L220,260Z" fill="#2a3a1a"/>
+<!-- Klo bakre venstre -->
+<path d="M208,287 L200,292 M213,288 L207,294 M218,288 L214,294" stroke="#141e0a" stroke-width="2.2" stroke-linecap="round"/>
+<!-- BAKBEIN høyre (fremre, fullt synlig) -->
+<path d="M245,232 Q255,256 262,272 Q268,284 260,289 Q250,292 246,282 L238,264Z" fill="#4a6030" stroke="#1e2a10" stroke-width="1.2"/>
+<!-- Kne-ledd -->
+<ellipse cx="255" cy="264" rx="9" ry="7" fill="#3a4e24" stroke="#1e2a10" stroke-width="1"/>
+<path d="M246,282 Q243,292 235,295 L222,298 Q214,298 214,289 L224,280Z" fill="#3a4e24"/>
+<!-- Klo fremre høyre -->
+<path d="M215,295 L208,300 M220,297 L215,302 M225,296 L222,301" stroke="#141e0a" stroke-width="2.2" stroke-linecap="round"/>
+<!-- Lår-muskel detalj -->
+<path d="M250,232 Q260,240 262,254 Q264,265 260,272" fill="none" stroke="#2e3e1c" stroke-width="2"/>
+<!-- LITEN ARM -->
+<path d="M190,168 Q202,160 215,166 Q222,172 218,182 L208,178 Q204,172 198,174Z" fill="#4a6030" stroke="#1e2a10" stroke-width="1.2"/>
+<!-- Arm-klo -->
+<path d="M215,165 L223,158 M216,169 L226,165" stroke="#1e2a10" stroke-width="2" stroke-linecap="round"/>
+<!-- HALS – kraftig, kortstivet -->
+<path d="M170,142 Q182,132 194,155 Q200,170 206,186 L194,189 Q187,172 181,156Z" fill="url(#tx-lateral)" stroke="#1e2a10" stroke-width="1.2"/>
+<path d="M175,143 Q184,135 190,155 Q194,168 198,184 L196,186 Q191,170 187,155Z" fill="url(#tx-belly)" opacity=".5"/>
+<!-- Hals-folder -->
+<path d="M178,148 Q185,144 192,152 M180,158 Q188,154 195,162 M182,168 Q190,164 198,172" fill="none" stroke="rgba(30,42,16,.45)" stroke-width="1.2"/>
+<!-- HODE – stor, massiv kjeve -->
+<path d="M62,96 Q82,72 118,70 Q152,68 174,86 Q190,100 188,126 Q186,142 168,150 Q145,158 120,153 Q88,146 68,126 Q50,108 62,96Z" fill="url(#tx-head)" stroke="#1e2a10" stroke-width="2" filter="url(#tx-shadow)"/>
+<!-- Hode – øvre profil (mørkere) -->
+<path d="M64,94 Q84,74 118,72 Q150,70 170,88 Q162,78 140,74 Q118,70 94,74 Q76,78 66,90Z" fill="#4a6030" opacity=".5"/>
+<!-- Hode-rynker (orbitale og snute-rynker) -->
+<path d="M106,92 Q114,88 122,92 Q128,96 124,100" fill="none" stroke="#1e2a10" stroke-width="1.5"/>
+<path d="M100,106 Q112,102 124,106" fill="none" stroke="#1e2a10" stroke-width="1"/>
+<path d="M84,88 Q90,84 96,86 Q98,90 94,92" fill="none" stroke="#1e2a10" stroke-width="1.2"/>
+<!-- Kjeft-åpning (dypt, dramatisk) -->
+<path d="M64,110 Q76,94 96,88 Q120,82 146,88 Q164,94 172,110 Q166,94 144,86 Q122,80 98,82 Q78,84 65,98Z" fill="#0e0404"/>
+<!-- Over-kjeve innside -->
+<path d="M66,108 Q80,96 100,90 Q122,85 145,90 Q162,95 170,108 Q166,100 146,92 Q125,87 100,88 Q82,90 69,102Z" fill="#1a0808"/>
+<!-- TENNER øvre – realistiske, varierte størrelser -->
+<g fill="#f5f0e0" stroke="#d0c8a0" stroke-width=".6">
+  <path d="M72,106 Q75,94 78,106Z"/><path d="M80,102 Q83,89 87,102Z"/>
+  <path d="M89,99 Q92,86 96,99Z"/><path d="M99,97 Q102,84 106,97Z"/>
+  <path d="M109,97 Q112,85 116,97Z"/><path d="M118,98 Q121,87 124,98Z"/>
+  <path d="M126,100 Q129,90 132,100Z"/><path d="M134,103 Q136,94 139,104Z"/>
+  <path d="M141,108 Q143,100 146,109Z"/>
+</g>
+<!-- TENNER nedre -->
+<g fill="#f5f0e0" stroke="#d0c8a0" stroke-width=".6">
+  <path d="M70,114 Q74,104 78,114Z"/><path d="M80,112 Q84,102 88,112Z"/>
+  <path d="M90,110 Q94,100 98,110Z"/><path d="M100,109 Q104,100 108,109Z"/>
+  <path d="M110,109 Q114,100 118,110Z"/><path d="M120,110 Q123,102 126,110Z"/>
+  <path d="M128,112 Q130,104 133,112Z"/><path d="M135,115 Q137,108 140,116Z"/>
+</g>
+<!-- GUM-LINJE -->
+<path d="M66,108 Q90,104 120,103 Q148,102 170,108" fill="none" stroke="#6a2020" stroke-width="1.2"/>
+<path d="M68,116 Q92,120 122,121 Q150,122 168,117" fill="none" stroke="#6a2020" stroke-width="1.2"/>
+<!-- ØYE – svært detaljert -->
+<ellipse cx="120" cy="100" rx="14" ry="12" fill="#0c0606" stroke="#2e1808" stroke-width="2"/>
+<circle cx="120" cy="100" r="9" fill="url(#tx-eye)"/>
+<ellipse cx="120" cy="102" rx="5" ry="7" fill="#0a0402"/>
+<circle cx="115" cy="96" r="3.5" fill="rgba(255,255,255,.55)"/>
+<circle cx="113" cy="94" r="1.5" fill="rgba(255,255,255,.3)"/>
+<!-- Øye-supraorbital-knott -->
+<path d="M108,90 Q116,85 128,87 Q136,90 138,96" fill="#3a4e26" stroke="#1e2a10" stroke-width="1.5"/>
+<ellipse cx="126" cy="88" rx="6" ry="4" fill="#4a6030"/>
+<!-- NOSTRIL -->
+<ellipse cx="78" cy="100" rx="5" ry="3.5" fill="#080404" transform="rotate(-25,78,100)"/>
+<path d="M74,96 Q78,92 84,94" fill="none" stroke="#1e2a10" stroke-width="1.5"/>
+<!-- RYGGSPIKULER (proto-fjær / ornament) -->
+<g fill="#3a4e26" stroke="#1e2a10" stroke-width="1">
+  <path d="M198,142 L205,126 L212,142Z" opacity=".85"/>
+  <path d="M216,137 L224,120 L232,137Z" opacity=".8"/>
+  <path d="M232,133 L240,116 L248,133Z" opacity=".75"/>
+  <path d="M250,130 L257,114 L264,130Z" opacity=".7"/>
+  <path d="M268,128 L274,113 L280,128Z" opacity=".65"/>
+  <path d="M285,126 L290,112 L296,126Z" opacity=".6"/>
+</g>
+<!-- HUD-TEKSTUR – skalor og folder over hele kroppen -->
+<g fill="none" stroke="rgba(30,42,16,.4)" stroke-width=".9">
+  <path d="M195,178 Q212,170 235,174 Q258,178 276,184"/>
+  <path d="M192,192 Q212,184 240,188 Q264,192 282,198"/>
+  <path d="M196,206 Q218,198 248,202 Q272,206 288,212"/>
+  <path d="M200,220 Q224,213 256,216 Q280,220 295,226"/>
+</g>
+<!-- Skala-prikker -->
+<g fill="rgba(40,56,24,.35)">
+  <circle cx="200" cy="182" r="3"/><circle cx="212" cy="178" r="2.5"/>
+  <circle cx="225" cy="176" r="3"/><circle cx="238" cy="177" r="2.5"/>
+  <circle cx="250" cy="180" r="3"/><circle cx="214" cy="190" r="2.5"/>
+  <circle cx="228" cy="188" r="3"/><circle cx="242" cy="190" r="2.5"/>
+  <circle cx="256" cy="192" r="3"/>
+</g>
+<!-- BAKGRUNN-DETALJ: Jord/stein hint -->
+<path d="M0,285 Q100,278 200,282 Q300,286 400,280 Q460,278 520,282 L520,300 L0,300Z" fill="#0a0e06" opacity=".7"/>
+</svg>`
+  },
+  {
+    id:'triceratops', navn:'Triceratops', latin:'Triceratops horridus', periode:'Sen-Kritt (68–66 mya)',
+    type:'Planteetere (ceratopsid)', farge:'#6a9050', glow:'rgba(106,144,80,.06)',
+    fakta:[{l:'Lengde',v:'9 m'},{l:'Vekt',v:'6–12 tonn'},{l:'Horn',v:'Opp til 1 m lange'},{l:'Nakkeplate',v:'Opp til 2 m bred'}],
+    desc:'Tre horn og en imponerende nakkeplate – men hvorfor hadde den dem?',
+    tekst:'Triceratops var ett av de siste og vanligste dinosaurene. De tre hornene og den store nakke-platen (fryllen) kan ha vært brukt til forsvar, kamp om paring – eller begge deler. Fryllen var trolig fargerik og brukt til kommunikasjon. Tannene var tilpasset å kutte og knuse seige planter.',
+    morsomt:'Triceratops og T. rex levde faktisk på samme tid og sted – de er hverandres naturlige fiender! Bein med tegn på T. rex-tannmerker er funnet hos Triceratops.',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="tc-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7e6442"/><stop offset="100%" stop-color="#3e321c"/></linearGradient>
+  <linearGradient id="tc-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a88c5c"/><stop offset="100%" stop-color="#7c6840"/></linearGradient>
+  <linearGradient id="tc-frill" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#de6030"/><stop offset="50%" stop-color="#c04020"/><stop offset="100%" stop-color="#801808"/></linearGradient>
+  <radialGradient id="tc-frill-glow" cx="50%" cy="20%" r="70%"><stop offset="0%" stop-color="rgba(255,100,50,.3)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+  <radialGradient id="tc-eye" cx="35%" cy="35%" r="60%"><stop offset="0%" stop-color="#a06018"/><stop offset="100%" stop-color="#4a2808"/></radialGradient>
+</defs>
+<rect width="520" height="300" fill="#0e0c06"/>
+<ellipse cx="265" cy="293" rx="215" ry="9" fill="rgba(0,0,0,.35)"/>
+<!-- Hale -->
+<path d="M402,178 Q432,158 458,136 Q478,118 494,104 Q502,98 500,104 Q490,114 472,130 Q452,148 426,166 Q406,180 404,186Z" fill="url(#tc-body)" stroke="#2e2410" stroke-width="1.2"/>
+<!-- KROPP (massiv, bredt) -->
+<ellipse cx="265" cy="198" rx="148" ry="88" fill="url(#tc-body)" stroke="#2e2410" stroke-width="2.2"/>
+<ellipse cx="260" cy="226" rx="118" ry="56" fill="url(#tc-belly)"/>
+<!-- Rygg-kontur -->
+<path d="M155,166 Q210,146 265,142 Q318,140 370,154 Q400,165 408,180" fill="none" stroke="rgba(62,50,28,.5)" stroke-width="3"/>
+<!-- BAKBEIN høyre -->
+<path d="M372,248 Q382,268 379,280 L357,282 Q352,268 356,248Z" fill="#6a5434" stroke="#2e2410" stroke-width="1.2"/>
+<ellipse cx="365" cy="272" rx="13" ry="9" fill="#5a4828" stroke="#2e2410" stroke-width="1"/>
+<path d="M357,282 Q355,292 344,293 L336,291 Q333,284 338,278Z" fill="#5a4828"/>
+<path d="M335,292 L328,298 M340,293 L337,299 M345,293 L345,299 M350,292 L351,298" stroke="#201808" stroke-width="2" stroke-linecap="round"/>
+<!-- BAKBEIN venstre -->
+<path d="M332,254 Q340,274 337,286 L315,286 Q310,272 315,254Z" fill="#5a4828" stroke="#2e2410" stroke-width="1.2"/>
+<!-- FRAMBEIN høyre -->
+<path d="M168,248 Q175,268 172,280 L152,282 Q147,268 151,248Z" fill="#6a5434" stroke="#2e2410" stroke-width="1.2"/>
+<ellipse cx="160" cy="270" rx="12" ry="8" fill="#5a4828" stroke="#2e2410" stroke-width="1"/>
+<path d="M152,282 Q150,292 140,293 L132,291 Q130,284 135,278Z" fill="#5a4828"/>
+<path d="M131,292 L124,298 M136,293 L133,299 M141,293 L141,299 M146,292 L147,298" stroke="#201808" stroke-width="2" stroke-linecap="round"/>
+<!-- FRAMBEIN venstre -->
+<path d="M140,252 Q146,272 143,284 L123,284 Q119,270 124,252Z" fill="#5a4828" stroke="#2e2410" stroke-width="1.2"/>
+<!-- NAKKE-SKJOLD (frill) – detaljert med åremønster og fargesone -->
+<path d="M97,80 Q66,38 53,66 Q46,90 62,110 Q70,128 88,134 Q106,140 120,128 Q144,108 158,90Z" fill="url(#tc-frill)" stroke="#901808" stroke-width="2"/>
+<path d="M97,80 Q68,46 58,72 Q52,95 66,114 Q74,130 88,134 Q100,138 112,128 Q134,110 152,92Z" fill="url(#tc-frill-glow)"/>
+<!-- Frill-årer -->
+<g fill="none" stroke="rgba(200,70,30,.4)" stroke-width="1.2">
+  <path d="M92,82 Q76,58 68,76"/><path d="M96,88 Q82,64 75,82"/>
+  <path d="M102,92 Q90,70 85,88"/><path d="M108,94 Q98,74 94,92"/>
+  <path d="M114,94 Q106,76 104,94"/><path d="M120,93 Q114,77 113,95"/>
+</g>
+<!-- Frill-kant knotter -->
+<g fill="#c03010" stroke="#901808" stroke-width="1">
+  <ellipse cx="57" cy="70" rx="5" ry="6"/><ellipse cx="52" cy="86" rx="5" ry="6"/>
+  <ellipse cx="56" cy="102" rx="5" ry="6"/><ellipse cx="64" cy="116" rx="5" ry="5"/>
+  <ellipse cx="76" cy="128" rx="5" ry="5"/><ellipse cx="90" cy="136" rx="5" ry="4"/>
+</g>
+<!-- Frill lyspunkter -->
+<g fill="rgba(255,120,60,.2)">
+  <ellipse cx="78" cy="90" rx="12" ry="18"/><ellipse cx="95" cy="100" rx="10" ry="15"/>
+  <ellipse cx="112" cy="105" rx="8" ry="12"/>
+</g>
+<!-- NAKKE -->
+<path d="M158,90 Q174,100 180,120 Q186,140 188,160 L170,162 Q167,140 162,120 Q157,102 148,94Z" fill="url(#tc-body)"/>
+<path d="M162,91 Q174,103 178,122 Q182,140 184,158 L182,160 Q177,140 174,121 Q170,103 162,95Z" fill="url(#tc-belly)" opacity=".45"/>
+<!-- Nakke-folder -->
+<path d="M165,98 Q173,94 180,102 M167,112 Q176,108 183,116 M169,126 Q178,122 186,130" fill="none" stroke="rgba(46,36,16,.45)" stroke-width="1.2"/>
+<!-- HODE -->
+<path d="M53,158 Q60,138 80,130 Q104,122 128,126 Q152,130 162,148 Q170,164 163,180 Q153,194 128,198 Q100,200 78,190 Q55,178 53,158Z" fill="url(#tc-body)" stroke="#2e2410" stroke-width="1.8"/>
+<!-- Hode dorsal mørkere -->
+<path d="M55,155 Q66,138 84,132 Q106,126 130,130 Q152,134 161,150" fill="none" stroke="rgba(62,50,28,.5)" stroke-width="2.5"/>
+<!-- Hode-kontur detaljert -->
+<path d="M55,158 Q58,148 65,142 Q72,138 78,134" fill="none" stroke="#4a3820" stroke-width="1.5"/>
+<!-- Kjeft-linje -->
+<path d="M56,172 Q68,182 90,188 Q112,194 136,190 Q154,186 162,176" fill="none" stroke="#2e2410" stroke-width="2"/>
+<path d="M56,160 Q68,148 85,140 Q108,133 134,138 Q154,144 163,158 Q156,144 135,136 Q108,130 84,136 Q66,142 58,154Z" fill="#0e0604" opacity=".7"/>
+<!-- NESE-HORN (enkelt) -->
+<path d="M64,162 Q51,140 46,118 Q44,104 50,100 Q60,96 66,108 Q72,124 74,152Z" fill="#ceba7a" stroke="#a09050" stroke-width="1.5"/>
+<path d="M64,162 Q55,142 52,122 Q50,108 54,104 Q62,116 67,148Z" fill="#a89858"/>
+<path d="M56,138 Q54,128 56,122 Q60,130 60,138Z" fill="rgba(200,190,120,.3)"/>
+<!-- HØYRE HORN (stor) -->
+<path d="M92,128 Q76,98 71,70 Q68,54 76,50 Q86,46 92,60 Q98,78 100,124Z" fill="#ceba7a" stroke="#a09050" stroke-width="1.5"/>
+<path d="M92,128 Q80,100 78,72 Q76,56 80,52 Q86,68 93,122Z" fill="#a89858"/>
+<!-- VENSTRE HORN (stor) -->
+<path d="M126,126 Q118,96 116,66 Q114,50 122,46 Q132,44 136,58 Q139,76 136,124Z" fill="#ceba7a" stroke="#a09050" stroke-width="1.5"/>
+<path d="M126,126 Q120,98 118,70 Q116,54 120,50 Q126,66 131,122Z" fill="#a89858"/>
+<!-- Horn tekstur -->
+<g fill="none" stroke="rgba(180,160,90,.3)" stroke-width="1">
+  <path d="M88,128 L84,80 M93,127 L90,80 M97,126 L96,82"/>
+  <path d="M122,126 L118,80 M127,125 L124,80 M131,124 L130,82"/>
+</g>
+<!-- ØYE -->
+<ellipse cx="98" cy="148" rx="12" ry="11" fill="#0c0806" stroke="#2e1e08" stroke-width="1.5"/>
+<circle cx="98" cy="148" r="7.5" fill="url(#tc-eye)"/>
+<ellipse cx="98" cy="150" rx="4" ry="5.5" fill="#080402"/>
+<circle cx="93" cy="143" r="3.5" fill="rgba(255,255,255,.5)"/>
+<path d="M87,140 Q95,135 108,137 Q114,141 115,148" fill="none" stroke="#2e1e08" stroke-width="2"/>
+<!-- NOSTRIL -->
+<ellipse cx="72" cy="164" rx="5" ry="3.5" fill="#0e0604"/>
+<!-- HODE-TEKSTUR -->
+<g fill="rgba(62,50,28,.35)">
+  <circle cx="100" cy="134" r="3"/><circle cx="114" cy="132" r="3"/>
+  <circle cx="128" cy="133" r="3"/><circle cx="106" cy="144" r="2.5"/>
+  <circle cx="120" cy="143" r="2.5"/><circle cx="134" cy="144" r="2.5"/>
+</g>
+<!-- KROPP-TEKSTUR -->
+<g fill="none" stroke="rgba(62,50,28,.4)" stroke-width=".9">
+  <path d="M202,200 Q225,192 255,196 Q280,200 302,208"/>
+  <path d="M198,216 Q224,208 260,212 Q288,216 312,224"/>
+  <path d="M200,232 Q228,224 265,228 Q295,232 320,240"/>
+</g>
+<path d="M0,288 Q130,282 260,286 Q390,290 520,284 L520,300 L0,300Z" fill="#0c0a04" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'brachiosaurus', navn:'Brachiosaurus', latin:'Brachiosaurus altithorax', periode:'Sen-Jura (154–150 mya)',
+    type:'Planteetere (sauropod)', farge:'#4080a0', glow:'rgba(64,128,160,.06)',
+    fakta:[{l:'Lengde',v:'26 m'},{l:'Høyde',v:'16 m (hals opp)'},{l:'Vekt',v:'30–60 tonn'},{l:'Mat per dag',v:'~200 kg planter'}],
+    desc:'En av de høyeste dinosaurene – nesten like høyt som en 5-etasjes bygning.',
+    tekst:'Brachiosaurus var usedvanlig blant sauropodene fordi forbeina var lengre enn bakbeina – derav det buede ryggen og den langt strekke halsen. Den kunne nå blader 16 meter oppe i trærne. Hjernen var liten, men det trengte ikke å tenke mye for å spise blader. Nesesporene satt høyt oppe på hodet, over øynene.',
+    morsomt:'Brachiosaurus produserte trolig enorme mengder metangass fra fermentering av plantemateriale i tarmene – nok til å bidra til klimaendringer!',
+    svg:`<svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="br-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6e9050"/><stop offset="100%" stop-color="#384a20"/></linearGradient>
+  <linearGradient id="br-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9eb870"/><stop offset="100%" stop-color="#7a9050"/></linearGradient>
+  <linearGradient id="br-neck" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#6e9050"/><stop offset="100%" stop-color="#4a6234"/></linearGradient>
+  <radialGradient id="br-eye" cx="38%" cy="35%" r="60%"><stop offset="0%" stop-color="#80a030"/><stop offset="100%" stop-color="#384808"/></radialGradient>
+</defs>
+<rect width="520" height="340" fill="#0c1608"/>
+<ellipse cx="260" cy="332" rx="220" ry="10" fill="rgba(0,0,0,.35)"/>
+<!-- Hale -->
+<path d="M428,222 Q455,204 478,182 Q496,164 506,150 Q512,144 510,152 Q503,164 487,182 Q466,204 440,226 Q430,234 428,238Z" fill="url(#br-body)" stroke="#2a3818" stroke-width="1.2"/>
+<path d="M430,225 Q454,210 476,190 Q493,174 504,162 Q508,168 497,180 Q478,198 455,218 Q435,234 430,238Z" fill="url(#br-belly)" opacity=".4"/>
+<!-- KROPP (stor ellipse) -->
+<ellipse cx="310" cy="244" rx="140" ry="90" fill="url(#br-body)" stroke="#2a3818" stroke-width="2.2"/>
+<ellipse cx="305" cy="272" rx="112" ry="60" fill="url(#br-belly)"/>
+<!-- Rygg-profil (konveks) -->
+<path d="M205,202 Q260,182 320,178 Q375,176 415,190 Q440,200 445,218" fill="none" stroke="rgba(50,70,28,.5)" stroke-width="3"/>
+<!-- BAKBEIN (lange, kraftige – elefantlignende) -->
+<path d="M392,298 Q400,318 397,330 L374,330 Q368,316 373,298Z" fill="#526838" stroke="#2a3818" stroke-width="1.2"/>
+<ellipse cx="382" cy="322" rx="15" ry="10" fill="#42582c" stroke="#2a3818" stroke-width="1"/>
+<path d="M374,330 Q372,338 360,339 L351,337 Q348,330 354,322Z" fill="#42582c"/>
+<path d="M349,338 L342,340 M355,339 L352,340 M361,339 L360,340 M367,338 L367,340 M372,337 L373,340" stroke="#1c2c10" stroke-width="2" stroke-linecap="round"/>
+<!-- BAKBEIN venstre -->
+<path d="M354,302 Q360,322 357,334 L334,334 Q329,320 334,302Z" fill="#42582c" stroke="#2a3818" stroke-width="1.2"/>
+<!-- FRAMBEIN (lengre enn bakbein – Brachio-karakteristikk!) -->
+<path d="M210,300 Q218,322 215,334 L192,334 Q187,320 193,300Z" fill="#526838" stroke="#2a3818" stroke-width="1.2"/>
+<ellipse cx="201" cy="324" rx="14" ry="10" fill="#42582c" stroke="#2a3818" stroke-width="1"/>
+<path d="M192,334 Q190,340 178,340 L170,338 Q168,330 174,322Z" fill="#42582c"/>
+<path d="M168,338 L162,340 M174,339 L171,340 M180,339 L179,340 M186,338 L186,340 M191,337 L192,340" stroke="#1c2c10" stroke-width="2" stroke-linecap="round"/>
+<!-- Lår-muskulatur detalj -->
+<path d="M396,298 Q407,308 408,322 Q408,332 400,330" fill="none" stroke="#38501c" stroke-width="2"/>
+<path d="M214,300 Q222,312 222,326 Q221,336 212,334" fill="none" stroke="#38501c" stroke-width="2"/>
+<!-- FRAMBEIN venstre -->
+<path d="M178,304 Q184,326 181,338 L158,338 Q154,324 160,304Z" fill="#42582c" stroke="#2a3818" stroke-width="1.2"/>
+<!-- LANG HALS (key feature!) – detaljert med folder og muskler -->
+<path d="M208,208 Q192,178 178,144 Q166,112 160,78 Q154,48 154,26 L170,20 Q172,50 178,80 Q184,114 196,148 Q210,182 224,210Z" fill="url(#br-neck)" stroke="#2a3818" stroke-width="1.8"/>
+<path d="M210,207 Q196,177 183,143 Q172,111 166,78 Q161,50 160,26 L156,24 Q156,54 162,84 Q168,118 180,152 Q194,186 212,210Z" fill="url(#br-belly)" opacity=".45"/>
+<!-- Hals-rynker (karakteristiske for lange halser) -->
+<g fill="none" stroke="rgba(42,56,24,.4)" stroke-width="1.2">
+  <path d="M174,50 Q168,56 170,64"/><path d="M172,70 Q166,76 168,84"/>
+  <path d="M172,90 Q166,98 168,108"/><path d="M173,115 Q168,124 170,134"/>
+  <path d="M176,140 Q170,150 173,160"/><path d="M181,165 Q175,175 178,186"/>
+  <path d="M188,190 Q183,200 186,210"/>
+</g>
+<!-- Hals-kontur-muskel -->
+<path d="M163,40 Q170,60 176,90 Q182,120 188,152 Q196,180 208,208" fill="none" stroke="#48621e" stroke-width="2.5"/>
+<!-- HODE (lite, lavt) -->
+<ellipse cx="156" cy="18" rx="28" ry="20" fill="url(#br-body)" stroke="#2a3818" stroke-width="1.8" transform="rotate(-12,156,18)"/>
+<!-- Hode-dorsal mørkere -->
+<path d="M132,10 Q150,2 172,8 Q182,14 178,22" fill="#6e9050" opacity=".45"/>
+<!-- Kjeve (bred, kort) -->
+<path d="M130,22 Q140,30 156,34 Q172,37 180,30 Q173,40 155,42 Q138,42 130,32Z" fill="#527040"/>
+<!-- NESEBORENE (karakteristisk HØYT på hodet!) -->
+<ellipse cx="158" cy="6" rx="5.5" ry="4" fill="#1a2810"/>
+<ellipse cx="168" cy="4" rx="4.5" ry="3.5" fill="#1a2810"/>
+<!-- ØYE -->
+<circle cx="140" cy="14" r="9" fill="#0c1006" stroke="#2a3818" stroke-width="1.2"/>
+<circle cx="140" cy="14" r="6" fill="url(#br-eye)"/>
+<ellipse cx="140" cy="16" rx="3" ry="4.5" fill="#060804"/>
+<circle cx="136" cy="10" r="3" fill="rgba(255,255,255,.5)"/>
+<!-- RYGGSPIKULER -->
+<path d="M225,213 Q255,200 292,196 Q330,192 368,196 Q400,200 422,210" fill="none" stroke="#3a5020" stroke-width="3.5"/>
+<g fill="#4a6228" opacity=".8">
+  <path d="M242,210 L249,194 L256,210Z"/>
+  <path d="M268,204 L275,188 L282,204Z"/>
+  <path d="M296,200 L303,184 L310,200Z"/>
+  <path d="M326,198 L332,182 L338,198Z"/>
+  <path d="M355,200 L360,185 L366,200Z"/>
+  <path d="M384,206 L388,192 L393,206Z"/>
+</g>
+<!-- HALE-ENDE-SPIKULER -->
+<!-- KROPP-TEKSTUR -->
+<g fill="none" stroke="rgba(42,56,24,.38)" stroke-width=".9">
+  <path d="M228,246 Q256,236 292,240 Q322,244 348,252"/>
+  <path d="M222,262 Q252,252 292,256 Q325,260 354,268"/>
+  <path d="M222,278 Q254,268 294,272 Q328,276 358,284"/>
+</g>
+<g fill="rgba(50,68,28,.3)">
+  <circle cx="240" cy="250" r="3"/><circle cx="258" cy="246" r="3"/><circle cx="276" cy="244" r="3"/>
+  <circle cx="294" cy="244" r="3"/><circle cx="312" cy="246" r="3"/>
+  <circle cx="248" cy="262" r="2.5"/><circle cx="268" cy="258" r="2.5"/>
+  <circle cx="288" cy="258" r="2.5"/><circle cx="308" cy="260" r="2.5"/>
+</g>
+<path d="M0,328 Q130,322 260,326 Q390,330 520,324 L520,340 L0,340Z" fill="#0c1408" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'velociraptor', navn:'Velociraptor', latin:'Velociraptor mongoliensis', periode:'Sen-Kritt (75–71 mya)',
+    type:'Kjøttetere (dromaeosaurid)', farge:'#b08030', glow:'rgba(176,128,48,.06)',
+    fakta:[{l:'Lengde',v:'2 m (ikke som i filmen!)'},{l:'Høyde',v:'0,5 m'},{l:'Vekt',v:'15–20 kg'},{l:'Hjernekapasitet',v:'Blant de smarteste'}],
+    desc:'Filmen Jurassic Park viste dem som 2 meter høye monstre – de var i virkeligheten fuglestore.',
+    tekst:'Filmen Jurassic Park tok kreative friheter: Velociraptor var omtrent på størrelse med en kalkun, ikke en mann. Den hadde fjær, klarte seg alene eller i par (ikke nødvendigvis i flokk), og det sigdformede klauen på andreetoen ble sannsynligvis brukt til å klatre og holde byttedyr fast – ikke å kutte. Deinonychus, som Jurassic Park-skaperne faktisk baserte designet på, var noe større.',
+    morsomt:'En nær slektning – Yutyrannus – hadde tydelige filamentøse fjær og viser at mange theropoder hadde fjær.',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="vr-dorsal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#6a5c30"/><stop offset="100%" stop-color="#3c3418"/>
+  </linearGradient>
+  <linearGradient id="vr-lateral" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#7a6c3c"/><stop offset="60%" stop-color="#5e5028"/><stop offset="100%" stop-color="#3a3018"/>
+  </linearGradient>
+  <linearGradient id="vr-belly" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#b0a870"/><stop offset="100%" stop-color="#847e50"/>
+  </linearGradient>
+  <linearGradient id="vr-feather" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#4a4228"/><stop offset="100%" stop-color="#2a2415"/>
+  </linearGradient>
+  <radialGradient id="vr-eye" cx="35%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#e05818"/><stop offset="70%" stop-color="#a03010"/><stop offset="100%" stop-color="#580808"/>
+  </radialGradient>
+</defs>
+<rect width="520" height="300" fill="#0e0c08"/>
+<ellipse cx="260" cy="292" rx="190" ry="9" fill="rgba(0,0,0,.35)"/>
+<!-- HALE (fjærpyntet) -->
+<path d="M325,158 Q360,140 394,118 Q422,100 446,84 Q460,75 462,81 Q452,90 432,104 Q408,120 380,138 Q354,154 328,168Z" fill="url(#vr-dorsal)" stroke="#2e2810" stroke-width="1.2"/>
+<path d="M327,161 Q358,145 390,126 Q417,110 442,96 Q455,89 457,95 Q447,104 426,117 Q400,133 370,150 Q348,162 328,170Z" fill="url(#vr-belly)" opacity=".45"/>
+<!-- Hale-fjær (vifte av fjær i enden) -->
+<g fill="url(#vr-feather)" stroke="#2a2410" stroke-width=".9">
+  <path d="M448,84 Q466,64 478,58 Q482,64 474,76 Q464,86 452,88Z"/>
+  <path d="M452,78 Q470,58 483,52 Q487,58 479,70 Q469,80 455,82Z"/>
+  <path d="M456,86 Q472,68 483,63 Q486,70 477,80 Q467,90 458,90Z"/>
+  <path d="M444,90 Q460,72 472,68 Q475,74 466,84 Q456,93 446,93Z"/>
+  <path d="M440,94 Q456,78 468,74 Q471,80 461,89 Q451,98 442,98Z"/>
+</g>
+<!-- Fjærtopper (mørkere tips) -->
+<g fill="#1a1608" opacity=".7">
+  <path d="M478,58 L485,52 L483,52Z"/><path d="M483,52 L490,46 L487,52Z"/>
+  <path d="M483,63 L490,57 L486,63Z"/><path d="M472,68 L479,62 L475,68Z"/>
+  <path d="M468,74 L475,68 L471,74Z"/>
+</g>
+<!-- KROPP (slank, atletisk) -->
+<ellipse cx="235" cy="190" rx="82" ry="56" fill="url(#vr-lateral)" stroke="#2e2810" stroke-width="1.8"/>
+<ellipse cx="228" cy="210" rx="66" ry="36" fill="url(#vr-belly)"/>
+<!-- FJÆR-KAPPING over rygg og sider -->
+<path d="M190,150 Q225,136 262,133 Q295,130 320,142" fill="none" stroke="#565028" stroke-width="3.5"/>
+<!-- Fjær rad 1 (ryggen) -->
+<g fill="url(#vr-feather)" stroke="#2a2410" stroke-width=".9">
+  <path d="M196,148 Q190,128 198,118 Q206,127 205,148Z"/>
+  <path d="M210,143 Q204,122 212,112 Q220,121 218,143Z"/>
+  <path d="M225,139 Q219,118 227,108 Q235,117 232,139Z"/>
+  <path d="M240,137 Q234,116 242,106 Q250,115 247,137Z"/>
+  <path d="M255,136 Q250,116 257,107 Q265,115 262,136Z"/>
+  <path d="M269,137 Q265,118 272,110 Q280,118 277,137Z"/>
+  <path d="M283,139 Q279,122 285,114 Q292,122 289,139Z"/>
+  <path d="M297,143 Q293,127 299,120 Q305,127 302,143Z"/>
+</g>
+<!-- Fjær tips mørkere -->
+<g fill="#1e1a0c" opacity=".8">
+  <path d="M197,118 L201,110 L205,118Z"/><path d="M211,112 L215,104 L220,112Z"/>
+  <path d="M226,108 L230,100 L235,108Z"/><path d="M241,106 L245,98 L250,106Z"/>
+  <path d="M256,107 L260,99 L265,107Z"/><path d="M271,110 L275,102 L280,110Z"/>
+</g>
+<!-- BAKBEIN høyre (fremre) – kraftig med synlig muskulatur -->
+<path d="M262,210 Q275,234 282,252 Q288,266 281,272 Q271,276 268,265 L258,248Z" fill="#6a5e34" stroke="#2e2810" stroke-width="1.2"/>
+<!-- Kne-ledd -->
+<ellipse cx="274" cy="252" rx="10" ry="8" fill="#564e2a" stroke="#2e2810" stroke-width="1"/>
+<!-- Lår-muskel -->
+<path d="M264,210 Q274,218 278,232 Q280,244 276,252" fill="none" stroke="#3a3218" stroke-width="2"/>
+<path d="M268,265 Q265,277 257,280 L244,283 Q237,282 237,273 L247,264Z" fill="#564e2a"/>
+<!-- SIGD-KLO (den berømte!) -->
+<path d="M257,280 Q246,294 238,292 Q231,287 237,278 Q246,272 257,278Z" fill="#141210" stroke="#2a2410" stroke-width="1.2"/>
+<path d="M246,292 Q238,300 234,297 Q230,292 236,286Z" fill="#1e1c10"/>
+<!-- Sigd-klo spiss -->
+<path d="M234,297 Q228,302 226,298 Q228,292 234,292Z" fill="#0c0a08"/>
+<!-- BAKBEIN venstre (bakre) -->
+<path d="M238,216 Q248,240 252,258 Q256,272 249,276 Q240,279 237,268 L232,250Z" fill="#5a5028" stroke="#2e2810" stroke-width="1.2"/>
+<path d="M237,268 Q234,278 227,280 L217,282 Q211,280 212,272 L222,264Z" fill="#4e4824"/>
+<!-- Klo bakre venstre -->
+<path d="M212,272 Q204,280 200,278 Q196,273 202,268 Q210,265 214,270Z" fill="#141210" stroke="#2a2410" stroke-width="1"/>
+<!-- ARM med fjær -->
+<path d="M190,178 Q202,170 215,176 Q222,183 218,194 L208,190 Q205,183 198,185Z" fill="#6a5e34" stroke="#2e2810" stroke-width="1.2"/>
+<!-- Arm-fjær (bevist!) -->
+<g fill="url(#vr-feather)" stroke="#2a2410" stroke-width=".8">
+  <path d="M194,176 Q188,162 194,154 Q200,162 200,176Z"/>
+  <path d="M202,174 Q196,160 202,152 Q208,160 208,174Z"/>
+  <path d="M210,175 Q205,162 210,154 Q216,162 215,175Z"/>
+</g>
+<!-- HALS -->
+<path d="M166,158 Q177,148 186,166 Q192,180 197,196 L185,198 Q179,182 173,166Z" fill="url(#vr-lateral)"/>
+<path d="M169,160 Q177,152 183,168 Q187,180 190,194 L188,196 Q183,183 179,167Z" fill="url(#vr-belly)" opacity=".45"/>
+<!-- Hals-fjær-hint -->
+<g fill="#4a4228" stroke="#2a2410" stroke-width=".8" opacity=".6">
+  <path d="M172,162 Q168,152 174,146 Q178,152 177,162Z"/>
+  <path d="M180,158 Q176,148 182,142 Q186,148 185,158Z"/>
+</g>
+<!-- HODE – langstrakt, smart-utseende -->
+<path d="M64,114 Q78,94 108,88 Q136,82 160,96 Q178,108 180,130 Q182,146 168,158 Q150,168 126,166 Q96,162 76,146 Q55,128 64,114Z" fill="url(#vr-lateral)" stroke="#2e2810" stroke-width="1.8"/>
+<!-- Hode-dorsal stripe -->
+<path d="M66,112 Q82,96 110,90 Q138,85 160,98" fill="none" stroke="rgba(60,52,24,.5)" stroke-width="3"/>
+<!-- Snute-rynker -->
+<path d="M120,104 Q130,100 140,104 Q145,108 140,112" fill="none" stroke="#2e2810" stroke-width="1.5"/>
+<path d="M110,118 Q122,114 134,118" fill="none" stroke="#2e2810" stroke-width="1.2"/>
+<!-- Kjeft (lang og smal) -->
+<path d="M66,122 Q80,108 100,102 Q124,96 148,102 Q164,108 170,122 Q164,108 146,102 Q124,96 100,100 Q80,106 68,118Z" fill="#0c0606"/>
+<!-- TENNER (mange, spisse) -->
+<g fill="#f0ecd8" stroke="#c8c0a0" stroke-width=".5">
+  <path d="M74,116 Q77,106 80,116Z"/><path d="M82,112 Q85,102 89,112Z"/>
+  <path d="M92,109 Q95,99 99,109Z"/><path d="M103,108 Q106,98 110,108Z"/>
+  <path d="M113,108 Q116,98 120,108Z"/><path d="M122,109 Q125,100 128,109Z"/>
+  <path d="M131,111 Q134,102 137,111Z"/><path d="M140,115 Q142,107 145,115Z"/>
+  <path d="M148,119 Q150,112 153,120Z"/>
+</g>
+<g fill="#f0ecd8" stroke="#c8c0a0" stroke-width=".5">
+  <path d="M72,124 Q75,114 78,124Z"/><path d="M80,122 Q83,112 86,122Z"/>
+  <path d="M90,120 Q93,110 96,120Z"/><path d="M100,119 Q103,110 106,119Z"/>
+  <path d="M110,119 Q113,110 116,119Z"/><path d="M119,120 Q122,112 125,120Z"/>
+  <path d="M128,122 Q130,114 133,122Z"/><path d="M137,126 Q139,118 142,126Z"/>
+</g>
+<!-- ØYE (stort, fremovervendt – god dybdesyn) -->
+<ellipse cx="118" cy="108" rx="14" ry="13" fill="#0c0808" stroke="#2e1810" stroke-width="2"/>
+<circle cx="118" cy="108" r="9" fill="url(#vr-eye)"/>
+<ellipse cx="118" cy="110" rx="5" ry="7" fill="#080404"/>
+<circle cx="113" cy="103" r="4" fill="rgba(255,255,255,.55)"/>
+<circle cx="111" cy="101" r="1.8" fill="rgba(255,255,255,.3)"/>
+<!-- Øye-ring -->
+<path d="M106,100 Q114,94 127,96 Q134,100 135,108" fill="none" stroke="#2e1810" stroke-width="2"/>
+<!-- NOSTRIL -->
+<ellipse cx="82" cy="110" rx="5" ry="3.5" fill="#090404" transform="rotate(-30,82,110)"/>
+<!-- HUD-MØNSTER (zebra-ish striper, basert på fossilfunn) -->
+<g fill="rgba(46,40,16,.5)">
+  <path d="M200,188 Q218,180 240,185 L236,192 Q216,186 200,193Z"/>
+  <path d="M208,200 Q228,192 252,197 L248,204 Q226,198 208,206Z"/>
+  <path d="M215,214 Q237,206 262,211 L258,218 Q234,212 215,220Z"/>
+  <path d="M220,228 Q244,220 270,225 L265,232 Q241,226 220,234Z"/>
+</g>
+<path d="M0,288 Q130,282 260,286 Q390,290 520,284 L520,300 L0,300Z" fill="#0c0a06" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'stegosaurus', navn:'Stegosaurus', latin:'Stegosaurus stenops', periode:'Sen-Jura (155–150 mya)',
+    type:'Planteetere (thyreophora)', farge:'#708040', glow:'rgba(112,128,64,.06)',
+    fakta:[{l:'Lengde',v:'9 m'},{l:'Ryggsplater',v:'17 bein-plater'},{l:'Hjerne',v:'Valnøttstor (80 g!)'},{l:'Halepigg',v:'Thagomizer – opp til 1 m'}],
+    desc:'Spektakulære ryggsplater – men en hjerne på størrelse med en valnøtt.',
+    tekst:'Stegosaurus er kjent for sine karakteristiske beinplater langs ryggen og de farlige taggene på halen. Platene var trolig gjennomboret av blodårer og kan ha fungert som temperaturregulering eller fargevisning. Hjernvolumet var ekstremt lite – en av de minste hjernevolumsratioene blant dinosaurer. Halepiggene (kalt «thagomizer» etter en tegneserie!) er funnet stukket inn i Allosaurus-virvler.',
+    morsomt:'«Thagomizer» – det vitenskapelige navnet på Stegosaurus-halepiggene – stammer fra en Far Side-tegneserie fra 1982 der det hevdes de ble oppkalt etter en huleboer!',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sg-body" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#6a7e40"/><stop offset="60%" stop-color="#4e5e2c"/><stop offset="100%" stop-color="#343e1c"/>
+  </linearGradient>
+  <linearGradient id="sg-belly" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#9aaa62"/><stop offset="100%" stop-color="#7a8848"/>
+  </linearGradient>
+  <linearGradient id="sg-plate" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#e86030"/><stop offset="40%" stop-color="#c84820"/><stop offset="100%" stop-color="#782808"/>
+  </linearGradient>
+  <linearGradient id="sg-plate2" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#d85828"/><stop offset="100%" stop-color="#681808"/>
+  </linearGradient>
+  <radialGradient id="sg-platecenter" cx="50%" cy="30%" r="60%">
+    <stop offset="0%" stop-color="rgba(255,120,60,.3)"/><stop offset="100%" stop-color="transparent"/>
+  </radialGradient>
+  <radialGradient id="sg-eye" cx="38%" cy="35%" r="60%">
+    <stop offset="0%" stop-color="#5a7820"/><stop offset="100%" stop-color="#2a4010"/>
+  </radialGradient>
+</defs>
+<rect width="520" height="300" fill="#0a0e06"/>
+<ellipse cx="265" cy="292" rx="210" ry="9" fill="rgba(0,0,0,.35)"/>
+<!-- Hale med Thagomizer -->
+<path d="M375,178 Q408,160 440,138 Q464,122 484,108 Q496,100 498,106 Q489,116 468,128 Q445,142 418,158 Q392,172 378,182Z" fill="url(#sg-body)" stroke="#2a3418" stroke-width="1.2"/>
+<path d="M377,180 Q408,165 438,146 Q462,130 482,118 Q493,112 495,118 Q485,126 462,140 Q436,154 406,169 Q382,181 378,185Z" fill="url(#sg-belly)" opacity=".5"/>
+<!-- THAGOMIZER (4 pigger) – karakteristisk Stegosaurus-forsvar -->
+<g filter="url(#sg-shadow)">
+  <path d="M448,130 Q455,108 466,100 Q474,106 470,122 Q464,136 454,138Z" fill="#c8b478" stroke="#9a8a50" stroke-width="1.5"/>
+  <path d="M456,122 Q464,100 476,94 Q483,100 479,116 Q472,130 462,131Z" fill="#c8b478" stroke="#9a8a50" stroke-width="1.5"/>
+  <path d="M438,138 Q443,116 454,110 Q461,115 458,130 Q452,144 444,144Z" fill="#b8a46a" stroke="#9a8a50" stroke-width="1.5"/>
+  <path d="M426,146 Q430,125 440,120 Q447,125 445,140 Q440,152 432,152Z" fill="#b8a46a" stroke="#9a8a50" stroke-width="1.5"/>
+</g>
+<!-- Pigg-skygger -->
+<g fill="none" stroke="rgba(160,140,70,.25)" stroke-width=".8">
+  <line x1="466" y1="100" x2="476" y2="100"/><line x1="454" y1="110" x2="461" y2="115"/>
+</g>
+<!-- KROPP (massiv, lavt og bredt) -->
+<ellipse cx="255" cy="200" rx="128" ry="78" fill="url(#sg-body)" stroke="#2a3418" stroke-width="2"/>
+<ellipse cx="250" cy="224" rx="104" ry="48" fill="url(#sg-belly)"/>
+<!-- Side-muskulatur -->
+<path d="M160,180 Q200,165 255,162 Q305,160 340,172" fill="none" stroke="rgba(50,60,28,.4)" stroke-width="2.5"/>
+<path d="M150,196 Q190,182 255,180 Q315,179 348,190" fill="none" stroke="rgba(50,60,28,.3)" stroke-width="2"/>
+<!-- BAKBEIN høyre (kraftige, elefantlignende) -->
+<path d="M330,242 Q340,260 338,274 L316,275 Q311,261 314,244Z" fill="#586030" stroke="#2a3418" stroke-width="1.2"/>
+<ellipse cx="325" cy="264" rx="12" ry="8" fill="#484e24" stroke="#2a3418" stroke-width="1"/>
+<path d="M316,275 Q314,283 304,284 L296,282 Q293,276 298,270Z" fill="#484e24"/>
+<path d="M296,283 L290,290 M301,284 L298,291 M306,284 L305,291 M311,283 L311,290" stroke="#1e2810" stroke-width="2" stroke-linecap="round"/>
+<!-- BAKBEIN venstre (delvis skjult) -->
+<path d="M298,248 Q306,266 303,280 L283,280 Q278,267 282,250Z" fill="#4e5828" stroke="#2a3418" stroke-width="1.2"/>
+<!-- FRAMBEIN høyre (kortere enn bakbein) -->
+<path d="M162,244 Q168,260 166,272 L148,273 Q143,260 147,244Z" fill="#586030" stroke="#2a3418" stroke-width="1.2"/>
+<ellipse cx="155" cy="262" rx="11" ry="7" fill="#484e24" stroke="#2a3418" stroke-width="1"/>
+<path d="M148,273 Q146,281 137,282 L130,280 Q128,274 133,268Z" fill="#484e24"/>
+<path d="M130,280 L124,287 M135,281 L132,288 M140,281 L140,288 M145,280 L146,287" stroke="#1e2810" stroke-width="2" stroke-linecap="round"/>
+<!-- FRAMBEIN venstre -->
+<path d="M136,248 Q141,264 138,276 L120,276 Q116,263 120,248Z" fill="#4e5828" stroke="#2a3418" stroke-width="1.2"/>
+<!-- RYGGPLATER (2 alternerende rekker, detaljerte med åremønster) -->
+<!-- Rekke A (større, venstre/bak) -->
+<g>
+  <path d="M175,170 Q162,138 172,118 Q183,138 186,170Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.2"/>
+  <path d="M175,170 Q166,142 173,122 Q180,142 183,170Z" fill="url(#sg-platecenter)" opacity=".6"/>
+  <path d="M178,170 Q196,134 208,110 Q220,133 224,170Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.2"/>
+  <path d="M181,170 Q197,138 208,115 Q217,138 220,170Z" fill="url(#sg-platecenter)" opacity=".6"/>
+  <path d="M210,166 Q228,128 242,104 Q255,127 258,166Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.4"/>
+  <path d="M213,166 Q229,132 242,108 Q252,132 254,166Z" fill="url(#sg-platecenter)" opacity=".6"/>
+  <path d="M244,163 Q262,126 278,104 Q290,126 293,163Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.4"/>
+  <path d="M247,163 Q263,130 277,108 Q287,130 289,163Z" fill="url(#sg-platecenter)" opacity=".6"/>
+  <path d="M278,166 Q294,130 308,112 Q318,130 320,166Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.2"/>
+  <path d="M340,172 Q352,140 362,126 Q370,140 371,172Z" fill="url(#sg-plate2)" stroke="#882010" stroke-width="1.2"/>
+</g>
+<!-- Rekke B (litt mindre, mellom rekke A) -->
+<g opacity=".88">
+  <path d="M186,170 Q178,140 187,122 Q196,140 198,170Z" fill="url(#sg-plate2)" stroke="#882010" stroke-width="1"/>
+  <path d="M222,167 Q212,134 222,114 Q232,134 234,167Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1"/>
+  <path d="M256,164 Q248,132 257,114 Q265,132 267,164Z" fill="url(#sg-plate2)" stroke="#882010" stroke-width="1.1"/>
+  <path d="M290,165 Q282,132 291,115 Q299,132 301,165Z" fill="url(#sg-plate)" stroke="#882010" stroke-width="1.1"/>
+  <path d="M322,170 Q316,140 323,124 Q331,140 332,170Z" fill="url(#sg-plate2)" stroke="#882010" stroke-width="1"/>
+  <path d="M355,174 Q349,146 355,132 Q362,146 363,174Z" fill="url(#sg-plate2)" stroke="#882010" stroke-width="1" opacity=".7"/>
+</g>
+<!-- Plate-årer (blodkar-mønster = termoreg.) -->
+<g fill="none" stroke="rgba(220,90,50,.35)" stroke-width=".9">
+  <line x1="210" y1="166" x2="212" y2="108"/><line x1="216" y1="165" x2="220" y2="110"/><line x1="222" y1="166" x2="225" y2="112"/>
+  <line x1="244" y1="163" x2="247" y2="106"/><line x1="250" y1="163" x2="253" y2="107"/><line x1="256" y1="164" x2="258" y2="109"/>
+</g>
+<!-- HALS (kort og buet) -->
+<path d="M152,172 Q162,163 170,178 Q176,192 180,206 L168,208 Q162,194 156,180Z" fill="url(#sg-body)" stroke="#2a3418" stroke-width="1.2"/>
+<path d="M155,173 Q162,166 168,180 Q173,192 176,204 L174,206 Q169,193 164,179Z" fill="url(#sg-belly)" opacity=".5"/>
+<!-- Hals-folder -->
+<path d="M158,178 Q165,174 172,180 M160,188 Q168,184 176,190 M162,198 Q170,194 178,200" fill="none" stroke="rgba(42,52,24,.4)" stroke-width="1.1"/>
+<!-- HODE (lavt, lite) -->
+<path d="M56,196 Q62,180 80,174 Q100,168 122,172 Q142,176 150,190 Q157,204 150,218 Q141,230 120,234 Q96,236 76,226 Q55,214 56,196Z" fill="url(#sg-body)" stroke="#2a3418" stroke-width="1.5"/>
+<!-- Hode-dorsal mørkere -->
+<path d="M58,193 Q68,179 88,175 Q108,171 128,176" fill="none" stroke="rgba(50,60,28,.5)" stroke-width="2.5"/>
+<!-- Nedre kjeve -->
+<path d="M58,208 Q70,218 90,224 Q110,230 132,226 Q146,222 150,214" fill="none" stroke="#2a3418" stroke-width="2"/>
+<!-- Kjeft-linje -->
+<path d="M60,200 Q72,188 90,182 Q112,176 134,182 Q148,188 152,198 Q148,188 132,182 Q112,175 90,180 Q72,185 62,196Z" fill="#0a0a04" opacity=".7"/>
+<!-- Nebb (hornete, litt papegøyeformet) -->
+<path d="M56,198 Q48,200 46,206 Q50,212 58,210 Q56,206 54,202 Q56,198 56,198Z" fill="#8a8862" stroke="#606040" stroke-width="1"/>
+<path d="M56,208 Q49,210 48,206 Q49,202 54,202Z" fill="#6a6848"/>
+<!-- ØYE -->
+<ellipse cx="90" cy="188" rx="12" ry="11" fill="#0a0c06" stroke="#2a3018" stroke-width="1.5"/>
+<circle cx="90" cy="188" r="7.5" fill="url(#sg-eye)"/>
+<ellipse cx="90" cy="190" rx="4" ry="5.5" fill="#040804"/>
+<circle cx="86" cy="184" r="3" fill="rgba(255,255,255,.5)"/>
+<!-- Øye-ring (supraorbital) -->
+<path d="M80,182 Q88,177 100,179 Q107,183 108,188" fill="none" stroke="#3a4818" stroke-width="1.5"/>
+<!-- NOSTRIL -->
+<ellipse cx="68" cy="192" rx="4" ry="3" fill="#080a04"/>
+<!-- HUD-TEKSTUR -->
+<g fill="none" stroke="rgba(42,52,24,.4)" stroke-width=".9">
+  <path d="M185,210 Q205,202 230,206 Q252,210 272,216"/>
+  <path d="M182,224 Q204,216 234,220 Q258,224 280,230"/>
+  <path d="M186,238 Q210,230 240,234 Q265,238 285,244"/>
+</g>
+<!-- Skale-prikker -->
+<g fill="rgba(50,62,28,.35)">
+  <circle cx="196" cy="216" r="2.5"/><circle cx="210" cy="212" r="2.5"/><circle cx="224" cy="212" r="2.5"/>
+  <circle cx="238" cy="214" r="2.5"/><circle cx="252" cy="218" r="2.5"/>
+  <circle cx="202" cy="228" r="2.5"/><circle cx="218" cy="224" r="2.5"/><circle cx="234" cy="226" r="2.5"/>
+</g>
+<path d="M0,288 Q130,282 260,286 Q390,290 520,284 L520,300 L0,300Z" fill="#080c04" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'spinosaurus', navn:'Spinosaurus', latin:'Spinosaurus aegyptiacus', periode:'Kritt (99–93 mya)',
+    type:'Kjøttetere (theropod)', farge:'#4060a0', glow:'rgba(64,96,160,.06)',
+    fakta:[{l:'Lengde',v:'14–18 m (lengste rovdyr!)'},{l:'Seil/rygg',v:'Opp til 1,6 m høye prosessus'},{l:'Diett',v:'Primært fisk'},{l:'Svømmefot?',v:'Sannsynligvis semiakvatisk'}],
+    desc:'Størst kjøttetende dinosaur noensinne – og levde sannsynligvis delvis i vann.',
+    tekst:'Spinosaurus var trolig den lengste kjøttetende dinosauren – enda lenger enn T. rex. Den hadde et krokodilelignende hode med koniske tenner perfekt for å gripe fisk, tette bein (som hjelpte den til å synke og svømme), og korte bakben. Ryggseilet av lange nevrale prosessus kan ha fungert som temperaturregulator, energilager, eller et visuelt signal for å tiltrekke make. Fossiler er funnet i Nord-Afrika – i det som var et tropisk deltalandskap.',
+    morsomt:'Originalfossilene av Spinosaurus ble ødelagt i Andre verdenskrig under bombing av München. Ny forståelse kom fra nye funn i Marokko på 2010-tallet.',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sp-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#4e6c84"/><stop offset="100%" stop-color="#1e3848"/></linearGradient>
+  <linearGradient id="sp-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7e9eb8"/><stop offset="100%" stop-color="#5a7888"/></linearGradient>
+  <linearGradient id="sp-sail" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e85820"/><stop offset="50%" stop-color="#b83c10"/><stop offset="100%" stop-color="#3c3020"/></linearGradient>
+  <radialGradient id="sp-sail-glow" cx="50%" cy="20%" r="70%"><stop offset="0%" stop-color="rgba(240,90,30,.25)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+  <radialGradient id="sp-eye" cx="38%" cy="35%" r="60%"><stop offset="0%" stop-color="#709010"/><stop offset="100%" stop-color="#304000"/></radialGradient>
+</defs>
+<rect width="520" height="300" fill="#080e18"/>
+<ellipse cx="260" cy="292" rx="200" ry="9" fill="rgba(0,0,0,.35)"/>
+<path d="M340,160 Q375,138 408,114 Q432,96 450,80 Q460,73 458,80 Q447,90 424,107 Q399,124 368,146 Q346,162 342,170Z" fill="url(#sp-body)" stroke="#1e3040" stroke-width="1.2"/>
+<path d="M342,163 Q374,144 406,122 Q428,106 447,92 Q454,98 440,110 Q416,126 388,144 Q362,160 343,172Z" fill="url(#sp-belly)" opacity=".4"/>
+<ellipse cx="240" cy="190" rx="100" ry="66" fill="url(#sp-body)" stroke="#1e3040" stroke-width="2"/>
+<ellipse cx="234" cy="212" rx="80" ry="44" fill="url(#sp-belly)"/>
+<!-- RYGGSEIL (dramatisk!) -->
+<path d="M178,130 Q195,68 220,30 Q238,8 246,18 Q242,36 228,62 Q210,92 200,130Z" fill="url(#sp-sail)" stroke="#9a2808" stroke-width="1.5"/>
+<path d="M200,130 Q218,80 235,48 Q242,30 246,18 Q248,32 238,58 Q222,88 210,130Z" fill="url(#sp-sail)" opacity=".7"/>
+<path d="M178,130 Q210,80 240,44 Q244,32 246,18 Q248,38 234,62 Q210,90 200,130Z" fill="url(#sp-sail-glow)"/>
+<!-- Seil-bein synlige -->
+<g stroke="#c04018" stroke-width="1.2" fill="none" opacity=".65">
+  <line x1="186" y1="128" x2="210" y2="30"/><line x1="192" y1="128" x2="215" y2="28"/>
+  <line x1="198" y1="128" x2="220" y2="28"/><line x1="205" y1="128" x2="226" y2="28"/>
+  <line x1="212" y1="128" x2="232" y2="30"/><line x1="219" y1="129" x2="237" y2="34"/>
+  <line x1="226" y1="130" x2="241" y2="40"/>
+</g>
+<!-- Seil-membran-tekstur -->
+<path d="M190,90 Q210,70 230,60 M184,110 Q206,88 228,78 M180,125 Q204,104 226,96" fill="none" stroke="rgba(200,70,30,.2)" stroke-width="1.5"/>
+<!-- Bakbein -->
+<path d="M278,210 Q286,232 283,246 L263,247 Q258,232 262,210Z" fill="#3e5868" stroke="#1e3040" stroke-width="1.2"/>
+<ellipse cx="270" cy="238" rx="12" ry="8" fill="#2e4858" stroke="#1e3040" stroke-width="1"/>
+<path d="M263,247 Q261,255 251,256 L244,254 Q241,247 246,241Z" fill="#2e4858"/>
+<path d="M243,255 L237,261 M248,256 L246,261 M253,256 L253,261 M258,255 L259,261" stroke="#142030" stroke-width="2" stroke-linecap="round"/>
+<path d="M252,214 Q259,236 256,248 L238,248 Q233,234 238,214Z" fill="#2e4858" stroke="#1e3040" stroke-width="1.2"/>
+<!-- Frambein -->
+<path d="M170,210 Q176,230 173,243 L155,244 Q150,229 154,210Z" fill="#3e5868" stroke="#1e3040" stroke-width="1.2"/>
+<path d="M155,244 Q153,252 144,253 L137,251 Q134,244 140,238Z" fill="#2e4858"/>
+<path d="M136,252 L130,258 M141,253 L139,258 M146,253 L146,258 M151,252 L152,258" stroke="#142030" stroke-width="2" stroke-linecap="round"/>
+<path d="M145,212 Q150,232 147,244 L130,244 Q126,230 131,212Z" fill="#2e4858" stroke="#1e3040" stroke-width="1.2"/>
+<!-- Hals -->
+<path d="M154,145 Q164,136 172,156 Q178,174 182,192 L170,194 Q165,175 158,157Z" fill="url(#sp-body)"/>
+<!-- HODE – krokodille-lang snute -->
+<path d="M46,130 Q62,108 94,100 Q124,92 152,106 Q170,116 174,138 Q177,154 165,167 Q148,178 124,178 Q94,174 72,158 Q46,140 46,130Z" fill="url(#sp-body)" stroke="#1e3040" stroke-width="1.8"/>
+<path d="M48,128 Q64,110 96,102 Q124,96 150,108" fill="none" stroke="rgba(60,88,102,.5)" stroke-width="3"/>
+<!-- Underkjeve (krokodille) -->
+<path d="M48,140 Q62,130 86,124 Q112,118 140,124 Q158,130 166,142" fill="#304858" opacity=".6"/>
+<!-- Tenner (store som stikker ut) -->
+<g fill="#ede8d0" stroke="#c0b898" stroke-width=".6">
+  <path d="M58,126 Q62,114 66,126Z"/><path d="M68,122 Q72,110 76,122Z"/>
+  <path d="M80,118 Q84,106 88,118Z"/><path d="M92,116 Q96,104 100,116Z"/>
+  <path d="M104,115 Q108,103 112,115Z"/><path d="M116,116 Q119,106 122,116Z"/>
+  <path d="M126,119 Q129,110 132,119Z"/><path d="M136,124 Q138,116 141,124Z"/>
+  <path d="M146,130 Q148,123 151,131Z"/>
+  <!-- Nedre tenner som stikker forbi øvre -->
+  <path d="M62,136 Q66,124 70,136Z" opacity=".9"/><path d="M76,134 Q80,122 84,134Z" opacity=".9"/>
+  <path d="M94,132 Q98,120 102,132Z" opacity=".9"/><path d="M114,132 Q117,122 120,133Z" opacity=".8"/>
+</g>
+<!-- Nedre kjeve linje -->
+<path d="M48,142 Q68,154 98,160 Q126,165 152,160 Q163,156 167,148" fill="none" stroke="#1e3040" stroke-width="2"/>
+<!-- ØYE -->
+<ellipse cx="112" cy="112" rx="13" ry="12" fill="#0a0e14" stroke="#1e3040" stroke-width="1.8"/>
+<circle cx="112" cy="112" r="8.5" fill="url(#sp-eye)"/>
+<ellipse cx="112" cy="114" rx="4.5" ry="6" fill="#060a0e"/>
+<circle cx="107" cy="107" r="3.5" fill="rgba(255,255,255,.5)"/>
+<path d="M100,104 Q108,98 122,100 Q129,104 130,112" fill="none" stroke="#1e3040" stroke-width="2"/>
+<ellipse cx="66" cy="120" rx="4.5" ry="3" fill="#0a0e14"/>
+<!-- Gjelle-sprekker -->
+<g fill="none" stroke="#1e3040" stroke-width="1.5" stroke-linecap="round">
+  <path d="M147,105 Q142,116 145,128"/><path d="M154,103 Q149,114 151,126"/>
+  <path d="M160,103 Q156,114 158,126"/><path d="M166,105 Q163,116 164,128"/>
+</g>
+<!-- Lateral linje -->
+<path d="M168,138 Q210,132 255,136 Q295,140 330,148" fill="none" stroke="rgba(80,120,160,.4)" stroke-width="1.5" stroke-dasharray="5 4"/>
+<!-- Hud-mønster (mørkere striper) -->
+<g fill="rgba(28,48,64,.5)">
+  <path d="M188,198 Q208,190 232,194 L228,200 Q206,196 188,204Z"/>
+  <path d="M192,212 Q214,204 240,208 L236,215 Q212,210 192,218Z"/>
+  <path d="M196,226 Q220,218 248,222 L244,229 Q218,224 196,232Z"/>
+</g>
+<path d="M0,288 Q130,282 260,286 Q390,290 520,284 L520,300 L0,300Z" fill="#080c14" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'ankylosaurus', navn:'Ankylosaurus', latin:'Ankylosaurus magniventris', periode:'Sen-Kritt (68–66 mya)',
+    type:'Planteetere (thyreophora)', farge:'#806040', glow:'rgba(128,96,64,.06)',
+    fakta:[{l:'Lengde',v:'10 m'},{l:'Vekt',v:'6–8 tonn'},{l:'Rustning',v:'Osteodermer (beinplater i hud)'},{l:'Halelkølle',v:'Kunne knuse bein'}],
+    desc:'En levende stridsvogn – pansret fra hode til hale med beinplater.',
+    tekst:'Ankylosaurus var en av de best pansrede dinosaurene. Osteodermer – beinplater fusjonert inn i huden – dekket hele ryggen og sidene. Til og med øyelokkene var forsterket med bein. Halekøllen, laget av sammensmeltet beinvev, kunne svinge med nok kraft til å knuse bein på rovdyr. Paradoks: dette massive dyret spiste bare planter.',
+    morsomt:'Ankylosaurus-ryggen var så pansret at paleontologer tror et barn kunne ha stått og gått på ryggen uten at dyret merket det.',
+    svg:`<svg viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="ak-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c7c42"/><stop offset="100%" stop-color="#3c3c1e"/></linearGradient>
+  <linearGradient id="ak-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#aeac6a"/><stop offset="100%" stop-color="#7c7a4a"/></linearGradient>
+  <radialGradient id="ak-od" cx="38%" cy="32%" r="62%"><stop offset="0%" stop-color="#aea868"/><stop offset="100%" stop-color="#5e5a30"/></radialGradient>
+  <radialGradient id="ak-eye" cx="35%" cy="35%" r="60%"><stop offset="0%" stop-color="#607020"/><stop offset="100%" stop-color="#2c3410"/></radialGradient>
+</defs>
+<rect width="520" height="280" fill="#0e0e08"/>
+<ellipse cx="260" cy="272" rx="225" ry="10" fill="rgba(0,0,0,.35)"/>
+<!-- Hale -->
+<path d="M380,160 Q408,145 432,128 Q450,115 464,104 Q472,98 470,104 Q462,114 446,128 Q428,143 404,160 Q386,172 382,178Z" fill="url(#ak-body)" stroke="#2c2c10" stroke-width="1.2"/>
+<!-- HALEMØRTEL (solid beinmasse!) -->
+<ellipse cx="475" cy="114" rx="28" ry="22" fill="url(#ak-od)" stroke="#6a6828" stroke-width="2.5"/>
+<ellipse cx="475" cy="114" rx="20" ry="16" fill="#9e9c60" stroke="#6a6828" stroke-width="1.5"/>
+<ellipse cx="475" cy="114" rx="12" ry="9" fill="#b2ae70"/>
+<!-- Mørtel-tekstur -->
+<g fill="none" stroke="rgba(140,136,80,.35)" stroke-width="1">
+  <ellipse cx="475" cy="114" rx="24" ry="19"/><ellipse cx="475" cy="114" rx="16" ry="13"/>
+</g>
+<!-- Halemørtelen skinker lys -->
+<ellipse cx="470" cy="108" rx="8" ry="6" fill="rgba(200,196,120,.2)"/>
+<!-- KROPP (bred, flat, pansret) -->
+<path d="M86,180 Q104,154 145,142 Q195,132 260,130 Q325,130 375,142 Q416,154 434,180 Q440,196 434,214 Q420,234 376,246 Q325,258 260,258 Q195,258 144,246 Q100,234 86,214 Q80,196 86,180Z" fill="url(#ak-body)" stroke="#2c2c10" stroke-width="2.2"/>
+<!-- Mage (flat mot bakken) -->
+<ellipse cx="260" cy="238" rx="155" ry="30" fill="url(#ak-belly)"/>
+<!-- OSTEODERMER – detaljerte med høydepunkter og skygger -->
+<!-- Rad 1 sentral topp -->
+<g fill="url(#ak-od)" stroke="#4e4c28" stroke-width="1.2">
+  <ellipse cx="160" cy="148" rx="16" ry="12" transform="rotate(-8,160,148)"/>
+  <ellipse cx="194" cy="140" rx="18" ry="13" transform="rotate(-4,194,140)"/>
+  <ellipse cx="230" cy="136" rx="20" ry="14"/>
+  <ellipse cx="268" cy="134" rx="22" ry="15"/>
+  <ellipse cx="306" cy="136" rx="20" ry="14"/>
+  <ellipse cx="342" cy="140" rx="18" ry="13" transform="rotate(4,342,140)"/>
+  <ellipse cx="376" cy="148" rx="16" ry="12" transform="rotate(8,376,148)"/>
+  <ellipse cx="405" cy="158" rx="14" ry="10" transform="rotate(12,405,158)"/>
+</g>
+<!-- Rad 2 ytre sider -->
+<g fill="url(#ak-od)" stroke="#4e4c28" stroke-width="1">
+  <ellipse cx="130" cy="166" rx="13" ry="10"/><ellipse cx="160" cy="156" rx="15" ry="11"/>
+  <ellipse cx="192" cy="150" rx="17" ry="12"/><ellipse cx="226" cy="146" rx="18" ry="12"/>
+  <ellipse cx="262" cy="144" rx="19" ry="13"/><ellipse cx="298" cy="146" rx="18" ry="12"/>
+  <ellipse cx="332" cy="150" rx="17" ry="12"/><ellipse cx="364" cy="156" rx="15" ry="11"/>
+  <ellipse cx="394" cy="164" rx="13" ry="10"/>
+</g>
+<!-- Rad 3 ytterste sider -->
+<g fill="url(#ak-od)" stroke="#4e4c28" stroke-width="1">
+  <ellipse cx="104" cy="186" rx="11" ry="8"/><ellipse cx="130" cy="174" rx="13" ry="10"/>
+  <ellipse cx="158" cy="165" rx="15" ry="11"/><ellipse cx="188" cy="160" rx="16" ry="11"/>
+  <ellipse cx="220" cy="156" rx="17" ry="12"/><ellipse cx="254" cy="154" rx="18" ry="12"/>
+  <ellipse cx="288" cy="156" rx="17" ry="12"/><ellipse cx="320" cy="160" rx="16" ry="11"/>
+  <ellipse cx="350" cy="165" rx="15" ry="11"/><ellipse cx="378" cy="172" rx="13" ry="10"/>
+  <ellipse cx="403" cy="180" rx="11" ry="8"/>
+</g>
+<!-- Høydepunkter på osteodermer -->
+<g fill="rgba(200,198,118,.3)">
+  <ellipse cx="228" cy="132" rx="7" ry="5"/><ellipse cx="266" cy="130" rx="8" ry="5.5"/>
+  <ellipse cx="304" cy="132" rx="7" ry="5"/><ellipse cx="192" cy="136" rx="6" ry="4"/>
+  <ellipse cx="340" cy="137" rx="6" ry="4"/>
+</g>
+<!-- Sidepigger (karakteristisk) -->
+<g fill="url(#ak-od)" stroke="#4e4c28" stroke-width="1.5">
+  <path d="M88,188 Q72,172 74,158 Q84,162 92,174 Q95,181 92,188Z"/>
+  <path d="M90,204 Q72,190 72,175 Q82,180 89,196 Q91,202 90,206Z"/>
+  <path d="M432,186 Q448,170 446,156 Q436,160 428,172 Q425,179 428,186Z"/>
+  <path d="M430,202 Q448,188 448,173 Q438,178 431,194 Q429,200 430,204Z"/>
+</g>
+<!-- Sigepigg-høydepunkter -->
+<g fill="rgba(200,198,118,.25)">
+  <ellipse cx="80" cy="174" rx="6" ry="8"/><ellipse cx="440" cy="172" rx="6" ry="8"/>
+</g>
+<!-- Bakbein (korte, kraftige) -->
+<path d="M372,228 Q380,248 377,260 L356,261 Q351,248 356,228Z" fill="#5e5e32" stroke="#2c2c10" stroke-width="1.2"/>
+<ellipse cx="363" cy="252" rx="13" ry="9" fill="#4e4e28" stroke="#2c2c10" stroke-width="1"/>
+<path d="M356,261 Q354,269 344,270 L336,268 Q334,260 340,254Z" fill="#4e4e28"/>
+<path d="M334,269 L328,274 M339,270 L337,275 M344,270 L344,275 M349,269 L350,274 M354,268 L355,273" stroke="#1e1e0c" stroke-width="2" stroke-linecap="round"/>
+<path d="M338,232 Q345,252 342,264 L322,264 Q317,250 322,232Z" fill="#4e4e28" stroke="#2c2c10" stroke-width="1.2"/>
+<!-- Frambein -->
+<path d="M144,228 Q150,248 147,260 L128,261 Q123,248 128,228Z" fill="#5e5e32" stroke="#2c2c10" stroke-width="1.2"/>
+<ellipse cx="135" cy="252" rx="12" ry="8" fill="#4e4e28" stroke="#2c2c10" stroke-width="1"/>
+<path d="M128,261 Q126,269 116,270 L108,268 Q106,260 112,254Z" fill="#4e4e28"/>
+<path d="M106,269 L100,274 M111,270 L109,275 M116,270 L116,275 M121,269 L122,274 M126,268 L127,273" stroke="#1e1e0c" stroke-width="2" stroke-linecap="round"/>
+<path d="M112,230 Q118,250 115,262 L96,262 Q92,248 96,230Z" fill="#4e4e28" stroke="#2c2c10" stroke-width="1.2"/>
+<!-- Hals (kort og bred) -->
+<path d="M103,168 Q114,158 124,174 Q130,188 135,204 L122,206 Q116,190 109,175Z" fill="url(#ak-body)"/>
+<!-- HODE (bredt, flatpansret) -->
+<path d="M36,188 Q42,168 64,160 Q90,152 116,156 Q140,160 148,176 Q155,192 146,206 Q136,220 112,224 Q84,226 62,216 Q38,204 36,188Z" fill="url(#ak-body)" stroke="#2c2c10" stroke-width="1.8"/>
+<!-- Hode-pansring -->
+<g fill="url(#ak-od)" stroke="#4e4c28" stroke-width="1">
+  <ellipse cx="66" cy="164" rx="10" ry="8"/><ellipse cx="90" cy="158" rx="12" ry="9"/>
+  <ellipse cx="114" cy="158" rx="11" ry="8.5"/><ellipse cx="136" cy="163" rx="10" ry="7.5"/>
+  <ellipse cx="58" cy="178" rx="9" ry="7"/><ellipse cx="82" cy="170" rx="11" ry="8"/>
+  <ellipse cx="106" cy="169" rx="10" ry="8"/><ellipse cx="128" cy="172" rx="9" ry="7"/>
+  <ellipse cx="144" cy="178" rx="8" ry="6"/>
+</g>
+<!-- Kjeft-linje (bred) -->
+<path d="M38,198 Q52,208 76,214 Q100,220 124,216 Q140,212 148,202" fill="none" stroke="#2c2c10" stroke-width="2.5"/>
+<!-- ØYE -->
+<ellipse cx="66" cy="178" rx="11" ry="10" fill="#0c0c06" stroke="#2c2c10" stroke-width="1.5"/>
+<circle cx="66" cy="178" r="7" fill="url(#ak-eye)"/>
+<ellipse cx="66" cy="180" rx="4" ry="5" fill="#060606"/>
+<circle cx="62" cy="174" r="3" fill="rgba(255,255,255,.45)"/>
+<ellipse cx="46" cy="192" rx="5" ry="3.5" fill="#0c0c06"/>
+<path d="M0,270 Q130,264 260,268 Q390,272 520,266 L520,280 L0,280Z" fill="#0c0c06" opacity=".6"/>
+</svg>`
+  },
+  {
+    id:'pteranodon', navn:'Pteranodon', latin:'Pteranodon longiceps', periode:'Sen-Kritt (88–75 mya)',
+    type:'Flygende reptil (pterosaur – IKKE dinosaur!)', farge:'#8050a0', glow:'rgba(128,80,160,.06)',
+    fakta:[{l:'Vingespenn',v:'7–9 m'},{l:'Vekt',v:'25–40 kg'},{l:'Dinosaur?',v:'NEI – pterosaur'},{l:'Kjøtt',v:'Fisk fra havet'}],
+    desc:'Ikke en dinosaur, men nær slektning – en flyvende reptil med gigantisk kjøl på hodet.',
+    tekst:'Pteranodon var ikke en dinosaur, men en pterosaur – en distinkt gruppe flygende reptiler som levde side om side med dinosaurene. Vingene var laget av hud strukket mellom en enormt forlenget fjerde finger og kroppen. Kjølen på hodet kan ha hjulpet til styring i luften. Pteranodon fisket trolig fra overflaten av havet, akkurat som en pelikan.',
+    morsomt:'Pteranodon hadde hult bein med veggtykkelse på under 1 mm for å holde seg lett nok til å fly – til tross for et vingespenn på inntil 9 meter.',
+    svg:`<svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="pt-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9a7050"/><stop offset="100%" stop-color="#543828"/></linearGradient>
+  <linearGradient id="pt-wing" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#b48866"/><stop offset="50%" stop-color="#8a6044"/><stop offset="100%" stop-color="#442818"/></linearGradient>
+  <linearGradient id="pt-wing-tip" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6a4830"/><stop offset="100%" stop-color="#2a1408"/></linearGradient>
+  <linearGradient id="pt-crest" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d06040"/><stop offset="50%" stop-color="#a84028"/><stop offset="100%" stop-color="#582018"/></linearGradient>
+  <radialGradient id="pt-eye" cx="35%" cy="35%" r="60%"><stop offset="0%" stop-color="#a06020"/><stop offset="100%" stop-color="#4a2808"/></radialGradient>
+</defs>
+<rect width="520" height="260" fill="#0c0e18"/>
+<ellipse cx="260" cy="254" rx="220" ry="8" fill="rgba(0,0,0,.3)"/>
+<!-- VINGE VENSTRE (full detalj) -->
+<path d="M218,152 Q186,126 148,98 Q112,72 74,50 Q44,34 18,22 Q8,30 22,42 Q50,58 84,78 Q120,100 156,128 Q188,154 212,164Z" fill="url(#pt-wing)" stroke="#4a3018" stroke-width="1.2"/>
+<!-- Vinge-membran detalj venstre -->
+<path d="M18,22 Q24,40 60,64 Q98,90 145,120 Q180,144 210,160" fill="none" stroke="rgba(80,52,32,.45)" stroke-width="1.2"/>
+<path d="M45,30 Q68,60 108,88 Q146,114 190,148 Q204,158 212,164" fill="none" stroke="rgba(80,52,32,.38)" stroke-width="1"/>
+<path d="M72,40 Q95,68 132,95 Q168,120 202,150" fill="none" stroke="rgba(80,52,32,.32)" stroke-width=".9"/>
+<path d="M100,52 Q122,78 158,104 Q192,130 212,156" fill="none" stroke="rgba(80,52,32,.28)" stroke-width=".9"/>
+<path d="M128,64 Q148,88 182,113 Q210,136 214,156" fill="none" stroke="rgba(80,52,32,.24)" stroke-width=".8"/>
+<!-- Vinge høyre -->
+<path d="M302,152 Q334,126 372,98 Q408,72 446,50 Q476,34 502,22 Q512,30 498,42 Q470,58 436,78 Q400,100 364,128 Q332,154 308,164Z" fill="url(#pt-wing)" stroke="#4a3018" stroke-width="1.2"/>
+<path d="M502,22 Q496,40 460,64 Q422,90 375,120 Q340,144 310,160" fill="none" stroke="rgba(80,52,32,.45)" stroke-width="1.2"/>
+<path d="M475,30 Q452,60 412,88 Q374,114 330,148 Q316,158 308,164" fill="none" stroke="rgba(80,52,32,.38)" stroke-width="1"/>
+<path d="M448,40 Q425,68 388,95 Q352,120 318,150" fill="none" stroke="rgba(80,52,32,.32)" stroke-width=".9"/>
+<!-- Vinge-finger (4. finger) – strukturell støtte -->
+<path d="M218,152 L18,22" stroke="#6a4830" stroke-width="4" stroke-linecap="round"/>
+<path d="M302,152 L502,22" stroke="#6a4830" stroke-width="4" stroke-linecap="round"/>
+<!-- Vinge-finger høydepunkter -->
+<path d="M218,152 L18,22" stroke="rgba(180,140,100,.3)" stroke-width="1.5"/>
+<path d="M302,152 L502,22" stroke="rgba(180,140,100,.3)" stroke-width="1.5"/>
+<!-- 3 andre fingre (kortere) -->
+<g stroke="#5a3c24" stroke-width="2.5" stroke-linecap="round">
+  <path d="M216,154 L175,120 M216,154 L180,128 M216,154 L186,135"/>
+  <path d="M304,154 L345,120 M304,154 L340,128 M304,154 L334,135"/>
+</g>
+<!-- KROPP -->
+<ellipse cx="260" cy="166" rx="52" ry="40" fill="url(#pt-body)" stroke="#4a3018" stroke-width="1.8"/>
+<!-- Krop-overflate -->
+<path d="M220,154 Q260,144 300,154" fill="none" stroke="rgba(90,60,36,.4)" stroke-width="2.5"/>
+<!-- BEIN (korte, kloformet) -->
+<path d="M246,190 Q240,205 238,218 L224,217 Q223,202 230,188Z" fill="#7a5838" stroke="#4a3018" stroke-width="1"/>
+<path d="M224,217 Q222,226 212,227 L206,225 Q205,218 210,212Z" fill="#5a4028"/>
+<path d="M205,226 L200,232 M210,227 L207,232 M215,227 L214,232 M219,226 L220,231" stroke="#3a2010" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M274,190 Q280,205 282,218 L296,217 Q297,202 290,188Z" fill="#7a5838" stroke="#4a3018" stroke-width="1"/>
+<path d="M296,217 Q298,226 308,227 L314,225 Q315,218 310,212Z" fill="#5a4028"/>
+<path d="M315,226 L320,232 M310,227 L313,232 M305,227 L306,232 M301,226 L300,231" stroke="#3a2010" stroke-width="1.8" stroke-linecap="round"/>
+<!-- HALS -->
+<path d="M248,148 Q245,134 244,116 L260,112 Q260,130 262,148Z" fill="url(#pt-body)"/>
+<!-- HODE -->
+<path d="M208,90 Q214,70 230,60 Q248,48 262,48 Q276,48 290,60 Q308,72 312,90 Q316,108 304,122 Q290,134 262,136 Q234,134 220,120 Q207,108 208,90Z" fill="url(#pt-body)" stroke="#4a3018" stroke-width="1.8"/>
+<!-- HODE-KAMM (mannens store kamm – seksuell dimorfisme!) -->
+<path d="M262,48 Q278,24 296,12 Q312,2 320,14 Q325,26 312,38 Q298,46 282,52Z" fill="url(#pt-crest)" stroke="#7a2810" stroke-width="1.5"/>
+<path d="M262,48 Q276,26 292,16 Q305,8 313,18 Q316,28 304,38 Q292,44 278,50Z" fill="rgba(220,100,60,.3)"/>
+<!-- Kamm-kontur -->
+<path d="M264,48 Q280,28 298,18 Q308,14 314,22" fill="none" stroke="rgba(200,80,40,.4)" stroke-width="1.5"/>
+<!-- SNUTE (lang, tannløs nebb) -->
+<path d="M208,90 Q199,98 195,108 Q192,118 198,124 Q206,130 218,126" fill="#7a5838" stroke="#4a3018" stroke-width="1.2"/>
+<path d="M195,108 Q186,115 184,122 Q189,126 196,122Z" fill="#8a6848"/>
+<!-- Nebb-linje -->
+<path d="M209,92 Q200,102 198,114" fill="none" stroke="#3a2818" stroke-width="1.5"/>
+<!-- ØYE -->
+<ellipse cx="228" cy="86" rx="13" ry="12" fill="#0c0a08" stroke="#3a2010" stroke-width="1.5"/>
+<circle cx="228" cy="86" r="8.5" fill="url(#pt-eye)"/>
+<ellipse cx="228" cy="88" rx="4.5" ry="6" fill="#060402"/>
+<circle cx="223" cy="81" r="4" fill="rgba(255,255,255,.55)"/>
+<circle cx="221" cy="79" r="1.8" fill="rgba(255,255,255,.3)"/>
+<path d="M217,78 Q224,72 238,74 Q244,78 245,84" fill="none" stroke="#3a2010" stroke-width="1.8"/>
+<!-- Vinge-tekstur (membran-rift og folder) -->
+<path d="M100,72 Q128,94 162,118 Q195,140 212,158" fill="none" stroke="rgba(100,70,44,.3)" stroke-width="1.5"/>
+<path d="M420,72 Q392,94 358,118 Q325,140 308,158" fill="none" stroke="rgba(100,70,44,.3)" stroke-width="1.5"/>
+<!-- Skygge under vingene -->
+<path d="M0,250 Q130,244 260,248 Q390,252 520,246 L520,260 L0,260Z" fill="#0c0e18" opacity=".5"/>
+</svg>`
+  },
+];
+
+// ══ DINO-GRID ══
+const grid = document.getElementById('dino-grid');
+DINOSAURER.forEach(d => {
+  const div = document.createElement('div');
+  div.className = 'dino-kort';
+  div.id = 'dk-'+d.id;
+  div.style.setProperty('--dk-farge', d.farge);
+  div.style.setProperty('--dk-glow', d.glow);
+  div.innerHTML = `
+    <div class="dk-svg">${d.svg.replace(/<svg /, '<svg style="width:100%;height:100%;display:block" ')}</div>
+    <div class="dk-body">
+      <div class="dk-periode">${d.periode}</div>
+      <div class="dk-navn" style="color:${d.farge}">${d.navn}</div>
+      <div class="dk-latin">${d.latin}</div>
+      <div class="dk-fakta">${d.fakta.slice(0,4).map(f=>`<div class="dk-f"><div class="dk-fl">${f.l}</div><div class="dk-fv">${f.v}</div></div>`).join('')}</div>
+      <div class="dk-desc">${d.desc}</div>
+    </div>`;
+  div.onclick = () => visDino(d.id);
+  grid.appendChild(div);
+});
+
+let aktivDino = null;
+function visDino(id) {
+  const info = document.getElementById('dino-info');
+  if (aktivDino === id) {
+    aktivDino = null;
+    info.classList.remove('synlig');
+    document.querySelectorAll('.dino-kort').forEach(k=>k.classList.remove('aktiv'));
+    return;
+  }
+  aktivDino = id;
+  const d = DINOSAURER.find(x=>x.id===id);
+  document.querySelectorAll('.dino-kort').forEach(k=>k.classList.toggle('aktiv',k.id==='dk-'+id));
+  info.innerHTML = `
+    <div>
+      ${d.svg.replace(/<svg /, '<svg style="width:100%;height:auto;display:block;border-radius:12px" ')}
+    </div>
+    <div>
+      <div class="di-tittel" style="color:${d.farge}">${d.navn}</div>
+      <div class="di-latin">${d.latin} · ${d.type}</div>
+      <div class="di-grid">${d.fakta.map(f=>`<div class="di-felt"><div class="di-fl">${f.l}</div><div class="di-fv">${f.v}</div></div>`).join('')}</div>
+      <p class="di-tekst">${d.tekst}</p>
+      <div class="di-morsomt">🦴 <strong>Visste du?</strong> ${d.morsomt}</div>
+    </div>`;
+  info.classList.add('synlig');
+  info.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══ ANATOMI ══
+const ANATOMI = [
+  {ikon:'🦴',tittel:'Hulle bein',tekst:'Mange dinosaurer hadde luftfylte, hulle bein – akkurat som fugler i dag. Dette reduserte vekten uten å ofre styrke, og muliggjorde de enorme kroppsstørrelsene.'},
+  {ikon:'🌡️',tittel:'Varmblodige?',tekst:'Forskning tyder på at mange dinosaurer var varmblodige (endoterme), ikke kaldblodige som krokodiller. Beinvekstmønstre ligner pattedyr og fugler, ikke reptiler.'},
+  {ikon:'🪺',tittel:'Reiratferd',tekst:'Mange dinosaurer, som Maiasaura (\"god mor-øgle\"), bygde reir, ruget på egg og stelte avkommet. Dette er mer likt fugler enn krokodiller.'},
+  {ikon:'🏃',tittel:'Tobeint vs. firbeint',tekst:'Tidlige dinosaurer var tobeinte. Etterhvert diversifiserte de til firbeinte former (sauropoder, ceratopider, thyreophora). Theropoder forble tobeinte – som fugler.'},
+  {ikon:'🐦',tittel:'Fugler = dinosaurer',tekst:'Fugler er direkte etterkommere av theropode dinosaurer. Archaeopteryx (~150 mya) viser overgangsformer. DNA-sammenligninger bekrefter dette. Kyllingen din er en levende dinosaur.'},
+  {ikon:'🔍',tittel:'Fossildannelse',tekst:'Kun en liten del av alle dyr fossiliseres – de fleste råtner ned. For å fossilisere trengs rask begravelse i sediment, fravær av oksygen, og millioner av år med mineralerstatning.'},
+  {ikon:'🐊',tittel:'Overlevende slektninger',tekst:'Krokodiller og alligatorer er de nærmeste levende slektningene til dinosaurer (utenom fugler). De tilhører samme gruppe – archosaurer – og har knapt endret seg på 200 millioner år.'},
+  {ikon:'🌍',tittel:'Pangea og spredning',tekst:'Dinosaurene spredte seg over hele verden mens Pangea gradvis delte seg. Lignende arter finnes i fossiler fra kontinenter som i dag er adskilt av hav – fordi de var sammenkoblet da.'},
+];
+
+const agrid = document.getElementById('anatomi-grid');
+ANATOMI.forEach(a => {
+  const d = document.createElement('div');
+  d.className = 'anatomi-kort';
+  d.innerHTML = `<div class="ak-ikon">${a.ikon}</div><div class="ak-tittel">${a.tittel}</div><div class="ak-tekst">${a.tekst}</div>`;
+  agrid.appendChild(d);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Havet</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,300;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#01080f;--surface:#020d18;--card:#041525;--border:rgba(30,120,200,.1);
+  --text:#d8eef8;--dim:#3a6080;
+  --blå:#1a7abf;--lys:#5bbce8;--dyp:#0a3a6a;--grønn:#1a8060;
+  --font-d:'Playfair Display',serif;--font-b:'Lato',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden;font-weight:300}
+
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(10,60,120,.18),transparent),
+             radial-gradient(ellipse 40% 40% at 20% 80%,rgba(10,80,40,.06),transparent);}
+
+nav{position:sticky;top:0;z-index:300;background:rgba(1,8,15,.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.76rem;color:var(--dim);text-decoration:none;letter-spacing:.04em}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--lys);font-style:italic}
+
+.page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 24px 100px}
+
+.hero{text-align:center;padding:44px 0 52px}
+.hero-over{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,6vw,4rem);font-weight:400;
+  line-height:1.1;margin-bottom:14px;letter-spacing:-.01em}
+.hero h1 em{font-style:italic;color:var(--lys);font-weight:300}
+.hero-sub{font-size:.96rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8;font-weight:300}
+
+.seksjon{margin-bottom:60px}
+.sep{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.sep-l{flex:1;height:1px;background:var(--border)}
+.sep-t{font-family:var(--font-d);font-size:.95rem;color:var(--dim);white-space:nowrap;letter-spacing:.02em;font-style:italic}
+
+/* DYBDEPROFIL */
+.dybde-wrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;cursor:pointer}
+.dybde-svg{display:block;width:100%;height:auto}
+.dybde-info{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:22px 26px;margin-top:12px;display:none}
+.dybde-info.synlig{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.di-sone-farge{width:10px;height:54px;border-radius:3px;flex-shrink:0}
+.di-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.di-tittel{font-family:var(--font-d);font-size:1.2rem;font-style:italic}
+.di-dybde{font-size:.8rem;color:var(--dim);margin-top:2px}
+.di-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.di-felt{padding:8px 10px;background:rgba(30,120,200,.04);border:1px solid var(--border);border-radius:8px}
+.di-fl{font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.di-fv{font-size:.8rem;color:var(--text)}
+.di-tekst{font-size:.88rem;line-height:1.75;color:rgba(216,238,248,.65)}
+.di-dyr{margin-top:10px;padding:9px 13px;background:rgba(91,188,232,.05);
+  border-left:3px solid var(--lys);border-radius:0 8px 8px 0;font-size:.83rem;line-height:1.6;color:var(--dim);font-style:italic}
+
+/* HAVDYR */
+.dyr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.dyr-kort{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  overflow:hidden;cursor:pointer;transition:all .22s;position:relative}
+.dyr-kort::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,var(--dg,rgba(91,188,232,.04)),transparent);pointer-events:none}
+.dyr-kort:hover{transform:translateY(-3px);border-color:var(--dc,var(--lys));box-shadow:0 8px 36px rgba(0,0,0,.5)}
+.dyr-kort.aktiv{border-color:var(--dc,var(--lys))}
+.dyr-svg-wrap{width:100%;height:200px;background:rgba(0,20,40,.3);display:flex;align-items:center;justify-content:center}
+.dyr-body{padding:16px 18px}
+.dyr-type{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dc,var(--lys));margin-bottom:5px}
+.dyr-navn{font-family:var(--font-d);font-size:1.1rem;letter-spacing:.02em;margin-bottom:2px;font-style:italic}
+.dyr-lat{font-size:.74rem;color:var(--dim);margin-bottom:8px}
+.dyr-fakta{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.dyr-f{padding:5px 8px;background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:7px}
+.dyr-fl{font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.dyr-fv{font-size:.74rem;color:var(--text)}
+.dyr-desc{font-size:.8rem;color:rgba(216,238,248,.55);line-height:1.6;margin-top:8px;font-style:italic}
+
+.dyr-info{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:28px;margin-top:14px;display:none}
+.dyr-info.synlig{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.dyrinfo-tittel{font-family:var(--font-d);font-size:1.7rem;font-style:italic;margin-bottom:4px}
+.dyrinfo-latin{font-size:.85rem;color:var(--dim);margin-bottom:14px}
+.dyrinfo-tekst{font-size:.88rem;line-height:1.78;color:rgba(216,238,248,.68);margin-bottom:12px}
+.dyrinfo-morsomt{padding:11px 14px;background:rgba(91,188,232,.06);
+  border-left:3px solid var(--lys);border-radius:0 9px 9px 0;font-size:.83rem;line-height:1.65;color:var(--dim)}
+
+/* HAVSTRØMMER */
+.strøm-wrap{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+
+/* FAKTAGRID */
+.fakta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.fakta-kort{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.fk-ikon{font-size:1.5rem;margin-bottom:8px}
+.fk-tittel{font-family:var(--font-d);font-size:.9rem;font-style:italic;color:var(--lys);margin-bottom:6px}
+.fk-tekst{font-size:.8rem;color:rgba(216,238,248,.58);line-height:1.62}
+
+/* Animasjoner */
+@keyframes fisk-svøm{0%{transform:translateX(0)}50%{transform:translateX(5px)}100%{transform:translateX(0)}}
+@keyframes hval-pust{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.04)}}
+@keyframes bølge-drift{0%{transform:translateX(0)}100%{transform:translateX(-40px)}}
+@keyframes dyp-puls{0%,100%{opacity:.4}50%{opacity:.8}}
+@keyframes lykt-puls{0%,100%{opacity:.5;r:3}50%{opacity:1;r:5}}
+@keyframes strøm-beveg{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-80}}
+.fisk-anim{animation:fisk-svøm 2.5s ease-in-out infinite}
+.hval-anim{transform-origin:center;animation:hval-pust 4s ease-in-out infinite}
+.lykt-anim{animation:lykt-puls 2s ease-in-out infinite}
+.strøm-anim{animation:strøm-beveg 3s linear infinite}
+
+@media(max-width:700px){
+  .dybde-info.synlig,.dyr-info.synlig{grid-template-columns:1fr}
+  .dyr-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Havet</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Marinbiologi · Oseanografi</div>
+    <h1>Havets <em>dybder</em><br>og mangfold</h1>
+    <p class="hero-sub">Havet dekker 71% av jorda og er livets fødested. Utforsk sonene fra solbeltet til det dypeste dyp – og skapningene som lever der</p>
+  </div>
+
+  <!-- DYBDEPROFIL -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Havets dybdesoner – klikk for å utforske</div><div class="sep-l"></div></div>
+    <div class="dybde-wrap">
+      <svg class="dybde-svg" viewBox="0 0 1060 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="hav-dybde" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0a3060"/>
+            <stop offset="18%" stop-color="#062850"/>
+            <stop offset="38%" stop-color="#041e3e"/>
+            <stop offset="60%" stop-color="#02142a"/>
+            <stop offset="80%" stop-color="#010a18"/>
+            <stop offset="100%" stop-color="#000508"/>
+          </linearGradient>
+          <linearGradient id="sol-sone" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(91,188,232,.22)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </linearGradient>
+          <radialGradient id="lyktfisk-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="rgba(150,255,150,.5)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Bakgrunn -->
+        <rect width="1060" height="500" fill="url(#hav-dybde)"/>
+
+        <!-- Solinnstråling -->
+        <rect x="0" y="0" width="1060" height="90" fill="url(#sol-sone)"/>
+
+        <!-- SONESEPARATORER (klikkbare) -->
+        <!-- Epipelagisk: 0–200m -->
+        <rect id="sone-epi" x="0" y="0" width="1060" height="90" fill="transparent" style="cursor:pointer"/>
+        <rect id="sone-epi-hl" x="0" y="0" width="5" height="90" fill="rgba(91,188,232,.5)" rx="0"/>
+        <text x="16" y="18" font-family="Playfair Display" font-size="11" fill="rgba(91,188,232,.8)" font-style="italic" letter-spacing=".04em">Epipelagisk sone</text>
+        <text x="16" y="30" font-family="Lato" font-size="8.5" fill="rgba(91,188,232,.45)">0 – 200 m · Sollyset-sonen</text>
+
+        <!-- Mesopelagisk: 200–1000m -->
+        <rect id="sone-meso" x="0" y="90" width="1060" height="80" fill="transparent" style="cursor:pointer"/>
+        <rect id="sone-meso-hl" x="0" y="90" width="5" height="80" fill="rgba(40,120,180,.5)" rx="0"/>
+        <line x1="0" y1="90" x2="1060" y2="90" stroke="rgba(91,188,232,.12)" stroke-width="1" stroke-dasharray="8 6"/>
+        <text x="16" y="106" font-family="Playfair Display" font-size="10" fill="rgba(60,160,220,.75)" font-style="italic">Mesopelagisk sone</text>
+        <text x="16" y="118" font-family="Lato" font-size="8.5" fill="rgba(60,160,220,.4)">200 – 1 000 m · Skumringssonen</text>
+
+        <!-- Bathypelagisk: 1000–4000m -->
+        <rect id="sone-bathy" x="0" y="170" width="1060" height="110" fill="transparent" style="cursor:pointer"/>
+        <rect id="sone-bathy-hl" x="0" y="170" width="5" height="110" fill="rgba(20,80,140,.5)" rx="0"/>
+        <line x1="0" y1="170" x2="1060" y2="170" stroke="rgba(60,160,220,.08)" stroke-width="1" stroke-dasharray="8 6"/>
+        <text x="16" y="186" font-family="Playfair Display" font-size="10" fill="rgba(40,130,190,.7)" font-style="italic">Bathypelagisk sone</text>
+        <text x="16" y="198" font-family="Lato" font-size="8.5" fill="rgba(40,130,190,.38)">1 000 – 4 000 m · Midnattsonen</text>
+
+        <!-- Abyssopelagisk: 4000–6000m -->
+        <rect id="sone-abyss" x="0" y="280" width="1060" height="120" fill="transparent" style="cursor:pointer"/>
+        <rect id="sone-abyss-hl" x="0" y="280" width="5" height="120" fill="rgba(10,50,100,.5)" rx="0"/>
+        <line x1="0" y1="280" x2="1060" y2="280" stroke="rgba(40,130,190,.06)" stroke-width="1" stroke-dasharray="8 6"/>
+        <text x="16" y="296" font-family="Playfair Display" font-size="10" fill="rgba(25,90,150,.65)" font-style="italic">Abyssopelagisk sone</text>
+        <text x="16" y="308" font-family="Lato" font-size="8.5" fill="rgba(25,90,150,.35)">4 000 – 6 000 m · Avgrunnsonen</text>
+
+        <!-- Hadalpelagisk: 6000–11000m -->
+        <rect id="sone-hadal" x="0" y="400" width="1060" height="100" fill="transparent" style="cursor:pointer"/>
+        <rect id="sone-hadal-hl" x="0" y="400" width="5" height="100" fill="rgba(5,25,60,.5)" rx="0"/>
+        <line x1="0" y1="400" x2="1060" y2="400" stroke="rgba(25,90,150,.05)" stroke-width="1" stroke-dasharray="8 6"/>
+        <text x="16" y="416" font-family="Playfair Display" font-size="10" fill="rgba(15,60,110,.6)" font-style="italic">Hadalpelagisk sone</text>
+        <text x="16" y="428" font-family="Lato" font-size="8.5" fill="rgba(15,60,110,.3)">6 000 – 11 000 m · Grøftesonen</text>
+
+        <!-- Dybde-markering høyre -->
+        <g font-family="Lato" font-size="8" fill="rgba(91,188,232,.25)" text-anchor="end">
+          <text x="1050" y="12">Overflate</text>
+          <text x="1050" y="92">200 m</text>
+          <text x="1050" y="172">1 000 m</text>
+          <text x="1050" y="282">4 000 m</text>
+          <text x="1050" y="402">6 000 m</text>
+          <text x="1050" y="495">11 000 m</text>
+        </g>
+
+        <!-- Sol-piler -->
+        <g opacity=".35">
+          <line x1="950" y1="0" x2="920" y2="85" stroke="#fde68a" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <line x1="970" y1="0" x2="945" y2="85" stroke="#fde68a" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <line x1="990" y1="0" x2="968" y2="85" stroke="#fde68a" stroke-width="1" stroke-dasharray="4 4"/>
+        </g>
+        <text x="965" y="20" font-family="Lato" font-size="7.5" fill="rgba(253,230,138,.5)">☀️ Sollys</text>
+
+        <!-- ILLUSTRASJONER I SONENE -->
+        <!-- Epipelagisk: fisk, delfiner, tang, korall -->
+        <!-- Hval -->
+        <ellipse cx="400" cy="45" rx="60" ry="18" fill="rgba(40,90,140,.6)" stroke="rgba(70,140,200,.3)" stroke-width="1" class="hval-anim"/>
+        <path d="M340,45 Q330,40 318,30" fill="none" stroke="rgba(40,90,140,.55)" stroke-width="8" stroke-linecap="round"/>
+        <path d="M452,42 Q462,35 468,28 M452,48 Q460,52 466,58" fill="none" stroke="rgba(40,90,140,.5)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="432" cy="40" r="2.5" fill="rgba(70,140,200,.6)"/>
+        <text x="400" y="74" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(91,188,232,.45)">Knølhval</text>
+
+        <!-- Hai -->
+        <g class="fisk-anim">
+          <ellipse cx="700" cy="50" rx="40" ry="12" fill="rgba(80,120,160,.5)" stroke="rgba(110,160,200,.25)" stroke-width="1"/>
+          <path d="M700,38 L712,24 L720,38" fill="rgba(80,120,160,.55)" stroke="rgba(110,160,200,.2)" stroke-width="1"/>
+          <path d="M660,50 Q648,44 640,36 M660,50 Q648,56 640,62" fill="none" stroke="rgba(80,120,160,.45)" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="728" cy="47" r="2" fill="rgba(110,160,200,.6)"/>
+          <text x="700" y="74" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(91,188,232,.4)">Hai</text>
+        </g>
+
+        <!-- Delfin -->
+        <g>
+          <ellipse cx="560" cy="32" rx="28" ry="10" fill="rgba(50,110,170,.55)" stroke="rgba(80,150,210,.25)" stroke-width="1"/>
+          <path d="M532,32 Q524,28 516,22 M532,36 Q524,40 518,46" fill="none" stroke="rgba(50,110,170,.45)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M560,22 L566,14 L570,22" fill="rgba(50,110,170,.5)"/>
+          <circle cx="576" cy="30" r="1.8" fill="rgba(80,150,210,.6)"/>
+          <text x="560" y="55" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(91,188,232,.4)">Delfin</text>
+        </g>
+
+        <!-- Mesopelagisk: lyktfisk, blekksprut -->
+        <!-- Blekksprut -->
+        <g>
+          <ellipse cx="300" cy="128" rx="20" ry="12" fill="rgba(100,50,150,.45)" stroke="rgba(150,80,200,.25)" stroke-width="1"/>
+          <g stroke="rgba(100,50,150,.5)" stroke-width="1.5" stroke-linecap="round" fill="none">
+            <path d="M285,136 Q278,148 280,158"/><path d="M290,138 Q285,152 287,162"/>
+            <path d="M296,138 Q294,153 295,163"/><path d="M302,138 Q302,153 303,163"/>
+            <path d="M308,137 Q310,152 310,162"/><path d="M314,136 Q316,149 315,159"/>
+            <path d="M319,133 Q324,144 322,154"/><path d="M322,130 Q328,138 325,148"/>
+          </g>
+          <circle cx="293" cy="124" r="3" fill="rgba(150,80,200,.6)"/>
+          <circle cx="307" cy="124" r="3" fill="rgba(150,80,200,.6)"/>
+          <text x="300" y="166" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(150,80,200,.4)">Blekksprut</text>
+        </g>
+
+        <!-- Lyktfisk (mesopelagisk) -->
+        <g>
+          <ellipse cx="700" cy="130" rx="16" ry="8" fill="rgba(30,80,130,.55)" stroke="rgba(60,120,180,.3)" stroke-width="1"/>
+          <path d="M684,130 Q676,126 670,120 M684,134 Q676,138 670,144" fill="none" stroke="rgba(30,80,130,.45)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="712" cy="128" r="1.5" fill="rgba(60,120,180,.7)"/>
+          <g>
+            <line x1="695" y1="122" x2="690" y2="112"/>
+            <circle cx="690" cy="111" r="3" fill="rgba(150,255,150,.55)" class="lykt-anim"/>
+            <circle cx="690" cy="111" r="7" fill="rgba(150,255,150,.1)" class="lykt-anim"/>
+          </g>
+          <text x="700" y="152" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(60,120,180,.4)">Lyktfisk</text>
+        </g>
+
+        <!-- Bathypelagisk: vampyrblekksprut, havspøkelse -->
+        <g>
+          <ellipse cx="450" cy="225" rx="18" ry="10" fill="rgba(80,0,80,.5)" stroke="rgba(120,0,120,.3)" stroke-width="1"/>
+          <g stroke="rgba(80,0,80,.55)" stroke-width="1.5" stroke-linecap="round" fill="none">
+            <path d="M435,232 Q430,244 432,252"/><path d="M439,234 Q436,246 438,254"/>
+            <path d="M444,234 Q443,246 444,254"/><path d="M450,234 Q450,247 451,255"/>
+            <path d="M456,234 Q458,246 457,254"/><path d="M461,233 Q464,244 462,252"/>
+            <path d="M466,231 Q470,241 468,250"/>
+          </g>
+          <circle cx="442" cy="221" r="3.5" fill="rgba(255,50,50,.5)"/>
+          <circle cx="458" cy="221" r="3.5" fill="rgba(255,50,50,.5)"/>
+          <text x="450" y="258" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(120,0,120,.4)">Vampyrblekksprut</text>
+        </g>
+
+        <!-- Abyssopelagisk: sjøkomkomst, deepsea-fisk -->
+        <g>
+          <ellipse cx="600" cy="340" rx="25" ry="8" fill="rgba(20,60,100,.45)" stroke="rgba(40,90,140,.25)" stroke-width="1"/>
+          <path d="M575,340 Q562,336 554,328 M575,344 Q562,348 554,354" fill="none" stroke="rgba(20,60,100,.4)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="595" cy="338" r="1.5" fill="rgba(40,90,140,.5)"/>
+          <!-- Lykt fremover -->
+          <line x1="596" y1="338" x2="606" y2="332"/>
+          <circle cx="607" cy="331" r="4" fill="rgba(255,220,100,.4)" class="lykt-anim"/>
+          <text x="600" y="360" text-anchor="middle" font-family="Lato" font-size="7.5" fill="rgba(40,90,140,.35)">Dypvannsfisk</text>
+        </g>
+
+        <!-- Hadal: helt mørkt, kun hint av bunnmateriale -->
+        <g>
+          <!-- Bunnmateriale -->
+          <path d="M0,490 Q100,484 200,488 Q350,495 500,486 Q650,480 800,488 Q900,492 1060,486 L1060,500 L0,500 Z"
+            fill="rgba(20,30,20,.6)"/>
+          <!-- Havsnø-prikker -->
+          <g fill="rgba(255,255,255,.08)">
+            <circle cx="200" cy="430" r="1.5"/><circle cx="350" cy="450" r="1"/><circle cx="500" cy="420" r="1.5"/>
+            <circle cx="650" cy="440" r="1"/><circle cx="800" cy="455" r="1.5"/><circle cx="900" cy="435" r="1"/>
+          </g>
+          <text x="530" y="465" text-anchor="middle" font-family="Lato" font-size="8" fill="rgba(255,255,255,.12)">Mariana-grøften · 11 034 m</text>
+        </g>
+
+        <!-- Havsnø overalt -->
+        <g fill="rgba(255,255,255,.06)">
+          <circle cx="150" cy="180" r="1.5"/><circle cx="280" cy="210" r="1"/><circle cx="450" cy="195" r="1.2"/>
+          <circle cx="600" cy="230" r="1"/><circle cx="750" cy="200" r="1.5"/><circle cx="900" cy="220" r="1"/>
+          <circle cx="100" cy="320" r="1.2"/><circle cx="350" cy="340" r="1"/><circle cx="600" cy="305" r="1.5"/>
+          <circle cx="850" cy="330" r="1"/><circle cx="1000" cy="315" r="1.2"/>
+        </g>
+
+        <!-- Hover-indikator (sone-markering) -->
+        <text x="530" y="488" text-anchor="middle" font-family="Lato" font-size="9" fill="rgba(91,188,232,.2)" letter-spacing=".06em">Klikk på en sone for å lære mer</text>
+      </svg>
+    </div>
+    <div class="dybde-info" id="dybde-info"></div>
+  </div>
+
+  <!-- HAVDYR -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Havets skapninger</div><div class="sep-l"></div></div>
+    <div class="dyr-grid" id="dyr-grid"></div>
+    <div class="dyr-info" id="dyr-info"></div>
+  </div>
+
+  <!-- HAVSTRØMMER -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Den globale havkonveyor – Ocean Conveyor Belt</div><div class="sep-l"></div></div>
+    <div class="strøm-wrap">
+      <svg viewBox="0 0 1060 380" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">
+        <defs>
+          <linearGradient id="globe-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#010a18"/><stop offset="100%" stop-color="#020d1e"/>
+          </linearGradient>
+        </defs>
+        <rect width="1060" height="380" fill="url(#globe-bg)"/>
+        <!-- Verdenskart (forenklet konturer) -->
+        <!-- Nord-Amerika -->
+        <path d="M100,80 Q130,60 170,65 Q200,70 220,100 Q240,130 230,180 Q218,220 190,240 Q160,255 140,240 Q110,220 95,180 Q80,140 100,80 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+        <!-- Sør-Amerika -->
+        <path d="M175,250 Q200,240 220,260 Q240,290 230,340 Q215,370 190,375 Q165,370 155,340 Q148,300 165,265 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+        <!-- Europa -->
+        <path d="M440,60 Q470,50 490,65 Q510,80 505,110 Q498,130 475,135 Q450,130 440,110 Q430,85 440,60 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+        <!-- Afrika -->
+        <path d="M450,145 Q480,138 510,155 Q535,180 535,240 Q525,300 500,330 Q475,348 455,330 Q435,305 432,245 Q430,185 450,145 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+        <!-- Asia -->
+        <path d="M530,50 Q620,30 720,45 Q790,60 820,100 Q840,135 820,160 Q780,180 720,170 Q650,160 580,140 Q540,120 530,90 Q525,70 530,50 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+        <!-- Australia -->
+        <path d="M760,260 Q800,245 840,255 Q870,270 875,305 Q870,335 840,345 Q800,350 770,330 Q748,310 748,285 Q748,265 760,260 Z" fill="rgba(30,80,50,.35)" stroke="rgba(50,120,80,.25)" stroke-width="1"/>
+
+        <!-- HAVSTRØMMER -->
+        <!-- Varm overflatestrøm (rød/oransje) -->
+        <path d="M200,170 Q260,140 350,130 Q420,125 440,100 Q460,75 490,75 Q540,78 580,100 Q620,125 660,140 Q700,150 740,140 Q780,128 820,120" 
+          fill="none" stroke="rgba(200,80,30,.5)" stroke-width="3" stroke-dasharray="12 6" class="strøm-anim"/>
+        <!-- Kald dypvannsstrøm (blå) -->
+        <path d="M200,195 Q180,220 165,255 Q155,290 165,320 Q180,350 220,360 Q300,370 400,355 Q500,342 580,350 Q650,358 720,345 Q800,330 860,305 Q900,280 895,240 Q890,205 870,185 Q840,160 800,155 Q760,152 740,160"
+          fill="none" stroke="rgba(30,100,180,.45)" stroke-width="3" stroke-dasharray="12 6" class="strøm-anim" style="animation-direction:reverse"/>
+        <!-- Golfstrømmen (fremhevet) -->
+        <path d="M200,170 Q220,155 250,148 Q290,140 330,132 Q370,124 400,120"
+          fill="none" stroke="rgba(230,100,40,.65)" stroke-width="4" stroke-dasharray="0"/>
+        <text x="270" y="118" font-family="Lato" font-size="8.5" fill="rgba(230,100,40,.7)" text-anchor="middle">Golfstrømmen</text>
+
+        <!-- Piler på strømmene -->
+        <g fill="rgba(200,80,30,.5)">
+          <polygon points="355,127 365,130 355,133"/>
+          <polygon points="455,98 465,100 455,103"/>
+          <polygon points="660,138 670,140 660,143"/>
+        </g>
+        <g fill="rgba(30,100,180,.45)">
+          <polygon points="580,351 570,347 580,344" transform="rotate(180,575,348)"/>
+          <polygon points="400,354 390,350 400,347" transform="rotate(180,395,351)"/>
+        </g>
+
+        <!-- Forklaringsboks -->
+        <rect x="10" y="290" width="320" height="80" rx="8" fill="rgba(1,8,15,.85)" stroke="rgba(30,120,200,.12)" stroke-width="1"/>
+        <text x="170" y="310" text-anchor="middle" font-family="Playfair Display" font-size="9" fill="rgba(91,188,232,.7)" font-style="italic">Termohalin sirkulasjon</text>
+        <text x="22" y="328" font-family="Lato" font-size="8" fill="rgba(91,188,232,.45)">Varm, salt overflatestrøm (rød): mot nord</text>
+        <text x="22" y="342" font-family="Lato" font-size="8" fill="rgba(30,100,180,.5)">Kald, tung dypvannsstrøm (blå): mot sør</text>
+        <text x="22" y="356" font-family="Lato" font-size="8" fill="rgba(91,188,232,.35)">Omløpstid: ~1 000 år</text>
+
+        <!-- Klimaeffekt-note -->
+        <rect x="710" y="175" width="340" height="60" rx="8" fill="rgba(1,8,15,.85)" stroke="rgba(200,80,30,.1)" stroke-width="1"/>
+        <text x="880" y="195" text-anchor="middle" font-family="Playfair Display" font-size="8.5" fill="rgba(200,80,30,.6)" font-style="italic">Klimaeffekt</text>
+        <text x="722" y="211" font-family="Lato" font-size="7.5" fill="rgba(200,80,30,.45)">Golfstrømmen varmer Norsk klima</text>
+        <text x="722" y="225" font-family="Lato" font-size="7.5" fill="rgba(91,188,232,.38)">Svekkelse kan gi ny «liten istid» i Europa</text>
+      </svg>
+    </div>
+    <div style="margin-top:12px;font-size:.88rem;line-height:1.78;color:rgba(216,238,248,.5);padding:0 4px">
+      Den termohaline sirkulasjonen (<em>Ocean Conveyor Belt</em>) transporterer varme og næringsstoffer rundt hele kloden. Golfstrømmen er en del av denne og gir Norge et klima som er <strong style="color:var(--text)">10–15°C varmere</strong> enn breddegraden tilsier. Global oppvarming kan svekke denne sirkulasjonen ved å smelte is og fortynne det salte vannet som driver strømmene nedover.
+    </div>
+  </div>
+
+  <!-- HAVFAKTA -->
+  <div class="seksjon">
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Havets rolle og fakta</div><div class="sep-l"></div></div>
+    <div class="fakta-grid" id="fakta-grid"></div>
+  </div>
+</div>
+
+<script>
+// ══ SONEDATA ══
+const SONER = {
+  epi:{
+    tittel:'Epipelagisk sone', dybde:'0 – 200 m', farge:'#3a9ad0',
+    felt:[{l:'Lys',v:'Full sollys'},{l:'Temperatur',v:'Overflatetemp – ned til ~12°C'},{l:'Trykk',v:'1–20 atm'},{l:'Produksjon',v:'90% av havets fotosyntese'}],
+    tekst:'Epipelagisk sone er den lyse overflatesonen der sollys trenger ned. Her skjer nesten all primærproduksjon i havet – fotosyntese fra planteplankton (fytoplankton). Planteplankton produserer halvparten av all oksygen på jorda. Rike fiskeområder, hvaler, delfiner, haier og tau av tang er karakteristisk.',
+    dyr:'🐋 Knølhval, blåhval · 🐬 Delfiner · 🦈 Hvithai · 🐠 Korallrevfisk · 🦑 Blekksprut (overflate) · 🐦 Sjøfugler'
+  },
+  meso:{
+    tittel:'Mesopelagisk sone', dybde:'200 – 1 000 m', farge:'#2a7ab4',
+    felt:[{l:'Lys',v:'Svakt skumrings-lys'},{l:'Temperatur',v:'12°C – 4°C'},{l:'Trykk',v:'20–100 atm'},{l:'Dyr',v:'Vertikalt migrerende'}],
+    tekst:'Mesopelagisk sone kalles skumringssonen – så lite lys at fotosyntese er umulig, men likevel nok til å se. Mange dyr her foretar den største daglige migrasjonen på jorda: de stiger opp til overflaten om natten for å spise, og synker ned til dypet om dagen for å skjule seg. Bioluminescens er vanlig: 90% av alle dyr i mesopelagisk sone kan lage sitt eget lys.',
+    dyr:'🦑 Lyktfisk · 🎿 Skolest · 🦐 Krill (viktigste byttedyr) · 🦑 Rekearter · 🌟 Bioluminescente maneter'
+  },
+  bathy:{
+    tittel:'Bathypelagisk sone', dybde:'1 000 – 4 000 m', farge:'#1a5a90',
+    felt:[{l:'Lys',v:'Totalt mørkt'},{l:'Temperatur',v:'4°C – 1°C (nesten konstant)'},{l:'Trykk',v:'100–400 atm'},{l:'Næring',v:'«Havsnø» – organisk materiale fra over'}],
+    tekst:'I bathypelagisk sone er det totalt mørkt og ekstremt kaldt. Dyrene her er avhengige av «havsnø» – et konstant fall av organisk materiale fra sonene over. Fisker er gjennomsiktige eller svartpigmenterte, har store øyne (eller er blinde) og mange har egne lys-organer. Her finnes noen av de merkeligste skapningene på jorda.',
+    dyr:'🐙 Vampyrblekksprut · 🐟 Svelgål · 🦈 Seksgjelle-hai · 🐠 Havkatt · 🌊 Blekksprut (kjempestørrelse)'
+  },
+  abyss:{
+    tittel:'Abyssopelagisk sone', dybde:'4 000 – 6 000 m', farge:'#0e3e70',
+    felt:[{l:'Lys',v:'Totalt mørkt'},{l:'Temperatur',v:'~2°C'},{l:'Trykk',v:'400–600 atm'},{l:'Bunn',v:'Myk leire og sediment'}],
+    tekst:'Avgrunnssonens bunn er dekket av et tykt lag sediment samlet over millioner av år. Her lever spesialiserte bakterier, maneter, sjøpiggsvin og fisk. Hydrotermal ventiler («svarte røykere») på havbunnen gir varme og kjemikalier – og støtter unike økosystemer som lever av kjemosyntese, ikke sollys. Disse ventilene er kanskje der livet oppsto.',
+    dyr:'🦐 Hvit reke · 🐚 Blåskjell (ventil-arter) · 🐛 Rørmark · 🐟 Ål-arter · 🦠 Ekstremofil-bakterier'
+  },
+  hadal:{
+    tittel:'Hadalpelagisk sone', dybde:'6 000 – 11 034 m', farge:'#071e40',
+    felt:[{l:'Dypeste punkt',v:'Mariana-grøften 11 034 m'},{l:'Trykk',v:'Opp til 1 100 atm'},{l:'Temperatur',v:'1–4°C'},{l:'Utforsket',v:'Mindre enn 1% av totalen'}],
+    tekst:'Hadalpelagisk sone finnes kun i dyphavs-grøfter. Trykket er ekstremt – over 1100 atmosfærer. Likevel lever det skapninger her. Amfipoder (rekeflokkdyr) kan finnes i enorme mengder. Reker, fisk og sjøagurker er funnet i Mariana-grøften. I 2020 ble det funnet plastforurensning i Mariana-grøften – dypeste sted kjent at menneskeavfall har nådd.',
+    dyr:'🦐 Dypvanns-amfipoder · 🐟 Hadalzone-snekkfisk · 🐛 Polychaeter · 🦠 Trykk-tolerante bakterier og arkéer'
+  }
+};
+
+document.querySelectorAll('[id^="sone-"]').forEach(el => {
+  if (el.id.includes('-hl')) return;
+  const key = el.id.replace('sone-','');
+  el.addEventListener('click', () => visSone(key));
+});
+
+let aktivSone = null;
+function visSone(key) {
+  const info = document.getElementById('dybde-info');
+  if (aktivSone === key) { aktivSone = null; info.classList.remove('synlig'); return; }
+  aktivSone = key;
+  const s = SONER[key]; if (!s) return;
+  info.innerHTML = `
+    <div>
+      <div class="di-header">
+        <div class="di-sone-farge" style="background:${s.farge}"></div>
+        <div>
+          <div class="di-tittel" style="color:${s.farge}">${s.tittel}</div>
+          <div class="di-dybde">${s.dybde}</div>
+        </div>
+      </div>
+      <div class="di-grid">${s.felt.map(f=>`<div class="di-felt"><div class="di-fl">${f.l}</div><div class="di-fv">${f.v}</div></div>`).join('')}</div>
+      <p class="di-tekst">${s.tekst}</p>
+    </div>
+    <div>
+      <div class="di-dyr">🐋 <strong>Typiske dyr i denne sonen:</strong><br>${s.dyr}</div>
+    </div>`;
+  info.classList.add('synlig');
+  info.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══ HAVDYR ══
+const DYR = [
+  {
+    id:'blahval', navn:'Blåhvalen', latin:'Balaenoptera musculus', type:'Hval · Pattedyr',
+    farge:'#3a8ab0', glow:'rgba(58,138,176,.06)',
+    fakta:[{l:'Lengde',v:'Up to 33 m'},{l:'Vekt',v:'Up to 200 tonn'},{l:'Diett',v:'Krill – 4 tonn/dag'},{l:'Lyd',v:'Kraftigste dyrelyd'}],
+    desc:'Det største dyret som noensinne har levd på jorda – større enn noen dinosaur.',
+    tekst:'Blåhvalen er det største dyret som noensinne er dokumentert – opp til 33 meter og 200 tonn. Hjertet alene veier ca. 600 kg. Den spiser nesten utelukkende krill ved å filtrere enorme mengder vann gjennom bardeplater. Blåhvalens «sang» kan høres på opptil 1 600 km avstand og er den kraftigste biologiske lyden kjent. De er klassifisert som truet art etter kraftig nedgang fra hvalfangst.',
+    morsomt:'Blåhvalens hjerte slår bare 5–6 ganger i minuttet. En menneskebaby kunne krype gjennom aorta!',
+    svg:`<svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="bv-dorsal" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a5a8e"/><stop offset="60%" stop-color="#1a3a6a"/><stop offset="100%" stop-color="#0a1a3a"/></linearGradient>
+  <linearGradient id="bv-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6a9ac4"/><stop offset="100%" stop-color="#4a7aa4"/></linearGradient>
+  <linearGradient id="bv-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#020c16"/><stop offset="100%" stop-color="#050e1c"/></linearGradient>
+  <radialGradient id="bv-body-glow" cx="30%" cy="30%" r="70%"><stop offset="0%" stop-color="rgba(42,90,142,.15)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+</defs>
+<rect width="520" height="240" fill="url(#bv-bg)"/>
+<!-- Undervanns-lys-stråler -->
+<g opacity=".06">
+  <path d="M80,0 Q70,120 60,240" stroke="#7dd3fc" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M200,0 Q192,120 185,240" stroke="#7dd3fc" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <path d="M350,0 Q345,120 340,240" stroke="#7dd3fc" stroke-width="10" fill="none" stroke-linecap="round"/>
+</g>
+<ellipse cx="260" cy="234" rx="240" ry="9" fill="rgba(0,0,0,.3)"/>
+<!-- HALE-FLUKER (karakteristisk halvmåne-form) -->
+<path d="M410,114 Q444,88 468,66 Q484,52 486,60 Q478,74 460,90 Q440,108 418,126Z" fill="url(#bv-dorsal)" stroke="#0a1a2a" stroke-width="1.2"/>
+<path d="M410,130 Q444,156 470,178 Q486,192 484,198 Q474,196 456,180 Q436,162 416,140Z" fill="url(#bv-dorsal)" stroke="#0a1a2a" stroke-width="1.2"/>
+<!-- Hale-profil -->
+<path d="M408,120 Q414,122 420,124 Q414,127 408,128 Q402,122 408,120Z" fill="#1a3a6a"/>
+<!-- KROPP (gigantisk, 30m lang!) -->
+<path d="M60,96 Q100,74 180,66 Q280,58 360,68 Q410,76 420,96 Q428,110 424,126 Q418,144 376,158 Q310,174 218,174 Q140,172 90,160 Q46,148 38,128 Q30,108 60,96Z" fill="url(#bv-dorsal)" stroke="#0a1a2a" stroke-width="2"/>
+<ellipse cx="240" cy="150" rx="180" ry="30" fill="url(#bv-body-glow)"/>
+<!-- Mage (lysere hvit) -->
+<path d="M70,140 Q100,164 180,170 Q280,176 360,162 Q406,148 422,128 Q415,148 374,162 Q308,176 220,176 Q140,174 88,162 Q52,152 50,136Z" fill="url(#bv-belly)"/>
+<!-- RYGG-FINNE (liten, men synlig) -->
+<path d="M315,68 Q324,46 336,36 Q344,44 340,60 Q335,72 324,78Z" fill="#1a3a6a" stroke="#0a1a2a" stroke-width="1.2"/>
+<!-- BRYST-FINNE venstre (lang, slank) -->
+<path d="M192,168 Q168,186 148,194 Q132,198 128,190 Q136,178 154,170 Q170,162 186,162Z" fill="#1a3a6a" stroke="#0a1a2a" stroke-width="1.2"/>
+<!-- Bryst-finne høyre (delvis synlig over) -->
+<path d="M192,80 Q172,68 154,62 Q140,58 138,66 Q144,76 162,80 Q178,84 188,84Z" fill="#243e6a" opacity=".8"/>
+<!-- HODE (massivt, rundt foran) -->
+<path d="M38,128 Q30,108 40,94 Q52,80 68,84 Q73,98 60,114 Q50,126 46,138Z" fill="url(#bv-dorsal)"/>
+<!-- Kjeft-linje (rett, karakteristisk) -->
+<path d="M42,130 Q56,138 80,144 Q110,150 145,152" fill="none" stroke="#0a1a2a" stroke-width="2.5"/>
+<!-- BALEIN-PLATER (synlige i kjeften) -->
+<g fill="rgba(40,80,130,.4)" stroke="rgba(40,80,130,.6)" stroke-width=".8">
+  <path d="M46,130 Q50,124 55,130"/><path d="M50,134 Q55,128 60,134"/>
+  <path d="M54,138 Q60,132 66,138"/><path d="M60,142 Q66,136 73,142"/>
+</g>
+<!-- ØYE (lite relativt til kroppen) -->
+<ellipse cx="58" cy="112" rx="10" ry="9" fill="#040810" stroke="#0a1a2a" stroke-width="1.5"/>
+<circle cx="58" cy="112" r="6.5" fill="#244870"/>
+<ellipse cx="58" cy="114" rx="3.5" ry="5" fill="#020408"/>
+<circle cx="54" cy="107" r="3" fill="rgba(255,255,255,.45)"/>
+<!-- PUSTEHULL (to hull, karakteristisk for blåhval) -->
+<ellipse cx="100" cy="68" rx="6" ry="4" fill="#0a1220" transform="rotate(-15,100,68)"/>
+<ellipse cx="112" cy="66" rx="5.5" ry="3.5" fill="#0a1220" transform="rotate(-12,112,66)"/>
+<!-- VANNSTØT-KOLONNE -->
+<path d="M106,60 Q100,42 98,22 Q102,14 107,22 Q109,42 108,60" fill="none" stroke="rgba(180,220,255,.5)" stroke-width="3" stroke-linecap="round"/>
+<path d="M107,22 Q103,12 108,5 Q113,10 112,20" fill="rgba(180,220,255,.3)"/>
+<!-- HUD-RILLER under kjeven (karakteristisk!) -->
+<g fill="none" stroke="rgba(30,80,140,.5)" stroke-width="1">
+  <path d="M56,134 Q72,126 96,130 Q118,134 140,132"/>
+  <path d="M62,142 Q80,134 108,138 Q130,142 152,140"/>
+  <path d="M70,150 Q90,142 120,146 Q145,150 168,148"/>
+  <path d="M80,158 Q103,150 135,154 Q160,158 184,156"/>
+  <path d="M92,166 Q118,158 152,162 Q178,166 200,164"/>
+</g>
+<!-- HUDE-FLEKKER (blåhval er faktisk flekkete) -->
+<g fill="rgba(20,60,110,.45)">
+  <ellipse cx="200" cy="78" rx="16" ry="8" transform="rotate(-12,200,78)"/>
+  <ellipse cx="248" cy="72" rx="14" ry="7" transform="rotate(-8,248,72)"/>
+  <ellipse cx="294" cy="72" rx="15" ry="7" transform="rotate(-5,294,72)"/>
+  <ellipse cx="220" cy="84" rx="11" ry="5"/>
+  <ellipse cx="266" cy="82" rx="12" ry="5.5" transform="rotate(4,266,82)"/>
+  <ellipse cx="312" cy="80" rx="10" ry="5" transform="rotate(6,312,80)"/>
+  <ellipse cx="340" cy="84" rx="9" ry="4.5" transform="rotate(8,340,84)"/>
+</g>
+<!-- Lys-refleksjon på ryggen -->
+<path d="M120,72 Q200,62 300,68 Q380,73 418,88" fill="none" stroke="rgba(80,140,200,.2)" stroke-width="4"/>
+</svg>`
+  },
+  {
+    id:'hai', navn:'Hvithaia', latin:'Carcharodon carcharias', type:'Bruskfisk',
+    farge:'#5090b0', glow:'rgba(80,144,176,.06)',
+    fakta:[{l:'Lengde',v:'Opp til 6 m'},{l:'Tenner',v:'~300 i flere rader'},{l:'Sanser',v:'Elektrosans, laterallinje'},{l:'Alder',v:'Opp til 70 år'}],
+    desc:'Toppen av næringskjeden i havet – 450 millioner år med lite endring.',
+    tekst:'Haier er 450 millioner år gamle – eldre enn trær. Hvithaia er en toppredator med et sofistikert sensorisk apparat: sidelinjesansen fanger opp trykkbølger, ampullene til Lorenzini oppdager elektriske felt fra byttet. Haier er ikke spesielt farlige for mennesker – vi er ikke deres naturlige byttedyr. Knapt 10 mennesker dør av haieangrep per år, mens mennesker dreper 100 millioner haier.',
+    morsomt:'Haier kan miste og fornye tenner gjennom hele livet – noen arter bytter 50 000 tenner over et livsløp!',
+    svg:`<svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sh-dorsal" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#486888"/><stop offset="70%" stop-color="#2a4868"/><stop offset="100%" stop-color="#102840"/></linearGradient>
+  <linearGradient id="sh-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8dce8"/><stop offset="100%" stop-color="#9ab8cc"/></linearGradient>
+  <linearGradient id="sh-fin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3a5878"/><stop offset="100%" stop-color="#0e2438"/></linearGradient>
+</defs>
+<rect width="520" height="240" fill="#050c14"/>
+<g opacity=".05">
+  <path d="M60,0 Q50,120 40,240" stroke="#7dd3fc" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M260,0 Q255,120 250,240" stroke="#7dd3fc" stroke-width="8" fill="none" stroke-linecap="round"/>
+</g>
+<ellipse cx="260" cy="234" rx="225" ry="8" fill="rgba(0,0,0,.3)"/>
+<!-- HALE (halvmåne – kraftig) -->
+<path d="M400,108 Q432,82 456,62 Q470,50 470,58 Q461,72 442,90 Q420,110 406,124Z" fill="url(#sh-dorsal)" stroke="#0a1a28" stroke-width="1.2"/>
+<path d="M400,132 Q432,158 458,178 Q472,190 470,196 Q460,192 440,174 Q418,154 404,136Z" fill="url(#sh-dorsal)" stroke="#0a1a28" stroke-width="1.2"/>
+<path d="M398,118 Q404,120 410,122 Q404,125 398,126 Q392,120 398,118Z" fill="#1a3050"/>
+<!-- KROPP (strømlinjeformet torpedo) -->
+<path d="M56,100 Q90,78 160,70 Q240,62 320,70 Q375,78 395,100 Q408,116 402,134 Q390,154 340,164 Q270,176 190,172 Q120,166 72,150 Q38,136 34,116 Q30,96 56,100Z" fill="url(#sh-dorsal)" stroke="#0a1a28" stroke-width="2"/>
+<!-- HVITHAIs karakteristiske hvitmage -->
+<path d="M66,148 Q100,170 180,178 Q258,184 336,170 Q382,156 400,132 Q390,156 344,168 Q264,180 184,176 Q106,170 70,152 Q42,140 40,124Z" fill="url(#sh-belly)"/>
+<!-- Counter-shading overgang (mørkere overside, lysere underside møtes) -->
+<path d="M65,114 Q100,100 164,94 Q240,88 314,94 Q368,100 395,114" fill="none" stroke="rgba(56,88,120,.5)" stroke-width="3"/>
+<!-- RYGG-FINNE (ikonisk stor og høy!) -->
+<path d="M228,70 Q240,36 256,16 Q268,26 264,46 Q258,66 248,78Z" fill="url(#sh-fin)" stroke="#0a1a28" stroke-width="1.5"/>
+<!-- Ryggfinne-skygge -->
+<path d="M248,78 Q255,60 262,40 Q265,30 264,26 Q268,36 265,54 Q260,70 250,79Z" fill="rgba(0,0,0,.2)"/>
+<!-- BRYSTFINNE venstre -->
+<path d="M196,164 Q172,182 150,190 Q136,194 132,186 Q140,174 158,166 Q174,158 192,158Z" fill="url(#sh-fin)" stroke="#0a1a28" stroke-width="1.2"/>
+<!-- Brystfinne høyre (over) -->
+<path d="M196,78 Q175,66 155,60 Q142,56 140,64 Q148,74 166,78 Q182,82 192,82Z" fill="#2a4868" opacity=".8"/>
+<!-- Bekkenfinne -->
+<path d="M316,156 Q319,172 311,178 Q303,180 301,172 Q303,162 312,156Z" fill="url(#sh-fin)" stroke="#0a1a28" stroke-width="1"/>
+<!-- HODE – spiss konisk snute -->
+<path d="M34,116 Q28,96 34,82 Q42,70 54,72 Q60,84 50,100 Q42,112 40,124Z" fill="url(#sh-dorsal)"/>
+<!-- Kjeft (U-formet, åpen litt) -->
+<path d="M30,110 Q38,94 56,86 Q72,80 92,84 Q108,88 118,100 Q110,86 90,82 Q70,78 52,84 Q38,92 33,106Z" fill="#0c1820"/>
+<!-- TENNER ØVRE (klassiske hvithaj-trekanter) -->
+<g fill="#f0ecd0" stroke="#d0c8a8" stroke-width=".6">
+  <path d="M36,96 Q40,84 44,96Z"/><path d="M46,91 Q50,78 54,91Z"/>
+  <path d="M57,88 Q61,74 65,88Z"/><path d="M68,86 Q72,72 76,86Z"/>
+  <path d="M79,85 Q83,72 87,85Z"/><path d="M90,86 Q93,74 96,86Z"/>
+  <path d="M99,88 Q102,77 105,88Z"/><path d="M108,92 Q110,82 113,92Z"/>
+</g>
+<!-- TENNER NEDRE -->
+<g fill="#f0ecd0" stroke="#d0c8a8" stroke-width=".6">
+  <path d="M35,108 Q39,98 43,108Z"/><path d="M45,107 Q49,97 53,107Z"/>
+  <path d="M56,106 Q60,96 64,106Z"/><path d="M67,105 Q71,96 75,105Z"/>
+  <path d="M78,105 Q82,96 86,105Z"/><path d="M89,106 Q92,98 95,106Z"/>
+  <path d="M98,108 Q100,100 103,108Z"/>
+</g>
+<!-- Kjeft-linje -->
+<path d="M30,112 Q46,122 72,128 Q100,133 130,132" fill="none" stroke="#0a1a28" stroke-width="2"/>
+<!-- ØYE (svart, "dead eye") -->
+<ellipse cx="50" cy="96" rx="12" ry="11" fill="#04080c" stroke="#0a1a28" stroke-width="2"/>
+<circle cx="50" cy="96" r="8" fill="#080c12"/>
+<circle cx="50" cy="96" r="4" fill="#020406"/>
+<circle cx="47" cy="92" r="2" fill="rgba(255,255,255,.18)"/>
+<!-- Øye-ring (niktitatende membran-hint) -->
+<path d="M40,90 Q48,85 61,88 Q66,93 64,100" fill="none" stroke="#0a1a28" stroke-width="1.5"/>
+<!-- AMPULLAE OF LORENZINI (elektroreseptorer på snuten!) -->
+<g fill="#0a1820" opacity=".85">
+  <circle cx="34" cy="98" r="2"/><circle cx="36" cy="94" r="2"/>
+  <circle cx="38" cy="91" r="2"/><circle cx="40" cy="88" r="2"/>
+  <circle cx="43" cy="86" r="1.8"/><circle cx="46" cy="84" r="1.8"/>
+  <circle cx="49" cy="83" r="1.8"/><circle cx="52" cy="82" r="1.5"/>
+</g>
+<!-- GJELLE-SPREKKER (5 stk!) -->
+<g fill="none" stroke="#0a1a28" stroke-width="1.8" stroke-linecap="round">
+  <path d="M76,80 Q70,92 74,106"/>
+  <path d="M85,78 Q79,90 82,104"/>
+  <path d="M94,77 Q88,89 90,103"/>
+  <path d="M103,77 Q98,89 99,103"/>
+  <path d="M112,78 Q107,90 108,104"/>
+</g>
+<!-- Gjelle-indre (rødere) -->
+<g fill="rgba(100,40,40,.3)" stroke="none">
+  <path d="M76,80 Q72,92 74,104 Q69,92 74,80Z"/>
+  <path d="M85,78 Q81,90 83,102 Q78,90 82,78Z"/>
+  <path d="M94,77 Q90,89 91,101 Q87,89 91,77Z"/>
+</g>
+<!-- LATERAL LINJE (sensorisk organ) -->
+<path d="M120,100 Q190,94 270,98 Q340,102 390,114" fill="none" stroke="rgba(90,140,180,.45)" stroke-width="1.8" stroke-dasharray="5 4"/>
+<!-- SCUTES (dorsal) -->
+<g fill="rgba(38,72,108,.35)">
+  <ellipse cx="160" cy="76" rx="12" ry="5" transform="rotate(-10,160,76)"/>
+  <ellipse cx="195" cy="72" rx="12" ry="5" transform="rotate(-7,195,72)"/>
+  <ellipse cx="230" cy="70" rx="13" ry="5"/><ellipse cx="265" cy="70" rx="13" ry="5"/>
+  <ellipse cx="300" cy="72" rx="12" ry="5" transform="rotate(5,300,72)"/>
+  <ellipse cx="335" cy="76" rx="11" ry="5" transform="rotate(8,335,76)"/>
+</g>
+</svg>`
+  },
+  {
+    id:'blekksprut', navn:'Kjempeblekkspruten', latin:'Architeuthis dux', type:'Blekksprut · Bløtdyr',
+    farge:'#7050a0', glow:'rgba(112,80,160,.06)',
+    fakta:[{l:'Lengde',v:'Opp til 13 m (med armer)'},{l:'Øyne',v:'Størst i dyreriket – 30 cm'},{l:'Dybde',v:'200–1000 m'},{l:'Levende obs.',v:'Først filmet 2004'}],
+    desc:'Det største virvelløse dyret – og en av klodens mest mystiske skapninger.',
+    tekst:'Kjempeblekkspruten har lenge vært omgitt av myter og mystikk – den inspirerte legenden om Kraken. Den har de største øynene i dyreriket (opptil 30 cm i diameter) – nødvendig for å se bioluminescens i det mørke mesopelagiske havet. Kjempeblekksprut er byttedyr for spermhvalen – hvaler er funnet med sugekoppmerker fra kamper i dypet.',
+    morsomt:'Kjempeblekkspruten ble aldri filmet levende i naturlige omgivelser før 2004 – for et dyr på 13 meter!',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="ks-mantle" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#7a3870"/><stop offset="55%" stop-color="#4a1848"/><stop offset="100%" stop-color="#200818"/></radialGradient>
+  <radialGradient id="ks-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(160,60,180,.3)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+  <radialGradient id="ks-eye" cx="32%" cy="32%" r="62%"><stop offset="0%" stop-color="#f0c030"/><stop offset="60%" stop-color="#c09010"/><stop offset="100%" stop-color="#604800"/></radialGradient>
+  <filter id="ks-glow-f"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="ks-bio"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<rect width="520" height="300" fill="#030810"/>
+<!-- Bioluminescens bakgrunn -->
+<g opacity=".12">
+  <circle cx="80" cy="60" r="30" fill="rgba(80,40,160,.6)" filter="url(#ks-bio)"/>
+  <circle cx="440" cy="100" r="24" fill="rgba(60,60,200,.5)" filter="url(#ks-bio)"/>
+  <circle cx="260" cy="240" r="20" fill="rgba(100,30,140,.4)" filter="url(#ks-bio)"/>
+</g>
+<ellipse cx="260" cy="296" rx="220" ry="8" fill="rgba(0,0,0,.3)"/>
+<!-- MANTELN (kroppen) – detaljert -->
+<ellipse cx="260" cy="90" rx="110" ry="40" fill="url(#ks-glow)" filter="url(#ks-glow-f)"/>
+<path d="M165,40 Q190,16 220,10 Q242,4 260,4 Q278,4 300,10 Q330,18 354,40 Q372,58 375,82 Q378,106 362,124 Q342,144 300,154 Q280,160 260,160 Q240,160 220,154 Q178,144 158,124 Q142,104 145,80 Q148,58 165,40Z" fill="url(#ks-mantle)" stroke="rgba(120,40,100,.5)" stroke-width="1.8"/>
+<!-- Mantel-overflate lysere topp -->
+<path d="M168,38 Q200,16 240,10 Q260,6 280,10 Q318,18 350,42" fill="rgba(160,80,160,.2)"/>
+<!-- FINNER (side-finner på manteln) -->
+<path d="M148,80 Q130,90 122,106 Q126,118 142,116 Q150,106 152,90Z" fill="rgba(100,30,80,.6)" stroke="rgba(140,60,120,.4)" stroke-width="1"/>
+<path d="M372,80 Q390,90 398,106 Q394,118 378,116 Q370,106 368,90Z" fill="rgba(100,30,80,.6)" stroke="rgba(140,60,120,.4)" stroke-width="1"/>
+<!-- KROMATOFORER (farge-celler, synlige gjennom semi-transparenthud) -->
+<g fill="rgba(200,80,180,.3)">
+  <circle cx="220" cy="50" r="12"/><circle cx="250" cy="40" r="14"/><circle cx="280" cy="42" r="12"/>
+  <circle cx="310" cy="52" r="11"/><circle cx="200" cy="68" r="10"/>
+  <circle cx="234" cy="60" r="12"/><circle cx="262" cy="58" r="14"/><circle cx="290" cy="62" r="12"/>
+  <circle cx="320" cy="68" r="10"/>
+  <circle cx="216" cy="82" r="11"/><circle cx="248" cy="76" r="12"/><circle cx="276" cy="78" r="12"/>
+  <circle cx="305" cy="82" r="11"/>
+</g>
+<!-- NEBB (skarpt papegøyenebb) -->
+<path d="M246,150 Q260,158 274,150 Q268,170 260,174 Q252,170 246,150Z" fill="#0c0808"/>
+<path d="M250,152 Q260,160 270,152 Q266,165 260,168 Q254,165 250,152Z" fill="#160c0c"/>
+<!-- ØYE VENSTRE (enorm, detaljert!) -->
+<ellipse cx="186" cy="114" rx="32" ry="30" fill="#0a0408" stroke="#3a1028" stroke-width="2"/>
+<circle cx="186" cy="114" r="24" fill="url(#ks-eye)"/>
+<!-- Pupill (horisontal spalte – blekksprut-pupill!) -->
+<path d="M164,114 Q175,108 186,108 Q197,108 208,114 Q197,120 186,120 Q175,120 164,114Z" fill="#040208"/>
+<!-- Øye-refleksjon -->
+<circle cx="176" cy="104" r="8" fill="rgba(255,255,255,.6)"/>
+<circle cx="172" cy="100" r="4" fill="rgba(255,255,255,.35)"/>
+<!-- Øye-ring (iris-detaljert) -->
+<circle cx="186" cy="114" r="24" fill="none" stroke="rgba(240,190,30,.3)" stroke-width="2"/>
+<!-- ØYE HØYRE -->
+<ellipse cx="334" cy="114" rx="32" ry="30" fill="#0a0408" stroke="#3a1028" stroke-width="2"/>
+<circle cx="334" cy="114" r="24" fill="url(#ks-eye)"/>
+<path d="M312,114 Q323,108 334,108 Q345,108 356,114 Q345,120 334,120 Q323,120 312,114Z" fill="#040208"/>
+<circle cx="324" cy="104" r="8" fill="rgba(255,255,255,.6)"/>
+<circle cx="320" cy="100" r="4" fill="rgba(255,255,255,.35)"/>
+<!-- Hodet mellom øynene -->
+<path d="M218,128 Q240,140 260,142 Q280,140 302,128" fill="none" stroke="rgba(120,50,100,.4)" stroke-width="2"/>
+<!-- ARMER (8 stk) med sugekopper -->
+<!-- Arm 1 -->
+<path d="M195,158 Q178,186 166,210 Q156,230 148,245 Q143,254 138,252 Q134,246 140,236 Q150,218 164,196 Q179,174 192,156Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<g fill="rgba(140,60,120,.5)" stroke="#7a2a60" stroke-width=".8">
+  <circle cx="178" cy="184" r="4.5"/><circle cx="168" cy="202" r="4"/><circle cx="156" cy="220" r="3.5"/><circle cx="146" cy="236" r="3"/>
+</g>
+<!-- Arm 2 -->
+<path d="M218,164 Q206,194 200,220 Q194,242 190,258 Q187,267 182,266 Q177,260 181,248 Q188,228 196,206 Q205,182 216,162Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<g fill="rgba(140,60,120,.5)" stroke="#7a2a60" stroke-width=".8">
+  <circle cx="204" cy="192" r="4.5"/><circle cx="198" cy="214" r="4"/><circle cx="192" cy="236" r="3.5"/><circle cx="188" cy="256" r="3"/>
+</g>
+<!-- Arm 3 -->
+<path d="M240,166 Q235,196 232,222 Q230,248 230,264 Q230,274 225,274 Q220,268 221,256 Q223,232 226,210 Q231,186 238,164Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- Arm 4 -->
+<path d="M260,168 Q260,198 260,224 Q260,250 260,266 Q260,276 255,276 Q250,270 251,256 Q253,232 255,208 Q257,186 258,166Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- Arm 5 -->
+<path d="M280,166 Q285,196 288,222 Q290,248 290,264 Q290,274 295,274 Q300,268 299,256 Q297,232 294,210 Q289,186 282,164Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- Arm 6 -->
+<path d="M302,164 Q312,194 318,220 Q324,244 324,260 Q325,270 330,270 Q335,264 332,250 Q328,228 320,208 Q311,184 304,162Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- Arm 7 -->
+<path d="M324,158 Q340,186 350,212 Q358,234 360,248 Q362,258 367,257 Q372,250 368,238 Q360,218 350,196 Q338,172 326,156Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- Arm 8 -->
+<path d="M344,152 Q364,178 378,202 Q390,222 396,238 Q400,248 404,246 Q407,238 402,226 Q392,208 377,186 Q362,164 346,150Z" fill="#5a1c4c" stroke="#3a0c2c" stroke-width="1.2"/>
+<!-- FANGSTTENTAKLER (2 ekstra lange!) -->
+<path d="M228,166 Q218,202 208,236 Q200,264 196,278 Q193,288 187,286 Q183,278 187,265 Q196,244 205,218 Q216,190 226,164Z" fill="#4a1440" stroke="#3a0c2c" stroke-width="1.5"/>
+<!-- Fangsttentakel-klubbe (sugekopper i ring) -->
+<g fill="none" stroke="rgba(180,60,150,.7)" stroke-width="1.5">
+  <circle cx="196" cy="276" r="7"/><circle cx="192" cy="282" r="6.5"/><circle cx="189" cy="287" r="6"/>
+</g>
+<g fill="rgba(180,60,150,.3)">
+  <circle cx="196" cy="276" r="4"/><circle cx="192" cy="282" r="3.5"/><circle cx="189" cy="287" r="3"/>
+</g>
+<path d="M292,166 Q302,202 312,236 Q320,264 324,278 Q327,288 333,286 Q337,278 333,265 Q324,244 315,218 Q304,190 294,164Z" fill="#4a1440" stroke="#3a0c2c" stroke-width="1.5"/>
+<g fill="none" stroke="rgba(180,60,150,.7)" stroke-width="1.5">
+  <circle cx="324" cy="276" r="7"/><circle cx="328" cy="282" r="6.5"/><circle cx="331" cy="287" r="6"/>
+</g>
+<g fill="rgba(180,60,150,.3)">
+  <circle cx="324" cy="276" r="4"/><circle cx="328" cy="282" r="3.5"/><circle cx="331" cy="287" r="3"/>
+</g>
+<!-- BIOLUMINESCENS-PRIKKER -->
+<g fill="rgba(200,100,220,.6)">
+  <circle cx="224" cy="48" r="3.5"/><circle cx="252" cy="36" r="4"/><circle cx="282" cy="40" r="3.5"/>
+  <circle cx="300" cy="54" r="3"/><circle cx="210" cy="64" r="3"/>
+  <circle cx="238" cy="56" r="3.5"/><circle cx="268" cy="54" r="4"/><circle cx="296" cy="60" r="3"/>
+</g>
+</svg>`
+  },
+  {
+    id:'korall', navn:'Korallrev', latin:'Anthozoa (orden)', type:'Korall · Korallrev-økosystem',
+    farge:'#e06040', glow:'rgba(224,96,64,.06)',
+    fakta:[{l:'Areal',v:'285 000 km² globalt'},{l:'Arter',v:'Hjem til 25% av alle havarter'},{l:'Dybde',v:'Oftest 0–40 m'},{l:'Truet av',v:'Blekning ved +1,5°C'}],
+    desc:'Havets regnskoger – sårbare økoasystemer truet av klimaendringer.',
+    tekst:'Korallrev er havets mest artsrike økosystemer – de «tropiske regnskogene» til havs. Koraller er faktisk dyr (polyppdyr) som lever i symbiose med fotosyntetiserende alger (zooxanthellae) som gir dem fargen. Ved temperaturstress mister korallene algene og «blekner» – uten alger dør de. Det store barrierereved har allerede opplevd 50% korallblekning. Over 1,5°C global oppvarming forventes de fleste rev å kollapse.',
+    morsomt:'Et korallrev du kan se er faktisk tusenvis av individuelle dyr som lever i en felles kalkstruktur. De er dyr, ikke planter!',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="kr-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#051822"/><stop offset="100%" stop-color="#020c16"/></linearGradient>
+  <linearGradient id="kr-ko1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f07030"/><stop offset="60%" stop-color="#c84818"/><stop offset="100%" stop-color="#781808"/></linearGradient>
+  <linearGradient id="kr-ko2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f4a828"/><stop offset="100%" stop-color="#a06010"/></linearGradient>
+  <linearGradient id="kr-ko3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#44d070"/><stop offset="100%" stop-color="#1a7030"/></linearGradient>
+  <linearGradient id="kr-ko4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5a9ee0"/><stop offset="100%" stop-color="#1a4898"/></linearGradient>
+  <radialGradient id="kr-light" cx="50%" cy="0%" r="80%"><stop offset="0%" stop-color="rgba(100,200,255,.15)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+</defs>
+<rect width="520" height="300" fill="url(#kr-water)"/>
+<rect width="520" height="300" fill="url(#kr-light)"/>
+<!-- Undervanns-lys-stråler -->
+<g opacity=".1">
+  <path d="M60,0 Q50,150 40,300" stroke="#7dd3fc" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <path d="M200,0 Q194,150 188,300" stroke="#7dd3fc" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M380,0 Q376,150 372,300" stroke="#7dd3fc" stroke-width="11" fill="none" stroke-linecap="round"/>
+</g>
+<!-- HAVBUNN -->
+<rect x="0" y="265" width="520" height="35" fill="#0c1824"/>
+<path d="M0,265 Q60,258 120,265 Q180,272 240,265 Q300,258 360,265 Q420,272 520,265 L520,300 L0,300Z" fill="#101e2c"/>
+<!-- Bunn-sand -->
+<path d="M0,272 Q80,266 160,272 Q240,278 320,272 Q400,266 520,272" fill="none" stroke="rgba(80,120,160,.3)" stroke-width="2"/>
+<!-- KORALL 1 – Stor rød greining (staghorn coral) -->
+<g>
+  <path d="M186,265 L186,218 Q184,202 178,188 Q172,174 174,160 L182,158 Q182,172 186,186 Q192,200 194,218 L196,265Z" fill="url(#kr-ko1)" stroke="#880c08" stroke-width="1.5"/>
+  <path d="M182,204 Q168,186 158,168 Q152,156 154,144 L162,142 Q161,154 166,164 Q175,180 189,198Z" fill="url(#kr-ko1)" stroke="#880c08" stroke-width="1.2"/>
+  <path d="M192,216 Q208,196 216,176 Q222,160 220,148 L212,146 Q212,158 208,172 Q200,192 192,210Z" fill="url(#kr-ko1)" stroke="#880c08" stroke-width="1.2"/>
+  <path d="M180,190 Q162,172 154,152 L158,146 Q168,166 178,184Z" fill="url(#kr-ko1)" stroke="#880c08" stroke-width="1" opacity=".8"/>
+  <path d="M194,202 Q212,182 218,162 L214,156 Q208,176 194,196Z" fill="url(#kr-ko1)" stroke="#880c08" stroke-width="1" opacity=".8"/>
+</g>
+<!-- Korall 1 polypper (blomstformet) -->
+<g fill="url(#kr-ko1)" stroke="#c03010" stroke-width=".8">
+  <circle cx="182" cy="158" r="6.5"/><circle cx="162" cy="142" r="6"/>
+  <circle cx="154" cy="144" r="5.5"/><circle cx="212" cy="146" r="6"/>
+  <circle cx="220" cy="148" r="5.5"/><circle cx="158" cy="146" r="5"/>
+  <circle cx="214" cy="156" r="5"/>
+</g>
+<!-- Polypp-tentakler -->
+<g stroke="rgba(240,120,60,.6)" stroke-width=".9" fill="none">
+  <path d="M182,156 L179,148 M182,156 L184,148 M182,156 L178,152 M182,156 L186,152"/>
+  <path d="M212,144 L209,136 M212,144 L214,136 M212,144 L208,140 M212,144 L216,140"/>
+  <path d="M162,140 L159,132 M162,140 L164,132 M162,140 L158,136 M162,140 L166,136"/>
+</g>
+<!-- KORALL 2 – Gul/oransje branching (links) -->
+<g>
+  <path d="M88,265 L88,228 Q86,212 80,196 Q75,184 76,170 L84,168 Q84,182 88,196 Q94,212 95,228 L96,265Z" fill="url(#kr-ko2)" stroke="#8a5208" stroke-width="1.4"/>
+  <path d="M84,214 Q72,196 64,178 Q59,166 60,154 L68,152 Q68,164 72,174 Q80,190 88,208Z" fill="url(#kr-ko2)" stroke="#8a5208" stroke-width="1.2"/>
+  <path d="M90,220 Q104,200 110,182 Q115,168 114,156 L106,154 Q106,166 103,180 Q96,198 92,216Z" fill="url(#kr-ko2)" stroke="#8a5208" stroke-width="1.2"/>
+</g>
+<g fill="url(#kr-ko2)" stroke="#c07810" stroke-width=".8">
+  <circle cx="84" cy="168" r="6.5"/><circle cx="68" cy="152" r="6"/>
+  <circle cx="60" cy="154" r="5.5"/><circle cx="106" cy="154" r="6"/>
+  <circle cx="114" cy="156" r="5.5"/>
+</g>
+<g stroke="rgba(240,170,40,.6)" stroke-width=".9" fill="none">
+  <path d="M84,166 L81,158 M84,166 L86,158 M84,166 L80,162 M84,166 L88,162"/>
+  <path d="M68,150 L65,142 M68,150 L70,142 M68,150 L64,146 M68,150 L72,146"/>
+</g>
+<!-- KORALL 3 – Grønn (høyre) -->
+<g>
+  <path d="M360,265 L360,228 Q358,212 352,196 L358,194 Q362,210 363,228 L364,265Z" fill="url(#kr-ko3)" stroke="#106820" stroke-width="1.4"/>
+  <path d="M356,214 Q344,196 336,178 Q331,165 332,154 L340,152 Q339,164 343,175 Q351,192 360,210Z" fill="url(#kr-ko3)" stroke="#106820" stroke-width="1.2"/>
+  <path d="M362,220 Q375,200 380,182 Q384,168 382,156 L374,154 Q374,166 372,180 Q366,198 362,216Z" fill="url(#kr-ko3)" stroke="#106820" stroke-width="1.2"/>
+</g>
+<g fill="url(#kr-ko3)" stroke="#30a840" stroke-width=".8">
+  <circle cx="358" cy="194" r="6.5"/><circle cx="340" cy="152" r="6"/>
+  <circle cx="332" cy="154" r="5.5"/><circle cx="374" cy="154" r="6"/>
+  <circle cx="382" cy="156" r="5.5"/>
+</g>
+<!-- BLÅ VIFTEKORALL (gorgonian fan) -->
+<path d="M248,265 L248,170 Q246,158 248,148" stroke="#3a78c0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<g fill="none" stroke="rgba(70,140,220,.4)" stroke-width="1">
+  <path d="M225,208 Q248,200 271,208"/><path d="M220,194 Q248,186 276,194"/>
+  <path d="M217,180 Q248,172 279,180"/><path d="M218,166 Q248,158 278,166"/>
+  <path d="M222,154 Q248,147 274,154"/>
+</g>
+<path d="M222,208 Q218,194 216,180 Q217,166 222,154 Q248,148 274,154 Q278,166 278,180 Q276,194 271,208 Q248,204 222,208Z" fill="rgba(50,120,200,.08)" stroke="rgba(60,130,210,.35)" stroke-width="1.2"/>
+<!-- NEMO-FISK (klovnfisk!) -->
+<g transform="translate(300,205)">
+  <ellipse cx="0" cy="0" rx="18" ry="13" fill="#f07818" stroke="#c05010" stroke-width="1.2"/>
+  <!-- Hvite striper (3 stk på klovnfisk) -->
+  <path d="M-6,-13 Q-5,13 -5,13 M2,-13 Q3,13 3,13" stroke="white" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M-6,-12 Q-5,12 -5,12 M2,-12 Q3,12 3,12" stroke="black" stroke-width=".9" fill="none"/>
+  <!-- Hale -->
+  <path d="M18,0 L27,-10 L30,0 L27,10 Z" fill="#f07818" stroke="#c05010" stroke-width="1.2"/>
+  <!-- Hale hvit linje -->
+  <path d="M22,-8 L22,8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Øye -->
+  <circle cx="-8" cy="-3" r="5" fill="white"/>
+  <circle cx="-8" cy="-3" r="3" fill="black"/>
+  <circle cx="-7" cy="-4" r="1.5" fill="white"/>
+  <!-- Mageflater og skjell -->
+  <path d="M-14,-5 Q-8,-8 0,-6 Q8,-4 14,-2" fill="none" stroke="rgba(200,90,20,.4)" stroke-width="1"/>
+  <path d="M-15,0 Q-8,-3 0,-1 Q8,1 15,3" fill="none" stroke="rgba(200,90,20,.3)" stroke-width=".8"/>
+</g>
+<!-- Liten blå fisk -->
+<g transform="translate(140,228)">
+  <ellipse cx="0" cy="0" rx="12" ry="8" fill="#3878e0" stroke="#1848b0" stroke-width="1"/>
+  <path d="M12,0 L18,-6 L20,0 L18,6Z" fill="#3878e0" stroke="#1848b0" stroke-width="1"/>
+  <path d="M6,-8 L6,8" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+  <circle cx="-5" cy="-2" r="3" fill="white"/>
+  <circle cx="-5" cy="-2" r="1.8" fill="black"/>
+</g>
+<!-- Sjøstjerne -->
+<g transform="translate(440,274)" fill="#e83820" stroke="#a01808" stroke-width=".8">
+  <path d="M0,-16 L3,-5 L16,-5 L6,2 L10,16 L0,9 L-10,16 L-6,2 L-16,-5 L-3,-5 Z"/>
+</g>
+<!-- Sjøpølse -->
+<path d="M50,278 Q80,272 110,278 Q100,283 80,285 Q60,283 50,278Z" fill="#7a3828" stroke="#5a2818" stroke-width="1.2"/>
+<g fill="none" stroke="#9a4838" stroke-width=".8" opacity=".7">
+  <circle cx="65" cy="278" r="3"/><circle cx="78" cy="275" r="3"/><circle cx="91" cy="275" r="3"/><circle cx="104" cy="278" r="3"/>
+</g>
+</svg>`
+  },
+  {
+    id:'spermhval', navn:'Spermhvalen', latin:'Physeter macrocephalus', type:'Hval · Tannhval',
+    farge:'#406080', glow:'rgba(64,96,128,.06)',
+    fakta:[{l:'Lengde',v:'Opp til 20 m'},{l:'Dybde',v:'Dykker til 3 000 m'},{l:'Hjerne',v:'Størst i dyreriket (8 kg)'},{l:'Lyd',v:'«Klikk» for ekolokasjon'}],
+    desc:'Dypeste dykker blant pattedyr – jakter blekksprut i balmørkt dyp.',
+    tekst:'Spermhvalen holder rekorden som dypeste dykker blant pattedyr – dokumentert til over 3 000 meters dybde og lengder på over 90 minutter. Den jakter primært på kjempeblekksprut i de mørke dypene ved hjelp av ekolokasjon – de kraftigste biologiske lydene produsert av noe dyr. Spermhvalen har den største hjernen i dyreriket. Spermaceti-orgelet i hodet (100 % hvalolje) ble brukt til dykkebuoyancy-regulering og er det dyret ble jaktet for.',
+    morsomt:'Spermhval har kompliaserte sosiale strukturer og dialekter – grupper av hvaler har unike klikke-mønstre som overføres fra mor til unge, akkurat som menneskelige kulturer.',
+    svg:`<svg viewBox="0 0 520 240" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sw-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#383020"/><stop offset="55%" stop-color="#282218"/><stop offset="100%" stop-color="#181208"/></linearGradient>
+  <linearGradient id="sw-belly" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6a5c40"/><stop offset="100%" stop-color="#4a3c28"/></linearGradient>
+  <radialGradient id="sw-head" cx="20%" cy="35%" r="80%"><stop offset="0%" stop-color="#483828"/><stop offset="100%" stop-color="#201808"/></radialGradient>
+</defs>
+<rect width="520" height="240" fill="#060808"/>
+<g opacity=".05">
+  <path d="M100,0 Q90,120 80,240" stroke="#4a7a9a" stroke-width="12" fill="none" stroke-linecap="round"/>
+</g>
+<ellipse cx="260" cy="234" rx="240" ry="8" fill="rgba(0,0,0,.3)"/>
+<!-- HALE-FLUKER -->
+<path d="M400,108 Q430,84 454,64 Q468,52 466,60 Q456,74 436,94 Q414,114 406,128Z" fill="url(#sw-body)" stroke="#0e0c06" stroke-width="1.2"/>
+<path d="M400,130 Q430,156 456,178 Q470,190 466,196 Q456,190 434,172 Q410,152 404,134Z" fill="url(#sw-body)" stroke="#0e0c06" stroke-width="1.2"/>
+<path d="M398,118 Q404,120 410,122 Q404,126 398,128 Q392,122 398,118Z" fill="#201a10"/>
+<!-- KROPP (enorm) -->
+<path d="M60,96 Q84,76 140,68 Q210,60 290,64 Q355,68 390,82 Q414,92 416,108 Q420,124 410,138 Q394,156 348,168 Q286,180 210,178 Q148,174 96,158 Q56,144 44,122 Q38,104 60,96Z" fill="url(#sw-body)" stroke="#0e0c06" stroke-width="2"/>
+<!-- Mage -->
+<path d="M74,148 Q106,168 188,176 Q278,182 356,164 Q396,150 410,132 Q400,154 354,166 Q278,178 190,174 Q106,168 76,150 Q52,138 48,120Z" fill="url(#sw-belly)"/>
+<!-- RYGG-PUKLER (karakteristisk for spermhval) -->
+<path d="M265,65 Q276,50 288,44 Q298,52 296,66 Q288,74 274,76Z" fill="#201a10" stroke="#0e0c06" stroke-width="1"/>
+<g fill="#1e1810" stroke="#0e0c06" stroke-width=".9">
+  <path d="M290,70 Q298,58 308,54 Q315,61 312,72 Q306,78 295,78Z"/>
+  <path d="M310,78 Q316,67 324,64 Q329,70 328,80 Q322,85 314,84Z"/>
+  <path d="M326,88 Q330,78 337,76 Q341,82 340,90 Q335,95 328,93Z"/>
+  <path d="M340,100 Q343,91 349,90 Q352,96 351,104 Q346,108 340,106Z"/>
+</g>
+<!-- ENORMT FIRKANTA HODE (50% av kroppen!) -->
+<path d="M36,122 Q30,100 38,84 Q46,70 60,70 Q72,72 76,86 Q68,104 52,120 Q44,130 42,138Z" fill="url(#sw-head)"/>
+<!-- Hode-profil (flat front – karakteristisk) -->
+<path d="M38,84 Q44,68 60,68 Q72,70 76,84" fill="none" stroke="#382818" stroke-width="2"/>
+<path d="M38,86 Q38,74 42,66 Q50,62 60,62 Q72,64 78,72" fill="#1a1208" opacity=".5"/>
+<!-- SPERMACET-ORGAN (fyller hodet!) -->
+<path d="M38,86 Q52,76 68,72 Q80,70 82,78 Q76,86 62,90 Q48,94 40,92Z" fill="rgba(80,60,30,.25)" stroke="rgba(100,80,40,.3)" stroke-width="1"/>
+<text x="58" y="82" font-family="sans-serif" font-size="7" fill="rgba(160,130,70,.4)" text-anchor="middle" font-style="italic">spermacet</text>
+<!-- TANNKJEFT (smal, nedre) -->
+<path d="M38,130 Q50,140 72,148 Q96,155 122,156" fill="none" stroke="#0e0c06" stroke-width="2.5"/>
+<!-- Kjeft-linje -->
+<path d="M40,118 Q52,108 70,103 Q88,98 108,102 Q122,106 130,116 Q122,104 106,100 Q88,96 70,100 Q52,106 42,114Z" fill="#0e0808" opacity=".7"/>
+<!-- TENNER (koniske, i nedre kjeve) -->
+<g fill="#d4c890" stroke="#a09862" stroke-width=".8">
+  <path d="M44,120 Q48,110 52,120Z"/><path d="M54,128 Q57,118 61,128Z"/>
+  <path d="M64,134 Q67,124 71,134Z"/><path d="M74,139 Q77,130 80,139Z"/>
+  <path d="M83,143 Q85,135 88,143Z"/>
+</g>
+<!-- ØYE (bakpå det enorme hodet) -->
+<ellipse cx="80" cy="108" rx="10" ry="9" fill="#080604" stroke="#0e0c06" stroke-width="1.5"/>
+<circle cx="80" cy="108" r="6.5" fill="#302018"/>
+<circle cx="80" cy="108" r="3.5" fill="#040202"/>
+<circle cx="77" cy="104" r="2.5" fill="rgba(255,255,255,.3)"/>
+<!-- PUSTEHULL (forskyvet til venstre – unikt for spermhval!) -->
+<ellipse cx="58" cy="64" rx="6" ry="4.5" fill="#0c0a04" transform="rotate(-20,58,64)"/>
+<!-- Vannstøt (skrå til venstre – karakteristisk!) -->
+<path d="M54,58 Q47,42 44,24 Q48,18 53,26 Q55,42 57,58" fill="none" stroke="rgba(180,210,240,.4)" stroke-width="3" stroke-linecap="round"/>
+<path d="M53,26 Q48,15 53,8 Q58,14 57,24" fill="rgba(180,210,240,.25)"/>
+<!-- ARR FRA BLEKKSPRUT (kjente sugekopp-arr!) -->
+<g fill="none" stroke="rgba(120,100,60,.45)" stroke-width="1.5">
+  <circle cx="90" cy="112" r="6"/><circle cx="100" cy="107" r="5"/>
+  <circle cx="88" cy="124" r="5.5"/><circle cx="100" cy="120" r="5"/>
+  <circle cx="96" cy="132" r="4.5"/><circle cx="108" cy="116" r="4.5"/>
+</g>
+<!-- BRYSTFINNE -->
+<path d="M192,166 Q168,184 148,192 Q132,196 128,188 Q136,176 154,168 Q170,160 188,160Z" fill="#241c10" stroke="#0e0c06" stroke-width="1.2"/>
+<!-- HUD-TEKSTUR (rynker og folder) -->
+<g fill="none" stroke="rgba(50,40,20,.45)" stroke-width=".9">
+  <path d="M100,100 Q130,94 170,97 Q208,100 240,104"/>
+  <path d="M108,110 Q140,104 182,107 Q220,110 255,114"/>
+  <path d="M115,120 Q150,114 194,117 Q234,120 268,124"/>
+</g>
+</svg>`
+  },
+  {
+    id:'maneter', navn:'Maneten', latin:'Medusozoa (underphylum)', type:'Nesledyr · Medusa',
+    farge:'#60b0c0', glow:'rgba(96,176,192,.05)',
+    fakta:[{l:'Kropp',v:'95% vann'},{l:'Hjerne/hjerte',v:'Ingen – men nervenettverk'},{l:'Alder',v:'~700 millioner år'},{l:'Udødelighet',v:'T. dohrnii: klinisk udødelig?'}],
+    desc:'Uten hjerne, hjerte eller blod – likevel blant de mest vellykkede dyrene på jorda.',
+    tekst:'Maneter er blant de eldste flercellede dyrene – de oppsto for ~700 millioner år siden og har overlevd alle fem masseuttydinger. De har intet hjerne, intet hjerte, intet blod og er 95% vann – likevel jaktes, svømmes og formerer de seg effektivt med et simpelt nervenettverk. Turritopsis dohrnii («den udødelige maneten») kan ved stress gå tilbake til polypstadiet og starte livet på nytt – en form for biologisk udødelighet.',
+    morsomt:'Turritopsis dohrnii er biologisk udødelig – den kan tilbakestille seg til polyp-stadiet etter å ha nådd kjønnsmodenhet og «starte på nytt» et ubegrenset antall ganger.',
+    svg:`<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="mj-bell1" cx="45%" cy="30%" r="65%">
+    <stop offset="0%" stop-color="rgba(190,90,220,.7)"/><stop offset="55%" stop-color="rgba(120,40,160,.4)"/><stop offset="100%" stop-color="rgba(50,10,80,.15)"/>
+  </radialGradient>
+  <radialGradient id="mj-bell2" cx="45%" cy="30%" r="65%">
+    <stop offset="0%" stop-color="rgba(80,180,240,.65)"/><stop offset="55%" stop-color="rgba(40,100,180,.35)"/><stop offset="100%" stop-color="rgba(10,40,100,.12)"/>
+  </radialGradient>
+  <radialGradient id="mj-bell3" cx="45%" cy="30%" r="65%">
+    <stop offset="0%" stop-color="rgba(200,80,100,.6)"/><stop offset="55%" stop-color="rgba(130,30,60,.35)"/><stop offset="100%" stop-color="rgba(60,10,30,.12)"/>
+  </radialGradient>
+  <filter id="mj-glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="mj-bio"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<rect width="520" height="300" fill="#020408"/>
+<!-- Bioluminescens bakgrunns-glow -->
+<g opacity=".2">
+  <circle cx="100" cy="50" r="45" fill="rgba(80,30,160,.5)" filter="url(#mj-bio)"/>
+  <circle cx="420" cy="80" r="38" fill="rgba(40,60,200,.4)" filter="url(#mj-bio)"/>
+  <circle cx="260" cy="220" r="32" fill="rgba(120,40,140,.4)" filter="url(#mj-bio)"/>
+  <circle cx="70" cy="200" r="25" fill="rgba(60,120,200,.3)" filter="url(#mj-bio)"/>
+  <circle cx="460" cy="220" r="28" fill="rgba(160,40,80,.3)" filter="url(#mj-bio)"/>
+</g>
+<!-- MANET 1 – STOR, SENTRAL (Chrysaora-type lys-manet) -->
+<g filter="url(#mj-glow)">
+  <!-- Ytre glow-sirkel -->
+  <circle cx="260" cy="75" r="90" fill="rgba(180,80,220,.08)"/>
+  <!-- BELL (klokke/hatt) – detaljert -->
+  <path d="M178,78 Q182,30 210,14 Q234,2 260,2 Q286,2 310,14 Q338,30 342,78 Q324,104 292,114 Q276,118 260,118 Q244,118 228,114 Q196,104 178,78Z" fill="url(#mj-bell1)" stroke="rgba(200,100,220,.6)" stroke-width="2"/>
+  <!-- Bell indre struktur (radiale kanaler) -->
+  <g fill="none" stroke="rgba(230,140,250,.4)" stroke-width="1.2">
+    <line x1="260" y1="18" x2="260" y2="118"/>
+    <line x1="260" y1="68" x2="200" y2="34"/><line x1="260" y1="68" x2="320" y2="34"/>
+    <line x1="260" y1="68" x2="188" y2="72"/><line x1="260" y1="68" x2="332" y2="72"/>
+    <line x1="260" y1="68" x2="200" y2="105"/><line x1="260" y1="68" x2="320" y2="105"/>
+  </g>
+  <!-- Sirkular muskelring -->
+  <ellipse cx="260" cy="68" rx="62" ry="48" fill="none" stroke="rgba(220,120,240,.5)" stroke-width="2"/>
+  <ellipse cx="260" cy="72" rx="40" ry="32" fill="none" stroke="rgba(220,120,240,.35)" stroke-width="1.5"/>
+  <!-- GONADER (synlige gjennom bellen – lys rosa) -->
+  <ellipse cx="234" cy="62" rx="12" ry="20" fill="rgba(255,140,190,.4)" transform="rotate(-18,234,62)"/>
+  <ellipse cx="286" cy="62" rx="12" ry="20" fill="rgba(255,140,190,.4)" transform="rotate(18,286,62)"/>
+  <!-- Gonader skygge -->
+  <ellipse cx="238" cy="70" rx="8" ry="14" fill="rgba(200,80,140,.2)" transform="rotate(-18,238,70)"/>
+  <ellipse cx="282" cy="70" rx="8" ry="14" fill="rgba(200,80,140,.2)" transform="rotate(18,282,70)"/>
+  <!-- Bell-kant (ruffled/bølget) -->
+  <path d="M178,78 Q182,88 188,82 Q192,90 198,84 Q202,92 208,86 Q212,94 218,88 Q222,96 228,90 Q232,98 238,92 Q242,100 248,94 Q252,102 260,96 Q268,102 272,94 Q278,100 282,92 Q288,98 292,90 Q298,96 302,88 Q308,94 312,86 Q318,92 322,84 Q328,90 332,82 Q338,88 342,78" fill="none" stroke="rgba(200,100,220,.7)" stroke-width="2"/>
+  <!-- Undertentakler gjennom bell-kanten -->
+  <g fill="rgba(200,120,240,.3)">
+    <circle cx="188" cy="82" r="4"/><circle cx="202" cy="88" r="4"/>
+    <circle cx="218" cy="90" r="4.5"/><circle cx="234" cy="94" r="4.5"/>
+    <circle cx="250" cy="96" r="5"/><circle cx="268" cy="96" r="5"/>
+    <circle cx="284" cy="94" r="4.5"/><circle cx="300" cy="90" r="4.5"/>
+    <circle cx="316" cy="88" r="4"/><circle cx="330" cy="82" r="4"/>
+  </g>
+  <!-- TENTAKLER (lange, stikkende) -->
+  <g stroke="rgba(200,90,230,.65)" stroke-width="1.4" fill="none">
+    <path d="M188,82 Q182,102 174,124 Q166,146 158,166 Q152,180 148,194 Q144,206 142,214 Q140,220 136,218"/>
+    <path d="M202,88 Q198,110 192,134 Q186,158 180,180 Q175,198 172,214 Q170,226 166,232"/>
+    <path d="M218,90 Q215,114 210,140 Q206,164 202,186 Q198,204 196,220 Q194,234 192,244"/>
+    <path d="M234,94 Q232,118 230,143 Q228,166 226,188 Q224,208 223,226 Q222,240 222,252"/>
+    <path d="M250,96 Q250,120 250,146 Q250,170 250,192 Q250,212 250,230 Q250,246 250,258"/>
+    <path d="M268,96 Q270,120 272,146 Q274,170 276,192 Q278,212 279,230 Q280,246 280,258"/>
+    <path d="M284,94 Q288,118 292,143 Q296,166 300,188 Q303,208 305,226 Q307,240 308,252"/>
+    <path d="M300,90 Q306,114 312,140 Q318,164 324,186 Q329,204 333,220 Q336,234 338,244"/>
+    <path d="M316,88 Q324,110 330,134 Q337,158 342,180 Q346,198 350,214 Q353,226 354,232"/>
+    <path d="M330,82 Q340,102 348,124 Q356,146 362,166 Q367,180 372,194 Q375,206 376,214 Q378,220 382,218"/>
+  </g>
+  <!-- Oral armer (bredere, flettet) -->
+  <g stroke="rgba(220,110,245,.6)" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <path d="M234,116 Q224,142 216,166 Q208,188 204,210 Q200,228 198,244"/>
+    <path d="M286,116 Q296,142 304,166 Q312,188 316,210 Q320,228 322,244"/>
+  </g>
+  <!-- Bioluminescens-prikker langs tentakler -->
+  <g fill="rgba(230,120,255,.7)">
+    <circle cx="174" cy="124" r="3"/><circle cx="160" cy="160" r="3.5"/><circle cx="148" cy="194" r="3"/>
+    <circle cx="190" cy="135" r="3"/><circle cx="180" cy="165" r="3.5"/><circle cx="170" cy="195" r="3"/>
+    <circle cx="210" cy="142" r="3.5"/><circle cx="204" cy="172" r="3"/><circle cx="198" cy="202" r="3"/>
+    <circle cx="250" cy="148" r="4"/><circle cx="250" cy="180" r="3.5"/><circle cx="250" cy="212" r="3"/>
+    <circle cx="292" cy="145" r="3.5"/><circle cx="300" cy="175" r="3"/><circle cx="308" cy="205" r="3"/>
+    <circle cx="332" cy="135" r="3"/><circle cx="342" cy="165" r="3.5"/><circle cx="350" cy="195" r="3"/>
+    <circle cx="350" cy="124" r="3"/><circle cx="364" cy="160" r="3.5"/><circle cx="372" cy="194" r="3"/>
+  </g>
+</g>
+<!-- MANET 2 – liten, blå (bakgrunn venstre) -->
+<g opacity=".75" filter="url(#mj-glow)">
+  <circle cx="82" cy="50" r="50" fill="rgba(60,140,220,.06)"/>
+  <path d="M42,56 Q44,24 60,14 Q70,8 82,8 Q94,8 104,14 Q120,24 122,56 Q110,74 94,80 Q88,82 82,82 Q76,82 70,80 Q54,74 42,56Z" fill="url(#mj-bell2)" stroke="rgba(80,160,240,.55)" stroke-width="1.5"/>
+  <g fill="none" stroke="rgba(100,180,250,.35)" stroke-width=".9">
+    <line x1="82" y1="14" x2="82" y2="82"/><line x1="82" y1="48" x2="52" y2="28"/>
+    <line x1="82" y1="48" x2="112" y2="28"/><line x1="82" y1="48" x2="44" y2="55"/>
+    <line x1="82" y1="48" x2="120" y2="55"/>
+  </g>
+  <ellipse cx="82" cy="48" rx="28" ry="22" fill="none" stroke="rgba(100,180,250,.4)" stroke-width="1.2"/>
+  <path d="M42,56 Q44,63 48,59 Q52,65 57,61 Q61,67 67,63 Q71,69 77,65 Q81,71 82,67 Q83,71 88,65 Q93,69 98,63 Q103,67 108,61 Q113,65 117,59 Q121,63 122,56" fill="none" stroke="rgba(80,160,240,.55)" stroke-width="1.5"/>
+  <g stroke="rgba(80,160,240,.5)" stroke-width=".9" fill="none">
+    <path d="M52,62 Q46,80 42,98 Q38,114 36,128 Q34,138 32,146"/>
+    <path d="M62,66 Q57,86 54,108 Q51,126 50,142"/>
+    <path d="M72,68 Q69,90 68,112 Q67,130 67,148"/>
+    <path d="M82,68 Q82,90 82,112 Q82,130 82,148"/>
+    <path d="M92,68 Q95,90 96,112 Q97,130 97,148"/>
+    <path d="M102,66 Q107,86 110,108 Q113,126 114,142"/>
+    <path d="M112,62 Q118,80 122,98 Q126,114 128,128 Q130,138 132,146"/>
+  </g>
+  <g fill="rgba(80,180,255,.6)">
+    <circle cx="42" cy="98" r="2.5"/><circle cx="38" cy="120" r="2.5"/>
+    <circle cx="54" cy="108" r="2.5"/><circle cx="51" cy="130" r="2.5"/>
+    <circle cx="82" cy="112" r="3"/><circle cx="82" cy="136" r="2.5"/>
+    <circle cx="112" cy="108" r="2.5"/><circle cx="116" cy="130" r="2.5"/>
+  </g>
+</g>
+<!-- MANET 3 – liten, rød (bakgrunn høyre) -->
+<g opacity=".65" filter="url(#mj-glow)">
+  <path d="M398,62 Q400,28 418,16 Q428,10 440,10 Q452,10 462,16 Q480,28 482,62 Q470,80 454,86 Q448,88 440,88 Q432,88 426,86 Q410,80 398,62Z" fill="url(#mj-bell3)" stroke="rgba(220,80,100,.5)" stroke-width="1.5"/>
+  <g fill="none" stroke="rgba(240,100,120,.35)" stroke-width=".9">
+    <line x1="440" y1="16" x2="440" y2="88"/><line x1="440" y1="52" x2="408" y2="32"/>
+    <line x1="440" y1="52" x2="472" y2="32"/><line x1="440" y1="52" x2="400" y2="60"/>
+    <line x1="440" y1="52" x2="480" y2="60"/>
+  </g>
+  <ellipse cx="440" cy="52" rx="28" ry="22" fill="none" stroke="rgba(240,100,120,.4)" stroke-width="1.2"/>
+  <path d="M398,62 Q400,69 404,65 Q408,71 413,67 Q417,73 423,69 Q427,75 433,71 Q437,77 440,73 Q443,77 448,71 Q453,75 458,69 Q462,73 467,67 Q471,71 476,65 Q480,69 482,62" fill="none" stroke="rgba(220,80,100,.5)" stroke-width="1.5"/>
+  <g stroke="rgba(220,80,100,.45)" stroke-width=".9" fill="none">
+    <path d="M408,68 Q402,86 398,104 Q394,120 392,136"/>
+    <path d="M418,72 Q413,92 410,112 Q407,130 406,148"/>
+    <path d="M430,74 Q427,96 426,118 Q425,136 425,154"/>
+    <path d="M440,74 Q440,96 440,118 Q440,136 440,154"/>
+    <path d="M450,74 Q453,96 454,118 Q455,136 455,154"/>
+    <path d="M462,72 Q467,92 470,112 Q473,130 474,148"/>
+    <path d="M472,68 Q478,86 482,104 Q486,120 488,136"/>
+  </g>
+  <g fill="rgba(240,100,120,.6)">
+    <circle cx="398" cy="104" r="2.5"/><circle cx="394" cy="126" r="2.5"/>
+    <circle cx="440" cy="118" r="3"/><circle cx="440" cy="142" r="2.5"/>
+    <circle cx="482" cy="104" r="2.5"/><circle cx="486" cy="126" r="2.5"/>
+  </g>
+</g>
+<!-- Lysende plankton-prikker i bakgrunnen -->
+<g fill="rgba(180,180,255,.4)" opacity=".6">
+  <circle cx="30" cy="140" r="1.5"/><circle cx="50" cy="170" r="1.5"/>
+  <circle cx="160" cy="260" r="1.8"/><circle cx="180" cy="245" r="1.5"/>
+  <circle cx="380" cy="260" r="1.8"/><circle cx="400" cy="248" r="1.5"/>
+  <circle cx="490" cy="160" r="1.5"/><circle cx="508" cy="180" r="1.8"/>
+  <circle cx="20" cy="100" r="1.5"/><circle cx="510" cy="120" r="1.5"/>
+</g>
+</svg>`
+  },
+];
+
+// ══ DYR-GRID ══
+const dyrGrid = document.getElementById('dyr-grid');
+DYR.forEach(d => {
+  const div = document.createElement('div');
+  div.className = 'dyr-kort'; div.id = 'dyk-'+d.id;
+  div.style.setProperty('--dc', d.farge); div.style.setProperty('--dg', d.glow);
+  div.innerHTML = `
+    <div class="dyr-svg-wrap">${d.svg.replace(/<svg /, '<svg style="width:100%;height:100%;display:block" ')}</div>
+    <div class="dyr-body">
+      <div class="dyr-type">${d.type}</div>
+      <div class="dyr-navn" style="color:${d.farge}">${d.navn}</div>
+      <div class="dyr-lat">${d.latin}</div>
+      <div class="dyr-fakta">${d.fakta.slice(0,4).map(f=>`<div class="dyr-f"><div class="dyr-fl">${f.l}</div><div class="dyr-fv">${f.v}</div></div>`).join('')}</div>
+      <div class="dyr-desc">${d.desc}</div>
+    </div>`;
+  div.onclick = () => visDyr(d.id);
+  dyrGrid.appendChild(div);
+});
+
+let aktivDyr = null;
+function visDyr(id) {
+  const info = document.getElementById('dyr-info');
+  if (aktivDyr === id) {
+    aktivDyr = null; info.classList.remove('synlig');
+    document.querySelectorAll('.dyr-kort').forEach(k=>k.classList.remove('aktiv'));
+    return;
+  }
+  aktivDyr = id;
+  const d = DYR.find(x=>x.id===id);
+  document.querySelectorAll('.dyr-kort').forEach(k=>k.classList.toggle('aktiv',k.id==='dyk-'+id));
+  info.innerHTML = `
+    <div>${d.svg.replace(/<svg /, '<svg style="width:100%;height:auto;display:block;border-radius:12px" ')}</div>
+    <div>
+      <div class="dyrinfo-tittel" style="color:${d.farge}">${d.navn}</div>
+      <div class="dyrinfo-latin">${d.latin} · ${d.type}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">${d.fakta.map(f=>`<div class="di-felt"><div class="di-fl">${f.l}</div><div class="di-fv">${f.v}</div></div>`).join('')}</div>
+      <p class="dyrinfo-tekst">${d.tekst}</p>
+      <div class="dyrinfo-morsomt">🌊 <strong>Visste du?</strong> ${d.morsomt}</div>
+    </div>`;
+  info.classList.add('synlig');
+  info.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══ FAKTA-GRID ══
+const FAKTA = [
+  {ikon:'💧',tittel:'Havets størrelse',tekst:'Havet dekker 71% av jordas overflate og inneholder 97% av alt vann på jorda. Det gjennomsnittlige dypet er 3 688 meter. Det totale volumet er 1,335 milliarder km³.'},
+  {ikon:'🌡️',tittel:'Klimaregulator',tekst:'Havet har absorbert over 90% av all varmen fra global oppvarming de siste 50 årene. Det absorberer også 25% av menneskeskapt CO₂ hvert år – uten dette ville klimaendringene gått mye raskere.'},
+  {ikon:'🌿',tittel:'Oksygenprodusent',tekst:'Planteplankton i havet produserer 50–80% av all oksygenet på jorda – mer enn alle verdens skoger til sammen. Uten havet ville vi ikke ha luft å puste.'},
+  {ikon:'🧊',tittel:'Havnivåstigning',tekst:'Havnivået stiger 3,3 mm per år globalt, primært fra smelting av isbreer og utvidelse av vann ved oppvarming. Over 1 milliard mennesker bor i lavereliggende kystområder.'},
+  {ikon:'🏔️',tittel:'Dypeste og høyeste',tekst:'Mariana-grøften er 11 034 m dyp – Mount Everest ville forsvinne med over 2 km å spare. Midthavsryggen er verdens lengste fjellkjede (65 000 km), men nesten helt under vann.'},
+  {ikon:'🦠',tittel:'Livet startet her',tekst:'Alt liv oppsto i havet – de første cellene for ~3,8 milliarder år siden. Hydrotermal ventiler på havbunnen er en av de ledende teoriene for livets opprinnelse.'},
+  {ikon:'🎣',tittel:'Matkilden',tekst:'Havet er en kritisk matkilde for over 3 milliarder mennesker. Fisk er den primære proteinkilden for mange kystsamfunn. Overfiske truer over 30% av alle fiskebestander.'},
+  {ikon:'🌊',tittel:'Ukjent territorium',tekst:'Mer enn 80% av havbunnen er ikke kartlagt i detalj. Vi vet mer om overflaten av Månen enn om dyphavet. Nye arter oppdages jevnlig selv i 2020-tallets undersøkelser.'},
+];
+
+const faktaGrid = document.getElementById('fakta-grid');
+FAKTA.forEach(f => {
+  const d = document.createElement('div');
+  d.className = 'fakta-kort';
+  d.innerHTML = `<div class="fk-ikon">${f.ikon}</div><div class="fk-tittel">${f.tittel}</div><div class="fk-tekst">${f.tekst}</div>`;
+  faktaGrid.appendChild(d);
+});
+</script>
+</body>
+</html>

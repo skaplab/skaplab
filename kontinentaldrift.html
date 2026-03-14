@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Kontinentaldrift og platetektonikk</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050810;--surface:#0a0e18;--card:#0f1420;--border:rgba(100,160,255,.08);
+  --text:#d8e4f8;--dim:#2a4060;
+  --accent:#60a0f0;--accent2:#f0a030;--accent3:#60d080;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 30% 20%,rgba(96,160,240,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(240,160,48,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,8,16,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(216,228,248,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(96,160,240,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(216,228,248,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.til-pangea{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:14px 28px;
+  background:rgba(96,160,240,.1);border:1px solid rgba(96,160,240,.3);border-radius:14px;
+  color:var(--accent);font-weight:600;font-size:.9rem;text-decoration:none;transition:all .2s}
+.til-pangea:hover{background:rgba(96,160,240,.18);border-color:rgba(96,160,240,.5);transform:translateY(-2px)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.plate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.plate-kort{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;transition:all .2s}
+.plate-kort:hover{border-color:rgba(96,160,240,.3);transform:translateY(-2px)}
+.pk-navn{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:3px;font-style:italic}
+.pk-type{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.pk-tekst{font-size:.76rem;line-height:1.6;color:rgba(216,228,248,.55)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Kontinentaldrift</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Geologi · Platetektonikk</div>
+    <h1>Kontinenter<br>i <em>bevegelse</em></h1>
+    <p class="hero-sub">Fra Pangea til dagens kart – platetektonikk former fjell, hav, jordskjelv og selve livet på jorda</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Wegener og oppdagelsen -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 08</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.2)">🔭 Oppdagelse</div>
+          <h3 class="k-tittel">Alfred Wegener og den store idéen</h3>
+          <p class="k-ingress">I 1912 foreslo Alfred Wegener at kontinentene en gang var samlet i ett superkontinent – Pangea. Han ble ledd ut. Femti år senere fikk han rett.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🗺️</span><div><strong>Puslespill-observasjonen:</strong> Wegener la merke til at Sør-Amerikas østkyst og Afrikas vestkyst passet som puslespillbrikker. Ikke tilfeldig – andre hadde sett det, men ingen hadde trukket konsekvensen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦕</span><div><strong>Fossil-beviset:</strong> Identiske fossiler av Mesosaurus (søtvannsreptil) på begge sider av Atlanterhavet. Det hadde ikke svømt tvers over. Kontinentene måtte ha vært koblet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🪨</span><div><strong>Bergartskorrelasjon:</strong> Identiske bergartslag og fjellkjeder på tvers av Atlanterhavet. Appalachene i USA og kaledonidene i Skottland og Norge er én sammenhengende fjellkjede – delt av havets åpning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Klimabevis:</strong> Kullforekomster (tropisk klima) i Antarktis. Istidsspor i Africa. Tropiske fossiler på Svalbard. Klimasoner passet ikke med dagens posisjon – kontinentene hadde beveget seg.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,240,.6)" letter-spacing=".08em">WEGENERS BEVIS</text>
+            <!-- S-Amerika og Afrika som puslespill -->
+            <!-- Sør-Amerika -->
+            <path d="M50,60 Q65,50 80,58 Q95,68 100,90 Q105,120 98,152 Q90,180 80,198 Q68,215 55,215 Q40,212 34,194 Q26,170 30,142 Q33,112 40,86 Q44,68 50,60Z" fill="rgba(240,160,48,.2)" stroke="#f0a030" stroke-width="1.8"/>
+            <text x="65" y="138" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.7)">Sør-</text>
+            <text x="65" y="150" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.7)">Amerika</text>
+            <!-- Afrika -->
+            <path d="M145,48 Q162,44 178,56 Q195,68 200,95 Q205,125 198,160 Q190,190 178,210 Q165,225 152,220 Q138,214 130,196 Q122,172 126,145 Q130,115 136,88 Q140,64 145,48Z" fill="rgba(96,208,128,.2)" stroke="#60d080" stroke-width="1.8"/>
+            <text x="165" y="138" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,128,.7)">Afrika</text>
+            <!-- Puslespill-pilene -->
+            <path d="M102,130 L128,130" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-dasharray="4 3"/>
+            <text x="115" y="124" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(255,255,255,.3)">passet!</text>
+            <!-- Mesosaurus fossil på begge sider -->
+            <text x="62" y="95" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.6)">🦎</text>
+            <text x="165" y="95" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.6)">🦎</text>
+            <text x="115" y="88" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.5)">Mesosaurus</text>
+            <!-- Fjellkjeder -->
+            <path d="M100,68 Q115,65 128,68" fill="none" stroke="rgba(240,160,48,.5)" stroke-width="3" stroke-linecap="round"/>
+            <text x="115" y="62" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.4)">Fjellkjeder</text>
+            <!-- Klimasoner -->
+            <text x="62" y="175" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(255,220,50,.5)">☀️</text>
+            <text x="62" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,220,50,.4)">tropisk kull</text>
+            <!-- Atlanterhavet -->
+            <text x="115" y="176" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.4)">🌊</text>
+            <text x="115" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.35)">Atl.havet</text>
+            <!-- Timeline -->
+            <text x="140" y="235" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(216,228,248,.45)">Wegener 1912 – Foreslår Pangea-teorien</text>
+            <text x="140" y="248" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(216,228,248,.35)">1960-70-tall – Platetektonikk bekreftet</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Pangea og superkontinenter -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 08</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🌍 Pangea</div>
+          <h3 class="k-tittel">Pangea og superkontinentenes syklus</h3>
+          <p class="k-ingress">Pangea var ikke det første superkontinentet. Jorda har hatt en syklus av samling og splitting i ~500 millioner år og vil sannsynligvis danne et nytt superkontinent om ~250 millioner år.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Rodinia (~1 mrd år siden):</strong> Jordens tidligste kjente superkontinent. Brøt opp ~750 mya. Ledet til kambrium-eksplosjon da det delte seg og skapte grunne hav.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦕</span><div><strong>Pangea (335–175 mya):</strong> «Alt land» på gresk. Dannet da Laurasia (nord) og Gondwana (sør) kolliderte. Dinosaurene spredte seg over hele Pangea. Brøt opp fra ~180 mya.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Laurasia og Gondwana:</strong> Pangea delte seg først i to – Laurasia (N-Amerika+Europa+Asia) og Gondwana (Sør-Amerika+Afrika+India+Australia+Antarktis). Videre splitting ga dagens kontinenter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔮</span><div><strong>Amasia (~250 mya fremover):</strong> Modeller antyder at N-Amerika vil kollidere med Asia over Nordpolen. Alternativt: «Novopangea» der Atlanterhavet lukkes og Sør-Amerika kolliderer med Afrika.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">PANGEA ~200 MYA</text>
+            <!-- Pangea som samlet landmasse -->
+            <path d="M85,40 Q120,28 155,35 Q190,42 210,62 Q228,82 230,110 Q232,140 220,165 Q205,192 185,205 Q162,218 140,215 Q118,212 100,225 Q80,237 62,232 Q40,224 32,204 Q22,180 28,152 Q34,122 40,98 Q50,68 85,40Z"
+              fill="rgba(100,160,80,.18)" stroke="rgba(128,200,96,.5)" stroke-width="1.8"/>
+            <!-- Pangea-interne kontinent-grenser -->
+            <g stroke="rgba(200,180,100,.25)" stroke-width="1" stroke-dasharray="5 3" fill="none">
+              <!-- N-Amerika / Europa -->
+              <path d="M100,80 Q118,72 130,85"/>
+              <!-- Afrika / S-Amerika -->
+              <path d="M115,155 Q125,165 115,180"/>
+              <!-- India -->
+              <path d="M190,110 Q198,130 185,150"/>
+              <!-- Australia -->
+              <path d="M185,195 Q195,205 190,215"/>
+            </g>
+            <!-- Tethys-havet inne i Pangea -->
+            <path d="M130,100 Q155,90 178,100 Q192,110 188,128 Q182,145 165,150 Q148,152 135,140 Q125,128 130,100Z"
+              fill="rgba(96,160,240,.2)" stroke="rgba(96,160,240,.4)" stroke-width="1"/>
+            <text x="160" y="128" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)">Tethys-</text>
+            <text x="160" y="138" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.5)">havet</text>
+            <!-- Kontinentnavn -->
+            <g font-family="DM Sans" font-size="8" fill="rgba(200,180,100,.65)">
+              <text x="75" y="90">Laurasia</text>
+              <text x="90" y="190">Gondwana</text>
+            </g>
+            <!-- Dyr spredt over Pangea -->
+            <text x="80" y="75" font-family="DM Sans" font-size="10" fill="rgba(240,160,48,.5)">🦕</text>
+            <text x="140" y="180" font-family="DM Sans" font-size="10" fill="rgba(240,160,48,.5)">🦕</text>
+            <!-- Tidslinje under -->
+            <line x1="14" y1="238" x2="266" y2="238" stroke="rgba(96,160,240,.2)" stroke-width="1.5"/>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(216,228,248,.35)" text-anchor="middle">
+              <text x="30" y="252">Rodinia</text><text x="30" y="228">1000 mya</text>
+              <text x="100" y="252">Pangea</text><text x="100" y="228">335 mya</text>
+              <text x="170" y="252">Deling</text><text x="170" y="228">180 mya</text>
+              <text x="236" y="252">I dag</text><text x="236" y="228">0</text>
+            </g>
+            <g stroke="rgba(96,160,240,.3)" stroke-width="1">
+              <line x1="30" y1="234" x2="30" y2="242"/>
+              <line x1="100" y1="234" x2="100" y2="242"/>
+              <line x1="170" y1="234" x2="170" y2="242"/>
+              <line x1="236" y1="234" x2="236" y2="242"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Platetektonikk-mekanismen -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 08</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.2)">⚙️ Mekanisme</div>
+          <h3 class="k-tittel">Hva driver platene?</h3>
+          <p class="k-ingress">Platetektonikk drives av varme fra jordens indre. Konveksjonsstrømmer i mantelen trekker og skyver de tektoniske platene rundt på overflaten.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Konveksjon i mantelen:</strong> Varm bergart stiger, avkjøles, synker igjen. Disse strømmene drar platene med seg. Varmen stammer fra radioaktivt henfall av U, Th og K i jordens indre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⬇️</span><div><strong>Plate-drag (slab pull):</strong> Den viktigste kraften. Når kald, tung oseanisk skorpe dykker ned i mantelen (subduksjon), trekker den resten av platen etter seg – som et brett som glir av bordet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">↔️</span><div><strong>Ryggskyv (ridge push):</strong> Ny oseanisk skorpe dannes ved midthavsrygger og er varmere/lettere – presser platene utover til siden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Hastighet:</strong> Platene beveger seg ~1–15 cm/år – omtrent like fort som negler vokser. Over millioner av år gir dette dramatiske endringer. Fastlands-GPS bekrefter dette i sanntid.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,240,.6)" letter-spacing=".08em">KONVEKSJON OG PLATEBEVEGELSE</text>
+            <!-- Jord-tverrsnitt -->
+            <!-- Ytre kjerne -->
+            <ellipse cx="140" cy="240" rx="100" ry="80" fill="rgba(240,100,40,.1)" stroke="rgba(240,100,40,.3)" stroke-width="1"/>
+            <!-- Indre kjerne -->
+            <ellipse cx="140" cy="240" rx="60" ry="46" fill="rgba(240,160,48,.15)" stroke="rgba(240,160,48,.4)" stroke-width="1"/>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">Kjerne</text>
+            <!-- Mantel -->
+            <path d="M30,200 Q60,160 140,150 Q220,160 250,200" fill="rgba(200,100,40,.08)" stroke="rgba(200,100,40,.2)" stroke-width="1"/>
+            <!-- Konveksjonsceller (piler) -->
+            <g fill="none" stroke="rgba(240,160,48,.4)" stroke-width="1.5">
+              <!-- Venstre celle -->
+              <path d="M60,155 Q48,175 52,198 Q56,215 70,218 Q80,220 85,210 Q90,196 82,180 Q74,162 65,155"/>
+              <polygon points="60,155 65,148 70,158" fill="rgba(240,160,48,.4)"/>
+              <!-- Høyre celle -->
+              <path d="M220,155 Q232,175 228,198 Q224,215 210,218 Q200,220 195,210 Q190,196 198,180 Q206,162 215,155"/>
+              <polygon points="220,155 215,148 210,158" fill="rgba(240,160,48,.4)"/>
+            </g>
+            <!-- Skorpe (to plater) -->
+            <!-- Venstre plate -->
+            <path d="M14,140 Q50,132 90,128 Q100,126 108,130 Q105,138 90,140 Q50,144 14,152Z" fill="rgba(96,160,240,.2)" stroke="#60a0f0" stroke-width="1.5"/>
+            <!-- Høyre plate -->
+            <path d="M172,130 Q182,126 220,128 Q250,130 266,134 L266,146 Q250,144 220,140 Q182,138 172,142Z" fill="rgba(96,160,240,.2)" stroke="#60a0f0" stroke-width="1.5"/>
+            <!-- Midthavsrygg (gap der ny skorpe dannes) -->
+            <path d="M108,126 Q120,118 132,122 Q140,126 148,120 Q160,118 172,126" fill="rgba(240,100,40,.3)" stroke="#f06040" stroke-width="2"/>
+            <text x="140" y="112" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,100,40,.7)">Midthavsrygg</text>
+            <text x="140" y="122" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,100,40,.5)">(ny skorpe dannes)</text>
+            <!-- Subduksjons-sone -->
+            <path d="M14,140 Q18,160 22,185 Q26,210 35,228" fill="none" stroke="rgba(200,100,40,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="10" y="152" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,40,.6)">Sub-</text>
+            <text x="10" y="162" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,40,.5)">duksjon</text>
+            <!-- Rygg-skyv pil -->
+            <path d="M128,126 L100,120" fill="none" stroke="rgba(96,160,240,.5)" stroke-width="1.5" marker-end="url(#kd-arr)"/>
+            <path d="M152,122 L180,118" fill="none" stroke="rgba(96,160,240,.5)" stroke-width="1.5" marker-end="url(#kd-arr2)"/>
+            <defs>
+              <marker id="kd-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,160,240,.6)"/></marker>
+              <marker id="kd-arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,160,240,.6)"/></marker>
+            </defs>
+            <!-- Hastighet-label -->
+            <text x="140" y="170" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(216,228,248,.4)">~2–10 cm/år</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Platetyper og grenser -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 08</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🏔️ Plategrenser</div>
+          <h3 class="k-tittel">Tre typer plategrenser</h3>
+          <p class="k-ingress">Der tektoniske plater møtes skjer det dramatiske ting – jordskjelv, vulkaner, fjellkjeder og havdyp.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">↔️</span><div><strong>Divergerende (fra hverandre):</strong> Ny havbunn dannes. Midtatlantiske rygg: Island vokser ~2 cm/år. Øst-Afrikas Rift Valley er et kontinentalt eksempel – Afrika sprekker sakte.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⬇️</span><div><strong>Konvergerende (mot hverandre):</strong> Subduksjonssone (oseanisk vs. kontinental: vulkaner; andes) eller kollisjon (to kontinentale: fjellkjeder; Himalaya fra India+Asia).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">↕️</span><div><strong>Transform (forbi hverandre):</strong> Plater glir sidelengs forbi. San Andreas-forkastningen i California. Ingen ny eller fortapt skorpe – men enorme jordskjelv.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌋</span><div><strong>Hotspots:</strong> Utbrudd midt i plater (ikke ved grenser) fra dype mantelplumer. Hawaii-øyrekken ble til da den pasifiske platen beveget seg over en fast hotspot over 70 millioner år.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">TRE PLATEGRENSE-TYPER</text>
+            <!-- Divergerende -->
+            <text x="46" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,128,.6)" font-weight="600">Divergerende</text>
+            <rect x="14" y="42" width="64" height="65" rx="6" fill="rgba(96,208,128,.04)" stroke="rgba(96,208,128,.2)" stroke-width="1"/>
+            <!-- To plater som drar seg fra hverandre -->
+            <rect x="18" y="55" width="25" height="12" rx="2" fill="rgba(96,160,240,.3)"/>
+            <rect x="50" y="55" width="25" height="12" rx="2" fill="rgba(96,160,240,.3)"/>
+            <!-- Magma opp i midten -->
+            <path d="M43,55 Q46,44 46,40 Q47,38 46,40 Q45,44 48,55" fill="rgba(240,100,40,.5)" stroke="#f06040" stroke-width="1.2"/>
+            <!-- Piler fra hverandre -->
+            <line x1="36" y1="60" x2="24" y2="60" stroke="rgba(96,208,128,.5)" stroke-width="1.5" marker-end="url(#kd-lp)"/>
+            <line x1="57" y1="60" x2="69" y2="60" stroke="rgba(96,208,128,.5)" stroke-width="1.5" marker-end="url(#kd-rp)"/>
+            <defs>
+              <marker id="kd-lp" markerWidth="5" markerHeight="5" refX="0" refY="2.5" orient="auto"><path d="M5,0 L0,2.5 L5,5 Z" fill="rgba(96,208,128,.6)"/></marker>
+              <marker id="kd-rp" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,128,.6)"/></marker>
+            </defs>
+            <text x="46" y="82" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,100,40,.5)">Ny havbunn</text>
+            <text x="46" y="92" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,128,.4)">Ex: Midtatlantisk rygg</text>
+            <text x="46" y="102" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,128,.35)">Island, Rift Valley</text>
+            <!-- Konvergerende -->
+            <text x="140" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.6)" font-weight="600">Konvergerende</text>
+            <rect x="108" y="42" width="64" height="65" rx="6" fill="rgba(240,160,48,.04)" stroke="rgba(240,160,48,.2)" stroke-width="1"/>
+            <!-- To plater mot hverandre -->
+            <rect x="112" y="55" width="25" height="12" rx="2" fill="rgba(96,160,240,.3)"/>
+            <rect x="144" y="55" width="25" height="12" rx="2" fill="rgba(120,160,80,.3)"/>
+            <!-- Subduksjon -->
+            <path d="M136,67 Q130,80 128,95 Q126,108 130,116" fill="none" stroke="rgba(240,160,48,.5)" stroke-width="2" stroke-linecap="round"/>
+            <!-- Fjell -->
+            <path d="M138,55 L144,42 L150,55" fill="rgba(200,160,80,.3)" stroke="rgba(240,160,48,.5)" stroke-width="1"/>
+            <!-- Piler mot hverandre -->
+            <line x1="124" y1="60" x2="136" y2="60" stroke="rgba(240,160,48,.5)" stroke-width="1.5" marker-end="url(#kd-rp2)"/>
+            <line x1="156" y1="60" x2="144" y2="60" stroke="rgba(240,160,48,.5)" stroke-width="1.5" marker-end="url(#kd-lp2)"/>
+            <defs>
+              <marker id="kd-lp2" markerWidth="5" markerHeight="5" refX="0" refY="2.5" orient="auto"><path d="M5,0 L0,2.5 L5,5 Z" fill="rgba(240,160,48,.6)"/></marker>
+              <marker id="kd-rp2" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,160,48,.6)"/></marker>
+            </defs>
+            <text x="140" y="82" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,160,48,.5)">Fjell/subduksjon</text>
+            <text x="140" y="92" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.4)">Ex: Himalaya, Andes</text>
+            <!-- Transform -->
+            <text x="234" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(224,96,96,.6)" font-weight="600">Transform</text>
+            <rect x="202" y="42" width="64" height="65" rx="6" fill="rgba(224,96,96,.04)" stroke="rgba(224,96,96,.2)" stroke-width="1"/>
+            <rect x="206" y="52" width="56" height="10" rx="2" fill="rgba(96,160,240,.25)"/>
+            <rect x="206" y="68" width="56" height="10" rx="2" fill="rgba(96,160,240,.25)"/>
+            <!-- Forksatning -->
+            <line x1="234" y1="62" x2="234" y2="68" stroke="rgba(224,96,96,.5)" stroke-width="2"/>
+            <!-- Piler sidelengs -->
+            <line x1="226" y1="56" x2="214" y2="56" stroke="rgba(224,96,96,.5)" stroke-width="1.5" marker-end="url(#kd-lp3)"/>
+            <line x1="242" y1="72" x2="254" y2="72" stroke="rgba(224,96,96,.5)" stroke-width="1.5" marker-end="url(#kd-rp3)"/>
+            <defs>
+              <marker id="kd-lp3" markerWidth="5" markerHeight="5" refX="0" refY="2.5" orient="auto"><path d="M5,0 L0,2.5 L5,5 Z" fill="rgba(224,96,96,.6)"/></marker>
+              <marker id="kd-rp3" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(224,96,96,.6)"/></marker>
+            </defs>
+            <text x="234" y="82" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,96,96,.5)">Jordskjelv</text>
+            <text x="234" y="92" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,96,96,.4)">Ex: San Andreas</text>
+            <!-- Hotspot -->
+            <text x="140" y="128" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,100,40,.55)" letter-spacing=".06em">HOTSPOT – MIDT I PLATE</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(216,228,248,.5)">
+              <text x="14" y="144">Mantelplume stiger fra dypt → vulkanism</text>
+              <text x="14" y="158">Hawaii: plate beveger seg over fast hotspot</text>
+              <text x="14" y="172">→ øyrekke av sluknet vulkaner bak</text>
+              <text x="14" y="186">Andre: Yellowstone, Island, Réunion</text>
+            </g>
+            <circle cx="140" cy="210" r="14" fill="rgba(240,100,40,.15)" stroke="#f06040" stroke-width="1.5"/>
+            <path d="M140,196 L140,160" fill="none" stroke="rgba(240,100,40,.4)" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,100,40,.5)">🌋 Hotspot under plate</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Jordskjelv og vulkaner -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 08</div>
+          <div class="k-kat" style="background:rgba(224,96,64,.1);color:#e06040;border:1px solid rgba(224,96,64,.2)">🌋 Naturkatastrofer</div>
+          <h3 class="k-tittel">Jordskjelv, vulkaner og tsunamier</h3>
+          <p class="k-ingress">De fleste aktive vulkaner og sterke jordskjelv skjer ved plategrenser. Stillehavsringen av ild er jordens mest aktive seismiske sone.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Richter-skalaen (nå Mw):</strong> Logaritmisk. Mw 7 = 32× mer energi enn Mw 6. Mw 9 er 1000× sterkere enn Mw 7. Det skjer ~20 000 merkbare jordskjelv/år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Tsunami:</strong> Undersjøisk jordskjelv eller skred løfter havbunnen og skaper bølger. Tohoku 2011 (Japan): Mw 9.1, 15 000 dødsfall. Bølger på 40+ m ved kysten.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Ringen av ild:</strong> ~90% av verdens jordskjelv og 75% av aktive vulkaner langs kanten av Stillehavsplaten. Chile, Japan, Indonesia, USA-vest, Alaska.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌫️</span><div><strong>Klimaeffekt av vulkaner:</strong> Store utbrudd sprøyter SO₂ til stratosfæren → sulfatpartikler → global avkjøling. Tambora 1815: «Året uten sommer» 1816. Frankenstein ble skrevet den kalde sommeren.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,96,64,.6)" letter-spacing=".08em">RINGEN AV ILD</text>
+            <!-- Stillahavet (blå ellipse) -->
+            <ellipse cx="140" cy="136" rx="110" ry="90" fill="rgba(96,160,240,.06)" stroke="rgba(96,160,240,.15)" stroke-width="1"/>
+            <text x="140" y="136" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.3)">Stillehavet</text>
+            <!-- Ringen av ild (rød ring) -->
+            <ellipse cx="140" cy="136" rx="110" ry="90" fill="none" stroke="rgba(240,96,64,.5)" stroke-width="3" stroke-dasharray="8 4"/>
+            <!-- Vulkaner langs ringen -->
+            <g fill="#e06040" font-family="DM Sans" font-size="10">
+              <!-- Alaska/Aleut -->
+              <text x="68" y="55">🌋</text>
+              <!-- Japan -->
+              <text x="218" y="62">🌋</text>
+              <!-- Filippinene -->
+              <text x="230" y="106">🌋</text>
+              <!-- Indonesia -->
+              <text x="224" y="158">🌋</text>
+              <!-- NZ -->
+              <text x="195" y="210">🌋</text>
+              <!-- Chile -->
+              <text x="52" y="218">🌋</text>
+              <!-- Mellom-Amerika -->
+              <text x="42" y="175">🌋</text>
+              <!-- Cascadia -->
+              <text x="38" y="115">🌋</text>
+            </g>
+            <!-- Jordskjelv-statistikk -->
+            <rect x="14" y="236" width="252" height="18" rx="6" fill="rgba(224,96,64,.06)" stroke="rgba(224,96,64,.2)" stroke-width="1"/>
+            <text x="140" y="248" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(224,96,64,.6)">90% av jordskjelv · 75% av aktive vulkaner langs Ringen av ild</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Norges geologi -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,128,.1);color:#60d080;border:1px solid rgba(96,208,128,.2)">🇳🇴 Norge</div>
+          <h3 class="k-tittel">Norsk geologi og platetektonikk</h3>
+          <p class="k-ingress">Norge har en fascinerende geologisk historie som strekker seg 3 milliarder år tilbake – kaledonidene, istider og Nordsjøolje er alle del av det platetektoniske sagaen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⛰️</span><div><strong>Kaledonidene:</strong> For ~400 mya kolliderte Baltika (Skandinavia) og Laurentia (N-Amerika) – dannet fjellkjede like høy som Himalaya. I dag er disse fjellene slitt ned til Norges kyst og Appalachene i USA.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏔️</span><div><strong>Atlanterhavsåpningen:</strong> Fra ~55 mya begynte Atlanterhavet å åpne seg mellom Norge og Grønland. Midtnorsk sokkel ble til. Vikingbassenget og Tampen er direkte resultater.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛢️</span><div><strong>Nordsjøolje:</strong> Organisk materiale fra jurassisk tid (180 mya) ble begravd og kokt til olje av geotermisk varme. Platetektonikken skapte bassenget der olje kunne akkumuleres.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Istidens effekter:</strong> Isbreer gravde ut fjordene for 10 000–20 000 år siden. Landhevingen etter istidens smelting pågår fortsatt – Skandinavia stiger ~5 mm/år i sentrumsnorge.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,128,.6)" letter-spacing=".08em">NORSK GEOLOGISK TIDSLINJE</text>
+            <!-- Tidslinje vertikal -->
+            <line x1="80" y1="30" x2="80" y2="250" stroke="rgba(96,160,240,.2)" stroke-width="1.5"/>
+            <!-- Tidspunkter -->
+            <g font-family="DM Sans" font-size="7.5">
+              <line x1="76" y1="50" x2="84" y2="50" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="54" text-anchor="end" fill="rgba(216,228,248,.4)">3000 mya</text>
+              <text x="88" y="54" fill="rgba(96,208,128,.6)" font-weight="600">Grunnfjell dannes (gneis)</text>
+              <line x1="76" y1="84" x2="84" y2="84" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="88" text-anchor="end" fill="rgba(216,228,248,.4)">~500 mya</text>
+              <text x="88" y="88" fill="rgba(240,160,48,.6)" font-weight="600">Kambrium – kalkstein dannes</text>
+              <line x1="76" y1="118" x2="84" y2="118" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="122" text-anchor="end" fill="rgba(216,228,248,.4)">~400 mya</text>
+              <text x="88" y="122" fill="rgba(240,160,48,.6)" font-weight="600">Kaledonske fjellkjede</text>
+              <text x="88" y="132" fill="rgba(216,228,248,.4)">(som Himalaya i dag)</text>
+              <line x1="76" y1="152" x2="84" y2="152" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="156" text-anchor="end" fill="rgba(216,228,248,.4)">~180 mya</text>
+              <text x="88" y="156" fill="rgba(96,208,128,.6)" font-weight="600">Jurassisk havbunn → olje</text>
+              <line x1="76" y1="186" x2="84" y2="186" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="190" text-anchor="end" fill="rgba(216,228,248,.4)">~55 mya</text>
+              <text x="88" y="190" fill="rgba(96,208,128,.6)" font-weight="600">Atlanterhavet åpner seg</text>
+              <text x="88" y="200" fill="rgba(216,228,248,.4)">(Norge/Grønland skilles)</text>
+              <line x1="76" y1="220" x2="84" y2="220" stroke="rgba(96,160,240,.3)" stroke-width="1"/>
+              <text x="72" y="224" text-anchor="end" fill="rgba(216,228,248,.4)">~20 000 år</text>
+              <text x="88" y="224" fill="rgba(96,160,240,.6)" font-weight="600">Istid → fjorder graves ut</text>
+              <line x1="76" y1="244" x2="84" y2="244" stroke="rgba(96,208,128,.4)" stroke-width="1.5"/>
+              <text x="72" y="248" text-anchor="end" fill="rgba(96,208,128,.5)">I dag</text>
+              <text x="88" y="248" fill="rgba(96,208,128,.6)" font-weight="600">Landheving +5 mm/år</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Bevis for platetektonikk -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 08</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.2)">🔬 Bevis</div>
+          <h3 class="k-tittel">Bevisene for platetektonikk</h3>
+          <p class="k-ingress">Platetektonikk ble akseptert rundt 1970 da en rekke uavhengige bevislinjer konvergerte – en vitenskapelig revolusjon i geologien.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧲</span><div><strong>Paleomagnetisme:</strong> Når magma stivner registrerer den jordens magnetfelt. Striping på havbunnen langs midthavsrygger viser symmetrisk magnetisk bytte – bevis for spredning av havbunn.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Varmeflux:</strong> Havbunnen nær midthavsrygger er varmere (ung skorpe) enn langt unna (gammel, kald). Direkte målinger bekrefter konveksjonsmønsteret.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📡</span><div><strong>GPS og VLBI:</strong> Moderne geodesi måler platebevegelse direkte. N-Amerika og Europa drifter ~2.5 cm fra hverandre per år. Bekreftet med millimeters nøyaktighet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Havbunnens alder:</strong> Ingen havbunn eldre enn ~180 millioner år – subduksjon sluker gammel skorpe. Kontinental skorpe kan være 4+ milliarder år gammel. Dramatisk kontrast.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,240,.6)" letter-spacing=".08em">MAGNETISK STRIPING</text>
+            <!-- Midthavsrygg -->
+            <path d="M130,30 Q136,60 132,100 Q128,140 132,180 Q136,220 130,250" fill="url(#rygg-grad)" stroke="rgba(240,100,40,.6)" stroke-width="5" stroke-linecap="round"/>
+            <path d="M150,30 Q144,60 148,100 Q152,140 148,180 Q144,220 150,250" fill="url(#rygg-grad)" stroke="rgba(240,100,40,.6)" stroke-width="5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="rygg-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(240,100,40,.6)"/><stop offset="100%" stop-color="rgba(240,100,40,.4)"/>
+              </linearGradient>
+            </defs>
+            <text x="140" y="138" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,100,40,.6)">MHR</text>
+            <!-- Magnetiske striper venstre -->
+            <g>
+              <rect x="92" y="30" width="32" height="40" rx="2" fill="rgba(60,120,220,.4)" stroke="rgba(60,120,220,.6)" stroke-width="1"/>
+              <rect x="58" y="30" width="28" height="40" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="28" y="30" width="24" height="40" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+              <rect x="92" y="75" width="32" height="35" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="58" y="75" width="28" height="35" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+              <rect x="92" y="115" width="32" height="42" rx="2" fill="rgba(60,120,220,.4)" stroke="rgba(60,120,220,.6)" stroke-width="1"/>
+              <rect x="58" y="115" width="28" height="42" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="92" y="162" width="32" height="38" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="58" y="162" width="28" height="38" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+            </g>
+            <!-- Magnetiske striper høyre (speilbilde) -->
+            <g>
+              <rect x="156" y="30" width="32" height="40" rx="2" fill="rgba(60,120,220,.4)" stroke="rgba(60,120,220,.6)" stroke-width="1"/>
+              <rect x="194" y="30" width="28" height="40" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="228" y="30" width="24" height="40" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+              <rect x="156" y="75" width="32" height="35" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="194" y="75" width="28" height="35" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+              <rect x="156" y="115" width="32" height="42" rx="2" fill="rgba(60,120,220,.4)" stroke="rgba(60,120,220,.6)" stroke-width="1"/>
+              <rect x="194" y="115" width="28" height="42" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="156" y="162" width="32" height="38" rx="2" fill="rgba(220,60,60,.3)" stroke="rgba(220,60,60,.5)" stroke-width="1"/>
+              <rect x="194" y="162" width="28" height="38" rx="2" fill="rgba(60,120,220,.35)" stroke="rgba(60,120,220,.5)" stroke-width="1"/>
+            </g>
+            <!-- Magnetisk nord/sør forklaring -->
+            <g font-family="DM Sans" font-size="7.5">
+              <rect x="14" y="218" width="10" height="8" rx="1" fill="rgba(60,120,220,.5)"/>
+              <text x="28" y="225" fill="rgba(60,120,220,.6)">Normalt magnetfelt (nord=nord)</text>
+              <rect x="14" y="232" width="10" height="8" rx="1" fill="rgba(220,60,60,.4)"/>
+              <text x="28" y="239" fill="rgba(220,60,60,.6)">Reversert magnetfelt</text>
+            </g>
+            <!-- Symmetri-pil -->
+            <path d="M86,200 Q140,208 194,200" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="140" y="252" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(255,255,255,.25)">Symmetrisk mønster = bevis for havbunnspredning</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Pangea-puslespill -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">08 / 08</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🧩 Interaktiv</div>
+          <h3 class="k-tittel" style="max-width:600px">Klar til å sette kontinentene på plass?</h3>
+          <p class="k-ingress" style="max-width:560px">Dra kontinentene tilbake til sine opprinnelige posisjoner i Pangea. Kan du rekonstruere superkontinentet fra 200 millioner år siden?</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:540px;margin:16px auto">
+            <div style="padding:14px;background:rgba(240,160,48,.06);border:1px solid rgba(240,160,48,.2);border-radius:12px;font-size:.78rem;color:rgba(216,228,248,.65);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">🧩</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">Dra og slipp</div>
+              Plasser 6 kontinenter i riktig posisjon
+            </div>
+            <div style="padding:14px;background:rgba(96,208,128,.06);border:1px solid rgba(96,208,128,.2);border-radius:12px;font-size:.78rem;color:rgba(216,228,248,.65);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">✅</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">Automatisk sjekk</div>
+              Puslespillet sjekker om plasseringen er korrekt
+            </div>
+            <div style="padding:14px;background:rgba(96,160,240,.06);border:1px solid rgba(96,160,240,.2);border-radius:12px;font-size:.78rem;color:rgba(216,228,248,.65);text-align:center">
+              <div style="font-size:1.5rem;margin-bottom:6px">🏆</div>
+              <div style="font-weight:600;color:var(--text);margin-bottom:3px">Utfordring</div>
+              Klarer du alle uten hint?
+            </div>
+          </div>
+          <a href="pangea.html" class="til-pangea">
+            🧩 Åpne Pangea-puslespillet →
+          </a>
+          <p style="margin-top:16px;font-size:.78rem;color:var(--dim);max-width:500px">Kombinert med teorien fra denne karusellen har du alt du trenger for å forstå Pangea fullt ut – fra Wegeners bevis til dagens GPS-målinger.</p>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- TEKTONISKE PLATER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Jordens største tektoniske plater</div><div class="sep-r"></div></div>
+  <div class="plate-grid">
+    <div class="plate-kort"><div class="pk-navn">Stillehavsplaten</div><div class="pk-type">Oseanisk · 103 mill. km²</div><div class="pk-tekst">Jordens største tektoniske plate. Omringet av subduksjonssoner – Ringen av ild. Beveger seg ~6–8 cm/år nordvestover. Hawaii-hotspot er et hull i platen.</div></div>
+    <div class="plate-kort"><div class="pk-navn">Nordamerikansk plate</div><div class="pk-type">Kontinental + oseanisk · 75 mill. km²</div><div class="pk-tekst">Inkluderer N-Amerika, Grønland og deler av Atlanterhavet. San Andreas-forkastningen markerer grensen mot Stillehavsplaten. Beveger seg ~2.3 cm/år vestover.</div></div>
+    <div class="plate-kort"><div class="pk-navn">Eurasisk plate</div><div class="pk-type">Kontinental · 67 mill. km²</div><div class="pk-tekst">Dekker Europa og mesteparten av Asia. Kolliderer med Indisk plate i sør → Himalaya vokser ~5 mm/år. Midtatlantisk rygg er vestgrensen mot N-Amerika.</div></div>
+    <div class="plate-kort"><div class="pk-navn">Afrikansk plate</div><div class="pk-type">Kontinental · 61 mill. km²</div><div class="pk-tekst">Sprekker opp langs Øst-Afrikansk Rift Valley – et nytt hav dannes om ~10 millioner år. Vil kollidere med Europa om ~50 millioner år og lukke Middelhavet.</div></div>
+    <div class="plate-kort"><div class="pk-navn">Indisk plate</div><div class="pk-type">Kontinental · 11 mill. km²</div><div class="pk-tekst">Kolliderte med Eurasia for ~50 mya og skapte Himalaya. Beveger seg fortsatt nordover med ~5 cm/år – Himalaya vokser fremdeles. Tidligst del av Gondwana.</div></div>
+    <div class="plate-kort"><div class="pk-navn">Antarktisk plate</div><div class="pk-type">Kontinental · 60 mill. km²</div><div class="pk-tekst">Omringet av midthavsrygger som skyver den innover. Relativt stabil. Antarktis var tropisk for 50 mya – fossiler av subtropisk skog er funnet under isen.</div></div>
+  </div>
+</div>
+
+<script>
+const N=document.querySelectorAll('.k-slide').length;let cur=0;
+const slides=document.getElementById('k-slides'),dotsEl=document.getElementById('k-dots');
+for(let i=0;i<N;i++){const d=document.createElement('button');d.className='k-dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);}
+function goTo(i){cur=i;slides.style.transform=`translateX(-${i*100}%)`;document.querySelectorAll('.k-dot').forEach((d,j)=>d.classList.toggle('on',j===i));document.getElementById('k-prev').disabled=i===0;document.getElementById('k-next').disabled=i===N-1;}
+function kGo(d){goTo(Math.max(0,Math.min(N-1,cur+d)));}
+let tx=0;document.getElementById('karusell').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.getElementById('karusell').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)kGo(dx<0?1:-1);},{passive:true});
+goTo(0);
+</script>
+</body>
+</html>
