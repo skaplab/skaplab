@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Kjemiske reaksjoner</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0a;--surface:#0a1010;--card:#0f1818;--border:rgba(52,211,153,.07);
+  --text:#e8f4f0;--dim:#1e4040;
+  --accent:#34d399;--accent2:#60c8f0;--accent3:#f0a030;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 20% 20%,rgba(52,211,153,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 85% 80%,rgba(96,200,240,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,10,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,244,240,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(52,211,153,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,244,240,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+
+/* BALANSERER */
+.bal-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.bal-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:20px}
+.bal-velg{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+.bal-knapp{padding:8px 16px;border-radius:10px;border:1px solid var(--border);background:rgba(52,211,153,.04);
+  color:var(--dim);font-family:var(--font-b);font-size:.8rem;cursor:pointer;transition:all .2s}
+.bal-knapp:hover{border-color:rgba(52,211,153,.4);color:var(--text)}
+.bal-knapp.aktiv{border-color:var(--accent);background:rgba(52,211,153,.1);color:var(--accent)}
+.bal-scene{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px}
+.bal-ligning{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;min-height:56px}
+.bal-stoff{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bal-stoff-navn{font-family:var(--font-d);font-size:1.4rem;font-weight:700;color:var(--text)}
+.bal-stoff-navn sub{font-size:.65em;vertical-align:sub}
+.bal-stoff-navn sup{font-size:.65em;vertical-align:super}
+.bal-koeff{display:flex;align-items:center;gap:6px}
+.bal-koeff-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;
+  color:var(--dim);font-size:1rem;cursor:pointer;transition:all .18s;line-height:1}
+.bal-koeff-btn:hover{border-color:var(--accent);color:var(--accent)}
+.bal-koeff-tall{font-family:var(--font-d);font-size:1.3rem;font-weight:700;min-width:24px;text-align:center}
+.bal-pil{font-family:var(--font-d);font-size:1.6rem;color:var(--dim)}
+.bal-pluss{font-family:var(--font-d);font-size:1.4rem;color:var(--dim)}
+.bal-atomteller{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:16px}
+.bal-atom{background:rgba(52,211,153,.04);border:1px solid var(--border);border-radius:9px;padding:9px 12px;text-align:center}
+.bal-atom-symbol{font-family:var(--font-d);font-size:1rem;font-weight:700;color:var(--accent)}
+.bal-atom-rad{display:flex;justify-content:space-between;font-size:.72rem;margin-top:4px;color:var(--dim)}
+.bal-atom-tall{font-weight:700}
+.bal-atom.ok .bal-atom-symbol{color:var(--accent)}
+.bal-atom.feil .bal-atom-symbol{color:#f06060}
+.bal-atom.feil{border-color:rgba(240,96,96,.3);background:rgba(240,96,96,.04)}
+.bal-status{text-align:center;padding:12px 16px;border-radius:10px;font-family:var(--font-d);font-size:1rem;
+  border:1px solid var(--border);background:rgba(52,211,153,.04);transition:all .3s}
+.bal-status.ok{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.1);color:var(--accent)}
+.bal-status.feil{border-color:rgba(240,96,96,.3);background:rgba(240,96,96,.04);color:#f09090}
+.bal-fasit{margin-top:12px;text-align:center}
+.bal-fasit-btn{padding:8px 18px;border-radius:9px;border:1px solid rgba(240,160,48,.3);background:transparent;
+  color:rgba(240,160,48,.6);font-family:var(--font-b);font-size:.8rem;cursor:pointer;transition:all .2s}
+.bal-fasit-btn:hover{border-color:var(--accent3);color:var(--accent3)}
+
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Kjemiske reaksjoner</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Reaksjoner</div>
+    <h1>Kjemiske<br><em>reaksjoner</em></h1>
+    <p class="hero-sub">Reaksjonstyper, energi, reaksjonshastighet, katalysatorer og balansering av kjemiske likninger</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Hva er en kjemisk reaksjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 08</div>
+          <div class="k-kat" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)">⚗️ Grunnlag</div>
+          <h3 class="k-tittel">Hva er en kjemisk reaksjon?</h3>
+          <p class="k-ingress">En kjemisk reaksjon skjer når atomer omorganiseres og nye stoffer dannes. Bindinger brytes og nye dannes – men atomene selv er uendrede.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Reaktanter → produkter:</strong> Utgangsstoffene (reaktantene) omdannes til nye stoffer (produkter). H₂ + ½O₂ → H₂O. Atomer verken skapes eller ødelegges – de omfordeles.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Tegn på kjemisk reaksjon:</strong> Fargeendring, gassutvikling, bunnfall, temperaturendring, lys. Fysiske endringer (smelte, fordampe) er IKKE kjemiske reaksjoner – stoffet er det samme.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Massebevaringsloven (Lavoisier 1789):</strong> Massen er konstant i en kjemisk reaksjon. Summen av reaktant-masser = summen av produkt-masser. Grunnlaget for balansering av likninger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Bindingsendringer:</strong> Kjemiske bindinger (kovalente, ioniske) brytes og dannes. Bindingsbrytning krever energi. Bindingsdannelse frigjør energi. Netto energiendring bestemmer om reaksjonen er eksoterm eller endoterm.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(52,211,153,.6)" letter-spacing=".08em">H₂ + Cl₂ → 2HCl</text>
+            <defs>
+              <marker id="rxn-arr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+                <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(52,211,153,.8)"/>
+              </marker>
+            </defs>
+            <!-- H2 molekyl -->
+            <circle cx="50" cy="90" r="18" fill="rgba(52,211,153,.15)" stroke="rgba(52,211,153,.5)" stroke-width="1.5"/>
+            <text x="50" y="95" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#34d399" font-weight="700">H</text>
+            <line x1="68" y1="90" x2="82" y2="90" stroke="rgba(52,211,153,.5)" stroke-width="2.5"/>
+            <circle cx="100" cy="90" r="18" fill="rgba(52,211,153,.15)" stroke="rgba(52,211,153,.5)" stroke-width="1.5"/>
+            <text x="100" y="95" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#34d399" font-weight="700">H</text>
+            <!-- Pluss -->
+            <text x="130" y="95" text-anchor="middle" font-family="Fraunces" font-size="18" fill="rgba(232,244,240,.3)">+</text>
+            <!-- Cl2 molekyl -->
+            <circle cx="160" cy="90" r="18" fill="rgba(96,200,240,.12)" stroke="rgba(96,200,240,.45)" stroke-width="1.5"/>
+            <text x="160" y="95" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#60c8f0" font-weight="700">Cl</text>
+            <line x1="178" y1="90" x2="192" y2="90" stroke="rgba(96,200,240,.45)" stroke-width="2.5"/>
+            <circle cx="210" cy="90" r="18" fill="rgba(96,200,240,.12)" stroke="rgba(96,200,240,.45)" stroke-width="1.5"/>
+            <text x="210" y="95" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#60c8f0" font-weight="700">Cl</text>
+            <!-- Pil ned -->
+            <line x1="140" y1="118" x2="140" y2="148" stroke="rgba(52,211,153,.5)" stroke-width="2" marker-end="url(#rxn-arr)"/>
+            <text x="155" y="137" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.5)">reaksjon</text>
+            <!-- Produkter: 2 HCl -->
+            <circle cx="80" cy="186" r="18" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.4)" stroke-width="1.5"/>
+            <text x="80" y="191" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0a030" font-weight="700">H</text>
+            <line x1="98" y1="186" x2="112" y2="186" stroke="rgba(240,160,48,.5)" stroke-width="2.5"/>
+            <circle cx="130" cy="186" r="18" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.4)" stroke-width="1.5"/>
+            <text x="130" y="191" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0a030" font-weight="700">Cl</text>
+            <text x="162" y="191" text-anchor="middle" font-family="Fraunces" font-size="18" fill="rgba(232,244,240,.3)">+</text>
+            <circle cx="192" cy="186" r="18" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.4)" stroke-width="1.5"/>
+            <text x="192" y="191" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0a030" font-weight="700">H</text>
+            <line x1="210" y1="186" x2="224" y2="186" stroke="rgba(240,160,48,.5)" stroke-width="2.5"/>
+            <circle cx="242" cy="186" r="18" fill="rgba(240,160,48,.1)" stroke="rgba(240,160,48,.4)" stroke-width="1.5"/>
+            <text x="242" y="191" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#f0a030" font-weight="700">Cl</text>
+            <!-- Atombevaring -->
+            <rect x="14" y="218" width="252" height="34" rx="9" fill="rgba(52,211,153,.04)" stroke="rgba(52,211,153,.15)" stroke-width="1"/>
+            <text x="140" y="231" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.45)">2 H + 2 Cl (reaktanter)</text>
+            <text x="140" y="245" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.55)">= 2 H + 2 Cl (produkter) ✓ Massebevaring</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Reaksjonstyper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 08</div>
+          <div class="k-kat" style="background:rgba(96,200,240,.1);color:#60c8f0;border:1px solid rgba(96,200,240,.2)">🗂️ Typer</div>
+          <h3 class="k-tittel">De fire reaksjonstypene</h3>
+          <p class="k-ingress">Kjemiske reaksjoner deles inn i fire grunntyper. Å gjenkjenne typen gir deg umiddelbart informasjon om hva produktene er.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Syntese (kombinasjon): A + B → AB</strong> To stoffer slår seg sammen. Eks: 2H₂ + O₂ → 2H₂O. Jern+svovel → jernsulfid. Mange industrielle prosesser er syntesereaksjoner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💥</span><div><strong>Spaltning (dekomposisjon): AB → A + B</strong> Ett stoff brytes ned. Eks: 2H₂O → 2H₂ + O₂ (elektrolyse). CaCO₃ → CaO + CO₂ (kalkbrenning). Krever ofte energi (varme, lys, elektrisitet).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Enkel fortrengning: A + BC → AC + B</strong> Et grunnstoff fortrenger et annet fra en forbindelse. Eks: Zn + CuSO₄ → ZnSO₄ + Cu. Forutsetter at A er mer reaktivt enn B (aktivitetsrekken).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔁</span><div><strong>Dobbel fortrengning: AB + CD → AD + CB</strong> Ionene bytter partnere. Eks: NaCl + AgNO₃ → AgCl↓ + NaNO₃. Bunnfall (↓), gass (↑) eller vann dannes – driver reaksjonen fremover.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,240,.6)" letter-spacing=".08em">FIRE REAKSJONSTYPER</text>
+            <defs>
+              <marker id="t-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.7)"/>
+              </marker>
+            </defs>
+            <!-- 1: Syntese -->
+            <text x="14" y="34" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.6)" font-weight="600">1. SYNTESE: A + B → AB</text>
+            <circle cx="32" cy="54" r="10" fill="rgba(52,211,153,.2)" stroke="rgba(52,211,153,.5)" stroke-width="1.2"/>
+            <text x="32" y="58" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.8)" font-weight="700">A</text>
+            <text x="50" y="58" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <circle cx="68" cy="54" r="10" fill="rgba(96,200,240,.2)" stroke="rgba(96,200,240,.5)" stroke-width="1.2"/>
+            <text x="68" y="58" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.8)" font-weight="700">B</text>
+            <path d="M83,54 L100,54" stroke="rgba(52,211,153,.5)" stroke-width="1.5" marker-end="url(#t-arr)"/>
+            <ellipse cx="122" cy="54" rx="18" ry="11" fill="rgba(52,211,153,.1)" stroke="rgba(52,211,153,.4)" stroke-width="1.2"/>
+            <text x="116" y="58" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.7)" font-weight="700">A</text>
+            <text x="128" y="58" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.7)" font-weight="700">B</text>
+            <text x="180" y="58" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.35)">eks: 2H₂ + O₂ → 2H₂O</text>
+            <!-- 2: Spaltning -->
+            <text x="14" y="84" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.6)" font-weight="600">2. SPALTNING: AB → A + B</text>
+            <ellipse cx="36" cy="104" rx="18" ry="11" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.4)" stroke-width="1.2"/>
+            <text x="30" y="108" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.7)" font-weight="700">A</text>
+            <text x="42" y="108" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.7)" font-weight="700">B</text>
+            <path d="M57,104 L74,104" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#t-arr)"/>
+            <circle cx="90" cy="104" r="10" fill="rgba(240,96,96,.15)" stroke="rgba(240,96,96,.45)" stroke-width="1.2"/>
+            <text x="90" y="108" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.8)" font-weight="700">A</text>
+            <text x="108" y="108" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <circle cx="126" cy="104" r="10" fill="rgba(240,160,48,.15)" stroke="rgba(240,160,48,.45)" stroke-width="1.2"/>
+            <text x="126" y="108" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.8)" font-weight="700">B</text>
+            <text x="150" y="108" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.35)">eks: 2H₂O → 2H₂ + O₂</text>
+            <!-- 3: Enkel fortrengning -->
+            <text x="14" y="134" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.6)" font-weight="600">3. ENKEL FORTRENGNING: A + BC → AC + B</text>
+            <circle cx="30" cy="154" r="10" fill="rgba(240,160,48,.15)" stroke="rgba(240,160,48,.45)" stroke-width="1.2"/>
+            <text x="30" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.8)" font-weight="700">A</text>
+            <text x="48" y="158" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <ellipse cx="72" cy="154" rx="18" ry="11" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)" stroke-width="1.2"/>
+            <text x="66" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.6)" font-weight="700">B</text>
+            <text x="78" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.6)" font-weight="700">C</text>
+            <path d="M95,154 L112,154" stroke="rgba(52,211,153,.5)" stroke-width="1.5" marker-end="url(#t-arr)"/>
+            <ellipse cx="136" cy="154" rx="18" ry="11" fill="rgba(240,160,48,.08)" stroke="rgba(240,160,48,.3)" stroke-width="1.2"/>
+            <text x="130" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.7)" font-weight="700">A</text>
+            <text x="142" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.7)" font-weight="700">C</text>
+            <text x="158" y="158" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <circle cx="174" cy="154" r="10" fill="rgba(52,211,153,.12)" stroke="rgba(52,211,153,.35)" stroke-width="1.2"/>
+            <text x="174" y="158" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.7)" font-weight="700">B</text>
+            <text x="192" y="158" font-family="DM Sans" font-size="7.5" fill="rgba(232,244,240,.3)">Zn + CuSO₄ → ...</text>
+            <!-- 4: Dobbel fortrengning -->
+            <text x="14" y="184" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.6)" font-weight="600">4. DOBBEL FORTRENGNING: AB + CD → AD + CB</text>
+            <ellipse cx="36" cy="204" rx="18" ry="11" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.3)" stroke-width="1.2"/>
+            <text x="30" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(160,96,248,.7)" font-weight="700">A</text>
+            <text x="42" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.6)" font-weight="700">B</text>
+            <text x="62" y="208" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <ellipse cx="86" cy="204" rx="18" ry="11" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)" stroke-width="1.2"/>
+            <text x="80" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.6)" font-weight="700">C</text>
+            <text x="92" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.6)" font-weight="700">D</text>
+            <path d="M109,204 L122,204" stroke="rgba(52,211,153,.5)" stroke-width="1.5" marker-end="url(#t-arr)"/>
+            <ellipse cx="146" cy="204" rx="18" ry="11" fill="rgba(160,96,248,.07)" stroke="rgba(160,96,248,.25)" stroke-width="1.2"/>
+            <text x="140" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(160,96,248,.65)" font-weight="700">A</text>
+            <text x="152" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.65)" font-weight="700">D</text>
+            <text x="170" y="208" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(232,244,240,.3)">+</text>
+            <ellipse cx="194" cy="204" rx="18" ry="11" fill="rgba(52,211,153,.07)" stroke="rgba(52,211,153,.25)" stroke-width="1.2"/>
+            <text x="188" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.6)" font-weight="700">C</text>
+            <text x="200" y="208" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.6)" font-weight="700">B</text>
+            <text x="22" y="238" font-family="DM Sans" font-size="7.5" fill="rgba(232,244,240,.3)">eks: NaCl + AgNO₃ → AgCl↓ + NaNO₃</text>
+            <text x="22" y="252" font-family="DM Sans" font-size="7.5" fill="rgba(232,244,240,.25)">(↓ = bunnfall, ↑ = gass dannes)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Forbrenning og oksidasjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 08</div>
+          <div class="k-kat" style="background:rgba(240,160,48,.1);color:#f0a030;border:1px solid rgba(240,160,48,.2)">🔥 Forbrenning</div>
+          <h3 class="k-tittel">Forbrenning og oksidasjon</h3>
+          <p class="k-ingress">Forbrenning er den viktigste kjemiske reaksjonen i hverdagen – i motorer, kroppen vår og naturens kretsløp. Det er en rask oksidasjonsreaksjon med oksygen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Fullstendig forbrenning:</strong> Karbon + hydrogen + oksygen → CO₂ + H₂O + energi. CH₄ + 2O₂ → CO₂ + 2H₂O. Nok oksygen tilgjengelig. Ren blå flamme. Bensin, naturgass, tre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>Ufullstendig forbrenning:</strong> For lite oksygen → CO (karbonmonoksid) + sot dannes. 2CH₄ + 3O₂ → 2CO + 4H₂O. CO er farlig giftig – binder seg til hemoglobin sterkere enn O₂. Gul/oransje flamme.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦠</span><div><strong>Oksidasjon:</strong> Når et stoff avgir elektroner eller reagerer med oksygen. Rust: 4Fe + 3O₂ → 2Fe₂O₃. Langsom oksidasjon. Celleånding: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + energi (ATP).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Redoks (reduksjon-oksidasjon):</strong> Oksidasjon og reduksjon skjer alltid samtidig. Det som oksideres (avgir e⁻) kalles reduseringsmiddel. Det som reduseres (tar imot e⁻) kalles oksidasjonsmiddel. Viktig i batterier og elektrolyse.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)" letter-spacing=".08em">FORBRENNING AV METAN (CH₄)</text>
+            <!-- CH4 molekyl -->
+            <circle cx="60" cy="80" r="22" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.4)" stroke-width="1.5"/>
+            <text x="60" y="75" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#f0a030" font-weight="700">CH₄</text>
+            <text x="60" y="90" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">metan</text>
+            <!-- + 2O2 -->
+            <text x="92" y="84" text-anchor="middle" font-family="Fraunces" font-size="16" fill="rgba(232,244,240,.25)">+</text>
+            <text x="92" y="99" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.25)">2×</text>
+            <circle cx="122" cy="80" r="22" fill="rgba(96,200,240,.1)" stroke="rgba(96,200,240,.35)" stroke-width="1.5"/>
+            <text x="122" y="84" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#60c8f0" font-weight="700">O₂</text>
+            <!-- Flammepil -->
+            <defs><marker id="brn-arr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(240,160,48,.8)"/></marker></defs>
+            <line x1="148" y1="80" x2="178" y2="80" stroke="rgba(240,160,48,.6)" stroke-width="2.5" marker-end="url(#brn-arr)"/>
+            <!-- Flamme-ikon -->
+            <text x="160" y="72" text-anchor="middle" font-family="DM Sans" font-size="14">🔥</text>
+            <!-- CO2 produkt -->
+            <circle cx="208" cy="66" r="22" fill="rgba(52,211,153,.1)" stroke="rgba(52,211,153,.35)" stroke-width="1.5"/>
+            <text x="208" y="70" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#34d399" font-weight="700">CO₂</text>
+            <!-- + 2H2O -->
+            <text x="208" y="102" text-anchor="middle" font-family="Fraunces" font-size="14" fill="rgba(232,244,240,.25)">+</text>
+            <text x="208" y="116" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.25)">2×</text>
+            <circle cx="208" cy="136" r="22" fill="rgba(96,200,240,.1)" stroke="rgba(96,200,240,.35)" stroke-width="1.5"/>
+            <text x="208" y="140" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#60c8f0" font-weight="700">H₂O</text>
+            <!-- Energi-pil -->
+            <path d="M208,160 L208,175" stroke="rgba(240,160,48,.4)" stroke-width="1.5" marker-end="url(#brn-arr)"/>
+            <text x="208" y="192" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.6)" font-weight="600">Energi (varme+lys)</text>
+            <!-- Ligning -->
+            <rect x="14" y="210" width="252" height="40" rx="10" fill="rgba(240,160,48,.04)" stroke="rgba(240,160,48,.15)" stroke-width="1"/>
+            <text x="140" y="226" text-anchor="middle" font-family="Fraunces" font-size="12" fill="rgba(240,160,48,.7)">CH₄ + 2O₂ → CO₂ + 2H₂O</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.4)">Eksoterm: ΔH = −890 kJ/mol</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Eksoterme og endoterme reaksjoner -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 08</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.2)">🌡️ Energi</div>
+          <h3 class="k-tittel">Eksoterme og endoterme reaksjoner</h3>
+          <p class="k-ingress">Alle kjemiske reaksjoner innebærer energiendringer. Noen avgir varme til omgivelsene, andre tar opp varme fra omgivelsene.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Eksoterm (ΔH &lt; 0):</strong> Frigjør energi. Produktene har lavere energi enn reaktantene. Temperatur stiger. Eksempler: forbrenning, nøytralisasjon, løsning av NaOH i vann, cellulær respirasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Endoterm (ΔH &gt; 0):</strong> Absorberer energi. Produktene har høyere energi enn reaktantene. Temperatur synker. Eksempler: fotosyntese, elektrolyse av vann, oppløsning av NH₄NO₃ (kalde kompresser).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Aktiveringsenergi (Ea):</strong> Den minste energimengden som trengs for å starte reaksjonen. Selv eksoterme reaksjoner trenger en spark. Bensin brenner ikke av seg selv – det trengs en gnist.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Entalpi (ΔH):</strong> ΔH = H_produkter − H_reaktanter. Måles i kJ/mol. Hesss lov: den totale entalpiendringe er uavhengig av reaksjonsveien – bare start- og sluttstilstand teller.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,96,.6)" letter-spacing=".08em">ENERGIDIAGRAM</text>
+            <defs>
+              <marker id="en-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.7)"/>
+              </marker>
+            </defs>
+            <!-- Aksene -->
+            <line x1="26" y1="230" x2="136" y2="230" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <line x1="26" y1="26" x2="26" y2="230" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <text x="80" y="248" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.3)">Reaksjonsforløp →</text>
+            <text x="18" y="130" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.3)" transform="rotate(-90,18,130)">Energi →</text>
+            <!-- EKSOTERM kurve -->
+            <!-- Reaktantnivå høyt -->
+            <line x1="30" y1="100" x2="52" y2="100" stroke="rgba(240,160,48,.6)" stroke-width="2"/>
+            <text x="40" y="93" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.55)">Reaktanter</text>
+            <!-- Aktiveringstopp -->
+            <path d="M52,100 Q62,42 72,42 Q82,42 92,75 Q102,110 116,180" fill="none" stroke="rgba(240,96,96,.6)" stroke-width="2"/>
+            <!-- Produktnivå lavt -->
+            <line x1="116" y1="180" x2="136" y2="180" stroke="rgba(52,211,153,.6)" stroke-width="2"/>
+            <text x="126" y="195" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(52,211,153,.55)">Produkter</text>
+            <!-- Ea-pil -->
+            <line x1="68" y1="100" x2="68" y2="44" stroke="rgba(96,200,240,.4)" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="60" y1="100" x2="76" y2="100" stroke="rgba(96,200,240,.3)" stroke-width="1"/>
+            <line x1="60" y1="44" x2="76" y2="44" stroke="rgba(96,200,240,.3)" stroke-width="1"/>
+            <text x="78" y="74" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.5)">Ea</text>
+            <!-- ΔH-pil -->
+            <line x1="120" y1="100" x2="120" y2="180" stroke="rgba(52,211,153,.5)" stroke-width="1.5" marker-end="url(#en-arr)"/>
+            <text x="126" y="145" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.6)" font-weight="600">−ΔH</text>
+            <text x="80" y="220" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.5)" font-weight="600">EKSOTERM (ΔH &lt; 0)</text>
+
+            <!-- ENDOTERM (høyre side) -->
+            <line x1="152" y1="230" x2="266" y2="230" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <line x1="152" y1="26" x2="152" y2="230" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <!-- Reaktantnivå lavt -->
+            <line x1="156" y1="190" x2="176" y2="190" stroke="rgba(240,160,48,.6)" stroke-width="2"/>
+            <text x="166" y="183" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.55)">Reaktanter</text>
+            <!-- Kurve -->
+            <path d="M176,190 Q188,120 200,110 Q212,100 224,115 Q236,130 242,110" fill="none" stroke="rgba(96,200,240,.6)" stroke-width="2"/>
+            <!-- Produktnivå høyt -->
+            <line x1="242" y1="110" x2="262" y2="110" stroke="rgba(52,211,153,.6)" stroke-width="2"/>
+            <text x="252" y="103" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(52,211,153,.55)">Produkter</text>
+            <!-- ΔH-pil opp -->
+            <line x1="248" y1="190" x2="248" y2="112" stroke="rgba(52,211,153,.5)" stroke-width="1.5" marker-end="url(#en-arr)"/>
+            <text x="258" y="155" font-family="DM Sans" font-size="9" fill="rgba(52,211,153,.6)" font-weight="600">+ΔH</text>
+            <text x="209" y="220" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.5)" font-weight="600">ENDOTERM (ΔH &gt; 0)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Reaksjonshastighet -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 08</div>
+          <div class="k-kat" style="background:rgba(96,200,240,.1);color:#60c8f0;border:1px solid rgba(96,200,240,.2)">⏱️ Hastighet</div>
+          <h3 class="k-tittel">Reaksjonshastighet</h3>
+          <p class="k-ingress">Noen reaksjoner skjer på millisekunder, andre tar millioner av år. Fem faktorer styrer hvor raskt reaktantene omdannes til produkter.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Temperatur:</strong> Høyere T → partikler beveger seg raskere → flere effektive kollisjoner per sekund. Tommelfingerregel: 10°C høyere T ≈ dobler reaksjonshastigheten (for mange reaksjoner).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Konsentrasjon:</strong> Høyere konsentrasjon → tettere partikler → hyppigere kollisjoner. Doblet konsentrasjon kan doble (eller mer enn doble) hastigheten, avhengig av reaksjonsorden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">✂️</span><div><strong>Overflate­areal:</strong> Pulver reagerer mye raskere enn klumper – mye mer overflate er tilgjengelig for kollisjoner. Støveksplosjoner i møller og miner: fint pulver + luft = eksplosivt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔅</span><div><strong>Lys:</strong> Fotokjemiske reaksjoner utløses av lys (fotoner gir energi). Fotosyntese, solbrenthet (UV-stråling bryter DNA-bindinger), film-fremkalling, solceller.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,240,.6)" letter-spacing=".08em">KOLLISJONSTEORI</text>
+            <!-- Kollisjonsmodell -->
+            <text x="140" y="36" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.4)">Reaksjon skjer bare ved energirik kollisjon i riktig orientering</text>
+            <!-- LAV temperatur: få kollisjoner -->
+            <rect x="14" y="46" width="118" height="90" rx="8" fill="rgba(96,200,240,.04)" stroke="rgba(96,200,240,.15)" stroke-width="1"/>
+            <text x="73" y="62" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.55)" font-weight="600">Lav T – langsom</text>
+            <!-- Tregere partikler -->
+            <circle cx="36" cy="100" r="10" fill="rgba(240,160,48,.2)" stroke="rgba(240,160,48,.5)" stroke-width="1.2"/>
+            <text x="36" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.7)">A</text>
+            <path d="M46,98 L56,98" stroke="rgba(240,160,48,.4)" stroke-width="1.2" marker-end="url(#t-arr)"/>
+            <circle cx="96" cy="100" r="10" fill="rgba(52,211,153,.15)" stroke="rgba(52,211,153,.4)" stroke-width="1.2"/>
+            <text x="96" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.7)">B</text>
+            <path d="M86,102 L76,102" stroke="rgba(52,211,153,.4)" stroke-width="1.2" marker-end="url(#t-arr)"/>
+            <text x="73" y="125" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.25)">Treffer ikke → ingen reaksjon</text>
+            <!-- HØY temperatur: mange kollisjoner -->
+            <rect x="148" y="46" width="118" height="90" rx="8" fill="rgba(240,96,96,.04)" stroke="rgba(240,96,96,.15)" stroke-width="1"/>
+            <text x="207" y="62" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.55)" font-weight="600">Høy T – rask</text>
+            <circle cx="170" cy="95" r="10" fill="rgba(240,160,48,.25)" stroke="rgba(240,160,48,.6)" stroke-width="1.5"/>
+            <text x="170" y="99" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.8)">A</text>
+            <path d="M180,93 L192,93" stroke="rgba(240,160,48,.6)" stroke-width="2" marker-end="url(#t-arr)"/>
+            <path d="M180,97 L192,97" stroke="rgba(240,160,48,.5)" stroke-width="1.5" marker-end="url(#t-arr)"/>
+            <circle cx="212" cy="95" r="10" fill="rgba(52,211,153,.2)" stroke="rgba(52,211,153,.5)" stroke-width="1.5"/>
+            <text x="212" y="99" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.8)">B</text>
+            <path d="M202,93 L190,93" stroke="rgba(52,211,153,.6)" stroke-width="2" marker-end="url(#t-arr)"/>
+            <text x="207" y="125" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(52,211,153,.5)">Kollisjon → AB dannes!</text>
+            <!-- De fem faktorene -->
+            <rect x="14" y="148" width="252" height="104" rx="10" fill="rgba(52,211,153,.03)" stroke="rgba(52,211,153,.12)" stroke-width="1"/>
+            <text x="140" y="164" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.5)" font-weight="600" letter-spacing=".06em">5 FAKTORER SOM PÅVIRKER HASTIGHETEN</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.55)">
+              <text x="22" y="182">1. 🌡️ Temperatur – flere og raskere kollisjoner</text>
+              <text x="22" y="198">2. 🔬 Konsentrasjon – tettere partikler kolliderer hyppigere</text>
+              <text x="22" y="214">3. ✂️ Overflateareal – mer kontaktflate mellom reaktanter</text>
+              <text x="22" y="230">4. ⚗️ Katalysator – senker aktiveringsenergi Ea</text>
+              <text x="22" y="246">5. 🔅 Lys – fotokjemiske reaksjoner (fotosyntese, UV)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Katalysatorer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 08</div>
+          <div class="k-kat" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)">⚗️ Katalysator</div>
+          <h3 class="k-tittel">Katalysatorer</h3>
+          <p class="k-ingress">En katalysator øker reaksjonshastigheten uten selv å bli forbrukt. Den senker aktiveringsenergi­en ved å tilby en alternativ reaksjonsvei.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔑</span><div><strong>Hva gjør katalysatoren?</strong> Tilbyr en alternativ reaksjonsvei med lavere aktiveringsenergi (Ea). Endrer IKKE ΔH (energiforskjellen mellom reaktanter og produkter). Forbrukes ikke – kan brukes på nytt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>Industri – Haber-prosessen:</strong> N₂ + 3H₂ ⇌ 2NH₃. Jernkatalysator senker Ea dramatisk. Uten katalysator: krever 500°C+ og ekstremt trykk. Produserer 150 millioner tonn kunstgjødsel per år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🫀</span><div><strong>Enzymer – biologiske katalysatorer:</strong> Proteinmolekyler i kroppen. Hvert enzym er spesifikt for én reaksjon (lås-nøkkel-modellen). Amylase (spytt bryter ned stivelse), pepsin (magesyren bryter ned proteiner). Hemmes av feil pH og temperatur.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚗</span><div><strong>Katalysatoren i bilen:</strong> Konverterer giftige avgasser: CO + uforbrente hydrokarboner + NOₓ → CO₂ + H₂O + N₂. Platina/palladium/rhodium på keramisk overflate. Virker bare varm (~300°C+).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(52,211,153,.6)" letter-spacing=".08em">KATALYSATOR – LAVERE Ea</text>
+            <defs>
+              <marker id="kat-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,.7)"/>
+              </marker>
+              <marker id="kat-arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,160,48,.7)"/>
+              </marker>
+            </defs>
+            <!-- Energiakser -->
+            <line x1="26" y1="220" x2="260" y2="220" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <line x1="26" y1="26" x2="26"  y2="220" stroke="rgba(232,244,240,.2)" stroke-width="1.2"/>
+            <text x="143" y="238" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(232,244,240,.3)">Reaksjonsforløp →</text>
+            <!-- Reaktantnivå -->
+            <line x1="30" y1="120" x2="60" y2="120" stroke="rgba(240,160,48,.5)" stroke-width="1.8"/>
+            <text x="44" y="113" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">Reaktanter</text>
+            <!-- UTEN katalysator (høy topp) -->
+            <path d="M60,120 Q80,34 100,34 Q120,34 140,100 Q160,165 180,165" fill="none" stroke="rgba(240,96,96,.5)" stroke-width="2" stroke-dasharray="5 3"/>
+            <!-- MED katalysator (lav topp) -->
+            <path d="M60,120 Q80,75 100,75 Q120,75 140,100 Q160,165 180,165" fill="none" stroke="rgba(52,211,153,.7)" stroke-width="2.5"/>
+            <!-- Produktnivå -->
+            <line x1="180" y1="165" x2="210" y2="165" stroke="rgba(52,211,153,.5)" stroke-width="1.8"/>
+            <text x="196" y="180" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(52,211,153,.5)">Produkter</text>
+            <!-- Ea uten kat -->
+            <line x1="100" y1="120" x2="100" y2="36" stroke="rgba(240,96,96,.3)" stroke-width="1" stroke-dasharray="3 2"/>
+            <line x1="92" y1="120" x2="108" y2="120" stroke="rgba(240,96,96,.25)" stroke-width="1"/>
+            <line x1="92" y1="36" x2="108" y2="36" stroke="rgba(240,96,96,.25)" stroke-width="1"/>
+            <text x="113" y="82" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.6)">Ea (uten kat)</text>
+            <!-- Ea med kat -->
+            <line x1="60" y1="120" x2="60" y2="77" stroke="rgba(52,211,153,.4)" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="18" y="100" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.6)">Ea</text>
+            <text x="14" y="112" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.55)">(med kat)</text>
+            <!-- Legend -->
+            <line x1="36" y1="196" x2="60" y2="196" stroke="rgba(240,96,96,.5)" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="66" y="200" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.55)">Uten katalysator</text>
+            <line x1="152" y1="196" x2="176" y2="196" stroke="rgba(52,211,153,.7)" stroke-width="2.5"/>
+            <text x="182" y="200" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.6)">Med katalysator</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Likevekt og Le Chateliers prinsipp -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 08</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">⚖️ Likevekt</div>
+          <h3 class="k-tittel">Kjemisk likevekt</h3>
+          <p class="k-ingress">Mange reaksjoner er reversible – de går begge veier. Likevekt oppnås når frem- og tilbakereaksjon går like raskt, og konsentrasjonene er konstante.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⇌</span><div><strong>Reversibel reaksjon:</strong> Skrives med dobbelpil (⇌). N₂ + 3H₂ ⇌ 2NH₃. Likevektskonstant K = [produkter]^n / [reaktanter]^m. K &gt;&gt; 1: likevekten ligger mot produktsiden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔀</span><div><strong>Le Chateliers prinsipp:</strong> Hvis et system i likevekt forstyrres, forskyver det seg i den retningen som motvirker forstyrrelsen. Universell prinsipp for alle likevekter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Temperatureffekt:</strong> Øk T → likevekten forskyves mot endoterm retning. Haber-prosessen er eksoterm → lavere T gir mer NH₃, men for langsomt. Kompromiss ~450°C.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Konsentrasjons- og trykkeffekt:</strong> Øk konsentrasjon av reaktant → mer produkt dannes. Øk trykk → forskyver mot siden med færrest gasskjemolekyl (Haber: 4 mol → 2 mol, så høyt trykk gir mer NH₃).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a0a"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">HABER-PROSESSEN</text>
+            <!-- N2 + 3H2 ⇌ 2NH3 -->
+            <text x="140" y="38" text-anchor="middle" font-family="Fraunces" font-size="14" fill="rgba(232,244,240,.6)">N₂ + 3H₂  ⇌  2NH₃</text>
+            <!-- Betingelser -->
+            <rect x="14" y="50" width="252" height="60" rx="10" fill="rgba(160,96,248,.04)" stroke="rgba(160,96,248,.18)" stroke-width="1"/>
+            <text x="140" y="66" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.55)" font-weight="600">OPTIMALE BETINGELSER</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.5)">
+              <text x="22" y="82">⚗️ Katalysator: Fe (jern) – senker Ea dramatisk</text>
+              <text x="22" y="97">🌡️ Temperatur: ~450°C (kompromiss hastighet/utbytte)</text>
+              <text x="22" y="102"/>
+            </g>
+            <text x="22" y="104" font-family="DM Sans" font-size="8.5" fill="rgba(232,244,240,.5)">⚡ Trykk: 150–300 atm (4 mol → 2 mol gass)</text>
+            <!-- Le Chatelier-tabell -->
+            <rect x="14" y="124" width="252" height="120" rx="10" fill="rgba(52,211,153,.03)" stroke="rgba(52,211,153,.12)" stroke-width="1"/>
+            <text x="140" y="140" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(52,211,153,.5)" font-weight="600" letter-spacing=".06em">LE CHATELIERS PRINSIPP</text>
+            <!-- Tabell-rader -->
+            <g font-family="DM Sans" font-size="8.5">
+              <text x="22" y="158" fill="rgba(232,244,240,.4)" font-weight="600">Forstyrrelse</text>
+              <text x="160" y="158" fill="rgba(232,244,240,.4)" font-weight="600">Likevekt forskyves</text>
+              <line x1="14" y1="162" x2="266" y2="162" stroke="rgba(232,244,240,.08)" stroke-width="1"/>
+              <text x="22" y="178" fill="rgba(240,160,48,.6)">↑ [N₂] eller [H₂]</text>
+              <text x="160" y="178" fill="rgba(52,211,153,.6)">→ Mot NH₃ (høyre)</text>
+              <text x="22" y="195" fill="rgba(240,96,96,.6)">↑ Temperatur</text>
+              <text x="160" y="195" fill="rgba(96,200,240,.6)">← Mot N₂+H₂ (venstre)</text>
+              <text x="22" y="212" fill="rgba(160,96,248,.6)">↑ Trykk</text>
+              <text x="160" y="212" fill="rgba(52,211,153,.6)">→ Mot NH₃ (høyre)</text>
+              <text x="22" y="229" fill="rgba(52,211,153,.5)">Tilsett katalysator</text>
+              <text x="160" y="229" fill="rgba(232,244,240,.35)">Ingen forskyvning</text>
+              <text x="160" y="240" fill="rgba(232,244,240,.25)">(bare raskere likevekt)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">08 / 08</div>
+          <div class="k-kat" style="background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Kjemiske reaksjoner – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:820px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(52,211,153,.04);border:1px solid rgba(52,211,153,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#34d399;display:block;margin-bottom:4px">⚗️ Grunnlag</strong>Reaktanter → produkter · Massebevaring (Lavoisier) · Bindinger brytes og dannes · Tegn: farge, gass, bunnfall, varme</div>
+            <div style="padding:14px;background:rgba(96,200,240,.04);border:1px solid rgba(96,200,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#60c8f0;display:block;margin-bottom:4px">🗂️ Typer</strong>Syntese A+B→AB · Spaltning AB→A+B · Enkel fortrengning · Dobbel fortrengning · Redoks (e⁻ overføring)</div>
+            <div style="padding:14px;background:rgba(240,160,48,.04);border:1px solid rgba(240,160,48,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#f0a030;display:block;margin-bottom:4px">🔥 Forbrenning</strong>Fullstendig: CO₂+H₂O · Ufullstendig: CO+sot · Oksidasjon/reduksjon · Celleånding = kontrollert forbrenning</div>
+            <div style="padding:14px;background:rgba(240,96,96,.04);border:1px solid rgba(240,96,96,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#f06060;display:block;margin-bottom:4px">🌡️ Energi</strong>Eksoterm ΔH&lt;0 · Endoterm ΔH&gt;0 · Aktiveringsenergi Ea · Hesss lov · Entalpi H</div>
+            <div style="padding:14px;background:rgba(96,200,240,.04);border:1px solid rgba(96,200,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#60c8f0;display:block;margin-bottom:4px">⏱️ Hastighet</strong>T↑ → raskere · Konsentrasjon↑ → raskere · Overflate↑ → raskere · Katalysator → senker Ea · Lys (fotokjemi)</div>
+            <div style="padding:14px;background:rgba(160,96,248,.04);border:1px solid rgba(160,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(232,244,240,.65);line-height:1.6"><strong style="color:#a060f8;display:block;margin-bottom:4px">⚖️ Likevekt</strong>Reversibel (⇌) · Le Chatelier · K = [P]ⁿ/[R]ᵐ · Haber: Fe-kat, 450°C, 200 atm · Enzymer = biologiske katalysatorer</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end k-slides -->
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div><!-- end karusell -->
+
+  <!-- BALANSERINGS-ØVELSE -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Balanser ligningene</div><div class="sep-r"></div></div>
+  <div class="bal-wrapper">
+    <div class="bal-tittel">Juster koeffisientene slik at antall atomer er likt på begge sider</div>
+    <div class="bal-velg" id="bal-velg"></div>
+    <div class="bal-scene">
+      <div class="bal-ligning" id="bal-ligning"></div>
+      <div class="bal-atomteller" id="bal-atomteller"></div>
+      <div class="bal-status" id="bal-status">Juster koeffisientene over</div>
+    </div>
+    <div class="bal-fasit">
+      <button class="bal-fasit-btn" onclick="visFasit()">Vis fasit</button>
+    </div>
+  </div>
+
+</div><!-- end page -->
+
+<script>
+// ══ KARUSELL ══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  if (Math.abs(e.changedTouches[0].clientX - tx) > 50) kGo(e.changedTouches[0].clientX < tx ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+// ══ BALANSERINGS-ØVELSE ══
+const REAKSJONER = [
+  {
+    navn: 'Hydrogen + oksygen',
+    stoffer: [
+      { side: 'L', navn: 'H₂', html: 'H<sub>2</sub>', atomer: { H: 2 } },
+      { side: 'L', navn: 'O₂', html: 'O<sub>2</sub>', atomer: { O: 2 } },
+      { side: 'R', navn: 'H₂O', html: 'H<sub>2</sub>O', atomer: { H: 2, O: 1 } },
+    ],
+    fasit: [2, 1, 2],
+  },
+  {
+    navn: 'Metan + oksygen',
+    stoffer: [
+      { side: 'L', navn: 'CH₄', html: 'CH<sub>4</sub>', atomer: { C: 1, H: 4 } },
+      { side: 'L', navn: 'O₂', html: 'O<sub>2</sub>', atomer: { O: 2 } },
+      { side: 'R', navn: 'CO₂', html: 'CO<sub>2</sub>', atomer: { C: 1, O: 2 } },
+      { side: 'R', navn: 'H₂O', html: 'H<sub>2</sub>O', atomer: { H: 2, O: 1 } },
+    ],
+    fasit: [1, 2, 1, 2],
+  },
+  {
+    navn: 'Jern + oksygen (rust)',
+    stoffer: [
+      { side: 'L', navn: 'Fe', html: 'Fe', atomer: { Fe: 1 } },
+      { side: 'L', navn: 'O₂', html: 'O<sub>2</sub>', atomer: { O: 2 } },
+      { side: 'R', navn: 'Fe₂O₃', html: 'Fe<sub>2</sub>O<sub>3</sub>', atomer: { Fe: 2, O: 3 } },
+    ],
+    fasit: [4, 3, 2],
+  },
+  {
+    navn: 'Nitrogen + hydrogen (Haber)',
+    stoffer: [
+      { side: 'L', navn: 'N₂', html: 'N<sub>2</sub>', atomer: { N: 2 } },
+      { side: 'L', navn: 'H₂', html: 'H<sub>2</sub>', atomer: { H: 2 } },
+      { side: 'R', navn: 'NH₃', html: 'NH<sub>3</sub>', atomer: { N: 1, H: 3 } },
+    ],
+    fasit: [1, 3, 2],
+  },
+  {
+    navn: 'Glukose-forbrenning',
+    stoffer: [
+      { side: 'L', navn: 'C₆H₁₂O₆', html: 'C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>', atomer: { C: 6, H: 12, O: 6 } },
+      { side: 'L', navn: 'O₂', html: 'O<sub>2</sub>', atomer: { O: 2 } },
+      { side: 'R', navn: 'CO₂', html: 'CO<sub>2</sub>', atomer: { C: 1, O: 2 } },
+      { side: 'R', navn: 'H₂O', html: 'H<sub>2</sub>O', atomer: { H: 2, O: 1 } },
+    ],
+    fasit: [1, 6, 6, 6],
+  },
+  {
+    navn: 'Aluminium + oksygen',
+    stoffer: [
+      { side: 'L', navn: 'Al', html: 'Al', atomer: { Al: 1 } },
+      { side: 'L', navn: 'O₂', html: 'O<sub>2</sub>', atomer: { O: 2 } },
+      { side: 'R', navn: 'Al₂O₃', html: 'Al<sub>2</sub>O<sub>3</sub>', atomer: { Al: 2, O: 3 } },
+    ],
+    fasit: [4, 3, 2],
+  },
+];
+
+let aktivRxn = 0;
+let koeff = [];
+
+function lastRxn(idx) {
+  aktivRxn = idx;
+  const rxn = REAKSJONER[idx];
+  koeff = rxn.stoffer.map(() => 1);
+
+  // Velg-knapper
+  document.querySelectorAll('.bal-knapp').forEach((b, i) => b.classList.toggle('aktiv', i === idx));
+  tegnLigning();
+  oppdaterTeller();
+}
+
+function tegnLigning() {
+  const rxn = REAKSJONER[aktivRxn];
+  const el = document.getElementById('bal-ligning');
+  el.innerHTML = '';
+  let foerstePaaHoyre = true;
+  let foerstePaaVenstre = true;
+
+  rxn.stoffer.forEach((stoff, i) => {
+    if (stoff.side === 'R' && foerstePaaHoyre) {
+      const pil = document.createElement('span');
+      pil.className = 'bal-pil'; pil.textContent = '→';
+      el.appendChild(pil);
+      foerstePaaHoyre = false;
+    } else if (stoff.side === 'L' && !foerstePaaVenstre) {
+      const plus = document.createElement('span');
+      plus.className = 'bal-pluss'; plus.textContent = '+';
+      el.appendChild(plus);
+    } else if (stoff.side === 'R' && !foerstePaaHoyre) {
+      const plus = document.createElement('span');
+      plus.className = 'bal-pluss'; plus.textContent = '+';
+      el.appendChild(plus);
+    }
+    if (stoff.side === 'L') foerstePaaVenstre = false;
+
+    const div = document.createElement('div');
+    div.className = 'bal-stoff';
+
+    const navn = document.createElement('div');
+    navn.className = 'bal-stoff-navn';
+    const k = koeff[i];
+    navn.innerHTML = (k > 1 ? `<span style="color:var(--accent);font-size:1.1em">${k}</span>` : '') + stoff.html;
+
+    const kCtrl = document.createElement('div');
+    kCtrl.className = 'bal-koeff';
+    const minus = document.createElement('button');
+    minus.className = 'bal-koeff-btn'; minus.textContent = '−';
+    minus.onclick = () => { if (koeff[i] > 1) { koeff[i]--; tegnLigning(); oppdaterTeller(); } };
+    const plus2 = document.createElement('button');
+    plus2.className = 'bal-koeff-btn'; plus2.textContent = '+';
+    plus2.onclick = () => { if (koeff[i] < 9) { koeff[i]++; tegnLigning(); oppdaterTeller(); } };
+
+    kCtrl.appendChild(minus);
+    kCtrl.appendChild(plus2);
+    div.appendChild(navn);
+    div.appendChild(kCtrl);
+    el.appendChild(div);
+  });
+}
+
+function oppdaterTeller() {
+  const rxn = REAKSJONER[aktivRxn];
+  const venstre = {}, hoyre = {};
+
+  rxn.stoffer.forEach((stoff, i) => {
+    const target = stoff.side === 'L' ? venstre : hoyre;
+    for (const [el, n] of Object.entries(stoff.atomer)) {
+      target[el] = (target[el] || 0) + n * koeff[i];
+    }
+  });
+
+  const alleAtomer = [...new Set([...Object.keys(venstre), ...Object.keys(hoyre)])].sort();
+  const tellerEl = document.getElementById('bal-atomteller');
+  tellerEl.innerHTML = '';
+
+  let altOK = true;
+  for (const atom of alleAtomer) {
+    const v = venstre[atom] || 0;
+    const h = hoyre[atom] || 0;
+    const ok = v === h;
+    if (!ok) altOK = false;
+
+    const div = document.createElement('div');
+    div.className = 'bal-atom ' + (ok ? 'ok' : 'feil');
+    div.innerHTML = `
+      <div class="bal-atom-symbol">${atom}</div>
+      <div class="bal-atom-rad">
+        <span class="bal-atom-tall">${v}</span>
+        <span>${ok ? '✓' : '≠'}</span>
+        <span class="bal-atom-tall">${h}</span>
+      </div>`;
+    tellerEl.appendChild(div);
+  }
+
+  const statusEl = document.getElementById('bal-status');
+  if (altOK) {
+    statusEl.textContent = '🎉 Riktig! Ligningen er balansert.';
+    statusEl.className = 'bal-status ok';
+  } else {
+    statusEl.textContent = 'Antall atomer er ikke like på begge sider – juster koeffisientene.';
+    statusEl.className = 'bal-status feil';
+  }
+}
+
+function visFasit() {
+  const rxn = REAKSJONER[aktivRxn];
+  koeff = [...rxn.fasit];
+  tegnLigning();
+  oppdaterTeller();
+}
+
+// Init
+const velgEl = document.getElementById('bal-velg');
+REAKSJONER.forEach((rxn, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'bal-knapp';
+  btn.textContent = rxn.navn;
+  btn.onclick = () => lastRxn(i);
+  velgEl.appendChild(btn);
+});
+lastRxn(0);
+</script>
+</body>
+</html>
