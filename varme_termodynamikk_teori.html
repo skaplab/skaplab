@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Varme og termodynamikk</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0608;--surface:#140a0c;--card:#1c0e10;--border:rgba(251,146,60,.07);
+  --text:#f4ece8;--dim:#4a2818;
+  --accent:#fb923c;--accent2:#fbbf24;--accent3:#60c8f0;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 30% 20%,rgba(251,146,60,.05),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(251,191,36,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(10,6,8,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(244,236,232,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(251,146,60,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(244,236,232,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* VARMEKALKULATOR */
+.vk-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.vk-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:20px}
+.vk-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.vk-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
+.vk-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:16px}
+.vk-felt{display:flex;flex-direction:column;gap:11px}
+.vk-rad{display:flex;align-items:center;gap:10px}
+.vk-rad label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);width:130px;flex-shrink:0}
+.vk-rad input,.vk-rad select{flex:1;padding:9px 13px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-b);font-size:.9rem}
+.vk-rad input:focus,.vk-rad select:focus{outline:none;border-color:var(--accent)}
+.vk-rad input[readonly]{color:var(--accent);font-weight:600;background:rgba(251,146,60,.06)}
+.vk-rad .enhet{font-size:.8rem;color:var(--dim);width:42px;flex-shrink:0}
+.vk-resultat{margin-top:14px;padding:12px 16px;border-radius:10px;
+  background:rgba(251,146,60,.05);border:1px solid rgba(251,146,60,.2);
+  font-family:var(--font-d);font-size:.95rem;color:var(--accent);text-align:center}
+.vk-nullstill{margin-top:10px;width:100%;padding:9px;border-radius:9px;
+  border:1px solid rgba(251,146,60,.2);background:transparent;
+  color:var(--dim);font-family:var(--font-b);font-size:.82rem;cursor:pointer;transition:all .2s}
+.vk-nullstill:hover{border-color:var(--accent);color:var(--accent)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.vk-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="energi_varme.html" class="nav-lnk">Energi og varme – oppgaver</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Varme og termodynamikk – teori</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Fysikk · Termodynamikk</div>
+    <h1>Varme og<br><em>termodynamikk</em></h1>
+    <p class="hero-sub">Temperatur, varme, varmeoverføring, faseover­ganger og termodynamikkens lover – energi i bevegelse</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Temperatur og varme -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)">🌡️ Temperatur</div>
+          <h3 class="k-tittel">Temperatur og varme</h3>
+          <p class="k-ingress">Temperatur og varme er ikke det samme. Temperatur er et mål på gjennomsnittlig kinetisk energi i partiklene. Varme er energi som overføres mellom objekter.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Temperatur:</strong> Mål på gjennomsnittlig kinetisk energi til partiklene. Enheter: Celsius (°C), Kelvin (K), Fahrenheit (°F). K = °C + 273.15. Absolutt nullpunkt: 0 K = −273.15 °C.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Varme (Q):</strong> Energi som overføres fra varmt til kaldt objekt. Enhet: joule (J). Varme flyter alltid fra høy til lav temperatur (2. termodynamiske lov). Stopper når likevektstemperatur er nådd.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚛️</span><div><strong>Kinetisk molekylteori:</strong> All materie består av partikler i stadig bevegelse. Høyere temperatur → raskere bevegelse. I gasser: partikler flyr fritt. I faste stoffer: vibrerer på plass.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Absolutt nullpunkt:</strong> 0 K – partiklene har minst mulig bevegelsesenergi. Umulig å nå i praksis. Nærmeste menneskeskapte: 38 picokelvin (MIT, 2003). Verdensrommet: ~2.7 K (kosmisk bakgrunnsstråling).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,146,60,.6)" letter-spacing=".08em">TEMPERATURSKALAER</text>
+            <!-- Termometer -->
+            <rect x="120" y="28" width="40" height="160" rx="20" fill="rgba(251,146,60,.06)" stroke="rgba(251,146,60,.25)" stroke-width="1.5"/>
+            <!-- Kvikksølv-kolonne -->
+            <rect x="128" y="88" width="24" height="100" rx="12" fill="rgba(251,146,60,.4)"/>
+            <circle cx="140" cy="196" r="14" fill="rgba(251,146,60,.7)" stroke="rgba(251,146,60,.9)" stroke-width="1.5"/>
+            <!-- Skalalinjer og labeler -->
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(244,236,232,.5)" stroke="rgba(244,236,232,.2)" stroke-width="1">
+              <!-- 100°C / 373K / 212°F – kokepunkt -->
+              <line x1="160" y1="48" x2="172" y2="48"/>
+              <text x="175" y="52" fill="rgba(251,146,60,.8)">100°C / 373K / 212°F</text>
+              <text x="175" y="62" fill="rgba(251,146,60,.5)" font-size="7.5">Vann koker</text>
+              <!-- 37°C / 310K – kroppstemperatur -->
+              <line x1="160" y1="88" x2="172" y2="88"/>
+              <text x="175" y="92">37°C / 310K</text>
+              <text x="175" y="102" font-size="7.5">Kroppstemperatur</text>
+              <!-- 20°C – romtemperatur -->
+              <line x1="160" y1="110" x2="168" y2="110"/>
+              <text x="171" y="114">20°C / 293K</text>
+              <!-- 0°C – frysepunkt -->
+              <line x1="160" y1="148" x2="172" y2="148"/>
+              <text x="175" y="152" fill="rgba(96,200,240,.7)">0°C / 273K / 32°F</text>
+              <text x="175" y="162" fill="rgba(96,200,240,.5)" font-size="7.5">Vann fryser</text>
+              <!-- -273°C – absolutt nullpunkt -->
+              <line x1="160" y1="188" x2="172" y2="188"/>
+              <text x="175" y="192" fill="rgba(200,200,240,.5)">−273°C / 0K</text>
+              <text x="175" y="202" fill="rgba(200,200,240,.35)" font-size="7.5">Absolutt nullpunkt</text>
+            </g>
+            <!-- Omregningsformler -->
+            <rect x="14" y="222" width="252" height="32" rx="9" fill="rgba(251,146,60,.04)" stroke="rgba(251,146,60,.15)" stroke-width="1"/>
+            <g font-family="Fraunces" font-size="10" text-anchor="middle">
+              <text x="80"  y="242" fill="rgba(251,146,60,.65)">K = °C+273</text>
+              <text x="200" y="242" fill="rgba(251,146,60,.55)">°F = °C×1.8+32</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Varmekapasitet og spesifikk varme -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)">💧 Varmekapasitet</div>
+          <h3 class="k-tittel">Spesifikk varmekapasitet</h3>
+          <p class="k-ingress">Ulike materialer trenger ulik mengde energi for å varmes opp like mye. Vann er usedvanlig «treigt» – det tar lang tid å varme opp og avkjøle.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Q = m · c · ΔT:</strong> Q = varme (J), m = masse (kg), c = spesifikk varmekapasitet (J/kg·K), ΔT = temperaturendring (K eller °C). For å varme 1 kg vann 1 grad trengs 4200 J.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Vann er spesielt:</strong> c_vann = 4200 J/kg·K – blant de høyeste av alle stoffer. Grunnen til at hav og innsjøer regulerer kystklima. Jern: 450 J/kg·K. Aluminium: 900 J/kg·K. Luft: 1005 J/kg·K.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☕</span><div><strong>Praktisk eksempel:</strong> Å varme 0.3 liter vann (300 g) fra 20°C til 100°C: Q = 0.3 × 4200 × 80 = 100 800 J ≈ 101 kJ. En 1000 W vannkoker bruker ~100 sekunder.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Havets varmelager:</strong> Havet absorberer over 90% av den ekstra varmen fra global oppvarming. Takket være vannets høye c_vann dempes klimaendringer – men havet lagrer enorme mengder energi.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,191,36,.6)" letter-spacing=".08em">SPESIFIKK VARMEKAPASITET</text>
+            <!-- Q = mcΔT trekant -->
+            <polygon points="140,34 58,172 222,172" fill="rgba(251,191,36,.05)" stroke="rgba(251,191,36,.22)" stroke-width="1.5"/>
+            <circle cx="140" cy="46" r="24" fill="rgba(251,146,60,.15)" stroke="rgba(251,146,60,.5)" stroke-width="1.5"/>
+            <text x="140" y="52" text-anchor="middle" font-family="Fraunces" font-size="20" fill="#fb923c" font-weight="700">Q</text>
+            <text x="140" y="78" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,146,60,.5)">Joule (J)</text>
+            <circle cx="84" cy="170" r="20" fill="rgba(96,200,240,.1)" stroke="rgba(96,200,240,.4)" stroke-width="1.5"/>
+            <text x="84" y="175" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#60c8f0" font-weight="700">m·c</text>
+            <text x="84" y="200" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.4)">kg · J/kg·K</text>
+            <circle cx="196" cy="170" r="20" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.4)" stroke-width="1.5"/>
+            <text x="196" y="176" text-anchor="middle" font-family="Fraunces" font-size="14" fill="#fbbf24" font-weight="700">ΔT</text>
+            <text x="196" y="200" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.4)">Kelvin (K)</text>
+            <!-- Sentrum -->
+            <text x="140" y="125" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(251,146,60,.5)">Q</text>
+            <line x1="112" y1="129" x2="168" y2="129" stroke="rgba(251,146,60,.35)" stroke-width="1.5"/>
+            <text x="100" y="145" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(96,200,240,.5)">m·c</text>
+            <text x="155" y="145" font-family="DM Sans" font-size="9" fill="rgba(244,236,232,.3)">×</text>
+            <text x="170" y="145" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(251,191,36,.5)">ΔT</text>
+            <!-- c-verdier -->
+            <rect x="14" y="210" width="252" height="44" rx="10" fill="rgba(251,146,60,.04)" stroke="rgba(251,146,60,.12)" stroke-width="1"/>
+            <text x="140" y="224" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(244,236,232,.4)" letter-spacing=".04em" font-weight="600">SPESIFIKK VARMEKAPASITET c [J/kg·K]</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(244,236,232,.5)">
+              <text x="22"  y="242">Vann:  4 200</text>
+              <text x="92"  y="242">Is:  2 090</text>
+              <text x="152" y="242">Jern:  450</text>
+              <text x="210" y="242">Kobber: 385</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Varmeoverføring -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)">🔀 Overføring</div>
+          <h3 class="k-tittel">Tre måter varme overføres på</h3>
+          <p class="k-ingress">Varme kan bevege seg på tre fundamentalt forskjellige måter: ledning gjennom fast materiale, konveksjon via fluidbevegelse, og stråling som elektromagnetiske bølger.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Ledning (konduksjon):</strong> Varme overføres via direkte kontakt mellom partikler. Metaller leder godt (mange frie elektroner). Tre, glass, luft leder dårlig (isolatorer). Å holde i en varm metallstav.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">♻️</span><div><strong>Konveksjon:</strong> Varm væske/gass stiger (lavere tetthet), kald synker → danner strømsirkel. Radiator, havstrømmer, atmosfærisk sirkulasjon, oppvask i vann. Forutsetter at fluidet kan bevege seg.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Stråling (radiasjon):</strong> Elektromagnetiske bølger – trenger ikke medium. Sola varmer jorda over 150 mill. km med vakuum imellom. Alle gjenstander over 0 K stråler. Infrarødt = varmestråling.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏠</span><div><strong>Isolasjon i hus:</strong> Doble glassruter: stillestående luft (dårlig leder, stopper konveksjon). Isolasjonsmateriale: mange luftlommer. Reflekterende folier: reduserer stråling. Alle tre mekanismer bekjempes.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,146,60,.6)" letter-spacing=".08em">TRE VARMEOVERFØRINGSMEKANISMER</text>
+            <defs>
+              <marker id="vk-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(251,146,60,.8)"/>
+              </marker>
+              <marker id="vk-blu" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,200,240,.8)"/>
+              </marker>
+            </defs>
+            <!-- LEDNING -->
+            <rect x="14" y="26" width="252" height="62" rx="9" fill="rgba(251,146,60,.04)" stroke="rgba(251,146,60,.18)" stroke-width="1"/>
+            <text x="24" y="42" font-family="DM Sans" font-size="8.5" fill="rgba(251,146,60,.6)" font-weight="600">1. LEDNING</text>
+            <!-- Stav med temperaturgradient -->
+            <defs>
+              <linearGradient id="stav-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="rgba(240,60,60,.8)"/>
+                <stop offset="100%" stop-color="rgba(96,200,240,.5)"/>
+              </linearGradient>
+            </defs>
+            <rect x="30" y="52" width="180" height="22" rx="5" fill="url(#stav-grad)" stroke="rgba(251,146,60,.3)" stroke-width="1"/>
+            <text x="42" y="67" font-family="DM Sans" font-size="8.5" fill="white" font-weight="600">varm</text>
+            <text x="188" y="67" text-anchor="end" font-family="DM Sans" font-size="8.5" fill="white" font-weight="600">kald</text>
+            <path d="M100" y1="63" x2="150" y2="63"/>
+            <path d="M100,63 L148,63" stroke="rgba(251,191,36,.6)" stroke-width="1.5" marker-end="url(#vk-arr)"/>
+            <text x="240" y="67" font-family="DM Sans" font-size="8" fill="rgba(251,146,60,.5)">→ Q</text>
+            <!-- KONVEKSJON -->
+            <rect x="14" y="98" width="252" height="68" rx="9" fill="rgba(96,200,240,.03)" stroke="rgba(96,200,240,.15)" stroke-width="1"/>
+            <text x="24" y="114" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.6)" font-weight="600">2. KONVEKSJON</text>
+            <!-- Konveksjonsstrøm -->
+            <rect x="50" y="118" width="80" height="42" rx="5" fill="rgba(96,200,240,.05)" stroke="rgba(96,200,240,.2)" stroke-width="1"/>
+            <!-- Varm bunn -->
+            <rect x="50" y="150" width="80" height="10" rx="3" fill="rgba(251,146,60,.25)"/>
+            <text x="90" y="158" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,146,60,.6)">🔥 varm</text>
+            <!-- Sirkulasjonspiler -->
+            <path d="M65,148 Q65,128 90,124 Q115,120 115,148" fill="none" stroke="rgba(251,146,60,.5)" stroke-width="1.5" marker-end="url(#vk-arr)"/>
+            <path d="M75,148 Q78,130 90,126" fill="none" stroke="rgba(96,200,240,.4)" stroke-width="1" stroke-dasharray="3 2"/>
+            <text x="170" y="136" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.5)">Varm stiger ↑</text>
+            <text x="170" y="150" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.4)">Kald synker ↓</text>
+            <!-- STRÅLING -->
+            <rect x="14" y="176" width="252" height="62" rx="9" fill="rgba(251,191,36,.03)" stroke="rgba(251,191,36,.15)" stroke-width="1"/>
+            <text x="24" y="192" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.6)" font-weight="600">3. STRÅLING (RADIASJON)</text>
+            <!-- Sol og jord -->
+            <circle cx="50" cy="214" r="16" fill="rgba(251,191,36,.3)" stroke="rgba(251,191,36,.7)" stroke-width="1.5"/>
+            <text x="50" y="218" text-anchor="middle" font-family="DM Sans" font-size="11">☀️</text>
+            <!-- Strålingspiler -->
+            <g stroke="rgba(251,191,36,.5)" stroke-width="1.2" marker-end="url(#vk-arr)">
+              <line x1="66" y1="205" x2="130" y2="205"/>
+              <line x1="66" y1="214" x2="130" y2="214"/>
+              <line x1="66" y1="223" x2="130" y2="223"/>
+            </g>
+            <text x="100" y="200" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.45)">EM-bølger</text>
+            <text x="100" y="232" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.35)">vakuum OK</text>
+            <!-- Jord -->
+            <circle cx="180" cy="214" r="16" fill="rgba(96,200,240,.15)" stroke="rgba(96,200,240,.4)" stroke-width="1.5"/>
+            <text x="180" y="218" text-anchor="middle" font-family="DM Sans" font-size="11">🌍</text>
+            <text x="230" y="210" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.45)">150 mill.</text>
+            <text x="230" y="222" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.35)">km vakuum</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Faseoverganger -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,240,.1);color:#60c8f0;border:1px solid rgba(96,200,240,.2)">🧊 Faser</div>
+          <h3 class="k-tittel">Faseoverganger og smeltevarme</h3>
+          <p class="k-ingress">Når et stoff endrer fase (fast → flytende → gass) absorberes eller avgis energi uten at temperaturen endres. Dette kalles latent varme.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧊</span><div><strong>Smeltevarme (L_s):</strong> Energi for å smelte 1 kg fast stoff til væske (konstant temperatur). Is: L_s = 334 000 J/kg. Q = m · L_s. Energien brytes bindingene, ikke øke temperatur.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💨</span><div><strong>Fordampingsvarme (L_f):</strong> Energi for å fordampe 1 kg væske til gass. Vann: L_f = 2 260 000 J/kg. Mye større enn smeltevarmen! Grunnen til at svette kjøler effektivt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Oppvarmingskurve:</strong> Temperatur stiger jevnt → flater ut ved smeltepunkt (0°C for is) → stiger igjen → flater ut ved kokepunkt (100°C) → stiger i dampfase. De flate partiene = latent varme.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌨️</span><div><strong>Hverdagseksempler:</strong> Is i drikke: holder 0°C lenge (smeltevarme absorpsjoner). Svette kjøler kroppen (fordampningsvarme). Kokeplate: vann holder 100°C selv om den er på fullt.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,240,.6)" letter-spacing=".08em">OPPVARMINGSKURVE – VANN</text>
+            <!-- Aksene -->
+            <line x1="30" y1="220" x2="270" y2="220" stroke="rgba(244,236,232,.25)" stroke-width="1.5"/>
+            <line x1="30" y1="20"  x2="30"  y2="220" stroke="rgba(244,236,232,.25)" stroke-width="1.5"/>
+            <text x="148" y="248" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(244,236,232,.3)">Tilsatt varme →</text>
+            <text x="16" y="130" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(244,236,232,.3)" transform="rotate(-90,16,130)">Temperatur (°C)</text>
+            <!-- Temperaturnivåer -->
+            <line x1="26" y1="180" x2="34" y2="180" stroke="rgba(96,200,240,.4)" stroke-width="1"/>
+            <text x="22" y="184" text-anchor="end" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.5)">0°</text>
+            <line x1="26" y1="80" x2="34" y2="80" stroke="rgba(251,146,60,.4)" stroke-width="1"/>
+            <text x="22" y="84" text-anchor="end" font-family="DM Sans" font-size="8.5" fill="rgba(251,146,60,.5)">100°</text>
+            <!-- Oppvarmingskurve -->
+            <!-- Isdel (stigende) -->
+            <path d="M30,220 L60,180" fill="none" stroke="rgba(96,200,240,.7)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Smelteplateau -->
+            <path d="M60,180 L100,180" fill="none" stroke="rgba(96,200,240,.9)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Vanndel (stigende) -->
+            <path d="M100,180 L160,80" fill="none" stroke="rgba(96,200,240,.7)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Kokepunkt-plateau -->
+            <path d="M160,80 L210,80" fill="none" stroke="rgba(251,146,60,.9)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Dampfase (stigende) -->
+            <path d="M210,80 L260,40" fill="none" stroke="rgba(251,146,60,.6)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Fase-labels -->
+            <text x="44" y="215" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.6)">Is</text>
+            <text x="80" y="196" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,240,.8)">Smelting</text>
+            <text x="80" y="206" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,240,.5)">L_s=334kJ/kg</text>
+            <text x="130" y="136" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.55)">Vann</text>
+            <text x="185" y="96" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,146,60,.8)">Koking</text>
+            <text x="185" y="106" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,146,60,.5)">L_f=2260kJ/kg</text>
+            <text x="242" y="56" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,146,60,.55)">Damp</text>
+            <!-- Latent varme markering -->
+            <path d="M60,174 Q80,168 100,174" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="3 2"/>
+            <path d="M160,74 Q185,68 210,74" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="3 2"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Termodynamikkens lover -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)">⚖️ Termodynamikk</div>
+          <h3 class="k-tittel">Termodynamikkens lover</h3>
+          <p class="k-ingress">Termodynamikken er fysikkens grunnleggende rammeverk for energi. De fire lovene styrer alt fra dampmaskin til biologiske celler.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">0️⃣</span><div><strong>0. lov (termisk likevekt):</strong> Hvis A og B er i likevekt med C, er A og B i likevekt med hverandre. Dette definerer temperatur som en målbar størrelse. Termometerets grunnlag.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">1️⃣</span><div><strong>1. lov (energibevaring):</strong> Energi kan verken skapes eller ødelegges – bare omformes. ΔU = Q − W. Den indre energien øker med tilsatt varme og minker med utført arbeid. «Ingen gratis lunsj».</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">2️⃣</span><div><strong>2. lov (entropi):</strong> Varme flyter spontant fra varm til kald. Entropi (uorden) øker alltid i et isolert system. Ingen maskin kan ha 100% virkningsgrad. Umuliggjør perpetuum mobile.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">3️⃣</span><div><strong>3. lov (absolutt nullpunkt):</strong> Det er umulig å nå absolutt nullpunkt (0 K) i et endelig antall steg. Entropien til et perfekt krystall er 0 ved 0 K.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,146,60,.6)" letter-spacing=".08em">ENERGIBEVARING OG ENTROPI</text>
+            <!-- 1. lov: ΔU = Q - W -->
+            <rect x="14" y="26" width="252" height="86" rx="10" fill="rgba(251,146,60,.04)" stroke="rgba(251,146,60,.18)" stroke-width="1"/>
+            <text x="24" y="42" font-family="DM Sans" font-size="8.5" fill="rgba(251,146,60,.65)" font-weight="600">1. LOV – ENERGIBEVARING: ΔU = Q − W</text>
+            <!-- System-boks -->
+            <rect x="96" y="50" width="88" height="52" rx="8" fill="rgba(251,146,60,.08)" stroke="rgba(251,146,60,.35)" stroke-width="1.5"/>
+            <text x="140" y="80" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(251,146,60,.7)">System</text>
+            <text x="140" y="94" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,146,60,.5)">ΔU</text>
+            <!-- Q inn -->
+            <defs>
+              <marker id="td-org" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(251,146,60,.9)"/></marker>
+              <marker id="td-yel" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(251,191,36,.9)"/></marker>
+            </defs>
+            <line x1="30" y1="76" x2="93" y2="76" stroke="rgba(251,146,60,.7)" stroke-width="2.5" marker-end="url(#td-org)"/>
+            <text x="58" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,146,60,.6)" font-weight="600">Q (varme inn)</text>
+            <!-- W ut -->
+            <line x1="187" y1="76" x2="244" y2="76" stroke="rgba(251,191,36,.7)" stroke-width="2.5" marker-end="url(#td-yel)"/>
+            <text x="216" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,191,36,.6)" font-weight="600">W (arbeid ut)</text>
+            <!-- 2. lov: Entropi -->
+            <rect x="14" y="124" width="252" height="90" rx="10" fill="rgba(96,200,240,.03)" stroke="rgba(96,200,240,.15)" stroke-width="1"/>
+            <text x="24" y="140" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.6)" font-weight="600">2. LOV – ENTROPI: ΔS ≥ 0</text>
+            <!-- Orden → uorden -->
+            <g>
+              <rect x="30" y="150" width="40" height="36" rx="4" fill="rgba(96,200,240,.06)" stroke="rgba(96,200,240,.25)" stroke-width="1"/>
+              <!-- Ordnede prikker -->
+              <circle cx="40" cy="160" r="3" fill="rgba(96,200,240,.5)"/>
+              <circle cx="52" cy="160" r="3" fill="rgba(96,200,240,.5)"/>
+              <circle cx="46" cy="170" r="3" fill="rgba(96,200,240,.5)"/>
+              <circle cx="40" cy="180" r="3" fill="rgba(96,200,240,.5)"/>
+              <circle cx="52" cy="180" r="3" fill="rgba(96,200,240,.5)"/>
+              <text x="50" y="200" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,240,.5)">Orden (lav S)</text>
+            </g>
+            <text x="100" y="172" text-anchor="middle" font-family="DM Sans" font-size="16" fill="rgba(251,191,36,.4)">→</text>
+            <g>
+              <rect x="120" y="150" width="60" height="36" rx="4" fill="rgba(251,146,60,.05)" stroke="rgba(251,146,60,.2)" stroke-width="1"/>
+              <!-- Uordnede prikker -->
+              <circle cx="128" cy="165" r="3" fill="rgba(251,146,60,.5)"/>
+              <circle cx="145" cy="157" r="3" fill="rgba(251,146,60,.5)"/>
+              <circle cx="162" cy="170" r="3" fill="rgba(251,146,60,.5)"/>
+              <circle cx="135" cy="178" r="3" fill="rgba(251,146,60,.5)"/>
+              <circle cx="155" cy="162" r="3" fill="rgba(251,146,60,.5)"/>
+              <circle cx="168" cy="154" r="3" fill="rgba(251,146,60,.5)"/>
+              <text x="150" y="200" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,146,60,.5)">Uorden (høy S)</text>
+            </g>
+            <text x="232" y="172" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,146,60,.4)">Spontant!</text>
+            <!-- Perpetuum mobile -->
+            <rect x="14" y="224" width="252" height="28" rx="8" fill="rgba(240,60,60,.04)" stroke="rgba(240,60,60,.15)" stroke-width="1"/>
+            <text x="140" y="242" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.5)">🚫 Perpetuum mobile er umulig (1. og 2. lov)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Virkningsgrad og varmemotorer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)">⚙️ Virkningsgrad</div>
+          <h3 class="k-tittel">Virkningsgrad og varmemotorer</h3>
+          <p class="k-ingress">En varmemotor omdanner termisk energi til mekanisk arbeid. Men aldri alt – noe varme «kastes bort». Virkningsgraden forteller oss hvor effektivt dette gjøres.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Virkningsgrad η:</strong> η = nyttig energi ut / tilsatt energi = W/Q_inn. Alltid &lt; 100% pga. 2. lov. Dampturbin: ~40%. Bensinmotor: ~25–35%. Dieselmotor: ~40–45%. Elektrisk motor: ~90–95%.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Carnot-virkningsgraden:</strong> η_max = 1 − T_kald/T_varm (i Kelvin). Teoretisk maksgrense. For å øke effektivitet: hev T_varm eller senk T_kald. Carnot viste dette i 1824 – lenge før termodynamikken var formalisert.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Varmepumpe og kjøleskap:</strong> «Omvendt» varmemotor – bruker arbeid til å flytte varme fra kald til varm kilde. COP (coefficient of performance) kan være &gt;1. Varmepumper: COP = 3–5 (3–5× mer varme enn elektrisk energi brukt).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Kraftverk og tap:</strong> Kullkraftverk: ~35–40% virkningsgrad → 60% varme kastes i hav/luft. Kombinert kraft og varme (CHP): utnytter spillvarmen til fjernvarme → total virkningsgrad opp mot 85–90%.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0a0608"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,191,36,.6)" letter-spacing=".08em">VARMEMOTOR – ENERGIFLYT</text>
+            <defs>
+              <marker id="vm-org" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(251,146,60,.9)"/></marker>
+              <marker id="vm-yel" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(251,191,36,.9)"/></marker>
+              <marker id="vm-blu" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(96,200,240,.9)"/></marker>
+            </defs>
+            <!-- Varm kilde -->
+            <rect x="100" y="28" width="80" height="36" rx="8" fill="rgba(251,146,60,.2)" stroke="rgba(251,146,60,.6)" stroke-width="1.5"/>
+            <text x="140" y="50" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(251,146,60,.8)" font-weight="600">🔥 Varm kilde</text>
+            <text x="140" y="62" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,146,60,.55)">T_varm</text>
+            <!-- Q_inn pil ned -->
+            <line x1="140" y1="64" x2="140" y2="96" stroke="rgba(251,146,60,.8)" stroke-width="3" marker-end="url(#vm-org)"/>
+            <text x="148" y="84" font-family="DM Sans" font-size="9" fill="rgba(251,146,60,.65)" font-weight="600">Q_inn</text>
+            <!-- Motor -->
+            <rect x="100" y="98" width="80" height="50" rx="8" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.5)" stroke-width="2"/>
+            <text x="140" y="120" text-anchor="middle" font-family="Fraunces" font-size="12" fill="#fbbf24" font-weight="700">Motor</text>
+            <text x="140" y="136" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.5)">η = W/Q_inn</text>
+            <!-- W ut høyre -->
+            <line x1="180" y1="123" x2="240" y2="123" stroke="rgba(251,191,36,.8)" stroke-width="3" marker-end="url(#vm-yel)"/>
+            <text x="210" y="116" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,191,36,.65)" font-weight="600">W (arbeid)</text>
+            <!-- Q_ut ned -->
+            <line x1="140" y1="148" x2="140" y2="185" stroke="rgba(96,200,240,.7)" stroke-width="2.5" marker-end="url(#vm-blu)"/>
+            <text x="148" y="170" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.55)" font-weight="600">Q_ut</text>
+            <!-- Kald kilde -->
+            <rect x="100" y="187" width="80" height="36" rx="8" fill="rgba(96,200,240,.12)" stroke="rgba(96,200,240,.4)" stroke-width="1.5"/>
+            <text x="140" y="208" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(96,200,240,.7)" font-weight="600">❄️ Kald kilde</text>
+            <text x="140" y="218" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,240,.45)">T_kald</text>
+            <!-- Energibevaring -->
+            <text x="14" y="240" font-family="DM Sans" font-size="8.5" fill="rgba(244,236,232,.35)">Q_inn = W + Q_ut</text>
+            <!-- Carnot formel -->
+            <text x="160" y="240" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(251,191,36,.55)">η_max = 1 − T_kald/T_varm</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Varme og termodynamikk – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:820px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(251,146,60,.04);border:1px solid rgba(251,146,60,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,232,.65);line-height:1.6"><strong style="color:#fb923c;display:block;margin-bottom:4px">🌡️ Temperatur</strong>K = °C + 273 · Kinetisk molekylteori · Absolutt nullpunkt 0 K · Varme flyter fra varm → kald</div>
+            <div style="padding:14px;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,232,.65);line-height:1.6"><strong style="color:#fbbf24;display:block;margin-bottom:4px">💧 Varmekapasitet</strong>Q = m·c·ΔT · Vann: c=4200 J/kg·K · Høy c = treig oppvarming · Havet som klimaregulator</div>
+            <div style="padding:14px;background:rgba(251,146,60,.04);border:1px solid rgba(251,146,60,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,232,.65);line-height:1.6"><strong style="color:#fb923c;display:block;margin-bottom:4px">🔀 Varmeoverføring</strong>Ledning (kontakt) · Konveksjon (fluidstrøm) · Stråling (EM-bølger, vakuum OK) · Isolasjon hemmer alle tre</div>
+            <div style="padding:14px;background:rgba(96,200,240,.04);border:1px solid rgba(96,200,240,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,232,.65);line-height:1.6"><strong style="color:#60c8f0;display:block;margin-bottom:4px">🧊 Faseoverganger</strong>Q = m·L · Is: L_s=334kJ/kg · Vann: L_f=2260kJ/kg · Latent varme: T konstant · Oppvarmingskurve</div>
+            <div style="padding:14px;background:rgba(251,146,60,.04);border:1px solid rgba(251,146,60,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,232,.65);line-height:1.6"><strong style="color:#fb923c;display:block;margin-bottom:4px">⚖️ Termodynamikk</strong>0: termisk likevekt · 1: ΔU=Q−W (energibevaring) · 2: ΔS≥0 (entropi øker) · 3: 0 K uoppnåelig</div>
+            <div style="padding:14px;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.15);border-radius:12px;font-size:.78rem;color:rgba(244,236,228,.65);line-height:1.6"><strong style="color:#fbbf24;display:block;margin-bottom:4px">⚙️ Virkningsgrad</strong>η = W/Q_inn &lt; 100% · Carnot: η_max=1−T_k/T_v · Varmepumpe COP&gt;1 · Motor vs elektrisk motor</div>
+          </div>
+          <div style="margin-top:20px">
+            <a href="energi_varme.html" style="display:inline-block;padding:11px 22px;border-radius:10px;border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.08);color:#fb923c;font-family:var(--font-d);font-size:.9rem;font-style:italic;text-decoration:none">Øv på energi og varme →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- VARME-KALKULATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Varme­kalkulator</div><div class="sep-r"></div></div>
+  <div class="vk-wrapper">
+    <div class="vk-tittel">Fyll inn kjente størrelser – ukjent beregnes automatisk</div>
+    <div class="vk-grid">
+      <!-- Q = mcΔT -->
+      <div class="vk-panel">
+        <h4>🌡️ Varmekapasitet &nbsp; Q = m · c · ΔT</h4>
+        <div class="vk-felt">
+          <div class="vk-rad"><label>Varme Q</label><input type="number" id="q-q" placeholder="?" step="any" oninput="beregnQ('q')"><span class="enhet">J</span></div>
+          <div class="vk-rad"><label>Masse m</label><input type="number" id="q-m" placeholder="?" step="any" oninput="beregnQ('m')"><span class="enhet">kg</span></div>
+          <div class="vk-rad">
+            <label>Stoff (c)</label>
+            <select id="q-stoff" onchange="settC()">
+              <option value="4200">Vann (4200)</option>
+              <option value="2090">Is (2090)</option>
+              <option value="1005">Luft (1005)</option>
+              <option value="900">Aluminium (900)</option>
+              <option value="450">Jern (450)</option>
+              <option value="385">Kobber (385)</option>
+              <option value="">Egendefinert</option>
+            </select>
+            <span class="enhet">J/kg·K</span>
+          </div>
+          <div class="vk-rad"><label>Varmekap. c</label><input type="number" id="q-c" value="4200" step="any" oninput="beregnQ('c')"><span class="enhet">J/kg·K</span></div>
+          <div class="vk-rad"><label>Temp.endring ΔT</label><input type="number" id="q-dt" placeholder="?" step="any" oninput="beregnQ('dt')"><span class="enhet">K / °C</span></div>
+        </div>
+        <div class="vk-resultat" id="q-res">Fyll inn to felt (Q, m eller ΔT)</div>
+        <button class="vk-nullstill" onclick="nullstillQ()">Nullstill</button>
+      </div>
+      <!-- Q = mL (faseovergang) -->
+      <div class="vk-panel">
+        <h4>🧊 Faseovergang &nbsp; Q = m · L</h4>
+        <div class="vk-felt">
+          <div class="vk-rad"><label>Varme Q</label><input type="number" id="l-q" placeholder="?" step="any" oninput="beregnL('q')"><span class="enhet">J</span></div>
+          <div class="vk-rad"><label>Masse m</label><input type="number" id="l-m" placeholder="?" step="any" oninput="beregnL('m')"><span class="enhet">kg</span></div>
+          <div class="vk-rad">
+            <label>Overgang</label>
+            <select id="l-type" onchange="settL()">
+              <option value="334000">Is smelter (334 kJ/kg)</option>
+              <option value="2260000">Vann koker (2260 kJ/kg)</option>
+              <option value="">Egendefinert L</option>
+            </select>
+          </div>
+          <div class="vk-rad"><label>Latent varme L</label><input type="number" id="l-l" value="334000" step="any" oninput="beregnL('l')"><span class="enhet">J/kg</span></div>
+        </div>
+        <div class="vk-resultat" id="l-res">Fyll inn to felt (Q, m eller L)</div>
+        <button class="vk-nullstill" onclick="nullstillL()">Nullstill</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+// ═══ HJELPEFUNKSJONER ═══
+function fmt(n) {
+  if (isNaN(n) || !isFinite(n)) return '?';
+  if (Math.abs(n) >= 1e6 || (Math.abs(n) < 0.01 && n !== 0)) return n.toExponential(3);
+  return parseFloat(n.toPrecision(5)).toString();
+}
+
+// ═══ Q = m·c·ΔT ═══
+function settC() {
+  const val = document.getElementById('q-stoff').value;
+  if (val) { document.getElementById('q-c').value = val; beregnQ('c'); }
+}
+function beregnQ(endret) {
+  const qEl = document.getElementById('q-q');
+  const mEl = document.getElementById('q-m');
+  const cEl = document.getElementById('q-c');
+  const dtEl = document.getElementById('q-dt');
+  const q = parseFloat(qEl.value), m = parseFloat(mEl.value);
+  const c = parseFloat(cEl.value), dt = parseFloat(dtEl.value);
+  const res = document.getElementById('q-res');
+  [qEl, mEl, dtEl].forEach(el => el.readOnly = false);
+
+  if (!isNaN(m) && !isNaN(c) && !isNaN(dt) && endret !== 'q') {
+    const bq = m * c * dt; qEl.value = fmt(bq); qEl.readOnly = true;
+    res.textContent = `Q = ${fmt(m)} × ${fmt(c)} × ${fmt(dt)} = ${fmt(bq)} J`;
+  } else if (!isNaN(q) && !isNaN(c) && !isNaN(dt) && endret !== 'm' && c !== 0 && dt !== 0) {
+    const bm = q / (c * dt); mEl.value = fmt(bm); mEl.readOnly = true;
+    res.textContent = `m = ${fmt(q)} ÷ (${fmt(c)} × ${fmt(dt)}) = ${fmt(bm)} kg`;
+  } else if (!isNaN(q) && !isNaN(m) && !isNaN(c) && endret !== 'dt' && m !== 0 && c !== 0) {
+    const bdt = q / (m * c); dtEl.value = fmt(bdt); dtEl.readOnly = true;
+    res.textContent = `ΔT = ${fmt(q)} ÷ (${fmt(m)} × ${fmt(c)}) = ${fmt(bdt)} K`;
+  } else {
+    res.textContent = 'Fyll inn to felt (Q, m eller ΔT)';
+  }
+}
+function nullstillQ() {
+  ['q-q','q-m','q-dt'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.readOnly = false; });
+  document.getElementById('q-res').textContent = 'Fyll inn to felt (Q, m eller ΔT)';
+}
+
+// ═══ Q = m·L ═══
+function settL() {
+  const val = document.getElementById('l-type').value;
+  if (val) { document.getElementById('l-l').value = val; beregnL('l'); }
+}
+function beregnL(endret) {
+  const qEl = document.getElementById('l-q');
+  const mEl = document.getElementById('l-m');
+  const lEl = document.getElementById('l-l');
+  const q = parseFloat(qEl.value), m = parseFloat(mEl.value), l = parseFloat(lEl.value);
+  const res = document.getElementById('l-res');
+  [qEl, mEl, lEl].forEach(el => el.readOnly = false);
+
+  if (!isNaN(m) && !isNaN(l) && endret !== 'q') {
+    const bq = m * l; qEl.value = fmt(bq); qEl.readOnly = true;
+    res.textContent = `Q = ${fmt(m)} kg × ${fmt(l)} J/kg = ${fmt(bq)} J`;
+  } else if (!isNaN(q) && !isNaN(l) && endret !== 'm' && l !== 0) {
+    const bm = q / l; mEl.value = fmt(bm); mEl.readOnly = true;
+    res.textContent = `m = ${fmt(q)} ÷ ${fmt(l)} = ${fmt(bm)} kg`;
+  } else if (!isNaN(q) && !isNaN(m) && endret !== 'l' && m !== 0) {
+    const bl = q / m; lEl.value = fmt(bl); lEl.readOnly = true;
+    res.textContent = `L = ${fmt(q)} ÷ ${fmt(m)} = ${fmt(bl)} J/kg`;
+  } else {
+    res.textContent = 'Fyll inn to felt (Q, m eller L)';
+  }
+}
+function nullstillL() {
+  ['l-q','l-m'].forEach(id => { const el = document.getElementById(id); el.value = ''; el.readOnly = false; });
+  document.getElementById('l-res').textContent = 'Fyll inn to felt (Q, m eller L)';
+}
+</script>
+</body>
+</html>
