@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Optikk: Lys og syn</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060810;--surface:#0a0e1c;--card:#10142a;--border:rgba(255,220,80,.07);
+  --text:#f0eef8;--dim:#3a3860;
+  --accent:#f0d040;--accent2:#60c8f8;--accent3:#f06080;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 30% 20%,rgba(240,208,64,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 70%,rgba(96,200,248,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,8,16,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(240,238,248,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(240,208,64,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(240,238,248,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* SPEKTRUM-DEMO */
+.spektrum-demo{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.sd-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);margin-bottom:20px;text-align:center}
+.sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.sd-boks{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.sd-boks h3{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:12px;font-style:italic}
+.prisme-wrap{display:flex;justify-content:center;margin-bottom:12px}
+.linse-knapper{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.linse-knapp{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;
+  color:var(--dim);font-family:var(--font-b);font-size:.78rem;cursor:pointer;transition:all .18s}
+.linse-knapp.aktiv{border-color:var(--accent);color:var(--accent);background:rgba(240,208,64,.06)}
+.linse-info{font-size:.8rem;color:rgba(240,238,248,.55);line-height:1.6}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.sd-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Optikk – lys og syn</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Fysikk · Optikk</div>
+    <h1>Lys og<br><em>optikk</em></h1>
+    <p class="hero-sub">Fra lysets natur til regnbuer, linser og øyet – hvordan lys oppfører seg og hvordan vi ser verden</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Lysets natur -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(240,208,64,.1);color:#f0d040;border:1px solid rgba(240,208,64,.2)">💡 Lysets natur</div>
+          <h3 class="k-tittel">Hva er lys?</h3>
+          <p class="k-ingress">Lys er elektromagnetisk stråling som øyet kan oppfatte. Det oppfører seg både som bølge og som partikkel – dette kalles bølge-partikkel-dualitet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Som bølge:</strong> Lys er en elektromagnetisk bølge – svingninger i elektriske og magnetiske felt. Bølgelengde λ (nm) bestemmer fargen: 400 nm (fiolett) → 700 nm (rødt). Trenger ikke medium – går gjennom vakuum.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Som partikkel (foton):</strong> Lys kommer i pakker kalt fotoner. Energi: E = hf (Plancks konstant × frekvens). Høy frekvens = høy energi. Einstein fikk nobelprisen for forklaringen av fotoelektrisk effekt (1921).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚀</span><div><strong>Lyshastighet:</strong> c = 299 792 458 m/s ≈ 300 000 km/s i vakuum. Lys fra solen bruker ~8 min til jorda. Ingenting kan gå fortere enn lys (Einsteins relativitetsteori).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌈</span><div><strong>Det elektromagnetiske spektrum:</strong> Synlig lys er bare en liten del: radio, mikrobølger, IR, synlig, UV, røntgen, gammastråling. Alt er EM-stråling – forskjellen er bølgelengden.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060810"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.6)" letter-spacing=".08em">DET ELEKTROMAGNETISKE SPEKTRUM</text>
+            <!-- EM-spektrum bånd -->
+            <defs>
+              <linearGradient id="em-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#e04040"/>
+                <stop offset="16%" stop-color="#e08030"/>
+                <stop offset="32%" stop-color="#e0d040"/>
+                <stop offset="48%" stop-color="#40d060"/>
+                <stop offset="64%" stop-color="#40a0e0"/>
+                <stop offset="80%" stop-color="#6040d0"/>
+                <stop offset="100%" stop-color="#a020c0"/>
+              </linearGradient>
+              <linearGradient id="synlig-grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#f04040"/>
+                <stop offset="17%" stop-color="#f09030"/>
+                <stop offset="33%" stop-color="#f0e040"/>
+                <stop offset="50%" stop-color="#40e060"/>
+                <stop offset="67%" stop-color="#4090f0"/>
+                <stop offset="83%" stop-color="#6040e0"/>
+                <stop offset="100%" stop-color="#9020b0"/>
+              </linearGradient>
+            </defs>
+            <!-- Synlig lys (regnbue) -->
+            <rect x="12" y="28" width="256" height="30" rx="6" fill="url(#em-grad)" opacity=".85"/>
+            <text x="140" y="47" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(255,255,255,.9)" font-weight="600">Synlig lys · 400–700 nm</text>
+            <!-- Bølgelengde-skala -->
+            <text x="14" y="70" font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.4)">700 nm (rødt)</text>
+            <text x="214" y="70" font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.4)">400 nm (fiolett)</text>
+            <!-- EM-spektrum full -->
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.45)" text-anchor="middle">
+              <rect x="12" y="80" width="36" height="16" rx="3" fill="rgba(240,80,80,.12)" stroke="rgba(240,80,80,.25)" stroke-width="1"/>
+              <text x="30" y="91">Radio</text>
+              <rect x="52" y="80" width="36" height="16" rx="3" fill="rgba(240,160,80,.12)" stroke="rgba(240,160,80,.25)" stroke-width="1"/>
+              <text x="70" y="91">Mikro</text>
+              <rect x="92" y="80" width="36" height="16" rx="3" fill="rgba(200,100,40,.12)" stroke="rgba(200,100,40,.25)" stroke-width="1"/>
+              <text x="110" y="91">IR</text>
+              <rect x="132" y="80" width="36" height="16" rx="3" fill="url(#em-grad)" opacity=".3"/>
+              <text x="150" y="91" fill="rgba(255,255,255,.7)" font-weight="600">Synlig</text>
+              <rect x="172" y="80" width="36" height="16" rx="3" fill="rgba(120,80,200,.12)" stroke="rgba(120,80,200,.25)" stroke-width="1"/>
+              <text x="190" y="91">UV</text>
+              <rect x="212" y="80" width="28" height="16" rx="3" fill="rgba(160,80,200,.12)" stroke="rgba(160,80,200,.25)" stroke-width="1"/>
+              <text x="226" y="91">Røntg.</text>
+              <rect x="244" y="80" width="24" height="16" rx="3" fill="rgba(200,60,200,.12)" stroke="rgba(200,60,200,.25)" stroke-width="1"/>
+              <text x="256" y="91">γ</text>
+            </g>
+            <text x="14" y="110" font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.3)">← Lang bølgelengde, lav energi</text>
+            <text x="175" y="110" font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.3)">Kort bølgelengde, høy energi →</text>
+            <!-- Bølge-illustrasjon -->
+            <text x="140" y="132" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.5)" letter-spacing=".06em">LYS SOM BØLGE</text>
+            <path d="M14,155 Q35,135 56,155 Q77,175 98,155 Q119,135 140,155 Q161,175 182,155 Q203,135 224,155 Q245,175 266,155"
+              fill="none" stroke="rgba(240,208,64,.7)" stroke-width="2"/>
+            <!-- Bølgelengde-pil -->
+            <path d="M14,167 L98,167" fill="none" stroke="rgba(240,208,64,.3)" stroke-width="1" stroke-dasharray="3 2"/>
+            <path d="M14,167 L18,163 M14,167 L18,171 M98,167 L94,163 M98,167 L94,171" stroke="rgba(240,208,64,.3)" stroke-width="1"/>
+            <text x="56" y="178" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.5)">λ (bølgelengde)</text>
+            <!-- Amplitude-pil -->
+            <path d="M50,155 L50,135" fill="none" stroke="rgba(240,208,64,.3)" stroke-width="1"/>
+            <text x="55" y="142" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.5)">A</text>
+            <!-- Foton-illustrasjon -->
+            <text x="140" y="200" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,248,.5)" letter-spacing=".06em">LYS SOM FOTON (PARTIKKEL)</text>
+            <circle cx="50" cy="230" r="8" fill="rgba(240,208,64,.3)" stroke="rgba(240,208,64,.7)" stroke-width="1.5"/>
+            <text x="50" y="234" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.9)" font-weight="700">hf</text>
+            <circle cx="110" cy="230" r="8" fill="rgba(240,160,64,.3)" stroke="rgba(240,160,64,.7)" stroke-width="1.5"/>
+            <text x="110" y="234" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.9)" font-weight="700">hf</text>
+            <circle cx="170" cy="230" r="8" fill="rgba(160,96,240,.3)" stroke="rgba(160,96,240,.7)" stroke-width="1.5"/>
+            <text x="170" y="234" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.9)" font-weight="700">hf</text>
+            <text x="215" y="234" font-family="DM Sans" font-size="8.5" fill="rgba(240,238,248,.4)">E = hf</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Refleksjon og brytning -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,248,.1);color:#60c8f8;border:1px solid rgba(96,200,248,.2)">🪞 Refleksjon og brytning</div>
+          <h3 class="k-tittel">Refleksjon og brytning</h3>
+          <p class="k-ingress">Når lys treffer en overflate kan det reflekteres tilbake eller brytes (bøyes) når det går fra ett medium til et annet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🪞</span><div><strong>Refleksjonslov:</strong> Innfallsvinkel = refleksjonsvinkel (begge måles fra normalen). Speilglatt overflate → speilrefleksjon. Ru overflate → diffus refleksjon (vi kan se objekter fra alle vinkler).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Snells lov (brytning):</strong> n₁ · sin(θ₁) = n₂ · sin(θ₂). Lys bøyes mot normalen når det går fra raskere til langsommere medium (luft → glass). Brytningsindeks n = c/v.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💎</span><div><strong>Totalrefleksjon:</strong> Når innfallsvinkelen overstiger kritisk vinkel θ_c = arcsin(n₂/n₁) i tettere medium, reflekteres alt lys. Basis for fiberoptikk – lys leder rundt bøyer med null tap.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏊</span><div><strong>Optisk illusjon:</strong> En pinne i vann ser bøyd ut fordi lys brytes i vannoverflaten. Øyet forlenger lysstrålen rett bakover og «ser» pinnen på feil sted.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060810"/>
+            <!-- Refleksjon (øverst) -->
+            <text x="70" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,248,.6)" letter-spacing=".06em">REFLEKSJON</text>
+            <!-- Overflate -->
+            <line x1="10" y1="90" x2="130" y2="90" stroke="rgba(240,238,248,.2)" stroke-width="1.5"/>
+            <!-- Normal (stiplet) -->
+            <line x1="70" y1="30" x2="70" y2="90" stroke="rgba(240,238,248,.15)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="75" y="42" font-family="DM Sans" font-size="7.5" fill="rgba(240,238,248,.3)">normal</text>
+            <!-- Innfallende stråle -->
+            <path d="M20,40 L70,90" stroke="rgba(240,208,64,.8)" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="16" y="36" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.6)">innfall</text>
+            <!-- Reflektert stråle -->
+            <path d="M70,90 L120,40" stroke="rgba(96,200,248,.8)" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="112" y="36" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,248,.6)">refleksjon</text>
+            <!-- Vinkelbuer -->
+            <path d="M52,78 A22,22 0 0,1 70,56" fill="none" stroke="rgba(240,208,64,.4)" stroke-width="1.2"/>
+            <text x="42" y="72" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.5)">θ₁</text>
+            <path d="M70,56 A22,22 0 0,1 88,78" fill="none" stroke="rgba(96,200,248,.4)" stroke-width="1.2"/>
+            <text x="84" y="72" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,248,.5)">θ₁</text>
+            <text x="70" y="106" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,238,248,.35)">θ_innfall = θ_refleksjon</text>
+
+            <!-- Skillelinje -->
+            <line x1="140" y1="8" x2="140" y2="252" stroke="rgba(240,238,248,.06)" stroke-width="1"/>
+
+            <!-- Brytning (høyre) -->
+            <text x="210" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,248,.6)" letter-spacing=".06em">BRYTNING (Snells lov)</text>
+            <!-- Luft/glass grense -->
+            <rect x="150" y="90" width="122" height="122" rx="4" fill="rgba(96,200,248,.04)" stroke="rgba(96,200,248,.15)" stroke-width="1"/>
+            <text x="212" y="86" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,238,248,.3)">Luft  n=1.0</text>
+            <text x="212" y="222" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,248,.4)">Glass  n=1.5</text>
+            <!-- Normal -->
+            <line x1="210" y1="40" x2="210" y2="200" stroke="rgba(240,238,248,.12)" stroke-width="1" stroke-dasharray="4 3"/>
+            <!-- Innfallende stråle -->
+            <path d="M165,45 L210,90" stroke="rgba(240,208,64,.8)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Brutt stråle (bøyes mot normal) -->
+            <path d="M210,90 L225,200" stroke="rgba(96,200,248,.8)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Vinkelbuer -->
+            <path d="M192,78 A22,22 0 0,1 210,60" fill="none" stroke="rgba(240,208,64,.4)" stroke-width="1.2"/>
+            <text x="178" y="74" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.5)">θ₁</text>
+            <path d="M210,110 A20,20 0 0,1 220,92" fill="none" stroke="rgba(96,200,248,.4)" stroke-width="1.2"/>
+            <text x="218" y="106" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,248,.5)">θ₂</text>
+            <text x="210" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,238,248,.35)">n₁·sin θ₁ = n₂·sin θ₂</text>
+
+            <!-- Totalrefleksjon -->
+            <rect x="10" y="130" width="122" height="118" rx="6" fill="rgba(160,96,240,.03)" stroke="rgba(160,96,240,.18)" stroke-width="1"/>
+            <text x="71" y="146" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,240,.55)" letter-spacing=".04em">TOTALREFLEKSJON</text>
+            <rect x="14" y="150" width="114" height="54" rx="4" fill="rgba(96,200,248,.06)" stroke="rgba(96,200,248,.2)" stroke-width="1"/>
+            <text x="71" y="163" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,248,.4)">Glass (tettere medium)</text>
+            <!-- Fiberoptikk hint -->
+            <path d="M20,175 Q40,168 60,178 Q80,188 100,178 Q118,168 125,175"
+              fill="none" stroke="rgba(240,208,64,.7)" stroke-width="2" stroke-linecap="round"/>
+            <text x="71" y="195" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.5)">Fiberoptikk – lys «bouncer» innover</text>
+            <text x="71" y="207" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.4)">θ &gt; θ_kritisk → alt lys reflekteres</text>
+            <text x="71" y="241" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,240,.5)" font-family="Fraunces">θ_c = arcsin(n₂/n₁)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Linser og speil -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,248,.1);color:#60c8f8;border:1px solid rgba(96,200,248,.2)">🔭 Linser og speil</div>
+          <h3 class="k-tittel">Linser og speil</h3>
+          <p class="k-ingress">Linser bryter lys og speil reflekterer det – begge kan samle eller spre lysstråler og danne bilder.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔍</span><div><strong>Konveks linse (samlende):</strong> Tykkere i midten. Samler parallelle stråler i brennpunktet F. Brennvidde f. Lager forstørret virtuelt bilde (lupe) eller reelt omvendt bilde (kamera, øye). 1/f = 1/d_o + 1/d_i</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👓</span><div><strong>Konkav linse (spredende):</strong> Tynnere i midten. Sprer parallelle stråler – ser ut som de kommer fra virtuelt brennpunkt bak linsen. Brukes til å korrigere nærsynt (myopi).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🪞</span><div><strong>Konkavt speil:</strong> Samlende – reflektor i lyskastere, teleskoper. Parallaktisk speil: konvekst – sprer lys, gir vidt synsfelt (butikkspeil, sidespeil på biler).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👁️</span><div><strong>Øyet som optisk system:</strong> Hornhinnen + linsen fungerer som samlende linse → danner reelt, omvendt bilde på netthinnen. Linsen endrer krumning (akkommodasjon) for å fokusere på nær/fjern.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060810"/>
+            <!-- Konveks linse -->
+            <text x="140" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.6)" letter-spacing=".06em">KONVEKS LINSE (SAMLENDE)</text>
+            <!-- Linse -->
+            <path d="M128,30 Q140,45 128,60 Q116,45 128,30Z" fill="rgba(96,200,248,.15)" stroke="rgba(96,200,248,.5)" stroke-width="1.5"/>
+            <path d="M140,30 Q152,45 140,60 Q128,45 140,30Z" fill="rgba(96,200,248,.15)" stroke="rgba(96,200,248,.5)" stroke-width="1.5"/>
+            <line x1="134" y1="45" x2="134" y2="45"/>
+            <!-- Optisk akse -->
+            <line x1="10" y1="45" x2="270" y2="45" stroke="rgba(240,238,248,.08)" stroke-width="1" stroke-dasharray="5 3"/>
+            <!-- Linse senterlinje -->
+            <line x1="134" y1="22" x2="134" y2="68" stroke="rgba(96,200,248,.3)" stroke-width="1.5"/>
+            <!-- Parallelle stråler inn -->
+            <g stroke="rgba(240,208,64,.7)" stroke-width="1.8" stroke-linecap="round">
+              <path d="M10,34 L134,34"/><path d="M10,45 L134,45"/><path d="M10,56 L134,56"/>
+            </g>
+            <!-- Samles i brennpunkt -->
+            <g stroke="rgba(240,208,64,.7)" stroke-width="1.8" stroke-linecap="round">
+              <path d="M134,34 L200,45"/><path d="M134,45 L200,45"/><path d="M134,56 L200,45"/>
+            </g>
+            <!-- Brennpunkt -->
+            <circle cx="200" cy="45" r="4" fill="rgba(240,208,64,.9)" stroke="#f0d040" stroke-width="1"/>
+            <text x="200" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,208,64,.7)">F</text>
+            <path d="M134" y1="62" x2="200" y2="62" fill="none"/>
+            <text x="167" y="72" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,248,.5)">f (brennvidde)</text>
+            <path d="M136,64 L198,64" stroke="rgba(96,200,248,.3)" stroke-width="1"/>
+
+            <!-- Konkav linse -->
+            <text x="140" y="92" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.5)" letter-spacing=".06em">KONKAV LINSE (SPREDENDE)</text>
+            <line x1="10" y1="125" x2="270" y2="125" stroke="rgba(240,238,248,.06)" stroke-width="1" stroke-dasharray="5 3"/>
+            <!-- Konkav linse form -->
+            <path d="M126,100 Q132,112 126,124 Q120,112 126,100Z" fill="rgba(160,96,240,.12)" stroke="rgba(160,96,240,.4)" stroke-width="1.5"/>
+            <path d="M142,100 Q136,112 142,124 Q148,112 142,100Z" fill="rgba(160,96,240,.12)" stroke="rgba(160,96,240,.4)" stroke-width="1.5"/>
+            <line x1="134" y1="97" x2="134" y2="127" stroke="rgba(160,96,240,.3)" stroke-width="1.5"/>
+            <!-- Stråler -->
+            <g stroke="rgba(240,208,64,.6)" stroke-width="1.8" stroke-linecap="round">
+              <path d="M10,110 L134,110"/><path d="M10,124 L134,124"/>
+            </g>
+            <!-- Spreder -->
+            <g stroke="rgba(240,208,64,.6)" stroke-width="1.8" stroke-linecap="round">
+              <path d="M134,110 L270,95"/><path d="M134,124 L270,138"/>
+            </g>
+            <!-- Virtuelt brennpunkt (stiplet bak linsen) -->
+            <path d="M134,110 Q80,116 60,118" stroke="rgba(240,208,64,.2)" stroke-width="1" stroke-dasharray="3 2"/>
+            <path d="M134,124 Q80,122 60,120" stroke="rgba(240,208,64,.2)" stroke-width="1" stroke-dasharray="3 2"/>
+            <circle cx="62" cy="119" r="3" fill="none" stroke="rgba(240,208,64,.35)" stroke-width="1"/>
+            <text x="52" y="113" font-family="DM Sans" font-size="7" fill="rgba(240,208,64,.35)">F (virt.)</text>
+            <text x="200" y="144" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(160,96,240,.5)">Brukes til å korrigere nærsynt</text>
+
+            <!-- Linsefomelen -->
+            <rect x="12" y="152" width="256" height="54" rx="10" fill="rgba(240,208,64,.04)" stroke="rgba(240,208,64,.2)" stroke-width="1"/>
+            <text x="140" y="168" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.55)" letter-spacing=".06em">LINSEFORMELEN</text>
+            <text x="140" y="185" text-anchor="middle" font-family="Fraunces" font-size="16" fill="rgba(240,208,64,.75)">1/f  =  1/d_o  +  1/d_i</text>
+            <text x="140" y="200" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,238,248,.35)">f = brennvidde · d_o = objektavstand · d_i = bildeavstand</text>
+
+            <!-- Forstørrelse -->
+            <text x="140" y="226" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(96,200,248,.6)">m = d_i / d_o  =  −h_i / h_o</text>
+            <text x="140" y="242" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,238,248,.3)">m &gt; 1: forstørret · m &lt; 0: reelt og omvendt</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Regnbuen og dispersjon -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(240,96,128,.1);color:#f06080;border:1px solid rgba(240,96,128,.2)">🌈 Dispersjon</div>
+          <h3 class="k-tittel">Regnbuen og dispersjon</h3>
+          <p class="k-ingress">Hvitt lys er egentlig en blanding av alle fargene. Når lys passerer gjennom et prisme eller en vanndråpe, brytes ulike bølgelengder forskjellig – og vi ser regnbuen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">💎</span><div><strong>Dispersjon:</strong> Brytningsindeksen n varierer med bølgelengden. Fiolett lys brytes mer enn rødt lys. Et prisme spalter hvitt lys i spektrum: ROGGBLF (rødt, oransje, gult, grønt, blått, lilla, fiolett).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌈</span><div><strong>Regnbue:</strong> Dannes av millioner av vanndråper. Lyset brytes inn, reflekteres innvendig og brytes ut igjen. Rødt sees ved 42°, fiolett ved 40° over den retningen lyset kommer fra (anti-solpunktet).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴🟢🔵</span><div><strong>Fargeteori – lys (additiv):</strong> Rødt + Grønt + Blått (RGB) = hvitt lys. Skjermer og lyspærer blander lys additivt. Helt fravær av lys = svart.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎨</span><div><strong>Fargeteori – pigment (subtraktiv):</strong> Cyan + Magenta + Gul (CMY) = svart (absorbert alt). Maling og trykk subtraktivt. Hvitt papir: ingenting absorbert. Rød maling: absorberer alt unntatt rødt.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="regnbue-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f04040"/>
+                <stop offset="17%" stop-color="#f09030"/>
+                <stop offset="33%" stop-color="#f0e040"/>
+                <stop offset="50%" stop-color="#40d060"/>
+                <stop offset="67%" stop-color="#4090f0"/>
+                <stop offset="83%" stop-color="#6040d0"/>
+                <stop offset="100%" stop-color="#9020c0"/>
+              </linearGradient>
+            </defs>
+            <rect width="280" height="260" fill="#060810"/>
+            <text x="140" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,208,64,.6)" letter-spacing=".06em">PRISME OG DISPERSJON</text>
+            <!-- Hvitt lys inn -->
+            <path d="M10,100 L80,100" stroke="rgba(255,255,255,.8)" stroke-width="3" stroke-linecap="round"/>
+            <text x="35" y="93" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,255,255,.5)">Hvitt lys</text>
+            <!-- Prisme -->
+            <polygon points="80,70 120,130 40,130" fill="rgba(96,200,248,.12)" stroke="rgba(96,200,248,.5)" stroke-width="1.8"/>
+            <text x="80" y="113" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,248,.6)">prisme</text>
+            <!-- Spektrum ut -->
+            <g stroke-width="2" stroke-linecap="round">
+              <path d="M91,130 L200,80" stroke="rgba(240,60,60,.85)"/>
+              <path d="M91,130 L200,92" stroke="rgba(240,140,40,.8)"/>
+              <path d="M91,130 L200,104" stroke="rgba(240,220,40,.8)"/>
+              <path d="M91,130 L200,116" stroke="rgba(40,200,60,.8)"/>
+              <path d="M91,130 L200,128" stroke="rgba(40,140,240,.8)"/>
+              <path d="M91,130 L200,140" stroke="rgba(80,40,200,.8)"/>
+              <path d="M91,130 L200,152" stroke="rgba(140,20,180,.8)"/>
+            </g>
+            <!-- Fargeetiketter -->
+            <g font-family="DM Sans" font-size="7" fill="rgba(240,238,248,.5)">
+              <text x="204" y="83">Rødt ~700 nm</text>
+              <text x="204" y="95">Oransje ~620 nm</text>
+              <text x="204" y="107">Gult ~580 nm</text>
+              <text x="204" y="119">Grønt ~530 nm</text>
+              <text x="204" y="131">Blått ~470 nm</text>
+              <text x="204" y="143">Lilla ~430 nm</text>
+              <text x="204" y="155">Fiolett ~400 nm</text>
+            </g>
+
+            <!-- Regnbue-forklaring -->
+            <rect x="10" y="170" width="260" height="82" rx="10" fill="rgba(240,96,128,.04)" stroke="rgba(240,96,128,.18)" stroke-width="1"/>
+            <text x="140" y="186" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,128,.55)" letter-spacing=".06em">REGNBUE – VANNDRÅPE</text>
+            <!-- Dråpe -->
+            <ellipse cx="75" cy="224" rx="28" ry="22" fill="rgba(96,200,248,.08)" stroke="rgba(96,200,248,.3)" stroke-width="1.2"/>
+            <!-- Lys inn -->
+            <path d="M20,210 L56,218" stroke="rgba(255,255,255,.6)" stroke-width="2"/>
+            <!-- Intern refleksjon -->
+            <path d="M56,218 L88,216 L70,238" stroke="rgba(240,208,64,.5)" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <!-- Ut (rødt øverst) -->
+            <path d="M70,238 L20,244" stroke="rgba(240,60,60,.7)" stroke-width="1.8"/>
+            <path d="M70,238 L18,250" stroke="rgba(80,40,200,.7)" stroke-width="1.8"/>
+            <text x="75" y="212" font-family="DM Sans" font-size="7" fill="rgba(96,200,248,.5)">1. brytes inn</text>
+            <text x="85" y="234" font-family="DM Sans" font-size="7" fill="rgba(240,208,64,.5)">2. reflekteres</text>
+            <text x="22" y="241" font-family="DM Sans" font-size="7" fill="rgba(240,60,60,.6)">Rødt 42°</text>
+            <text x="22" y="253" font-family="DM Sans" font-size="7" fill="rgba(80,40,200,.5)">Fiolett 40°</text>
+            <!-- RGB -->
+            <text x="195" y="200" text-anchor="middle" font-family="Fraunces" font-size="8.5" fill="rgba(240,238,248,.45)">Additiv: R+G+B = hvit</text>
+            <circle cx="175" cy="226" r="14" fill="rgba(240,40,40,.35)"/>
+            <circle cx="195" cy="213" r="14" fill="rgba(40,220,40,.35)"/>
+            <circle cx="215" cy="226" r="14" fill="rgba(40,80,240,.35)"/>
+            <!-- Overlapp senter -->
+            <text x="195" y="226" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,255,255,.9)" font-weight="700">hvit</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Øyet som optisk system -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,248,.1);color:#60c8f8;border:1px solid rgba(96,200,248,.2)">👁️ Øyet</div>
+          <h3 class="k-tittel">Øyet som optisk system</h3>
+          <p class="k-ingress">Øyet er et avansert optisk instrument. Hornhinnen og linsen danner et samlende linse-system som projiserer et skarpt bilde på netthinnen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔭</span><div><strong>Hornhinne + linse:</strong> Hornhinnen gir ~2/3 av den totale lysbrytingen. Linsen gir den justerbare delen. Totalt ~60 dioptrier. Bildet på netthinnen er reelt og opp-ned – hjernen snur det.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎚️</span><div><strong>Akkommodasjon:</strong> Ciliærmusklene endrer linsens krumning → fokuserer på ulike avstander. Nær: linsen fortykkes (høy brytningskraft). Fjern: linsen flates ut. Evnen avtar med alder (presbyopi).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👁️</span><div><strong>Nærsynt (myopi):</strong> Øyeeplet for langt – bildet dannes foran netthinnen. Korrigeres med konkav (spredende) linse. <br/><strong>Langsynt (hyperopi):</strong> For kort øye – bildet bak netthinnen. Korrigeres med konveks linse.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌈</span><div><strong>Tapper og staver:</strong> Tapper (6–7 mill.): fargersyn, skarpsyn, trenger mye lys. Konsentrert i gula flekk. Staver (120 mill.): svart/hvitt, periferisyn, ekstremt lysfølsomme – brukes i mørket.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060810"/>
+            <text x="140" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,248,.6)" letter-spacing=".06em">ØYET SOM OPTISK SYSTEM</text>
+            <!-- Øye-form -->
+            <ellipse cx="130" cy="100" rx="80" ry="70" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+            <!-- Hornhinne (fremre) -->
+            <path d="M58,78 Q40,100 58,122" fill="rgba(96,200,248,.12)" stroke="rgba(96,200,248,.5)" stroke-width="2"/>
+            <text x="28" y="102" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,248,.5)">Horn-</text>
+            <text x="28" y="111" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,248,.5)">hinne</text>
+            <!-- Linse -->
+            <path d="M90,88 Q104,100 90,112 Q76,100 90,88Z" fill="rgba(240,208,64,.2)" stroke="rgba(240,208,64,.5)" stroke-width="1.5"/>
+            <text x="90" y="128" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,208,64,.5)">Linse</text>
+            <!-- Pupill/iris -->
+            <circle cx="73" cy="100" r="14" fill="rgba(96,160,96,.1)" stroke="rgba(96,160,96,.4)" stroke-width="1.2"/>
+            <circle cx="73" cy="100" r="6" fill="rgba(0,0,0,.8)" stroke="rgba(0,0,0,.9)" stroke-width="1"/>
+            <!-- Netthinne -->
+            <path d="M205,68 Q220,100 205,132" fill="none" stroke="rgba(240,96,128,.5)" stroke-width="2.5"/>
+            <text x="228" y="102" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,128,.5)">Nett-</text>
+            <text x="228" y="111" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,128,.5)">hinne</text>
+            <!-- Gula flekk -->
+            <circle cx="198" cy="100" r="5" fill="rgba(240,208,64,.4)" stroke="rgba(240,208,64,.7)" stroke-width="1"/>
+            <text x="198" y="119" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,208,64,.5)">gula fl.</text>
+            <!-- Synsnerve -->
+            <path d="M210,100 L250,100" stroke="rgba(200,160,80,.4)" stroke-width="3" stroke-linecap="round"/>
+            <text x="252" y="103" font-family="DM Sans" font-size="7" fill="rgba(200,160,80,.4)">Synsn.</text>
+            <!-- Lysstråler gjennom øyet -->
+            <g stroke="rgba(240,208,64,.6)" stroke-width="1.5" stroke-linecap="round">
+              <path d="M12,68 L58,82 L90,95 L195,74"/>
+              <path d="M12,100 L58,100 L90,100 L195,100"/>
+              <path d="M12,132 L58,118 L90,105 L195,126"/>
+            </g>
+            <!-- Bilde på netthinnen (omvendt) -->
+            <text x="197" y="66" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,208,64,.4)">▼ reelt</text>
+            <text x="197" y="135" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,208,64,.4)">▲ opp-ned</text>
+            <!-- Synsfeil-korreksjon -->
+            <rect x="10" y="155" width="260" height="94" rx="10" fill="rgba(240,96,128,.03)" stroke="rgba(240,96,128,.18)" stroke-width="1"/>
+            <text x="140" y="170" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,128,.55)" letter-spacing=".06em">SYNSFEIL OG KORREKSJON</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(240,238,248,.5)">
+              <text x="20" y="188">👁️ Nærsynt (myopi): øye for langt</text>
+              <text x="20" y="204">   → bilde foran netthinne</text>
+              <text x="20" y="220">   → korreksjon: konkav linse ⟨  ⟩</text>
+              <text x="20" y="236">👁️ Langsynt (hyperopi): øye for kort</text>
+              <text x="154" y="220" fill="rgba(96,200,248,.6)" font-style="italic">spredende</text>
+              <text x="154" y="242" fill="rgba(240,208,64,.6)" font-style="italic">samlende</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Fargeteori og lysets egenskaper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(240,96,128,.1);color:#f06080;border:1px solid rgba(240,96,128,.2)">🎨 Fargeteori</div>
+          <h3 class="k-tittel">Fargeteori og lysabsorpsjon</h3>
+          <p class="k-ingress">Farger oppstår fordi objekter absorberer noen bølgelengder og reflekterer andre. Hva vi ser avhenger av lyset som treffer øyet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🍎</span><div><strong>Hvorfor er et eple rødt?</strong> Epleskallet absorberer nesten all synlig lys bortsett fra røde bølgelengder (~620–750 nm). Rødt lys reflekteres og treffer øyets røde tapper.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Klorofyll:</strong> Absorberer rødt og blått lys effektivt – reflekterer grønt. Løv ser grønt ut. Om høsten brytes klorofyll ned og andre pigmenter (karotenoid: gult/oransje, antocyan: rødt) vises.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📺</span><div><strong>Skjermteknologi (RGB):</strong> Skjermer har millioner av piksler med røde, grønne og blå underpiksler. Hvert piksel blander lys additivt. Full styrke på alle tre: hvitt. Ingen: svart.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌅</span><div><strong>Blå himmel og rød solnedgang:</strong> Rayleigh-spredning: atmosfæren sprer korte bølgelengder (blått) mye mer enn lange (rødt). Solen rett over: blå himmel. Lav sol: lyset passerer mer luft → blått spredt bort → rød/orange himmel.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060810"/>
+            <text x="140" y="14" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,128,.6)" letter-spacing=".06em">ABSORBSJON OG REFLEKSJON</text>
+            <!-- Grønt løvblad -->
+            <ellipse cx="70" cy="65" rx="30" ry="22" fill="rgba(40,160,40,.35)" stroke="rgba(40,200,40,.5)" stroke-width="1.5" transform="rotate(-20,70,65)"/>
+            <text x="70" y="68" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,240,200,.8)" font-weight="600">Løv</text>
+            <!-- Hvitt lys inn -->
+            <path d="M10,50 L42,58" stroke="rgba(255,255,255,.7)" stroke-width="2.5"/>
+            <!-- Absorberes -->
+            <g stroke-width="1.5" stroke-linecap="round">
+              <path d="M52,48 L52,30" stroke="rgba(240,60,60,.6)" stroke-dasharray="3 2"/>
+              <path d="M58,52 L64,36" stroke="rgba(60,80,240,.6)" stroke-dasharray="3 2"/>
+              <text x="40" y="26" font-family="DM Sans" font-size="7" fill="rgba(240,238,248,.35)">Rødt og blått absorberes</text>
+            </g>
+            <!-- Grønt reflekteres -->
+            <path d="M45,72 L15,86" stroke="rgba(40,200,40,.8)" stroke-width="2.5"/>
+            <text x="8" y="96" font-family="DM Sans" font-size="7.5" fill="rgba(40,200,40,.6)">Grønt reflekteres → vi ser grønt</text>
+
+            <!-- RGB-sirkler additiv -->
+            <text x="200" y="28" text-anchor="middle" font-family="Fraunces" font-size="8.5" fill="rgba(240,238,248,.45)" letter-spacing=".04em">Additiv (lys/skjerm)</text>
+            <circle cx="185" cy="60" r="18" fill="rgba(240,40,40,.4)"/>
+            <circle cx="215" cy="60" r="18" fill="rgba(40,40,240,.4)"/>
+            <circle cx="200" cy="82" r="18" fill="rgba(40,200,40,.4)"/>
+            <!-- Overlapp -->
+            <text x="200" y="64" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.8)" font-weight="600">hvit</text>
+            <text x="188" y="81" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.7)">cyan</text>
+            <text x="212" y="81" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.7)">gul</text>
+            <text x="200" y="54" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.7)">magenta</text>
+
+            <!-- CMY subtraktiv -->
+            <text x="200" y="108" text-anchor="middle" font-family="Fraunces" font-size="8.5" fill="rgba(240,238,248,.45)" letter-spacing=".04em">Subtraktiv (trykk/maling)</text>
+            <circle cx="185" cy="140" r="18" fill="rgba(40,200,200,.4)"/>
+            <circle cx="215" cy="140" r="18" fill="rgba(200,40,200,.4)"/>
+            <circle cx="200" cy="162" r="18" fill="rgba(200,200,40,.4)"/>
+            <text x="200" y="155" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.7)" font-weight="600">svart</text>
+
+            <!-- Rayleigh-spredning -->
+            <rect x="10" y="192" width="260" height="58" rx="10" fill="rgba(96,150,240,.04)" stroke="rgba(96,150,240,.18)" stroke-width="1"/>
+            <text x="140" y="208" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,150,240,.55)">Rayleigh-spredning</text>
+            <text x="140" y="224" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,150,240,.6)">☀️ Blå himmel: blått (kort λ) spres mest</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,130,40,.6)">🌅 Rød solnedgang: blått spredt bort → rødere lys</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(240,208,64,.1);color:#f0d040;border:1px solid rgba(240,208,64,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Optikk – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:820px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(240,208,64,.04);border:1px solid rgba(240,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#f0d040;display:block;margin-bottom:4px">💡 Lysets natur</strong>Bølge-partikkel-dualitet · EM-bølge · Foton: E=hf · c = 3×10⁸ m/s · Spektrum: radio → γ-stråling</div>
+            <div style="padding:14px;background:rgba(96,200,248,.04);border:1px solid rgba(96,200,248,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#60c8f8;display:block;margin-bottom:4px">🪞 Refleksjon</strong>θ_inn = θ_refl · Speil vs diffus refleksjon · Totalrefleksjon: θ > θ_c · Fiberoptikk</div>
+            <div style="padding:14px;background:rgba(96,200,248,.04);border:1px solid rgba(96,200,248,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#60c8f8;display:block;margin-bottom:4px">🌊 Brytning</strong>Snells lov: n₁sinθ₁ = n₂sinθ₂ · Brytningsindeks n = c/v · Bøyes mot normal i tettere medium</div>
+            <div style="padding:14px;background:rgba(240,208,64,.04);border:1px solid rgba(240,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#f0d040;display:block;margin-bottom:4px">🔭 Linser</strong>Konveks (samlende): F, 1/f = 1/d_o + 1/d_i · Konkav (spredende): myopi-korreksjon · m = d_i/d_o</div>
+            <div style="padding:14px;background:rgba(240,96,128,.04);border:1px solid rgba(240,96,128,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#f06080;display:block;margin-bottom:4px">🌈 Dispersjon</strong>Prisme splitter hvitt lys · Regnbue: 42° (rødt) – 40° (fiolett) · Dispersjon: n varierer med λ</div>
+            <div style="padding:14px;background:rgba(96,200,248,.04);border:1px solid rgba(96,200,248,.15);border-radius:12px;font-size:.78rem;color:rgba(240,238,248,.65);line-height:1.6"><strong style="color:#60c8f8;display:block;margin-bottom:4px">👁️ Øyet</strong>Hornhinne + linse = samlende system · Bilde: reelt, omvendt på netthinnen · Myopi: konkav · Hyperopi: konveks · Tapper/staver</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- INTERAKTIV PRISME-DEMO -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Interaktiv: Prisme og linse</div><div class="sep-r"></div></div>
+  <div class="spektrum-demo">
+    <div class="sd-tittel">Utforsk lys gjennom optiske instrumenter</div>
+    <div class="sd-grid">
+      <div class="sd-boks">
+        <h3>🌈 Prisme – dispersjon</h3>
+        <div class="prisme-wrap">
+          <canvas id="prisme-canvas" width="240" height="160" style="border-radius:10px;background:#06080e"></canvas>
+        </div>
+        <div class="linse-knapper">
+          <button class="linse-knapp aktiv" onclick="visPrisme('hvit')">Hvitt lys</button>
+          <button class="linse-knapp" onclick="visPrisme('roed')">Rødt</button>
+          <button class="linse-knapp" onclick="visPrisme('groenn')">Grønt</button>
+          <button class="linse-knapp" onclick="visPrisme('blaa')">Blått</button>
+        </div>
+        <div class="linse-info" id="prisme-info">Hvitt lys inneholder alle bølgelengder. Prismet bryter dem ulikt og separerer fargene til et synlig spektrum.</div>
+      </div>
+      <div class="sd-boks">
+        <h3>🔭 Linse – strålegang</h3>
+        <div class="prisme-wrap">
+          <canvas id="linse-canvas" width="240" height="160" style="border-radius:10px;background:#06080e"></canvas>
+        </div>
+        <div class="linse-knapper">
+          <button class="linse-knapp aktiv" onclick="visLinse('konveks')">Konveks</button>
+          <button class="linse-knapp" onclick="visLinse('konkav')">Konkav</button>
+          <button class="linse-knapp" onclick="visLinse('oge')">Øyet</button>
+        </div>
+        <div class="linse-info" id="linse-info">Konveks linse samler parallelle lysstråler i ett brennpunkt. Brennvidde f: jo tykkere linse, jo kortere f.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N=document.querySelectorAll('.k-slide').length;let cur=0;
+const slides=document.getElementById('k-slides'),dotsEl=document.getElementById('k-dots');
+for(let i=0;i<N;i++){const d=document.createElement('button');d.className='k-dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);}
+function goTo(i){cur=i;slides.style.transform=`translateX(-${i*100}%)`;document.querySelectorAll('.k-dot').forEach((d,j)=>d.classList.toggle('on',j===i));document.getElementById('k-prev').disabled=i===0;document.getElementById('k-next').disabled=i===N-1;}
+function kGo(d){goTo(Math.max(0,Math.min(N-1,cur+d)));}
+let tx=0;document.getElementById('karusell').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.getElementById('karusell').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)kGo(dx<0?1:-1);},{passive:true});
+goTo(0);
+
+// ═══ PRISME-DEMO ═══
+const prismeInfo = {
+  hvit: 'Hvitt lys inneholder alle bølgelengder. Prismet bryter dem ulikt og separerer fargene til et synlig spektrum.',
+  roed: 'Rødt lys (~700 nm) har lavest frekvens og brytes minst av glasset. Ingen synlig dispersjon ved enkelt farget lys.',
+  groenn: 'Grønt lys (~530 nm) er midt i spektrum. Brytes mer enn rødt, men mindre enn blått.',
+  blaa: 'Blått lys (~470 nm) har høy frekvens og brytes mest. Korte bølgelengder bøyes kraftigere.'
+};
+
+function tegnPrisme(modus) {
+  const c = document.getElementById('prisme-canvas');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 240, 160);
+  ctx.fillStyle = '#06080e'; ctx.fillRect(0, 0, 240, 160);
+
+  // Prisme
+  ctx.beginPath(); ctx.moveTo(90,20); ctx.lineTo(130,140); ctx.lineTo(50,140); ctx.closePath();
+  ctx.fillStyle = 'rgba(96,200,248,.1)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(96,200,248,.5)'; ctx.lineWidth = 1.8; ctx.stroke();
+
+  const farger = modus === 'hvit'
+    ? [['rgba(240,60,60,.85)',10],['rgba(240,150,40,.8)',6],['rgba(240,220,40,.8)',2],['rgba(40,200,60,.8)',-2],['rgba(40,140,240,.8)',-6],['rgba(140,40,200,.8)',-10]]
+    : modus === 'roed' ? [['rgba(240,60,60,.9)',0]]
+    : modus === 'groenn' ? [['rgba(40,200,60,.9)',0]]
+    : [['rgba(40,140,240,.9)',0]];
+
+  // Innkommende stråle(r)
+  farger.forEach(([farge]) => {
+    ctx.beginPath(); ctx.moveTo(10, 80); ctx.lineTo(70, 80);
+    ctx.strokeStyle = modus === 'hvit' ? 'rgba(255,255,255,.7)' : farge;
+    ctx.lineWidth = modus === 'hvit' ? 3 : 2.5; ctx.stroke();
+  });
+
+  // Ut-stråler
+  farger.forEach(([farge, off]) => {
+    ctx.beginPath(); ctx.moveTo(100, 113); ctx.lineTo(230, 113 - off * 5);
+    ctx.strokeStyle = farge; ctx.lineWidth = 2; ctx.stroke();
+  });
+  document.getElementById('prisme-info').textContent = prismeInfo[modus];
+  document.querySelectorAll('#prisme-canvas ~ .linse-knapper .linse-knapp').forEach(b => b.classList.toggle('aktiv', b.textContent.toLowerCase().startsWith(modus === 'hvit' ? 'h' : modus === 'roed' ? 'r' : modus === 'groenn' ? 'g' : 'b')));
+}
+
+const linseInfo = {
+  konveks: 'Konveks linse samler parallelle lysstråler i ett brennpunkt F. Brennvidde f: jo tykkere linse, jo kortere f og jo sterkere linse (dioptrier = 1/f).',
+  konkav: 'Konkav linse sprer parallelle lysstråler. Strålene ser ut til å komme fra et virtuelt brennpunkt bak linsen. Brukes til nærsynte.',
+  oge: 'Øyets linse og hornhinne danner til sammen et samlende system (~60 dioptrier). Bildet på netthinnen er reelt og opp-ned.'
+};
+
+function tegnLinse(modus) {
+  const c = document.getElementById('linse-canvas');
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 240, 160);
+  ctx.fillStyle = '#06080e'; ctx.fillRect(0, 0, 240, 160);
+
+  const CX = 120, CY = 80;
+  // Optisk akse
+  ctx.setLineDash([5,3]); ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, CY); ctx.lineTo(240, CY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (modus === 'konveks' || modus === 'oge') {
+    // Konveks linse
+    ctx.beginPath();
+    ctx.moveTo(CX-6,CY-36); ctx.quadraticCurveTo(CX+14,CY,CX-6,CY+36);
+    ctx.quadraticCurveTo(CX-26,CY,CX-6,CY-36);
+    ctx.fillStyle = 'rgba(96,200,248,.15)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(96,200,248,.6)'; ctx.lineWidth = 1.8; ctx.stroke();
+    // Brennpunkt
+    const fX = modus === 'oge' ? CX+55 : CX+70;
+    ctx.beginPath(); ctx.arc(fX,CY,4,0,Math.PI*2);
+    ctx.fillStyle = 'rgba(240,208,64,.9)'; ctx.fill();
+    ctx.fillStyle = 'rgba(240,208,64,.7)';
+    ctx.font = '9px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('F', fX, CY-10);
+    // Stråler
+    [CY-22, CY, CY+22].forEach(y => {
+      ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(CX-6, y);
+      ctx.strokeStyle = 'rgba(240,208,64,.7)'; ctx.lineWidth = 1.8; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(CX-6, y); ctx.lineTo(fX, CY);
+      ctx.stroke();
+    });
+    if (modus === 'oge') {
+      ctx.fillStyle = 'rgba(240,238,248,.4)'; ctx.font = '8px DM Sans';
+      ctx.fillText('Hornhinne+linse: ~60 dioptrier', CX, 152);
+    }
+  } else {
+    // Konkav linse
+    ctx.beginPath();
+    ctx.moveTo(CX+6,CY-36); ctx.quadraticCurveTo(CX-14,CY,CX+6,CY+36);
+    ctx.quadraticCurveTo(CX+26,CY,CX+6,CY-36);
+    ctx.fillStyle = 'rgba(160,96,240,.12)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(160,96,240,.55)'; ctx.lineWidth = 1.8; ctx.stroke();
+    // Virtuelt brennpunkt (bak linsen)
+    ctx.setLineDash([3,2]);
+    ctx.beginPath(); ctx.arc(CX-60,CY,4,0,Math.PI*2);
+    ctx.strokeStyle = 'rgba(240,208,64,.5)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(240,208,64,.5)'; ctx.font = '9px DM Sans';
+    ctx.fillText('F (v)', CX-60, CY-10);
+    [CY-22, CY, CY+22].forEach((y, i) => {
+      ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(CX+6, y);
+      ctx.strokeStyle = 'rgba(240,208,64,.7)'; ctx.lineWidth = 1.8; ctx.stroke();
+      const spredY = y + (y-CY)*0.6;
+      ctx.beginPath(); ctx.moveTo(CX+6, y); ctx.lineTo(230, y+(y-CY)*0.55);
+      ctx.stroke();
+      ctx.setLineDash([3,2]);
+      ctx.strokeStyle = 'rgba(240,208,64,.25)';
+      ctx.beginPath(); ctx.moveTo(CX+6, y); ctx.lineTo(CX-60, CY); ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+  document.getElementById('linse-info').textContent = linseInfo[modus];
+  document.querySelectorAll('#linse-canvas ~ .linse-knapper .linse-knapp').forEach(b => {
+    b.classList.toggle('aktiv', b.getAttribute('onclick').includes(modus));
+  });
+}
+
+function visPrisme(m) { tegnPrisme(m); }
+function visLinse(m) { tegnLinse(m); }
+
+tegnPrisme('hvit');
+tegnLinse('konveks');
+</script>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Atomets oppbygning</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06040e;--surface:#0e0a1c;--card:#140f24;--border:rgba(160,120,255,.08);
+  --text:#ece8f8;--dim:#4a3870;
+  --accent:#a060f8;--accent2:#60d0f0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 25% 25%,rgba(160,96,248,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,208,240,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,4,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(236,232,248,.58);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(160,96,248,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(236,232,248,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* ATOM-KONFIGURATOR */
+.atom-konfig{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.ak-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);margin-bottom:18px;text-align:center}
+.ak-kontroll{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:18px}
+.ak-kontroll label{font-size:.75rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+.ak-kontroll select{padding:8px 14px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-b);font-size:.85rem;cursor:pointer}
+.ak-kontroll select:focus{outline:none;border-color:var(--accent)}
+.ak-canvas-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.ak-info{flex:1;min-width:220px;max-width:320px}
+.ak-info-tabell{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.ak-boks{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center}
+.ak-boks-val{font-family:var(--font-d);font-size:1.6rem;font-weight:700;color:var(--accent)}
+.ak-boks-lab{font-size:.65rem;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.grunn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.grunn-kort{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s}
+.grunn-kort:hover{border-color:rgba(160,96,248,.4);transform:translateY(-2px)}
+.gk-symbol{font-family:var(--font-d);font-size:1.8rem;font-weight:700;color:var(--accent)}
+.gk-navn{font-size:.72rem;color:var(--dim);margin:3px 0;letter-spacing:.04em}
+.gk-nr{font-size:.7rem;font-weight:600;color:rgba(236,232,248,.5)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Atomets oppbygning</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Atomteori</div>
+    <h1>Atomets<br><em>oppbygning</em></h1>
+    <p class="hero-sub">Fra Dalton til kvantefysikk – hvordan atomer er bygd opp og hva som gir grunnstoffene sine unike egenskaper</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Hva er et atom -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 08</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">⚛️ Grunnlag</div>
+          <h3 class="k-tittel">Hva er et atom?</h3>
+          <p class="k-ingress">Atom betyr «udelelig» på gresk – men det er det ikke. Et atom består av en tett kjerne omgitt av elektroner i et enormt, tomt rom.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Størrelse:</strong> Et atom er ~0.1 nm (10⁻¹⁰ m) i diameter. En millimeter inneholder 10 millioner atomer på rad. Kjernen er 100 000× mindre enn atomet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏛️</span><div><strong>Historikk:</strong> Dalton (1803): atomer er udelelige sfærer. Thomson (1897): elektroner oppdaget. Rutherford (1911): kjerne oppdaget. Bohr (1913): elektronskall.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Rutherfords gullfolie-eksperiment:</strong> Alfapartikler ble skutt mot et gullfolie. De fleste gikk rett gjennom – men noen spratt tilbake. Bevis for at nesten all masse er i en liten kjerne.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌌</span><div><strong>Mesteparten er tomt:</strong> Hvis atomkjernen var en fotball på Ullevål stadion, ville elektronene kretse i en bane utenfor Oslo. Det er mye tomrom i «fast» stoff.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="kjerne-g" cx="40%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#f06060"/><stop offset="100%" stop-color="#901818"/>
+              </radialGradient>
+              <radialGradient id="bg-atom" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(160,96,248,.06)"/><stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="280" height="260" fill="#060410"/>
+            <!-- Glow -->
+            <circle cx="140" cy="130" r="110" fill="url(#bg-atom)"/>
+            <!-- Elektronbaner (ellipser) -->
+            <ellipse cx="140" cy="130" rx="100" ry="40" fill="none" stroke="rgba(160,96,248,.2)" stroke-width="1" transform="rotate(0,140,130)"/>
+            <ellipse cx="140" cy="130" rx="100" ry="40" fill="none" stroke="rgba(96,208,240,.2)" stroke-width="1" transform="rotate(60,140,130)"/>
+            <ellipse cx="140" cy="130" rx="100" ry="40" fill="none" stroke="rgba(96,208,240,.2)" stroke-width="1" transform="rotate(120,140,130)"/>
+            <!-- Kjerne -->
+            <circle cx="140" cy="130" r="18" fill="url(#kjerne-g)" stroke="rgba(240,96,96,.5)" stroke-width="1.5"/>
+            <text x="140" y="135" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(255,255,255,.8)" font-weight="700">⚛</text>
+            <!-- Elektroner -->
+            <circle cx="240" cy="130" r="7" fill="rgba(160,96,248,.8)" stroke="#a060f8" stroke-width="1.5"/>
+            <text x="240" y="134" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">e⁻</text>
+            <circle cx="92" cy="96" r="7" fill="rgba(96,208,240,.8)" stroke="#60d0f0" stroke-width="1.5"/>
+            <text x="92" y="100" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">e⁻</text>
+            <circle cx="164" cy="60" r="7" fill="rgba(96,208,240,.8)" stroke="#60d0f0" stroke-width="1.5"/>
+            <text x="164" y="64" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">e⁻</text>
+            <!-- Størrelsesammenligning -->
+            <text x="140" y="195" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.4)">Atom: ~0.1 nm = 10⁻¹⁰ m</text>
+            <text x="140" y="210" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.35)">Kjerne: ~0.000001 nm = 10⁻¹⁵ m</text>
+            <text x="140" y="226" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(160,96,248,.45)">Kjernen er 100 000× mindre enn atomet</text>
+            <!-- Rutherford-hint -->
+            <text x="14" y="248" font-family="DM Sans" font-size="8" fill="rgba(236,232,248,.3)">Rutherford 1911 – «Gullfolie-eksperimentet»</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Protoner, nøytroner og elektroner -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 08</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.2)">🔴 Partikler</div>
+          <h3 class="k-tittel">De tre sub-atomære partiklene</h3>
+          <p class="k-ingress">Alle atomer er bygd av de samme tre partiklene – det er bare antallet som varierer og gir hvert grunnstoff sin identitet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:#f06060">🔴</span><div><strong>Proton (p⁺):</strong> I kjernen. Positivt ladet (+1). Masse ≈ 1 u (atommasseenhet). Antall protoner = atomnummer (Z) = definerer grunnstoffet. Carbon: alltid 6 protoner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:#a0a0b0">⚪</span><div><strong>Nøytron (n⁰):</strong> I kjernen. Ingen ladning. Masse ≈ 1 u. Antall nøytroner kan variere → isotoper. Holder kjernen stabil via kjernekraft.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon" style="color:#a060f8">🟣</span><div><strong>Elektron (e⁻):</strong> Utenfor kjernen, i skall. Negativt ladet (−1). Masse ≈ 1/1836 u (neglisjerbar). Antall elektroner = antall protoner i nøytralt atom. Styrer kjemiske egenskaper.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Massetall (A):</strong> A = Z + N (protoner + nøytroner). Karbon-12: Z=6, N=6, A=12. Karbon-14 (radioaktivt): Z=6, N=8, A=14.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">KARBON-12 (C-12)</text>
+            <!-- Kjerne -->
+            <circle cx="140" cy="100" r="48" fill="rgba(20,10,30,.6)" stroke="rgba(160,96,248,.2)" stroke-width="1.5"/>
+            <!-- 6 protoner + 6 nøytroner i kjerne -->
+            <g>
+              <circle cx="126" cy="85" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="126" y="89" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+              <circle cx="148" cy="82" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="148" y="86" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+              <circle cx="165" cy="96" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="165" y="100" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+              <circle cx="158" cy="115" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="158" y="119" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+              <circle cx="136" cy="118" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="136" y="122" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+              <circle cx="118" cy="108" r="9" fill="rgba(240,96,96,.8)" stroke="#f06060" stroke-width="1"/><text x="118" y="112" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+            </g>
+            <g>
+              <circle cx="140" cy="82" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="140" y="86" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+              <circle cx="155" cy="78" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="155" y="82" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+              <circle cx="168" cy="108" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="168" y="112" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+              <circle cx="148" cy="120" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="148" y="124" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+              <circle cx="120" cy="88" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="120" y="92" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+              <circle cx="116" cy="114" r="9" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1"/><text x="116" y="118" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+            </g>
+            <!-- Kjernekraft-hint -->
+            <circle cx="140" cy="100" r="48" fill="none" stroke="rgba(240,192,64,.1)" stroke-width="2"/>
+            <!-- Elektronskall 1 (2 el) -->
+            <circle cx="140" cy="100" r="72" fill="none" stroke="rgba(160,96,248,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <circle cx="212" cy="100" r="7" fill="rgba(160,96,248,.8)" stroke="#a060f8" stroke-width="1.2"/>
+            <text x="212" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">e⁻</text>
+            <circle cx="68" cy="100" r="7" fill="rgba(160,96,248,.8)" stroke="#a060f8" stroke-width="1.2"/>
+            <text x="68" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">e⁻</text>
+            <text x="140" y="165" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(160,96,248,.5)">Skall 1: 2 el.</text>
+            <!-- Elektronskall 2 (4 el) -->
+            <circle cx="140" cy="100" r="105" fill="none" stroke="rgba(96,208,240,.2)" stroke-width="1" stroke-dasharray="4 3"/>
+            <g fill="rgba(96,208,240,.8)" stroke="#60d0f0" stroke-width="1.2">
+              <circle cx="245" cy="100" r="6"/><circle cx="35" cy="100" r="6"/>
+              <circle cx="140" cy="205" r="6"/><circle cx="140" cy="−5" r="6"/>
+            </g>
+            <text x="245" y="116" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.5)">e⁻</text>
+            <text x="20" y="116" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.5)">e⁻</text>
+            <!-- Tabell -->
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.5)">Z=6  N=6  A=12  Elektronkonfig: 2,4</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Elektronskall og Bohr-modellen -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 08</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">🪐 Elektronskall</div>
+          <h3 class="k-tittel">Elektronskall og Bohr-modellen</h3>
+          <p class="k-ingress">Elektroner befinner seg ikke tilfeldig rundt kjernen – de er organisert i energinivåer (skall). Ytterste skall avgjør kjemisk reaktivitet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">1️⃣</span><div><strong>Skall 1 (K):</strong> Maks 2 elektroner. Nærmest kjernen, lavest energi. H og He fyller dette skallet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">2️⃣</span><div><strong>Skall 2 (L):</strong> Maks 8 elektroner. Li–Ne fyller dette. C har 4 valenselektroner i skall 2 – kan danne 4 bindinger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">3️⃣</span><div><strong>Skall 3 (M):</strong> Maks 8 (enklere modell) eller 18. Na–Ar. Natrium (Na) har 1 elektron i skall 3 – gir lett fra seg dette (blir Na⁺).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚗️</span><div><strong>Valenselektroner:</strong> Elektroner i ytterste skall. Avgjør kjemisk oppførsel. Edelgasser (He, Ne, Ar) har fullt ytterste skall → svært lite reaktive. Alle atomer «vil» ha 8 valenselektroner (oktettregel).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">ELEKTRONKONFIGURASJON</text>
+            <!-- Natrium Na: 2,8,1 -->
+            <text x="70" y="36" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,160,48,.6)">Na (11)</text>
+            <circle cx="70" cy="100" r="8" fill="rgba(240,96,96,.7)" stroke="#f06060" stroke-width="1.2"/>
+            <text x="70" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white">11p</text>
+            <circle cx="70" cy="100" r="24" fill="none" stroke="rgba(160,96,248,.3)" stroke-width="1"/>
+            <circle cx="70" cy="100" r="44" fill="none" stroke="rgba(96,208,240,.25)" stroke-width="1"/>
+            <circle cx="70" cy="100" r="62" fill="none" stroke="rgba(96,208,240,.2)" stroke-width="1"/>
+            <!-- Skall 1: 2 el -->
+            <circle cx="94" cy="100" r="5" fill="rgba(160,96,248,.7)"/><circle cx="46" cy="100" r="5" fill="rgba(160,96,248,.7)"/>
+            <!-- Skall 2: 8 el -->
+            <g fill="rgba(96,208,240,.7)">
+              <circle cx="114" cy="100" r="4.5"/><circle cx="26" cy="100" r="4.5"/>
+              <circle cx="70" cy="56" r="4.5"/><circle cx="70" cy="144" r="4.5"/>
+              <circle cx="101" cy="69" r="4.5"/><circle cx="39" cy="69" r="4.5"/>
+              <circle cx="101" cy="131" r="4.5"/><circle cx="39" cy="131" r="4.5"/>
+            </g>
+            <!-- Skall 3: 1 el (valenselektron) -->
+            <circle cx="132" cy="100" r="6" fill="rgba(96,208,64,.9)" stroke="#60d040" stroke-width="1.5"/>
+            <text x="132" y="104" text-anchor="middle" font-family="DM Sans" font-size="7" fill="white" font-weight="700">e⁻</text>
+            <text x="70" y="178" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.5)">2, 8, 1 → gir lett fra seg e⁻</text>
+
+            <!-- Klor Cl: 2,8,7 -->
+            <text x="210" y="36" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.6)">Cl (17)</text>
+            <circle cx="210" cy="100" r="8" fill="rgba(240,96,96,.7)" stroke="#f06060" stroke-width="1.2"/>
+            <text x="210" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white">17p</text>
+            <circle cx="210" cy="100" r="24" fill="none" stroke="rgba(160,96,248,.3)" stroke-width="1"/>
+            <circle cx="210" cy="100" r="44" fill="none" stroke="rgba(96,208,240,.25)" stroke-width="1"/>
+            <circle cx="210" cy="100" r="62" fill="none" stroke="rgba(96,208,240,.2)" stroke-width="1"/>
+            <circle cx="234" cy="100" r="5" fill="rgba(160,96,248,.7)"/><circle cx="186" cy="100" r="5" fill="rgba(160,96,248,.7)"/>
+            <g fill="rgba(96,208,240,.7)">
+              <circle cx="254" cy="100" r="4.5"/><circle cx="166" cy="100" r="4.5"/>
+              <circle cx="210" cy="56" r="4.5"/><circle cx="210" cy="144" r="4.5"/>
+              <circle cx="241" cy="69" r="4.5"/><circle cx="179" cy="69" r="4.5"/>
+              <circle cx="241" cy="131" r="4.5"/><circle cx="179" cy="131" r="4.5"/>
+            </g>
+            <!-- Skall 3: 7 el (mangler 1) -->
+            <g fill="rgba(96,208,240,.75)">
+              <circle cx="272" cy="100" r="5"/><circle cx="265" cy="78" r="5"/>
+              <circle cx="251" cy="62" r="5"/><circle cx="232" cy="55" r="5"/>
+              <circle cx="210" cy="38" r="5"/><circle cx="188" cy="55" r="5"/>
+              <!-- 7. plass ledig (stiplet) -->
+            </g>
+            <circle cx="172" cy="64" r="5" fill="none" stroke="rgba(96,208,64,.5)" stroke-width="1.5" stroke-dasharray="3 2"/>
+            <text x="210" y="178" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,240,.5)">2, 8, 7 → tar lett imot e⁻</text>
+            <!-- Oktettregel label -->
+            <text x="140" y="214" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,64,.5)" letter-spacing=".04em">Oktettregel: 8 valenselektroner = stabilt</text>
+            <text x="140" y="230" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.35)">Na⁺ + Cl⁻ → NaCl (salt)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Isotoper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,240,.1);color:#60d0f0;border:1px solid rgba(96,208,240,.2)">⚖️ Isotoper</div>
+          <h3 class="k-tittel">Isotoper – varianter av samme grunnstoff</h3>
+          <p class="k-ingress">Isotoper er atomer av samme grunnstoff med ulikt antall nøytroner. De har samme kjemiske egenskaper, men ulik masse og noen er radioaktive.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔵</span><div><strong>Hydrogen-isotopene:</strong> ¹H (protium, 99.98%), ²H (deuterium, 1 nøytron), ³H (tritium, 2 nøytroner, radioaktiv). Tungt vann (D₂O) brukes i kjernereaktor.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Karbon-14 datering:</strong> C-14 (radioaktivt) dannes i atmosfæren. Levende organismer tar det opp. Etter død halveres mengden hvert 5730. år. Måling av C-14 gir alder opp til ~50 000 år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚕️</span><div><strong>Medisinsk bruk:</strong> Tc-99m (teknecium) brukes i 80% av all nukleærmedisinsk diagnostikk. I-131 behandler skjoldbruskkjertelkreft. PET-scan bruker F-18 merket glukose.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚛️</span><div><strong>Atomkraft:</strong> U-235 og U-238 er uran-isotoper. U-235 er fissilt (kan kløyves) – brukes i reaktorer. U-238 er det meste av naturlig uran og kan konverteres til plutonium.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.6)" letter-spacing=".08em">HYDROGEN-ISOTOPENE</text>
+            <!-- Protium H-1 -->
+            <text x="52" y="38" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.6)">¹H Protium</text>
+            <circle cx="52" cy="80" r="12" fill="rgba(240,96,96,.6)" stroke="#f06060" stroke-width="1.5"/>
+            <text x="52" y="84" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="white" font-weight="700">p⁺</text>
+            <circle cx="52" cy="80" r="30" fill="none" stroke="rgba(160,96,248,.3)" stroke-width="1"/>
+            <circle cx="82" cy="80" r="6" fill="rgba(160,96,248,.7)" stroke="#a060f8" stroke-width="1"/>
+            <text x="52" y="124" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.5)">Z=1 N=0 A=1</text>
+            <text x="52" y="136" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.4)">99.98% av H</text>
+
+            <!-- Deuterium H-2 -->
+            <text x="140" y="38" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.6)">²H Deuterium</text>
+            <circle cx="133" cy="80" r="12" fill="rgba(240,96,96,.6)" stroke="#f06060" stroke-width="1.5"/>
+            <text x="133" y="84" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="white" font-weight="700">p⁺</text>
+            <circle cx="148" cy="80" r="11" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1.5"/>
+            <text x="148" y="84" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">n⁰</text>
+            <circle cx="140" cy="80" r="30" fill="none" stroke="rgba(160,96,248,.3)" stroke-width="1"/>
+            <circle cx="170" cy="80" r="6" fill="rgba(160,96,248,.7)" stroke="#a060f8" stroke-width="1"/>
+            <text x="140" y="124" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.5)">Z=1 N=1 A=2</text>
+            <text x="140" y="136" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.4)">Tungt vann D₂O</text>
+
+            <!-- Tritium H-3 -->
+            <text x="228" y="38" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,96,96,.6)">³H Tritium</text>
+            <circle cx="218" cy="80" r="11" fill="rgba(240,96,96,.6)" stroke="#f06060" stroke-width="1.5"/>
+            <text x="218" y="84" text-anchor="middle" font-family="DM Sans" font-size="8" fill="white" font-weight="700">p⁺</text>
+            <circle cx="232" cy="74" r="10" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1.2"/>
+            <text x="232" y="78" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">n⁰</text>
+            <circle cx="234" cy="88" r="10" fill="rgba(160,160,180,.6)" stroke="#a0a0b8" stroke-width="1.2"/>
+            <text x="234" y="92" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="white" font-weight="700">n⁰</text>
+            <circle cx="228" cy="80" r="30" fill="none" stroke="rgba(224,96,96,.25)" stroke-width="1" stroke-dasharray="4 3"/>
+            <circle cx="258" cy="80" r="6" fill="rgba(160,96,248,.7)" stroke="#a060f8" stroke-width="1"/>
+            <text x="228" y="124" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,96,96,.5)">Z=1 N=2 A=3</text>
+            <text x="228" y="136" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,96,96,.4)">☢️ Radioaktiv</text>
+
+            <!-- C-14 datering -->
+            <rect x="14" y="154" width="252" height="96" rx="10" fill="rgba(96,208,240,.03)" stroke="rgba(96,208,240,.2)" stroke-width="1"/>
+            <text x="140" y="170" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.55)" letter-spacing=".06em">KARBON-14 DATERING</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.55)">
+              <text x="24" y="186">Halvtid: 5730 år</text>
+              <text x="24" y="200">0 år:    100% C-14</text>
+              <text x="24" y="214">5730 år:  50% C-14</text>
+              <text x="24" y="228">11 460 år: 25% C-14</text>
+              <text x="24" y="242">~50 000 år: ~0.1% (grense)</text>
+            </g>
+            <!-- Halvtids-kurve hint -->
+            <path d="M152,188 Q175,192 195,202 Q215,212 230,226 Q240,236 245,242"
+              fill="none" stroke="rgba(96,208,240,.4)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Ioner og kjemisk binding -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 08</div>
+          <div class="k-kat" style="background:rgba(96,208,64,.1);color:#60d040;border:1px solid rgba(96,208,64,.2)">⚡ Ioner</div>
+          <h3 class="k-tittel">Ioner og kjemisk binding</h3>
+          <p class="k-ingress">Når atomer gir bort eller tar imot elektroner, dannes ioner med elektrisk ladning. Dette er grunnlaget for ioniske bindinger og salter.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Kation (positiv ion):</strong> Atom som har avgitt elektroner. Na → Na⁺ (avgir 1 e⁻). Metaller danner vanligvis kationer. Tiltrekkes av negativt ladde ioner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">➖</span><div><strong>Anion (negativ ion):</strong> Atom som har tatt imot elektroner. Cl + e⁻ → Cl⁻. Ikke-metaller danner vanligvis anioner. Tiltrekkes av positivt ladde ioner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧂</span><div><strong>Ionisk binding:</strong> Na⁺ + Cl⁻ → NaCl. Elektrostatisk tiltrekning mellom motsatt ladde ioner. Gir salter med høye smeltepunkter og elektrisk ledning i smeltet form.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Kovalent binding:</strong> Atomer deler elektroner (felles elektronpar) i stedet for å overføre. H₂, O₂, H₂O, CO₂. Gir molekyler. Kan være enkelt-, dobbelt- eller trippelbinding.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,64,.6)" letter-spacing=".08em">IONISK VS KOVALENT BINDING</text>
+            <!-- Ionisk: Na + Cl -->
+            <text x="70" y="36" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.6)" font-weight="600">IONISK BINDING</text>
+            <!-- Na -->
+            <circle cx="46" cy="85" r="22" fill="rgba(240,96,96,.08)" stroke="rgba(240,96,96,.3)" stroke-width="1.2"/>
+            <circle cx="46" cy="85" r="10" fill="rgba(240,96,96,.6)" stroke="#f06060" stroke-width="1"/>
+            <text x="46" y="89" text-anchor="middle" font-family="Fraunces" font-size="10" fill="white" font-weight="700">Na</text>
+            <!-- Valenselektron -->
+            <circle cx="68" cy="85" r="5" fill="rgba(96,208,64,.9)" stroke="#60d040" stroke-width="1"/>
+            <text x="46" y="118" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.5)">Na (2,8,1)</text>
+            <!-- Pil: elektron overføres -->
+            <path d="M73,85 L93,85" fill="none" stroke="rgba(96,208,64,.6)" stroke-width="1.5" marker-end="url(#ion-arr)"/>
+            <defs><marker id="ion-arr" markerWidth="5" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,64,.7)"/></marker></defs>
+            <!-- Cl -->
+            <circle cx="116" cy="85" r="22" fill="rgba(96,208,240,.06)" stroke="rgba(96,208,240,.25)" stroke-width="1.2"/>
+            <circle cx="116" cy="85" r="10" fill="rgba(96,208,240,.5)" stroke="#60d0f0" stroke-width="1"/>
+            <text x="116" y="89" text-anchor="middle" font-family="Fraunces" font-size="10" fill="white" font-weight="700">Cl</text>
+            <text x="116" y="118" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,240,.5)">Cl (2,8,7)</text>
+            <!-- Resultat: Na+ og Cl- -->
+            <text x="81" y="144" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,160,48,.4)">→</text>
+            <circle cx="46" cy="168" r="16" fill="rgba(240,96,96,.15)" stroke="rgba(240,96,96,.4)" stroke-width="1.5"/>
+            <text x="46" y="172" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#f09090" font-weight="700">Na⁺</text>
+            <text x="81" y="168" font-family="DM Sans" font-size="13" fill="rgba(240,160,48,.4)">+</text>
+            <circle cx="116" cy="168" r="18" fill="rgba(96,208,240,.12)" stroke="rgba(96,208,240,.4)" stroke-width="1.5"/>
+            <text x="116" y="172" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#90d0f0" font-weight="700">Cl⁻</text>
+            <text x="81" y="196" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.5)">NaCl (bordsalt)</text>
+
+            <!-- Kovalent: H2O -->
+            <text x="210" y="36" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.6)" font-weight="600">KOVALENT BINDING</text>
+            <!-- O -->
+            <circle cx="210" cy="95" r="18" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.3)" stroke-width="1.2"/>
+            <text x="210" y="99" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#f09090" font-weight="700">O</text>
+            <!-- H venstre -->
+            <circle cx="176" cy="120" r="12" fill="rgba(160,96,248,.1)" stroke="rgba(160,96,248,.3)" stroke-width="1.2"/>
+            <text x="176" y="124" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#c090f8" font-weight="700">H</text>
+            <!-- H høyre -->
+            <circle cx="244" cy="120" r="12" fill="rgba(160,96,248,.1)" stroke="rgba(160,96,248,.3)" stroke-width="1.2"/>
+            <text x="244" y="124" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#c090f8" font-weight="700">H</text>
+            <!-- Bindinger (delte e-par) -->
+            <line x1="196" y1="110" x2="185" y2="116" stroke="rgba(96,208,64,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="224" y1="110" x2="235" y2="116" stroke="rgba(96,208,64,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Delte elektroner -->
+            <circle cx="191" cy="113" r="3.5" fill="rgba(96,208,64,.7)"/>
+            <circle cx="229" cy="113" r="3.5" fill="rgba(96,208,64,.7)"/>
+            <text x="210" y="155" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.5)">H₂O – delte elektronpar</text>
+            <!-- Bindingsvinkel -->
+            <path d="M185,116 Q210,130 235,116" fill="none" stroke="rgba(96,208,64,.2)" stroke-width="1" stroke-dasharray="3 2"/>
+            <text x="210" y="145" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,64,.4)">104.5°</text>
+            <!-- CO2 -->
+            <text x="210" y="192" text-anchor="middle" font-family="Fraunces" font-size="14" fill="rgba(160,96,248,.45)">O=C=O</text>
+            <text x="210" y="208" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.35)">CO₂ – dobbeltbindinger</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Radioaktivitet -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 08</div>
+          <div class="k-kat" style="background:rgba(240,200,64,.1);color:#f0c840;border:1px solid rgba(240,200,64,.2)">☢️ Radioaktivitet</div>
+          <h3 class="k-tittel">Radioaktivitet og kjerneenergi</h3>
+          <p class="k-ingress">Ustabile atomkjerner henfalles spontant og avgir energi som stråling. Dette er farlig, men også medisinsk og energimessig nyttig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">α</span><div><strong>Alfastråling (α):</strong> Avgir heliumkjerne (2p + 2n). Lav rekkevidde, stoppes av papir. Farlig ved innånding/svelging. Ra-226 → Rn-222 + α.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">β</span><div><strong>Betastråling (β):</strong> Avgir elektron (β⁻) eller positron (β⁺). Stoppes av aluminium. Brukes i medisin (PET-scan). C-14 henfaller via β⁻.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">γ</span><div><strong>Gammastråling (γ):</strong> Høyenergi elektromagnetisk stråling. Krever bly eller betong for skjerming. Brukes til sterilisering av medisinsk utstyr og strålebehandling.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Kjernespalting (fisjon):</strong> U-235 + nøytron → Ba + Kr + 3 nøytroner + energi. Kjedereaksjon. Kjernekraft: kontrollert. Atombombe: ukontrollert. 1 kg U-235 = energi fra 3000 tonn kull.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,200,64,.6)" letter-spacing=".08em">STRÅLETYPER OG REKKEVIDDE</text>
+            <!-- Kilde -->
+            <circle cx="30" cy="90" r="16" fill="rgba(240,200,64,.2)" stroke="#f0c840" stroke-width="2"/>
+            <text x="30" y="94" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#f0c840" font-weight="700">☢️</text>
+            <text x="30" y="114" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,200,64,.5)">kilde</text>
+            <!-- Alpha-stråle -->
+            <text x="14" y="148" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,48,.6)" font-weight="600">α</text>
+            <path d="M46,140 L88,140" stroke="#f0a030" stroke-width="3" stroke-linecap="round"/>
+            <!-- Papir-barriere -->
+            <rect x="90" y="130" width="5" height="20" fill="rgba(255,255,255,.3)" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+            <text x="92" y="127" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)">papir</text>
+            <!-- Alpha stoppes av papir -->
+            <path d="M95,140 L95,140" stroke="#f0a030" stroke-width="1"/>
+            <text x="110" y="144" font-family="DM Sans" font-size="8" fill="rgba(240,160,48,.4)">stoppes av papir</text>
+            <!-- Beta-stråle -->
+            <text x="14" y="178" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,240,.6)" font-weight="600">β</text>
+            <path d="M46,170 L130,170" stroke="#60d0f0" stroke-width="2" stroke-linecap="round"/>
+            <!-- Aluminium-barriere -->
+            <rect x="132" y="160" width="6" height="20" fill="rgba(200,200,220,.4)" stroke="rgba(200,200,220,.5)" stroke-width="1"/>
+            <text x="135" y="157" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,200,220,.4)">Al</text>
+            <text x="150" y="174" font-family="DM Sans" font-size="8" fill="rgba(96,208,240,.4)">stoppes av Al</text>
+            <!-- Gamma-stråle -->
+            <text x="14" y="208" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.6)" font-weight="600">γ</text>
+            <path d="M46,200 L240,200" stroke="#a060f8" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="6 2"/>
+            <!-- Bly-barriere (tykk) -->
+            <rect x="200" y="190" width="12" height="20" fill="rgba(100,100,120,.5)" stroke="rgba(120,120,140,.6)" stroke-width="1"/>
+            <text x="206" y="187" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(120,120,140,.5)">Pb</text>
+            <path d="M212,200 L256,200" stroke="#a060f8" stroke-width="1" stroke-dasharray="3 2" opacity=".4"/>
+            <text x="232" y="215" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(160,96,248,.4)">trenger gjennom</text>
+            <!-- Halvtid-formel -->
+            <rect x="14" y="226" width="252" height="28" rx="8" fill="rgba(240,200,64,.04)" stroke="rgba(240,200,64,.2)" stroke-width="1"/>
+            <text x="140" y="244" text-anchor="middle" font-family="Fraunces" font-size="13" fill="rgba(240,200,64,.7)">N(t) = N₀ · (½)^(t/t½)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Atom og periodesystem -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 08</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">📊 Periodesystem</div>
+          <h3 class="k-tittel">Atom og periodesystemet</h3>
+          <p class="k-ingress">Periodesystemet er organisert etter atomnummer og elektronkonfigurasjon – mønstrene i tabellen avspeiler direkte hvordan elektroner er arrangert.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">↔️</span><div><strong>Perioder (rader):</strong> Hvert nytt skall starter en ny periode. Periode 1: skall 1 (H, He). Periode 2: skall 2 (Li–Ne). Periode 3: skall 3 (Na–Ar).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">↕️</span><div><strong>Grupper (kolonner):</strong> Atomer i samme gruppe har samme antall valenselektroner og tilsvarende kjemiske egenskaper. Gruppe 1 (alkalimetaller): 1 valenselektron, svært reaktive.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌟</span><div><strong>Edelgasser (gruppe 18):</strong> He, Ne, Ar, Kr, Xe, Rn. Fullt ytterste skall → nesten null reaktivitet. Brukes i lysstoffrør, lasere og sveising.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Trender:</strong> Atomradius øker nedover (flere skall) og minker mot høyre (mer kjernekraft trekker elektroner inn). Elektronegativitet øker mot høyre og oppover.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060410"/>
+            <text x="140" y="15" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">PERIODESYSTEM (FORENKLET)</text>
+            <!-- Mini periodesystem -->
+            <g font-family="DM Sans" font-size="8.5" font-weight="600" text-anchor="middle">
+              <!-- Periode 1 -->
+              <rect x="12" y="22" width="22" height="18" rx="3" fill="rgba(160,96,248,.15)" stroke="rgba(160,96,248,.3)" stroke-width="1"/>
+              <text x="23" y="34" fill="#a060f8">H</text>
+              <rect x="246" y="22" width="22" height="18" rx="3" fill="rgba(96,208,240,.15)" stroke="rgba(96,208,240,.3)" stroke-width="1"/>
+              <text x="257" y="34" fill="#60d0f0">He</text>
+              <!-- Periode 2 -->
+              <rect x="12" y="44" width="22" height="18" rx="3" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.25)" stroke-width="1"/>
+              <text x="23" y="56" fill="#f0a030">Li</text>
+              <rect x="36" y="44" width="22" height="18" rx="3" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.25)" stroke-width="1"/>
+              <text x="47" y="56" fill="#f0a030">Be</text>
+              <!-- p-blokk -->
+              <rect x="174" y="44" width="22" height="18" rx="3" fill="rgba(96,208,64,.1)" stroke="rgba(96,208,64,.25)" stroke-width="1"/>
+              <text x="185" y="56" fill="#60d040">B</text>
+              <rect x="198" y="44" width="22" height="18" rx="3" fill="rgba(96,208,64,.15)" stroke="rgba(96,208,64,.35)" stroke-width="1"/>
+              <text x="209" y="56" fill="#80d060">C</text>
+              <rect x="222" y="44" width="22" height="18" rx="3" fill="rgba(96,208,64,.1)" stroke="rgba(96,208,64,.25)" stroke-width="1"/>
+              <text x="233" y="56" fill="#60d040">N</text>
+              <rect x="246" y="44" width="22" height="18" rx="3" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.25)" stroke-width="1"/>
+              <text x="257" y="56" fill="#60a0f0">O</text>
+              <!-- Periode 3 -->
+              <rect x="12" y="66" width="22" height="18" rx="3" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.25)" stroke-width="1"/>
+              <text x="23" y="78" fill="#f0a030">Na</text>
+              <rect x="36" y="66" width="22" height="18" rx="3" fill="rgba(240,160,48,.12)" stroke="rgba(240,160,48,.25)" stroke-width="1"/>
+              <text x="47" y="78" fill="#f0a030">Mg</text>
+              <rect x="174" y="66" width="22" height="18" rx="3" fill="rgba(96,208,64,.1)" stroke="rgba(96,208,64,.25)" stroke-width="1"/>
+              <text x="185" y="78" fill="#60d040">Al</text>
+              <rect x="198" y="66" width="22" height="18" rx="3" fill="rgba(96,208,64,.1)" stroke="rgba(96,208,64,.25)" stroke-width="1"/>
+              <text x="209" y="78" fill="#60d040">Si</text>
+              <!-- Edelgasser -->
+              <g fill="rgba(96,208,240,.25)" stroke="rgba(96,208,240,.5)" stroke-width="1">
+                <rect x="246" y="44" width="22" height="18" rx="3"/><text x="257" y="56" fill="#60d0f0">Ne</text>
+                <rect x="246" y="66" width="22" height="18" rx="3"/><text x="257" y="78" fill="#60d0f0">Ar</text>
+              </g>
+              <!-- Fikse Ne/Ar tekst -->
+              <text x="257" y="56" fill="#60d0f0">Ne</text>
+              <text x="257" y="78" fill="#60d0f0">Ar</text>
+            </g>
+            <!-- Trender-piler -->
+            <!-- Atomradius øker nedover -->
+            <path d="M6,30 L6,86" stroke="rgba(240,160,48,.4)" stroke-width="2" marker-end="url(#pt-arr1)"/>
+            <defs>
+              <marker id="pt-arr1" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,160,48,.5)"/>
+              </marker>
+              <marker id="pt-arr2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto">
+                <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,240,.5)"/>
+              </marker>
+            </defs>
+            <text x="4" y="118" font-family="DM Sans" font-size="7" fill="rgba(240,160,48,.4)" transform="rotate(-90,4,118)">Atomradius ↑</text>
+            <!-- Elektronegativitet øker mot høyre og opp -->
+            <path d="M14,100 L268,100" stroke="rgba(96,208,240,.4)" stroke-width="2" marker-end="url(#pt-arr2)"/>
+            <text x="140" y="114" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,240,.4)">Elektronegativitet →</text>
+            <!-- Legende -->
+            <g font-family="DM Sans" font-size="8">
+              <rect x="12" y="126" width="12" height="10" rx="2" fill="rgba(240,160,48,.3)"/>
+              <text x="28" y="134" fill="rgba(240,160,48,.6)">Alkalimetaller / jordalkalimetaller</text>
+              <rect x="12" y="140" width="12" height="10" rx="2" fill="rgba(96,208,64,.2)"/>
+              <text x="28" y="148" fill="rgba(96,208,64,.6)">Andre ikke-metaller</text>
+              <rect x="12" y="154" width="12" height="10" rx="2" fill="rgba(96,208,240,.3)"/>
+              <text x="28" y="162" fill="rgba(96,208,240,.6)">Edelgasser (gruppe 18)</text>
+            </g>
+            <!-- Fakta -->
+            <rect x="12" y="174" width="256" height="78" rx="10" fill="rgba(160,96,248,.03)" stroke="rgba(160,96,248,.2)" stroke-width="1"/>
+            <text x="140" y="190" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.55)" letter-spacing=".04em">PERIODESYSTEM-TRENDER</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(236,232,248,.5)">
+              <text x="22" y="206">Periode = antall elektronskall</text>
+              <text x="22" y="220">Gruppe = antall valenselektroner</text>
+              <text x="22" y="234">Edelgasser: 0 (He) eller 8 valenselektroner</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S8: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">08 / 08</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Atomets oppbygning – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:760px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(240,96,96,.04);border:1px solid rgba(240,96,96,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#f06060;display:block;margin-bottom:4px">🔴 Atomkjernen</strong>Protoner (p⁺, +1) + Nøytroner (n⁰) · Atomnummer Z = antall protoner = grunnstoff · Massetall A = Z+N · Kjernekraft holder kjernen</div>
+            <div style="padding:14px;background:rgba(160,96,248,.04);border:1px solid rgba(160,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#a060f8;display:block;margin-bottom:4px">🟣 Elektroner</strong>e⁻, ladning −1 · Organisert i skall: K(2), L(8), M(8) · Valenselektroner = ytterste skall · Styrer kjemisk reaktivitet</div>
+            <div style="padding:14px;background:rgba(96,208,240,.04);border:1px solid rgba(96,208,240,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#60d0f0;display:block;margin-bottom:4px">⚖️ Isotoper</strong>Samme Z, ulik N · C-12 og C-14 · Halvtid · C-14 datering · Medisinsk bruk (Tc-99m, I-131)</div>
+            <div style="padding:14px;background:rgba(96,208,64,.04);border:1px solid rgba(96,208,64,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#60d040;display:block;margin-bottom:4px">⚡ Ioner og binding</strong>Kation (avgir e⁻) · Anion (tar imot e⁻) · Ionisk binding: elektrostatisk · Kovalent: deler e-par · NaCl vs H₂O</div>
+            <div style="padding:14px;background:rgba(240,200,64,.04);border:1px solid rgba(240,200,64,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#f0c840;display:block;margin-bottom:4px">☢️ Radioaktivitet</strong>α (papir) · β (Al) · γ (bly) · Halvtid · C-14 datering · Fisjon: U-235 · Kjedereaksjon</div>
+            <div style="padding:14px;background:rgba(160,96,248,.04);border:1px solid rgba(160,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,248,.65);line-height:1.6"><strong style="color:#a060f8;display:block;margin-bottom:4px">📊 Periodesystem</strong>Periode = skall · Gruppe = valenselektroner · Trender: radius/elektroneg. · Edelgasser: stabilt ytterste skall</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- INTERAKTIV ATOM-KONFIGURATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Interaktiv atom-konfigurator</div><div class="sep-r"></div></div>
+  <div class="atom-konfig">
+    <div class="ak-tittel">Velg et grunnstoff og se atomets elektronstruktur</div>
+    <div class="ak-kontroll">
+      <label>GRUNNSTOFF</label>
+      <select id="ak-select" onchange="oppdaterAtom()">
+        <option value="1">H – Hydrogen (1)</option>
+        <option value="2">He – Helium (2)</option>
+        <option value="3">Li – Litium (3)</option>
+        <option value="4">Be – Beryllium (4)</option>
+        <option value="5">B – Bor (5)</option>
+        <option value="6" selected>C – Karbon (6)</option>
+        <option value="7">N – Nitrogen (7)</option>
+        <option value="8">O – Oksygen (8)</option>
+        <option value="9">F – Fluor (9)</option>
+        <option value="10">Ne – Neon (10)</option>
+        <option value="11">Na – Natrium (11)</option>
+        <option value="12">Mg – Magnesium (12)</option>
+        <option value="13">Al – Aluminium (13)</option>
+        <option value="14">Si – Silisium (14)</option>
+        <option value="15">P – Fosfor (15)</option>
+        <option value="16">S – Svovel (16)</option>
+        <option value="17">Cl – Klor (17)</option>
+        <option value="18">Ar – Argon (18)</option>
+        <option value="19">K – Kalium (19)</option>
+        <option value="20">Ca – Kalsium (20)</option>
+      </select>
+    </div>
+    <div class="ak-canvas-wrap">
+      <canvas id="ak-canvas" width="280" height="280" style="border-radius:12px;background:rgba(0,0,0,.3)"></canvas>
+      <div class="ak-info">
+        <div id="ak-navn" style="font-family:var(--font-d);font-size:1.4rem;font-weight:700;color:var(--accent);margin-bottom:4px"></div>
+        <div id="ak-symbol" style="font-family:var(--font-d);font-size:2.5rem;font-weight:700;color:rgba(236,232,248,.6)"></div>
+        <div class="ak-info-tabell">
+          <div class="ak-boks"><div class="ak-boks-val" id="ak-z"></div><div class="ak-boks-lab">Atomnummer (Z)</div></div>
+          <div class="ak-boks"><div class="ak-boks-val" id="ak-a"></div><div class="ak-boks-lab">Massetall (A)</div></div>
+          <div class="ak-boks"><div class="ak-boks-val" id="ak-n"></div><div class="ak-boks-lab">Nøytroner</div></div>
+          <div class="ak-boks"><div class="ak-boks-val" id="ak-val"></div><div class="ak-boks-lab">Valenselektroner</div></div>
+        </div>
+        <div id="ak-konfig" style="margin-top:12px;padding:10px 14px;background:rgba(160,96,248,.06);border:1px solid rgba(160,96,248,.2);border-radius:10px;font-family:var(--font-d);font-size:1rem;color:var(--accent);text-align:center"></div>
+        <div id="ak-type" style="margin-top:8px;font-size:.78rem;color:var(--dim);text-align:center"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N=document.querySelectorAll('.k-slide').length;let cur=0;
+const slides=document.getElementById('k-slides'),dotsEl=document.getElementById('k-dots');
+for(let i=0;i<N;i++){const d=document.createElement('button');d.className='k-dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);}
+function goTo(i){cur=i;slides.style.transform=`translateX(-${i*100}%)`;document.querySelectorAll('.k-dot').forEach((d,j)=>d.classList.toggle('on',j===i));document.getElementById('k-prev').disabled=i===0;document.getElementById('k-next').disabled=i===N-1;}
+function kGo(d){goTo(Math.max(0,Math.min(N-1,cur+d)));}
+let tx=0;document.getElementById('karusell').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+document.getElementById('karusell').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)kGo(dx<0?1:-1);},{passive:true});
+goTo(0);
+
+// ═══ ATOM-KONFIGURATOR ═══
+const ATOMER = {
+  1:  {navn:'Hydrogen',    symbol:'H',  A:1,   conf:[1],         type:'Ikke-metall'},
+  2:  {navn:'Helium',      symbol:'He', A:4,   conf:[2],         type:'Edelgass'},
+  3:  {navn:'Litium',      symbol:'Li', A:7,   conf:[2,1],       type:'Alkalimetall'},
+  4:  {navn:'Beryllium',   symbol:'Be', A:9,   conf:[2,2],       type:'Jordalkalimetall'},
+  5:  {navn:'Bor',         symbol:'B',  A:11,  conf:[2,3],       type:'Halvmetall'},
+  6:  {navn:'Karbon',      symbol:'C',  A:12,  conf:[2,4],       type:'Ikke-metall'},
+  7:  {navn:'Nitrogen',    symbol:'N',  A:14,  conf:[2,5],       type:'Ikke-metall'},
+  8:  {navn:'Oksygen',     symbol:'O',  A:16,  conf:[2,6],       type:'Ikke-metall'},
+  9:  {navn:'Fluor',       symbol:'F',  A:19,  conf:[2,7],       type:'Halogen'},
+  10: {navn:'Neon',        symbol:'Ne', A:20,  conf:[2,8],       type:'Edelgass'},
+  11: {navn:'Natrium',     symbol:'Na', A:23,  conf:[2,8,1],     type:'Alkalimetall'},
+  12: {navn:'Magnesium',   symbol:'Mg', A:24,  conf:[2,8,2],     type:'Jordalkalimetall'},
+  13: {navn:'Aluminium',   symbol:'Al', A:27,  conf:[2,8,3],     type:'Metall'},
+  14: {navn:'Silisium',    symbol:'Si', A:28,  conf:[2,8,4],     type:'Halvmetall'},
+  15: {navn:'Fosfor',      symbol:'P',  A:31,  conf:[2,8,5],     type:'Ikke-metall'},
+  16: {navn:'Svovel',      symbol:'S',  A:32,  conf:[2,8,6],     type:'Ikke-metall'},
+  17: {navn:'Klor',        symbol:'Cl', A:35,  conf:[2,8,7],     type:'Halogen'},
+  18: {navn:'Argon',       symbol:'Ar', A:40,  conf:[2,8,8],     type:'Edelgass'},
+  19: {navn:'Kalium',      symbol:'K',  A:39,  conf:[2,8,8,1],   type:'Alkalimetall'},
+  20: {navn:'Kalsium',     symbol:'Ca', A:40,  conf:[2,8,8,2],   type:'Jordalkalimetall'},
+};
+
+const SKALLFARGER = ['rgba(160,96,248,.85)','rgba(96,208,240,.85)','rgba(96,208,64,.85)','rgba(240,160,48,.85)'];
+const SKALLRADIER = [45, 75, 105, 130];
+
+function tegnAtom(Z, conf) {
+  const canvas = document.getElementById('ak-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 280, H = 280, CX = 140, CY = 140;
+  ctx.clearRect(0, 0, W, H);
+
+  // Bakgrunn
+  ctx.fillStyle = '#06040e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Glow
+  const glow = ctx.createRadialGradient(CX, CY, 0, CX, CY, 120);
+  glow.addColorStop(0, 'rgba(160,96,248,.08)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+  // Elektronbaner
+  conf.forEach((n, i) => {
+    ctx.beginPath();
+    ctx.ellipse(CX, CY, SKALLRADIER[i], SKALLRADIER[i], 0, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(255,255,255,0.06)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Kjerne
+  const kjGrad = ctx.createRadialGradient(CX-5, CY-5, 0, CX, CY, 20);
+  kjGrad.addColorStop(0, '#f08080');
+  kjGrad.addColorStop(1, '#901818');
+  ctx.beginPath(); ctx.arc(CX, CY, 20, 0, Math.PI*2);
+  ctx.fillStyle = kjGrad; ctx.fill();
+  ctx.strokeStyle = 'rgba(240,96,96,.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.font = 'bold 12px DM Sans'; ctx.textAlign = 'center';
+  ctx.fillText(Z + 'p', CX, CY + 4);
+
+  // Elektroner i hvert skall
+  conf.forEach((antall, skall) => {
+    const radius = SKALLRADIER[skall];
+    const farge = SKALLFARGER[skall];
+    for (let j = 0; j < antall; j++) {
+      const vinkel = (j / Math.max(antall, 1)) * Math.PI * 2 - Math.PI/2;
+      const x = CX + radius * Math.cos(vinkel);
+      const y = CY + radius * Math.sin(vinkel);
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2);
+      ctx.fillStyle = farge; ctx.fill();
+      ctx.strokeStyle = farge.replace('.85', '1'); ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = 'white';
+      ctx.font = '7px DM Sans'; ctx.textAlign = 'center';
+      ctx.fillText('e⁻', x, y + 2.5);
+    }
+  });
+}
+
+function oppdaterAtom() {
+  const Z = parseInt(document.getElementById('ak-select').value);
+  const at = ATOMER[Z];
+  if (!at) return;
+  tegnAtom(Z, at.conf);
+  document.getElementById('ak-navn').textContent = at.navn;
+  document.getElementById('ak-symbol').textContent = at.symbol;
+  document.getElementById('ak-z').textContent = Z;
+  document.getElementById('ak-a').textContent = at.A;
+  document.getElementById('ak-n').textContent = at.A - Z;
+  const val = at.conf[at.conf.length - 1];
+  document.getElementById('ak-val').textContent = val;
+  document.getElementById('ak-konfig').textContent = 'Elektronkonfigurasjon: ' + at.conf.join(', ');
+  const typeInfo = {
+    'Edelgass': '🟢 Stabilt – 8 valenselektroner (He: 2)',
+    'Alkalimetall': '🔴 Svært reaktivt – 1 valenselektron',
+    'Halogen': '🟠 Reaktivt – 7 valenselektroner',
+    'Metall': '⚪ Metall – avgir elektroner lett',
+    'Halvmetall': '🟡 Halvleder – midt mellom',
+    'Jordalkalimetall': '🟠 Reaktivt – 2 valenselektroner',
+    'Ikke-metall': '🔵 Ikke-metall – tar gjerne imot elektroner',
+  };
+  document.getElementById('ak-type').textContent = (typeInfo[at.type] || at.type);
+}
+
+oppdaterAtom();
+</script>
+</body>
+</html>
