@@ -723,8 +723,209 @@ function tegnLinse(modus) {
 function visPrisme(m) { tegnPrisme(m); }
 function visLinse(m) { tegnLinse(m); }
 
-tegnPrisme('hvit');
-tegnLinse('konveks');
+document.addEventListener('DOMContentLoaded', function() {
+  tegnPrisme('hvit');
+  tegnLinse('konveks');
+  oppdaterSnells();
+});
+
+// ═══ SNELLS LOV SIMULATOR ═══
+function oppdaterSnells() {
+  const vinkel = parseFloat(document.getElementById('sv-vinkel').value);
+  const n1 = parseFloat(document.getElementById('sv-m1').value);
+  const n2 = parseFloat(document.getElementById('sv-m2').value);
+  document.getElementById('sv-vinkel-val').textContent = vinkel;
+
+  const sinT1 = Math.sin(vinkel * Math.PI / 180);
+  const sinT2val = (n1 * sinT1) / n2;
+  const totalrefl = sinT2val > 1;
+  const t2 = totalrefl ? null : Math.asin(sinT2val) * 180 / Math.PI;
+
+  // Kritisk vinkel (fra tettere til lettere)
+  const kritisk = n1 > n2 ? (Math.asin(n2/n1) * 180/Math.PI).toFixed(1) + '°' : 'Bare fra tettere → lettere medium';
+  document.getElementById('sv-kritisk').textContent = kritisk;
+
+  // Resultatvisning
+  const resFormel = document.getElementById('sv-res-formel');
+  const resTall = document.getElementById('sv-res-tall');
+  const resStat = document.getElementById('sv-res-status');
+
+  if (totalrefl) {
+    resFormel.textContent = '⚠️ Totalrefleksjon!';
+    resFormel.style.color = '#f06060';
+    resTall.textContent = `n₁=${n1}, θ₁=${vinkel}° → sinθ₂ = ${(sinT2val).toFixed(3)} > 1`;
+    resStat.innerHTML = '<div style="font-size:.82rem;line-height:1.65;color:rgba(240,96,96,.75)">🔴 Totalrefleksjon – lyset kan ikke passere. Grunnlaget for fiberoptikk!</div>';
+  } else {
+    resFormel.style.color = 'var(--accent)';
+    resFormel.textContent = `${n1} · sin(${vinkel}°) = ${n2} · sin(θ₂)`;
+    resTall.textContent = `θ₂ = ${t2.toFixed(1)}° 
+${n1} × ${sinT1.toFixed(3)} = ${n2} × ${(sinT2val).toFixed(3)}`;
+    const retning = n2 > n1 ? 'mot normalen (tettere medium)' : n2 < n1 ? 'bort fra normalen (lettere medium)' : 'ingen brytning (like medier)';
+    resStat.innerHTML = `<div style="font-size:.82rem;line-height:1.65;color:rgba(240,238,248,.65)">Lyset bøyes <strong>${retning}</strong>.<br>Brytningsvinkel: <strong style="color:var(--accent)">${t2.toFixed(1)}°</strong></div>`;
+  }
+
+  tegnSnells(vinkel, n1, n2, t2, totalrefl);
+}
+
+function tegnSnells(vinkel, n1, n2, t2, totalrefl) {
+  const canvas = document.getElementById('sv-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const grense = H / 2;
+  const CX = W / 2;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#050810';
+  ctx.fillRect(0, 0, W, H);
+
+  // Medium-bakgrunner
+  ctx.fillStyle = n2 > n1 ? 'rgba(96,200,248,.05)' : 'rgba(96,200,248,.03)';
+  ctx.fillRect(0, grense, W, H - grense);
+
+  // Medium-labels
+  ctx.font = '11px DM Sans';
+  ctx.fillStyle = 'rgba(240,238,248,.35)';
+  ctx.textAlign = 'left';
+  ctx.fillText(`n₁ = ${n1}`, 8, 20);
+  ctx.fillStyle = 'rgba(96,200,248,.5)';
+  ctx.fillText(`n₂ = ${n2}`, 8, grense + 20);
+
+  // Grenseflate
+  ctx.strokeStyle = 'rgba(96,200,248,.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, grense); ctx.lineTo(W, grense); ctx.stroke();
+
+  // Normal
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CX, 20); ctx.lineTo(CX, H - 10); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const vRad = vinkel * Math.PI / 180;
+  const len1 = grense - 20;
+
+  // Innfallsstråle
+  const sx = CX - len1 * Math.sin(vRad);
+  const sy = grense - len1 * Math.cos(vRad);
+  ctx.strokeStyle = 'rgba(240,208,64,.85)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(CX, grense); ctx.stroke();
+  // Pil
+  tegnPil(ctx, sx, sy, CX, grense, 'rgba(240,208,64,.85)');
+
+  // Vinkelindikator θ₁
+  ctx.strokeStyle = 'rgba(240,208,64,.4)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(CX, grense, 38, -Math.PI/2, -Math.PI/2 + vRad, false);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(240,208,64,.65)';
+  ctx.font = 'bold 12px DM Sans';
+  ctx.textAlign = 'center';
+  const lm1 = 50;
+  ctx.fillText('θ₁', CX - lm1 * Math.sin(vRad/2) - 8, grense - lm1 * Math.cos(vRad/2));
+
+  if (totalrefl) {
+    // Reflektert stråle
+    const rx = CX + len1 * Math.sin(vRad);
+    const ry = grense - len1 * Math.cos(vRad);
+    ctx.strokeStyle = 'rgba(240,96,96,.8)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(CX, grense); ctx.lineTo(rx, ry); ctx.stroke();
+    tegnPil(ctx, CX, grense, rx, ry, 'rgba(240,96,96,.8)');
+    ctx.fillStyle = 'rgba(240,96,96,.6)';
+    ctx.font = '11px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠️ Totalrefleksjon', W/2, H - 15);
+  } else {
+    const t2Rad = t2 * Math.PI / 180;
+    const len2 = H - grense - 20;
+    const ex = CX + len2 * Math.sin(t2Rad);
+    const ey = grense + len2 * Math.cos(t2Rad);
+    ctx.strokeStyle = 'rgba(96,200,248,.85)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(CX, grense); ctx.lineTo(ex, ey); ctx.stroke();
+    tegnPil(ctx, CX, grense, ex, ey, 'rgba(96,200,248,.85)');
+    // Vinkelindikator θ₂
+    ctx.strokeStyle = 'rgba(96,200,248,.4)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(CX, grense, 38, Math.PI/2, Math.PI/2 + t2Rad, true);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(96,200,248,.7)';
+    ctx.font = 'bold 12px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('θ₂', CX + 54 * Math.sin(t2Rad/2) + 8, grense + 50 * Math.cos(t2Rad/2));
+  }
+
+  // Skjæringspunkt
+  ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.beginPath(); ctx.arc(CX, grense, 4, 0, Math.PI*2); ctx.fill();
+}
+
+function tegnPil(ctx, x1, y1, x2, y2, farge) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const sz = 9;
+  ctx.fillStyle = farge;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - sz*Math.cos(angle-0.42), y2 - sz*Math.sin(angle-0.42));
+  ctx.lineTo(x2 - sz*Math.cos(angle+0.42), y2 - sz*Math.sin(angle+0.42));
+  ctx.closePath(); ctx.fill();
+}
+
+
+
 </script>
+  <!-- SNELLS LOV SIMULATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Snells lov – lysbrytningssimulator</div><div class="sep-r"></div></div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px">
+    <div style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:6px">Juster innfallsvinkel og velg medier – se Snells lov live</div>
+    <div style="font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px">n₁·sin(θ₁) = n₂·sin(θ₂) · Dra glidebryteren for å endre vinkel</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:16px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <label style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">INNFALLSVINKEL: <span id="sv-vinkel-val">40</span>°</label>
+        <input type="range" id="sv-vinkel" min="1" max="89" value="40" style="width:150px;accent-color:var(--accent)" oninput="oppdaterSnells()">
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <label style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">MEDIUM 1</label>
+        <select id="sv-m1" style="padding:7px 12px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-b);font-size:.84rem" onchange="oppdaterSnells()">
+          <option value="1.00">Luft/vakuum (n=1.00)</option>
+          <option value="1.33">Vann (n=1.33)</option>
+          <option value="1.50">Glass (n=1.50)</option>
+          <option value="2.42">Diamant (n=2.42)</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        <label style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">MEDIUM 2</label>
+        <select id="sv-m2" style="padding:7px 12px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-b);font-size:.84rem" onchange="oppdaterSnells()">
+          <option value="1.00">Luft/vakuum (n=1.00)</option>
+          <option value="1.33" selected>Vann (n=1.33)</option>
+          <option value="1.50">Glass (n=1.50)</option>
+          <option value="2.42">Diamant (n=2.42)</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;justify-content:center">
+      <canvas id="sv-canvas" width="340" height="280" style="border-radius:14px;background:rgba(0,0,0,.3)"></canvas>
+      <div style="flex:1;min-width:200px;max-width:280px">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px">
+          <div style="font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Beregning</div>
+          <div style="font-family:var(--font-d);font-size:1.1rem;color:var(--accent);margin-bottom:6px" id="sv-res-formel">n₁·sinθ₁ = n₂·sinθ₂</div>
+          <div style="font-size:.82rem;color:rgba(240,238,248,.7);line-height:1.7" id="sv-res-tall"></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px" id="sv-res-status">
+          <div style="font-size:.82rem;line-height:1.65;color:rgba(240,238,248,.6)">Lyset brytes mot normalen i et tettere medium.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+          <div style="font-size:.7rem;color:var(--dim);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">Kritisk vinkel</div>
+          <div style="font-size:.82rem;color:rgba(240,238,248,.6)" id="sv-kritisk">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 </body>
 </html>
