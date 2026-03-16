@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Elektrokjemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a10;--surface:#0a1020;--card:#0e1430;--border:rgba(250,204,21,.07);
+  --text:#fef9c3;--dim:#3a3010;
+  --accent:#facc15;--accent2:#60d0a0;--accent3:#60a8f0;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(250,204,21,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,160,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,16,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(254,249,195,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(250,204,21,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(254,249,195,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* CELLE-SIMULATOR */
+.celle-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.celle-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:6px}
+.celle-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:18px}
+.celle-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.celle-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.celle-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px}
+.celle-rad{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.celle-rad label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);width:90px;flex-shrink:0}
+.celle-rad select{flex:1;padding:8px 12px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text);font-family:var(--font-b);font-size:.88rem;cursor:pointer}
+.celle-rad select:focus{outline:none;border-color:var(--accent)}
+.celle-resultat{margin-top:12px;padding:14px 16px;border-radius:10px;
+  background:rgba(250,204,21,.05);border:1px solid rgba(250,204,21,.2)}
+.celle-res-v{font-family:var(--font-d);font-size:1.8rem;color:var(--accent);text-align:center;font-weight:700}
+.celle-res-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-top:4px}
+.celle-res-eq{margin-top:10px;font-size:.8rem;color:rgba(254,249,195,.7);line-height:1.7}
+.celle-res-eq code{background:rgba(250,204,21,.08);padding:2px 6px;border-radius:4px;color:var(--accent);font-family:var(--font-b)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+@keyframes e-flyt{0%{stroke-dashoffset:40}100%{stroke-dashoffset:0}}
+.e-anim{stroke-dasharray:8 5;animation:e-flyt 1s linear infinite}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.celle-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="kjemiske_reaksjoner.html" class="nav-lnk">Kjemiske reaksjoner</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Elektrokjemi</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Elektrokjemi</div>
+    <h1>Elektro­kjemi –<br><em>kjemi og elektrisitet</em></h1>
+    <p class="hero-sub">Redoksreaksjoner som produserer eller bruker elektrisk energi – batterier, brenselceller og elektrolyse</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Galvanisk celle -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(250,204,21,.1);color:#facc15;border:1px solid rgba(250,204,21,.2)">🔋 Galvanisk celle</div>
+          <h3 class="k-tittel">Galvanisk (voltaisk) celle</h3>
+          <p class="k-ingress">En galvanisk celle omdanner kjemisk energi til elektrisk energi via spontane redoksreaksjoner. Det er grunnprinsippet i alle batterier.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">➖</span><div><strong>Anode (negativ pol):</strong> Oksidasjon skjer her – metallet løser seg opp og avgir elektroner til den ytre kretsen. Eks: Zn → Zn²⁺ + 2e⁻. Massetapet er et tegn på oksidasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Katode (positiv pol):</strong> Reduksjon skjer her – ioner fra løsningen mottar elektroner. Eks: Cu²⁺ + 2e⁻ → Cu. Massen øker når kobber avsettes på elektroden.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧂</span><div><strong>Saltbru:</strong> Forbinder de to halvreaksjonskarene og lar ioner vandre for å opprettholde elektronøytralitet. Uten saltbru stopper strømmen fordi ladning bygger seg opp i løsningene.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Elektromotorisk kraft (EMK):</strong> Spenningen cellen produserer. E°celle = E°katode − E°anode. Positiv EMK → spontan reaksjon → galvanisk celle. Negativ EMK → ikke-spontan → krever elektrolyse.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a10"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(250,204,21,.6)" letter-spacing=".08em">DANIELL-CELLEN (Zn/Cu)</text>
+            <defs>
+              <marker id="el-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(250,204,21,.85)"/></marker>
+              <marker id="ion-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,160,240,.7)"/></marker>
+            </defs>
+            <!-- Beholder venstre (ZnSO4) -->
+            <rect x="14" y="80" width="90" height="120" rx="6" fill="rgba(250,204,21,.06)" stroke="rgba(250,204,21,.25)" stroke-width="1.5"/>
+            <text x="59" y="170" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.45)">ZnSO₄(aq)</text>
+            <!-- Zn-elektrode (anode) -->
+            <rect x="44" y="60" width="12" height="130" rx="3" fill="rgba(200,190,80,.6)" stroke="rgba(250,204,21,.7)" stroke-width="1.2"/>
+            <text x="50" y="54" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(250,204,21,.75)" font-weight="600">Zn</text>
+            <text x="50" y="208" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.5)">ANODE</text>
+            <text x="50" y="218" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(250,204,21,.4)">(−)</text>
+            <!-- Zn²⁺ ioner -->
+            <g fill="rgba(250,204,21,.55)" font-family="DM Sans" font-size="8">
+              <text x="22" y="120">Zn²⁺</text><text x="22" y="140">Zn²⁺</text><text x="68" y="130">Zn²⁺</text>
+            </g>
+            <!-- Beholder høyre (CuSO4) -->
+            <rect x="176" y="80" width="90" height="120" rx="6" fill="rgba(96,208,160,.06)" stroke="rgba(96,208,160,.25)" stroke-width="1.5"/>
+            <!-- Blå løsning (CuSO4) -->
+            <rect x="177" y="140" width="88" height="59" rx="0" fill="rgba(60,130,220,.1)" stroke="none"/>
+            <text x="221" y="170" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.45)">CuSO₄(aq)</text>
+            <!-- Cu-elektrode (katode) -->
+            <rect x="224" y="60" width="12" height="130" rx="3" fill="rgba(180,100,40,.7)" stroke="rgba(220,140,60,.7)" stroke-width="1.2"/>
+            <text x="230" y="54" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(220,140,60,.75)" font-weight="600">Cu</text>
+            <text x="230" y="208" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.5)">KATODE</text>
+            <text x="230" y="218" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.4)">(+)</text>
+            <!-- Cu²⁺ ioner -->
+            <g fill="rgba(96,160,240,.55)" font-family="DM Sans" font-size="8">
+              <text x="182" y="120">Cu²⁺</text><text x="182" y="140">Cu²⁺</text><text x="240" y="130">Cu²⁺</text>
+            </g>
+            <!-- Saltbru -->
+            <rect x="104" y="84" width="72" height="20" rx="8" fill="rgba(200,200,220,.15)" stroke="rgba(200,200,220,.4)" stroke-width="1.5"/>
+            <text x="140" y="97" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,200,220,.55)">Saltbru (KNO₃)</text>
+            <!-- Ytre krets (elektroner) -->
+            <path d="M50,60 Q50,34 140,28 Q230,22 230,60" fill="none" stroke="rgba(250,204,21,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Animert elektronstrøm -->
+            <path class="e-anim" d="M50,60 Q50,34 140,28 Q230,22 230,60"
+              fill="none" stroke="rgba(250,204,21,.75)" stroke-width="2" stroke-linecap="round" marker-end="url(#el-arr)"/>
+            <text x="140" y="22" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,204,21,.55)" font-weight="600">e⁻ → → →</text>
+            <!-- Voltmeter -->
+            <circle cx="140" cy="40" r="12" fill="rgba(250,204,21,.12)" stroke="rgba(250,204,21,.4)" stroke-width="1.5"/>
+            <text x="140" y="44" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,204,21,.7)" font-weight="600">V</text>
+            <!-- Halvreaksjoner -->
+            <rect x="14" y="234" width="252" height="22" rx="7" fill="rgba(250,204,21,.04)" stroke="rgba(250,204,21,.15)" stroke-width="1"/>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(254,249,195,.5)">
+              <text x="20" y="248">Anode: Zn → Zn²⁺ + 2e⁻</text>
+              <text x="160" y="248">Katode: Cu²⁺ + 2e⁻ → Cu</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Standardpotensial og reaktivitetsrekken -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.2)">📊 Potensial</div>
+          <h3 class="k-tittel">Standardpotensial og reaktivitetsrekken</h3>
+          <p class="k-ingress">Hvert redoks-par har et standard-elektrodepotensial (E°) målt mot standardhydrogenelektroden. Dette avgjør hvilken vei elektroner flyter og spenningen cellen gir.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Standardelektrodepotensial (E°):</strong> Målt ved 25°C, 1 mol/L og 1 atm mot SHE (H⁺/H₂ = 0.00 V). Positiv E°: ioner reduseres lett (edelmetall). Negativ E°: metall oksideres lett (reaktivt metall).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Cellens EMK:</strong> E°celle = E°katode − E°anode. Zn/Cu-celle: E° = +0.34 − (−0.76) = 1.10 V. En alkalisk AA-batteri: ~1.5 V. LiPo: 3.7 V. Brenselcelle (H₂/O₂): ~1.23 V.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⬆️</span><div><strong>Reaktivitetsrekken (metaller):</strong> K &gt; Na &gt; Ca &gt; Mg &gt; Al &gt; Zn &gt; Fe &gt; Pb &gt; H &gt; Cu &gt; Ag &gt; Au. Et metall høyere i rekken fortrenges et metall lenger ned. Fe + CuSO₄ → FeSO₄ + Cu.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Nernst-ligningen:</strong> E = E° − (RT/nF)·ln(Q). Spenningen avhenger av konsentrasjon. Ved likevekt: E = 0 og Q = K (likevektskonstant). Grunnlaget for pH-elektroden og andre potensialelektroder.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a10"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.6)" letter-spacing=".08em">STANDARDPOTENSIAL (E° vs SHE)</text>
+            <!-- Akse -->
+            <line x1="120" y1="24" x2="120" y2="246" stroke="rgba(254,249,195,.2)" stroke-width="1.5"/>
+            <text x="110" y="24" text-anchor="end" font-family="DM Sans" font-size="8" fill="rgba(254,249,195,.4)">E° / V</text>
+            <!-- Nulllinje -->
+            <line x1="80" y1="136" x2="270" y2="136" stroke="rgba(254,249,195,.1)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="76" y="139" text-anchor="end" font-family="DM Sans" font-size="8" fill="rgba(254,249,195,.35)">0.00</text>
+            <!-- Metaller -->
+            <g font-family="DM Sans" font-size="9">
+              <!-- K: -2.93 -->
+              <rect x="122" y="30" width="55" height="14" rx="3" fill="rgba(240,96,96,.2)"/>
+              <text x="135" y="41" fill="rgba(240,96,96,.8)" font-weight="600">K</text>
+              <text x="175" y="41" fill="rgba(240,96,96,.6)">−2.93</text>
+              <!-- Na: -2.71 -->
+              <rect x="122" y="48" width="55" height="14" rx="3" fill="rgba(240,130,60,.2)"/>
+              <text x="135" y="59" fill="rgba(240,130,60,.8)" font-weight="600">Na</text>
+              <text x="175" y="59" fill="rgba(240,130,60,.6)">−2.71</text>
+              <!-- Mg: -2.37 -->
+              <rect x="122" y="66" width="55" height="14" rx="3" fill="rgba(240,160,40,.2)"/>
+              <text x="135" y="77" fill="rgba(240,160,40,.7)" font-weight="600">Mg</text>
+              <text x="175" y="77" fill="rgba(240,160,40,.5)">−2.37</text>
+              <!-- Al: -1.66 -->
+              <rect x="122" y="84" width="55" height="14" rx="3" fill="rgba(240,200,40,.18)"/>
+              <text x="135" y="95" fill="rgba(240,200,40,.65)" font-weight="600">Al</text>
+              <text x="175" y="95" fill="rgba(240,200,40,.5)">−1.66</text>
+              <!-- Zn: -0.76 -->
+              <rect x="122" y="102" width="55" height="14" rx="3" fill="rgba(250,220,60,.18)"/>
+              <text x="135" y="113" fill="rgba(250,220,60,.75)" font-weight="600">Zn</text>
+              <text x="175" y="113" fill="rgba(250,220,60,.55)">−0.76</text>
+              <!-- Fe: -0.44 -->
+              <rect x="122" y="120" width="55" height="14" rx="3" fill="rgba(250,230,80,.15)"/>
+              <text x="135" y="131" fill="rgba(250,230,80,.6)" font-weight="600">Fe</text>
+              <text x="175" y="131" fill="rgba(250,230,80,.45)">−0.44</text>
+              <!-- H: 0.00 -->
+              <rect x="122" y="132" width="55" height="14" rx="3" fill="rgba(254,249,195,.08)" stroke="rgba(254,249,195,.2)" stroke-width="1"/>
+              <text x="135" y="143" fill="rgba(254,249,195,.5)" font-weight="600">H₂</text>
+              <text x="175" y="143" fill="rgba(254,249,195,.4)">0.00</text>
+              <!-- Cu: +0.34 -->
+              <rect x="122" y="150" width="55" height="14" rx="3" fill="rgba(96,208,160,.18)"/>
+              <text x="135" y="161" fill="rgba(96,208,160,.75)" font-weight="600">Cu</text>
+              <text x="175" y="161" fill="rgba(96,208,160,.55)">+0.34</text>
+              <!-- Ag: +0.80 -->
+              <rect x="122" y="168" width="55" height="14" rx="3" fill="rgba(96,208,160,.22)"/>
+              <text x="135" y="179" fill="rgba(96,208,160,.8)" font-weight="600">Ag</text>
+              <text x="175" y="179" fill="rgba(96,208,160,.6)">+0.80</text>
+              <!-- Au: +1.50 -->
+              <rect x="122" y="186" width="55" height="14" rx="3" fill="rgba(96,208,160,.28)"/>
+              <text x="135" y="197" fill="rgba(96,208,160,.85)" font-weight="600">Au</text>
+              <text x="175" y="197" fill="rgba(96,208,160,.65)">+1.50</text>
+              <!-- F2: +2.87 -->
+              <rect x="122" y="204" width="55" height="14" rx="3" fill="rgba(60,200,160,.35)"/>
+              <text x="135" y="215" fill="rgba(60,200,160,.9)" font-weight="600">F₂</text>
+              <text x="175" y="215" fill="rgba(60,200,160,.7)">+2.87</text>
+            </g>
+            <!-- Labels -->
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(254,249,195,.35)">
+              <text x="14" y="70">Reaktivt</text>
+              <text x="14" y="82">oksideres</text>
+              <text x="14" y="92">lett</text>
+              <path d="M50,58 L50,130" stroke="rgba(240,96,96,.3)" stroke-width="1"/>
+              <path d="M47,58 L50,52 L53,58" fill="none" stroke="rgba(240,96,96,.3)" stroke-width="1"/>
+              <text x="14" y="168">Edelt</text>
+              <text x="14" y="180">reduseres</text>
+              <text x="14" y="192">lett</text>
+              <path d="M50,145 L50,218" stroke="rgba(96,208,160,.3)" stroke-width="1"/>
+              <path d="M47,218 L50,224 L53,218" fill="none" stroke="rgba(96,208,160,.3)" stroke-width="1"/>
+            </g>
+            <!-- Zn/Cu-celle markering -->
+            <path d="M186,110 Q198,135 186,158" fill="none" stroke="rgba(250,204,21,.4)" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <text x="224" y="135" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.55)">1.10 V</text>
+            <text x="224" y="146" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.4)">(Zn/Cu)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Batterier og brenselceller -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(250,204,21,.1);color:#facc15;border:1px solid rgba(250,204,21,.2)">🔋 Batterier</div>
+          <h3 class="k-tittel">Batterier og brenselceller</h3>
+          <p class="k-ingress">Moderne batterier er sofistikerte galvaniske celler med høy energitetthet. Brenselceller er «batterier» der drivstoffet mates kontinuerlig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>Litiumbatteri (LiPo/Li-ion):</strong> Anode: grafit (Li lagres mellom grafitlag). Katode: LiCoO₂ eller LiFePO₄. E° ≈ 3.7 V. Lades opp: Li⁺ vandrer tilbake. Energitetthet: ~200 Wh/kg. Brukes i EV, mobiltelefoner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚗</span><div><strong>Blybatteri (bilbatteri):</strong> Anode: Pb. Katode: PbO₂. Elektrolytt: H₂SO₄(aq). E° = 2.0 V per celle → 6 celler = 12 V. Kan lades opp. Tung (35 kg) men billig og pålitelig. Høy strøm for startmotor.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Brenselcelle (H₂/O₂):</strong> H₂ oksideres ved anode: H₂ → 2H⁺ + 2e⁻. O₂ reduseres ved katode: O₂ + 4H⁺ + 4e⁻ → 2H₂O. E° = 1.23 V. Biproduktet er rent vann. Virkningsgrad ~60% (vs bensinmotor ~25%).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">♻️</span><div><strong>Kapasitet og energitetthet:</strong> Kapasitet [Ah]: total ladning batteriet kan levere. Energitetthet [Wh/kg]: energi per masse. LiPo ×5 mer energitett enn blybatteri. Tesla Model 3: ~80 kWh, 75 kg batteri.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a10"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(250,204,21,.6)" letter-spacing=".08em">BRENSELCELLE – H₂/O₂</text>
+            <defs><marker id="bc-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(250,204,21,.8)"/></marker>
+            <marker id="bc-arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,160,240,.8)"/></marker></defs>
+            <!-- H2 inn -->
+            <text x="30" y="28" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(250,204,21,.6)">H₂</text>
+            <line x1="30" y1="32" x2="30" y2="70" stroke="rgba(250,204,21,.5)" stroke-width="2" marker-end="url(#bc-arr)"/>
+            <!-- Anode -->
+            <rect x="14" y="72" width="52" height="116" rx="6" fill="rgba(250,204,21,.1)" stroke="rgba(250,204,21,.4)" stroke-width="1.5"/>
+            <text x="40" y="112" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,204,21,.7)" font-weight="600">Anode</text>
+            <text x="40" y="125" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.5)">H₂→2H⁺+2e⁻</text>
+            <!-- Proton exchange membrane -->
+            <rect x="118" y="72" width="44" height="116" rx="4" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.3)" stroke-width="1.5"/>
+            <text x="140" y="118" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)">PEM</text>
+            <text x="140" y="130" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.4)">H⁺ →</text>
+            <!-- Katode -->
+            <rect x="214" y="72" width="52" height="116" rx="6" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.4)" stroke-width="1.5"/>
+            <text x="240" y="112" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.7)" font-weight="600">Katode</text>
+            <text x="240" y="126" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.5)">O₂+4H⁺+4e⁻</text>
+            <text x="240" y="138" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.5)">→ 2H₂O</text>
+            <!-- O2 inn -->
+            <text x="240" y="28" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,160,.6)">O₂</text>
+            <line x1="240" y1="32" x2="240" y2="70" stroke="rgba(96,208,160,.5)" stroke-width="2" marker-end="url(#bc-arr2)"/>
+            <!-- H2O ut -->
+            <text x="240" y="202" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,160,.55)">H₂O</text>
+            <line x1="240" y1="188" x2="240" y2="198" stroke="rgba(96,208,160,.4)" stroke-width="2" marker-end="url(#bc-arr2)"/>
+            <!-- Ytre krets -->
+            <path d="M40,72 Q40,44 140,38 Q240,32 240,72" fill="none" stroke="rgba(250,204,21,.4)" stroke-width="2"/>
+            <path class="e-anim" d="M40,72 Q40,44 140,38 Q240,32 240,72"
+              fill="none" stroke="rgba(250,204,21,.7)" stroke-width="1.5" marker-end="url(#bc-arr)"/>
+            <text x="140" y="32" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.5)" font-weight="600">e⁻ → → →  (1.23 V)</text>
+            <!-- Sammenligning -->
+            <rect x="10" y="202" width="260" height="52" rx="9" fill="rgba(250,204,21,.04)" stroke="rgba(250,204,21,.15)" stroke-width="1"/>
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,204,21,.55)" font-weight="600">SAMMENLIGNING</text>
+            <g font-family="DM Sans" font-size="8" fill="rgba(254,249,195,.45)">
+              <text x="20" y="230">Bensinmotor: ~25% virkn.</text>
+              <text x="20" y="244">Brenselcelle: ~60% virkn.</text>
+              <text x="160" y="230">LiPo: ~200 Wh/kg</text>
+              <text x="160" y="244">Blybatteri: ~40 Wh/kg</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Elektrolyse -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.2)">⚡ Elektrolyse</div>
+          <h3 class="k-tittel">Elektrolyse</h3>
+          <p class="k-ingress">Elektrolyse bruker elektrisk energi til å drive ikke-spontane redoksreaksjoner. Det er «batteriet i revers» og brukes industrielt i stor skala.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔌</span><div><strong>Prinsipp:</strong> Ekstern spenningskilde tvinger elektroner til å flyte mot den spontane retningen. Anode kobles til positiv pol: oksideres. Katode til negativ pol: reduseres. Faradays lov: m = (M·I·t)/(n·F).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Elektrolyse av vann:</strong> 2H₂O → 2H₂ + O₂. Anode: 2H₂O → O₂ + 4H⁺ + 4e⁻. Katode: 4H⁺ + 4e⁻ → 2H₂. Krever ~1.23 V teoretisk (praksis ~1.8–2.0 V pga. overpotensial). Grønn hydrogen-produksjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>Hall-Héroult-prosessen (aluminium):</strong> Al₂O₃ (bauxitt) løst i kryolitt ved ~960°C. Elektrolyse gir Al ved katode. Krever enorm elektrisk energi (~14 kWh/kg Al). Gjenvinning av Al krever bare 5% av dette.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🪙</span><div><strong>Galvanisering (elektroavsetning):</strong> Metall avsettes fra løsning til et objekt. Forsølving, forgyldning, forkromming. Printet kretskort: kobberspor galvaniseres. Farady: m ∝ I·t (ladning).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a10"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,240,.6)" letter-spacing=".08em">ELEKTROLYSE AV VANN</text>
+            <defs><marker id="el2-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(96,160,240,.8)"/></marker>
+            <marker id="el2-arry" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(250,204,21,.8)"/></marker></defs>
+            <!-- Elektrolysekaret -->
+            <rect x="50" y="80" width="180" height="130" rx="8" fill="rgba(96,160,240,.06)" stroke="rgba(96,160,240,.25)" stroke-width="1.5"/>
+            <!-- Vann -->
+            <rect x="52" y="130" width="176" height="78" rx="0" fill="rgba(96,160,240,.08)" stroke="none"/>
+            <text x="140" y="175" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.4)">H₂O (aq)</text>
+            <!-- Anode (+, høyre) -->
+            <rect x="186" y="70" width="10" height="130" rx="3" fill="rgba(250,204,21,.5)" stroke="rgba(250,204,21,.7)" stroke-width="1.2"/>
+            <text x="191" y="64" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,204,21,.7)" font-weight="600">+</text>
+            <text x="191" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,204,21,.5)">Anode</text>
+            <!-- O2 bobler ved anode -->
+            <g fill="rgba(250,96,96,.5)" stroke="rgba(250,96,96,.7)" stroke-width="0.8">
+              <circle cx="192" cy="110" r="5"/><circle cx="200" cy="102" r="4"/>
+              <circle cx="184" cy="106" r="4"/><circle cx="196" cy="92" r="3"/>
+            </g>
+            <text x="215" y="100" font-family="DM Sans" font-size="9" fill="rgba(250,96,96,.6)">O₂ ↑</text>
+            <!-- Katode (-, venstre) -->
+            <rect x="84" y="70" width="10" height="130" rx="3" fill="rgba(96,160,240,.5)" stroke="rgba(96,160,240,.7)" stroke-width="1.2"/>
+            <text x="89" y="64" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,160,240,.7)" font-weight="600">−</text>
+            <text x="89" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.5)">Katode</text>
+            <!-- H2 bobler ved katode -->
+            <g fill="rgba(200,230,255,.4)" stroke="rgba(200,230,255,.6)" stroke-width="0.8">
+              <circle cx="84" cy="110" r="5"/><circle cx="76" cy="102" r="4"/>
+              <circle cx="92" cy="106" r="4"/><circle cx="80" cy="92" r="3"/>
+            </g>
+            <text x="52" y="100" font-family="DM Sans" font-size="9" fill="rgba(200,230,255,.6)">H₂ ↑</text>
+            <!-- Spenningskilde -->
+            <rect x="98" y="30" width="84" height="30" rx="8" fill="rgba(96,160,240,.12)" stroke="rgba(96,160,240,.4)" stroke-width="1.5"/>
+            <text x="140" y="49" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.75)" font-weight="600">⚡ ~2 V</text>
+            <!-- Kretsledninger -->
+            <path d="M94,68 L94,60 L98,60" stroke="rgba(96,160,240,.5)" stroke-width="2" fill="none"/>
+            <path d="M182,60 L191,60 L191,68" stroke="rgba(250,204,21,.5)" stroke-width="2" fill="none"/>
+            <!-- Elektroner (fra anode til spenningskilde) -->
+            <path class="e-anim" d="M191,52 Q191,38 182,34" fill="none" stroke="rgba(250,204,21,.65)" stroke-width="1.5" marker-end="url(#el2-arry)"/>
+            <!-- Elektroner (fra spenningskilde til katode) -->
+            <path class="e-anim" d="M98,34 Q88,38 89,52" fill="none" stroke="rgba(96,160,240,.65)" stroke-width="1.5" marker-end="url(#el2-arr)"/>
+            <!-- Halvreaksjoner -->
+            <rect x="14" y="228" width="252" height="28" rx="7" fill="rgba(96,160,240,.04)" stroke="rgba(96,160,240,.15)" stroke-width="1"/>
+            <g font-family="DM Sans" font-size="8" fill="rgba(254,249,195,.5)">
+              <text x="20" y="240">Katode (−): 4H⁺ + 4e⁻ → 2H₂</text>
+              <text x="20" y="252">Anode (+): 2H₂O → O₂ + 4H⁺ + 4e⁻</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Korrosjon og beskyttelse -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.2)">🦀 Korrosjon</div>
+          <h3 class="k-tittel">Korrosjon og beskyttelse</h3>
+          <p class="k-ingress">Korrosjon er ufrivillig oksidasjon av metaller i kontakt med miljøet. Det er en elektrokjemisk prosess som koster samfunnet hundrevis av milliarder kroner hvert år.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🦀</span><div><strong>Rustdannelse (jernkorrosjon):</strong> Anode (Fe): Fe → Fe²⁺ + 2e⁻ (oksidasjon). Katode (O₂ + H₂O): O₂ + 4e⁻ + 2H₂O → 4OH⁻ (reduksjon). Fe²⁺ + 2OH⁻ → Fe(OH)₂ → Fe₂O₃·nH₂O (rust). Krever både O₂ og H₂O.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>Galvanisk korrosjon:</strong> To ulike metaller i kontakt i en elektrolytt danner en galvanisk celle. Det mer reaktive metallet (anode) korroderer akselerert. Unngå aluminiumsskruer i stål! Aluminiumsbåter med kobberrørgang korroderer raskt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛡️</span><div><strong>Katodisk beskyttelse:</strong> Koble et mer reaktivt metall (Zn, Mg) til det som skal beskyttes → det reaktive metallet ofres (offeranode). Brukes på skip, rørledninger, offshore-installasjoner. Zn-blokker på skipsskrog.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎨</span><div><strong>Andre beskyttelsesmetoder:</strong> Maling/belegg (fysisk barriere). Fortinning (hermetikkbokser): Sn er edelere enn Fe → galvanisk korrosjon hvis belegget skades! Galvanisering (Zn på stål): Zn ofres og beskytter.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a10"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,96,.6)" letter-spacing=".08em">RUSTDANNELSE OG KATODISK BESKYTTELSE</text>
+            <!-- RUST venstre -->
+            <text x="66" y="32" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.6)" font-weight="600">Rustprosessen</text>
+            <!-- Fe-plate -->
+            <rect x="30" y="44" width="72" height="120" rx="5" fill="rgba(200,140,60,.25)" stroke="rgba(200,140,60,.5)" stroke-width="1.5"/>
+            <text x="66" y="96" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(200,140,60,.65)">Fe</text>
+            <!-- Rust-flekk -->
+            <ellipse cx="58" cy="114" rx="18" ry="12" fill="rgba(200,80,40,.3)" stroke="rgba(200,80,40,.5)" stroke-width="1"/>
+            <text x="58" y="118" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,80,40,.7)">rust</text>
+            <!-- Anode-prosess -->
+            <text x="66" y="180" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,140,40,.5)">Fe→Fe²⁺+2e⁻</text>
+            <text x="66" y="192" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,140,40,.4)">Oksideres</text>
+            <!-- Vann/O2 -->
+            <text x="16" y="114" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.45)">O₂+H₂O</text>
+            <!-- KATODISK BESKYTTELSE høyre -->
+            <text x="210" y="32" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.6)" font-weight="600">Katodisk beskyttelse</text>
+            <!-- Fe-plate (beskyttet) -->
+            <rect x="174" y="44" width="72" height="120" rx="5" fill="rgba(96,120,180,.15)" stroke="rgba(96,120,180,.4)" stroke-width="1.5"/>
+            <text x="210" y="96" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,120,180,.6)">Fe</text>
+            <text x="210" y="110" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.5)">✓ Beskyttet</text>
+            <!-- Zn-offeranode -->
+            <rect x="255" y="64" width="20" height="80" rx="4" fill="rgba(250,220,60,.35)" stroke="rgba(250,220,60,.7)" stroke-width="1.5"/>
+            <text x="265" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(250,220,60,.7)" font-weight="600">Zn</text>
+            <text x="265" y="160" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(250,220,60,.5)">ofres</text>
+            <!-- Kobling -->
+            <line x1="246" y1="84" x2="256" y2="84" stroke="rgba(250,220,60,.5)" stroke-width="2"/>
+            <text x="210" y="180" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.45)">Zn→Zn²⁺+2e⁻</text>
+            <text x="210" y="192" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.4)">(Zn er mer reaktiv)</text>
+            <!-- Pilene / elektron-flyt -->
+            <defs><marker id="k-arr-e" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(250,220,60,.7)"/></marker></defs>
+            <path d="M256,84 Q250,74 246,74 L174,74" fill="none" stroke="rgba(250,220,60,.4)" stroke-width="1.5" marker-end="url(#k-arr-e)"/>
+            <!-- Faradays lov -->
+            <rect x="14" y="210" width="252" height="44" rx="9" fill="rgba(96,160,240,.04)" stroke="rgba(96,160,240,.15)" stroke-width="1"/>
+            <text x="140" y="224" text-anchor="middle" font-family="Fraunces" font-size="12" fill="rgba(250,204,21,.6)">m = (M · I · t) / (n · F)</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(254,249,195,.35)">Faradays lov: masse avsatt ∝ ladning (I·t)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(250,204,21,.1);color:#facc15;border:1px solid rgba(250,204,21,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Elektrokjemi – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:820px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(250,204,21,.04);border:1px solid rgba(250,204,21,.15);border-radius:12px;font-size:.78rem;color:rgba(254,249,195,.65);line-height:1.6"><strong style="color:#facc15;display:block;margin-bottom:4px">🔋 Galvanisk celle</strong>Anode (−): oksidasjon · Katode (+): reduksjon · Saltbru · E°celle = E°katode − E°anode · Spontan reaksjon</div>
+            <div style="padding:14px;background:rgba(96,208,160,.04);border:1px solid rgba(96,208,160,.15);border-radius:12px;font-size:.78rem;color:rgba(254,249,195,.65);line-height:1.6"><strong style="color:#60d0a0;display:block;margin-bottom:4px">📊 Standardpotensial</strong>E° vs SHE · Reaktivitetsrekke · K&gt;Na&gt;Ca&gt;Mg&gt;Al&gt;Zn&gt;Fe&gt;H&gt;Cu&gt;Ag&gt;Au · Nernst-ligningen</div>
+            <div style="padding:14px;background:rgba(250,204,21,.04);border:1px solid rgba(250,204,21,.15);border-radius:12px;font-size:.78rem;color:rgba(254,249,195,.65);line-height:1.6"><strong style="color:#facc15;display:block;margin-bottom:4px">🔋 Batterier</strong>Li-ion: 3.7 V · Blybatteri: 12 V (6 celler) · Brenselcelle H₂/O₂: 1.23 V, 60% virkn. · Grønn H₂</div>
+            <div style="padding:14px;background:rgba(96,160,240,.04);border:1px solid rgba(96,160,240,.15);border-radius:12px;font-size:.78rem;color:rgba(254,249,195,.65);line-height:1.6"><strong style="color:#60a0f0;display:block;margin-bottom:4px">⚡ Elektrolyse</strong>Ikke-spontan (trenger spenning) · Vann: 2H₂O→2H₂+O₂ · Hall-Héroult (Al) · Galvanisering · Faradays lov</div>
+            <div style="padding:14px;background:rgba(240,96,96,.04);border:1px solid rgba(240,96,96,.15);border-radius:12px;font-size:.78rem;color:rgba(254,249,195,.65);line-height:1.6"><strong style="color:#f06060;display:block;margin-bottom:4px">🦀 Korrosjon</strong>Fe+O₂+H₂O→rust · Galvanisk korrosjon · Katodisk beskyttelse (offeranode Zn) · Galvanisering · Maling</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- GALVANISK CELLE-KALKULATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Galvanisk celle – beregn EMK</div><div class="sep-r"></div></div>
+  <div class="celle-wrapper">
+    <div class="celle-tittel">Velg to elektroder og se cellens EMK og halvreaksjoner</div>
+    <div class="celle-sub">E°celle = E°katode − E°anode · Positiv EMK = spontan galvanisk celle</div>
+    <div class="celle-grid">
+      <div>
+        <canvas id="celle-canvas" width="420" height="280" style="width:100%;border-radius:14px;background:rgba(0,0,0,.3)"></canvas>
+      </div>
+      <div class="celle-panel">
+        <h4>⚡ Elektrodevalg</h4>
+        <div class="celle-rad">
+          <label>Anode (−)</label>
+          <select id="sel-anode" onchange="oppdaterCelle()">
+            <option value="K">K  (−2.93 V)</option>
+            <option value="Na">Na (−2.71 V)</option>
+            <option value="Mg">Mg (−2.37 V)</option>
+            <option value="Al">Al (−1.66 V)</option>
+            <option value="Zn" selected>Zn (−0.76 V)</option>
+            <option value="Fe">Fe (−0.44 V)</option>
+            <option value="Pb">Pb (−0.13 V)</option>
+            <option value="H2">H₂ (0.00 V)</option>
+            <option value="Cu">Cu (+0.34 V)</option>
+            <option value="Ag">Ag (+0.80 V)</option>
+          </select>
+        </div>
+        <div class="celle-rad">
+          <label>Katode (+)</label>
+          <select id="sel-katode" onchange="oppdaterCelle()">
+            <option value="K">K  (−2.93 V)</option>
+            <option value="Na">Na (−2.71 V)</option>
+            <option value="Mg">Mg (−2.37 V)</option>
+            <option value="Al">Al (−1.66 V)</option>
+            <option value="Zn">Zn (−0.76 V)</option>
+            <option value="Fe">Fe (−0.44 V)</option>
+            <option value="Pb">Pb (−0.13 V)</option>
+            <option value="H2">H₂ (0.00 V)</option>
+            <option value="Cu" selected>Cu (+0.34 V)</option>
+            <option value="Ag">Ag (+0.80 V)</option>
+          </select>
+        </div>
+        <div class="celle-resultat">
+          <div class="celle-res-v" id="celle-emk">1.10 V</div>
+          <div class="celle-res-sub" id="celle-type">⚡ Galvanisk celle – spontan!</div>
+          <div class="celle-res-eq" id="celle-eq"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slides = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slides.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+// ═══ CELLE-KALKULATOR ═══
+const ELEKTRODER = {
+  K:   { E: -2.93, sym: 'K',  oks: 'K → K⁺ + e⁻',         red: 'K⁺ + e⁻ → K',         n: 1, farge: 'rgba(240,96,96,.6)'    },
+  Na:  { E: -2.71, sym: 'Na', oks: 'Na → Na⁺ + e⁻',        red: 'Na⁺ + e⁻ → Na',        n: 1, farge: 'rgba(240,130,60,.6)'  },
+  Mg:  { E: -2.37, sym: 'Mg', oks: 'Mg → Mg²⁺ + 2e⁻',      red: 'Mg²⁺ + 2e⁻ → Mg',      n: 2, farge: 'rgba(240,180,40,.6)'  },
+  Al:  { E: -1.66, sym: 'Al', oks: 'Al → Al³⁺ + 3e⁻',      red: 'Al³⁺ + 3e⁻ → Al',      n: 3, farge: 'rgba(220,200,160,.6)' },
+  Zn:  { E: -0.76, sym: 'Zn', oks: 'Zn → Zn²⁺ + 2e⁻',      red: 'Zn²⁺ + 2e⁻ → Zn',      n: 2, farge: 'rgba(250,210,60,.65)' },
+  Fe:  { E: -0.44, sym: 'Fe', oks: 'Fe → Fe²⁺ + 2e⁻',      red: 'Fe²⁺ + 2e⁻ → Fe',      n: 2, farge: 'rgba(200,140,80,.6)'  },
+  Pb:  { E: -0.13, sym: 'Pb', oks: 'Pb → Pb²⁺ + 2e⁻',      red: 'Pb²⁺ + 2e⁻ → Pb',      n: 2, farge: 'rgba(180,180,200,.5)' },
+  H2:  { E:  0.00, sym: 'H₂', oks: 'H₂ → 2H⁺ + 2e⁻',       red: '2H⁺ + 2e⁻ → H₂',       n: 2, farge: 'rgba(200,220,255,.5)' },
+  Cu:  { E:  0.34, sym: 'Cu', oks: 'Cu → Cu²⁺ + 2e⁻',      red: 'Cu²⁺ + 2e⁻ → Cu',      n: 2, farge: 'rgba(200,120,60,.7)'  },
+  Ag:  { E:  0.80, sym: 'Ag', oks: 'Ag → Ag⁺ + e⁻',         red: 'Ag⁺ + e⁻ → Ag',         n: 1, farge: 'rgba(220,220,230,.65)'},
+};
+
+function oppdaterCelle() {
+  const anodeId = document.getElementById('sel-anode').value;
+  const katodeId = document.getElementById('sel-katode').value;
+  const anode = ELEKTRODER[anodeId];
+  const katode = ELEKTRODER[katodeId];
+  const emk = katode.E - anode.E;
+  const emkEl = document.getElementById('celle-emk');
+  const typeEl = document.getElementById('celle-type');
+  const eqEl = document.getElementById('celle-eq');
+
+  emkEl.textContent = emk.toFixed(2) + ' V';
+  if (emk > 0.01) {
+    emkEl.style.color = '#4ade80';
+    typeEl.textContent = '⚡ Galvanisk celle – spontan!';
+    typeEl.style.color = 'rgba(74,222,128,.7)';
+  } else if (emk < -0.01) {
+    emkEl.style.color = '#f06060';
+    typeEl.textContent = '🔌 Krever elektrolyse – ikke spontan';
+    typeEl.style.color = 'rgba(240,96,96,.7)';
+  } else {
+    emkEl.style.color = 'rgba(254,249,195,.5)';
+    typeEl.textContent = '⚖️ I likevekt (E° = 0)';
+    typeEl.style.color = 'rgba(254,249,195,.4)';
+  }
+
+  eqEl.innerHTML = `
+    <strong style="color:rgba(250,204,21,.7)">Anode (−): oksideres</strong><br>
+    <code>${anode.oks}</code>  E° = ${anode.E.toFixed(2)} V<br><br>
+    <strong style="color:rgba(96,208,160,.7)">Katode (+): reduseres</strong><br>
+    <code>${katode.red}</code>  E° = ${katode.E.toFixed(2)} V<br><br>
+    <strong>E°celle = ${katode.E.toFixed(2)} − (${anode.E.toFixed(2)}) = ${emk.toFixed(2)} V</strong>`;
+
+  tegnCelle(anode, katode, emk);
+}
+
+function tegnCelle(anode, katode, emk) {
+  const canvas = document.getElementById('celle-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#060a10';
+  ctx.fillRect(0, 0, W, H);
+
+  // Venstre beholder (anode)
+  ctx.strokeStyle = 'rgba(250,204,21,.3)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(20, 70, 130, 150);
+  ctx.fillStyle = 'rgba(250,204,21,.05)';
+  ctx.fillRect(21, 71, 128, 148);
+  // Løsning anode
+  ctx.fillStyle = 'rgba(250,204,21,.06)';
+  ctx.fillRect(21, 151, 128, 68);
+
+  // Høyre beholder (katode)
+  ctx.strokeStyle = 'rgba(96,208,160,.3)';
+  ctx.strokeRect(270, 70, 130, 150);
+  ctx.fillStyle = 'rgba(96,208,160,.04)';
+  ctx.fillRect(271, 71, 128, 148);
+  ctx.fillStyle = 'rgba(96,160,240,.06)';
+  ctx.fillRect(271, 151, 128, 68);
+
+  // Anode-elektrode
+  ctx.fillStyle = anode.farge;
+  ctx.fillRect(72, 55, 14, 155);
+  ctx.font = 'bold 12px DM Sans';
+  ctx.fillStyle = anode.farge;
+  ctx.textAlign = 'center';
+  ctx.fillText(anode.sym, 79, 46);
+  ctx.font = '10px DM Sans';
+  ctx.fillStyle = 'rgba(250,204,21,.5)';
+  ctx.fillText('ANODE (−)', 79, 234);
+
+  // Katode-elektrode
+  ctx.fillStyle = katode.farge;
+  ctx.fillRect(334, 55, 14, 155);
+  ctx.font = 'bold 12px DM Sans';
+  ctx.fillStyle = katode.farge;
+  ctx.textAlign = 'center';
+  ctx.fillText(katode.sym, 341, 46);
+  ctx.font = '10px DM Sans';
+  ctx.fillStyle = 'rgba(96,208,160,.5)';
+  ctx.fillText('KATODE (+)', 341, 234);
+
+  // Saltbru
+  ctx.fillStyle = 'rgba(200,200,220,.15)';
+  ctx.strokeStyle = 'rgba(200,200,220,.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(152, 74, 116, 18, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(200,200,220,.55)';
+  ctx.font = '10px DM Sans';
+  ctx.textAlign = 'center';
+  ctx.fillText('Saltbru', 210, 87);
+
+  // Ytre krets
+  ctx.strokeStyle = emk > 0 ? 'rgba(250,204,21,.5)' : 'rgba(240,96,96,.5)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(79, 55); ctx.lineTo(79, 24); ctx.lineTo(341, 24); ctx.lineTo(341, 55);
+  ctx.stroke();
+
+  // EMK-visning
+  ctx.fillStyle = emk > 0 ? 'rgba(74,222,128,.85)' : 'rgba(240,96,96,.75)';
+  ctx.font = 'bold 16px Fraunces, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(emk.toFixed(2) + ' V', 210, 20);
+
+  // Halvreaksjoner
+  ctx.font = '9px DM Sans';
+  ctx.fillStyle = 'rgba(250,204,21,.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText(anode.oks, 84, 250);
+  ctx.fillStyle = 'rgba(96,208,160,.5)';
+  ctx.fillText(katode.red, 336, 250);
+
+  // Ioner i løsning
+  ctx.font = '9px DM Sans';
+  ctx.fillStyle = 'rgba(250,204,21,.4)';
+  ctx.textAlign = 'center';
+  ctx.fillText(anode.sym + '²⁺', 115, 175);
+  ctx.fillStyle = 'rgba(96,160,240,.4)';
+  ctx.fillText(katode.sym + '²⁺', 305, 175);
+}
+
+oppdaterCelle();
+</script>
+</body>
+</html>

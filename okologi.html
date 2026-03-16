@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Økologi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#040a06;--surface:#071010;--card:#0a1614;--border:rgba(74,222,128,.07);
+  --text:#e8f8ec;--dim:#1e4228;
+  --accent:#4ade80;--accent2:#86efac;--accent3:#fbbf24;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(74,222,128,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(251,191,36,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(4,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 40px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:360px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:34px 36px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.25rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.83rem;line-height:1.72;color:rgba(232,248,236,.55);margin-bottom:14px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(74,222,128,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,248,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* NÆRINGSNETT */
+.sep{display:flex;align-items:center;gap:16px;margin:40px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.nett-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.nett-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:4px}
+.nett-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px}
+.nett-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.nett-canvas-wrap{position:relative}
+.nett-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.nett-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.art-knapp{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.02);cursor:pointer;font-size:.8rem;color:var(--dim);width:100%;text-align:left;margin-bottom:6px;transition:all .2s}
+.art-knapp:hover{border-color:rgba(74,222,128,.3);color:var(--text)}
+.art-knapp.aktiv{border-color:var(--accent);color:var(--accent);background:rgba(74,222,128,.05)}
+.art-ikon{font-size:1.1rem}
+.art-info{margin-top:12px;padding:12px 14px;border-radius:10px;background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.2);font-size:.8rem;line-height:1.65;color:rgba(232,248,236,.7);min-height:80px}
+/* POPULASJONSSIMULATOR */
+.pop-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.pop-kontroll{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:20px}
+.pop-felt{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pop-felt label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.pop-felt input[type=range]{width:130px;accent-color:var(--accent)}
+.pop-felt span{font-size:.85rem;color:var(--accent);font-weight:600;min-width:50px;text-align:center}
+.pop-knapper{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+.pop-btn{padding:9px 20px;border-radius:10px;border:1px solid rgba(74,222,128,.3);
+  background:rgba(74,222,128,.07);color:var(--accent);font-family:var(--font-d);font-size:.9rem;
+  font-style:italic;cursor:pointer;transition:all .2s}
+.pop-btn:hover{background:rgba(74,222,128,.14);border-color:var(--accent)}
+.pop-btn.rød{border-color:rgba(240,96,96,.3);background:rgba(240,96,96,.06);color:#f06060}
+.pop-btn.rød:hover{background:rgba(240,96,96,.12);border-color:#f06060}
+.pop-status{text-align:center;font-size:.82rem;color:var(--dim);margin-top:8px;min-height:20px}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.nett-layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Økologi</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Natur</div>
+    <h1>Økologi –<br><em>samspill i naturen</em></h1>
+    <p class="hero-sub">Næringsnett, populasjonsdynamikk, biomer, bærekraft og artsmangfold – livet som system</p>
+  </div>
+
+  <!-- KARUSELL -->
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Grunnbegreper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2)">🌿 Grunnlag</div>
+          <h3 class="k-tittel">Grunnbegreper i økologi</h3>
+          <p class="k-ingress">Økologi studerer samspillet mellom organismer og deres miljø. Fra enkeltindivid til hele biosfæren – alt henger sammen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Organisasjonsnivåer:</strong> Individ → populasjon (alle av én art på ett sted) → samfunn/biocenose (alle arter på ett sted) → økosystem (samfunn + det abiotiske miljøet) → biom → biosfære.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Abiotiske vs biotiske faktorer:</strong> Abiotisk: temperatur, nedbør, lys, pH, næringssalter, vind. Biotisk: predatorer, byttedyr, konkurrenter, parasitter, symbionter. Begge setter grenser for en arts utbredelse (toleransegrenser).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏠</span><div><strong>Nisje:</strong> En arts «yrke» i økosystemet – hva den spiser, når den er aktiv, hvor den oppholder seg, etc. To arter kan ikke ha identisk nisje over tid (Gauses prinsipp: konkurranseutelukkelse).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Energiflyt vs kretsløp:</strong> Energi strømmer gjennom økosystemet (enveiskjørt: inn som sollys, ut som varme). Stoffer (C, N, P, vann) sykler – de brukes om igjen. Dette er den grunnleggende forskjellen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(74,222,128,.6)" letter-spacing=".08em">ORGANISASJONSNIVÅER</text>
+            <!-- Konsentriske ovaler fra individ til biosfære -->
+            <g fill="none" stroke-width="1.2">
+              <ellipse cx="140" cy="136" rx="118" ry="108" stroke="rgba(74,222,128,.12)"/>
+              <ellipse cx="140" cy="136" rx="96" ry="88" stroke="rgba(74,222,128,.15)"/>
+              <ellipse cx="140" cy="136" rx="74" ry="68" stroke="rgba(74,222,128,.2)"/>
+              <ellipse cx="140" cy="136" rx="52" ry="48" stroke="rgba(74,222,128,.28)"/>
+              <ellipse cx="140" cy="136" rx="30" ry="28" stroke="rgba(74,222,128,.4)"/>
+            </g>
+            <!-- Ikoner -->
+            <text x="140" y="144" text-anchor="middle" font-size="16">🐺</text>
+            <!-- Labels -->
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle" fill="rgba(232,248,236,.5)">
+              <text x="140" y="104">Populasjon</text>
+              <text x="140" y="82">Samfunn</text>
+              <text x="140" y="62">Økosystem</text>
+              <text x="140" y="42">Biom</text>
+              <text x="140" y="22" fill="rgba(74,222,128,.5)">Biosfære</text>
+            </g>
+            <!-- Energiflyt vs kretsløp -->
+            <rect x="10" y="202" width="124" height="50" rx="9" fill="rgba(251,191,36,.05)" stroke="rgba(251,191,36,.2)" stroke-width="1"/>
+            <text x="72" y="217" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.65)" font-weight="600">Energiflyt</text>
+            <text x="72" y="229" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.45)">Sol → liv → varme</text>
+            <text x="72" y="241" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.35)">enveiskjørt</text>
+            <rect x="144" y="202" width="126" height="50" rx="9" fill="rgba(74,222,128,.05)" stroke="rgba(74,222,128,.2)" stroke-width="1"/>
+            <text x="207" y="217" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.65)" font-weight="600">Stoffkretsløp</text>
+            <text x="207" y="229" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.45)">C, N, P, H₂O</text>
+            <text x="207" y="241" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.35)">gjenbrukes</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Næringsnett og trofiske nivåer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2)">🌱 Næringsnett</div>
+          <h3 class="k-tittel">Næringsnett og trofiske nivåer</h3>
+          <p class="k-ingress">Energi strømmer gjennom økosystemet via spising. Produsenter omdanner sollys til organisk stoff – alt annet liv er avhengig av dem.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Produsenter (trofisk nivå 1):</strong> Planter, alger og cyanobakterier. Bruker sollys + CO₂ + vann → glukose (fotosyntese). Primærproduksjon = total organisk stoff produsert. Grunnlaget for alt liv.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐇</span><div><strong>Primærkonsumenter (TN 2):</strong> Planteeterere (herbivorer): mus, sau, insekter, krill. Mottar ~10% av energien fra produsentene – resten går til varme og respirasjon (10%-regelen).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🦊</span><div><strong>Sekundær- og tertiærkonsumenter (TN 3–4):</strong> Kjøttetere (karnivorer) og altetere (omnivorer). Bare ~10% energioverføring per ledd → store rovdyr er sjeldne og trenger store territorier.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍄</span><div><strong>Nedbrytere/detritivorer:</strong> Sopp, bakterier, meitemark, åtseleter. Bryter ned dødt organisk stoff og frigjør næringssalter tilbake. Uten nedbrytere ville næringsstoffer låses i dødt materiale.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(74,222,128,.6)" letter-spacing=".08em">ENERGIPYRAMIDE  (10%-REGELEN)</text>
+            <!-- Pyramide -->
+            <polygon points="140,28 30,230 250,230" fill="rgba(74,222,128,.05)" stroke="rgba(74,222,128,.2)" stroke-width="1.5"/>
+            <!-- Nivå 1: Produsenter (bunn) -->
+            <rect x="36" y="194" width="208" height="36" rx="0" fill="rgba(74,222,128,.2)" stroke="none"/>
+            <text x="140" y="215" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(74,222,128,.85)" font-weight="600">🌿 Produsenter · 10 000 kJ</text>
+            <!-- Nivå 2: Primærkonsumenter -->
+            <rect x="60" y="152" width="160" height="38" rx="0" fill="rgba(134,239,172,.18)" stroke="none"/>
+            <line x1="60" y1="152" x2="220" y2="152" stroke="rgba(74,222,128,.15)" stroke-width="1"/>
+            <text x="140" y="173" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(134,239,172,.75)" font-weight="600">🐇 Planteeterere · 1 000 kJ</text>
+            <!-- Nivå 3: Sekundærkonsumenter -->
+            <rect x="86" y="112" width="108" height="36" rx="0" fill="rgba(251,191,36,.15)" stroke="none"/>
+            <line x1="86" y1="112" x2="194" y2="112" stroke="rgba(74,222,128,.12)" stroke-width="1"/>
+            <text x="140" y="132" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.7)" font-weight="600">🦊 Kjøttetere · 100 kJ</text>
+            <!-- Nivå 4: Topprovdyr -->
+            <rect x="108" y="74" width="64" height="34" rx="0" fill="rgba(240,96,96,.15)" stroke="none"/>
+            <line x1="108" y1="74" x2="172" y2="74" stroke="rgba(74,222,128,.1)" stroke-width="1"/>
+            <text x="140" y="93" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.7)" font-weight="600">🦅 Topprovdyr · 10 kJ</text>
+            <!-- Varmetap piler -->
+            <g stroke="rgba(255,100,50,.35)" stroke-width="1.5" fill="none">
+              <path d="M228,210 Q245,198 250,188"/>
+              <path d="M220,168 Q238,158 242,148"/>
+              <path d="M200,128 Q215,118 218,108"/>
+            </g>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(255,100,50,.4)">
+              <text x="252" y="187">90% varme</text>
+              <text x="244" y="147">90% varme</text>
+              <text x="220" y="107">90% varme</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Populasjonsdynamikk -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.2)">📈 Populasjon</div>
+          <h3 class="k-tittel">Populasjonsdynamikk</h3>
+          <p class="k-ingress">Populasjoner vokser, stabiliseres og svinger basert på ressurser, predatorer og andre begrensende faktorer. To grunnleggende vekstkurver beskriver dette.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Eksponentiell vekst (J-kurve):</strong> Ubegrenset vekst når ressurser ikke er en begrensning. dN/dt = r·N, der r er intrinsisk vekstrate. Skjer ved kolonisering av nytt habitat eller etter bestandskollapser.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Logistisk vekst (S-kurve):</strong> Vekst avtar når populasjonen nærmer seg bæreevnen K (carrying capacity). dN/dt = r·N·(K-N)/K. Mest realistisk modell for de fleste arter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐺🐇</span><div><strong>Rovdyr-byttedyr-sykluser:</strong> Hare og gaupe (Canada): når harebestanden øker → mer mat til gaupa → gaupebestanden øker → mer predasjon → harebestanden faller → gaupa sulter → gaupebestanden faller → syklusen gjentas. Periode: ~10 år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Regulerende faktorer:</strong> Tetthetsuavhengige: flom, frost, brann – slår uansett populasjonsstørrelse. Tetthetsgavhengige: sykdom, sult, predatorer, territorium – sterkere effekt ved høy tetthet. Virker som negativ tilbakekobling.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(251,191,36,.6)" letter-spacing=".08em">VEKSTKURVER</text>
+            <!-- Akser -->
+            <line x1="30" y1="200" x2="260" y2="200" stroke="rgba(232,248,236,.2)" stroke-width="1.5"/>
+            <line x1="30" y1="30"  x2="30"  y2="200" stroke="rgba(232,248,236,.2)" stroke-width="1.5"/>
+            <text x="145" y="220" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,248,236,.3)">Tid →</text>
+            <text x="16" y="120" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,248,236,.25)" transform="rotate(-90,16,120)">Populasjon →</text>
+            <!-- K-linje -->
+            <line x1="30" y1="70" x2="260" y2="70" stroke="rgba(251,191,36,.3)" stroke-width="1.2" stroke-dasharray="5 3"/>
+            <text x="264" y="74" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.5)">K</text>
+            <!-- J-kurve (eksponentiell) -->
+            <path d="M36,198 Q60,195 80,188 Q110,175 140,148 Q165,124 190,88 Q210,60 230,36"
+              fill="none" stroke="rgba(240,96,96,.7)" stroke-width="2.5"/>
+            <text x="235" y="34" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.65)" font-weight="600">J-kurve</text>
+            <text x="235" y="46" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.4)">eksponen.</text>
+            <!-- S-kurve (logistisk) -->
+            <path d="M36,198 Q50,197 65,194 Q85,188 105,178 Q130,162 150,140 Q168,118 180,98 Q190,82 196,74 Q200,72 210,71 Q230,70 258,70"
+              fill="none" stroke="rgba(74,222,128,.75)" stroke-width="2.5"/>
+            <text x="236" y="62" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.65)" font-weight="600">S-kurve</text>
+            <text x="236" y="74" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.4)">logistisk</text>
+            <!-- Rovdyr/byttedyr mini -->
+            <rect x="10" y="210" width="260" height="44" rx="9" fill="rgba(251,191,36,.04)" stroke="rgba(251,191,36,.15)" stroke-width="1"/>
+            <text x="140" y="224" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.6)" font-weight="600">ROVDYR-BYTTEDYR-SYKLUS (Lotka-Volterra)</text>
+            <!-- Mini oscillerende kurver -->
+            <path d="M20,244 Q30,234 38,244 Q46,254 54,244 Q62,234 70,244 Q78,254 86,244"
+              fill="none" stroke="rgba(134,239,172,.5)" stroke-width="1.5"/>
+            <path d="M26,248 Q34,238 42,248 Q50,258 58,248 Q66,238 74,248 Q82,258 90,248"
+              fill="none" stroke="rgba(240,96,96,.5)" stroke-width="1.5"/>
+            <text x="102" y="244" font-family="DM Sans" font-size="7.5" fill="rgba(134,239,172,.5)">🐇 byttedyr</text>
+            <text x="102" y="254" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.5)">🐺 rovdyr</text>
+            <text x="200" y="249" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.4)">syklus ~10 år</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Biomer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2)">🌍 Biomer</div>
+          <h3 class="k-tittel">Biomer og biodiversitet</h3>
+          <p class="k-ingress">Jordas overflate er delt inn i store biomer – karakterisert av klima, vegetasjon og dyreliv. Biodiversitet er et mål på livsrikdommen og en forutsetning for stabile økosystemer.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌴</span><div><strong>Tropisk regnskog:</strong> Høy temperatur + nedbør året rundt → størst biodiversitet på land (~50% av alle landarter på 6% av arealet). Rask nedbrytning, næringsfattig jord. Amazonas, Kongo, Borneo.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>Savannen og tempererte grassletter:</strong> Sesongtørke holder trær borte. Savanne: elefant, giraff, løve. Prerie/steppe: bison, rødrev, ørn. Verdens kornkammer – nå truet av avskoging og jordbruk.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌲</span><div><strong>Taiga og tundra:</strong> Taiga (boreale skoger): gran, furu, lerk. Kaldest i Sibir (−70°C). Tundra: permafrost, ingen trær, lemen, reinsdyr, isbjørn. Tundraen er CO₂-lager – tiner nå med global oppvarming.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🪸</span><div><strong>Hav og koralrev:</strong> Havene dekker 71% av jorda og absorberer ~30% av CO₂. Koralrev: «tropisk regnskog i havet» – stor biodiversitet, sterkt truet av oppvarming og havforsuring.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(74,222,128,.6)" letter-spacing=".08em">BIOMER – KLIMA OG VEGETASJON</text>
+            <!-- Klimagram (nedbør vs temperatur) -->
+            <line x1="30" y1="180" x2="260" y2="180" stroke="rgba(232,248,236,.2)" stroke-width="1.5"/>
+            <line x1="30" y1="20"  x2="30"  y2="180" stroke="rgba(232,248,236,.2)" stroke-width="1.5"/>
+            <text x="145" y="198" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,248,236,.3)">Temperatur →</text>
+            <text x="16" y="106" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,248,236,.25)" transform="rotate(-90,16,106)">Nedbør →</text>
+            <!-- Biomer som ellipser -->
+            <g>
+              <!-- Tundra (kald, lav nedbør) -->
+              <ellipse cx="55" cy="150" rx="22" ry="18" fill="rgba(180,220,240,.2)" stroke="rgba(180,220,240,.4)" stroke-width="1.2"/>
+              <text x="55" y="148" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(180,220,240,.7)">Tundra</text>
+              <text x="55" y="158" text-anchor="middle" font-family="DM Sans" font-size="7">❄️</text>
+              <!-- Taiga (kald, middels nedbør) -->
+              <ellipse cx="80" cy="110" rx="24" ry="20" fill="rgba(60,160,80,.2)" stroke="rgba(60,160,80,.4)" stroke-width="1.2"/>
+              <text x="80" y="108" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(60,160,80,.7)">Taiga</text>
+              <text x="80" y="118" text-anchor="middle" font-family="DM Sans" font-size="7">🌲</text>
+              <!-- Temperert skog -->
+              <ellipse cx="130" cy="90" rx="28" ry="22" fill="rgba(100,200,100,.2)" stroke="rgba(100,200,100,.4)" stroke-width="1.2"/>
+              <text x="130" y="88" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(100,200,100,.7)">Temperert</text>
+              <text x="130" y="100" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(100,200,100,.6)">skog</text>
+              <!-- Savanne -->
+              <ellipse cx="185" cy="130" rx="28" ry="20" fill="rgba(220,180,60,.2)" stroke="rgba(220,180,60,.4)" stroke-width="1.2"/>
+              <text x="185" y="128" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,180,60,.7)">Savanne</text>
+              <text x="185" y="140" text-anchor="middle" font-family="DM Sans" font-size="7">🌾</text>
+              <!-- Ørkener -->
+              <ellipse cx="195" cy="165" rx="26" ry="14" fill="rgba(240,200,100,.15)" stroke="rgba(240,200,100,.35)" stroke-width="1.2"/>
+              <text x="195" y="163" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,200,100,.6)">Ørken</text>
+              <text x="195" y="173" text-anchor="middle" font-family="DM Sans" font-size="7">🏜️</text>
+              <!-- Tropisk regnskog -->
+              <ellipse cx="225" cy="55" rx="32" ry="28" fill="rgba(30,200,100,.25)" stroke="rgba(30,200,100,.5)" stroke-width="1.5"/>
+              <text x="225" y="50" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(30,200,100,.8)" font-weight="600">Tropisk</text>
+              <text x="225" y="62" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(30,200,100,.7)">regnskog</text>
+              <text x="225" y="74" text-anchor="middle" font-family="DM Sans" font-size="7">🌴</text>
+            </g>
+            <!-- Biodiversitet gradient -->
+            <rect x="10" y="206" width="260" height="48" rx="9" fill="rgba(74,222,128,.04)" stroke="rgba(74,222,128,.15)" stroke-width="1"/>
+            <text x="140" y="220" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.55)" font-weight="600">BIODIVERSITET – ANTALL LANDARTER GLOBALT</text>
+            <g font-family="DM Sans" font-size="8" text-anchor="middle">
+              <text x="38"  y="238" fill="rgba(180,220,240,.5)">Tundra</text><text x="38"  y="248" fill="rgba(180,220,240,.4)">~500</text>
+              <text x="90"  y="238" fill="rgba(60,160,80,.5)">Taiga</text><text x="90"  y="248" fill="rgba(60,160,80,.4)">~2000</text>
+              <text x="148" y="238" fill="rgba(100,200,100,.5)">Temp.</text><text x="148" y="248" fill="rgba(100,200,100,.4)">~5000</text>
+              <text x="202" y="238" fill="rgba(220,180,60,.5)">Savanne</text><text x="202" y="248" fill="rgba(220,180,60,.4)">~15000</text>
+              <text x="255" y="238" fill="rgba(30,200,100,.65)">Regnskog</text><text x="255" y="248" fill="rgba(30,200,100,.55)">~100 000+</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Stoffkretsløp -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,160,255,.1);color:#60a0ff;border:1px solid rgba(96,160,255,.2)">🔄 Kretsløp</div>
+          <h3 class="k-tittel">Karbonkretsløpet og nitrogenkretsløpet</h3>
+          <p class="k-ingress">Karbon og nitrogen sykler kontinuerlig mellom atmosfæren, havet, jorda og levende organismer. Menneskelig aktivitet har forstyrret begge kretsløpene.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Karbonkretsløpet:</strong> CO₂ i luft → fotosyntese (produsenter) → celleånding (alle organismer) → CO₂ tilbake. Langsiktig lager: kalkstein, kull, olje (fossile brensler). Menneskene frigjør lagret karbon ~100× raskere enn naturen lagrer det.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Nitrogenkretsløpet:</strong> N₂ (80% av lufta) kan ikke brukes direkte av planter. Nitrogenbindende bakterier (Rhizobium i belgvekstrøtter, Azotobacter) binder N₂ → NH₄⁺ (ammonium) → nitrifikasjon → NO₃⁻ (nitrat) → planteopptak. Denitrifikasjon: NO₃⁻ → N₂ tilbake.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Vannkretsløpet:</strong> Fordampning (hav, land) → skydannelse → nedbør → avrenning/grunnvann → hav. Planter bidrar via transpirasjon (~70% av nedbøren over regnskoger er resirkulert via transpirering).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Menneskelig påvirkning:</strong> CO₂-utslipp: +48% over førindustriell nivå. Kunstgjødsel frigjør reaktivt nitrogen som forstyrrer nitrogenkretsløpet → algeoppblomstring (eutrofiering), havets «døde soner».</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,255,.6)" letter-spacing=".08em">KARBONKRETSLØPET</text>
+            <defs><marker id="ko-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(74,222,128,.7)"/></marker>
+            <marker id="ko-arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(251,191,36,.7)"/></marker>
+            <marker id="ko-arr3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,96,96,.7)"/></marker></defs>
+            <!-- Atmosfære -->
+            <rect x="70" y="26" width="140" height="26" rx="8" fill="rgba(96,160,255,.12)" stroke="rgba(96,160,255,.4)" stroke-width="1.2"/>
+            <text x="140" y="43" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,255,.75)" font-weight="600">Atmosfære (CO₂)</text>
+            <!-- Planter -->
+            <rect x="30" y="110" width="80" height="28" rx="7" fill="rgba(74,222,128,.12)" stroke="rgba(74,222,128,.4)" stroke-width="1.2"/>
+            <text x="70" y="127" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(74,222,128,.7)" font-weight="600">🌿 Planter</text>
+            <!-- Dyr -->
+            <rect x="170" y="110" width="80" height="28" rx="7" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.35)" stroke-width="1.2"/>
+            <text x="210" y="127" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,191,36,.65)" font-weight="600">🐾 Dyr</text>
+            <!-- Jord/nedbrytere -->
+            <rect x="90" y="190" width="100" height="26" rx="7" fill="rgba(160,100,60,.15)" stroke="rgba(160,100,60,.4)" stroke-width="1.2"/>
+            <text x="140" y="206" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,100,60,.7)" font-weight="600">🍂 Jord / nedbrytere</text>
+            <!-- Fossile brensler -->
+            <rect x="14" y="190" width="68" height="26" rx="7" fill="rgba(100,100,120,.15)" stroke="rgba(100,100,120,.3)" stroke-width="1.2"/>
+            <text x="48" y="206" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(100,100,120,.6)">⛽ Fossil</text>
+            <!-- Piler -->
+            <!-- Fotosyntese: CO2 → Planter -->
+            <path d="M110,52 Q80,70 80,108" fill="none" stroke="rgba(74,222,128,.6)" stroke-width="2" marker-end="url(#ko-arr)"/>
+            <text x="62" y="82" font-family="DM Sans" font-size="7.5" fill="rgba(74,222,128,.45)">Fotosyntese</text>
+            <!-- Celleånding: Planter → CO2 -->
+            <path d="M85,110 Q100,75 120,54" fill="none" stroke="rgba(96,160,255,.5)" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#ko-arr2)"/>
+            <!-- Spising: Planter → Dyr -->
+            <path d="M112,124 L168,124" fill="none" stroke="rgba(251,191,36,.6)" stroke-width="2" marker-end="url(#ko-arr2)"/>
+            <text x="140" y="118" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.4)">spising</text>
+            <!-- Respirasjon: Dyr → CO2 -->
+            <path d="M200,110 Q185,75 162,54" fill="none" stroke="rgba(96,160,255,.5)" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#ko-arr2)"/>
+            <text x="204" y="82" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,255,.35)">Respirasjon</text>
+            <!-- Nedbrytning → CO2 -->
+            <path d="M140,190 Q140,175 140,160 Q140,145 150,134" fill="none" stroke="rgba(160,100,60,.5)" stroke-width="1.5" marker-end="url(#ko-arr)"/>
+            <!-- Fossil → CO2 (rød, menneskeskapt) -->
+            <path d="M48,190 Q40,160 80,58" fill="none" stroke="rgba(240,96,96,.5)" stroke-width="2" stroke-dasharray="5 2" marker-end="url(#ko-arr3)"/>
+            <text x="22" y="140" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.45)" transform="rotate(-75,22,140)">Utslipp ⚠️</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Bærekraft og trusler -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.2)">⚠️ Bærekraft</div>
+          <h3 class="k-tittel">Trusler mot biodiversitet og bærekraft</h3>
+          <p class="k-ingress">Vi er inne i den sjette masseutryddelsen – drevet av menneskelig aktivitet. Hastigheten er 100–1000× høyere enn den naturlige bakgrunnsraten.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🏗️</span><div><strong>Habitattap (største trussel):</strong> Avskoging, drenering av våtmark, byutvikling. ~75% av landoverflaten er forandret av mennesker. Fragmentering av habitat isolerer populasjoner og reduserer genetisk mangfold.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Klimaendringer:</strong> Endrer utbredelsesområder, forstyrrer fenologi (timing av blomstring, trekk, yngling). Korallbleking: vann over 1°C over normalt i 4 uker → koralldød. Havforsuring (CO₂ + H₂O → H₂CO₃) truer skalldyr.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">👾</span><div><strong>Fremmede arter:</strong> Introduserte arter uten naturlige fiender kan ekspandere ukontrollert og utkonkurrere stedegne arter. Eks: mink i Norge, signalkreps i Sverige, japansk pileurt i Europa.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Kaskadeeffekter:</strong> Fjerning av nøkkelarter kan kollapse hele økosystemet. Ulv tilbake i Yellowstone: ulv → elg beiter mindre → krattskog øker → elver stabiliseres → bever kommer tilbake → biodiversitet øker. «Trofisk kaskade».</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#040a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,96,.6)" letter-spacing=".08em">TROFISK KASKADE – YELLOWSTONE</text>
+            <defs><marker id="y-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,96,96,.7)"/></marker>
+            <marker id="y-arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(74,222,128,.7)"/></marker></defs>
+            <!-- Uten ulv -->
+            <text x="70" y="32" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.6)" font-weight="600">Uten ulv</text>
+            <text x="70" y="52" text-anchor="middle" font-size="14">🫎</text>
+            <text x="70" y="66" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.5)">Elg: mange</text>
+            <path d="M70,70 L70,82" stroke="rgba(240,96,96,.4)" stroke-width="1.5" marker-end="url(#y-arr)"/>
+            <text x="70" y="96" text-anchor="middle" font-size="12">🌿</text>
+            <text x="70" y="110" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.5)">Planter: lite</text>
+            <path d="M70,114 L70,126" stroke="rgba(240,96,96,.4)" stroke-width="1.5" marker-end="url(#y-arr)"/>
+            <text x="70" y="140" text-anchor="middle" font-size="12">🌊</text>
+            <text x="70" y="154" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.5)">Elver: ustabile</text>
+            <text x="70" y="170" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.4)">Bever: borte</text>
+            <!-- Midtpil -->
+            <path d="M100,110 Q140,110 170,110" fill="none" stroke="rgba(74,222,128,.5)" stroke-width="2" stroke-dasharray="5 3"/>
+            <text x="140" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.55)" font-weight="600">Ulv tilbake!</text>
+            <text x="140" y="116" text-anchor="middle" font-family="DM Sans" font-size="10">🐺</text>
+            <!-- Med ulv -->
+            <text x="210" y="32" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.6)" font-weight="600">Med ulv</text>
+            <text x="210" y="52" text-anchor="middle" font-size="14">🫎</text>
+            <text x="210" y="66" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.55)">Elg: kontrollert</text>
+            <path d="M210,70 L210,82" stroke="rgba(74,222,128,.4)" stroke-width="1.5" marker-end="url(#y-arr2)"/>
+            <text x="210" y="96" text-anchor="middle" font-size="12">🌿</text>
+            <text x="210" y="110" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.55)">Planter: rik</text>
+            <path d="M210,114 L210,126" stroke="rgba(74,222,128,.4)" stroke-width="1.5" marker-end="url(#y-arr2)"/>
+            <text x="210" y="140" text-anchor="middle" font-size="12">🌊</text>
+            <text x="210" y="154" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.55)">Elver: stabile</text>
+            <text x="210" y="168" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(74,222,128,.45)">Bever: tilbake!</text>
+            <!-- Bærekraftsmål -->
+            <rect x="10" y="184" width="260" height="68" rx="10" fill="rgba(74,222,128,.04)" stroke="rgba(74,222,128,.15)" stroke-width="1"/>
+            <text x="140" y="198" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(74,222,128,.55)" font-weight="600">FNS BÆREKRAFTSMÅL (SDG) – RELEVANTE</text>
+            <g font-family="DM Sans" font-size="8" fill="rgba(232,248,236,.5)">
+              <text x="22" y="214">🌊 SDG 14: Livet i havet</text>
+              <text x="22" y="228">🌿 SDG 15: Livet på land</text>
+              <text x="150" y="214">🌡️ SDG 13: Klimahandling</text>
+              <text x="150" y="228">🥗 SDG 2: Bærekraftig mat</text>
+              <text x="80" y="244" fill="rgba(74,222,128,.45)">30×30: beskytte 30% av jord og hav innen 2030</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:600px">Økologi – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:820px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#4ade80;display:block;margin-bottom:4px">🌿 Grunnlag</strong>Individ→populasjon→samfunn→økosystem→biom→biosfære · Abiotisk vs biotisk · Nisje · Energiflyt (enveis) vs stoffkretsløp (syklisk)</div>
+            <div style="padding:14px;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#4ade80;display:block;margin-bottom:4px">🌱 Næringsnett</strong>TN1: produsenter · TN2: herbivorer · TN3+: karnivorer · 10%-regelen · Nedbrytere frigjør næring · Energipyramide</div>
+            <div style="padding:14px;background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#fbbf24;display:block;margin-bottom:4px">📈 Populasjon</strong>J-kurve (eksponentiell) · S-kurve (logistisk, bæreevne K) · Rovdyr-byttedyr-syklus · Tetthetsgavhengige faktorer</div>
+            <div style="padding:14px;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#4ade80;display:block;margin-bottom:4px">🌍 Biomer</strong>Tropisk regnskog (maks biodiversitet) · Taiga · Tundra (permafrost, CO₂-lager) · Savanne · Hav (71% av jorda)</div>
+            <div style="padding:14px;background:rgba(96,160,255,.04);border:1px solid rgba(96,160,255,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#60a0ff;display:block;margin-bottom:4px">🔄 Kretsløp</strong>Karbonkretsløp (fotosyntese/respirasjon, fossilbrennstoff) · Nitrogenkretsløp (binding, nitrifikasjon, denitrifikasjon) · Eutrofiering</div>
+            <div style="padding:14px;background:rgba(240,96,96,.04);border:1px solid rgba(240,96,96,.15);border-radius:12px;font-size:.78rem;color:rgba(232,248,236,.65);line-height:1.6"><strong style="color:#f06060;display:block;margin-bottom:4px">⚠️ Bærekraft</strong>6. masseutryddelse · Habitattap > klimaendringer > fremmedarter · Trofisk kaskade · SDG 13, 14, 15 · 30×30-målet</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- INTERAKTIVT NÆRINGSNETT -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Interaktivt næringsnett – skogen</div><div class="sep-r"></div></div>
+  <div class="nett-wrapper">
+    <div class="nett-tittel">Klikk på en art for å se dens rolle i næringsnettet</div>
+    <div class="nett-sub">Hvem spiser hvem? Hva skjer hvis en art forsvinner?</div>
+    <div class="nett-layout">
+      <div class="nett-canvas-wrap">
+        <canvas id="nett-canvas" width="460" height="360" style="border-radius:14px;background:rgba(0,0,0,.3);max-width:100%"></canvas>
+      </div>
+      <div class="nett-panel">
+        <h4>🌿 Velg art</h4>
+        <div id="art-knapper"></div>
+        <div class="art-info" id="art-info">Klikk på en art i næringsnettet eller bruk knappene for å lære mer.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPULASJONSSIMULATOR -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Populasjonssimulator</div><div class="sep-r"></div></div>
+  <div class="pop-wrapper">
+    <div class="nett-tittel" style="margin-bottom:4px">Logistisk vekst – juster parametere og se populasjonsutviklingen</div>
+    <div class="nett-sub">Se hvordan bæreevne (K), vekstrate (r) og startpopulasjon påvirker kurven</div>
+    <div class="pop-kontroll">
+      <div class="pop-felt">
+        <label>Startpopulasjon (N₀)</label>
+        <input type="range" id="sl-n0" min="5" max="200" value="20" oninput="oppdaterSim()">
+        <span id="val-n0">20</span>
+      </div>
+      <div class="pop-felt">
+        <label>Vekstrate (r)</label>
+        <input type="range" id="sl-r" min="1" max="30" value="8" oninput="oppdaterSim()">
+        <span id="val-r">0.8</span>
+      </div>
+      <div class="pop-felt">
+        <label>Bæreevne (K)</label>
+        <input type="range" id="sl-k" min="50" max="1000" value="300" oninput="oppdaterSim()">
+        <span id="val-k">300</span>
+      </div>
+    </div>
+    <div class="pop-knapper">
+      <button class="pop-btn" onclick="leggTilRovdyr()">+ Legg til rovdyr</button>
+      <button class="pop-btn rød" onclick="fjernRovdyr()">− Fjern rovdyr</button>
+      <button class="pop-btn" onclick="tilbakestill()">Tilbakestill</button>
+    </div>
+    <canvas id="pop-canvas" width="900" height="260" style="width:100%;border-radius:14px;background:rgba(0,0,0,.25)"></canvas>
+    <div class="pop-status" id="pop-status"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+// ═══ NÆRINGSNETT ═══
+const ARTER = [
+  { id: 'sol',     navn: 'Sol (energikilde)', ikon: '☀️', x: 230, y: 30,  trn: 0, farge: 'rgba(251,191,36,.8)',
+    spiser: [], spistAv: ['gras','bær'],
+    info: 'Solen er energikilden for alt liv. Fotosyntesen omdanner sollys til kjemisk energi i plantemassen. Bare ~1% av solenergi som treffer bakken fanges opp av planter.',
+    trussel: 'Solen kan ikke fjernes – men skygging (skogdød) reduserer primærproduksjonen.' },
+  { id: 'gras',   navn: 'Gras og urter', ikon: '🌿', x: 100, y: 110, trn: 1, farge: 'rgba(74,222,128,.8)',
+    spiser: ['sol'], spistAv: ['rein','hare','mus'],
+    info: 'Gras og urter er primærprodusenter (TN1). De omdanner sollys til organisk stoff via fotosyntese. De er mat for planteeterene og danner grunnlaget for næringsnettet.',
+    trussel: 'Uten gras og urter kollapser alle planteeterene, og deretter alle rovdyrene.' },
+  { id: 'bær',    navn: 'Bær og frukter', ikon: '🫐', x: 360, y: 110, trn: 1, farge: 'rgba(134,239,172,.8)',
+    spiser: ['sol'], spistAv: ['rein','rødrev','bjørn'],
+    info: 'Bær er næringsrike frukter som lokker dyr til å spise dem og spre frøene. Blåbær, tyttebær og molter er viktige norske eksempler. Viktig matkilde om høsten.',
+    trussel: 'Bær er sesongsavhengige – klimaendringer forskyver bærsesongen og kan mismatch med dyrs behov.' },
+  { id: 'hare',   navn: 'Hare', ikon: '🐇', x: 90,  y: 200, trn: 2, farge: 'rgba(200,230,200,.75)',
+    spiser: ['gras'], spistAv: ['rødrev','gaupe','rovfugl'],
+    info: 'Haren er primærkonsument (TN2) og beiter på gras, urter og bark. I Norge er snøharen vanligst. Haren er et nøkkelbyttedyr for mange rovdyr. Kjent for Lotka-Volterra-syklusen med gaupen.',
+    trussel: 'Uten hare: rødrev og gaupe får matmangel → bestanden faller. Harepopulasjonen svinger naturlig med ~10-årsperiode.' },
+  { id: 'mus',    navn: 'Mus og lemen', ikon: '🐭', x: 230, y: 200, trn: 2, farge: 'rgba(220,210,200,.7)',
+    spiser: ['gras'], spistAv: ['rødrev','gaupe','rovfugl','ugle'],
+    info: 'Mus og lemen er viktige primærkonsumenter og byttedyr. Lemenår hvert 3.–5. år gir en massiv ressurs for alle rovdyr. Mange rovdyrs reproduksjon er synkronisert med lemenår.',
+    trussel: 'Uten mus/lemen: fjellrev og mange rovfugler kan ikke reprodusere. Lemenår er en drivkraft for hele fjellenes næringsnett.' },
+  { id: 'rein',   navn: 'Rein og elg', ikon: '🦌', x: 370, y: 200, trn: 2, farge: 'rgba(200,200,180,.7)',
+    spiser: ['gras','bær'], spistAv: ['gaupe','bjørn','ulv'],
+    info: 'Store planteetere som rein og elg er viktige primærkonsumenter. Elgen er et «nøkkelarter» i boreal skog – beiting former vegetasjonen. Tamrein er viktig for samisk kultur.',
+    trussel: 'Klimaendringer rammer reinens beiteforhold – regn-på-snø-hendelser iser beitet og kan drepe reinflokker.' },
+  { id: 'rødrev',  navn: 'Rødrev', ikon: '🦊', x: 100, y: 295, trn: 3, farge: 'rgba(240,140,60,.75)',
+    spiser: ['hare','mus'], spistAv: ['gaupe','ulv'],
+    info: 'Rødrev er en opportunistisk altetende (TN3) som spiser mus, hare, bær, insekter og åtsel. Meget tilpasningsdyktig – finnes i byer til høyfjell. Konkurrerer med fjellrev om territorium.',
+    trussel: 'Rødrev har ekspandert nordover pga. klimaendringer og utkonkurrerer den rødlistede fjellreven.' },
+  { id: 'rovfugl', navn: 'Rovfugl (kongeørn)', ikon: '🦅', x: 230, y: 295, trn: 3, farge: 'rgba(180,160,120,.75)',
+    spiser: ['hare','mus','rein'], spistAv: [],
+    info: 'Kongeørnen er et topprovdyr (TN4) som spiser hare, rein-kalver og mus. Store territorier (50–200 km²). Langlevet (opptil 30 år). Paret er lojalt – bruker samme reir i årevis.',
+    trussel: 'Kongeørn var sterkt truet av jakt og forgiftning på 1900-tallet. Nå freda i Norge med ~1000 hekkende par.' },
+  { id: 'gaupe',  navn: 'Gaupe', ikon: '🐱', x: 370, y: 295, trn: 3, farge: 'rgba(220,200,160,.75)',
+    spiser: ['hare','rein','rødrev'], spistAv: [],
+    info: 'Gaupen er Norges eneste storviltrovkatt og et topprovdyr. Spesialutruster for å ta hare og rein. Solitær og sky. Ca. 400 individer i Norge. Forvaltning er politisk kontroversielt.',
+    trussel: 'Konflikter med sauehold fører til kvotejakt. Uten gaupe øker hare og rein → overpopulasjon → overbeiting.' },
+  { id: 'bjørn',  navn: 'Bjørn', ikon: '🐻', x: 470, y: 295, trn: 3, farge: 'rgba(180,140,100,.75)',
+    spiser: ['bær','rein'], spistAv: [],
+    info: 'Bjørnen er altetende (omnivore, TN3-4) – spiser bær, sopp, rot, fisk, insekter og pattedyr. 90% av dietten er plantemateriale. Ca. 125–165 bjørner i Norge. Viktig frøspredere via avføring.',
+    trussel: 'Bjørnens store territorier (100–1000 km²) krever sammenhengende natur. Fragmentering av habitat er den største langsiktige trusselen.' },
+];
+
+let aktivArt = null;
+const canvas = document.getElementById('nett-canvas');
+const ctx = canvas.getContext('2d');
+
+// Bygg knapper
+const knappDiv = document.getElementById('art-knapper');
+ARTER.filter(a => a.id !== 'sol').forEach(art => {
+  const btn = document.createElement('button');
+  btn.className = 'art-knapp';
+  btn.innerHTML = `<span class="art-ikon">${art.ikon}</span>${art.navn}`;
+  btn.onclick = () => velgArt(art.id);
+  btn.id = 'btn-' + art.id;
+  knappDiv.appendChild(btn);
+});
+
+function velgArt(id) {
+  aktivArt = id;
+  document.querySelectorAll('.art-knapp').forEach(b => b.classList.toggle('aktiv', b.id === 'btn-' + id));
+  const art = ARTER.find(a => a.id === id);
+  if (!art) return;
+  const spiserNavn = art.spiser.map(s => ARTER.find(a => a.id === s)?.ikon + ' ' + ARTER.find(a => a.id === s)?.navn).filter(Boolean).join(', ') || '–';
+  const spistAvNavn = art.spistAv.map(s => ARTER.find(a => a.id === s)?.ikon + ' ' + ARTER.find(a => a.id === s)?.navn).filter(Boolean).join(', ') || '–';
+  document.getElementById('art-info').innerHTML = `
+    <strong style="color:var(--accent)">${art.ikon} ${art.navn}</strong> <em style="color:var(--dim);font-size:.75rem">(TN ${art.trn || 1})</em><br>
+    <span style="color:var(--dim);font-size:.75rem">Spiser:</span> ${spiserNavn}<br>
+    <span style="color:var(--dim);font-size:.75rem">Spises av:</span> ${spistAvNavn}<br><br>
+    ${art.info}<br><br>
+    <span style="color:rgba(240,96,96,.7);font-size:.75rem">⚠️ ${art.trussel}</span>`;
+  tegnNett();
+}
+
+function tegnNett() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(4,10,6,.9)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Skaler koordinater
+  const skx = W / 560, sky = H / 360;
+  const pos = {};
+  ARTER.forEach(a => { pos[a.id] = { x: a.x * skx, y: a.y * sky }; });
+
+  // Tegn piler (energiflyt)
+  ARTER.forEach(art => {
+    art.spiser.forEach(bytteId => {
+      if (bytteId === 'sol' && art.id !== 'gras' && art.id !== 'bær') return;
+      const fra = pos[bytteId];
+      const til = pos[art.id];
+      if (!fra || !til) return;
+      const dx = til.x - fra.x, dy = til.y - fra.y;
+      const len = Math.sqrt(dx*dx + dy*dy);
+      const r = 18;
+      const ex = til.x - dx/len*r, ey = til.y - dy/len*r;
+      const sx = fra.x + dx/len*r, sy = fra.y + dy/len*r;
+      const erAktiv = aktivArt && (art.id === aktivArt || bytteId === aktivArt);
+      ctx.strokeStyle = erAktiv ? 'rgba(74,222,128,.85)' : 'rgba(74,222,128,.15)';
+      ctx.lineWidth = erAktiv ? 2.5 : 1;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+      // Pil
+      const angle = Math.atan2(dy, dx);
+      ctx.fillStyle = erAktiv ? 'rgba(74,222,128,.85)' : 'rgba(74,222,128,.15)';
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - 8*Math.cos(angle-0.4), ey - 8*Math.sin(angle-0.4));
+      ctx.lineTo(ex - 8*Math.cos(angle+0.4), ey - 8*Math.sin(angle+0.4));
+      ctx.closePath(); ctx.fill();
+    });
+  });
+
+  // Tegn noder
+  ARTER.forEach(art => {
+    const p = pos[art.id];
+    const erAktiv = art.id === aktivArt;
+    const erRelert = aktivArt && (
+      (ARTER.find(a => a.id === aktivArt)?.spiser.includes(art.id)) ||
+      (ARTER.find(a => a.id === aktivArt)?.spistAv.includes(art.id))
+    );
+
+    ctx.beginPath(); ctx.arc(p.x, p.y, 18, 0, Math.PI*2);
+    ctx.fillStyle = erAktiv ? 'rgba(74,222,128,.25)' : erRelert ? 'rgba(74,222,128,.12)' : 'rgba(255,255,255,.05)';
+    ctx.fill();
+    ctx.strokeStyle = erAktiv ? 'rgba(74,222,128,.9)' : erRelert ? 'rgba(74,222,128,.5)' : 'rgba(255,255,255,.15)';
+    ctx.lineWidth = erAktiv ? 2 : 1;
+    ctx.stroke();
+
+    ctx.font = `${14 * Math.min(skx, sky)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(art.ikon, p.x, p.y);
+
+    ctx.font = `${10 * Math.min(skx, sky)}px DM Sans`;
+    ctx.fillStyle = erAktiv ? 'rgba(74,222,128,.9)' : 'rgba(232,248,236,.5)';
+    ctx.fillText(art.navn.split(' ')[0], p.x, p.y + 24 * sky);
+  });
+}
+
+// Klikk på canvas
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const skx = canvas.width / 560, sky = canvas.height / 360;
+  let nærmest = null, minDist = 999;
+  ARTER.forEach(art => {
+    const dx = art.x * skx - mx, dy = art.y * sky - my;
+    const d = Math.sqrt(dx*dx + dy*dy);
+    if (d < minDist) { minDist = d; nærmest = art; }
+  });
+  if (nærmest && minDist < 25) velgArt(nærmest.id);
+});
+
+tegnNett();
+
+// ═══ POPULASJONSSIMULATOR ═══
+let harRovdyr = false;
+
+function oppdaterSim() {
+  const n0 = parseInt(document.getElementById('sl-n0').value);
+  const r = parseInt(document.getElementById('sl-r').value) / 10;
+  const K = parseInt(document.getElementById('sl-k').value);
+  document.getElementById('val-n0').textContent = n0;
+  document.getElementById('val-r').textContent = r.toFixed(1);
+  document.getElementById('val-k').textContent = K;
+  tegnSim(n0, r, K, harRovdyr);
+}
+
+function leggTilRovdyr() { harRovdyr = true; oppdaterSim(); }
+function fjernRovdyr() { harRovdyr = false; oppdaterSim(); }
+function tilbakestill() {
+  harRovdyr = false;
+  document.getElementById('sl-n0').value = 20;
+  document.getElementById('sl-r').value = 8;
+  document.getElementById('sl-k').value = 300;
+  oppdaterSim();
+}
+
+function tegnSim(n0, r, K, rovdyr) {
+  const pc = document.getElementById('pop-canvas');
+  const ctx2 = pc.getContext('2d');
+  const W = pc.width, H = pc.height;
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = 'rgba(4,10,6,.9)';
+  ctx2.fillRect(0, 0, W, H);
+
+  const STEG = 200, MARGIN = { top: 20, right: 30, bottom: 40, left: 60 };
+  const pW = W - MARGIN.left - MARGIN.right;
+  const pH = H - MARGIN.top - MARGIN.bottom;
+
+  // Beregn kurver
+  const byttedyr = [n0], rovdyrArr = rovdyr ? [n0 * 0.1] : [];
+  const rPrey = r, rPred = 0.6, a = 0.01, b = 0.008, d = 0.4;
+
+  for (let i = 1; i < STEG; i++) {
+    const N = byttedyr[i-1];
+    if (!rovdyr) {
+      const dN = r * N * (K - N) / K;
+      byttedyr.push(Math.max(0, N + dN));
+    } else {
+      const P = rovdyrArr[i-1];
+      const dN = rPrey * N * (K - N) / K - a * N * P;
+      const dP = b * N * P - d * P;
+      byttedyr.push(Math.max(0, N + dN));
+      rovdyrArr.push(Math.max(0, P + dP));
+    }
+  }
+
+  const maks = Math.max(...byttedyr, ...(rovdyrArr.length ? rovdyrArr : [0]), K) * 1.1;
+
+  // Akser
+  ctx2.strokeStyle = 'rgba(232,248,236,.2)';
+  ctx2.lineWidth = 1.5;
+  ctx2.beginPath(); ctx2.moveTo(MARGIN.left, MARGIN.top); ctx2.lineTo(MARGIN.left, H - MARGIN.bottom); ctx2.stroke();
+  ctx2.beginPath(); ctx2.moveTo(MARGIN.left, H - MARGIN.bottom); ctx2.lineTo(W - MARGIN.right, H - MARGIN.bottom); ctx2.stroke();
+
+  // K-linje
+  const yK = MARGIN.top + pH * (1 - K / maks);
+  ctx2.strokeStyle = 'rgba(251,191,36,.35)';
+  ctx2.lineWidth = 1;
+  ctx2.setLineDash([6, 3]);
+  ctx2.beginPath(); ctx2.moveTo(MARGIN.left, yK); ctx2.lineTo(W - MARGIN.right, yK); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.fillStyle = 'rgba(251,191,36,.5)';
+  ctx2.font = '11px DM Sans';
+  ctx2.textAlign = 'left';
+  ctx2.fillText('K = ' + K, W - MARGIN.right + 4, yK + 4);
+
+  // Byttedyr-kurve
+  ctx2.strokeStyle = 'rgba(74,222,128,.85)';
+  ctx2.lineWidth = 2.5;
+  ctx2.beginPath();
+  byttedyr.forEach((n, i) => {
+    const x = MARGIN.left + (i / (STEG-1)) * pW;
+    const y = MARGIN.top + pH * (1 - n / maks);
+    i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+  });
+  ctx2.stroke();
+
+  // Rovdyr-kurve
+  if (rovdyr && rovdyrArr.length) {
+    ctx2.strokeStyle = 'rgba(240,96,96,.75)';
+    ctx2.lineWidth = 2;
+    ctx2.beginPath();
+    rovdyrArr.forEach((p, i) => {
+      const x = MARGIN.left + (i / (STEG-1)) * pW;
+      const y = MARGIN.top + pH * (1 - p / maks);
+      i === 0 ? ctx2.moveTo(x, y) : ctx2.lineTo(x, y);
+    });
+    ctx2.stroke();
+  }
+
+  // Labels
+  ctx2.font = '11px DM Sans';
+  ctx2.fillStyle = 'rgba(74,222,128,.7)';
+  ctx2.textAlign = 'left';
+  ctx2.fillText('🌿 Byttedyr', MARGIN.left + 10, MARGIN.top + 16);
+  if (rovdyr) {
+    ctx2.fillStyle = 'rgba(240,96,96,.7)';
+    ctx2.fillText('🐺 Rovdyr (×10)', MARGIN.left + 10, MARGIN.top + 30);
+  }
+
+  // Y-akse labels
+  ctx2.fillStyle = 'rgba(232,248,236,.3)';
+  ctx2.textAlign = 'right';
+  [0, 0.25, 0.5, 0.75, 1].forEach(frac => {
+    const val = Math.round(maks * frac);
+    const y = MARGIN.top + pH * (1 - frac);
+    ctx2.fillText(val, MARGIN.left - 5, y + 4);
+    ctx2.strokeStyle = 'rgba(232,248,236,.05)';
+    ctx2.lineWidth = 1;
+    ctx2.beginPath(); ctx2.moveTo(MARGIN.left, y); ctx2.lineTo(W - MARGIN.right, y); ctx2.stroke();
+  });
+
+  // X-akse labels
+  ctx2.fillStyle = 'rgba(232,248,236,.3)';
+  ctx2.textAlign = 'center';
+  [0, 50, 100, 150, 200].forEach(t => {
+    const x = MARGIN.left + (t / (STEG-1)) * pW;
+    ctx2.fillText('t=' + t, x, H - 8);
+  });
+
+  // Statusmelding
+  const sluttN = Math.round(byttedyr[STEG-1]);
+  const erStabil = Math.abs(sluttN - K) / K < 0.05;
+  document.getElementById('pop-status').textContent = rovdyr
+    ? `Med rovdyr svinger populasjonene i sykler (Lotka-Volterra). Siste byttedyr: ${sluttN}`
+    : erStabil
+      ? `✓ Populasjonen stabiliserer seg nær bæreevnen K = ${K} (logistisk vekst)`
+      : `Populasjonen er på vei mot K = ${K}. Nåværende størrelse: ${sluttN}`;
+}
+
+oppdaterSim();
+</script>
+</body>
+</html>

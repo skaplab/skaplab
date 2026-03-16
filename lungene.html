@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Lungene og åndedrett</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1218;--border:rgba(125,211,252,.07);
+  --text:#e8f4ff;--dim:#2a4860;
+  --accent:#7dd3fc;
+  --font-d:'Playfair Display',serif;--font-b:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 55% at 50% 40%,rgba(125,211,252,.025),transparent)}
+nav{position:sticky;top:0;z-index:300;background:rgba(6,10,14,.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:12px}
+.nav-lnk{font-size:.82rem;font-weight:500;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.9rem;color:var(--accent)}
+.layout{position:relative;z-index:1;display:grid;grid-template-columns:220px 1fr 220px;
+  max-width:1260px;margin:0 auto;padding:0 16px 60px;gap:0 20px}
+.header{grid-column:1/-1;text-align:center;padding:32px 20px 20px}
+.header h1{font-family:var(--font-d);font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;margin-bottom:6px}
+.header h1 em{font-style:italic;color:var(--accent)}
+.header-sub{font-size:.85rem;color:var(--dim);letter-spacing:.03em}
+.side-panel{padding:16px 0;display:flex;flex-direction:column;gap:7px;align-self:start;position:sticky;top:65px}
+.side-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:8px 4px 4px;font-weight:600}
+.organ-knapp{font-family:var(--font-b);font-size:.78rem;font-weight:500;padding:8px 12px;border-radius:10px;
+  border:1px solid var(--border);background:rgba(255,255,255,.02);color:var(--dim);cursor:pointer;text-align:left;
+  transition:all .2s;display:flex;align-items:center;gap:8px}
+.organ-knapp:hover{border-color:rgba(125,211,252,.3);color:var(--text);background:rgba(125,211,252,.04)}
+.organ-knapp.aktiv{border-color:var(--farge,var(--accent));color:var(--farge,var(--accent));background:rgba(125,211,252,.06)}
+.organ-knapp .dot{width:7px;height:7px;border-radius:50%;background:var(--farge,var(--accent));flex-shrink:0;opacity:.65}
+.organ-knapp.aktiv .dot{opacity:1;box-shadow:0 0 6px var(--farge,var(--accent))}
+.senter{display:flex;flex-direction:column;align-items:center;gap:16px}
+.lungsvg{width:100%;max-width:520px;height:auto;display:block}
+.info-panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:24px;width:100%;max-width:520px;min-height:160px;position:relative;overflow:hidden;transition:all .3s}
+.info-panel::before{content:'';position:absolute;inset:0;border-radius:20px;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,var(--pglow,rgba(125,211,252,.04)),transparent);pointer-events:none}
+.info-tom{display:flex;align-items:center;justify-content:center;height:120px;color:var(--dim);font-size:.85rem;letter-spacing:.04em;text-transform:uppercase}
+.info-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.info-emoji{font-size:2rem}
+.info-navn{font-family:var(--font-d);font-size:1.35rem;font-weight:700;color:var(--organ-farge,var(--accent))}
+.info-latin{font-size:.78rem;color:var(--dim);font-style:italic;margin-top:1px}
+.info-divider{height:1px;background:var(--border);margin:0 0 14px}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.info-kort{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.info-kort-label{font-size:.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.info-kort-verdi{font-size:.8rem;font-weight:500;color:var(--text);line-height:1.4}
+.info-tekst{font-size:.83rem;line-height:1.7;color:rgba(232,244,255,.8)}
+.info-fakta{margin-top:12px;padding:10px 13px;background:rgba(255,255,255,.02);
+  border-left:3px solid var(--organ-farge,var(--accent));border-radius:0 8px 8px 0;font-size:.8rem;line-height:1.6;color:var(--dim)}
+.hotspot{cursor:pointer;transition:all .2s}
+.hotspot:hover .hf{filter:brightness(1.4) saturate(1.3)}
+.hotspot.aktiv .hf{filter:brightness(1.6) saturate(1.6)}
+.et{font-family:'DM Sans',sans-serif;font-size:9.5px;fill:rgba(255,255,255,.3);font-weight:500}
+.tooltip{position:absolute;background:rgba(6,10,14,.95);border:1px solid rgba(125,211,252,.2);border-radius:8px;
+  padding:5px 10px;font-size:.75rem;color:var(--text);pointer-events:none;white-space:nowrap;
+  transform:translate(-50%,-100%) translateY(-8px);transition:opacity .15s;z-index:10}
+@keyframes pust{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.06)}}
+.pust-anim{transform-origin:center bottom;animation:pust 3s ease-in-out infinite}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side-panel{flex-direction:row;flex-wrap:wrap;position:static}.header{padding:20px 12px 12px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="kroppens_organer.html" class="nav-lnk">Kroppens organer</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Lungene og åndedrett</span>
+</nav>
+<div class="layout">
+  <div class="header">
+    <h1>Lungene – <em>pulmones</em></h1>
+    <p class="header-sub">Klikk på strukturene for å lære mer · 500 ml luft per åndedrag · 20 000 åndedrag per dag</p>
+  </div>
+
+  <!-- VENSTRE PANEL -->
+  <div class="side-panel">
+    <div class="side-label">Luftveier</div>
+    <button class="organ-knapp" style="--farge:#7dd3fc" onclick="velg('nese')"><span class="dot"></span>Nese og munn</button>
+    <button class="organ-knapp" style="--farge:#60c0f0" onclick="velg('svelg')"><span class="dot"></span>Svelg og strupehode</button>
+    <button class="organ-knapp" style="--farge:#40a8e0" onclick="velg('luftrør')"><span class="dot"></span>Luftrør (trakea)</button>
+    <button class="organ-knapp" style="--farge:#2090c8" onclick="velg('bronkier')"><span class="dot"></span>Bronkier og bronkioler</button>
+    <div class="side-label">Lunger</div>
+    <button class="organ-knapp" style="--farge:#c084fc" onclick="velg('høyre')"><span class="dot"></span>Høyre lunge</button>
+    <button class="organ-knapp" style="--farge:#a855f7" onclick="velg('venstre')"><span class="dot"></span>Venstre lunge</button>
+    <button class="organ-knapp" style="--farge:#f0a0c0" onclick="velg('alveol')"><span class="dot"></span>Alveoler</button>
+    <button class="organ-knapp" style="--farge:#e07898" onclick="velg('pleura')"><span class="dot"></span>Lungehinner (pleura)</button>
+  </div>
+
+  <!-- SENTRUM: SVG -->
+  <div class="senter">
+    <div style="position:relative;width:100%;max-width:520px">
+      <svg class="lungsvg" id="lung-svg" viewBox="0 0 520 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="lung-bg" cx="50%" cy="45%" r="65%">
+            <stop offset="0%" stop-color="#0a1520"/><stop offset="100%" stop-color="#030810"/>
+          </radialGradient>
+          <radialGradient id="lung-r" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#b070e0"/><stop offset="100%" stop-color="#703098"/>
+          </radialGradient>
+          <radialGradient id="lung-l" cx="60%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#9050c8"/><stop offset="100%" stop-color="#502080"/>
+          </radialGradient>
+        </defs>
+        <rect width="520" height="500" fill="url(#lung-bg)"/>
+
+        <!-- RIBBEIN (bakgrunn) -->
+        <g fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2" stroke-linecap="round">
+          <path d="M80,130 Q160,110 260,115 Q360,110 440,130"/>
+          <path d="M75,158 Q160,138 260,143 Q360,138 445,158"/>
+          <path d="M72,186 Q160,166 260,171 Q360,166 448,186"/>
+          <path d="M72,214 Q160,194 260,199 Q360,194 448,214"/>
+          <path d="M74,242 Q160,222 260,227 Q360,222 446,242"/>
+          <path d="M80,270 Q160,250 260,255 Q360,250 440,270"/>
+          <path d="M88,298 Q165,280 260,284 Q355,280 432,298"/>
+          <path d="M100,325 Q170,308 260,312 Q350,308 420,325"/>
+        </g>
+
+        <!-- HØYRE LUNGE (venstre i bilde) -->
+        <g class="hotspot pust-anim" id="hot-høyre" onclick="velg('høyre')">
+          <path class="hf" d="M90,140 Q55,180 50,240 Q45,300 65,350 Q85,395 120,415 Q155,430 185,420 Q215,408 225,380 Q235,350 230,300 Q225,250 220,200 Q214,155 200,130 Q185,108 165,110 Q135,110 110,125 Z"
+            fill="url(#lung-r)" stroke="rgba(192,132,252,.4)" stroke-width="1.5" opacity=".85"/>
+          <!-- Lappegrenser -->
+          <path d="M90,200 Q140,195 180,210 Q210,220 225,240" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+          <path d="M70,280 Q130,270 185,285 Q215,295 228,315" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1.5"/>
+          <!-- 3 lapper label -->
+          <text x="100" y="185" font-family="DM Sans" font-size="8" fill="rgba(192,132,252,.45)">Overlapp</text>
+          <text x="100" y="255" font-family="DM Sans" font-size="8" fill="rgba(192,132,252,.4)">Midtlapp</text>
+          <text x="100" y="330" font-family="DM Sans" font-size="8" fill="rgba(192,132,252,.35)">Underlapp</text>
+        </g>
+
+        <!-- VENSTRE LUNGE (høyre i bilde) -->
+        <g class="hotspot pust-anim" id="hot-venstre" onclick="velg('venstre')" style="animation-delay:.15s">
+          <path class="hf" d="M430,140 Q465,180 470,240 Q475,300 455,350 Q435,395 400,415 Q365,430 335,418 Q305,406 295,378 Q285,348 290,298 Q296,250 300,200 Q307,155 322,130 Q337,108 357,110 Q387,110 410,125 Z"
+            fill="url(#lung-l)" stroke="rgba(168,85,247,.4)" stroke-width="1.5" opacity=".85"/>
+          <!-- 2 lapper (venstre har bare 2) -->
+          <path d="M435,220 Q385,215 340,228 Q310,238 294,258" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+          <!-- Hjertehakk -->
+          <path d="M294,290 Q296,310 295,330" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <text x="380" y="195" font-family="DM Sans" font-size="8" fill="rgba(168,85,247,.45)">Overlapp</text>
+          <text x="365" y="300" font-family="DM Sans" font-size="8" fill="rgba(168,85,247,.4)">Underlapp</text>
+        </g>
+
+        <!-- LUFTRØR / TRAKEA -->
+        <g class="hotspot" id="hot-luftrør" onclick="velg('luftrør')">
+          <rect class="hf" x="246" y="50" width="28" height="110" rx="12"
+            fill="rgba(64,168,224,.25)" stroke="rgba(64,168,224,.6)" stroke-width="2"/>
+          <path d="M252,50 L252,160 M262,50 L262,160" fill="none" stroke="rgba(64,168,224,.2)" stroke-width="1"/>
+        </g>
+
+        <!-- BRONKIER (fra trakea til lunger) -->
+        <g class="hotspot" id="hot-bronkier" onclick="velg('bronkier')">
+          <!-- Høyre bronki -->
+          <path class="hf" d="M246,160 Q200,165 185,175 Q170,185 165,195"
+            fill="none" stroke="rgba(32,144,200,.8)" stroke-width="8" stroke-linecap="round"/>
+          <path d="M246,160 Q200,165 185,175 Q170,185 165,195"
+            fill="none" stroke="rgba(125,211,252,.4)" stroke-width="3" stroke-linecap="round"/>
+          <!-- Venstre bronki -->
+          <path class="hf" d="M274,160 Q320,165 335,175 Q350,185 355,195"
+            fill="none" stroke="rgba(32,144,200,.8)" stroke-width="8" stroke-linecap="round"/>
+          <path d="M274,160 Q320,165 335,175 Q350,185 355,195"
+            fill="none" stroke="rgba(125,211,252,.4)" stroke-width="3" stroke-linecap="round"/>
+          <!-- Bronkioler (grener) -->
+          <g fill="none" stroke="rgba(32,144,200,.45)" stroke-width="3" stroke-linecap="round">
+            <path d="M165,195 Q145,210 135,230"/>
+            <path d="M165,195 Q155,215 150,240"/>
+            <path d="M165,195 Q175,215 170,240"/>
+            <path d="M355,195 Q375,210 385,230"/>
+            <path d="M355,195 Q365,215 370,240"/>
+            <path d="M355,195 Q345,215 350,240"/>
+          </g>
+        </g>
+
+        <!-- STRUPEHODE OG SVELG -->
+        <g class="hotspot" id="hot-svelg" onclick="velg('svelg')">
+          <ellipse class="hf" cx="260" cy="35" rx="22" ry="14"
+            fill="rgba(64,192,240,.2)" stroke="rgba(64,192,240,.5)" stroke-width="1.5"/>
+          <text x="260" y="39" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(64,192,240,.7)">Strupehode</text>
+        </g>
+
+        <!-- NESE OG MUNN -->
+        <g class="hotspot" id="hot-nese" onclick="velg('nese')">
+          <ellipse class="hf" cx="260" cy="14" rx="28" ry="10"
+            fill="rgba(125,211,252,.15)" stroke="rgba(125,211,252,.4)" stroke-width="1.5"/>
+          <text x="260" y="18" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(125,211,252,.65)">Nese / munn</text>
+        </g>
+
+        <!-- PLEURA -->
+        <g class="hotspot" id="hot-pleura" onclick="velg('pleura')">
+          <!-- Pleura-linje rundt høyre lunge -->
+          <path class="hf" d="M88,138 Q52,178 47,238 Q42,300 63,352 Q84,398 120,418 Q157,433 188,422 Q220,410 232,382 Q244,354 238,304 Q232,252 228,202 Q221,154 206,128 Q189,104 165,107 Q130,107 107,123 Z"
+            fill="none" stroke="rgba(240,120,160,.35)" stroke-width="2" stroke-dasharray="6 4"/>
+        </g>
+
+        <!-- ALVEOLER (forstørret innsikt) -->
+        <g class="hotspot" id="hot-alveol" onclick="velg('alveol')">
+          <rect class="hf" x="358" y="320" width="148" height="148" rx="14"
+            fill="rgba(240,160,192,.06)" stroke="rgba(240,160,192,.2)" stroke-width="1.5"/>
+          <text x="432" y="338" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,192,.5)">Alveoler – forstørret</text>
+          <!-- Alveol-sekker -->
+          <g fill="rgba(240,160,192,.15)" stroke="rgba(240,160,192,.5)" stroke-width="1.2">
+            <circle cx="395" cy="365" r="16"/>
+            <circle cx="432" cy="358" r="14"/>
+            <circle cx="466" cy="365" r="16"/>
+            <circle cx="390" cy="400" r="15"/>
+            <circle cx="424" cy="396" r="16"/>
+            <circle cx="458" cy="400" r="15"/>
+            <circle cx="408" cy="433" r="13"/>
+            <circle cx="444" cy="430" r="13"/>
+          </g>
+          <!-- Kapillærer rundt alveolene -->
+          <g fill="none" stroke="rgba(224,80,80,.45)" stroke-width="1.5">
+            <circle cx="395" cy="365" r="20"/>
+            <circle cx="432" cy="358" r="18"/>
+            <circle cx="466" cy="365" r="20"/>
+            <circle cx="408" cy="433" r="17"/>
+          </g>
+          <!-- O2/CO2 piler -->
+          <text x="432" y="456" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(125,211,252,.5)">O₂ inn ↓  CO₂ ut ↑</text>
+        </g>
+
+        <!-- MELLOMGULV -->
+        <path d="M60,430 Q160,415 260,418 Q360,415 460,430"
+          fill="none" stroke="rgba(125,211,252,.2)" stroke-width="3" stroke-linecap="round"/>
+        <text x="260" y="448" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(125,211,252,.3)">Mellomgulv (diafragma)</text>
+
+        <!-- Etiketter -->
+        <g class="et">
+          <text x="56" y="160">Pleura</text>
+          <text x="56" y="170">(hinne)</text>
+          <text x="236" y="100">Luftrør</text>
+          <text x="234" y="110">(trakea)</text>
+          <text x="172" y="170">Bronki</text>
+        </g>
+      </svg>
+      <div class="tooltip" id="tooltip" style="opacity:0;left:0;top:0"></div>
+    </div>
+
+    <div class="info-panel" id="info-panel">
+      <div class="info-tom" id="info-tom">👆 Klikk på en struktur for å lære mer</div>
+      <div id="info-innhold" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- HØYRE PANEL -->
+  <div class="side-panel">
+    <div class="side-label">Gassutveksling</div>
+    <button class="organ-knapp" style="--farge:#7dd3fc" onclick="velg('gassutveksling')"><span class="dot"></span>Gassutveksling</button>
+    <button class="organ-knapp" style="--farge:#60e080" onclick="velg('innånding')"><span class="dot"></span>Innånding og utånding</button>
+    <button class="organ-knapp" style="--farge:#40c060" onclick="velg('blodgass')"><span class="dot"></span>O₂ og CO₂ i blodet</button>
+    <div class="side-label">Regulering</div>
+    <button class="organ-knapp" style="--farge:#fbbf24" onclick="velg('diafragma')"><span class="dot"></span>Mellomgulv (diafragma)</button>
+    <button class="organ-knapp" style="--farge:#f0a030" onclick="velg('pustesenteret')"><span class="dot"></span>Pustesenteret</button>
+    <div class="side-label">Sykdom</div>
+    <button class="organ-knapp" style="--farge:#f06060" onclick="velg('astma')"><span class="dot"></span>Astma</button>
+    <button class="organ-knapp" style="--farge:#e04040" onclick="velg('kols')"><span class="dot"></span>KOLS</button>
+    <button class="organ-knapp" style="--farge:#c02020" onclick="velg('lungekreft')"><span class="dot"></span>Lungekreft</button>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  nese: {navn:'Nese og munn', latin:'Cavitas nasi / os', emoji:'👃',
+    fakta:[{l:'Funksjon',v:'Filter + fukt'},{l:'Temperatur',v:'Varmer luft til 37°C'},{l:'Slem',v:'Fanger partikler'},{l:'Luktesans',v:'Olfaktorisk epitel'}],
+    tekst:'Nesen filtrerer, fukter og varmer innpustet luft. Nesehårene og slimhinnene fanger støv, pollen og bakterier. Munnen er et alternativt inntak men uten disse beskyttelsene. Slimhinnene produserer ca. 1 liter slim per dag.',
+    morsomt:'Nesen varmer innåndet luft fra -30°C til 37°C på under en centimeter vei – en termisk effektivitet ingeniører misunner.'},
+  svelg: {navn:'Svelg og strupehode', latin:'Pharynx / Larynx', emoji:'🗣️',
+    fakta:[{l:'Strupelokk',v:'Epiglottis'},{l:'Stemmebånd',v:'I larynx'},{l:'Kryss',v:'Mat og luft'},{l:'Refleks',v:'Hosterefleks'}],
+    tekst:'Svelget er fellesvei for luft og mat. Strupelokket (epiglottis) dekker over luftveiene når vi svelger slik at mat ikke havner i lungene. Hosterefleksen er en nødmekanisme hvis noe likevel havner feil vei. Struphodet inneholder stemmebåndene.',
+    morsomt:'Vi svelger ca. 600 ganger per dag uten å tenke på det – og hosterefleksen kan fremprovosere en strøm på opptil 900 km/t, sterkere enn et orkan.'},
+  luftrør: {navn:'Luftrør', latin:'Trachea', emoji:'🫁',
+    fakta:[{l:'Lengde',v:'10–12 cm'},{l:'Diameter',v:'~2 cm'},{l:'Struktur',v:'C-formede bruskringer'},{l:'Flimmer',v:'Mukociliær transport'}],
+    tekst:'Luftrøret er et rør av bruskringer (C-formet for å gi plass til spiserøret bak) som leder luft fra struphodet til bronkiene. Slimhinnene er dekket av flimmerhår (cilia) som slår i bølger og skyver partikler og slim oppover mot svelget – den såkalte mukociliære transporten. Røyking lammer disse flimmerhårene.',
+    morsomt:'Flimmerhårene i luftrøret slår 12–15 ganger per sekund og skyver slim oppover med en hastighet av ~1 cm/min – de renser luftveiene kontinuerlig mens vi sover.'},
+  bronkier: {navn:'Bronkier og bronkioler', latin:'Bronchi / bronchioli', emoji:'🌿',
+    fakta:[{l:'Hoveddeling',v:'2 bronkier'},{l:'Grener',v:'~23 generasjoner'},{l:'Terminal',v:'Bronkioler (0.5mm)'},{l:'Totalt',v:'~300 000 bronkioler'}],
+    tekst:'Luftrøret deler seg i høyre og venstre bronki, som igjen forgrenes som et tre gjennom ~23 generasjoner ned til terminale bronkioler med diameter 0,5 mm. Jo lenger ut, desto mer glatt muskulatur og mindre brusk. Bronkospasmen ved astma skjer i bronkiolene.',
+    morsomt:'Bronkitreet har et totalt areal av bare ~180 cm² – men alveolesystemet det ender i har et gassutvekslingsareal på 70 m², omtrent størrelsen på en tennisbane.'},
+  høyre: {navn:'Høyre lunge', latin:'Pulmo dexter', emoji:'🫁',
+    fakta:[{l:'Lapper',v:'3 (over/midt/under)'},{l:'Vekt',v:'~620 g'},{l:'Volum',v:'~2.5 L'},{l:'Større enn',v:'Venstre lunge'}],
+    tekst:'Høyre lunge er større enn venstre og har tre lapper: overlapp, midtlapp og underlapp, skilt av fissurer. Den mottar ~55% av lungeblodgjennomstrøm­ningen. Høyre bronki er mer vertikal enn venstre – dermed er det her fremmedlegemer (f.eks. ertefrø hos barn) oftest havner.',
+    morsomt:'Høyre bronki er nesten rett (bare 25° fra trakea) mens venstre er mer horisontal (45°). Det er grunnen til at leger sier at «feil som faller ned, faller til høyre».'},
+  venstre: {navn:'Venstre lunge', latin:'Pulmo sinister', emoji:'🫁',
+    fakta:[{l:'Lapper',v:'2 (over/under)'},{l:'Vekt',v:'~570 g'},{l:'Hakk',v:'Hjertehakket'},{l:'Lingua',v:'Fremspring fra overlapp'}],
+    tekst:'Venstre lunge har bare to lapper og er noe smalere enn høyre, fordi hjertet tar plass på venstre side og lager et innhakk (hjertehakket, cardiac notch). Den har et fremspring kalt lingua som tilsvarer høyre lunges midtlapp.',
+    morsomt:'Selv om venstre lunge er mindre, jobber begge like hardt – ved hvile pumpes ~5 L blod per minutt gjennom lungenes kapillærer, og alt passerer gjennom gassutvekslingen.'},
+  alveol: {navn:'Alveoler', latin:'Alveoli pulmonis', emoji:'🔬',
+    fakta:[{l:'Antall',v:'~300 millioner'},{l:'Diameter',v:'0.2–0.3 mm'},{l:'Totalt areal',v:'~70 m²'},{l:'Veggtykkelse',v:'0.2 µm'}],
+    tekst:'Alveolene er de bitte små luftsekke-nerne der selve gassutvekslingen skjer. De er dekket av et tett nett av kapillærer der blodet passerer tett på luften. Oksygen diffunderer fra alveolluft (høy pO₂) til blod (lav pO₂). CO₂ diffunderer motsatt vei. Veggtykkelsen er bare 0,2 mikrometer – én celle tykk.',
+    morsomt:'Gassutvekslingen er så effektiv at blodet er ferdig oksygenert på under ett sekund – raskere enn hjertet rekker å pumpe det videre.'},
+  pleura: {navn:'Lungehinner (pleura)', latin:'Pleura', emoji:'🫧',
+    fakta:[{l:'Lag',v:'2 (visceral + parietal)'},{l:'Mellomrom',v:'Pleuralvæske'},{l:'Funksjon',v:'Reduserer friksjon'},{l:'Pleuritt',v:'Betennelse gir smerter'}],
+    tekst:'Lungene er omgitt av to glatte hinner med et tynt lag pleuralvæske imellom. Den viscerale pleura sitter på selve lungen, den parietale pleura sitter på brystkasseveggen. Væsken reduserer friksjon og holder lungene utspent. Et hull i pleuralhulen (pneumotoraks) får lungen til å kollapse.',
+    morsomt:'Det negative trykket i pleuralhulen (−5 cmH₂O) er det som holder lungene utspent. Uten det ville lungene trekke seg sammen til en liten klump – som en tømt ballong.'},
+  gassutveksling: {navn:'Gassutveksling', latin:'Respiratio externa', emoji:'🔄',
+    fakta:[{l:'Mekanisme',v:'Diffusjon'},{l:'O₂ press (alv)',v:'~105 mmHg'},{l:'CO₂ press (blod)',v:'~46 mmHg'},{l:'Tid',v:'<1 sekund'}],
+    tekst:'Gassutveksling skjer via diffusjon over alveolembranen. Oksygen (høyere partialtrykk i alveolen) diffunderer inn i blodet. CO₂ (høyere partialtrykk i blodet) diffunderer ut. Prosessen drives utelukkende av trykkforskjeller – ingen energi brukes. Hemoglobin i røde blodlegemer binder og transporterer O₂.',
+    morsomt:'Hemoglobin er en molekylær mester: det binder O₂ 65 millioner ganger i løpet av en rød blodcelles levetid på ~120 dager – uten å slites ut.'},
+  innånding: {navn:'Innånding og utånding', latin:'Inspiratio / Expiratio', emoji:'💨',
+    fakta:[{l:'Innånding',v:'Aktiv (muskelarbeid)'},{l:'Utånding',v:'Passiv (elastisitet)'},{l:'Frekvens',v:'12–20/min i hvile'},{l:'Tidalvolum',v:'~500 ml'}],
+    tekst:'Innånding er aktiv: mellomgulvet trekker seg ned og ribbeinmusklene løfter ribbeinene utover → brysthulen øker i volum → trykket faller under atmosfæretrykk → luft strømmer inn. Utånding er normalt passiv: musklene slapper av, lungeelastisiteten presser luft ut. Ved hard pust brukes bukmusklene aktivt.',
+    morsomt:'Du puster ca. 20 000 ganger daglig og tar inn ~11 000 liter luft. I løpet av en levetid på 80 år er det omtrent 600 millioner åndedrag.'},
+  blodgass: {navn:'O₂ og CO₂ i blodet', latin:'Gassis sanguinis', emoji:'🩸',
+    fakta:[{l:'O₂ transport',v:'98% på hemoglobin'},{l:'CO₂ transport',v:'70% som HCO₃⁻'},{l:'SpO₂ normalt',v:'95–100%'},{l:'Pulsoksymeter',v:'Måler SpO₂'}],
+    tekst:'Oksygen transporteres nesten utelukkende bundet til hemoglobin i røde blodlegemer (oksyhemoglobin). CO₂ transporteres på tre måter: løst i plasma (~10%), bundet til hemoglobin (~20%) og som bikarbonat HCO₃⁻ (~70%) etter reaksjon med vann katalysert av karboanhydrase.',
+    morsomt:'Et pulsoksymeter (fingerclips) måler oksygenmetning ved å lyse gjennom fingeren med rødt og infrarødt lys – oksyhemoglobin og deoksyhemoglobin absorberer lys ulikt.'},
+  diafragma: {navn:'Mellomgulv (diafragma)', latin:'Diaphragma', emoji:'🥁',
+    fakta:[{l:'Form',v:'Kuppelformet muskel'},{l:'Nervestyring',v:'N. phrenicus (C3-C5)'},{l:'Bidrag',v:'70% av innånding'},{l:'Hikke',v:'Ufrivillig spasme'}],
+    tekst:'Mellomgulvet er den viktigste pustemuskelen og utgjør 70% av innåndingsarbeidet i hvile. Det er en kuppelformet muskel mellom brysthulen og bukhulen. Når det trekker seg ned, øker brysthuletrykket og luft strømmer inn. Nervestyringen kommer fra nakkeryggraden (C3–C5) – skade her kan ramme pusten.',
+    morsomt:'Hikke er ufrivillig sammentrekning av mellomgulvet etterfulgt av plutselig lukking av strupelokket. Den raskeste registrerte hikke varte 68 år – Charles Osborne hadde hikke fra 1922 til 1990.'},
+  pustesenteret: {navn:'Pustesenteret', latin:'Centrum respiratorium', emoji:'🧠',
+    fakta:[{l:'Plassering',v:'Hjernestammen'},{l:'Sensor',v:'CO₂-nivå i blodet'},{l:'Normal rate',v:'12–20/min'},{l:'Regulering',v:'Kjemoreseptorer'}],
+    tekst:'Pustesenteret i hjernestammen (medulla oblongata og pons) styrer rytmisk pust automatisk. Det viktigste stimuluset er CO₂-nivået (ikke O₂) i blodet – økt CO₂ senker pH og trigger økt pusting. Kjemoreseptorer i aorta og halspulsåren måler O₂ og pH. Derfor er det umulig å holde pusten til bevisstløshet – CO₂ tvinger deg å puste.',
+    morsomt:'Profesjonelle fridykkere trener seg til å undertrykke pustemeldinger og kan holde pusten over 20 minutter. Verdensrekorden er 24 minutter og 37 sekunder (Budimir Šobat, 2021).'},
+  astma: {navn:'Astma', latin:'Asthma bronchiale', emoji:'⚠️',
+    fakta:[{l:'Prevalens',v:'~8% i Norge'},{l:'Mekanisme',v:'Bronkospasmen'},{l:'Behandling',v:'Inhalatorer'},{l:'Trigger',v:'Allergen, anstrengelse'}],
+    tekst:'Astma er en kronisk betennelsessykdom i luftveiene med tilbakevendende episoder av bronkospasme: glatt muskulatur i bronkiolene trekker seg sammen, slimhinnene svulmer og slim produseres. Resultatet er pipende pust, tungpustenhet og hoste. Kortvarig bronkodilatatorer (beta-2 agonister, blå inhalator) og steroider brukes i behandling.',
+    morsomt:'Astma var ukjent i den vestlige verden frem til 1800-tallet. Mange mener økt hygiene, endret tarmflora og luftforurensning er årsaker til den dramatiske økningen gjennom 1900-tallet (hygienehypotesen).'},
+  kols: {navn:'KOLS', latin:'COPD', emoji:'⚠️',
+    fakta:[{l:'Årsak',v:'Røyking (85%)'},{l:'Prevalens',v:'~300 000 i Norge'},{l:'Irreversibel',v:'Ja'},{l:'Symptomer',v:'Tungpust, hoste, slem'}],
+    tekst:'KOLS (kronisk obstruktiv lungesykdom) er en progressiv, irreversibel sykdom der alveolene ødelegges (emfysem) og luftveiene er kronisk betente. Gassutvekslingsarealet krymper gradvis. 85% skyldes røyking. Symptomene utvikles sakte over tiår – mange oppdager sykdommen sent. Ingen kur, men røykeslutt bremser progresjonen.',
+    morsomt:'Alveolene kan IKKE regenereres. Hver sigar ødelegger et lite stykke av de 300 millionene alveolene permanent. KOLS-pasienter beskriver følelsen som å puste gjennom et sugerør hele dagen.'},
+  lungekreft: {navn:'Lungekreft', latin:'Carcinoma pulmonis', emoji:'⚠️',
+    fakta:[{l:'Hyppigste årsak',v:'Røyking'},{l:'5-års overlevelse',v:'~20%'},{l:'Typer',v:'NSCLC (85%) og SCLC'},{l:'Symptomer',v:'Blodig hoste, vekttap'}],
+    tekst:'Lungekreft er den vanligste kreftdødsårsaken på verdensbasis. Røyking forårsaker ~85% av tilfellene ved å skade DNA i bronkialepitelet. Symptomene er ofte sene – sykdommen er gjerne avansert når den oppdages. Behandling inkluderer kirurgi, stråling, kjemoterapi og nyere immunterapi og målrettet behandling.',
+    morsomt:'Risikoen for lungekreft begynner å avta allerede det første året etter røykeslutt, og etter 10 år er risikoen halvert sammenlignet med de som fortsetter å røyke.'},
+};
+
+let aktivStruktur = null;
+const tooltip = document.getElementById('tooltip');
+const svg = document.getElementById('lung-svg');
+
+function velg(id) {
+  const data = DATA[id];
+  if (!data) return;
+  aktivStruktur = id;
+  document.querySelectorAll('.organ-knapp').forEach(b =>
+    b.classList.toggle('aktiv', b.getAttribute('onclick') === `velg('${id}')`));
+  document.querySelectorAll('.hotspot').forEach(el =>
+    el.classList.toggle('aktiv', el.id === 'hot-' + id));
+  document.getElementById('info-tom').style.display = 'none';
+  const innhold = document.getElementById('info-innhold');
+  innhold.style.display = 'block';
+  const farge = document.querySelector(`.organ-knapp[onclick="velg('${id}')"]`)?.style.getPropertyValue('--farge') || '#7dd3fc';
+  document.getElementById('info-panel').style.setProperty('--organ-farge', farge);
+  document.getElementById('info-panel').style.setProperty('--pglow', farge + '22');
+  const kortHTML = (data.fakta || []).map(f => `
+    <div class="info-kort">
+      <div class="info-kort-label">${f.l}</div>
+      <div class="info-kort-verdi">${f.v}</div>
+    </div>`).join('');
+  innhold.innerHTML = `
+    <div class="info-header">
+      <span class="info-emoji">${data.emoji}</span>
+      <div>
+        <div class="info-navn">${data.navn}</div>
+        <div class="info-latin">${data.latin}</div>
+      </div>
+    </div>
+    <div class="info-divider"></div>
+    <div class="info-grid">${kortHTML}</div>
+    <p class="info-tekst">${data.tekst}</p>
+    <div class="info-fakta">💡 <strong>Visste du?</strong> ${data.morsomt}</div>`;
+  if (window.innerWidth < 900)
+    document.getElementById('info-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.querySelectorAll('.hotspot').forEach(el => {
+  const id = el.id.replace('hot-', '');
+  const data = DATA[id];
+  if (!data) return;
+  el.addEventListener('mouseenter', () => { tooltip.textContent = data.navn; tooltip.style.opacity = '1'; });
+  el.addEventListener('mousemove', e => {
+    const rect = svg.getBoundingClientRect();
+    tooltip.style.left = (e.clientX - rect.left) + 'px';
+    tooltip.style.top = (e.clientY - rect.top) + 'px';
+  });
+  el.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+});
+</script>
+</body>
+</html>
