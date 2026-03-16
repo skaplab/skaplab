@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Labsikkerhet og forsøksdesign</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0800;--surface:#12100a;--card:#181408;--border:rgba(240,200,60,.07);
+  --text:#fff8e8;--dim:#403010;
+  --accent:#f0c840;--accent2:#60d8a0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(240,200,60,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,216,160,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(10,8,0,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.4rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+/* FANER */
+.faner{display:flex;gap:6px;margin-bottom:0;border-bottom:1px solid var(--border)}
+.fane{padding:12px 22px;font-family:var(--font-d);font-size:.9rem;font-style:italic;cursor:pointer;
+  border:1px solid transparent;border-bottom:none;border-radius:10px 10px 0 0;color:var(--dim);transition:all .2s}
+.fane:hover{color:var(--text);background:rgba(240,200,60,.04)}
+.fane.aktiv{color:var(--accent);background:var(--surface);border-color:var(--border);border-bottom-color:var(--surface)}
+.fane-innhold{display:none;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 12px 12px 12px;padding:28px;margin-bottom:24px}
+.fane-innhold.aktiv{display:block}
+/* SIKKERHETSREGLER */
+.regel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:20px}
+.regel-kort{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
+.regel-kort:hover{border-color:rgba(240,200,60,.35);background:rgba(240,200,60,.04)}
+.regel-kort.aktiv{border-color:var(--accent);background:rgba(240,200,60,.07)}
+.regel-ikon{font-size:2rem;margin-bottom:8px}
+.regel-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:4px}
+.regel-tekst{font-size:.79rem;line-height:1.6;color:rgba(255,248,232,.6)}
+.regel-detail{background:var(--card);border:1px solid rgba(240,200,60,.2);border-radius:12px;padding:20px;min-height:100px;margin-top:4px}
+/* RISIKOVURDERING */
+.risiko-tabell{width:100%;border-collapse:collapse;margin-bottom:16px}
+.risiko-tabell th{background:rgba(240,200,60,.08);padding:10px 14px;text-align:left;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border)}
+.risiko-tabell td{padding:10px 14px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,248,232,.7);vertical-align:top}
+.risiko-tabell tr:hover td{background:rgba(240,200,60,.02)}
+.risiko-nivå{display:inline-block;padding:2px 10px;border-radius:100px;font-size:.72rem;font-weight:600}
+.r-lav{background:rgba(96,216,160,.12);color:#60d8a0;border:1px solid rgba(96,216,160,.3)}
+.r-mid{background:rgba(240,200,60,.12);color:#f0c840;border:1px solid rgba(240,200,60,.3)}
+.r-høy{background:rgba(240,96,96,.12);color:#f06060;border:1px solid rgba(240,96,96,.3)}
+/* FORSØKSDESIGNER */
+.forsok-seksjon{margin-bottom:18px}
+.forsok-label{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;font-weight:600}
+.forsok-input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.03);color:var(--text);font-family:var(--font-b);font-size:.88rem;resize:vertical}
+.forsok-input:focus{outline:none;border-color:var(--accent)}
+.forsok-rad{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.forsok-btn{padding:11px 24px;border-radius:10px;border:1px solid rgba(240,200,60,.35);
+  background:rgba(240,200,60,.08);color:var(--accent);font-family:var(--font-d);font-size:.95rem;
+  font-style:italic;cursor:pointer;transition:all .2s;margin-top:6px}
+.forsok-btn:hover{background:rgba(240,200,60,.16);border-color:var(--accent)}
+.forsok-resultat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px;display:none}
+.forsok-resultat h4{font-family:var(--font-d);font-size:1rem;color:var(--accent);margin-bottom:12px}
+.forsok-steg{display:flex;flex-direction:column;gap:8px}
+.fs{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:.8rem;line-height:1.6;color:rgba(255,248,232,.7)}
+.fs-nr{width:22px;height:22px;border-radius:50%;background:rgba(240,200,60,.2);color:var(--accent);font-size:.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.sep{display:flex;align-items:center;gap:16px;margin:28px 0 16px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+@media(max-width:700px){.forsok-rad{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="vitenskapspersoner.html" class="nav-lnk">Vitenskapspersoner</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Labsikkerhet og forsøksdesign</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Naturvitenskapelig praksis · LK20 KM1 + KM4</div>
+    <h1>Labsikkerhet<br><em>og forsøksdesign</em></h1>
+    <p class="hero-sub">Sikker og systematisk eksperimentering – fra hypotese til konklusjon. De viktigste prinsippene for å gjennomføre gode naturfagforsøk.</p>
+  </div>
+
+  <!-- FANER -->
+  <div class="faner">
+    <button class="fane aktiv" onclick="byttFane('sikkerhet')">🦺 Labsikkerhet</button>
+    <button class="fane" onclick="byttFane('risiko')">⚠️ Risikovurdering</button>
+    <button class="fane" onclick="byttFane('forsok')">🔬 Forsøksdesign</button>
+    <button class="fane" onclick="byttFane('analyse')">📊 Data og analyse</button>
+  </div>
+
+  <!-- FANE: SIKKERHET -->
+  <div class="fane-innhold aktiv" id="fane-sikkerhet">
+    <p style="font-size:.85rem;line-height:1.7;color:rgba(255,248,232,.6);margin-bottom:20px">
+      Klikk på et sikkerhetsområde for å lese mer. Alle punktene er pensum etter LK20 – du skal kjenne dem og følge dem i labarbeid.
+    </p>
+    <div class="regel-grid">
+      <div class="regel-kort" onclick="visRegel('verneutstyr')">
+        <div class="regel-ikon">🥽</div>
+        <div class="regel-tittel">Verneutstyr</div>
+        <div class="regel-tekst">Briller, hansker og labfrakk – og når du bruker dem</div>
+      </div>
+      <div class="regel-kort" onclick="visRegel('faresymboler')">
+        <div class="regel-ikon">☠️</div>
+        <div class="regel-tittel">Faresymboler (GHS)</div>
+        <div class="regel-tekst">Internasjonale farepiktogrammer du må kjenne</div>
+      </div>
+      <div class="regel-kort" onclick="visRegel('syrebase')">
+        <div class="regel-ikon">⚗️</div>
+        <div class="regel-tittel">Kjemikalier</div>
+        <div class="regel-tekst">Håndtering av syrer, baser og brennbare stoffer</div>
+      </div>
+      <div class="regel-kort" onclick="visRegel('brann')">
+        <div class="regel-ikon">🔥</div>
+        <div class="regel-tittel">Brannfare og gass</div>
+        <div class="regel-tekst">Åpen flamme, gassbrennere og brennbare gasser</div>
+      </div>
+      <div class="regel-kort" onclick="visRegel('avfall')">
+        <div class="regel-ikon">♻️</div>
+        <div class="regel-tittel">Avfallshåndtering</div>
+        <div class="regel-tekst">Hva kan i vasken, og hva er spesialavfall?</div>
+      </div>
+      <div class="regel-kort" onclick="visRegel('ulykke')">
+        <div class="regel-ikon">🚨</div>
+        <div class="regel-tittel">Ved ulykke</div>
+        <div class="regel-tekst">Hva gjør du hvis noe går galt?</div>
+      </div>
+    </div>
+    <div class="regel-detail" id="regel-detail">
+      <p style="color:var(--dim);font-size:.83rem;text-align:center;margin-top:8px">👆 Velg et sikkerhetsområde ovenfor</p>
+    </div>
+  </div>
+
+  <!-- FANE: RISIKOVURDERING -->
+  <div class="fane-innhold" id="fane-risiko">
+    <p style="font-size:.85rem;line-height:1.7;color:rgba(255,248,232,.6);margin-bottom:20px">
+      Risikovurdering gjøres FØR forsøket starter. Identifiser farer, vurder sannsynlighet og konsekvens, og beskriv tiltak. Dette er LK20 KM4.
+    </p>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px">
+      <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--accent);margin-bottom:8px">Risikomatrise</p>
+      <p style="font-size:.8rem;color:rgba(255,248,232,.55);margin-bottom:14px">Risiko = Sannsynlighet × Konsekvens. Bruk matrisen nedenfor for å klassifisere risiko:</p>
+      <svg viewBox="0 0 420 180" width="100%" style="max-width:480px;display:block;margin:0 auto">
+        <rect width="420" height="180" fill="#181408"/>
+        <!-- Akse-labels -->
+        <text x="210" y="172" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(255,248,232,.5)">Sannsynlighet →</text>
+        <text x="14" y="90" text-anchor="middle" font-family="DM Sans" font-size="11" fill="rgba(255,248,232,.5)" transform="rotate(-90,14,90)">Konsekvens →</text>
+        <!-- Rutenett 3x3 -->
+        <g>
+          <!-- Lav sannsynlighet -->
+          <rect x="40" y="10" width="118" height="50" rx="3" fill="rgba(96,216,160,.15)" stroke="rgba(96,216,160,.2)" stroke-width="1"/>
+          <text x="99" y="38" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,216,160,.7)">LAV risiko</text>
+          <rect x="40" y="62" width="118" height="50" rx="3" fill="rgba(96,216,160,.12)" stroke="rgba(96,216,160,.2)" stroke-width="1"/>
+          <text x="99" y="90" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,216,160,.6)">LAV risiko</text>
+          <rect x="40" y="114" width="118" height="50" rx="3" fill="rgba(240,200,60,.12)" stroke="rgba(240,200,60,.25)" stroke-width="1"/>
+          <text x="99" y="142" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,200,60,.65)">MIDDELS risiko</text>
+          <!-- Middels sannsynlighet -->
+          <rect x="160" y="10" width="118" height="50" rx="3" fill="rgba(96,216,160,.1)" stroke="rgba(96,216,160,.2)" stroke-width="1"/>
+          <text x="219" y="38" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,216,160,.6)">LAV risiko</text>
+          <rect x="160" y="62" width="118" height="50" rx="3" fill="rgba(240,200,60,.12)" stroke="rgba(240,200,60,.25)" stroke-width="1"/>
+          <text x="219" y="90" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,200,60,.65)">MIDDELS risiko</text>
+          <rect x="160" y="114" width="118" height="50" rx="3" fill="rgba(240,96,96,.12)" stroke="rgba(240,96,96,.25)" stroke-width="1"/>
+          <text x="219" y="142" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.65)">HØY risiko</text>
+          <!-- Høy sannsynlighet -->
+          <rect x="280" y="10" width="118" height="50" rx="3" fill="rgba(240,200,60,.1)" stroke="rgba(240,200,60,.2)" stroke-width="1"/>
+          <text x="339" y="38" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,200,60,.6)">MIDDELS risiko</text>
+          <rect x="280" y="62" width="118" height="50" rx="3" fill="rgba(240,96,96,.12)" stroke="rgba(240,96,96,.25)" stroke-width="1"/>
+          <text x="339" y="90" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.65)">HØY risiko</text>
+          <rect x="280" y="114" width="118" height="50" rx="3" fill="rgba(240,96,96,.2)" stroke="rgba(240,96,96,.4)" stroke-width="1"/>
+          <text x="339" y="142" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.8)" font-weight="600">KRITISK risiko</text>
+          <!-- Akse-ticks -->
+          <g font-family="DM Sans" font-size="9" fill="rgba(255,248,232,.3)">
+            <text x="99" y="162">Lav S.</text>
+            <text x="216" y="162">Middels S.</text>
+            <text x="334" y="162">Høy S.</text>
+            <text x="32" y="38" text-anchor="end">Lav K.</text>
+            <text x="32" y="90" text-anchor="end">Mid. K.</text>
+            <text x="32" y="142" text-anchor="end">Høy K.</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <table class="risiko-tabell">
+      <thead>
+        <tr>
+          <th>Fare/aktivitet</th>
+          <th>Mulig hendelse</th>
+          <th>Risiko</th>
+          <th>Forebyggende tiltak</th>
+          <th>Beredskap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sterke syrer (HCl, H₂SO₄)</td>
+          <td>Søl på hud eller i øyne</td>
+          <td><span class="risiko-nivå r-høy">HØY</span></td>
+          <td>Vernebriller + hansker. Arbeid under digestorium. Nøytralisere spill med NaHCO₃.</td>
+          <td>Skyll med store mengder vann i 15 min. Ring 113 ved øyeskader.</td>
+        </tr>
+        <tr>
+          <td>Gassbrennere (Bunsen)</td>
+          <td>Brannskader, gasslekkasje, brann</td>
+          <td><span class="risiko-nivå r-høy">HØY</span></td>
+          <td>Fest løst hår. Ingen brennbare stoffer nær flammen. Sjekk gasskobling. Aldri la brenner stå uten tilsyn.</td>
+          <td>Steng gassen umiddelbart. Brannslukker. Brannalarm.</td>
+        </tr>
+        <tr>
+          <td>Glassredskaper</td>
+          <td>Brudd, snitt</td>
+          <td><span class="risiko-nivå r-mid">MIDDELS</span></td>
+          <td>Sjekk for sprekker. Ikke press glass i gummi med kraft. Hansker ved knust glass.</td>
+          <td>Rydd opp med papir, ikke hendene. Plaster/førstehjelp.</td>
+        </tr>
+        <tr>
+          <td>Elektrisk utstyr (vannbad, ovn)</td>
+          <td>Støt, brann</td>
+          <td><span class="risiko-nivå r-mid">MIDDELS</span></td>
+          <td>Ikke berør med fuktige hender. Sjekk ledninger. Ikke overbelast stikkontakter.</td>
+          <td>Slå av hovedbryter. Bruk brannteppe ved brann.</td>
+        </tr>
+        <tr>
+          <td>Biologisk materiale</td>
+          <td>Infeksjon, allergi</td>
+          <td><span class="risiko-nivå r-lav">LAV</span></td>
+          <td>Hansker og briller. Ikke berør slimhinner. Vask hender etter forsøket.</td>
+          <td>Desinfisere. Oppsøk lege ved sårskade med biologisk materiale.</td>
+        </tr>
+        <tr>
+          <td>Sterke baser (NaOH)</td>
+          <td>Etseskader – verre enn syre</td>
+          <td><span class="risiko-nivå r-høy">HØY</span></td>
+          <td>Vernebriller + hansker. Baser er glatte og etsende. Vær forsiktig – du kjenner det ikke før skaden er skjedd.</td>
+          <td>Skyll med store mengder vann. NaOH eter mye dypere enn syre.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="background:rgba(240,200,60,.05);border:1px solid rgba(240,200,60,.2);border-radius:10px;padding:14px;font-size:.82rem;line-height:1.7;color:rgba(255,248,232,.65)">
+      <strong style="color:var(--accent);display:block;margin-bottom:6px">📋 Hva en risikovurdering skal inneholde (LK20 KM4):</strong>
+      Identifiser alle farer → Vurder sannsynlighet og konsekvens → Bestem risikokategori → Beskriv forebyggende tiltak → Planlegg beredskap (hva gjør du HVIS det likevel skjer). En risikovurdering er ikke et formelt skjema – det er en systematisk tankerekke du gjør FØR forsøket.
+    </div>
+  </div>
+
+  <!-- FANE: FORSØKSDESIGN -->
+  <div class="fane-innhold" id="fane-forsok">
+    <p style="font-size:.85rem;line-height:1.7;color:rgba(255,248,232,.6);margin-bottom:20px">
+      Et godt forsøk har klart formulerte spørsmål, testbare hypoteser, kontrollerte variabler og systematisk datainnsamling. Bruk planleggeren nedenfor.
+    </p>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">
+      <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--accent);margin-bottom:12px">Variabeltyper</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="padding:12px;background:rgba(240,200,60,.06);border:1px solid rgba(240,200,60,.2);border-radius:9px;font-size:.8rem">
+          <strong style="color:var(--accent);display:block;margin-bottom:4px">Uavhengig variabel</strong>
+          <p style="color:rgba(255,248,232,.6);line-height:1.6">Den du <em>endrer</em> med vilje. Kun ÉN uavhengig variabel per forsøk! Eks: temperaturen vannet har når du løser salt.</p>
+        </div>
+        <div style="padding:12px;background:rgba(96,216,160,.05);border:1px solid rgba(96,216,160,.2);border-radius:9px;font-size:.8rem">
+          <strong style="color:#60d8a0;display:block;margin-bottom:4px">Avhengig variabel</strong>
+          <p style="color:rgba(255,248,232,.6);line-height:1.6">Det du <em>måler</em> – utfallet. Eks: mengde salt som løser seg. Endres som respons på den uavhengige variabelen.</p>
+        </div>
+        <div style="padding:12px;background:rgba(96,160,240,.05);border:1px solid rgba(96,160,240,.2);border-radius:9px;font-size:.8rem">
+          <strong style="color:rgba(96,160,240,.8);display:block;margin-bottom:4px">Kontrollvariabler</strong>
+          <p style="color:rgba(255,248,232,.6);line-height:1.6">Alt annet du holder <em>konstant</em>. Eks: mengde vann, type salt, omrøring. Uten kontroll vet du ikke hva som påvirket resultatet.</p>
+        </div>
+      </div>
+    </div>
+    <div class="sep"><div class="sep-l"></div><div class="sep-t">Forsøksplanlegger</div><div class="sep-r"></div></div>
+    <div class="forsok-seksjon">
+      <div class="forsok-label">🔍 Forsøksspørsmål (hva vil du finne ut?)</div>
+      <textarea class="forsok-input" id="f-sporsmal" rows="2" placeholder="Eks: Påvirker temperaturen på vann løseligheten til natriumklorid?"></textarea>
+    </div>
+    <div class="forsok-seksjon">
+      <div class="forsok-label">💡 Hypotese (din forutsigelse – og begrunnelse)</div>
+      <textarea class="forsok-input" id="f-hypotese" rows="2" placeholder="Eks: Jeg tror salt løser seg lettere i varmt vann fordi høyere temperatur øker molekylbevegelsen..."></textarea>
+    </div>
+    <div class="forsok-seksjon forsok-rad">
+      <div>
+        <div class="forsok-label">⚙️ Uavhengig variabel (det du endrer)</div>
+        <input class="forsok-input" id="f-uav" type="text" placeholder="Eks: Temperaturen på vannet (20°C, 40°C, 60°C, 80°C)">
+      </div>
+      <div>
+        <div class="forsok-label">📏 Avhengig variabel (det du måler)</div>
+        <input class="forsok-input" id="f-av" type="text" placeholder="Eks: Gram NaCl som løser seg i 100 ml vann">
+      </div>
+    </div>
+    <div class="forsok-seksjon">
+      <div class="forsok-label">🔒 Kontrollvariabler (hva holder du konstant?)</div>
+      <input class="forsok-input" id="f-kont" type="text" placeholder="Eks: Mengde vann (100 ml), type salt (NaCl), omrøringstid (30 sek), destillert vann">
+    </div>
+    <div class="forsok-seksjon">
+      <div class="forsok-label">📋 Utstyr og materialer</div>
+      <input class="forsok-input" id="f-utstyr" type="text" placeholder="Eks: Beger (250 ml), termometer, vekt (±0.1 g), rørestav, vannkoker, NaCl">
+    </div>
+    <div class="forsok-seksjon">
+      <div class="forsok-label">⚠️ Risikovurdering (viktigste farer og tiltak)</div>
+      <textarea class="forsok-input" id="f-risiko" rows="2" placeholder="Eks: Fare: varmt vann → brannskader. Tiltak: vernehansker, ikke hell varmt vann på seg. Beredskap: skyll med kaldt vann."></textarea>
+    </div>
+    <button class="forsok-btn" onclick="genererPlan()">📄 Generer forsøksplan</button>
+    <div class="forsok-resultat" id="forsok-resultat">
+      <h4>📋 Din forsøksplan</h4>
+      <div class="forsok-steg" id="forsok-steg"></div>
+      <div style="margin-top:16px;padding:12px 14px;background:rgba(240,200,60,.05);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;font-size:.8rem;color:rgba(255,248,232,.65)">
+        💡 Husk: Gjenta forsøket minst 3 ganger for å sikre at resultatet er reproduserbart – ikke en tilfeldighet!
+      </div>
+    </div>
+  </div>
+
+  <!-- FANE: ANALYSE -->
+  <div class="fane-innhold" id="fane-analyse">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--accent);margin-bottom:12px">📈 Presentere data</p>
+        <div style="font-size:.82rem;line-height:1.7;color:rgba(255,248,232,.65)">
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Tabell:</strong> Alltid med enheter i kolonneoverskriften. Riktig antall gjeldende siffer. Inkluder gjentakelser og gjennomsnitt.</p>
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Graf:</strong> X-akse = uavhengig variabel. Y-akse = avhengig variabel. Alltid tittel og aksemerking med enheter. Feilstolper hvis usikkerhet.</p>
+          <p><strong style="color:var(--text)">Velg riktig graftype:</strong> Kontinuerlige data → linjegraf. Kategoriske data → stolpediagram. Fordeling → histogram.</p>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px">
+        <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--accent);margin-bottom:12px">🔍 Feilkilder og usikkerhet</p>
+        <div style="font-size:.82rem;line-height:1.7;color:rgba(255,248,232,.65)">
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Systematiske feil:</strong> Alltid i samme retning – f.eks. ukalibrert vekt eller varm termometer. Oppdages ved å sammenligne med kjente verdier.</p>
+          <p style="margin-bottom:8px"><strong style="color:var(--text)">Tilfeldige feil:</strong> Varierer fra måling til måling – reduseres ved å gjenta forsøket. Årsak: unøyaktig avlesing, vibrasjon, temperatursvingninger.</p>
+          <p><strong style="color:var(--text)">Presisjon vs nøyaktighet:</strong> Presis = samme svar hver gang. Nøyaktig = nær den sanne verdien. Du kan være presis men unøyaktig (konsekvent feil).</p>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px">
+      <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--accent);margin-bottom:12px">📝 Konklusjonsmal – hva en god konklusjon inneholder</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="padding:10px 12px;border-radius:9px;background:rgba(240,200,60,.04);border:1px solid var(--border);font-size:.81rem;line-height:1.6;color:rgba(255,248,232,.7)"><strong style="color:var(--accent)">1. Svar på forsøksspørsmålet:</strong> Svar direkte med dine egne data: «Resultatene viser at...»</div>
+        <div style="padding:10px 12px;border-radius:9px;background:rgba(240,200,60,.04);border:1px solid var(--border);font-size:.81rem;line-height:1.6;color:rgba(255,248,232,.7)"><strong style="color:var(--accent)">2. Hypotesen:</strong> Støttes eller avkreftes hypotesen av dataene? Begrunn med tall fra forsøket.</div>
+        <div style="padding:10px 12px;border-radius:9px;background:rgba(240,200,60,.04);border:1px solid var(--border);font-size:.81rem;line-height:1.6;color:rgba(255,248,232,.7)"><strong style="color:var(--accent)">3. Teorikobling:</strong> Forklar resultatet med kjent teori. Hvorfor ble det slik? (Molekylær forklaring, etc.)</div>
+        <div style="padding:10px 12px;border-radius:9px;background:rgba(240,200,60,.04);border:1px solid var(--border);font-size:.81rem;line-height:1.6;color:rgba(255,248,232,.7)"><strong style="color:var(--accent)">4. Feilkilder:</strong> Hvilke feilkilder kan ha påvirket resultatet? Systematiske? Tilfeldige?</div>
+        <div style="padding:10px 12px;border-radius:9px;background:rgba(240,200,60,.04);border:1px solid var(--border);font-size:.81rem;line-height:1.6;color:rgba(255,248,232,.7)"><strong style="color:var(--accent)">5. Forbedringer:</strong> Hva ville du gjort annerledes for å forbedre forsøket? Hvilke spørsmål dukket opp?</div>
+      </div>
+    </div>
+    <div style="background:rgba(96,216,160,.05);border:1px solid rgba(96,216,160,.2);border-radius:10px;padding:14px;font-size:.82rem;line-height:1.7;color:rgba(255,248,232,.65)">
+      <strong style="color:#60d8a0;display:block;margin-bottom:6px">🔄 Den naturvitenskapelige metoden (syklus):</strong>
+      Observasjon → Spørsmål → Hypotese → Forsøksdesign (variabler + risikovurdering) → Datainnsamling → Analyse → Konklusjon → Ny hypotese. Vitenskapelig kunnskap er aldri «bevist» – den er den beste forklaringen vi har inntil bedre data foreligger.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function byttFane(id) {
+  document.querySelectorAll('.fane').forEach((f, i) => f.classList.toggle('aktiv', ['sikkerhet','risiko','forsok','analyse'][i] === id));
+  document.querySelectorAll('.fane-innhold').forEach(f => f.classList.toggle('aktiv', f.id === 'fane-' + id));
+}
+
+const REGLER = {
+  verneutstyr: {
+    tittel: '🥽 Verneutstyr – alltid i lab',
+    innhold: `<strong style="color:var(--accent)">Vernebriller:</strong> Obligatorisk ved kjemikalier, varme væsker, knusing eller boring. Brukes selv om du «bare ser på». Øyeskader er irreversible.<br><br>
+    <strong style="color:var(--accent)">Vernehansker (nitril):</strong> Ved kontakt med kjemikalier, biologisk materiale eller varmt utstyr. Sjekk om hansken tåler stoffet du bruker (ikke alle hansker er resistente mot alle løsemidler).<br><br>
+    <strong style="color:var(--accent)">Labfrakk:</strong> Beskytter klær og huden mot søl og sprut. Skal ha lange ermer og kneppes igjen.<br><br>
+    <strong style="color:var(--accent)">Lukket fottøy:</strong> Alltid i lab – beskytt mot nedfall og søl på føttene.<br><br>
+    <strong style="color:var(--accent)">Hår:</strong> Langt hår skal festes. Det kan ta fyr, henge i maskiner eller kontaminere prøver.`
+  },
+  faresymboler: {
+    tittel: '☠️ GHS-farepiktogrammer',
+    innhold: `Det globalt harmoniserte systemet (GHS) bruker 9 piktogrammer:<br><br>
+    💀 <strong style="color:var(--text)">Dødningehode</strong> – Akutt giftig (dødelig i små doser). Eks: HCN, kvikksølv.<br>
+    ☠️ <strong style="color:var(--text)">Utropstegn</strong> – Helseskadelig, irriterende. Eks: toluen, aceton.<br>
+    🔥 <strong style="color:var(--text)">Flamme</strong> – Brennbart. Eks: etanol, bensin, hydrogen.<br>
+    💥 <strong style="color:var(--text)">Eksplosjon</strong> – Eksplosivt. Eks: perklorater, azider.<br>
+    ⚗️ <strong style="color:var(--text)">Etsende</strong> – Etsende for metaller og hud. Eks: konsentrert H₂SO₄, NaOH.<br>
+    🌍 <strong style="color:var(--text)">Miljøfare</strong> – Giftig for vannmiljø. Eks: tributyltinn, perfluorstoffer.<br>
+    🫁 <strong style="color:var(--text)">Helsefare</strong> – Kreftfremkallende, mutagent, reproduksjonstoksisk. Eks: benzen, asbest.<br>
+    🌡️ <strong style="color:var(--text)">Oksiderende</strong> – Kan antenne andre stoffer. Eks: H₂O₂ (konsentrert), KMnO₄.<br>
+    💨 <strong style="color:var(--text)">Gass under trykk</strong> – Eks: gassbeholdere, aerosoler.`
+  },
+  syrebase: {
+    tittel: '⚗️ Kjemikaliehåndtering',
+    innhold: `<strong style="color:var(--accent)">Fortynning av syre:</strong> Alltid tilsett SYRE til VANN – aldri omvendt («syre i vann, som det sier»). Konsentrert svovelsyre genererer enorm varme ved kontakt med vann.<br><br>
+    <strong style="color:var(--accent)">Sterke baser (NaOH, KOH):</strong> Eter sakte og smertefritt – du merker skaden for sent! Ekstra farlig for øynene. Skyll umiddelbart med rikelige mengder vann.<br><br>
+    <strong style="color:var(--accent)">Løsemidler (etanol, aceton):</strong> Brennbare! Hold unna åpen flamme. Bruk digestorium. Ikke inhaler damper over lengre tid.<br><br>
+    <strong style="color:var(--accent)">Sikkerhetsdatablad (SDS/MSDS):</strong> Alle kjemikalier har et sikkerhetsdatablad som forteller om farer, håndtering, verneutstyr og nødprosedyrer. Les det før du bruker ukjente stoffer.`
+  },
+  brann: {
+    tittel: '🔥 Brannfare og gassbrennere',
+    innhold: `<strong style="color:var(--accent)">Bunsen-brenner:</strong> (1) Sjekk gasskobling og slanger. (2) Lukk luftventilen. (3) Åpne gasskranen svakt. (4) Tenn umiddelbart. (5) Juster luftinnslipp til ønsket flamme.<br><br>
+    <strong style="color:var(--accent)">Brannfarlige stoffer:</strong> Aldri ha brennbare væsker nær åpen flamme! Etanol og aceton er svært brennbare. Hold dem minst 1 meter unna.<br><br>
+    <strong style="color:var(--accent)">Brannslukkeutstyr:</strong> CO₂-slukker til elektrisk utstyr og kjemikalier (ikke vann!). Brannteppe til personen som brenner. Kjenn til plassering av nøddusjene.<br><br>
+    <strong style="color:var(--accent)">Gasslekkasje:</strong> Lukk gasskranen umiddelbart. Luft ut lokalet. Ingen gnister eller elektrisk utstyr. Evakuer og ring brannvesenet ved store lekkasjer.`
+  },
+  avfall: {
+    tittel: '♻️ Avfallshåndtering i lab',
+    innhold: `<strong style="color:var(--accent)">I vasken (OK):</strong> Sterkt fortyndede løsninger av NaCl, sukker, eddik (svak syre i svært liten mengde), bufferløsninger – bare hvis skolen tillater det.<br><br>
+    <strong style="color:var(--accent)">Spesialavfall (ALDRI i vasken):</strong> Organiske løsemidler (etanol, aceton i store mengder), syrer/baser (pH &lt;5 eller &gt;9), tunge metaller (bly, kvikksølv, kobber), biologisk materiale som kan inneholde patogener.<br><br>
+    <strong style="color:var(--accent)">Knust glass:</strong> Aldri i vanlig søppel – separat beholder for knust glass merket tydelig.<br><br>
+    <strong style="color:var(--accent)">Biologisk avfall:</strong> I gule poser hvis skolen driver med biologisk materiale. Autoklaver eller desinfiserer ved behov.<br><br>
+    Spesialavfall leveres til kommunalt mottak eller håndteres av skolen. Spør alltid læreren ved tvil.`
+  },
+  ulykke: {
+    tittel: '🚨 Ved ulykke i laboratoriet',
+    innhold: `<strong style="color:var(--accent)">Kjemikalier på huden:</strong> Skyll UMIDDELBART med store mengder kaldt vann i minst 15 minutter. Fjern tilsølte klær under skylling. Ring 113 ved alvorlige etseskader.<br><br>
+    <strong style="color:var(--accent)">Kjemikalier i øynene:</strong> KRITISK. Skyll med nøddusj eller øyeskyllestasjon i 15–30 minutter med øyet ÅPENT. Ring 113. Øyeskader kan bli permanente ved forsinket behandling.<br><br>
+    <strong style="color:var(--accent)">Brann på person:</strong> Stopp – Fall ned – Rull (stop, drop, roll). Bruk brannteppe. Ring 113.<br><br>
+    <strong style="color:var(--accent)">Innånding av giftige damper:</strong> Flytt personen til frisk luft. Ring 113 ved bevisstløshet eller pustevansker. Kontakt Giftinformasjonen: <strong style="color:var(--accent)">22 59 13 00</strong>.<br><br>
+    <strong style="color:var(--accent)">Svelging:</strong> Ikke fremkall brekninger (kan gjøre skaden verre ved etsende stoffer). Ring Giftinformasjonen: <strong style="color:var(--accent)">22 59 13 00</strong> eller 113.`
+  }
+};
+
+function visRegel(id) {
+  const r = REGLER[id];
+  document.querySelectorAll('.regel-kort').forEach(k => k.classList.toggle('aktiv', k.getAttribute('onclick') === `visRegel('${id}')`));
+  document.getElementById('regel-detail').innerHTML = `
+    <h4 style="font-family:var(--font-d);font-size:1rem;color:var(--accent);margin-bottom:12px">${r.tittel}</h4>
+    <p style="font-size:.83rem;line-height:1.75;color:rgba(255,248,232,.72)">${r.innhold}</p>`;
+}
+
+function genererPlan() {
+  const sp = document.getElementById('f-sporsmal').value.trim();
+  const hy = document.getElementById('f-hypotese').value.trim();
+  const uav = document.getElementById('f-uav').value.trim();
+  const av = document.getElementById('f-av').value.trim();
+  const kont = document.getElementById('f-kont').value.trim();
+  const uts = document.getElementById('f-utstyr').value.trim();
+  const risi = document.getElementById('f-risiko').value.trim();
+
+  if (!sp || !hy) {
+    alert('Fyll ut minst forsøksspørsmål og hypotese.');
+    return;
+  }
+
+  const steg = [
+    { n: 1, tekst: `<strong>Forsøksspørsmål:</strong> ${sp}` },
+    { n: 2, tekst: `<strong>Hypotese:</strong> ${hy}` },
+    { n: 3, tekst: `<strong>Uavhengig variabel (det du endrer):</strong> ${uav || '—'}` },
+    { n: 4, tekst: `<strong>Avhengig variabel (det du måler):</strong> ${av || '—'}` },
+    { n: 5, tekst: `<strong>Kontrollvariabler (holdes konstant):</strong> ${kont || '—'}` },
+    { n: 6, tekst: `<strong>Utstyr og materialer:</strong> ${uts || '—'}` },
+    { n: 7, tekst: `<strong>Risikovurdering:</strong> ${risi || '— (husk å fylle ut!)'}` },
+    { n: 8, tekst: `<strong>Gjennomføring:</strong> Utfør forsøket systematisk. Endre kun den uavhengige variabelen. Mål den avhengige variabelen for hvert trinn. Gjenta minst 3 ganger.` },
+    { n: 9, tekst: `<strong>Dataregistrering:</strong> Lag en tabell med kolonner for uavhengig variabel, alle gjentakelser og gjennomsnitt. Inkluder enheter. Bruk riktig antall gjeldende siffer.` },
+    { n: 10, tekst: `<strong>Analyse og konklusjon:</strong> Tegn graf (X = uavhengig, Y = avhengig). Svar på forsøksspørsmålet. Vurder om hypotesen støttes. Diskuter feilkilder.` },
+  ];
+
+  const stegsHTML = steg.map(s => `
+    <div class="fs">
+      <div class="fs-nr">${s.n}</div>
+      <div>${s.tekst}</div>
+    </div>`).join('');
+
+  document.getElementById('forsok-steg').innerHTML = stegsHTML;
+  const res = document.getElementById('forsok-resultat');
+  res.style.display = 'block';
+  res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
