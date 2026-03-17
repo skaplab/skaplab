@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Molekylmodeller</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1420;--border:rgba(96,200,255,.07);
+  --text:#e8f4ff;--dim:#1e3450;
+  --accent:#60c8ff;--accent2:#a0f060;--accent3:#f0c060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 30% 20%,rgba(96,200,255,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(160,240,96,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:24px 0 36px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.hero h1{font-family:var(--font-d);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:10px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.88rem;color:var(--dim);max-width:560px;margin:0 auto;line-height:1.8}
+/* BUILDER LAYOUT */
+.builder{display:grid;grid-template-columns:220px 1fr 260px;gap:14px;height:600px}
+.toolbar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.toolbar-seksjon{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;font-weight:600}
+.atom-knapp{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;border:1px solid var(--border);background:transparent;cursor:pointer;width:100%;font-family:var(--font-b);font-size:.82rem;color:rgba(232,244,255,.7);transition:all .18s}
+.atom-knapp:hover{border-color:var(--accent);color:var(--text);background:rgba(96,200,255,.05)}
+.atom-knapp.aktiv{border-color:var(--accent);background:rgba(96,200,255,.12);color:var(--accent)}
+.atom-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:white}
+.canvas-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;cursor:crosshair}
+.canvas-wrap canvas{display:block;width:100%;height:100%}
+.canvas-overlay{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+.c-btn{padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:rgba(232,244,255,.6);font-size:.75rem;cursor:pointer;backdrop-filter:blur(4px);transition:all .18s}
+.c-btn:hover{border-color:var(--accent);color:var(--accent)}
+.c-btn.danger:hover{border-color:rgba(240,96,96,.5);color:rgba(240,96,96,.7)}
+.modus-bar{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:4px;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:10px;padding:4px;backdrop-filter:blur(8px)}
+.modus-knapp{padding:5px 13px;border-radius:7px;border:none;background:transparent;color:rgba(232,244,255,.5);font-size:.78rem;cursor:pointer;transition:all .18s}
+.modus-knapp.aktiv{background:rgba(96,200,255,.15);color:var(--accent)}
+.infopanel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.info-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic;margin-bottom:4px}
+.info-felt{font-size:.79rem;line-height:1.6;color:rgba(232,244,255,.65);padding:8px 10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:5px}
+.info-felt strong{color:var(--text);display:block;margin-bottom:2px}
+.hjelpetekst{font-size:.74rem;color:var(--dim);line-height:1.6}
+/* FORHÅNDSBYGG */
+.sep{display:flex;align-items:center;gap:16px;margin:28px 0 16px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.maler-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.mal-kort{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.mal-kort:hover{border-color:var(--accent);background:rgba(96,200,255,.05)}
+.mal-ikon{font-size:1.6rem;margin-bottom:6px}
+.mal-navn{font-family:var(--font-d);font-size:.85rem;color:var(--accent);margin-bottom:3px}
+.mal-form{font-size:.72rem;color:var(--dim)}
+/* LÆRINGSNOTAT */
+.lnotat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-top:16px}
+.lnotat h3{font-family:var(--font-d);font-size:1rem;color:var(--accent);font-style:italic;margin-bottom:12px}
+.lnotat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.lnotat-boks{padding:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:.79rem;line-height:1.6;color:rgba(232,244,255,.65)}
+.lnotat-boks strong{color:var(--text);display:block;margin-bottom:3px}
+@media(max-width:900px){.builder{grid-template-columns:1fr;height:auto}.canvas-wrap{height:400px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="kjemiske_bindinger.html" class="nav-lnk">Kjemiske bindinger</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Molekylmodeller</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · LK20 KM3 – Lage og bruke modeller</div>
+    <h1>Bygg <em>molekylmodeller</em><br>fra bunnen</h1>
+    <p class="hero-sub">Plasser atomer, tegn bindinger og se Lewis-strukturen ta form. Utforsk hvordan oktettregel, bindingstype og geometri henger sammen.</p>
+  </div>
+
+  <div class="builder">
+    <!-- VERKTØYLINJE -->
+    <div class="toolbar">
+      <div class="toolbar-seksjon">Atomer</div>
+      <button class="atom-knapp aktiv" id="btn-H" onclick="velgAtom('H')"><span class="atom-dot" style="background:#9060d8">H</span>Hydrogen (1)</button>
+      <button class="atom-knapp" id="btn-C" onclick="velgAtom('C')"><span class="atom-dot" style="background:#606060">C</span>Karbon (4)</button>
+      <button class="atom-knapp" id="btn-N" onclick="velgAtom('N')"><span class="atom-dot" style="background:#6060d8">N</span>Nitrogen (3/5)</button>
+      <button class="atom-knapp" id="btn-O" onclick="velgAtom('O')"><span class="atom-dot" style="background:#d84040">O</span>Oksygen (2/6)</button>
+      <button class="atom-knapp" id="btn-F" onclick="velgAtom('F')"><span class="atom-dot" style="background:#40b840">F</span>Fluor (1/7)</button>
+      <button class="atom-knapp" id="btn-Cl" onclick="velgAtom('Cl')"><span class="atom-dot" style="background:#20a040">Cl</span>Klor (1/7)</button>
+      <button class="atom-knapp" id="btn-S" onclick="velgAtom('S')"><span class="atom-dot" style="background:#c8c820">S</span>Svovel (2/6)</button>
+      <button class="atom-knapp" id="btn-P" onclick="velgAtom('P')"><span class="atom-dot" style="background:#d87820">P</span>Fosfor (3/5)</button>
+
+      <div class="toolbar-seksjon" style="margin-top:6px">Bindinger</div>
+      <button class="atom-knapp" id="btn-bond1" onclick="velgModus('binding1')"><span style="font-size:.9rem">—</span> Enkeltbinding</button>
+      <button class="atom-knapp" id="btn-bond2" onclick="velgModus('binding2')"><span style="font-size:.9rem">=</span> Dobbeltbinding</button>
+      <button class="atom-knapp" id="btn-bond3" onclick="velgModus('binding3')"><span style="font-size:.9rem">≡</span> Trippelbinding</button>
+
+      <div class="toolbar-seksjon" style="margin-top:6px">Slett</div>
+      <button class="atom-knapp" id="btn-slett" onclick="velgModus('slett')" style="color:rgba(240,96,96,.7)"><span style="font-size:.9rem">✕</span> Slett element</button>
+    </div>
+
+    <!-- TEGNEFLATE -->
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="mol-canvas"></canvas>
+      <div class="canvas-overlay">
+        <button class="c-btn" onclick="tommFlate()">↺ Nullstill</button>
+        <button class="c-btn" onclick="angre()">⟵ Angre</button>
+        <button class="c-btn" onclick="visLewis()">Lewis-vis</button>
+      </div>
+      <div class="modus-bar">
+        <button class="modus-knapp aktiv" id="m-plasser" onclick="byttCanvasModus('plasser')">Plasser atom</button>
+        <button class="modus-knapp" id="m-bind" onclick="byttCanvasModus('bind')">Tegn binding</button>
+        <button class="modus-knapp" id="m-flytt" onclick="byttCanvasModus('flytt')">Flytt</button>
+      </div>
+    </div>
+
+    <!-- INFOPANEL -->
+    <div class="infopanel" id="infopanel">
+      <div class="info-tittel">Molekylinformasjon</div>
+      <div class="info-felt" id="info-formel"><strong>Molekylformel</strong>Ingen atomer ennå</div>
+      <div class="info-felt" id="info-valensel"><strong>Valenselektroner totalt</strong>—</div>
+      <div class="info-felt" id="info-oktet"><strong>Oktet-status</strong>—</div>
+      <div class="info-felt" id="info-bindinger"><strong>Bindinger</strong>—</div>
+      <div class="info-felt" id="info-type"><strong>Bindingstype (estimat)</strong>—</div>
+      <div class="info-felt hjelpetekst" id="info-hint">
+        <strong style="color:var(--accent);display:block;margin-bottom:4px">Slik bruker du byggeren:</strong>
+        1. Velg et atom fra listen til venstre<br>
+        2. Klikk på lerretet for å plassere det<br>
+        3. Velg «Tegn binding» og klikk to atomer<br>
+        4. Sjekk om hvert atom oppfyller oktettregel
+      </div>
+    </div>
+  </div>
+
+  <!-- MALER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Last inn et eksempelmolekyl</div><div class="sep-r"></div></div>
+  <div class="maler-grid">
+    <div class="mal-kort" onclick="lastMal('h2o')"><div class="mal-ikon">💧</div><div class="mal-navn">H₂O</div><div class="mal-form">Bøyd · Polær</div></div>
+    <div class="mal-kort" onclick="lastMal('co2')"><div class="mal-ikon">🌫️</div><div class="mal-navn">CO₂</div><div class="mal-form">Lineær · Apolart</div></div>
+    <div class="mal-kort" onclick="lastMal('nh3')"><div class="mal-ikon">🧪</div><div class="mal-navn">NH₃</div><div class="mal-form">Pyramidal · Polær</div></div>
+    <div class="mal-kort" onclick="lastMal('ch4')"><div class="mal-ikon">⛽</div><div class="mal-navn">CH₄</div><div class="mal-form">Tetraeder · Apolart</div></div>
+    <div class="mal-kort" onclick="lastMal('hcl')"><div class="mal-ikon">⚗️</div><div class="mal-navn">HCl</div><div class="mal-form">Lineær · Polær</div></div>
+    <div class="mal-kort" onclick="lastMal('c2h4')"><div class="mal-ikon">🔗</div><div class="mal-navn">C₂H₄</div><div class="mal-form">Trigonal plan</div></div>
+    <div class="mal-kort" onclick="lastMal('c2h2')"><div class="mal-ikon">⚡</div><div class="mal-navn">C₂H₂</div><div class="mal-form">Lineær · Trippel</div></div>
+    <div class="mal-kort" onclick="lastMal('h2o2')"><div class="mal-ikon">🫧</div><div class="mal-navn">H₂O₂</div><div class="mal-form">Bøyd · Peroksid</div></div>
+  </div>
+
+  <!-- LÆRINGSNOTAT -->
+  <div class="lnotat">
+    <h3>Hva modellen din viser – og hva den ikke viser</h3>
+    <div class="lnotat-grid">
+      <div class="lnotat-boks"><strong>✓ Modellen viser</strong>Antall atomer og binding­stype · Lewis-struktur (2D) · Valenselektroner · Oktetoppfyllelse per atom</div>
+      <div class="lnotat-boks"><strong>⚠ Modellen forenkler</strong>3D-geometri er ikke nøyaktig i 2D · Bindingslengder er ikke i skala · Elektronskyer er ikke tegnet</div>
+      <div class="lnotat-boks"><strong>🔬 Virkelige modeller</strong>Kugle-pinne-modeller · Romfyllingsmodeller · Datamaskingenererte elektrontetthetskart · Røntgenkrystallografi</div>
+      <div class="lnotat-boks"><strong>💡 Oktettregel – unntakene</strong>H: maks 2 e⁻ · Be og B: kan ha under 8 · S og P (tredje periode+): kan utvide til 10–12 e⁻</div>
+      <div class="lnotat-boks"><strong>📐 Fra Lewis til 3D</strong>Tell bindingspar og ensomme par rundt sentralatom → bruk VSEPR-modellen → bestem geometri og polæritet</div>
+      <div class="lnotat-boks"><strong>📚 Relaterte sider</strong><a href="kjemiske_bindinger.html" style="color:var(--accent)">Kjemiske bindinger</a> · <a href="atom.html" style="color:var(--accent)">Atom og periodesystem</a> · <a href="organisk_kjemi_karusell.html" style="color:var(--accent)">Organisk kjemi</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// TILSTAND
+// ═══════════════════════════════════════
+const ATOM_DATA = {
+  H:  { r:14, farge:'#9060d8', valens:1,  max_bind:1  },
+  C:  { r:19, farge:'#808080', valens:4,  max_bind:4  },
+  N:  { r:17, farge:'#6060d8', valens:5,  max_bind:3  },
+  O:  { r:16, farge:'#d84040', valens:6,  max_bind:2  },
+  F:  { r:15, farge:'#40b840', valens:7,  max_bind:1  },
+  Cl: { r:18, farge:'#20a040', valens:7,  max_bind:1  },
+  S:  { r:18, farge:'#c8c820', valens:6,  max_bind:2  },
+  P:  { r:18, farge:'#d87820', valens:5,  max_bind:3  },
+};
+const EN_VALS = {H:2.1,C:2.5,N:3.0,O:3.5,F:4.0,Cl:3.0,S:2.5,P:2.1};
+
+let atomer = [];        // {id, symbol, x, y}
+let bindinger = [];     // {id, a1, a2, order}
+let valgtAtom = 'H';
+let canvasModus = 'plasser'; // plasser|bind|flytt|slett
+let bindingOrder = 1;
+let bindFra = null;
+let dragging = null;
+let history_stack = [];
+let idTeller = 0;
+
+function snapshot() { history_stack.push(JSON.stringify({atomer,bindinger})); if(history_stack.length>30) history_stack.shift(); }
+function angre() {
+  if(!history_stack.length) return;
+  const s = JSON.parse(history_stack.pop());
+  atomer = s.atomer; bindinger = s.bindinger; tegn(); oppdaterInfo();
+}
+
+// ═══════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════
+const canvas = document.getElementById('mol-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  const wrap = document.getElementById('canvas-wrap');
+  W = canvas.width = wrap.clientWidth;
+  H = canvas.height = wrap.clientHeight;
+  tegn();
+}
+window.addEventListener('resize', resize);
+setTimeout(resize, 60);
+
+// ═══════════════════════════════════════
+// TEGNING
+// ═══════════════════════════════════════
+function tegn() {
+  if(!W||!H) return;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0e1420';
+  ctx.fillRect(0,0,W,H);
+
+  // Rutenett
+  ctx.strokeStyle = 'rgba(96,200,255,.04)';
+  ctx.lineWidth = 1;
+  for(let x=0;x<W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for(let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Bindinger
+  bindinger.forEach(b => {
+    const a1 = atomer.find(a=>a.id===b.a1);
+    const a2 = atomer.find(a=>a.id===b.a2);
+    if(!a1||!a2) return;
+    const dx=a2.x-a1.x, dy=a2.y-a1.y, len=Math.sqrt(dx*dx+dy*dy);
+    const nx=dy/len, ny=-dx/len;
+    const offsets = b.order===1?[0]: b.order===2?[-4,4]:[-7,0,7];
+    offsets.forEach(off=>{
+      ctx.strokeStyle='rgba(232,244,255,.65)'; ctx.lineWidth=2.5;
+      ctx.beginPath();
+      ctx.moveTo(a1.x+nx*off, a1.y+ny*off);
+      ctx.lineTo(a2.x+nx*off, a2.y+ny*off);
+      ctx.stroke();
+    });
+  });
+
+  // Atomer
+  atomer.forEach(a => {
+    const d = ATOM_DATA[a.symbol];
+    // Skygge
+    ctx.beginPath(); ctx.arc(a.x+2,a.y+2,d.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.fill();
+    // Sirkel
+    ctx.beginPath(); ctx.arc(a.x,a.y,d.r,0,Math.PI*2);
+    ctx.fillStyle=d.farge+'30'; ctx.strokeStyle=d.farge; ctx.lineWidth=2;
+    ctx.fill(); ctx.stroke();
+    // Symbol
+    ctx.fillStyle=d.farge; ctx.font=`bold ${a.symbol.length>1?10:12}px DM Sans`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(a.symbol,a.x,a.y);
+    // Ensomme par
+    const bindCount = bindinger.filter(b=>(b.a1===a.id||b.a2===a.id)).reduce((s,b)=>s+b.order,0);
+    const freeEl = d.valens - bindCount;
+    if(freeEl>0) {
+      const lpPairs = Math.floor(freeEl/2);
+      const angles = [Math.PI*1.5, 0, Math.PI*0.5, Math.PI];
+      for(let i=0;i<lpPairs;i++){
+        const ang=angles[i]||0, lx=a.x+Math.cos(ang)*(d.r+10), ly=a.y+Math.sin(ang)*(d.r+10);
+        ctx.fillStyle='rgba(240,192,96,.7)';
+        ctx.beginPath(); ctx.arc(lx-3,ly,2.5,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(lx+3,ly,2.5,0,Math.PI*2); ctx.fill();
+      }
+    }
+  });
+
+  // Fremhev bindingsfra-atom
+  if(bindFra!==null) {
+    const a = atomer.find(x=>x.id===bindFra);
+    if(a){ ctx.beginPath(); ctx.arc(a.x,a.y,ATOM_DATA[a.symbol].r+5,0,Math.PI*2);
+      ctx.strokeStyle='rgba(96,200,255,.6)'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]); }
+  }
+}
+
+// ═══════════════════════════════════════
+// INTERAKSJON
+// ═══════════════════════════════════════
+function klikk(e) {
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+
+  if(canvasModus==='plasser') {
+    snapshot();
+    atomer.push({id:idTeller++, symbol:valgtAtom, x:Math.round(mx/20)*20, y:Math.round(my/20)*20});
+    tegn(); oppdaterInfo();
+  } else if(canvasModus==='bind'||canvasModus==='binding1'||canvasModus==='binding2'||canvasModus==='binding3') {
+    const treff = finnAtom(mx,my);
+    if(treff===null) return;
+    if(bindFra===null){ bindFra=treff; tegn(); return; }
+    if(bindFra===treff){ bindFra=null; tegn(); return; }
+    snapshot();
+    const eks = bindinger.find(b=>(b.a1===bindFra&&b.a2===treff)||(b.a1===treff&&b.a2===bindFra));
+    if(eks){ eks.order=Math.min(3,eks.order+1); }
+    else { bindinger.push({id:idTeller++, a1:bindFra, a2:treff, order:bindingOrder}); }
+    bindFra=null; tegn(); oppdaterInfo();
+  } else if(canvasModus==='slett') {
+    snapshot();
+    const treff=finnAtom(mx,my);
+    if(treff!==null){ atomer=atomer.filter(a=>a.id!==treff); bindinger=bindinger.filter(b=>b.a1!==treff&&b.a2!==treff); }
+    else {
+      const b=finnBinding(mx,my);
+      if(b!==null) bindinger=bindinger.filter(x=>x.id!==b);
+    }
+    tegn(); oppdaterInfo();
+  }
+}
+
+let dragAtom=null, dragOx=0, dragOy=0;
+canvas.addEventListener('mousedown', e=>{
+  if(canvasModus!=='flytt') { klikk(e); return; }
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const id=finnAtom(mx,my);
+  if(id!==null){ dragAtom=id; const a=atomer.find(x=>x.id===id); dragOx=mx-a.x; dragOy=my-a.y; }
+});
+canvas.addEventListener('mousemove', e=>{
+  if(dragAtom===null) return;
+  const rect=canvas.getBoundingClientRect();
+  const a=atomer.find(x=>x.id===dragAtom);
+  if(a){ a.x=e.clientX-rect.left-dragOx; a.y=e.clientY-rect.top-dragOy; tegn(); }
+});
+canvas.addEventListener('mouseup', ()=>{ if(dragAtom!==null){ oppdaterInfo(); dragAtom=null; } });
+canvas.addEventListener('click', e=>{ if(canvasModus!=='flytt') klikk(e); });
+
+// Touch
+canvas.addEventListener('touchstart', e=>{
+  e.preventDefault();
+  const t=e.touches[0], r=canvas.getBoundingClientRect();
+  const fakeE={clientX:t.clientX,clientY:t.clientY};
+  if(canvasModus==='flytt'){
+    const mx=t.clientX-r.left, my=t.clientY-r.top;
+    const id=finnAtom(mx,my);
+    if(id!==null){ dragAtom=id; const a=atomer.find(x=>x.id===id); dragOx=mx-a.x; dragOy=my-a.y; }
+  } else klikk(fakeE);
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(dragAtom===null) return;
+  const t=e.touches[0],r=canvas.getBoundingClientRect();
+  const a=atomer.find(x=>x.id===dragAtom);
+  if(a){a.x=t.clientX-r.left-dragOx;a.y=t.clientY-r.top-dragOy;tegn();}
+},{passive:false});
+canvas.addEventListener('touchend',()=>{if(dragAtom!==null){oppdaterInfo();dragAtom=null;}});
+
+function finnAtom(mx,my) {
+  for(let i=atomer.length-1;i>=0;i--){
+    const a=atomer[i], d=ATOM_DATA[a.symbol];
+    if(Math.hypot(mx-a.x,my-a.y)<d.r+4) return a.id;
+  }
+  return null;
+}
+function finnBinding(mx,my) {
+  for(const b of bindinger){
+    const a1=atomer.find(a=>a.id===b.a1), a2=atomer.find(a=>a.id===b.a2);
+    if(!a1||!a2) continue;
+    const dx=a2.x-a1.x, dy=a2.y-a1.y, len=Math.sqrt(dx*dx+dy*dy);
+    if(len<1) continue;
+    const t=((mx-a1.x)*dx+(my-a1.y)*dy)/(len*len);
+    if(t<0||t>1) continue;
+    const px=a1.x+t*dx, py=a1.y+t*dy;
+    if(Math.hypot(mx-px,my-py)<8) return b.id;
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════
+// KONTROLLER
+// ═══════════════════════════════════════
+function velgAtom(sym) {
+  valgtAtom=sym;
+  document.querySelectorAll('.atom-knapp[id^="btn-"]').forEach(b=>b.classList.remove('aktiv'));
+  document.getElementById('btn-'+sym)?.classList.add('aktiv');
+  byttCanvasModus('plasser');
+}
+function velgModus(m) {
+  if(m==='binding1'){bindingOrder=1;byttCanvasModus('bind');}
+  else if(m==='binding2'){bindingOrder=2;byttCanvasModus('bind');}
+  else if(m==='binding3'){bindingOrder=3;byttCanvasModus('bind');}
+  else byttCanvasModus(m);
+  document.querySelectorAll('.atom-knapp[id^="btn-bond"], .atom-knapp[id="btn-slett"]').forEach(b=>b.classList.remove('aktiv'));
+  document.getElementById('btn-'+m)?.classList.add('aktiv');
+}
+function byttCanvasModus(m) {
+  canvasModus=m; bindFra=null;
+  document.querySelectorAll('.modus-knapp').forEach(b=>b.classList.remove('aktiv'));
+  if(m==='plasser') document.getElementById('m-plasser')?.classList.add('aktiv');
+  else if(m==='bind') document.getElementById('m-bind')?.classList.add('aktiv');
+  else if(m==='flytt') document.getElementById('m-flytt')?.classList.add('aktiv');
+}
+function tommFlate() { snapshot(); atomer=[]; bindinger=[]; bindFra=null; tegn(); oppdaterInfo(); }
+
+// ═══════════════════════════════════════
+// INFOPANEL OPPDATERING
+// ═══════════════════════════════════════
+function oppdaterInfo() {
+  if(atomer.length===0){
+    document.getElementById('info-formel').innerHTML='<strong>Molekylformel</strong>Ingen atomer ennå';
+    document.getElementById('info-valensel').innerHTML='<strong>Valenselektroner totalt</strong>—';
+    document.getElementById('info-oktet').innerHTML='<strong>Oktet-status</strong>—';
+    document.getElementById('info-bindinger').innerHTML='<strong>Bindinger</strong>—';
+    document.getElementById('info-type').innerHTML='<strong>Bindingstype (estimat)</strong>—';
+    return;
+  }
+  // Formel
+  const teller={};
+  atomer.forEach(a=>{ teller[a.symbol]=(teller[a.symbol]||0)+1; });
+  const rekkef=['C','H','N','O','F','Cl','S','P'];
+  let formel='';
+  rekkef.forEach(s=>{ if(teller[s]) formel+=s+(teller[s]>1?teller[s]:''); });
+  Object.keys(teller).filter(s=>!rekkef.includes(s)).forEach(s=>formel+=s+(teller[s]>1?teller[s]:''));
+  document.getElementById('info-formel').innerHTML=`<strong>Molekylformel</strong>${formel||'—'}`;
+
+  // Valenselektroner
+  const totValens = atomer.reduce((s,a)=>s+(ATOM_DATA[a.symbol]?.valens||0),0);
+  const totBind = bindinger.reduce((s,b)=>s+b.order*2,0);
+  document.getElementById('info-valensel').innerHTML=`<strong>Valenselektroner totalt</strong>${totValens} e⁻ (${totBind} i bindinger, ${totValens-totBind} ensomme)`;
+
+  // Oktet-status
+  let oktetFeil=[], oktetOK=[];
+  atomer.forEach(a=>{
+    const bindEl=bindinger.filter(b=>b.a1===a.id||b.a2===a.id).reduce((s,b)=>s+b.order*2,0);
+    const maal=a.symbol==='H'?2:8;
+    const lonePairs=ATOM_DATA[a.symbol].valens-bindEl/2*1; // electrons shared
+    const totEl=bindEl + Math.max(0,(ATOM_DATA[a.symbol].valens - bindEl/2*1)*2 - bindEl);
+    if(bindEl>=maal) oktetOK.push(a.symbol);
+    else oktetFeil.push(`${a.symbol}(${bindEl}/${maal})`);
+  });
+  const oktetTxt = oktetFeil.length===0 ? '✓ Alle atomer har fylt oktet' : `⚠ ${oktetFeil.join(', ')} – mangler elektroner`;
+  document.getElementById('info-oktet').innerHTML=`<strong>Oktet-status</strong>${oktetTxt}`;
+
+  // Bindinger
+  const b1=bindinger.filter(b=>b.order===1).length;
+  const b2=bindinger.filter(b=>b.order===2).length;
+  const b3=bindinger.filter(b=>b.order===3).length;
+  const bTxt=[b1?`${b1} enkelt`:null,b2?`${b2} dobbel`:null,b3?`${b3} trippel`:null].filter(Boolean).join(', ')||'Ingen';
+  document.getElementById('info-bindinger').innerHTML=`<strong>Bindinger</strong>${bTxt}`;
+
+  // Bindingstype
+  let enVals=[];
+  bindinger.forEach(b=>{
+    const a1=atomer.find(a=>a.id===b.a1), a2=atomer.find(a=>a.id===b.a2);
+    if(a1&&a2){ const de=Math.abs((EN_VALS[a1.symbol]||2.5)-(EN_VALS[a2.symbol]||2.5)); enVals.push(de); }
+  });
+  let typeTxt='—';
+  if(enVals.length){
+    const maxDE=Math.max(...enVals);
+    if(maxDE>1.7) typeTxt=`Ionisk (maks ΔEN=${maxDE.toFixed(1)})`;
+    else if(maxDE>0.5) typeTxt=`Polær kovalent (maks ΔEN=${maxDE.toFixed(1)})`;
+    else typeTxt=`Apolar kovalent (maks ΔEN=${maxDE.toFixed(1)})`;
+  }
+  document.getElementById('info-type').innerHTML=`<strong>Bindingstype (estimat)</strong>${typeTxt}`;
+}
+
+function visLewis() {
+  alert('Lewis-visning:\n\n' + atomer.map(a=>{
+    const bEl=bindinger.filter(b=>b.a1===a.id||b.a2===a.id).reduce((s,b)=>s+b.order,0);
+    const lone=Math.floor((ATOM_DATA[a.symbol].valens-bEl)/2);
+    return `${a.symbol}: ${bEl} binding(er), ${lone} ensomt/e par`;
+  }).join('\n'));
+}
+
+// ═══════════════════════════════════════
+// MALER
+// ═══════════════════════════════════════
+const MALER = {
+  h2o: { atomer:[{s:'O',x:.5,y:.38},{s:'H',x:.38,y:.58},{s:'H',x:.62,y:.58}], bindinger:[[0,1,1],[0,2,1]] },
+  co2: { atomer:[{s:'C',x:.5,y:.5},{s:'O',x:.3,y:.5},{s:'O',x:.7,y:.5}], bindinger:[[0,1,2],[0,2,2]] },
+  nh3: { atomer:[{s:'N',x:.5,y:.42},{s:'H',x:.35,y:.62},{s:'H',x:.5,y:.68},{s:'H',x:.65,y:.62}], bindinger:[[0,1,1],[0,2,1],[0,3,1]] },
+  ch4: { atomer:[{s:'C',x:.5,y:.5},{s:'H',x:.35,y:.35},{s:'H',x:.65,y:.35},{s:'H',x:.35,y:.65},{s:'H',x:.65,y:.65}], bindinger:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]] },
+  hcl: { atomer:[{s:'H',x:.4,y:.5},{s:'Cl',x:.6,y:.5}], bindinger:[[0,1,1]] },
+  c2h4: { atomer:[{s:'C',x:.42,y:.5},{s:'C',x:.58,y:.5},{s:'H',x:.32,y:.38},{s:'H',x:.32,y:.62},{s:'H',x:.68,y:.38},{s:'H',x:.68,y:.62}], bindinger:[[0,1,2],[0,2,1],[0,3,1],[1,4,1],[1,5,1]] },
+  c2h2: { atomer:[{s:'C',x:.42,y:.5},{s:'C',x:.58,y:.5},{s:'H',x:.3,y:.5},{s:'H',x:.7,y:.5}], bindinger:[[0,1,3],[0,2,1],[1,3,1]] },
+  h2o2: { atomer:[{s:'O',x:.4,y:.5},{s:'O',x:.6,y:.5},{s:'H',x:.28,y:.4},{s:'H',x:.72,y:.4}], bindinger:[[0,1,1],[0,2,1],[1,3,1]] },
+};
+function lastMal(id) {
+  snapshot();
+  const m=MALER[id]; if(!m) return;
+  atomer=[]; bindinger=[]; idTeller=0;
+  m.atomer.forEach((a,i)=>{ atomer.push({id:i,symbol:a.s,x:a.x*W,y:a.y*H}); });
+  m.bindinger.forEach(b=>{ bindinger.push({id:idTeller++,a1:b[0],a2:b[1],order:b[2]}); });
+  idTeller=atomer.length+bindinger.length;
+  tegn(); oppdaterInfo();
+}
+</script>
+</body>
+</html>

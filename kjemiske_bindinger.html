@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Kjemiske bindinger</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06040e;--surface:#0e0a1c;--card:#140f24;--border:rgba(160,120,255,.08);
+  --text:#ece8fc;--dim:#2a2040;
+  --accent:#a060f8;--accent2:#60d0f0;--accent3:#f0c060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(160,96,248,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,208,240,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,4,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(236,232,252,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(160,96,248,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(236,232,252,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* LEWIS-BYGGER */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.lewis-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lewis-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lewis-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-b);font-size:.82rem;color:var(--dim);transition:all .18s}
+.lewis-tab:hover{color:var(--text);border-color:rgba(160,96,248,.3)}
+.lewis-tab.aktiv{color:var(--accent);background:rgba(160,96,248,.1);border-color:rgba(160,96,248,.4)}
+.lewis-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.lewis-canvas-wrap canvas{width:100%;border-radius:14px}
+.lewis-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lewis-panel h4{font-family:var(--font-d);font-size:1rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lewis-felt{margin-bottom:9px;padding:9px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:.8rem;line-height:1.6;color:rgba(236,232,252,.7)}
+.lewis-felt strong{color:var(--text);display:block;margin-bottom:2px}
+.egenskaps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.egensk-boks{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.egensk-val{font-family:var(--font-d);font-size:1.1rem;font-weight:700;margin-bottom:2px}
+.egensk-lbl{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lewis-grid{grid-template-columns:1fr}.egenskaps-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="atom.html" class="nav-lnk">Atom og periodesystem</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Kjemiske bindinger</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · LK20 KM9</div>
+    <h1>Kjemiske bindinger<br><em>og egenskaper</em></h1>
+    <p class="hero-sub">Lewis-strukturer, elektronegativitet, polær og apolar binding – og hvordan bindingstype bestemmer et stoffs fysikalske egenskaper</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Oktettregel og Lewis-strukturer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">🔬 Lewis</div>
+          <h3 class="k-tittel">Oktettregel og Lewis-strukturer</h3>
+          <p class="k-ingress">Atomer søker å fylle sitt ytterste skall med 8 elektroner (oktettregel – H vil ha 2). Lewis-strukturer er et kart over valenselektroner og bindinger i et molekyl.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Valenselektroner:</strong> Elektroner i ytterste skall – de eneste som deltar i kjemiske bindinger. C har 4 valenselektroner, N har 5, O har 6, F har 7, H har 1. Antallet styrer hvor mange bindinger atomet kan danne.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">✏️</span><div><strong>Lewis-struktur (elektronpunktstruktur):</strong> Hvert valenselektron tegnes som en prikk rundt atomsymbolet. Par av prikker mellom atomer = kovalent binding (delt elektronpar). Ensomme par = ikke-bindende elektroner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Enkel, dobbel og trippelbinding:</strong> 1 delt elektronpar = enkeltbinding (–). 2 par = dobbeltbinding (=). 3 par = trippelbinding (≡). C=O i CO₂, N≡N i N₂. Dobbelt- og trippelbindinger er kortere og sterkere enn enkeltbindinger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧩</span><div><strong>Tegne Lewis-struktur, steg for steg:</strong> (1) Tell alle valenselektroner. (2) Sett sentralatom. (3) Koble med enkeltbindinger. (4) Fyll oktet på yttere atomer. (5) Gi gjenværende til sentralatom. (6) Dobbeltbind hvis nødvendig for oktet.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#06040e"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">LEWIS-STRUKTURER</text>
+            <!-- H2O -->
+            <text x="54" y="36" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,240,.6)" font-weight="600">H₂O</text>
+            <g font-family="Fraunces" font-size="14" text-anchor="middle" fill="rgba(236,232,252,.8)">
+              <text x="24" y="76">H</text>
+              <text x="54" y="70">O</text>
+              <text x="84" y="76">H</text>
+            </g>
+            <!-- Ensomme par på O -->
+            <g fill="rgba(240,96,96,.7)">
+              <circle cx="47" cy="60" r="2.5"/><circle cx="54" cy="58" r="2.5"/>
+              <circle cx="47" cy="74" r="2.5"/><circle cx="54" cy="76" r="2.5"/>
+            </g>
+            <!-- Bindingsstreker -->
+            <line x1="32" y1="73" x2="46" y2="70" stroke="rgba(236,232,252,.5)" stroke-width="2"/>
+            <line x1="62" y1="70" x2="76" y2="73" stroke="rgba(236,232,252,.5)" stroke-width="2"/>
+            <text x="54" y="100" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,240,.45)">2 ensomme par + 2 bindinger</text>
+
+            <!-- CO2 -->
+            <text x="198" y="36" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,192,96,.6)" font-weight="600">CO₂</text>
+            <g font-family="Fraunces" font-size="14" text-anchor="middle" fill="rgba(236,232,252,.8)">
+              <text x="164" y="72">O</text>
+              <text x="198" y="72">C</text>
+              <text x="232" y="72">O</text>
+            </g>
+            <!-- Dobbeltbindinger -->
+            <line x1="174" y1="69" x2="190" y2="69" stroke="rgba(240,192,96,.6)" stroke-width="2"/>
+            <line x1="174" y1="74" x2="190" y2="74" stroke="rgba(240,192,96,.6)" stroke-width="2"/>
+            <line x1="206" y1="69" x2="222" y2="69" stroke="rgba(240,192,96,.6)" stroke-width="2"/>
+            <line x1="206" y1="74" x2="222" y2="74" stroke="rgba(240,192,96,.6)" stroke-width="2"/>
+            <!-- Ensomme par på O -->
+            <g fill="rgba(240,96,96,.7)">
+              <circle cx="160" cy="64" r="2.5"/><circle cx="164" cy="61" r="2.5"/>
+              <circle cx="160" cy="80" r="2.5"/><circle cx="164" cy="83" r="2.5"/>
+              <circle cx="236" cy="64" r="2.5"/><circle cx="232" cy="61" r="2.5"/>
+              <circle cx="236" cy="80" r="2.5"/><circle cx="232" cy="83" r="2.5"/>
+            </g>
+            <text x="198" y="100" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,192,96,.45)">2 dobbeltbindinger, lineær</text>
+
+            <!-- NH3 -->
+            <text x="54" y="128" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,96,.6)" font-weight="600">NH₃</text>
+            <g font-family="Fraunces" font-size="14" text-anchor="middle" fill="rgba(236,232,252,.8)">
+              <text x="54" y="165">N</text>
+              <text x="24" y="180">H</text>
+              <text x="54" y="195">H</text>
+              <text x="84" y="180">H</text>
+            </g>
+            <line x1="46" y1="166" x2="31" y2="174" stroke="rgba(236,232,252,.5)" stroke-width="2"/>
+            <line x1="54" y1="170" x2="54" y2="183" stroke="rgba(236,232,252,.5)" stroke-width="2"/>
+            <line x1="62" y1="166" x2="77" y2="174" stroke="rgba(236,232,252,.5)" stroke-width="2"/>
+            <g fill="rgba(240,96,96,.7)"><circle cx="48" cy="154" r="2.5"/><circle cx="60" cy="154" r="2.5"/></g>
+            <text x="54" y="212" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,96,.45)">1 ensomt par → pyramidal</text>
+
+            <!-- N2 -->
+            <text x="198" y="128" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(160,96,248,.6)" font-weight="600">N₂</text>
+            <g font-family="Fraunces" font-size="14" text-anchor="middle" fill="rgba(236,232,252,.8)">
+              <text x="172" y="165">N</text>
+              <text x="224" y="165">N</text>
+            </g>
+            <!-- Trippelbinding -->
+            <line x1="182" y1="160" x2="214" y2="160" stroke="rgba(160,96,248,.6)" stroke-width="2"/>
+            <line x1="182" y1="165" x2="214" y2="165" stroke="rgba(160,96,248,.6)" stroke-width="2"/>
+            <line x1="182" y1="170" x2="214" y2="170" stroke="rgba(160,96,248,.6)" stroke-width="2"/>
+            <g fill="rgba(240,96,96,.7)">
+              <circle cx="163" cy="160" r="2.5"/><circle cx="163" cy="170" r="2.5"/>
+              <circle cx="233" cy="160" r="2.5"/><circle cx="233" cy="170" r="2.5"/>
+            </g>
+            <text x="198" y="192" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(160,96,248,.45)">Trippelbinding – svært stabil</text>
+            <!-- Forklaring -->
+            <rect x="10" y="218" width="260" height="34" rx="8" fill="rgba(160,96,248,.04)" stroke="rgba(160,96,248,.12)" stroke-width="1"/>
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.5)" font-weight="600">● = valenselektron  — = bindende elektronpar  : = ensomt par</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,252,.35)">Hvert atom ønsker 8 elektroner (oktettregel) – H ønsker 2</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Elektronegativitet og polæritet -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,240,.1);color:#60d0f0;border:1px solid rgba(96,208,240,.2)">δ± Polæritet</div>
+          <h3 class="k-tittel">Elektronegativitet og polær binding</h3>
+          <p class="k-ingress">Elektronegativitet måler et atoms evne til å tiltrekke bindingselektroner. Stor forskjell mellom to atomer → elektronskyen forskyves → polær binding med delladninger δ+ og δ–.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Paulings elektronegativitetsskala:</strong> F = 4,0 (høyest). O = 3,5. N = 3,0. C = 2,5. H = 2,1. Metaller: lav (Na = 0,9). Elektronegativiteten øker mot høyre og oppover i periodesystemet (bortsett fra edle gasser).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">↔️</span><div><strong>Tre bindingstyper etter ΔEN:</strong> ΔEN &lt; 0,5: apolar kovalent (jevn deling, f.eks. Cl₂, C–H). ΔEN 0,5–1,7: polær kovalent (delladninger δ+/δ–, f.eks. H₂O, HCl). ΔEN &gt; 1,7: ionisk (fullstendig overføring, f.eks. NaCl).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Polære molekyler:</strong> Et molekyl er polært hvis det har polære bindinger OG asymmetrisk form. H₂O: polære O–H-bindinger + vinklet form → dipolmoment. CO₂: polære C=O-bindinger, men lineær og symmetrisk → apolart molekyl totalt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧲</span><div><strong>Hydrogenbinding:</strong> Spesiell type dipol–dipol-kraft mellom H bundet til F, O eller N og et ensomt par. Forklarer vanns usedvanlig høye kokepunkt (100°C vs. –61°C for H₂S), DNAs dobbelthelix og proteinfolding.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#06040e"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,240,.6)" letter-spacing=".08em">ELEKTRONEGATIVITET OG POLÆRITET</text>
+            <!-- Skala -->
+            <defs><linearGradient id="en-grad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="rgba(240,96,96,.2)"/>
+              <stop offset="100%" stop-color="rgba(160,96,248,.7)"/>
+            </linearGradient></defs>
+            <rect x="18" y="28" width="244" height="14" rx="5" fill="url(#en-grad)"/>
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle" fill="rgba(236,232,252,.5)">
+              <text x="26" y="54">Na 0,9</text>
+              <text x="62" y="54">H 2,1</text>
+              <text x="98" y="54">C 2,5</text>
+              <text x="140" y="54">N 3,0</text>
+              <text x="186" y="54">O 3,5</text>
+              <text x="254" y="54">F 4,0</text>
+            </g>
+            <text x="18" y="66" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.45)">lav EN</text>
+            <text x="262" y="66" text-anchor="end" font-family="DM Sans" font-size="8" fill="rgba(160,96,248,.55)">høy EN</text>
+
+            <!-- Tre bindingstyper -->
+            <rect x="10" y="74" width="260" height="172" rx="10" fill="rgba(96,208,240,.03)" stroke="rgba(96,208,240,.1)" stroke-width="1"/>
+
+            <!-- Apolar kovalent: Cl2 -->
+            <g>
+              <text x="130" y="92" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,96,.6)" font-weight="600">ΔEN &lt; 0,5 → Apolar kovalent</text>
+              <circle cx="82" cy="112" r="16" fill="rgba(96,208,96,.1)" stroke="rgba(96,208,96,.3)" stroke-width="1.5"/>
+              <text x="82" y="116" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(96,208,96,.8)">Cl</text>
+              <line x1="98" y1="112" x2="118" y2="112" stroke="rgba(96,208,96,.5)" stroke-width="2"/>
+              <circle cx="134" cy="112" r="16" fill="rgba(96,208,96,.1)" stroke="rgba(96,208,96,.3)" stroke-width="1.5"/>
+              <text x="134" y="116" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(96,208,96,.8)">Cl</text>
+              <text x="108" y="135" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,96,.45)">Cl₂ – elektroner likt delt</text>
+              <!-- Elektronsky sentrert -->
+              <ellipse cx="108" cy="112" rx="38" ry="10" fill="none" stroke="rgba(96,208,96,.25)" stroke-width="1" stroke-dasharray="3 2"/>
+            </g>
+
+            <!-- Polær kovalent: HF -->
+            <g>
+              <text x="130" y="158" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,240,.6)" font-weight="600">ΔEN 0,5–1,7 → Polær kovalent</text>
+              <circle cx="72" cy="178" r="14" fill="rgba(240,192,96,.1)" stroke="rgba(240,192,96,.3)" stroke-width="1.5"/>
+              <text x="72" y="182" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(240,192,96,.8)">H</text>
+              <text x="72" y="200" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,192,96,.5)">δ+</text>
+              <line x1="86" y1="178" x2="106" y2="178" stroke="rgba(96,208,240,.5)" stroke-width="2"/>
+              <circle cx="120" cy="178" r="16" fill="rgba(160,96,248,.1)" stroke="rgba(160,96,248,.4)" stroke-width="1.5"/>
+              <text x="120" y="182" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(160,96,248,.8)">F</text>
+              <text x="120" y="200" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(160,96,248,.5)">δ–</text>
+              <!-- Elektronsky forskjøvet mot F -->
+              <ellipse cx="110" cy="178" rx="28" ry="9" fill="none" stroke="rgba(160,96,248,.3)" stroke-width="1.5" stroke-dasharray="3 2"/>
+              <text x="170" y="182" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,240,.5)">HF – H₂O, HCl</text>
+              <text x="170" y="194" font-family="DM Sans" font-size="8" fill="rgba(236,232,252,.35)">Elektroner dratt mot F</text>
+            </g>
+
+            <!-- Ionisk: NaCl -->
+            <g>
+              <text x="130" y="218" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.55)" font-weight="600">ΔEN &gt; 1,7 → Ionisk (fullstendig overføring)</text>
+              <circle cx="72" cy="238" r="12" fill="rgba(240,96,96,.08)" stroke="rgba(240,96,96,.3)" stroke-width="1.5"/>
+              <text x="72" y="242" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(240,96,96,.7)">Na⁺</text>
+              <text x="98" y="242" text-anchor="middle" font-family="DM Sans" font-size="12" fill="rgba(236,232,252,.4)">+</text>
+              <circle cx="124" cy="238" r="14" fill="rgba(96,208,240,.08)" stroke="rgba(96,208,240,.3)" stroke-width="1.5"/>
+              <text x="124" y="242" text-anchor="middle" font-family="Fraunces" font-size="11" fill="rgba(96,208,240,.7)">Cl⁻</text>
+              <text x="180" y="242" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.45)">NaCl – elektron overført</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Bindingstype og fysikalske egenskaper -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(240,192,96,.1);color:#f0c060;border:1px solid rgba(240,192,96,.2)">🌡️ Egenskaper</div>
+          <h3 class="k-tittel">Bindingstype bestemmer egenskaper</h3>
+          <p class="k-ingress">Kokepunkt, løselighet, elektrisk ledningsevne og hardhet bestemmes direkte av hvilken bindingstype et stoff har. Dette er koblingen mellom atom-nivå og kjemiske egenskaper.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Ioniske forbindelser (NaCl, MgO):</strong> Høye smeltepunkter (NaCl: 801°C) fordi ionegitteret er sterkt. Løses i vann (polært løsemiddel). Leder strøm i smeltet form eller oppløst (frie ioner), ikke i fast form. Sprøe – gitteret splitter langs ioneskikt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Polare kovalente molekyler (H₂O, HCl, etanol):</strong> Middels/lave kokepunkter. Polære molekyler løses i polære løsemidler («likt løser likt»). Elektrisk ikke-ledende. Van der Waals-kreftene og hydrogenbindinger mellom molekylene bestemmer kokepunktet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⛽</span><div><strong>Apolare kovalente molekyler (CH₄, Cl₂, heksan):</strong> Lave kokepunkter (svake London-dispersjonskrefter). Løses i apolare løsemidler (oljete stoffer). Leder ikke strøm. Fett og oljer er apolare – løses ikke i vann.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚙️</span><div><strong>Metallisk binding (Cu, Fe, Al):</strong> Metallatomer avgir valenselektroner til et «elektronhav». Gir elektrisk ledning, termisk ledning og mekanisk formbarhet. Smeltepunkter varierer. Lyser – fri elektroner reflekterer lys.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#06040e"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,192,96,.6)" letter-spacing=".08em">BINDINGSTYPE → EGENSKAPER</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <!-- Header -->
+              <text x="22" y="34" fill="rgba(236,232,252,.4)" font-weight="600">Bindingstype</text>
+              <text x="115" y="34" fill="rgba(236,232,252,.4)" font-weight="600">Kokep.</text>
+              <text x="160" y="34" fill="rgba(236,232,252,.4)" font-weight="600">Løselig i</text>
+              <text x="226" y="34" fill="rgba(236,232,252,.4)" font-weight="600">Leder</text>
+              <line x1="10" y1="38" x2="270" y2="38" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+
+              <!-- Ionisk -->
+              <rect x="10" y="42" width="6" height="38" rx="2" fill="rgba(240,96,96,.6)"/>
+              <text x="25" y="58" fill="rgba(240,96,96,.7)" font-weight="600">Ionisk</text>
+              <text x="25" y="70" fill="rgba(236,232,252,.45)">NaCl, MgO</text>
+              <text x="115" y="64" fill="rgba(240,96,96,.65)">Høyt</text>
+              <text x="115" y="74" fill="rgba(236,232,252,.35)">801°C+</text>
+              <text x="160" y="64" fill="rgba(240,96,96,.65)">Vann</text>
+              <text x="160" y="74" fill="rgba(236,232,252,.35)">(polært)</text>
+              <text x="226" y="64" fill="rgba(96,208,96,.6)">Smeltet/</text>
+              <text x="226" y="74" fill="rgba(96,208,96,.5)">løst: ja</text>
+
+              <!-- Polær kovalent -->
+              <rect x="10" y="86" width="6" height="38" rx="2" fill="rgba(96,208,240,.6)"/>
+              <text x="25" y="102" fill="rgba(96,208,240,.7)" font-weight="600">Polær kovalent</text>
+              <text x="25" y="114" fill="rgba(236,232,252,.45)">H₂O, HCl, etanol</text>
+              <text x="115" y="108" fill="rgba(96,208,240,.65)">Middels</text>
+              <text x="115" y="118" fill="rgba(236,232,252,.35)">-200–200°C</text>
+              <text x="160" y="108" fill="rgba(96,208,240,.65)">Vann</text>
+              <text x="160" y="118" fill="rgba(236,232,252,.35)">(polært)</text>
+              <text x="226" y="108" fill="rgba(240,96,96,.5)">Nei</text>
+              <text x="226" y="118" fill="rgba(236,232,252,.35)">(ioniserer)</text>
+
+              <!-- Apolar kovalent -->
+              <rect x="10" y="130" width="6" height="38" rx="2" fill="rgba(96,208,96,.6)"/>
+              <text x="25" y="146" fill="rgba(96,208,96,.7)" font-weight="600">Apolar kovalent</text>
+              <text x="25" y="158" fill="rgba(236,232,252,.45)">CH₄, heksan, fett</text>
+              <text x="115" y="152" fill="rgba(96,208,96,.65)">Lavt</text>
+              <text x="115" y="162" fill="rgba(236,232,252,.35)">under 100°C</text>
+              <text x="160" y="152" fill="rgba(96,208,96,.65)">Olje</text>
+              <text x="160" y="162" fill="rgba(236,232,252,.35)">(apolart)</text>
+              <text x="226" y="152" fill="rgba(240,96,96,.5)">Nei</text>
+              <text x="226" y="162" fill="rgba(236,232,252,.35)"></text>
+
+              <!-- Metallisk -->
+              <rect x="10" y="174" width="6" height="38" rx="2" fill="rgba(240,192,96,.6)"/>
+              <text x="25" y="190" fill="rgba(240,192,96,.7)" font-weight="600">Metallisk</text>
+              <text x="25" y="202" fill="rgba(236,232,252,.45)">Fe, Cu, Al, Na</text>
+              <text x="115" y="196" fill="rgba(240,192,96,.65)">Varierer</text>
+              <text x="115" y="206" fill="rgba(236,232,252,.35)">Na 98°C→W 3400°C</text>
+              <text x="160" y="196" fill="rgba(240,96,96,.4)">Ikke i</text>
+              <text x="160" y="206" fill="rgba(240,96,96,.35)">løsning</text>
+              <text x="226" y="196" fill="rgba(96,208,96,.6)">Ja</text>
+              <text x="226" y="206" fill="rgba(96,208,96,.45)">(e⁻-hav)</text>
+
+              <!-- Likt løser likt -->
+              <rect x="10" y="220" width="260" height="32" rx="8" fill="rgba(160,96,248,.05)" stroke="rgba(160,96,248,.15)" stroke-width="1"/>
+              <text x="140" y="233" text-anchor="middle" fill="rgba(160,96,248,.6)" font-weight="600">«Likt løser likt»</text>
+              <text x="140" y="245" text-anchor="middle" fill="rgba(236,232,252,.4)">Polære løsemidler løser ioniske og polære stoffer · Apolare løser apolare</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Molekylgeometri -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">📐 Geometri</div>
+          <h3 class="k-tittel">Molekylgeometri – VSEPR-modellen</h3>
+          <p class="k-ingress">VSEPR (Valence Shell Electron Pair Repulsion): elektronpar frastøter hverandre og inntar posisjoner som gir maksimal avstand. Dette bestemmer molekylets form – og om det er polært.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Lineær (180°):</strong> 2 bindingspar, ingen ensomme par. CO₂, BeCl₂. Selv om C=O er polær, kanselleres dipolene → apolart molekyl totalt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Vinklet/bøyd:</strong> 2 bindingspar + 1–2 ensomme par. H₂O: 2 ensomme par → 104,5°. SO₂: 1 ensomt par → 119°. Ensomme par tar mer plass enn bindingspar → komprimerer bindingsvinkelen. Polær form.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⛰️</span><div><strong>Trigonal pyramidal:</strong> 3 bindingspar + 1 ensomt par. NH₃: 107°. Ensomt par på topp presser bindingene nedover. Polært molekyl. CH₃⁻ i organisk kjemi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔷</span><div><strong>Tetraedisk (109,5°):</strong> 4 bindingspar, ingen ensomme par. CH₄, CCl₄. Symmetrisk → apolart selv om C–Cl er polær. SiO₄⁴⁻ i kvarts. Karbons 4 bindinger i tetraederform er grunnlaget for organisk kjemi.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#06040e"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)" letter-spacing=".08em">MOLEKYLGEOMETRI – VSEPR</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <!-- Lineær: CO2 -->
+              <text x="60" y="36" text-anchor="middle" fill="rgba(96,208,96,.65)" font-weight="600">Lineær</text>
+              <text x="60" y="47" text-anchor="middle" fill="rgba(236,232,252,.4)">CO₂, 180°</text>
+              <circle cx="24" cy="68" r="12" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.35)" stroke-width="1.5"/>
+              <text x="24" y="72" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(240,96,96,.7)">O</text>
+              <line x1="36" y1="68" x2="48" y2="68" stroke="rgba(96,208,96,.5)" stroke-width="2"/>
+              <circle cx="60" cy="68" r="12" fill="rgba(96,208,96,.1)" stroke="rgba(96,208,96,.3)" stroke-width="1.5"/>
+              <text x="60" y="72" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(96,208,96,.7)">C</text>
+              <line x1="72" y1="68" x2="84" y2="68" stroke="rgba(96,208,96,.5)" stroke-width="2"/>
+              <circle cx="96" cy="68" r="12" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.35)" stroke-width="1.5"/>
+              <text x="96" y="72" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(240,96,96,.7)">O</text>
+              <text x="60" y="92" text-anchor="middle" fill="rgba(96,208,96,.4)">Apolart (symmetri)</text>
+
+              <!-- Bøyd: H2O -->
+              <text x="200" y="36" text-anchor="middle" fill="rgba(96,208,240,.65)" font-weight="600">Bøyd/vinklet</text>
+              <text x="200" y="47" text-anchor="middle" fill="rgba(236,232,252,.4)">H₂O, 104,5°</text>
+              <circle cx="200" cy="72" r="14" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.35)" stroke-width="1.5"/>
+              <text x="200" y="76" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(240,96,96,.7)">O</text>
+              <!-- Ensomme par -->
+              <circle cx="192" cy="60" r="3" fill="rgba(240,96,96,.5)"/><circle cx="208" cy="60" r="3" fill="rgba(240,96,96,.5)"/>
+              <line x1="190" y1="80" x2="170" y2="94" stroke="rgba(96,208,240,.5)" stroke-width="2"/>
+              <circle cx="162" cy="100" r="10" fill="rgba(160,96,248,.1)" stroke="rgba(160,96,248,.35)" stroke-width="1.5"/>
+              <text x="162" y="104" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(160,96,248,.7)">H</text>
+              <line x1="210" y1="80" x2="230" y2="94" stroke="rgba(96,208,240,.5)" stroke-width="2"/>
+              <circle cx="238" cy="100" r="10" fill="rgba(160,96,248,.1)" stroke="rgba(160,96,248,.35)" stroke-width="1.5"/>
+              <text x="238" y="104" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(160,96,248,.7)">H</text>
+              <text x="200" y="120" text-anchor="middle" fill="rgba(96,208,240,.4)">Polært (asymmetri)</text>
+
+              <!-- Trigonal pyramidal: NH3 -->
+              <text x="60" y="146" text-anchor="middle" fill="rgba(240,192,96,.65)" font-weight="600">Trigonal pyramidal</text>
+              <text x="60" y="157" text-anchor="middle" fill="rgba(236,232,252,.4)">NH₃, 107°</text>
+              <circle cx="60" cy="172" r="14" fill="rgba(96,208,96,.1)" stroke="rgba(96,208,96,.3)" stroke-width="1.5"/>
+              <text x="60" y="176" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(96,208,96,.7)">N</text>
+              <circle cx="54" cy="161" r="3" fill="rgba(96,208,96,.5)"/><circle cx="66" cy="161" r="3" fill="rgba(96,208,96,.5)"/>
+              <line x1="50" y1="180" x2="34" y2="196" stroke="rgba(240,192,96,.5)" stroke-width="2"/>
+              <circle cx="26" cy="204" r="9" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.3)" stroke-width="1.5"/>
+              <text x="26" y="208" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)">H</text>
+              <line x1="60" y1="186" x2="60" y2="200" stroke="rgba(240,192,96,.5)" stroke-width="2"/>
+              <circle cx="60" cy="209" r="9" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.3)" stroke-width="1.5"/>
+              <text x="60" y="213" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)">H</text>
+              <line x1="70" y1="180" x2="86" y2="196" stroke="rgba(240,192,96,.5)" stroke-width="2"/>
+              <circle cx="94" cy="204" r="9" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.3)" stroke-width="1.5"/>
+              <text x="94" y="208" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(160,96,248,.6)">H</text>
+              <text x="60" y="228" text-anchor="middle" fill="rgba(240,192,96,.4)">Polært</text>
+
+              <!-- Tetraedisk: CH4 -->
+              <text x="200" y="146" text-anchor="middle" fill="rgba(240,96,96,.65)" font-weight="600">Tetraedisk</text>
+              <text x="200" y="157" text-anchor="middle" fill="rgba(236,232,252,.4)">CH₄, 109,5°</text>
+              <circle cx="200" cy="178" r="14" fill="rgba(240,192,96,.1)" stroke="rgba(240,192,96,.3)" stroke-width="1.5"/>
+              <text x="200" y="182" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(240,192,96,.7)">C</text>
+              <g stroke="rgba(240,192,96,.45)" stroke-width="2">
+                <line x1="190" y1="168" x2="178" y2="156"/><line x1="210" y1="168" x2="222" y2="156"/>
+                <line x1="192" y1="190" x2="180" y2="206"/><line x1="208" y1="190" x2="220" y2="206"/>
+              </g>
+              <g font-family="Fraunces" font-size="9" text-anchor="middle" fill="rgba(160,96,248,.6)">
+                <circle cx="174" cy="150" r="8" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.25)" stroke-width="1"/><text x="174" y="154">H</text>
+                <circle cx="226" cy="150" r="8" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.25)" stroke-width="1"/><text x="226" y="154">H</text>
+                <circle cx="176" cy="212" r="8" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.25)" stroke-width="1"/><text x="176" y="216">H</text>
+                <circle cx="224" cy="212" r="8" fill="rgba(160,96,248,.08)" stroke="rgba(160,96,248,.25)" stroke-width="1"/><text x="224" y="216">H</text>
+              </g>
+              <text x="200" y="232" text-anchor="middle" fill="rgba(240,96,96,.4)">Apolart (symmetri)</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Bindingsstyrke og energi -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.2)">⚡ Bindingsstyrke</div>
+          <h3 class="k-tittel">Bindingsstyrke, bindingslengde og energi</h3>
+          <p class="k-ingress">Bindingsenergi er energien som kreves for å bryte én mol av en bestemt binding. Sterkere binding = kortere binding = mer energi kreves. Dette er grunnlaget for forståelse av kjemiske reaksjoner.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Bindingsenergier (kJ/mol):</strong> C–C: 347 | C=C: 614 | C≡C: 839. N–N: 163 | N=N: 418 | N≡N: 945. O–H: 459 | H–F: 569 | H–H: 436. Dobbelt- og trippelbindinger er sterkere og kortere enn enkeltbindinger av samme type.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Bindingslengde:</strong> C–C: 154 pm | C=C: 134 pm | C≡C: 120 pm. Kortere binding = sterkere binding = høyere bindingsenergi. N≡N er ekstremt stabilt (945 kJ/mol) – det er derfor N₂ er så inert og ikke brenner, og kvelstoff trenger nitrogenfiksering.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Hess's lov og bindingsenergier:</strong> ΔH°rxn ≈ Σ(bindingsenergier brutt) – Σ(bindingsenergier dannet). Eksoterm reaksjon: nye bindinger er sterkere enn de som brytes → energi frigjøres. Forbrenning av metan: CH₄ + 2O₂ → CO₂ + 2H₂O, ΔH = –890 kJ/mol.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Hybridisering (grunnleggende):</strong> Karbonatomer kan hybridisere sine orbitaler: sp³ (tetraeder, alkaner), sp² (trigonal plan, alkener, benzen), sp (lineær, alkyner). Hybridisering forklarer molekylgeometrien og bindingsvinklene i organiske molekyler.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#06040e"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,96,96,.6)" letter-spacing=".08em">BINDINGSSTYRKE – C–C VS C=C VS C≡C</text>
+            <!-- Energidiagram -->
+            <text x="22" y="36" font-family="DM Sans" font-size="8.5" fill="rgba(236,232,252,.35)">E (kJ/mol)</text>
+            <!-- Y-akse -->
+            <line x1="44" y1="46" x2="44" y2="210" stroke="rgba(236,232,252,.15)" stroke-width="1.5"/>
+            <!-- X-akse -->
+            <line x1="44" y1="210" x2="270" y2="210" stroke="rgba(236,232,252,.15)" stroke-width="1.5"/>
+            <!-- Referanselinje -->
+            <line x1="44" y1="180" x2="270" y2="180" stroke="rgba(236,232,252,.08)" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="38" y="184" text-anchor="end" font-family="DM Sans" font-size="8" fill="rgba(236,232,252,.3)">0</text>
+            <!-- C-C bar -->
+            <rect x="60" y="132" width="36" height="48" rx="3" fill="rgba(96,208,96,.35)" stroke="rgba(96,208,96,.5)" stroke-width="1"/>
+            <text x="78" y="128" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,96,.7)" font-weight="600">347</text>
+            <text x="78" y="222" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,96,.5)">C–C</text>
+            <!-- C=C bar -->
+            <rect x="112" y="90" width="36" height="90" rx="3" fill="rgba(240,192,96,.35)" stroke="rgba(240,192,96,.5)" stroke-width="1"/>
+            <text x="130" y="86" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,192,96,.7)" font-weight="600">614</text>
+            <text x="130" y="222" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,192,96,.5)">C=C</text>
+            <!-- C≡C bar -->
+            <rect x="164" y="62" width="36" height="118" rx="3" fill="rgba(240,96,96,.35)" stroke="rgba(240,96,96,.5)" stroke-width="1"/>
+            <text x="182" y="58" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.7)" font-weight="600">839</text>
+            <text x="182" y="222" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.5)">C≡C</text>
+            <!-- N≡N -->
+            <rect x="218" y="46" width="36" height="134" rx="3" fill="rgba(160,96,248,.35)" stroke="rgba(160,96,248,.5)" stroke-width="1"/>
+            <text x="236" y="42" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(160,96,248,.7)" font-weight="600">945</text>
+            <text x="236" y="222" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(160,96,248,.5)">N≡N</text>
+            <!-- Lengdepiler under -->
+            <rect x="10" y="234" width="260" height="22" rx="7" fill="rgba(240,192,96,.04)" stroke="rgba(240,192,96,.12)" stroke-width="1"/>
+            <text x="140" y="248" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,192,96,.5)">Kortere bindingslengde  ←  pm: 154 → 134 → 120  →  Sterkere binding</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(160,96,248,.1);color:#a060f8;border:1px solid rgba(160,96,248,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:620px">Kjemiske bindinger – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:860px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(160,96,248,.04);border:1px solid rgba(160,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#a060f8;display:block;margin-bottom:4px">✏️ Lewis-strukturer</strong>Valenselektroner som prikker · Delte elektronpar = binding · Enkel/dobbel/trippel · Oktettregel · H vil ha 2 · Steg-for-steg-metode</div>
+            <div style="padding:14px;background:rgba(96,208,240,.04);border:1px solid rgba(96,208,240,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#60d0f0;display:block;margin-bottom:4px">δ± Elektronegativitet</strong>Paulings skala: F=4,0 O=3,5 N=3,0 C=2,5 H=2,1 · ΔEN &lt;0,5 apolar · 0,5–1,7 polær · &gt;1,7 ionisk</div>
+            <div style="padding:14px;background:rgba(240,192,96,.04);border:1px solid rgba(240,192,96,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#f0c060;display:block;margin-bottom:4px">🌡️ Bindingstype → egenskaper</strong>Ionisk: høyt kokep., løses i vann · Polær koval.: middels kokep. · Apolar: lavt kokep., løses i olje · Metallisk: leder strøm</div>
+            <div style="padding:14px;background:rgba(160,96,248,.04);border:1px solid rgba(160,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#a060f8;display:block;margin-bottom:4px">📐 VSEPR-geometri</strong>Lineær 180° (CO₂) · Bøyd 104,5° (H₂O) · Pyramidal 107° (NH₃) · Tetraeder 109,5° (CH₄) · Form = polær/apolar</div>
+            <div style="padding:14px;background:rgba(240,96,96,.04);border:1px solid rgba(240,96,96,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#f06060;display:block;margin-bottom:4px">⚡ Bindingsstyrke</strong>Enkel &lt; Dobbel &lt; Trippel · Kortere = sterkere · C–C: 347 | C=C: 614 | N≡N: 945 kJ/mol · Bindingsenergier → ΔH</div>
+            <div style="padding:14px;background:rgba(96,208,96,.04);border:1px solid rgba(96,208,96,.15);border-radius:12px;font-size:.78rem;color:rgba(236,232,252,.65);line-height:1.6"><strong style="color:#60d060;display:block;margin-bottom:4px">💧 Hydrogenbinding</strong>H bundet til F/O/N + ensomt par · Forklarer H₂O kokepunkt 100°C · DNA-dobbelthelix · Proteinfolding</div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <a href="atom.html" style="display:inline-block;padding:10px 20px;border-radius:10px;border:1px solid rgba(160,96,248,.3);background:rgba(160,96,248,.07);color:#a060f8;font-family:var(--font-d);font-size:.9rem;font-style:italic;text-decoration:none">← Atom og periodesystem</a>
+            <a href="molekylmodeller.html" style="display:inline-block;padding:10px 20px;border-radius:10px;border:1px solid rgba(96,208,240,.3);background:rgba(96,208,240,.07);color:#60d0f0;font-family:var(--font-d);font-size:.9rem;font-style:italic;text-decoration:none">Bygg molekylmodeller →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- LEWIS-STRUKTUR EXPLORER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Lewis-struktur explorer</div><div class="sep-r"></div></div>
+  <div class="lewis-wrapper">
+    <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:6px">Velg et molekyl og utforsk Lewis-struktur, bindingstype og egenskaper</p>
+    <div class="lewis-tabs" id="lewis-tabs">
+      <button class="lewis-tab aktiv" onclick="visLewis('h2o')">H₂O</button>
+      <button class="lewis-tab" onclick="visLewis('co2')">CO₂</button>
+      <button class="lewis-tab" onclick="visLewis('nh3')">NH₃</button>
+      <button class="lewis-tab" onclick="visLewis('ch4')">CH₄</button>
+      <button class="lewis-tab" onclick="visLewis('hcl')">HCl</button>
+      <button class="lewis-tab" onclick="visLewis('nacl')">NaCl</button>
+      <button class="lewis-tab" onclick="visLewis('n2')">N₂</button>
+      <button class="lewis-tab" onclick="visLewis('c2h4')">C₂H₄</button>
+    </div>
+    <div class="lewis-grid">
+      <div class="lewis-canvas-wrap">
+        <canvas id="lewis-canvas" width="460" height="340"></canvas>
+      </div>
+      <div class="lewis-panel" id="lewis-panel">
+        <h4>H₂O – vann</h4>
+        <div id="lewis-felter"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+const MOLEKYLER = {
+  h2o: {
+    navn: 'H₂O – vann', bindingstype: 'Polær kovalent',
+    delta_en: 'ΔEN(O–H) = 1,4', geometri: 'Bøyd/vinklet (104,5°)',
+    polar: 'Polært', kokep: '100°C', smeltep: '0°C', loselig: 'Blandar seg med vann',
+    leder: 'Nei (rent vann)', farger: { C: '#f06060', H: '#c090f8', lone: '#f0c060' },
+    beskrivelse: 'To O–H-bindinger med ΔEN=1,4 gir δ+ på H og δ– på O. To ensomme par komprimerer bindingsvinkelen til 104,5°. Asymmetrisk form → sterkt polært molekyl. Hydrogenbindinger mellom H₂O-molekyler gir ekstraordinært høyt kokepunkt.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cx=W/2, cy=H/2-10;
+      drawAtom(ctx,cx,cy-10,22,'#f06060','O','white'); drawLonePairs(ctx,cx,cy-34,cx,cy-34);
+      drawAtom(ctx,cx-70,cy+44,16,'#9060d8','H','white'); drawAtom(ctx,cx+70,cy+44,16,'#9060d8','H','white');
+      drawBond(ctx,cx-10,cy+4,cx-62,cy+40,'rgba(96,208,240,.6)',1);
+      drawBond(ctx,cx+10,cy+4,cx+62,cy+40,'rgba(96,208,240,.6)',1);
+      drawDeltaLabel(ctx,cx-76,cy+36,'+');  drawDeltaLabel(ctx,cx+76,cy+36,'+'); drawDeltaLabel(ctx,cx,cy-16,'–');
+      drawAngle(ctx,cx,cy+4,104.5,'rgba(96,208,240,.4)');
+      drawInfo(ctx,W,H,'Polær kovalent · Bøyd 104,5° · Sterkt polært','rgba(96,208,240,.55)');
+    }
+  },
+  co2: {
+    navn: 'CO₂ – karbondioksid', bindingstype: 'Polær kovalent (dobbeltbindinger)',
+    delta_en: 'ΔEN(C=O) = 1,0', geometri: 'Lineær (180°)',
+    polar: 'Apolart (symmetrisk)', kokep: '–78,5°C (sublimerer)', smeltep: '—', loselig: 'Lite (CO₂-bobler)',
+    leder: 'Nei',
+    beskrivelse: 'To C=O dobbeltbindinger er polære (ΔEN=1,0), men de peker nøyaktig i motsatt retning. Dipolene kansellerer → lineært og apolart molekyl totalt. CO₂ løses dårlig i vann (danner litt kullsyre H₂CO₃). Drivhusgass.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cy=H/2-10;
+      drawAtom(ctx,W/2,cy,20,'#60c860','C','white');
+      drawAtom(ctx,W/2-110,cy,18,'#f06060','O','white'); drawLonePairs(ctx,W/2-130,cy-8,W/2-130,cy+8);
+      drawAtom(ctx,W/2+110,cy,18,'#f06060','O','white'); drawLonePairs(ctx,W/2+130,cy-8,W/2+130,cy+8);
+      drawDoubleBond(ctx,W/2-22,cy,W/2-92,cy,'rgba(240,192,96,.65)');
+      drawDoubleBond(ctx,W/2+22,cy,W/2+92,cy,'rgba(240,192,96,.65)');
+      drawDeltaLabel(ctx,W/2-110,cy+28,'+'); drawDeltaLabel(ctx,W/2+110,cy+28,'+'); drawDeltaLabel(ctx,W/2,cy+28,'–');
+      ctx.fillStyle='rgba(240,192,96,.5)'; ctx.font='10px DM Sans'; ctx.textAlign='center';
+      ctx.fillText('← dipol kansellerer →', W/2, cy+50);
+      drawInfo(ctx,W,H,'Polære bindinger, men lineær og symmetrisk → Apolart totalt','rgba(240,192,96,.55)');
+    }
+  },
+  nh3: {
+    navn: 'NH₃ – ammoniakk', bindingstype: 'Polær kovalent',
+    delta_en: 'ΔEN(N–H) = 0,9', geometri: 'Trigonal pyramidal (107°)',
+    polar: 'Polært', kokep: '–33°C', smeltep: '–78°C', loselig: 'Svært løselig i vann',
+    leder: 'Nei',
+    beskrivelse: 'N har 5 valenselektroner: 3 brukes til bindinger med H, 2 danner et ensomt par. Det ensomme paret tar mer plass enn bindingene → presser dem nedover → pyramidal form med 107°. Polært molekyl. NH₃ lukter sterkt og er basisk i vann.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cx=W/2, cy=H/2-30;
+      drawAtom(ctx,cx,cy,20,'#6080e0','N','white'); drawLonePairs(ctx,cx-8,cy-22,cx+8,cy-22);
+      drawAtom(ctx,cx-75,cy+58,16,'#c090f8','H','white');
+      drawAtom(ctx,cx,cy+75,16,'#c090f8','H','white');
+      drawAtom(ctx,cx+75,cy+58,16,'#c090f8','H','white');
+      drawBond(ctx,cx-12,cy+12,cx-67,cy+54,'rgba(96,160,248,.6)',1);
+      drawBond(ctx,cx,cy+20,cx,cy+59,'rgba(96,160,248,.6)',1);
+      drawBond(ctx,cx+12,cy+12,cx+67,cy+54,'rgba(96,160,248,.6)',1);
+      drawDeltaLabel(ctx,cx,cy-4,'–'); drawDeltaLabel(ctx,cx-78,cy+72,'+'); drawDeltaLabel(ctx,cx,cy+90,'+'); drawDeltaLabel(ctx,cx+78,cy+72,'+');
+      drawInfo(ctx,W,H,'Polær kovalent · Pyramidal 107° · Polært · Hydrogenbinding','rgba(96,160,248,.55)');
+    }
+  },
+  ch4: {
+    navn: 'CH₄ – metan', bindingstype: 'Apolar kovalent',
+    delta_en: 'ΔEN(C–H) = 0,4', geometri: 'Tetraedisk (109,5°)',
+    polar: 'Apolart', kokep: '–162°C', smeltep: '–183°C', loselig: 'Løses ikke i vann',
+    leder: 'Nei',
+    beskrivelse: 'ΔEN(C–H) = 0,4 → apolar kovalent binding. Tetraedisk form er symmetrisk → ingen netto dipol → apolart molekyl. Metan er hoveddelen av naturgass. London-dispersjonskrefter mellom CH₄-molekyler er svake → svært lavt kokepunkt.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cx=W/2, cy=H/2-10;
+      drawAtom(ctx,cx,cy,22,'#f0c060','C','white');
+      drawAtom(ctx,cx-80,cy-50,16,'#c090f8','H','white');
+      drawAtom(ctx,cx+80,cy-50,16,'#c090f8','H','white');
+      drawAtom(ctx,cx-80,cy+60,16,'#c090f8','H','white');
+      drawAtom(ctx,cx+80,cy+60,16,'#c090f8','H','white');
+      const hc='rgba(96,208,96,.55)';
+      drawBond(ctx,cx-15,cy-12,cx-68,cy-44,hc,1); drawBond(ctx,cx+15,cy-12,cx+68,cy-44,hc,1);
+      drawBond(ctx,cx-15,cy+12,cx-68,cy+52,hc,1); drawBond(ctx,cx+15,cy+12,cx+68,cy+52,hc,1);
+      ctx.fillStyle='rgba(96,208,96,.4)'; ctx.font='10px DM Sans'; ctx.textAlign='center';
+      ctx.fillText('Symmetrisk tetraeder – ingen netto dipol', cx, cy+110);
+      drawInfo(ctx,W,H,'Apolar kovalent · Tetraeder 109,5° · Apolart','rgba(96,208,96,.55)');
+    }
+  },
+  hcl: {
+    navn: 'HCl – hydrogenklorid', bindingstype: 'Polær kovalent',
+    delta_en: 'ΔEN(H–Cl) = 0,9', geometri: 'Lineær (diatomisk)',
+    polar: 'Polært', kokep: '–85°C', smeltep: '–114°C', loselig: 'Svært løselig – ioniserer til H⁺ + Cl⁻',
+    leder: 'Som gass: nei. I vann: ja (sterk syre)',
+    beskrivelse: 'HCl er et diatomisk molekyl med tydelig dipol: H er δ+ og Cl er δ–. I vann ioniserer HCl fullstendig → H⁺ (H₃O⁺) + Cl⁻ → saltsyre (sterk syre). Ensomme par på Cl kan donere proton-akseptor-reaksjoner.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cy=H/2-10;
+      drawAtom(ctx,W/2-80,cy,18,'#c090f8','H','white');
+      drawAtom(ctx,W/2+60,cy,26,'#60d0a0','Cl','white');
+      drawBond(ctx,W/2-64,cy,W/2+34,cy,'rgba(96,208,240,.6)',1);
+      drawDeltaLabel(ctx,W/2-80,cy+28,'+'); drawDeltaLabel(ctx,W/2+60,cy+38,'–');
+      drawLonePairs(ctx,W/2+88,cy-8,W/2+88,cy+8);
+      drawLonePairs(ctx,W/2+60,cy-34,W/2+60,cy-34);
+      ctx.fillStyle='rgba(96,208,240,.5)'; ctx.font='10px DM Sans'; ctx.textAlign='center';
+      ctx.fillText('Elektronsky dratt mot Cl (høyere EN)', W/2, cy+60);
+      drawInfo(ctx,W,H,'Polær kovalent · Lineær · Ioniserer i vann → sterk syre','rgba(96,208,240,.55)');
+    }
+  },
+  nacl: {
+    navn: 'NaCl – natriumklorid (bordsalt)', bindingstype: 'Ionisk',
+    delta_en: 'ΔEN = 2,1 (fullstendig overføring)', geometri: 'Ionegitter (kubisk)',
+    polar: 'Ionisk – ikke molekyl', kokep: '1413°C', smeltep: '801°C', loselig: 'Svært løselig i vann',
+    leder: 'Ja – i smeltet form eller oppløst',
+    beskrivelse: 'Na (EN=0,9) avgir ett elektron til Cl (EN=3,0). ΔEN=2,1 → ionisk binding. Na⁺ og Cl⁻ danner et tredimensjonalt ionegitter med sterk elektrostatisk tiltrekning → høyt smeltepunkt. I vann dissosier NaCl til frie ioner → leder strøm.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const s=55, ox=W/2-s, oy=H/2-50;
+      for(let r=0;r<3;r++) for(let c=0;c<3;c++){
+        const x=ox+c*s, y=oy+r*s, isNa=(r+c)%2===0;
+        ctx.beginPath(); ctx.arc(x,y,isNa?16:20,0,Math.PI*2);
+        ctx.fillStyle=isNa?'rgba(240,96,96,.12)':'rgba(96,208,240,.08)';
+        ctx.strokeStyle=isNa?'rgba(240,96,96,.4)':'rgba(96,208,240,.35)';
+        ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
+        ctx.fillStyle=isNa?'rgba(240,96,96,.7)':'rgba(96,208,240,.7)';
+        ctx.font=isNa?'10px Fraunces':'9px Fraunces'; ctx.textAlign='center';
+        ctx.fillText(isNa?'Na⁺':'Cl⁻',x,y+4);
+      }
+      drawInfo(ctx,W,H,'Ionisk binding · Ionegitter · Smeltep. 801°C · Leder i oppløsning','rgba(96,208,240,.55)');
+    }
+  },
+  n2: {
+    navn: 'N₂ – kvelstoff', bindingstype: 'Apolar kovalent (trippelbinding)',
+    delta_en: 'ΔEN = 0 (samme grunnstoff)', geometri: 'Lineær (diatomisk)',
+    polar: 'Apolart', kokep: '–196°C', smeltep: '–210°C', loselig: 'Svært lite løselig',
+    leder: 'Nei',
+    beskrivelse: 'N≡N er en av de sterkeste bindingene i kjemien (945 kJ/mol). N har 5 valenselektroner: 3 deles → trippelbinding. 2 ensomme par på hvert N. Ekstremt stabil → N₂ er inert (reagerer ikke lett). 78% av luft. Trenger nitrogenfiksering for biologisk bruk.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cy=H/2-20;
+      drawAtom(ctx,W/2-70,cy,22,'#6060d8','N','white');
+      drawAtom(ctx,W/2+70,cy,22,'#6060d8','N','white');
+      drawLonePairs(ctx,W/2-98,cy-8,W/2-98,cy+8);
+      drawLonePairs(ctx,W/2+98,cy-8,W/2+98,cy+8);
+      const col='rgba(160,96,248,.65)';
+      drawBond(ctx,W/2-48,cy-6,W/2+48,cy-6,col,1);
+      drawBond(ctx,W/2-48,cy,W/2+48,cy,col,1);
+      drawBond(ctx,W/2-48,cy+6,W/2+48,cy+6,col,1);
+      ctx.fillStyle='rgba(160,96,248,.5)'; ctx.font='10px DM Sans'; ctx.textAlign='center';
+      ctx.fillText('Trippelbinding: 945 kJ/mol – ekstremt stabil', W/2, cy+50);
+      ctx.fillText('N₂ = 78% av luft – svært inert', W/2, cy+65);
+      drawInfo(ctx,W,H,'Apolar kovalent · Trippelbinding · Lavt kokep. –196°C','rgba(160,96,248,.55)');
+    }
+  },
+  c2h4: {
+    navn: 'C₂H₄ – eten (etylen)', bindingstype: 'Apolar/polær kovalent, dobbeltbinding',
+    delta_en: 'ΔEN(C–H)=0,4, C=C=0', geometri: 'Trigonal plan (120°)',
+    polar: 'Svakt polært', kokep: '–104°C', smeltep: '–169°C', loselig: 'Lite løselig',
+    leder: 'Nei',
+    beskrivelse: 'C=C dobbeltbinding: sp²-hybridisering → trigonal plan geometri med 120°. Stiv om C=C-aksen (kan ikke rotere fritt). Grunnstoff i produksjon av polyetylen (PE-plast). Plantehormon: fremskynder modning av frukt.',
+    draw: (ctx, W, H) => {
+      ctx.clearRect(0,0,W,H); ctx.fillStyle='#06040e'; ctx.fillRect(0,0,W,H);
+      const cy=H/2-10;
+      drawAtom(ctx,W/2-55,cy,20,'#f0c060','C','white');
+      drawAtom(ctx,W/2+55,cy,20,'#f0c060','C','white');
+      drawDoubleBond(ctx,W/2-35,cy,W/2+35,cy,'rgba(240,192,96,.7)');
+      drawAtom(ctx,W/2-110,cy-48,14,'#c090f8','H','white');
+      drawAtom(ctx,W/2-110,cy+48,14,'#c090f8','H','white');
+      drawAtom(ctx,W/2+110,cy-48,14,'#c090f8','H','white');
+      drawAtom(ctx,W/2+110,cy+48,14,'#c090f8','H','white');
+      const hc='rgba(96,208,96,.5)';
+      drawBond(ctx,W/2-68,cy-8,W/2-100,cy-40,hc,1); drawBond(ctx,W/2-68,cy+8,W/2-100,cy+40,hc,1);
+      drawBond(ctx,W/2+68,cy-8,W/2+100,cy-40,hc,1); drawBond(ctx,W/2+68,cy+8,W/2+100,cy+40,hc,1);
+      ctx.fillStyle='rgba(240,192,96,.5)'; ctx.font='10px DM Sans'; ctx.textAlign='center';
+      ctx.fillText('sp²-hybridisering → 120° · C=C kan ikke rotere', W/2, cy+90);
+      drawInfo(ctx,W,H,'Dobbeltbinding · Trigonal plan 120° · Basis for PE-plast','rgba(240,192,96,.55)');
+    }
+  }
+};
+
+function drawAtom(ctx,x,y,r,c,t,tc){
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=c+'28'; ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
+  ctx.fillStyle=c; ctx.font=`${r<15?9:11}px Fraunces`; ctx.textAlign='center'; ctx.fillText(t,x,y+4);
+}
+function drawBond(ctx,x1,y1,x2,y2,c,w){
+  ctx.strokeStyle=c; ctx.lineWidth=2+w; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+}
+function drawDoubleBond(ctx,x1,y,x2,y2,c){
+  ctx.strokeStyle=c; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x1,y-4); ctx.lineTo(x2,y2-4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1,y+4); ctx.lineTo(x2,y2+4); ctx.stroke();
+}
+function drawLonePairs(ctx,x1,y1,x2,y2){
+  ctx.fillStyle='rgba(240,192,96,.7)';
+  [x1,x2].forEach((x,i)=>{ [y1,y2].forEach((y,j)=>{ if(i===0&&j===0||i===1&&j===1){ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();} }); });
+  ctx.beginPath(); ctx.arc(x1,y1,3,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x2,y2,3,0,Math.PI*2); ctx.fill();
+}
+function drawDeltaLabel(ctx,x,y,sign){
+  ctx.fillStyle=sign==='+'?'rgba(240,192,96,.7)':'rgba(96,208,240,.7)';
+  ctx.font='10px DM Sans'; ctx.textAlign='center'; ctx.fillText('δ'+sign,x,y);
+}
+function drawAngle(ctx,x,y,deg,c){
+  ctx.strokeStyle=c; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.arc(x,y+4,28,Math.PI*0.55,Math.PI*0.9);
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=c; ctx.font='9px DM Sans'; ctx.textAlign='center';
+  ctx.fillText(deg+'°',x,y+42);
+}
+function drawInfo(ctx,W,H,txt,c){
+  ctx.fillStyle='rgba(255,255,255,.04)'; ctx.strokeStyle='rgba(160,96,248,.12)'; ctx.lineWidth=1;
+  const rh=28, ry=H-rh-6;
+  ctx.beginPath(); ctx.roundRect(8,ry,W-16,rh,6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=c; ctx.font='9px DM Sans'; ctx.textAlign='center'; ctx.fillText(txt,W/2,ry+17);
+}
+
+const molIds = Object.keys(MOLEKYLER);
+function visLewis(id) {
+  const mol = MOLEKYLER[id];
+  document.querySelectorAll('.lewis-tab').forEach((t,i) => t.classList.toggle('aktiv', molIds[i]===id));
+  document.getElementById('lewis-panel').querySelector('h4').textContent = mol.navn;
+  document.getElementById('lewis-felter').innerHTML = [
+    {l:'Bindingstype', v:mol.bindingstype},{l:'Elektronegativitet', v:mol.delta_en},
+    {l:'Geometri', v:mol.geometri},{l:'Polæritet', v:mol.polar},
+    {l:'Kokepunkt', v:mol.kokep},{l:'Løselighet i vann', v:mol.loselig},
+    {l:'Elektrisk ledning', v:mol.leder},
+    {l:'Forklaring', v:mol.beskrivelse}
+  ].map(f=>`<div class="lewis-felt"><strong>${f.l}</strong>${f.v}</div>`).join('');
+  const c = document.getElementById('lewis-canvas');
+  mol.draw(c.getContext('2d'), c.width, c.height);
+}
+document.addEventListener('DOMContentLoaded', () => visLewis('h2o'));
+</script>
+</body>
+</html>
