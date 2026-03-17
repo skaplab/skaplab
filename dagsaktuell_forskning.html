@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Dagsaktuell forskning</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a08;--surface:#0a100c;--card:#0e1610;--border:rgba(60,180,100,.07);
+  --text:#e8f5ee;--dim:#1a3020;
+  --accent:#50d880;--accent2:#60b8f0;--accent3:#f0c850;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(80,216,128,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,184,240,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,8,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.4rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:560px;margin:0 auto;line-height:1.85}
+/* KARUSELL */
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,238,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,216,128,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,238,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* PEER REVIEW GAME */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.pr-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pr-artikkel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.pr-artikkel h4{font-family:var(--font-d);font-size:1rem;color:var(--accent);margin-bottom:8px}
+.pr-tekst{font-size:.82rem;line-height:1.7;color:rgba(232,245,238,.7);margin-bottom:14px}
+.pr-spm{font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.pr-valg{display:flex;flex-direction:column;gap:6px}
+.pr-knapp{padding:8px 14px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.79rem;text-align:left;color:rgba(232,245,238,.65);transition:all .18s}
+.pr-knapp:hover{border-color:rgba(80,216,128,.4);color:var(--text);background:rgba(80,216,128,.04)}
+.pr-knapp.riktig{border-color:rgba(80,216,128,.6);background:rgba(80,216,128,.1);color:#50d880}
+.pr-knapp.feil{border-color:rgba(240,96,96,.5);background:rgba(240,96,96,.08);color:#f06060}
+.pr-feedback{margin-top:12px;padding:10px 13px;border-radius:8px;font-size:.8rem;line-height:1.6;display:none}
+.pr-feedback.vis{display:block}
+.pr-poeng{font-family:var(--font-d);font-size:1.1rem;text-align:center;color:var(--accent);margin-top:16px}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.pr-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="vitenskapspersoner.html" class="nav-lnk">Vitenskapspersoner</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Dagsaktuell forskning</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Vitenskapsteori · LK20 KM5</div>
+    <h1>Dagsaktuell forskning –<br><em>hvordan kunnskap bygges</em></h1>
+    <p class="hero-sub">Peer review, replikasjon, metaanalyse og vitenskapelig konsensus – slik genereres ny kunnskap, og slik skiller vi god forskning fra svak</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Den vitenskapelige metoden -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(80,216,128,.1);color:#50d880;border:1px solid rgba(80,216,128,.2)">🔬 Metode</div>
+          <h3 class="k-tittel">Den vitenskapelige metoden</h3>
+          <p class="k-ingress">Vitenskapelig kunnskap bygges gjennom en syklisk prosess – ikke en lineær trapp. Ny kunnskap reviderer gammel. Ingen hypotese er hellig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔍</span><div><strong>Observasjon og spørsmål:</strong> Vitenskapen starter alltid med noe som overrasker, avviker eller ikke lar seg forklare. Gode spørsmål er testbare: «Er X årsaken til Y?» ikke «Hva er meningen med X?»</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>Hypotese og forutsigelse:</strong> En hypotese er en testbar forklaring. Popperskriterie: den må være falsifiserbar – det må finnes et mulig resultat som ville motbevise den. «Alle svanene er hvite» er vitenskapelig. «Det finnes en Gud» er ikke det (ikke falsifiserbar).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Eksperiment og kontroll:</strong> Kun én variabel endres om gangen. Kontrollgruppe er identisk med eksperimentgruppen bortsett fra den uavhengige variabelen. Blindforsøk/dobbeltblind forebygger bias (verken forsøksperson eller forsker vet hvem som fikk hva).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Replikasjon – vitenskapens sikkerhetsnett:</strong> Én studie beviser ingenting. Funn som ikke lar seg replikere av uavhengige forskningsgrupper er ikke vitenskapelig fakta. «Replikasjonskrisen» i psykologi og medisin: mange berømte funn har ikke latt seg reprodusere.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,216,128,.6)" letter-spacing=".08em">VITENSKAPELIG SYKLUS</text>
+            <defs><marker id="vs-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(80,216,128,.7)"/></marker></defs>
+            <!-- Sirkelen -->
+            <circle cx="140" cy="130" r="80" fill="none" stroke="rgba(80,216,128,.12)" stroke-width="1.5"/>
+            <!-- Steg på sirkelen -->
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle">
+              <!-- Topp: Observasjon -->
+              <ellipse cx="140" cy="52" rx="36" ry="18" fill="rgba(80,216,128,.1)" stroke="rgba(80,216,128,.4)" stroke-width="1.5"/>
+              <text x="140" y="50" fill="rgba(80,216,128,.8)" font-weight="600">Observasjon</text>
+              <text x="140" y="61" fill="rgba(80,216,128,.5)">& spørsmål</text>
+              <!-- Høyre: Hypotese -->
+              <ellipse cx="218" cy="96" rx="36" ry="18" fill="rgba(240,200,60,.08)" stroke="rgba(240,200,60,.35)" stroke-width="1.5"/>
+              <text x="218" y="94" fill="rgba(240,200,60,.7)" font-weight="600">Hypotese</text>
+              <text x="218" y="105" fill="rgba(240,200,60,.45)">& forutsigelse</text>
+              <!-- Høyre ned: Eksperiment -->
+              <ellipse cx="218" cy="162" rx="36" ry="18" fill="rgba(96,184,240,.08)" stroke="rgba(96,184,240,.35)" stroke-width="1.5"/>
+              <text x="218" y="160" fill="rgba(96,184,240,.7)" font-weight="600">Eksperiment</text>
+              <text x="218" y="171" fill="rgba(96,184,240,.45)">& data</text>
+              <!-- Bunn: Analyse -->
+              <ellipse cx="140" cy="206" rx="36" ry="18" fill="rgba(240,96,160,.08)" stroke="rgba(240,96,160,.35)" stroke-width="1.5"/>
+              <text x="140" y="204" fill="rgba(240,96,160,.7)" font-weight="600">Analyse</text>
+              <text x="140" y="215" fill="rgba(240,96,160,.45)">& konklusjon</text>
+              <!-- Venstre ned: Peer review -->
+              <ellipse cx="62" cy="162" rx="36" ry="18" fill="rgba(192,96,248,.08)" stroke="rgba(192,96,248,.35)" stroke-width="1.5"/>
+              <text x="62" y="160" fill="rgba(192,96,248,.7)" font-weight="600">Peer review</text>
+              <text x="62" y="171" fill="rgba(192,96,248,.45)">& publisering</text>
+              <!-- Venstre: Replikasjon -->
+              <ellipse cx="62" cy="96" rx="36" ry="18" fill="rgba(240,160,60,.08)" stroke="rgba(240,160,60,.35)" stroke-width="1.5"/>
+              <text x="62" y="94" fill="rgba(240,160,60,.7)" font-weight="600">Replikasjon</text>
+              <text x="62" y="105" fill="rgba(240,160,60,.45)">& konsensus</text>
+            </g>
+            <!-- Piler rundt -->
+            <g stroke="rgba(80,216,128,.4)" stroke-width="1.5" fill="none">
+              <path d="M170,62 Q200,68 210,80" marker-end="url(#vs-arr)"/>
+              <path d="M220,114 Q220,135 220,144" marker-end="url(#vs-arr)"/>
+              <path d="M195,172 Q172,188 160,196" marker-end="url(#vs-arr)"/>
+              <path d="M104,200 Q82,192 72,178" marker-end="url(#vs-arr)"/>
+              <path d="M56,144 Q54,124 56,114" marker-end="url(#vs-arr)"/>
+              <path d="M84,90 Q108,74 118,64" marker-end="url(#vs-arr)"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Peer review -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(192,96,248,.1);color:#c060f8;border:1px solid rgba(192,96,248,.2)">📝 Fagfellevurdering</div>
+          <h3 class="k-tittel">Peer review – fagfellevurdering</h3>
+          <p class="k-ingress">Peer review er mekanismen som holder vitenskapen ærlig. Før en artikkel publiseres i et anerkjent tidsskrift, vurderes den av uavhengige eksperter i samme fagfelt.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📋</span><div><strong>Prosessen:</strong> Forsker sender inn manus → Redaktør screener → 2–3 anonyme fagfeller vurderer metode, resultater og konklusjoner → Tilbakemelding: godkjent, revidering kreves, eller avvist. Prosessen tar typisk 3–12 måneder. Viktige funn: raskere.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛡️</span><div><strong>Hva peer review beskytter mot:</strong> Åpenbare metodefeil, overdrevne konklusjoner, feil statistikk, datamaniupulasjon og plagiat. Ikke en garanti – peer review fanger ikke alt, men er det beste vi har.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Predatory journals:</strong> Falske tidsskrifter som hevder å ha peer review, men publiserer alt mot betaling. Problemet vokser. Sjekk: Er tidsskriftet på Directory of Open Access Journals? Kjenner du utgiveren? Er Impact Factor reell?</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔓</span><div><strong>Open access og preprints:</strong> Preprints (arXiv, bioRxiv, medRxiv) deles offentlig før peer review. Rask spredning under COVID-19, men også rask spredning av feil. Open access gjør forskning tilgjengelig for alle – men finansieringsmodellen skiftes til forfatterbetaling, noe som gir nye bias-problemer.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(192,96,248,.6)" letter-spacing=".08em">PEER REVIEW – PROSESSEN</text>
+            <defs><marker id="pr-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(192,96,248,.7)"/></marker>
+            <marker id="pr-grn" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(80,216,128,.7)"/></marker>
+            <marker id="pr-red" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(240,96,96,.7)"/></marker></defs>
+            <!-- Flytdiagram -->
+            <!-- 1: Forsker -->
+            <rect x="95" y="22" width="90" height="28" rx="8" fill="rgba(80,216,128,.1)" stroke="rgba(80,216,128,.35)" stroke-width="1.5"/>
+            <text x="140" y="40" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.7)" font-weight="600">👩‍🔬 Forsker sender inn</text>
+            <path d="M140,50 L140,62" stroke="rgba(192,96,248,.5)" stroke-width="1.5" marker-end="url(#pr-arr)"/>
+            <!-- 2: Redaktør -->
+            <rect x="95" y="62" width="90" height="28" rx="8" fill="rgba(96,184,240,.08)" stroke="rgba(96,184,240,.3)" stroke-width="1.5"/>
+            <text x="140" y="80" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,184,240,.6)" font-weight="600">📋 Redaktør screener</text>
+            <path d="M140,90 L140,102" stroke="rgba(192,96,248,.5)" stroke-width="1.5" marker-end="url(#pr-arr)"/>
+            <!-- 3: Fagfeller -->
+            <rect x="80" y="102" width="120" height="28" rx="8" fill="rgba(192,96,248,.08)" stroke="rgba(192,96,248,.3)" stroke-width="1.5"/>
+            <text x="140" y="120" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(192,96,248,.65)" font-weight="600">🔍 2–3 anonyme fagfeller</text>
+            <!-- Tre utfall -->
+            <g>
+              <path d="M100,130 L60,155" stroke="rgba(80,216,128,.5)" stroke-width="1.5" marker-end="url(#pr-grn)"/>
+              <rect x="10" y="156" width="85" height="26" rx="7" fill="rgba(80,216,128,.1)" stroke="rgba(80,216,128,.35)" stroke-width="1.2"/>
+              <text x="52" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.7)" font-weight="600">✓ Godkjent</text>
+              <text x="52" y="178" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(80,216,128,.5)">→ Publisert!</text>
+
+              <path d="M140,130 L140,155" stroke="rgba(240,200,60,.5)" stroke-width="1.5" marker-end="url(#pr-arr)"/>
+              <rect x="95" y="156" width="90" height="26" rx="7" fill="rgba(240,200,60,.08)" stroke="rgba(240,200,60,.3)" stroke-width="1.2"/>
+              <text x="140" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,60,.65)" font-weight="600">✏️ Revider</text>
+              <text x="140" y="178" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,200,60,.45)">→ Ny runde</text>
+
+              <path d="M180,130 L220,155" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#pr-red)"/>
+              <rect x="185" y="156" width="85" height="26" rx="7" fill="rgba(240,96,96,.08)" stroke="rgba(240,96,96,.3)" stroke-width="1.2"/>
+              <text x="227" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.65)" font-weight="600">✗ Avvist</text>
+              <text x="227" y="178" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.45)">→ Annet tidsskrift</text>
+            </g>
+            <!-- Revideringsloop -->
+            <path d="M140,182 Q140,200 95,192 Q60,185 52,182" fill="none" stroke="rgba(240,200,60,.3)" stroke-width="1" stroke-dasharray="4 2"/>
+            <!-- Tidsskrift -->
+            <rect x="44" y="200" width="192" height="50" rx="10" fill="rgba(80,216,128,.05)" stroke="rgba(80,216,128,.15)" stroke-width="1"/>
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.5)" font-weight="600">ANERKJENTE VITENSKAPELIGE TIDSSKRIFTER</text>
+            <text x="140" y="230" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,238,.4)">Nature · Science · Cell · NEJM · Lancet</text>
+            <text x="140" y="242" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,238,.35)">BMJ · PNAS · JAMA · PLoS ONE</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Fra én studie til konsensus -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(80,216,128,.1);color:#50d880;border:1px solid rgba(80,216,128,.2)">📊 Evidenshierarki</div>
+          <h3 class="k-tittel">Evidenshierarkiet – ikke all forskning er like sterk</h3>
+          <p class="k-ingress">En enkelt studie – uansett hvor imponerende – er ikke nok til å endre medisinsk eller vitenskapelig praksis. Bevisstyrken avhenger av studiedesign, størrelse og om funnene er replikert.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">👑</span><div><strong>Topp: Systematisk oversikt og metaanalyse:</strong> Samler alle relevante studier om et spørsmål og analyserer dem statistisk. Gir det beste og mest robuste svaret vi kan ha. Cochrane Collaboration publiserer gullstandard-metaanalyser for medisinsk behandling.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏅</span><div><strong>Randomisert kontrollert forsøk (RCT):</strong> Deltakere tilfeldig fordelt mellom behandling og kontroll. Dobbelblind: verken deltaker eller behandler vet hvem som fikk hva. Minimerer confounders. Gullstandard for å teste behandlinger.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📋</span><div><strong>Kohortstudie og kasus-kontroll:</strong> Observasjonsstudier – følger grupper over tid eller sammenligner «tilfeller» med kontroller. Svakere enn RCT fordi konfoundere ikke er kontrollert. Kan ikke vise kausalitet, bare korrelasjon (men korrelasjon kan være sterk indikasjon).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Bunnen: Kasuistikker og ekspertuttalelser:</strong> Enkelttilfeller kan ikke generaliseres. Eksperters meninger teller, men er ikke bevis. «En ny studie viser at X...»-overskrifter er sjelden et enkelt svar – det er startpunktet for videre forskning.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,216,128,.6)" letter-spacing=".08em">EVIDENSHIERARKIET</text>
+            <!-- Pyramide -->
+            <!-- Topp: Metaanalyse -->
+            <polygon points="140,28 100,72 180,72" fill="rgba(80,216,128,.2)" stroke="rgba(80,216,128,.5)" stroke-width="1.5"/>
+            <text x="140" y="54" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(80,216,128,.8)" font-weight="600">Systematisk</text>
+            <text x="140" y="64" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(80,216,128,.7)">oversikt/metaanalyse</text>
+            <!-- RCT -->
+            <polygon points="100,72 76,108 204,108 180,72" fill="rgba(240,200,60,.15)" stroke="rgba(240,200,60,.4)" stroke-width="1.5"/>
+            <text x="140" y="94" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,60,.75)" font-weight="600">RCT (randomisert kontrollert)</text>
+            <!-- Kohortstudie -->
+            <polygon points="76,108 48,148 232,148 204,108" fill="rgba(96,184,240,.1)" stroke="rgba(96,184,240,.35)" stroke-width="1.5"/>
+            <text x="140" y="132" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,184,240,.65)" font-weight="600">Kohort- og kasus-kontrollstudier</text>
+            <!-- Kasus-serier -->
+            <polygon points="48,148 22,186 258,186 232,148" fill="rgba(240,160,96,.08)" stroke="rgba(240,160,96,.3)" stroke-width="1.5"/>
+            <text x="140" y="170" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,160,96,.6)" font-weight="600">Kasus-serier / tverrsnittstudier</text>
+            <!-- Ekspert -->
+            <polygon points="22,186 10,220 270,220 258,186" fill="rgba(240,96,96,.07)" stroke="rgba(240,96,96,.25)" stroke-width="1.5"/>
+            <text x="140" y="207" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.55)" font-weight="600">Kasuistikker / Ekspertuttalelser / Meninger</text>
+            <text x="10" y="240" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.4)">Høyest bevisstyrke</text>
+            <text x="270" y="240" text-anchor="end" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.4)">Lavest bevisstyrke</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Replikasjonskrisen -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(240,200,60,.1);color:#f0c850;border:1px solid rgba(240,200,60,.2)">⚠️ Krise</div>
+          <h3 class="k-tittel">Replikasjonskrisen – vitenskapen tar selvkritikk</h3>
+          <p class="k-ingress">En systematisk gjennomgang i 2015 forsøkte å replikere 100 psykologistudier. Bare ~36–39% ga signifikante funn igjen. Dette utløste en selvkritisk revolusjon i vitenskapen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Årsaker til replikasjonskrisen:</strong> p-hacking (analysere data på mange måter til noe blir signifikant), HARKing (hypothesizing after results are known – påstå hypotesen var planlagt fra starten), selektiv publisering (positive funn publiseres, negative forblir i skrivebordsskuffen).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔧</span><div><strong>Løsninger: åpen vitenskap:</strong> Preregistrering (registrer hypotesen og metoden BEFORE datainnsamling – gjør HARKing umulig). Deling av rådata og kode. Replikasjonsartikler anerkjennes nå som like viktige som nye funn.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💊</span><div><strong>Medisin og p = 0.05:</strong> P-verdien sier bare om funnet sannsynligvis ikke er tilfeldighet – ikke om det er viktig. Et statistisk signifikant funn kan ha neglisjerbar klinisk effekt. Effektstørrelse (Cohen's d, NNT) er vel så viktig som p-verdi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📰</span><div><strong>Medierapportering av forskning:</strong> «En ny studie viser at kaffe forlenger livet» – kritisk tenkning: Hvem finansierte studien? Hva var studiedesignet? Hvem var deltakerne? Er funnene replikert? En studie er et signal, ikke et svar.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,200,60,.6)" letter-spacing=".08em">P-HACKING OG ÅPEN VITENSKAP</text>
+            <!-- Publikasjonsbias-illustrasjon -->
+            <text x="140" y="38" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,200,60,.55)" font-weight="600">Publikasjonsbias</text>
+            <!-- Mange studier -->
+            <g>
+              <g fill="rgba(80,216,128,.7)">
+                <rect x="18" y="50" width="16" height="42" rx="3"/>
+                <rect x="38" y="60" width="16" height="32" rx="3"/>
+                <rect x="58" y="46" width="16" height="46" rx="3"/>
+                <rect x="78" y="54" width="16" height="38" rx="3"/>
+              </g>
+              <g fill="rgba(240,96,96,.4)">
+                <rect x="98" y="75" width="16" height="17" rx="3"/>
+                <rect x="118" y="70" width="16" height="22" rx="3"/>
+                <rect x="138" y="78" width="16" height="14" rx="3"/>
+                <rect x="158" y="65" width="16" height="27" rx="3"/>
+                <rect x="178" y="72" width="16" height="20" rx="3"/>
+                <rect x="198" y="76" width="16" height="16" rx="3"/>
+                <rect x="218" y="68" width="16" height="24" rx="3"/>
+                <rect x="238" y="73" width="16" height="19" rx="3"/>
+              </g>
+            </g>
+            <text x="66" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.6)">Publiseres</text>
+            <text x="176" y="104" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,96,96,.5)">Skuffskuffe (neg. funn)</text>
+            <line x1="10" y1="92" x2="270" y2="92" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+            <text x="10" y="115" font-family="DM Sans" font-size="8" fill="rgba(255,255,255,.3)">p &lt; 0.05 (signifikant)</text>
+            <!-- Åpen vitenskap-løsninger -->
+            <rect x="10" y="124" width="260" height="126" rx="10" fill="rgba(80,216,128,.04)" stroke="rgba(80,216,128,.12)" stroke-width="1"/>
+            <text x="140" y="140" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,216,128,.5)" font-weight="600">ÅPEN VITENSKAP – LØSNINGER</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <rect x="18" y="148" width="114" height="92" rx="7" fill="rgba(80,216,128,.06)" stroke="rgba(80,216,128,.2)" stroke-width="1"/>
+              <text x="75" y="163" text-anchor="middle" fill="rgba(80,216,128,.65)" font-weight="600">PROBLEM</text>
+              <g fill="rgba(232,245,238,.5)">
+                <text x="26" y="178">p-hacking</text>
+                <text x="26" y="192">HARKing</text>
+                <text x="26" y="206">Neg. funn usynlige</text>
+                <text x="26" y="220">Data skjult</text>
+                <text x="26" y="234">Kode ikke delt</text>
+              </g>
+              <rect x="148" y="148" width="114" height="92" rx="7" fill="rgba(96,184,240,.06)" stroke="rgba(96,184,240,.2)" stroke-width="1"/>
+              <text x="205" y="163" text-anchor="middle" fill="rgba(96,184,240,.65)" font-weight="600">LØSNING</text>
+              <g fill="rgba(232,245,238,.5)">
+                <text x="156" y="178">Preregistrering</text>
+                <text x="156" y="192">OSF.io registrering</text>
+                <text x="156" y="206">Neg. funn publiseres</text>
+                <text x="156" y="220">Åpne datasett</text>
+                <text x="156" y="234">Åpen kildekode</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Dagsaktuell forskning – eksempler -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,184,240,.1);color:#60b8f0;border:1px solid rgba(96,184,240,.2)">🔬 Aktuelt</div>
+          <h3 class="k-tittel">Dagsaktuell forskning – eksempler</h3>
+          <p class="k-ingress">Naturfag er ikke bare lærebokenes kunnskap – det skjer ny forskning hver dag. Her er eksempler på aktive forskningsområder som berører kompetansemålene i LK20.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>CRISPR-Cas9 og genterapi:</strong> Genredigeringsverktøyet CRISPR revolusjonerer biologien. 2024: Første godkjente CRISPR-behandling mot sigdcelleanemi (Casgevy). Etiske dilemmaer: germline editing (arvelige genendringer), designer babies, ulikhet i tilgang. Genererer ny kunnskap om genetikkens grenser.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Klimaforskning 2024–2025:</strong> 2023 og 2024 var de varmeste år noensinne målt. IPCC AR6: Vi er allerede over 1.5°C kortvarig oppvarming. Tipping points: Grønlandsisen, Amazonas, korallrev. Aktiv forskning: karbonfangst, negative utslipp, solenergi-refleksjon (kontroversiell).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Nevrovitenskap og bevissthet:</strong> Blue Brain Project: digital simulering av musehjernen. Connectome-prosjektet: kartlegger alle synaptiske forbindelser i en hjerne. Kunstig intelligens og nevrofeedback åpner for behandling av Alzheimer og Parkinsons. Fortsatt fundamentale åpne spørsmål om bevissthet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚀</span><div><strong>James Webb-teleskopet:</strong> Siden 2022 har JWST bilder av galakser dannet bare 300 mill. år etter Big Bang – utfordrer noen modeller for galaksedannelse. Exoplanetforskning: atmosfærekjemi på planeter utenfor solsystemet, leting etter biosignaturer (oksygen, metan).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,184,240,.6)" letter-spacing=".08em">AKTIVE FORSKNINGSFRONTER</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <!-- CRISPR -->
+              <rect x="10" y="26" width="125" height="100" rx="9" fill="rgba(80,216,128,.06)" stroke="rgba(80,216,128,.2)" stroke-width="1"/>
+              <text x="72" y="44" text-anchor="middle" fill="rgba(80,216,128,.7)" font-weight="600">🧬 CRISPR</text>
+              <text x="72" y="58" text-anchor="middle" fill="rgba(232,245,238,.5)">Genterapi 2024</text>
+              <text x="72" y="72" text-anchor="middle" fill="rgba(232,245,238,.4)">Sigdcelleanemi</text>
+              <text x="72" y="86" text-anchor="middle" fill="rgba(232,245,238,.35)">behandlet</text>
+              <text x="72" y="100" text-anchor="middle" fill="rgba(80,216,128,.4)">→ Etikk: hvem</text>
+              <text x="72" y="112" text-anchor="middle" fill="rgba(80,216,128,.35)">får tilgang?</text>
+              <!-- Klima -->
+              <rect x="145" y="26" width="125" height="100" rx="9" fill="rgba(240,96,96,.05)" stroke="rgba(240,96,96,.2)" stroke-width="1"/>
+              <text x="207" y="44" text-anchor="middle" fill="rgba(240,96,96,.65)" font-weight="600">🌡️ Klima 2024</text>
+              <text x="207" y="58" text-anchor="middle" fill="rgba(232,245,238,.5)">Varmeste år noensinne</text>
+              <text x="207" y="72" text-anchor="middle" fill="rgba(232,245,238,.4)">1.5°C passert kortvarig</text>
+              <text x="207" y="86" text-anchor="middle" fill="rgba(232,245,238,.35)">Tipping points</text>
+              <text x="207" y="100" text-anchor="middle" fill="rgba(240,96,96,.4)">→ Karbonfangst</text>
+              <text x="207" y="112" text-anchor="middle" fill="rgba(240,96,96,.35)">kontroversiell</text>
+              <!-- Neuro -->
+              <rect x="10" y="136" width="125" height="100" rx="9" fill="rgba(192,96,248,.05)" stroke="rgba(192,96,248,.2)" stroke-width="1"/>
+              <text x="72" y="154" text-anchor="middle" fill="rgba(192,96,248,.65)" font-weight="600">🧠 Neuro</text>
+              <text x="72" y="168" text-anchor="middle" fill="rgba(232,245,238,.5)">Blue Brain Project</text>
+              <text x="72" y="182" text-anchor="middle" fill="rgba(232,245,238,.4)">Connectome</text>
+              <text x="72" y="196" text-anchor="middle" fill="rgba(232,245,238,.35)">AI + nevrofeedback</text>
+              <text x="72" y="210" text-anchor="middle" fill="rgba(192,96,248,.4)">→ Alzheimer-håp</text>
+              <text x="72" y="224" text-anchor="middle" fill="rgba(192,96,248,.35)">Bevissthet: åpent</text>
+              <!-- JWST -->
+              <rect x="145" y="136" width="125" height="100" rx="9" fill="rgba(240,200,60,.05)" stroke="rgba(240,200,60,.2)" stroke-width="1"/>
+              <text x="207" y="154" text-anchor="middle" fill="rgba(240,200,60,.65)" font-weight="600">🔭 JWST</text>
+              <text x="207" y="168" text-anchor="middle" fill="rgba(232,245,238,.5)">Tidlige galakser</text>
+              <text x="207" y="182" text-anchor="middle" fill="rgba(232,245,238,.4)">300 mill. år etter BB</text>
+              <text x="207" y="196" text-anchor="middle" fill="rgba(232,245,238,.35)">Exoplanet atmosfærer</text>
+              <text x="207" y="210" text-anchor="middle" fill="rgba(240,200,60,.4)">→ Biosignaturer?</text>
+              <text x="207" y="224" text-anchor="middle" fill="rgba(240,200,60,.35)">Liv utenfor Jorda?</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Kritisk lesing av forskning -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(80,216,128,.1);color:#50d880;border:1px solid rgba(80,216,128,.2)">🕵️ Kildekritikk</div>
+          <h3 class="k-tittel">Kritisk lesing av forskning og nyheter</h3>
+          <p class="k-ingress">LK20 krever at du kan drøfte «hvordan ny kunnskap genereres gjennom samarbeid og kritisk tilnærming». Det betyr at du må kunne lese forskningsmeldinger kritisk.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">❓</span><div><strong>Spørsmål å stille om EN studie:</strong> Hvem finansierte? (Industrisponset forskning: bias-risiko). Var det blindet? Hva var kontrollgruppen? Hvor mange deltakere? Er resultatene klinisk viktige (ikke bare statistisk signifikante)? Er det primærkilde eller pressemelding?</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📰</span><div><strong>Typiske medieoverskriftsfeil:</strong> «X forårsaker Y» (kausalitet fra korrelasjon). «X eliminerer Y» (overdrivelse). «Forskning viser at...» (hvilken forskning? Én studie? Metaanalyse?). Spesielt mye feilinformasjon innen ernæring, psykologi og kreftforskning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌐</span><div><strong>Pålitelige ressurser for norske elever:</strong> Forskning.no, NIPH.no, FHI.no (Folkehelseinstituttet), SNL.no (Store norske leksikon), PubMed (engelske originalstudier), Cochrane Reviews, IPCC-rapporter for klima, IPBES for biodiversitet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🤝</span><div><strong>Vitenskapelig samarbeid – slik drives moderne forskning:</strong> Store prosjekter: CERN (10 000 forskere), Human Genome Project (20 land), IPCC (800+ forfattere). Preprint-servere muliggjør rask deling. Open access betyr at alle land kan lese. Samarbeid akselererer oppdagelse.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#060a08"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,216,128,.6)" letter-spacing=".08em">SJEKKLISTE: ER STUDIEN GOD?</text>
+            <g font-family="DM Sans" font-size="8.5">
+              <g fill="rgba(80,216,128,.7)">
+                <text x="18" y="42">✓</text><text x="30" y="42" fill="rgba(232,245,238,.65)">Er studien peer reviewed?</text>
+                <text x="18" y="60">✓</text><text x="30" y="60" fill="rgba(232,245,238,.65)">Er det RCT eller bare observasjon?</text>
+                <text x="18" y="78">✓</text><text x="30" y="78" fill="rgba(232,245,238,.65)">Hvem finansierte forskningen?</text>
+                <text x="18" y="96">✓</text><text x="30" y="96" fill="rgba(232,245,238,.65)">Var studien blindet?</text>
+                <text x="18" y="114">✓</text><text x="30" y="114" fill="rgba(232,245,238,.65)">Hvor mange deltakere (n)?</text>
+                <text x="18" y="132">✓</text><text x="30" y="132" fill="rgba(232,245,238,.65)">Er funnene replikert av andre?</text>
+                <text x="18" y="150">✓</text><text x="30" y="150" fill="rgba(232,245,238,.65)">Effektstørrelse vs. p-verdi?</text>
+                <text x="18" y="168">✓</text><text x="30" y="168" fill="rgba(232,245,238,.65)">Sier media det samme som studien?</text>
+              </g>
+            </g>
+            <!-- Advarselskilt -->
+            <rect x="10" y="182" width="260" height="70" rx="10" fill="rgba(240,200,60,.05)" stroke="rgba(240,200,60,.18)" stroke-width="1"/>
+            <text x="140" y="198" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,60,.55)" font-weight="600">⚠️ RØDE FLAGG – VÆR KRITISK</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,245,238,.45)">
+              <text x="22" y="214">• Eneste studie i verden som finner dette</text>
+              <text x="22" y="228">• Finansiert av industri med interessekonflikt</text>
+              <text x="22" y="242">• «Forsker sier...» uten å navngi studie/tidsskrift</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(80,216,128,.1);color:#50d880;border:1px solid rgba(80,216,128,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:640px">Forskning og kunnskapsproduksjon – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:860px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(80,216,128,.04);border:1px solid rgba(80,216,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#50d880;display:block;margin-bottom:4px">🔬 Vitenskapelig metode</strong>Observasjon → Hypotese (falsifiserbar!) → Eksperiment → Analyse → Konklusjon → Replikasjon. Syklisk, ikke lineær.</div>
+            <div style="padding:14px;background:rgba(192,96,248,.04);border:1px solid rgba(192,96,248,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#c060f8;display:block;margin-bottom:4px">📝 Peer review</strong>Anonyme fagfeller vurderer metode og konklusjoner. Ikke perfekt, men nødvendig. Predatory journals = felle. Preprints = ikke peer reviewed.</div>
+            <div style="padding:14px;background:rgba(80,216,128,.04);border:1px solid rgba(80,216,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#50d880;display:block;margin-bottom:4px">📊 Evidenshierarki</strong>Metaanalyse > RCT > Kohortstudie > Kasuistikker. Én studie = ikke nok. Replikasjon er vitenskapens sikkerhetsnett.</div>
+            <div style="padding:14px;background:rgba(240,200,60,.04);border:1px solid rgba(240,200,60,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#f0c850;display:block;margin-bottom:4px">⚠️ Replikasjonskrisen</strong>p-hacking, HARKing, publikasjonsbias. Løsning: preregistrering, åpne data, åpen kode. p &lt; 0.05 ≠ viktig funn.</div>
+            <div style="padding:14px;background:rgba(96,184,240,.04);border:1px solid rgba(96,184,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#60b8f0;display:block;margin-bottom:4px">🔬 Dagsaktuell forskning</strong>CRISPR (genterapi 2024) · IPCC (1.5°C passert) · JWST (tidlige galakser) · Blue Brain · Nevrologi og AI. Forskning skjer nå.</div>
+            <div style="padding:14px;background:rgba(80,216,128,.04);border:1px solid rgba(80,216,128,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,238,.65);line-height:1.6"><strong style="color:#50d880;display:block;margin-bottom:4px">🕵️ Kildekritikk</strong>Spør: Peer reviewed? RCT eller observasjon? Finansiert av hvem? Blindet? n=? Replikert? Effektstørrelse vs p-verdi. Sjekk originalstudie, ikke bare overskrift.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- PEER REVIEW-SPILLET -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Peer review-quiz – er dette god forskning?</div><div class="sep-r"></div></div>
+  <div class="pr-wrapper">
+    <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:6px">Vurder studiene nedenfor med kritisk blikk</p>
+    <p style="font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px">LK20 KM5 – drøfte hvordan ny kunnskap genereres gjennom kritisk tilnærming</p>
+    <div class="pr-poeng">Poeng: <span id="pr-poeng">0</span> / <span id="pr-maks">0</span></div>
+    <div class="pr-grid" id="pr-grid"></div>
+  </div>
+</div>
+
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+// PEER REVIEW-QUIZ
+const OPPGAVER = [
+  {
+    tittel: '📰 Studie A: Kaffe kurerer kreft',
+    beskrivelse: 'Overskrift: «Kaffe halverer risiko for kreft, ny studie viser». Studien er sponset av en internasjonal kaffeorganisasjon. n=85. Ingen kontrollgruppe. Ikke blindet. Publisert i et ukjent tidsskrift. Ikke replikert.',
+    spm: 'Hva er den viktigste svakheten?',
+    valg: [
+      { tekst: 'For få deltakere (n=85) og ingen kontrollgruppe', riktig: true },
+      { tekst: 'Forsøkspersonene drakk kaffe for sjelden', riktig: false },
+      { tekst: 'Kafe burde vært ekskludert fra studien', riktig: false },
+      { tekst: 'Kaffe er ikke interessant å forske på', riktig: false },
+    ],
+    feedback: 'Riktig! Studien mangler kontrollgruppe (vi vet ikke hva kaffe sammenlignes med), har for få deltakere til å gi statistisk kraft, og interessekonflikten (industrifinansiering) er et rødt flagg. En enkelt, ikke-replikert studie er aldri nok.'
+  },
+  {
+    tittel: '🧪 Studie B: Vaksinemyten',
+    beskrivelse: 'En lege publiserte i 1998 en studie med n=12 barn som hevdet at MMR-vaksinen forårsaket autisme. Studien ble tilbaketrukket av tidsskriftet i 2010 da det kom frem at dataene var fabrikkert. Likevel spres budskapet fortsatt.',
+    spm: 'Hva skjedde her vitenskapelig?',
+    valg: [
+      { tekst: 'Peer review fanger ikke alltid juks – men systemet ryddet opp da svindelen ble oppdaget', riktig: true },
+      { tekst: 'Studien er fortsatt gyldig fordi den ble publisert', riktig: false },
+      { tekst: 'n=12 er nok til å bevise en sammenheng', riktig: false },
+      { tekst: 'Alle legers forskning er pålitelig', riktig: false },
+    ],
+    feedback: 'Riktig. Peer review er ikke ufeilbarlig, men vitenskapens selvkorrigerende mekanisme fungerte til slutt. Studien ble tilbaketrukket (retracted). Etterfølgende studier med hundrevis av tusen barn fant ingen sammenheng mellom MMR og autisme.'
+  },
+  {
+    tittel: '🌡️ Studie C: Klimakonsensus',
+    beskrivelse: 'IPCC AR6 (2021) er en systematisk oversikt over tusenvis av klimastudier, skrevet av 800+ forskere fra 195 land. Konklusjon: menneskelig aktivitet er «utvetydig» årsak til global oppvarming siden 1950.',
+    spm: 'Hvilket nivå i evidenshierarkiet er dette?',
+    valg: [
+      { tekst: 'Systematisk oversikt – høyeste nivå i evidenshierarkiet', riktig: true },
+      { tekst: 'En enkelt ekspertuttalelse', riktig: false },
+      { tekst: 'En kasuistikk basert på ett land', riktig: false },
+      { tekst: 'Et observasjonsstudie uten kontrollgruppe', riktig: false },
+    ],
+    feedback: 'Riktig. IPCC-rapportene er systematiske oversikter – det sterkeste bevisgrunnlaget vi kan ha. Det er ikke «bare teorier», men konsolidert kunnskap fra tusenvis av studier. Vitenskapelig konsensus om menneskeskapt klimaendring er blant de sterkest evidensbaserte konklusjonene i vitenskapens historie.'
+  },
+  {
+    tittel: '🧬 Studie D: CRISPR og etikk',
+    beskrivelse: 'I 2018 annonserte en kinesisk forsker at han hadde brukt CRISPR til å redigere embryoer som førte til to levende barn. Det var ikke forhåndsgodkjent, ikke peer reviewed, og uten etisk klarering. Han ble fengslet.',
+    spm: 'Hva illustrerer denne saken?',
+    valg: [
+      { tekst: 'At vitenskapelig fremgang krever etisk regulering og faglig konsensus, ikke bare teknisk kompetanse', riktig: true },
+      { tekst: 'At CRISPR er for farlig til å bruke i noen sammenheng', riktig: false },
+      { tekst: 'At kinesisk forskning er upålitelig', riktig: false },
+      { tekst: 'At peer review ikke er nødvendig for banebrytende forskning', riktig: false },
+    ],
+    feedback: 'Riktig. Saken viser at teknologisk evne alene ikke er nok – vitenskapelig fremgang krever etisk refleksjon, samfunnsdebatt og regulering. Germline-editing (arvelige genendringer) er internasjonalt kontroversielt og regulert. LK20 krever nettopp at du kan drøfte slike dilemmaer.'
+  }
+];
+
+let poeng = 0;
+document.getElementById('pr-maks').textContent = OPPGAVER.length;
+
+const grid = document.getElementById('pr-grid');
+OPPGAVER.forEach((opp, idx) => {
+  const div = document.createElement('div');
+  div.className = 'pr-artikkel';
+  div.innerHTML = `
+    <h4>${opp.tittel}</h4>
+    <div class="pr-tekst">${opp.beskrivelse}</div>
+    <div class="pr-spm">${opp.spm}</div>
+    <div class="pr-valg" id="valg-${idx}">
+      ${opp.valg.map((v, vi) => `<button class="pr-knapp" onclick="svar(${idx},${vi},${v.riktig})">${v.tekst}</button>`).join('')}
+    </div>
+    <div class="pr-feedback" id="fb-${idx}"></div>`;
+  grid.appendChild(div);
+});
+
+function svar(idx, vi, riktig) {
+  const valgDiv = document.getElementById('valg-' + idx);
+  if (valgDiv.dataset.besvart) return;
+  valgDiv.dataset.besvart = '1';
+  const knapper = valgDiv.querySelectorAll('.pr-knapp');
+  knapper[vi].classList.add(riktig ? 'riktig' : 'feil');
+  if (!riktig) knapper.forEach(k => { if (k.textContent === OPPGAVER[idx].valg.find(v => v.riktig).tekst) k.classList.add('riktig'); });
+  if (riktig) { poeng++; document.getElementById('pr-poeng').textContent = poeng; }
+  const fb = document.getElementById('fb-' + idx);
+  fb.style.background = riktig ? 'rgba(80,216,128,.07)' : 'rgba(240,96,96,.07)';
+  fb.style.borderLeft = riktig ? '3px solid rgba(80,216,128,.5)' : '3px solid rgba(240,96,96,.4)';
+  fb.style.borderRadius = '0 8px 8px 0';
+  fb.style.color = 'rgba(232,245,238,.75)';
+  fb.innerHTML = (riktig ? '✓ ' : '✗ ') + OPPGAVER[idx].feedback;
+  fb.classList.add('vis');
+}
+</script>
+</body>
+</html>
