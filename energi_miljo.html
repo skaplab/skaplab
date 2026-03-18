@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Energi og miljøpåvirkning</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050a06;--surface:#091210;--card:#0d1a14;--border:rgba(80,220,120,.07);
+  --text:#e8f5ec;--dim:#1a3020;
+  --accent:#50dc78;--accent2:#60c8f0;--accent3:#f0c840;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(80,220,120,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,200,240,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="energiproduksjon.html" class="nav-lnk">Energiproduksjon</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Energi og miljøpåvirkning</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Energi · Miljø · LK20 KM12</div>
+    <h1>Energiproduksjon<br><em>og miljøpåvirkning</em></h1>
+    <p class="hero-sub">Lokal vs. global miljøkonsekvens, livsløpsanalyse (LCA), energidilemmaer og bærekraftige valg – ingen energikilde er uten konsekvenser</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1: Lokal vs. global miljøkonsekvens -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(80,220,120,.1);color:#50dc78;border:1px solid rgba(80,220,120,.2)">🌍 Perspektiv</div>
+          <h3 class="k-tittel">Lokal vs. global miljøpåvirkning</h3>
+          <p class="k-ingress">Energiproduksjon forårsaker ulike typer miljøpåvirkning – noen er lokale og synlige, andre er globale og usynlige. Å forstå begge er nødvendig for å vurdere energikilder helhetlig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>Lokale konsekvenser:</strong> Luftforurensning (NOₓ, SO₂, partikler) fra kull og olje → helse i nærområdet. Gruvedrift → habitatødeleggelse. Vannkraft → endret elvemiljø, vandringshindre for laks. Vindkraft → støy, visuelle inngrep, fugle- og flaggermustap. Kjernekraft → risikoopplevelse, avfallshåndtering.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Globale konsekvenser:</strong> CO₂ og andre drivhusgasser påvirker hele jordens klimasystem uavhengig av utslippssted. Metanutslipp fra kullgruver og gassproduksjon. Radioaktivt avfall krever isolasjon i 10 000 år. Kvikksølv fra kullkraft transporteres globalt og konsentreres i næringskjeden (biomagnifisering).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⏰</span><div><strong>Tidsaspektet:</strong> Noen konsekvenser er umiddelbare (luftforurensning dreper i dag – ~7 mill. dør av dårlig luftkvalitet per år globalt). Andre tar tiår (klimaendringer: CO₂ fra 1800-tallet varmer kloden nå). Radioaktivt avfall er et ansvar for titusener av fremtidige generasjoner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Hvem betaler prisen?</strong> Eksternaliteter: kostnadene som ikke er inkludert i energiprisen. Koller i Polen lider av luftforurensning fra kullkraft – forbrukerne i resten av Europa slipper unna. Klimaendringer rammer fattige land (Bangladesh, Sahel) hardest, men rikere land har historisk stått for mest av utslippene.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#050a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,220,120,.6)" letter-spacing=".08em">LOKAL VS GLOBAL PÅVIRKNING</text>
+            <!-- Lokal -->
+            <ellipse cx="80" cy="115" rx="65" ry="85" fill="rgba(80,220,120,.06)" stroke="rgba(80,220,120,.2)" stroke-width="1.5"/>
+            <text x="80" y="42" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(80,220,120,.65)" font-weight="600">LOKAL</text>
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle" fill="rgba(232,245,236,.55)">
+              <text x="80" y="58">🏭 Luftforurensning</text>
+              <text x="80" y="72">💧 Vannforurensning</text>
+              <text x="80" y="86">🔊 Støy og visuell</text>
+              <text x="80" y="100">🐦 Habitatendring</text>
+              <text x="80" y="114">🌊 Endret elv/kyst</text>
+              <text x="80" y="128">⚡ Nettforurensning</text>
+              <text x="80" y="152" fill="rgba(80,220,120,.4)" font-size="8">→ Rammes av nabolaget</text>
+              <text x="80" y="164" fill="rgba(80,220,120,.35)" font-size="8">→ Synlig og målbart</text>
+              <text x="80" y="176" fill="rgba(80,220,120,.3)" font-size="8">→ Reguleres lokalt</text>
+            </g>
+            <!-- Global -->
+            <ellipse cx="200" cy="115" rx="65" ry="85" fill="rgba(96,200,240,.05)" stroke="rgba(96,200,240,.2)" stroke-width="1.5"/>
+            <text x="200" y="42" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.65)" font-weight="600">GLOBAL</text>
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle" fill="rgba(232,245,236,.55)">
+              <text x="200" y="58">🌡️ CO₂ og klima</text>
+              <text x="200" y="72">☠️ Kvikksølv-spredning</text>
+              <text x="200" y="86">☢️ Radioaktivt avfall</text>
+              <text x="200" y="100">🌊 Havnivåstigning</text>
+              <text x="200" y="114">🐟 Biomagnifisering</text>
+              <text x="200" y="128">🏜️ Økt tørke</text>
+              <text x="200" y="152" fill="rgba(96,200,240,.4)" font-size="8">→ Rammer alle land</text>
+              <text x="200" y="164" fill="rgba(96,200,240,.35)" font-size="8">→ Usynlig og langsiktig</text>
+              <text x="200" y="176" fill="rgba(96,200,240,.3)" font-size="8">→ Krever internasj. avtaler</text>
+            </g>
+            <!-- Overlapp -->
+            <text x="140" y="115" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,200,60,.5)">Begge</text>
+            <text x="140" y="128" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,200,60,.4)">deler</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2: Livsløpsanalyse (LCA) -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(96,200,240,.1);color:#60c8f0;border:1px solid rgba(96,200,240,.2)">♻️ LCA</div>
+          <h3 class="k-tittel">Livsløpsanalyse – fra vugge til grav</h3>
+          <p class="k-ingress">Livsløpsanalyse (LCA) er et verktøy for å vurdere total miljøpåvirkning gjennom hele produktets livsløp: utvinning av råmaterialer, produksjon, bruk og avhending. Avslører skjulte konsekvenser.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>El-bil vs. bensinbil:</strong> El-bilen har null utslipp i bruk, men batteriproduksjon er svært CO₂-intensivt (kobolt fra Kongo, litium fra Chile). En ny el-bil starter med et «karbongjeld» på 8–15 tonn CO₂ mer enn en bensinbil. Break-even: ~3 år med norsk strøm (vannkraft). I Polen (kull): break-even aldri.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Solceller:</strong> Produksjon av silisiumceller er energikrevende. Energi-tilbakebetalingstid: 1–4 år (avhengig av solstrålingssted). Deretter 25+ år med utslippsfri strøm. LCA-CO₂: ~30–50 g CO₂/kWh – svært mye lavere enn kull (900 g) og gass (490 g). Viktig: avhending av solceller krever spesialhåndtering.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💨</span><div><strong>Vindkraft:</strong> Produksjon av rotorblader (glassfiberkompositts) er energikrevende og vanskelig å resirkulere. Fundament: betong og stål. Livsløps-CO₂: 7–15 g CO₂/kWh – best blant alle kilder. Men lokal påvirkning (støy, fugler) er reell og kan ikke ignoreres selv om klimaregnskapet er eksellent.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚛️</span><div><strong>Kjernekraft:</strong> Svært lav CO₂ per kWh i livsløp (~12 g CO₂/kWh – på linje med vind). Men uranutvinning og anrikning er energikrevende. Byggetid: 10–20 år og kostbar. Radioaktivt avfall må lagres sikkert i 10 000–100 000 år. Risiko ved ulykker (Tsjernobyl, Fukushima) – selv om absolutt risiko er lav per produsert kWh.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#050a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,240,.6)" letter-spacing=".08em">CO₂ PER KWH – LIVSLØPSANALYSE</text>
+            <!-- Stolpediagram -->
+            <text x="18" y="36" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,236,.35)">g CO₂/kWh</text>
+            <!-- Y-akse -->
+            <line x1="44" y1="44" x2="44" y2="210" stroke="rgba(232,245,236,.12)" stroke-width="1.5"/>
+            <line x1="44" y1="210" x2="270" y2="210" stroke="rgba(232,245,236,.12)" stroke-width="1.5"/>
+            <!-- Referanselinjer -->
+            <g stroke="rgba(232,245,236,.06)" stroke-width="1" stroke-dasharray="4 3">
+              <line x1="44" y1="100" x2="270" y2="100"/>
+              <line x1="44" y1="150" x2="270" y2="150"/>
+              <line x1="44" y1="60" x2="270" y2="60"/>
+            </g>
+            <g font-family="DM Sans" font-size="8" fill="rgba(232,245,236,.25)" text-anchor="end">
+              <text x="40" y="212">0</text>
+              <text x="40" y="153">250</text>
+              <text x="40" y="103">500</text>
+              <text x="40" y="62">750</text>
+            </g>
+            <!-- Stolper -->
+            <g font-family="DM Sans" font-size="8.5">
+              <!-- Kull: 900 g -->
+              <rect x="52" y="52" width="24" height="158" rx="3" fill="rgba(80,80,80,.5)" stroke="rgba(120,120,120,.4)" stroke-width="1"/>
+              <text x="64" y="48" text-anchor="middle" fill="rgba(160,160,160,.7)">900</text>
+              <text x="64" y="224" text-anchor="middle" fill="rgba(160,160,160,.5)">Kull</text>
+              <!-- Gass: 490 g -->
+              <rect x="84" y="116" width="24" height="94" rx="3" fill="rgba(96,120,200,.4)" stroke="rgba(96,120,200,.5)" stroke-width="1"/>
+              <text x="96" y="112" text-anchor="middle" fill="rgba(96,120,200,.65)">490</text>
+              <text x="96" y="224" text-anchor="middle" fill="rgba(96,120,200,.5)">Gass</text>
+              <!-- Biomasse: 230 g -->
+              <rect x="116" y="166" width="24" height="44" rx="3" fill="rgba(160,200,80,.35)" stroke="rgba(160,200,80,.4)" stroke-width="1"/>
+              <text x="128" y="162" text-anchor="middle" fill="rgba(160,200,80,.6)">230</text>
+              <text x="128" y="224" text-anchor="middle" fill="rgba(160,200,80,.5)">Bio</text>
+              <!-- Sol: 40 g -->
+              <rect x="148" y="202" width="24" height="8" rx="2" fill="rgba(240,200,60,.5)" stroke="rgba(240,200,60,.6)" stroke-width="1"/>
+              <text x="160" y="198" text-anchor="middle" fill="rgba(240,200,60,.7)">40</text>
+              <text x="160" y="224" text-anchor="middle" fill="rgba(240,200,60,.5)">Sol</text>
+              <!-- Kjernekraft: 12 g -->
+              <rect x="180" y="207" width="24" height="3" rx="1" fill="rgba(160,96,248,.6)" stroke="rgba(160,96,248,.7)" stroke-width="1"/>
+              <text x="192" y="203" text-anchor="middle" fill="rgba(160,96,248,.7)">12</text>
+              <text x="192" y="224" text-anchor="middle" fill="rgba(160,96,248,.5)">Kjerne</text>
+              <!-- Vind: 11 g -->
+              <rect x="212" y="207" width="24" height="3" rx="1" fill="rgba(80,220,120,.7)" stroke="rgba(80,220,120,.8)" stroke-width="1"/>
+              <text x="224" y="203" text-anchor="middle" fill="rgba(80,220,120,.75)">11</text>
+              <text x="224" y="224" text-anchor="middle" fill="rgba(80,220,120,.5)">Vind</text>
+              <!-- Vann: 4 g -->
+              <rect x="244" y="209" width="22" height="1" rx="1" fill="rgba(96,200,240,.7)" stroke="rgba(96,200,240,.8)" stroke-width="1"/>
+              <text x="255" y="205" text-anchor="middle" fill="rgba(96,200,240,.75)">4</text>
+              <text x="255" y="224" text-anchor="middle" fill="rgba(96,200,240,.5)">Vann</text>
+            </g>
+            <!-- Note -->
+            <rect x="10" y="236" width="260" height="18" rx="5" fill="rgba(80,220,120,.04)" stroke="rgba(80,220,120,.1)" stroke-width="1"/>
+            <text x="140" y="248" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,220,120,.4)">Livsløps-CO₂ inkluderer produksjon, transport, drift og avhending</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3: Energidilemmaer -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(240,200,60,.1);color:#f0c840;border:1px solid rgba(240,200,60,.2)">⚖️ Dilemmaer</div>
+          <h3 class="k-tittel">Energidilemmaer – ingen lette valg</h3>
+          <p class="k-ingress">Alle energikilder har fordeler og ulemper. Energipolitikk handler om å veie motstridende hensyn: klima, økonomi, natur, forsyningssikkerhet og rettferdighet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>«Grønn» energi er ikke alltid ren lokalt:</strong> Vannkraft er CO₂-fri men endrer elveøkosystemet dramatisk (Laksefoss, Gaula, Alta). Vindkraft dreper fugl og flaggermus, og er visuelt inngripende. Solparker bruker enorme landarealer i tørre regioner der biologisk mangfold er sårbart.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🇨🇳</span><div><strong>Globale verdikjeder:</strong> Solcellepaneler er produsert i Kina med kull. Kobolt til elbil-batterier utvinnes ofte av barn i Kongo. «Grønn» energi i Europa kan ha grå fotavtrykk i andre land. LCA og supply-chain-analyse er avgjørende for å ikke flytte miljøproblemer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🤝</span><div><strong>Energirettferdighet:</strong> 675 millioner mennesker mangler tilgang til elektrisitet (IEA 2022). Å nekte fattige land å bruke billig kull (som vestlige land brukte for å industrialisere seg) er etisk tvilsomt. Bærekraftig utvikling krever tilgang til energi for alle – ikke bare klimamål for de rike.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Forsyningssikkerhet vs. klima:</strong> Russlands gass-angrep (2022) tvang Europa til å øke kullbruk i stedet for å fase ut raskere. Energisikkerhet er en nasjonal sikkerhetsinteresse. Konsentrert produksjon (sol i Sahara, vind i Nordsjøen) skaper avhengigheter. Energilagring og diversifisering er kritisk.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#050a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,200,60,.6)" letter-spacing=".08em">ENERGIENS AVVEININGSTRIANGLE</text>
+            <!-- Trekant med tre hjørner -->
+            <polygon points="140,36 36,204 244,204" fill="rgba(240,200,60,.04)" stroke="rgba(240,200,60,.2)" stroke-width="1.5"/>
+            <!-- Hjørnelabels -->
+            <text x="140" y="28" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(80,220,120,.7)" font-weight="600">🌍 Klima</text>
+            <text x="28" y="220" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,200,240,.7)" font-weight="600">💰 Økonomi</text>
+            <text x="250" y="220" text-anchor="end" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.7)" font-weight="600">⚡ Sikkerhet</text>
+            <!-- Energikilder plottet -->
+            <g font-family="DM Sans" font-size="8.5" text-anchor="middle">
+              <!-- Kull: svak klima, sterk økonomi/sikkerhet -->
+              <circle cx="80" cy="170" r="10" fill="rgba(80,80,80,.4)" stroke="rgba(120,120,120,.5)" stroke-width="1.5"/>
+              <text x="80" y="174" fill="rgba(200,200,200,.7)" font-size="9">🏭</text>
+              <text x="80" y="190" fill="rgba(160,160,160,.55)">Kull</text>
+              <!-- Vind: sterk klima, middels økonomi/sikkerhet -->
+              <circle cx="130" cy="80" r="10" fill="rgba(80,220,120,.15)" stroke="rgba(80,220,120,.5)" stroke-width="1.5"/>
+              <text x="130" y="84" fill="rgba(80,220,120,.7)" font-size="9">💨</text>
+              <text x="130" y="100" fill="rgba(80,220,120,.5)">Vind</text>
+              <!-- Kjernekraft: god klima, dyr, trygg -->
+              <circle cx="180" cy="100" r="10" fill="rgba(160,96,248,.12)" stroke="rgba(160,96,248,.4)" stroke-width="1.5"/>
+              <text x="180" y="104" fill="rgba(160,96,248,.65)" font-size="9">⚛️</text>
+              <text x="180" y="120" fill="rgba(160,96,248,.5)">Kjerne</text>
+              <!-- Gass: middels alt -->
+              <circle cx="140" cy="150" r="9" fill="rgba(96,200,240,.1)" stroke="rgba(96,200,240,.35)" stroke-width="1.5"/>
+              <text x="140" y="154" fill="rgba(96,200,240,.55)" font-size="9">🔥</text>
+              <text x="140" y="170" fill="rgba(96,200,240,.4)">Gass</text>
+              <!-- Sol: bra klima, avh. av Kina -->
+              <circle cx="110" cy="120" r="9" fill="rgba(240,200,60,.12)" stroke="rgba(240,200,60,.4)" stroke-width="1.5"/>
+              <text x="110" y="124" fill="rgba(240,200,60,.65)" font-size="9">☀️</text>
+              <text x="110" y="140" fill="rgba(240,200,60,.4)">Sol</text>
+            </g>
+            <!-- Note -->
+            <rect x="10" y="218" width="260" height="34" rx="8" fill="rgba(240,200,60,.04)" stroke="rgba(240,200,60,.12)" stroke-width="1"/>
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,60,.5)" font-weight="600">Ingen kilde scorer optimalt på alle tre dimensjoner</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,236,.35)">Energipolitikk = prioritering under usikkerhet</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4: Norges energisystem -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(80,220,120,.1);color:#50dc78;border:1px solid rgba(80,220,120,.2)">🇳🇴 Norge</div>
+          <h3 class="k-tittel">Norges energisystem – styrker og dilemmaer</h3>
+          <p class="k-ingress">Norge er i en unik energimessig posisjon: ~90% av strømproduksjonen er fornybar vannkraft, men vi er verdens 7. største eksportør av fossil gass og olje. Dette er Norges store energidilemma.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Vannkraft – Norges ryggrad:</strong> 1681 vannkraftverk produserer ~136 TWh/år (~90% av norsk strøm). Magasinene fungerer som et enormt batteri – Norden eksporterer regulerbar kraft mot dansk og tysk vindkraft. Men ny utbygging er kontroversiell: de beste vassdragene er vernet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛢️</span><div><strong>Oljeparadokset:</strong> Norge eksporterer fossil gass som dekker ~25% av Europas gassforbruk. Oljefondets midler brukes til velferd. Klimaet skiller ikke mellom norsk og saudiarabisk olje. Å fase ut norsk olje vil ikke redusere globalt forbruk umiddelbart – men vil det på lang sikt?</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Kraftunderskudd og strømpriskrise 2021–22:</strong> Rekordlave magasinnivåer + økt eksport til Europa via nye kabler = ekstreme norske strømpriser. Illustrerer spenningen mellom europeisk klimasolidaritet (eksporter grønn kraft) og nasjonal forsyningssikkerhet (behold kraften hjemme).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌬️</span><div><strong>Havvind – fremtiden?</strong> Norge har Europas beste havvindpotensiale (Nordsjøen). Første storskala prosjekt: Hywind Tampen (vindkraft til oljeplatformer). Havvind kan produsere enorme mengder strøm uten de lokale naturinngrepene ved landbasert vindkraft. Kostbart – men kostnaden faller raskt.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#050a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,220,120,.6)" letter-spacing=".08em">NORGES STRØMMIKS</text>
+            <!-- Sirkediagram -->
+            <defs>
+              <clipPath id="circ-clip"><circle cx="140" cy="120" r="80"/></clipPath>
+            </defs>
+            <!-- Vannkraft 90% -->
+            <path d="M140,120 L140,40 A80,80 0 1,1 58,176 Z" fill="rgba(96,200,240,.35)" stroke="rgba(96,200,240,.5)" stroke-width="1.5"/>
+            <!-- Vind 10% -->
+            <path d="M140,120 L58,176 A80,80 0 0,1 140,40 Z" fill="rgba(80,220,120,.25)" stroke="rgba(80,220,120,.4)" stroke-width="1.5"/>
+            <!-- Labels -->
+            <text x="150" y="110" font-family="DM Sans" font-size="11" fill="rgba(96,200,240,.75)" font-weight="600">💧 90%</text>
+            <text x="150" y="124" font-family="DM Sans" font-size="8.5" fill="rgba(96,200,240,.5)">Vannkraft</text>
+            <text x="90" y="178" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(80,220,120,.7)" font-weight="600">💨 10%</text>
+            <text x="90" y="191" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(80,220,120,.5)">Vind + annet</text>
+            <!-- Eksport -->
+            <rect x="10" y="210" width="260" height="42" rx="9" fill="rgba(240,200,60,.04)" stroke="rgba(240,200,60,.12)" stroke-width="1"/>
+            <text x="140" y="225" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,60,.55)" font-weight="600">OLJEPARADOKSET</text>
+            <text x="140" y="239" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,236,.45)">99% fornybar strøm hjemme · Verdens 7. største fossil-eksportør</text>
+            <text x="140" y="250" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(232,245,236,.35)">Oljefondet: 19 000 mrd. kr (2024) · Dilemma: klima vs. velferd</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5: Bærekraftig energiforbruk -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(80,220,120,.1);color:#50dc78;border:1px solid rgba(80,220,120,.2)">♻️ Bærekraft</div>
+          <h3 class="k-tittel">Bærekraftig energiforbruk – hva kan du gjøre?</h3>
+          <p class="k-ingress">Teknologiske løsninger er nødvendige, men ikke tilstrekkelige. Energiforbruk er en summen av milliarder av individuelle valg. Atferdsendring og politikk virker begge.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🏠</span><div><strong>Oppvarming og isolasjon:</strong> ~40% av energiforbruk i Norge går til oppvarming av bygg. Etterisolering er det mest kostnadseffektive klimatiltaket. Varmepumpe vs. elektrisk panelovn: 3× mer effektiv. Passivhus bruker 80% mindre energi enn eldre bygg.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚗</span><div><strong>Transport:</strong> Fly er det mest CO₂-intensive transportmiddel per km. Togbruk i Norge: 5× lavere utslipp enn flyreise. El-bil i Norge (vannkraft): ~95% lavere livsløpsutslipp enn bensinbil. Sykkel og gange: null utslipp. Cruise-skip: utslippene per passasjer kan overgå flyreise.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🥩</span><div><strong>Kosthold:</strong> Storfekjøtt: ~60 kg CO₂/kg kjøtt (inkl. metan fra drøvtyggere). Kylling: ~6 kg CO₂/kg. Bønner: ~2 kg CO₂/kg. Vegetarisk kosthold kan halvere matens klimaavtrykk. Matsvinnet er like stort som alle flyreiser globalt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔌</span><div><strong>Energieffektivisering:</strong> Den beste kilowattimen er den som ikke brukes. LED erstatter glødelampe: bruker 85% mindre. Standby-forbruk: en norsk husstand bruker ~500 kWh/år på standby. Systemperspektiv: energimerking, avgifter og reguleringer er mer effektivt enn apell til enkeltpersoner alene.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" width="260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#050a06"/>
+            <text x="140" y="16" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(80,220,120,.6)" letter-spacing=".08em">CO₂ PER AKTIVITET (NORSK PERSPEKTIV)</text>
+            <!-- Horisontale stolper -->
+            <g font-family="DM Sans" font-size="8.5">
+              <!-- Flyreise t/r Oslo-NY -->
+              <text x="110" y="40" text-anchor="end" fill="rgba(240,96,96,.6)">Flyreise t/r Oslo–NY</text>
+              <rect x="115" y="28" width="120" height="14" rx="3" fill="rgba(240,96,96,.4)" stroke="rgba(240,96,96,.5)" stroke-width="1"/>
+              <text x="240" y="39" fill="rgba(240,96,96,.65)">1900 kg</text>
+              <!-- Bensinbil 1 år -->
+              <text x="110" y="62" text-anchor="end" fill="rgba(240,160,48,.6)">Bensinbil 1 år (15k km)</text>
+              <rect x="115" y="50" width="85" height="14" rx="3" fill="rgba(240,160,48,.35)" stroke="rgba(240,160,48,.5)" stroke-width="1"/>
+              <text x="205" y="61" fill="rgba(240,160,48,.65)">1350 kg</text>
+              <!-- Storfekjøtt 1kg/uke -->
+              <text x="110" y="84" text-anchor="end" fill="rgba(240,96,96,.5)">Storfekjøtt 1 kg/uke</text>
+              <rect x="115" y="72" width="72" height="14" rx="3" fill="rgba(240,96,96,.3)" stroke="rgba(240,96,96,.4)" stroke-width="1"/>
+              <text x="192" y="83" fill="rgba(240,96,96,.55)">3120 kg</text>
+              <!-- Elbil 1 år -->
+              <text x="110" y="106" text-anchor="end" fill="rgba(240,200,60,.6)">El-bil 1 år (15k km)</text>
+              <rect x="115" y="94" width="8" height="14" rx="3" fill="rgba(240,200,60,.4)" stroke="rgba(240,200,60,.5)" stroke-width="1"/>
+              <text x="128" y="105" fill="rgba(240,200,60,.6)">70 kg</text>
+              <!-- Tog Oslo-Bergen -->
+              <text x="110" y="128" text-anchor="end" fill="rgba(80,220,120,.6)">Tog Oslo–Bergen (t/r)</text>
+              <rect x="115" y="116" width="3" height="14" rx="2" fill="rgba(80,220,120,.5)" stroke="rgba(80,220,120,.6)" stroke-width="1"/>
+              <text x="123" y="127" fill="rgba(80,220,120,.6)">8 kg</text>
+              <!-- Vegetarisk kosthold -->
+              <text x="110" y="150" text-anchor="end" fill="rgba(80,220,120,.6)">Vegetarisk kosthold 1 år</text>
+              <rect x="115" y="138" width="12" height="14" rx="3" fill="rgba(80,220,120,.4)" stroke="rgba(80,220,120,.5)" stroke-width="1"/>
+              <text x="132" y="149" fill="rgba(80,220,120,.6)">560 kg</text>
+              <!-- LED vs glødelampe -->
+              <text x="110" y="172" text-anchor="end" fill="rgba(96,200,240,.6)">LED vs glødelampe 1 år</text>
+              <rect x="115" y="160" width="2" height="14" rx="2" fill="rgba(96,200,240,.5)" stroke="rgba(96,200,240,.6)" stroke-width="1"/>
+              <text x="122" y="171" fill="rgba(96,200,240,.6)">5 kg</text>
+            </g>
+            <rect x="10" y="196" width="260" height="56" rx="9" fill="rgba(80,220,120,.04)" stroke="rgba(80,220,120,.12)" stroke-width="1"/>
+            <text x="140" y="212" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(80,220,120,.5)" font-weight="600">DE FIRE VIKTIGSTE INDIVIDUELLE KLIMATILTAKENE</text>
+            <g font-family="DM Sans" font-size="8.5" fill="rgba(232,245,236,.45)">
+              <text x="22" y="228">1. Fly mindre · 2. Ikke bil (eller el-bil)</text>
+              <text x="22" y="242">3. Spis mindre storfekjøtt · 4. Færre barn (?) – kontroversielt</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6: Oppsummering -->
+      <div class="k-slide hel">
+        <div class="k-info" style="border-right:none;align-items:center;text-align:center">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(80,220,120,.1);color:#50dc78;border:1px solid rgba(80,220,120,.2)">📚 Oppsummering</div>
+          <h3 class="k-tittel" style="max-width:640px">Energi og miljøpåvirkning – nøkkelpoenger</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:860px;margin:16px auto 0;text-align:left">
+            <div style="padding:14px;background:rgba(80,220,120,.04);border:1px solid rgba(80,220,120,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#50dc78;display:block;margin-bottom:4px">🌍 Lokal vs. global</strong>Lokalt: luftkvalitet, habitattap, støy · Globalt: CO₂, kvikksølv, radioaktivt avfall · Tidsaspekt: noen umiddelbart, noen tiår · Eksternaliteter: usynlige priser</div>
+            <div style="padding:14px;background:rgba(96,200,240,.04);border:1px solid rgba(96,200,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#60c8f0;display:block;margin-bottom:4px">♻️ LCA – livsløpsanalyse</strong>Vugge til grav · El-bil karbongjeld (~3 år break-even) · CO₂/kWh: Kull 900 → Vind 11 · Solceller: 1–4 år energi-tilbakebetaling</div>
+            <div style="padding:14px;background:rgba(240,200,60,.04);border:1px solid rgba(240,200,60,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#f0c840;display:block;margin-bottom:4px">⚖️ Dilemmaer</strong>Klima-natur konflikt · Globale verdikjeder · Energirettferdighet · Forsyningssikkerhet vs. klima · Ingen kilde er perfekt</div>
+            <div style="padding:14px;background:rgba(80,220,120,.04);border:1px solid rgba(80,220,120,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#50dc78;display:block;margin-bottom:4px">🇳🇴 Norge</strong>90% vannkraft · Verdens 7. fossil-eksportør · Oljeparadokset · Strømprisdilemma 2021–22 · Havvind: fremtidig løsning</div>
+            <div style="padding:14px;background:rgba(96,200,240,.04);border:1px solid rgba(96,200,240,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#60c8f0;display:block;margin-bottom:4px">🏠 Individuelle tiltak</strong>Etterisolering (størst effekt) · Varmepumpe · El-bil/tog · Mindre flyreiser · Mindre storfekjøtt · Systempolitikk > apell alene</div>
+            <div style="padding:14px;background:rgba(240,200,60,.04);border:1px solid rgba(240,200,60,.15);border-radius:12px;font-size:.78rem;color:rgba(232,245,236,.65);line-height:1.6"><strong style="color:#f0c840;display:block;margin-bottom:4px">💡 Nøkkelprinsipp</strong>«Beste kWh er den som ikke brukes» · LCA avslører skjulte kostnader · Energipolitikk = avveining · Ingen teknisk løsning er tilstrekkelig alene</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+  <!-- INTERAKTIV LCA-SAMMENLIGNER -->
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Livsløpsanalyse – sammenlign energikilder</div><div class="sep-r"></div></div>
+  <div class="lca-wrapper">
+    <p style="font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:6px">Velg en energikilde og utforsk lokal og global miljøpåvirkning</p>
+    <div class="lca-tabs">
+      <button class="lca-tab aktiv" onclick="visLCA('kull')">🏭 Kull</button>
+      <button class="lca-tab" onclick="visLCA('gass')">🔥 Gass</button>
+      <button class="lca-tab" onclick="visLCA('vann')">💧 Vannkraft</button>
+      <button class="lca-tab" onclick="visLCA('vind')">💨 Vindkraft</button>
+      <button class="lca-tab" onclick="visLCA('sol')">☀️ Solkraft</button>
+      <button class="lca-tab" onclick="visLCA('kjerne')">⚛️ Kjernekraft</button>
+    </div>
+    <div class="lca-grid">
+      <div class="lca-bar-seksjon">
+        <div class="lca-tittel" id="lca-tittel">🏭 Kull</div>
+        <div id="lca-barer"></div>
+      </div>
+      <div class="lca-info" id="lca-info-panel">
+        <h4>Sammendrag</h4>
+        <div id="lca-info-tekst"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+const LCA_DATA = {
+  kull: {
+    navn: '🏭 Kull', farge: 'rgba(120,120,120,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:100, enhet:'900 g/kWh'},
+      {l:'Luftforurensning', v:95, enhet:'Svært høy'},
+      {l:'Arealbruk', v:70, enhet:'Høy'},
+      {l:'Vannforbruk', v:60, enhet:'Middels'},
+      {l:'Avfallsproblem', v:50, enhet:'Aske/SO₂'},
+      {l:'Kostnad (LCOE)', v:45, enhet:'Lav–middels'},
+    ],
+    info: [
+      {i:'🔴', t:'Globalt', v:'Høyest CO₂-utslipp av alle energikilder (900 g/kWh). Kvikksølv fra kullkraft distribueres globalt og biomagnifiseres. Metanutslipp fra kullgruver.'},
+      {i:'🔴', t:'Lokalt', v:'NOₓ, SO₂ og finpartikler gir luftforurensning som dreper millioner per år. Gruvedrift ødelegger landskap permanent.'},
+      {i:'🟡', t:'Økonomi', v:'Historisk billig å bygge, men eksternalitetene er enorme. Med karbonpris er kull ikke billig.'},
+      {i:'🔴', t:'Bærekraft', v:'Ikke fornybar. Begrenset ressurs. Ingen fremtid i et karbonnøytralt samfunn.'},
+    ]
+  },
+  gass: {
+    navn: '🔥 Naturgass', farge: 'rgba(96,120,200,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:54, enhet:'490 g/kWh'},
+      {l:'Luftforurensning', v:35, enhet:'Lavere enn kull'},
+      {l:'Arealbruk', v:30, enhet:'Moderat'},
+      {l:'Vannforbruk', v:40, enhet:'Moderat'},
+      {l:'Avfallsproblem', v:20, enhet:'Lavt'},
+      {l:'Kostnad (LCOE)', v:42, enhet:'Middels'},
+    ],
+    info: [
+      {i:'🟡', t:'Globalt', v:'~490 g CO₂/kWh – halvparten av kull. Metanutslipp fra distribusjon og utvinning (metan er 80× sterkere enn CO₂ på 20 år).'},
+      {i:'🟡', t:'Lokalt', v:'Mye bedre luftkvalitet enn kull. Men fracking (hydraulisk oppsprekking) kan forurense grunnvann og forårsake jordskjelv.'},
+      {i:'🟢', t:'Fleksibilitet', v:'Rask av/på – komplementerer sol og vind. Viktig som «brostek» i energiomstillingen.'},
+      {i:'🔴', t:'Geopolitikk', v:'Russlands gassvåpen (2022) viste farene ved energiavhengighet. Norge er nå Europas viktigste gassleverandør.'},
+    ]
+  },
+  vann: {
+    navn: '💧 Vannkraft', farge: 'rgba(96,200,240,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:1, enhet:'4 g/kWh'},
+      {l:'Luftforurensning', v:2, enhet:'Nær null'},
+      {l:'Arealbruk', v:75, enhet:'Høy (magasin)'},
+      {l:'Vannforbruk', v:90, enhet:'Endrer flyt'},
+      {l:'Avfallsproblem', v:5, enhet:'Svært lavt'},
+      {l:'Kostnad (LCOE)', v:20, enhet:'Svært lav'},
+    ],
+    info: [
+      {i:'🟢', t:'Globalt', v:'Nesten null CO₂ i drift. Fleksibel – kan lagre energi i magasin. Norges magasiner er Nordeuropas «batteri».'},
+      {i:'🔴', t:'Lokalt', v:'Vassdragsregulering endrer elvemiljøet dramatisk. Laksevandring blokkeres. Temperaturregime endres. Biologisk mangfold i elva reduseres.'},
+      {i:'🟡', t:'Metanproblem', v:'Tropiske vannkraftmagasiner (Brasil) produserer metan fra nedbrytning av organisk materiale – kan ha høyere klimaavtrykk enn gass!'},
+      {i:'🟢', t:'Økonomi', v:'Billigst per kWh blant eksisterende norske anlegg. Svært lang levetid (50–100 år). Lite vedlikehold.'},
+    ]
+  },
+  vind: {
+    navn: '💨 Vindkraft', farge: 'rgba(80,220,120,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:2, enhet:'11 g/kWh'},
+      {l:'Luftforurensning', v:3, enhet:'Nær null'},
+      {l:'Arealbruk', v:55, enhet:'Inngripende'},
+      {l:'Vannforbruk', v:5, enhet:'Svært lavt'},
+      {l:'Avfallsproblem', v:25, enhet:'Rotorblad'},
+      {l:'Kostnad (LCOE)', v:28, enhet:'Lav og fallende'},
+    ],
+    info: [
+      {i:'🟢', t:'Globalt', v:'Lavest CO₂-utslipp i livsløp (11 g/kWh). Ingen drivhusgasser i drift. Fornybar.'},
+      {i:'🟡', t:'Lokalt – land', v:'Støy og visuelle inngrep. Fugle- og flaggermustap. Veier og fundamenter ødelegger natur. Fosen: kan krenke samiske rettigheter (ILO-169).'},
+      {i:'🟢', t:'Lokalt – hav', v:'Havvind har minimal lokal påvirkning (i hvert fall for fauna over havflaten). Kan faktisk fungere som kunstig rev.'},
+      {i:'🔴', t:'Avfall', v:'Rotorblader av glassfiberkompositts er vanskelige å resirkulere. Voksende problem – ny teknologi på vei.'},
+    ]
+  },
+  sol: {
+    navn: '☀️ Solkraft', farge: 'rgba(240,200,60,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:5, enhet:'40 g/kWh'},
+      {l:'Luftforurensning', v:4, enhet:'Nær null'},
+      {l:'Arealbruk', v:50, enhet:'Areal per kWh'},
+      {l:'Vannforbruk', v:8, enhet:'Svært lavt'},
+      {l:'Avfallsproblem', v:35, enhet:'Solcelleavfall'},
+      {l:'Kostnad (LCOE)', v:22, enhet:'Faller raskt'},
+    ],
+    info: [
+      {i:'🟢', t:'Globalt', v:'Nær null CO₂ i drift. Kostnadene har falt 90% siden 2010. Kan installeres desentralt (hustaket).'},
+      {i:'🟡', t:'Verdikjede', v:'Produksjon i Kina med kullkraft. Silikonproduksjon er energikrevende. Sølv og indium (knappe ressurser) brukes. Energi-payback: 1–4 år.'},
+      {i:'🟡', t:'Avfall', v:'Solceller inneholder kadmium, bly og sjeldne metaller. Avhending krever spesialhåndtering. EU-regulering påkrevd fra 2032.'},
+      {i:'🟡', t:'Intermittens', v:'Produserer bare om dagen og ikke i skydekke. Krever lagring (batteri) eller nett-balansering. Perfekt komplementær til vindkraft.'},
+    ]
+  },
+  kjerne: {
+    navn: '⚛️ Kjernekraft', farge: 'rgba(160,96,248,.6)',
+    bars: [
+      {l:'CO₂ (livsløp)', v:2, enhet:'12 g/kWh'},
+      {l:'Luftforurensning', v:1, enhet:'Nær null'},
+      {l:'Arealbruk', v:15, enhet:'Svært lavt'},
+      {l:'Vannforbruk', v:65, enhet:'Kjøling'},
+      {l:'Avfallsproblem', v:90, enhet:'Radioaktivt'},
+      {l:'Kostnad (LCOE)', v:80, enhet:'Svært høy'},
+    ],
+    info: [
+      {i:'🟢', t:'Globalt', v:'12 g CO₂/kWh i livsløp – på linje med vind. Ingen luftforurensning i drift. Kompakt: produserer enorme mengder energi fra lite areal.'},
+      {i:'🔴', t:'Avfall', v:'Radioaktivt høyaktivt avfall: halvveringstid > 10 000 år. Endelig lagring ikke løst i de fleste land. Et ansvar for hundrer av fremtidige generasjoner.'},
+      {i:'🟡', t:'Risiko', v:'Sannsynlighet per reaktorår: svært lav. Men konsekvensene er katastrofale (Tsjernobyl, Fukushima). Risikopersepsjon er mye høyere enn statistisk risiko.'},
+      {i:'🔴', t:'Økonomi', v:'Svært dyr og tidkrevende å bygge (10–20 år). Ny generasjon SMR (Small Modular Reactors) kan endre dette.'},
+    ]
+  }
+};
+
+function visLCA(id) {
+  const d = LCA_DATA[id];
+  document.querySelectorAll('.lca-tab').forEach((t,i) => {
+    const ids = ['kull','gass','vann','vind','sol','kjerne'];
+    t.classList.toggle('aktiv', ids[i]===id);
+  });
+  document.getElementById('lca-tittel').textContent = d.navn;
+  document.getElementById('lca-barer').innerHTML = d.bars.map(b => `
+    <div class="lca-rad">
+      <div class="lca-label">${b.l}</div>
+      <div class="lca-bar-wrap"><div class="lca-bar" style="width:${b.v}%;background:${d.farge}"></div></div>
+      <div class="lca-val" style="color:${d.farge}">${b.enhet}</div>
+    </div>`).join('');
+  document.getElementById('lca-info-tekst').innerHTML = d.info.map(p => `
+    <div class="lca-punkt">
+      <span>${p.i}</span>
+      <div><strong style="color:var(--text)">${p.t}:</strong> ${p.v}</div>
+    </div>`).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => visLCA('kull'));
+</script>
+</body>
+</html>
