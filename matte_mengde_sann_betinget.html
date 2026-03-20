@@ -153,12 +153,34 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['beregn_pb','multipliser','uavhengig','praktisk'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='beregn_pb'){
+    var pAB=rnd(1,5)/10,pB=rnd(pAB*10+1,9)/10;
+    var pAgiB=Math.round(pAB/pB*100)/100;
+    return{type:'Beregn P(A|B)',input:'tall',
+      spm:'P(A∩B) = <strong>'+pAB+'</strong>, P(B) = <strong>'+pB+'</strong>. Finn P(A|B).',
+      prefix:'P(A|B) =',fasit:pAgiB,steg:pAB+' / '+pB+' = <strong>'+pAgiB+'</strong>'};
+  } else if(type==='multipliser'){
+    var pA=rnd(2,7)/10,pBgiA=rnd(2,8)/10;
+    var pAB2=Math.round(pA*pBgiA*100)/100;
+    return{type:'P(A∩B)',input:'tall',
+      spm:'P(A) = <strong>'+pA+'</strong>, P(B|A) = <strong>'+pBgiA+'</strong>. Finn P(A∩B).',
+      prefix:'=',fasit:pAB2,steg:pA+' × '+pBgiA+' = <strong>'+pAB2+'</strong>'};
+  } else if(type==='uavhengig'){
+    var pA2=rnd(2,6)/10,pB2=rnd(2,6)/10;
+    var prod=Math.round(pA2*pB2*100)/100;
+    return{type:'Uavhengige hendelser',input:'tall',
+      spm:'A og B er uavhengige. P(A) = '+pA2+', P(B) = '+pB2+'. P(A∩B)?',
+      prefix:'=',fasit:prod,steg:pA2+' × '+pB2+' = <strong>'+prod+'</strong>'};
+  } else {
+    var tot=rnd(4,8),rod=rnd(2,tot-1),rest=tot-rod;
+    var p1=rod/tot,p2=(rod-1)/(tot-1);
+    var svar=Math.round(p1*p2*100)/100;
+    return{type:'Uten tilbakelegging',input:'tall',
+      spm:'Pose: '+rod+' røde og '+rest+' blå. Trekker 2. P(begge røde)?',
+      prefix:'=',fasit:svar,steg:rod+'/'+tot+' × '+(rod-1)+'/'+(tot-1)+' = <strong>'+svar+'</strong>'};
+  }
 }
 
 function startOkt(){

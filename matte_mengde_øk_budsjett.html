@@ -153,12 +153,31 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['overskudd','underskudd','sparing','finn_inntekt'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='overskudd'){
+    var innt=rnd(15,35)*1000,utg=rnd(10,innt/1000-2)*1000;
+    return{type:'Beregn overskudd',input:'tall',
+      spm:'Inntekt: <strong>'+innt+' kr</strong>, utgifter: <strong>'+utg+' kr</strong>. Månedlig overskudd?',
+      prefix:'kr',fasit:innt-utg,steg:innt+' - '+utg+' = <strong>'+(innt-utg)+' kr</strong>'};
+  } else if(type==='underskudd'){
+    var innt2=rnd(12,20)*1000,utg2=innt2+rnd(1,5)*1000;
+    return{type:'Underskudd?',input:'flervalg',
+      spm:'Inntekt: '+innt2+' kr, utgifter: '+utg2+' kr. Hva er situasjonen?',
+      valg:bland(['Underskudd på '+(utg2-innt2)+' kr','Overskudd på '+(utg2-innt2)+' kr']),
+      fasit:'Underskudd på '+(utg2-innt2)+' kr',steg:'Utgifter > inntekter → underskudd'};
+  } else if(type==='sparing'){
+    var sparePst=rnd(1,4)*5,netto=rnd(15,30)*1000;
+    var spar=Math.round(netto*sparePst/100);
+    return{type:'Sparebeløp',input:'tall',
+      spm:'Månedlig netto: <strong>'+netto+' kr</strong>. Sparer <strong>'+sparePst+' %</strong>. Beløp per måned?',
+      prefix:'kr',fasit:spar,steg:netto+' × '+sparePst/100+' = <strong>'+spar+' kr</strong>'};
+  } else {
+    var utg3=rnd(12,22)*1000,overskudd=rnd(1,5)*1000;
+    return{type:'Finn inntekt',input:'tall',
+      spm:'Utgifter: <strong>'+utg3+' kr</strong>, ønsket overskudd: <strong>'+overskudd+' kr</strong>. Nødvendig inntekt?',
+      prefix:'kr',fasit:utg3+overskudd,steg:utg3+' + '+overskudd+' = <strong>'+(utg3+overskudd)+' kr</strong>'};
+  }
 }
 
 function startOkt(){

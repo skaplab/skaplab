@@ -153,12 +153,36 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['relfrekvens','sammenlign','beregn','flervalg_sim'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='relfrekvens'){
+    var n=rnd(5,20)*100,gunstige=rnd(Math.floor(n*0.1),Math.floor(n*0.6));
+    var f=Math.round(gunstige/n*1000)/1000;
+    return{type:'Relativ frekvens',input:'tall',
+      spm:'Etter <strong>'+n+'</strong> forsøk inntreffer hendelsen <strong>'+gunstige+' ganger</strong>. Relativ frekvens?',
+      prefix:'f =',fasit:f,steg:gunstige+' / '+n+' = <strong>'+f+'</strong>'};
+  } else if(type==='sammenlign'){
+    var n1=rnd(10,50),n2=rnd(500,2000);
+    return{type:'Pålitelighet',input:'flervalg',
+      spm:'Hvilken simulering gir mest pålitelig estimat: <strong>'+n1+' forsøk</strong> eller <strong>'+n2+' forsøk</strong>?',
+      valg:bland([n2+' forsøk',n1+' forsøk']),
+      fasit:n2+' forsøk',steg:'Flere forsøk → mer pålitelig (de store talls lov)'};
+  } else if(type==='beregn'){
+    var forsok=rnd(3,10)*100,pTeor=rnd(1,4)/6;
+    var forventet=Math.round(forsok*pTeor);
+    return{type:'Forventet antall',input:'tall',
+      spm:'Kaster terning <strong>'+forsok+' ganger</strong>. Forventet antall seksere?',
+      prefix:'≈',fasit:Math.round(forsok/6),steg:forsok+' × 1/6 = <strong>'+Math.round(forsok/6)+'</strong>'};
+  } else {
+    var n3=rnd(200,1000),ant=rnd(Math.floor(n3*0.1),Math.floor(n3*0.5));
+    var f3=Math.round(ant/n3*100)/100;
+    var teor=rnd(1,4)/6;
+    return{type:'Nær teori?',input:'flervalg',
+      spm:'Etter '+n3+' kast av terning falt sekseren '+ant+' ganger (f='+f3+'). Er dette nær forventet 1/6 ≈ 0,167?',
+      valg:bland([Math.abs(f3-0.167)<0.04?'Ja, rimelig nær':'Nei, altfor langt unna',Math.abs(f3-0.167)<0.04?'Nei, altfor langt unna':'Ja, rimelig nær']),
+      fasit:Math.abs(f3-0.167)<0.04?'Ja, rimelig nær':'Nei, altfor langt unna',
+      steg:'|'+f3+'-0,167| = '+Math.round(Math.abs(f3-0.167)*1000)/1000};
+  }
 }
 
 function startOkt(){

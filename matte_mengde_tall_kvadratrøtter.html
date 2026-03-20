@@ -153,12 +153,36 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['enkel','forenkle','regneregler','irrational'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='enkel'){
+    var perfekte=[4,9,16,25,36,49,64,81,100,121,144,169];
+    var n=perfekte[rnd(0,perfekte.length-1)];
+    return{type:'Beregn kvadratrot',input:'tall',
+      spm:'Beregn <strong>√'+n+'</strong>',
+      prefix:'=',fasit:Math.round(Math.sqrt(n)),
+      steg:'√'+n+' = <strong>'+Math.round(Math.sqrt(n))+'</strong>'};
+  } else if(type==='forenkle'){
+    var par=[[12,'2√3',2,3],[20,'2√5',2,5],[45,'3√5',3,5],[50,'5√2',5,2],[72,'6√2',6,2],[75,'5√3',5,3],[98,'7√2',7,2],[48,'4√3',4,3],[32,'4√2',4,2],[27,'3√3',3,3]];
+    var v=vanskel===1?par.slice(0,4):par;
+    var p=v[rnd(0,v.length-1)];
+    return{type:'Forenkle rot',input:'flervalg',
+      spm:'Forenkle <strong>√'+p[0]+'</strong>',
+      valg:bland([p[1], p[2]+'√'+p[3]*2, (p[2]+1)+'√'+p[3], p[2]+'√'+(p[3]+1)]),
+      fasit:p[1],steg:'√'+p[0]+' = √('+(p[2]*p[2])+'·'+p[3]+') = '+p[2]+'·√'+p[3]+' = <strong>'+p[1]+'</strong>'};
+  } else if(type==='regneregler'){
+    var a=rnd(2,6),b=rnd(2,6);
+    return{type:'Regneregler',input:'tall',
+      spm:'Beregn <strong>√'+a+' · √'+b+'</strong>',
+      prefix:'√',fasit:a*b,steg:'√'+a+'·√'+b+' = √'+(a*b)};
+  } else {
+    var irr=['√2','√3','√5','√7'];
+    var v2=irr[rnd(0,3)];
+    return{type:'Rasjonalt?',input:'flervalg',
+      spm:'Er <strong>'+v2+'</strong> et rasjonalt tall?',
+      valg:bland(['Nei, irrasjonalt','Ja, rasjonalt']),
+      fasit:'Nei, irrasjonalt',steg:v2+' kan ikke skrives som brøk p/q'};
+  }
 }
 
 function startOkt(){

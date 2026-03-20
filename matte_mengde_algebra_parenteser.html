@@ -153,12 +153,39 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['gangUt','faktoriser','dobbel','konjugat'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='gangUt'){
+    var a=rndNul(-5,8),b=rnd(-8,8);
+    if(vanskel===1){a=rnd(2,5);b=rnd(1,8);}
+    var t1=rndNul(-5,6),t2=rnd(-6,6);
+    var p1=a*t1,p2=a*t2;
+    return{type:'Gang inn parentes',input:'flervalg',
+      spm:'Gang ut: <strong>'+a+'('+t1+'x + '+t2+')</strong>',
+      valg:bland([p1+'x + '+p2,(a+1)*t1+'x + '+p2,p1+'x + '+(p2+a),a+'x + '+p2]),
+      fasit:p1+'x + '+p2,steg:a+'·'+t1+'x + '+a+'·'+t2+' = <strong>'+p1+'x + '+p2+'</strong>'};
+  } else if(type==='faktoriser'){
+    var f=rnd(2,vanskel===1?4:7),a2=rnd(2,5),b2=rnd(1,5);
+    var uttrykk=f*a2+'x + '+f*b2;
+    return{type:'Faktoriser',input:'flervalg',
+      spm:'Faktoriser: <strong>'+(f*a2)+'x + '+(f*b2)+'</strong>',
+      valg:bland([f+'('+a2+'x + '+b2+')',(f+1)+'('+a2+'x + '+b2+')',f+'('+(a2+1)+'x + '+b2+')',f+'('+a2+'x + '+(b2+1)+')']),
+      fasit:f+'('+a2+'x + '+b2+')',steg:'Felles faktor: '+f+'. Svar: <strong>'+f+'('+a2+'x + '+b2+')</strong>'};
+  } else if(type==='dobbel'){
+    var p=rnd(1,4),q=rnd(1,4),r=rnd(-4,0),s=rnd(1,4);
+    var ledd1=p*r,ledd2=p*s,ledd3=q*r,ledd4=q*s;
+    var x2=p*r,xmid=p*s+q*r,konst=q*s;
+    return{type:'Doble parenteser',input:'flervalg',
+      spm:'Gang ut: <strong>(x + '+p+')(x + '+q+')</strong>',
+      valg:bland(['x² + '+(p+q)+'x + '+p*q,'x² + '+(p*q)+'x + '+(p+q),'x² + '+p+'x + '+q,'x² + '+(p+q+1)+'x + '+p*q]),
+      fasit:'x² + '+(p+q)+'x + '+p*q,steg:'x·x + '+p+'x + '+q+'x + '+p*q+' = <strong>x² + '+(p+q)+'x + '+p*q+'</strong>'};
+  } else {
+    var a3=rnd(1,5),b3=rnd(1,5);
+    return{type:'Konjugatsetning',input:'flervalg',
+      spm:'Gang ut: <strong>(x + '+a3+')(x - '+a3+')</strong>',
+      valg:bland(['x² - '+a3*a3,'x² + '+a3*a3,'x² - '+a3,'(x+'+a3+')²']),
+      fasit:'x² - '+a3*a3,steg:'Konjugatsetning: a²-b² = x² - '+a3*a3};
+  }
 }
 
 function startOkt(){

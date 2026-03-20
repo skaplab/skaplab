@@ -153,12 +153,34 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['range_output','range_sum','while_output','kode_lese'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='range_output'){
+    var start=rnd(0,3),stopp=start+rnd(3,7),steg=rnd(0,1)?1:rnd(1,3);
+    var utfall=[];for(var i=start;i<stopp;i+=steg)utfall.push(i);
+    var siste=utfall[utfall.length-1];
+    return{type:'range() output',input:'tall',
+      spm:'Python: <code>for i in range('+start+', '+stopp+(steg>1?', '+steg:'')+'):</code><br>Hva er det siste tallet som skrives ut?',
+      prefix:'=',fasit:siste,steg:'range gir: '+utfall.join(', ')+'. Sist: <strong>'+siste+'</strong>'};
+  } else if(type==='range_sum'){
+    var a=rnd(1,5),b=a+rnd(3,8);
+    var sum=0;for(var i=a;i<=b;i++)sum+=i;
+    return{type:'Sum med løkke',input:'tall',
+      spm:'<code>sum=0; for i in range('+a+', '+(b+1)+'): sum+=i</code><br>Hva er sum til slutt?',
+      prefix:'sum =',fasit:sum,steg:'Legger sammen '+a+'+...+'+b+' = <strong>'+sum+'</strong>'};
+  } else if(type==='while_output'){
+    var start2=rnd(1,3),grense=start2+rnd(2,5),steg2=rnd(1,2);
+    var ant=Math.floor((grense-start2)/steg2)+(((grense-start2)%steg2===0)?1:0);
+    return{type:'While-løkke',input:'tall',
+      spm:'<code>i='+start2+'; while i<='+grense+': print(i); i+='+steg2+'</code><br>Hvor mange tall skrives ut?',
+      prefix:'=',fasit:ant,steg:'Verdier: '+start2+' til '+grense+' med steg '+steg2+' → <strong>'+ant+' tall</strong>'};
+  } else {
+    var tall=rnd(2,5),fak=1;for(var i=1;i<=tall;i++)fak*=i;
+    return{type:'Hva beregnes?',input:'flervalg',
+      spm:'<code>res=1; for i in range(1,'+( tall+1)+'): res*=i</code><br>Hva beregnes?',
+      valg:bland([tall+'! = '+fak,'Sum 1 til '+tall,''+tall+'^2 = '+tall*tall,''+(tall*2)]),
+      fasit:tall+'! = '+fak,steg:tall+'! = <strong>'+fak+'</strong>'};
+  }
 }
 
 function startOkt(){

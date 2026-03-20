@@ -153,12 +153,32 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['relfrekvens','kode_tolke','forventet','paalitelighet'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='relfrekvens'){
+    var n=rnd(3,20)*100,ant=rnd(Math.floor(n*0.1),Math.floor(n*0.5));
+    var f=Math.round(ant/n*1000)/1000;
+    return{type:'Relativ frekvens fra simulering',input:'tall',
+      spm:'Simulering: <strong>'+n+' forsøk</strong>, hendelsen skjedde <strong>'+ant+' ganger</strong>. Estimert P?',
+      prefix:'P ≈',fasit:f,steg:ant+' / '+n+' = <strong>'+f+'</strong>'};
+  } else if(type==='kode_tolke'){
+    var seks=rnd(100,300);
+    return{type:'Tolkoppgave',input:'flervalg',
+      spm:'<code>seks=0; for _ in range('+seks*6+'): if randint(1,6)==6: seks+=1</code><br>Hva beregner koden?',
+      valg:bland(['Antall seksere i '+seks*6+' terningkast','Summen av '+seks*6+' terningkast','Sannsynligheten for ikke å få seks','Antall partall']),
+      fasit:'Antall seksere i '+seks*6+' terningkast',steg:'Teller hver gang terningen viser 6'};
+  } else if(type==='forventet'){
+    var n2=rnd(3,20)*100,p=rnd(1,4);
+    return{type:'Forventet antall',input:'tall',
+      spm:'Simulerer <strong>'+n2+'</strong> myntkast. Forventet antall kron?',
+      prefix:'≈',fasit:Math.round(n2/2),steg:n2+' × 0,5 = <strong>'+Math.round(n2/2)+'</strong>'};
+  } else {
+    var n3a=rnd(10,50),n3b=rnd(500,2000);
+    return{type:'Pålitelighet',input:'flervalg',
+      spm:'Hvilken simulering gir mest pålitelig estimat?',
+      valg:bland([n3b+' simuleringer',n3a+' simuleringer']),
+      fasit:n3b+' simuleringer',steg:'Større n → bedre estimat (de store talls lov)'};
+  }
 }
 
 function startOkt(){

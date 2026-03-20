@@ -153,12 +153,36 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var typer=['absoluttfeil','relativfeil','gjeldende','avrunding'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='absoluttfeil'){
+    var sant=rnd(5,50)*(vanskel===1?10:1);
+    var avvik=rnd(1,vanskel===1?3:8);
+    var malt=sant+(rnd(0,1)?avvik:-avvik);
+    return{type:'Absolutt feil',input:'tall',
+      spm:'Sann verdi: <strong>'+sant+'</strong>, målt: <strong>'+malt+'</strong>. Absolutt feil?',
+      prefix:'=',fasit:Math.abs(malt-sant),steg:'|'+malt+'-'+sant+'| = <strong>'+Math.abs(malt-sant)+'</strong>'};
+  } else if(type==='relativfeil'){
+    var sant2=rnd(10,100)*(vanskel===1?5:1);
+    var avvik2=rnd(1,5);
+    var relFeil=Math.round(avvik2/sant2*100*10)/10;
+    return{type:'Relativ feil',input:'tall',
+      spm:'Sann verdi: <strong>'+sant2+'</strong>, absolutt feil: <strong>'+avvik2+'</strong>. Relativ feil (%)?',
+      prefix:'%',fasit:relFeil,steg:avvik2+'/'+sant2+' × 100 = <strong>'+relFeil+' %</strong>'};
+  } else if(type==='gjeldende'){
+    var tall=['0,0042','1,050','300','0,100','25,0','1 000','0,00670'];
+    var gs=[2,4,1,3,3,1,3];
+    var idx=rnd(0,tall.length-1);
+    return{type:'Gjeldende sifre',input:'tall',
+      spm:'Hvor mange gjeldende sifre har <strong>'+tall[idx]+'</strong>?',
+      prefix:'=',fasit:gs[idx],steg:'Teller meningsbærende sifre: <strong>'+gs[idx]+'</strong>'};
+  } else {
+    var n=rnd(1,9)+(rnd(1,9)/10)+(rnd(1,9)/100);
+    var avrundet=Math.round(n*10)/10;
+    return{type:'Avrunding',input:'tall',
+      spm:'Avrund <strong>'+fmt(n)+'</strong> til 1 desimalplass.',
+      prefix:'≈',fasit:avrundet,steg:'Ser på 2. desimal: → <strong>'+avrundet+'</strong>'};
+  }
 }
 
 function startOkt(){

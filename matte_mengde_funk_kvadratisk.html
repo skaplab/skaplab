@@ -153,12 +153,38 @@ function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).repl
 function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
 
 function lagOppgave(){
-  var a=rndNul(-5,8),b=rnd(-10,10),x=rnd(-4,8);
-  if(vanskel===1){a=rndNul(1,5);b=rnd(0,10);x=rnd(1,8);}
-  var y=a*x+b;
-  return{type:'Beregn',input:'tall',
-    spm:'Beregn <strong>'+a+'·'+x+' + ('+b+')</strong>',
-    prefix:'=',fasit:y,steg:a+'·'+x+' + ('+b+') = '+a*x+' + ('+b+') = <strong>'+y+'</strong>'};
+  var x0=rnd(-3,4),y0=rnd(-6,5);
+  var a=rndNul(-3,3);
+  if(vanskel===1){a=1;x0=rnd(0,3);y0=rnd(0,5);}
+  var typer=['retning','bunnpunkt','nullpunkt','sett_inn'];
+  var type=typer[rnd(0,vanskel===1?1:3)];
+  if(type==='retning'){
+    var a2=rndNul(-4,4);
+    return{type:'Åpning',input:'flervalg',
+      spm:'Funksjonen y = '+a2+'x². Åpner parabelen opp eller ned?',
+      valg:bland([a2>0?'Oppover':'Nedover',a2>0?'Nedover':'Oppover']),
+      fasit:a2>0?'Oppover':'Nedover',steg:'a = '+a2+(a2>0?' > 0 → oppover':' < 0 → nedover')};
+  } else if(type==='bunnpunkt'){
+    var b=rnd(-4,4);
+    var xT=-b/(2*a||1),yT=a*xT*xT+b*xT+rnd(-4,4);
+    // Bruk formen y = a(x-x0)²+y0
+    var b2=-2*a*x0,c=a*x0*x0+y0;
+    return{type:'Finn bunnpunkt',input:'tall',
+      spm:'Funksjonen y = '+a+'x² + '+b2+'x + '+c+'. x-koordinat til '+(a>0?'bunn':'topp')+'punkt?',
+      prefix:'x =',fasit:x0,steg:'x = -b/(2a) = '+(-b2)+'/('+2*a+') = <strong>'+x0+'</strong>'};
+  } else if(type==='nullpunkt'){
+    var x1=rnd(-4,4),x2=rnd(-4,4);
+    var bk=-(x1+x2),ck=x1*x2;
+    return{type:'Nullpunkter',input:'flervalg',
+      spm:'Finn nullpunktene til y = x² + '+bk+'x + '+ck,
+      valg:bland(['x = '+x1+' og x = '+x2,'x = '+(-x1)+' og x = '+(-x2),'x = '+(x1+1)+' og x = '+x2,'x = '+x1]),
+      fasit:'x = '+x1+' og x = '+x2,steg:'(x-'+x1+')(x-'+x2+') = 0'};
+  } else {
+    var xv=rnd(-3,4),av=rnd(1,3),c2=rnd(-5,5);
+    return{type:'Sett inn verdi',input:'tall',
+      spm:'y = '+av+'x² + '+c2+'. Finn y når x = '+xv,
+      prefix:'y =',fasit:av*xv*xv+c2,steg:av+'·'+xv+'² + '+c2+' = '+av*xv*xv+' + '+c2+' = <strong>'+(av*xv*xv+c2)+'</strong>'};
+  }
 }
 
 function startOkt(){
