@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Prosentvekst og -nedgang</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0f1a;--surface:#13152a;--card:#181b2e;--border:rgba(139,92,246,.12);--text:#eef0ff;--dim:rgba(238,240,255,.38);--accent:#a78bfa;--accent2:#38bdf8;--accent3:#34d399;--warn:#fbbf24;--correct:#10b981;--wrong:#ef4444;--font-d:'Lora',serif;--font-b:'DM Sans',sans-serif;}
+html{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(139,92,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.025) 1px,transparent 1px);background-size:32px 32px;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 50% at 20% 10%,rgba(139,92,246,.05) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 90%,rgba(56,189,248,.035) 0%,transparent 55%);}
+nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;}
+.nav-lnk{font-size:.8rem;color:var(--dim);text-decoration:none}.nav-lnk:hover{color:var(--text)}.nav-sep{color:rgba(255,255,255,.12)}
+.nav-tittel{font-family:var(--font-d);font-size:.88rem;color:var(--accent)}
+.nav-trinn{margin-left:auto;font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:rgba(139,92,246,.12);padding:3px 10px;border-radius:20px;border:1px solid rgba(139,92,246,.2);}
+.wrapper{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:32px 20px 80px;}
+.kort-header{display:flex;align-items:flex-start;gap:16px;padding:28px 28px 24px;background:var(--card);border:1px solid var(--border);border-radius:20px;margin-bottom:20px;position:relative;overflow:hidden;}
+.kort-header::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,.06) 0%,transparent 50%);pointer-events:none;}
+.kort-ikon{font-size:2.6rem;line-height:1;flex-shrink:0;margin-top:2px;}
+.kort-meta{flex:1}
+.kort-km-badge{display:inline-block;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.2);padding:2px 9px;border-radius:20px;margin-bottom:8px;}
+.kort-tittel{font-family:var(--font-d);font-size:1.75rem;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px;}
+.kort-sub{font-size:.88rem;color:var(--dim);line-height:1.7}
+.trinn-badges{display:flex;gap:6px;margin-top:10px}
+.trinn-b{font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(56,189,248,.12);color:var(--accent2);border:1px solid rgba(56,189,248,.2)}
+.fp-tekst-rad{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-bottom:6px;}
+.fp-bar{height:3px;background:rgba(255,255,255,.06);border-radius:3px;margin-bottom:24px;overflow:hidden;}
+.fp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .4s ease;}
+.slide{display:none}.slide.aktiv{display:block;animation:fadeInn .3s ease}
+@keyframes fadeInn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.teori-kort,.oppgave-kort{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 28px 24px;margin-bottom:16px;}
+.slide-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.slide-label::after{content:'';flex:1;height:1px;background:rgba(139,92,246,.15);}
+.teori-overskrift{font-family:var(--font-d);font-size:1.22rem;font-weight:600;color:var(--text);margin-bottom:14px;}
+.teori-tekst{font-size:.92rem;line-height:1.85;color:rgba(238,240,255,.82)}
+.teori-tekst p{margin-bottom:10px}
+.teori-tekst strong{color:var(--accent);font-weight:600}
+.def-boks{background:rgba(139,92,246,.07);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 18px;margin:16px 0;font-size:.9rem;line-height:1.75;}
+.def-tittel{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.formel{font-family:'Lora',serif;font-size:1.12rem;text-align:center;padding:14px 20px;margin:14px 0;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;color:var(--text);letter-spacing:.02em;}
+.regler-tabell{width:100%;border-collapse:collapse;margin:14px 0;font-size:.88rem;}
+.regler-tabell td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.05);}
+.regler-tabell td:first-child{color:var(--accent);font-weight:600;min-width:180px;}
+.regler-tabell td:last-child{color:rgba(238,240,255,.75);}
+.eks-boks{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.15);border-radius:14px;padding:18px 20px;margin:16px 0;}
+.eks-header{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent3);margin-bottom:10px;}
+.steg-liste{font-size:.88rem;line-height:1.8;color:rgba(238,240,255,.82)}
+.steg-item{display:flex;gap:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.steg-item:last-child{border-bottom:none}
+.steg-nr{min-width:22px;height:22px;border-radius:50%;background:rgba(52,211,153,.15);color:var(--accent3);font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.sporsmal{font-family:var(--font-d);font-size:1.1rem;line-height:1.6;color:var(--text);margin-bottom:20px;}
+.sporsmal .hl{color:var(--warn);background:rgba(251,191,36,.08);padding:1px 5px;border-radius:4px;}
+.flervalg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.fv-btn{padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--dim);font-family:var(--font-b);font-size:.88rem;cursor:pointer;text-align:left;transition:all .18s;}
+.fv-btn:hover:not(:disabled){border-color:rgba(139,92,246,.3);color:var(--text);background:rgba(139,92,246,.07)}
+.fv-btn.valgt{border-color:var(--accent);background:rgba(139,92,246,.12);color:var(--accent)}
+.fv-btn.riktig-svar{border-color:var(--correct)!important;background:rgba(16,185,129,.1)!important;color:#6ee7b7!important}
+.fv-btn.feil-svar{border-color:var(--wrong)!important;background:rgba(239,68,68,.1)!important;color:#fca5a5!important}
+.svar-gruppe{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.svar-label{font-size:.85rem;color:var(--dim);min-width:80px}
+.svar-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 14px;font-family:var(--font-b);font-size:.95rem;color:var(--text);width:150px;transition:border .2s;outline:none;}
+.svar-input:focus{border-color:var(--accent)}.svar-input.riktig{border-color:var(--correct);background:rgba(16,185,129,.08)}.svar-input.feil{border-color:var(--wrong);background:rgba(239,68,68,.08)}
+.sjekk-btn{padding:10px 22px;border-radius:10px;background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(56,189,248,.2));border:1px solid rgba(139,92,246,.3);color:var(--text);font-family:var(--font-b);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.sjekk-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(139,92,246,.45),rgba(56,189,248,.3));transform:translateY(-1px)}.sjekk-btn:disabled{opacity:.4;cursor:default;transform:none}
+.feedback{padding:12px 16px;border-radius:10px;font-size:.88rem;line-height:1.6;margin-top:12px;display:none;}
+.feedback.vis{display:block;animation:fadeInn .25s}
+.feedback.riktig{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#6ee7b7}
+.feedback.feil{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#fca5a5}
+.slide-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;}
+.nav-btn{padding:11px 22px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--dim);font-family:var(--font-b);font-size:.88rem;font-weight:500;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:6px;}
+.nav-btn:hover:not(:disabled){border-color:rgba(139,92,246,.35);color:var(--text);background:rgba(139,92,246,.07)}.nav-btn:disabled{opacity:.3;cursor:default}
+.nav-btn.prim{background:rgba(139,92,246,.18);border-color:rgba(139,92,246,.3);color:var(--accent);font-weight:600;}
+.nav-btn.prim:hover{background:rgba(139,92,246,.28)}
+.slide-teller{font-size:.8rem;color:var(--dim);white-space:nowrap}
+.slide-prikker{display:flex;gap:5px;align-items:center}
+.prikk{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;transition:all .2s;}
+.prikk.aktiv{background:var(--accent);transform:scale(1.2)}.prikk.gjort{background:var(--accent3)}
+.slutt-kort{background:var(--card);border:1px solid rgba(52,211,153,.2);border-radius:20px;padding:36px 28px;text-align:center;margin-bottom:16px;}
+.slutt-emoji{font-size:3rem;margin-bottom:12px}
+.slutt-tittel{font-family:var(--font-d);font-size:1.5rem;color:var(--accent3);margin-bottom:8px}
+.slutt-tekst{font-size:.88rem;color:var(--dim);line-height:1.7;margin-bottom:24px}
+.slutt-knapper{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.mengde-banner{background:linear-gradient(135deg,rgba(56,189,248,.08),rgba(139,92,246,.06));border:1px solid rgba(56,189,248,.15);border-radius:16px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;text-decoration:none;transition:all .2s;margin-top:16px;}
+.mengde-banner:hover{border-color:rgba(56,189,248,.3)}
+.mengde-banner .mb-tittel{font-size:.95rem;font-weight:600;color:var(--accent2);margin-bottom:3px}
+.mengde-banner .mb-sub{font-size:.78rem;color:var(--dim)}
+.mengde-banner .mb-pil{font-size:1.3rem;color:var(--accent2);flex-shrink:0}
+code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;}
+@media(max-width:560px){.flervalg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+<a href="matte_hub.html" class="nav-lnk">📐 Matematikk</a>
+<span class="nav-sep">/</span>
+<a href="matte_hub.html" class="nav-lnk">KM2</a>
+<span class="nav-sep">/</span>
+<span class="nav-tittel">Prosentvekst og -nedgang</span>
+<span class="nav-trinn">9–10. trinn</span>
+</nav>
+<div class="wrapper">
+<div class="kort-header">
+<div class="kort-ikon">📈</div>
+<div class="kort-meta">
+<div class="kort-km-badge">KM2 · Tall</div>
+<h1 class="kort-tittel">Prosentvekst og -nedgang</h1>
+<p class="kort-sub">Prosentvekst og prosentnedgang brukes til å beskrive endringer over tid – renter, befolkningsvekst, prisendringer og mer.</p>
+<div class="trinn-badges"><span class="trinn-b">9. trinn</span><span class="trinn-b">10. trinn</span></div>
+</div>
+</div>
+<div class="fp-tekst-rad"><span id="fpT">Steg 1 av 4</span><span id="fpP">0 %</span></div>
+<div class="fp-bar"><div class="fp-fill" id="fpf" style="width:0%"></div></div>
+<div id="karusell">
+<div class="slide aktiv" id="s0">
+<div class="teori-kort">
+<div class="slide-label">📖 Teori</div>
+<h2 class="teori-overskrift">Vekstfaktor</h2>
+<div class="teori-tekst"><p>Istedet for å beregne endringen og legge til, kan vi bruke en <strong>vekstfaktor</strong>. Vekst på p % gir vekstfaktor (1 + p/100). Nedgang på p % gir vekstfaktor (1 − p/100).</p></div>
+<div class="formel">Ny verdi = gammel verdi · vekstfaktor</div>
+<div class="eks-boks"><div class="eks-header">🔢 Eks: 12 % vekst</div><div class="steg-liste">
+<div class="steg-item"><div class="steg-nr">1</div><div>Vekstfaktor = 1 + 0,12 = 1,12</div></div>
+<div class="steg-item"><div class="steg-nr">2</div><div>En pris på 500 kr øker med 12 %:</div></div>
+<div class="steg-item"><div class="steg-nr">3</div><div>500 · 1,12 = <strong>560 kr</strong></div></div>
+</div></div>
+</div>
+</div>
+<div class="slide" id="s1">
+<div class="oppgave-kort">
+<div class="slide-label">🤔 Sjekk deg selv</div>
+<h2 class="teori-overskrift">Vekstfaktor</h2>
+<p class="sporsmal">En aksje faller 15 %. Hva er vekstfaktoren?</p>
+<div class="flervalg" id="fv1">
+<button class="fv-btn" onclick="velgFV(this,'fv1','0,85')" data-v="0,85">0,85</button>
+<button class="fv-btn" onclick="velgFV(this,'fv1','1,15')" data-v="1,15">1,15</button>
+<button class="fv-btn" onclick="velgFV(this,'fv1','0,15')" data-v="0,15">0,15</button>
+<button class="fv-btn" onclick="velgFV(this,'fv1','1,85')" data-v="1,85">1,85</button>
+</div>
+<button class="sjekk-btn" id="sjekk_fv1" onclick="sjekkFV('fv1','0,85','fb1')" disabled>Sjekk svar</button>
+<div class="feedback" id="fb1" data-ok="Nedgang på 15 %: vekstfaktor = 1 − 0,15 = <strong>0,85</strong>" data-feil="Riktig svar: 0,85. Nedgang på 15 %: vekstfaktor = 1 − 0,15 = <strong>0,85</strong>"></div>
+</div>
+</div>
+<div class="slide" id="s2">
+<div class="oppgave-kort">
+<div class="slide-label">✏️ Oppgave</div>
+<h2 class="teori-overskrift">Gjentatt vekst</h2>
+<p class="sporsmal">En befolkning på 8 000 vokser 5 % per år. Hva er befolkningen etter 2 år?</p>
+<div class="svar-gruppe"><span class="svar-label">Svar:</span><input class="svar-input" id="inp2" type="text" placeholder="?" autocomplete="off"></div>
+<button class="sjekk-btn" onclick="sjekkInp('inp2','8820','fb2','')">Sjekk svar</button>
+<div class="feedback" id="fb2" data-ok="8 000 · 1,05² = 8 000 · 1,1025 = <strong>8 820</strong>" data-feil="8 000 · 1,05² = 8 000 · 1,1025 = <strong>8 820</strong>"></div>
+</div>
+</div>
+<div class="slide" id="s3">
+<div class="slutt-kort">
+<div class="slutt-emoji">🎉</div>
+<h2 class="slutt-tittel">Bra jobbet!</h2>
+<p class="slutt-tekst">Du har gått gjennom teorien om prosentvekst og -nedgang.<br>Klar for å øve mer?</p>
+<div class="slutt-knapper">
+<a href="matte_mengde_prosent_vekst.html" class="nav-btn prim" style="text-decoration:none">⚡ Digital mengdetrening</a>
+<button class="nav-btn" onclick="lastPDF('prosent_vekst')">📄 Last ned PDF</button>
+<button class="nav-btn" onclick="gaa(0)">↩ Se igjen</button>
+</div>
+</div>
+<a href="matte_mengde_prosent_vekst.html" class="mengde-banner">
+<div><div class="mb-tittel">⚡ Mengdetrening – Prosentvekst og -nedgang</div><div class="mb-sub">Uendelig oppgaver · Vanskelighetsgrad · Løsningssteg</div></div>
+<div class="mb-pil">→</div>
+</a>
+</div>
+</div>
+<div class="slide-nav" style="margin-top:20px">
+<button class="nav-btn" id="forrige" onclick="nav(-1)" disabled>← Forrige</button>
+<div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+<span class="slide-teller" id="steller">1 / 4</span>
+<div class="slide-prikker" id="prikker"></div>
+</div>
+<button class="nav-btn prim" id="neste" onclick="nav(1)">Neste →</button>
+</div>
+</div>
+<script>
+var N=0,akt=0,gjort=[];
+function init(n){N=n;gjort=new Array(n).fill(false);gjort[0]=true;oppdater();byggPrikker();}
+function byggPrikker(){var c=document.getElementById('prikker');c.innerHTML='';for(var i=0;i<N;i++){var p=document.createElement('span');p.className='prikk'+(i===akt?' aktiv':'')+(gjort[i]&&i!==akt?' gjort':'');(function(idx){p.onclick=function(){gaa(idx);};})(i);c.appendChild(p);}}
+function gaa(idx){document.getElementById('s'+akt).classList.remove('aktiv');akt=idx;gjort[akt]=true;document.getElementById('s'+akt).classList.add('aktiv');oppdater();window.scrollTo({top:0,behavior:'smooth'});}
+function nav(d){var ny=akt+d;if(ny>=0&&ny<N)gaa(ny);}
+function oppdater(){var pct=Math.round(akt/(N-1)*100);document.getElementById('fpf').style.width=pct+'%';document.getElementById('fpT').textContent='Steg '+(akt+1)+' av '+N;document.getElementById('fpP').textContent=pct+' %';document.getElementById('steller').textContent=(akt+1)+' / '+N;document.getElementById('forrige').disabled=akt===0;var nb=document.getElementById('neste');nb.disabled=akt===N-1;nb.textContent=akt===N-2?'Avslutt →':'Neste →';byggPrikker();}
+function velgFV(btn,grp,val){var g=document.getElementById(grp);g.querySelectorAll('.fv-btn').forEach(function(b){b.classList.remove('valgt');});btn.classList.add('valgt');btn.dataset.v=val;document.getElementById('sjekk_'+grp).disabled=false;}
+function sjekkFV(grp,fasit,fbId){var g=document.getElementById(grp);var v=g.querySelector('.fv-btn.valgt');if(!v)return;var ok=v.dataset.v===fasit;g.querySelectorAll('.fv-btn').forEach(function(b){b.disabled=true;if(b.dataset.v===fasit)b.classList.add('riktig-svar');else if(b.classList.contains('valgt'))b.classList.add('feil-svar');});document.getElementById('sjekk_'+grp).disabled=true;var fb=document.getElementById(fbId);fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?'✓ Riktig! '+fb.dataset.ok:'✗ '+fb.dataset.feil;}
+function sjekkInp(inpId,fasit,fbId,enhet){var v=document.getElementById(inpId).value.trim().replace(',','.');var ok=Math.abs(parseFloat(v)-parseFloat(fasit))<0.06;document.getElementById(inpId).className='svar-input '+(ok?'riktig':'feil');document.getElementById(inpId).disabled=true;var fb=document.getElementById(fbId);fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+fb.dataset.ok):('✗ Fasit: '+fasit+(enhet?' '+enhet:'')+'<br>'+fb.dataset.feil);}
+function lastPDF(id){var a=document.createElement('a');a.href='skaplab_matte_'+id+'.pdf';a.download='skaplab_matte_'+id+'.pdf';a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+</script>
+<script>init(4);</script>
+</body>
+</html>
