@@ -123,6 +123,11 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filt
 .km-panel-btn:hover{background:rgba(125,211,252,.1);border-color:rgba(125,211,252,.5)}
 .km-panel-btn.aktiv{background:rgba(125,211,252,.14);border-color:rgba(125,211,252,.5);color:rgba(125,211,252,1)}
 .km-panel-separator{height:1px;background:rgba(255,255,255,.07);margin:10px 0}
+
+.pdf-dl-lnk{display:flex;align-items:center;gap:6px;padding:6px 8px;margin-bottom:4px;
+  border-radius:6px;border:1px solid rgba(125,211,252,.2);background:rgba(125,211,252,.06);
+  color:rgba(125,211,252,.85);text-decoration:none;font-size:.75rem;transition:background .15s}
+.pdf-dl-lnk:hover{background:rgba(125,211,252,.16)}
 .km-resultat-teller{font-size:.72rem;color:rgba(255,255,255,.28);text-align:center;
   margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07)}
 
@@ -1156,7 +1161,8 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filt
     <div style="font-size:.68rem;color:rgba(255,255,255,.25);margin-bottom:8px;line-height:1.5">
       Åpner PDF-en for hvert valgt emne i ny fane. Last opp PDF-ene til GitHub-repositoriet ditt.
     </div>
-    <button class="km-panel-btn" style="width:100%;justify-content:center;margin-top:4px" onclick="genererArsplan()">📄 Åpne valgte PDF-er</button>
+    <button class="km-panel-btn" style="width:100%;justify-content:center;margin-top:4px" onclick="visLenkeliste()">📄 Last ned valgte PDF-er</button>
+    <div id="pdf-lenkeliste" style="display:none;margin-top:10px"></div>
   </div>
 </div><!-- end km-panel -->
 </div><!-- end hub-layout -->
@@ -1297,15 +1303,35 @@ function fjernFraBok(nokkel) {
   var teller = document.getElementById('bok-teller');
   if (teller) teller.textContent = bokValgte.size > 0 ? ' (' + bokValgte.size + ')' : '';
 }
-function genererArsplan() {
-  if (bokValgte.size === 0) { alert('Legg til emner ved å klikke + Bok-knappen på fagkortene.'); return; }
-  var mangler = [];
+function genererArsplan() { visLenkeliste(); }
+
+function visLenkeliste() {
+  if (bokValgte.size === 0) {
+    alert('Legg til emner ved a klikke + Bok-knappen pa fagkortene.');
+    return;
+  }
+  var boks = document.getElementById('pdf-lenkeliste');
+  if (!boks) return;
+  if (boks.style.display === 'block') { boks.style.display = 'none'; return; }
+  boks.innerHTML = '';
+  var intro = document.createElement('div');
+  intro.textContent = 'Klikk for a laste ned:';
+  intro.style.cssText = 'font-size:.7rem;color:rgba(255,255,255,.35);margin-bottom:6px';
+  boks.appendChild(intro);
   bokValgte.forEach(function(nokkel) {
     var filnavn = 'skaplab_' + nokkel + '.pdf';
-    var vindu = window.open(filnavn, '_blank');
-    if (!vindu) mangler.push(nokkel);
+    var kort = document.querySelector('.fagkort[href="' + nokkel + '.html"]');
+    var tittel = (kort && kort.querySelector('.fagkort-tittel'))
+      ? kort.querySelector('.fagkort-tittel').textContent : nokkel;
+    var a = document.createElement('a');
+    a.href = filnavn;
+    a.target = '_blank';
+    a.setAttribute('download', '');
+    a.className = 'pdf-dl-lnk';
+    a.innerHTML = '<span>📄</span><span>' + tittel + '</span>';
+    boks.appendChild(a);
   });
-  if (mangler.length > 0) alert('NB: PDF for ' + mangler.join(', ') + ' er ikke generert ennå.');
+  boks.style.display = 'block';
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
