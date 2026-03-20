@@ -586,11 +586,14 @@
   }
   .answer-btn {
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-    color: var(--text); font-family: var(--font-body); font-size: 0.85rem;
-    font-weight: 700; padding: 9px 16px; border-radius: 8px;
+    color: var(--text); font-family: var(--font-body); font-size: 0.92rem;
+    font-weight: 700; padding: 13px 18px; border-radius: 10px;
     cursor: pointer; text-align: left; transition: all 0.18s;
+    min-height: 48px; display: flex; align-items: center; gap: 10px;
+    touch-action: manipulation;
   }
   .answer-btn:hover { background: rgba(127,255,110,0.1); border-color: rgba(127,255,110,0.3); }
+  .answer-btn.selected { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
   .answer-btn.correct { background: rgba(127,255,110,0.2); border-color: var(--accent4); color: var(--accent4); }
   .answer-btn.wrong { background: rgba(255,80,80,0.15); border-color: rgba(255,80,80,0.5); color: #ff6b6b; }
   .dialog-continue {
@@ -1097,7 +1100,7 @@
 <nav>
   <div class="nav-logo" onclick="scrollTo(0,0)">Skap<span>Lab</span></div>
   <ul class="nav-links">
-    <li><a href="matematikk.html">Matematikk</a></li>
+    <li><a href="matte_hub.html">Matematikk</a></li>
     <li><a href="naturfag_hub.html">Naturfag</a></li>
     <li><a href="skaperverksted.html">Skaperverksted</a></li>
     <li><a href="programmering.html">Programmering</a></li>
@@ -1577,7 +1580,7 @@
     <div class="laerer-panel" id="panel-matematikk">
       <div class="opplegg-grid">
 
-        <a href="matematikk.html" style="text-decoration:none;">
+        <a href="matte_hub.html" style="text-decoration:none;">
           <div class="opplegg-kort farge-gul reveal" style="cursor:pointer;">
             <div class="opplegg-tittel">➕ Matematikk – alle fagområder</div>
             <div class="opplegg-meta">
@@ -2170,6 +2173,54 @@ function filterContent(subject, btn) {
   });
 }
 
+
+// ── TILBAKEMELDING ──
+let valgtRolle = '';
+
+function velgRolle(btn) {
+  document.querySelectorAll('.fskj-rolle-btn').forEach(b => b.classList.remove('valgt'));
+  btn.classList.add('valgt');
+  valgtRolle = btn.textContent.trim();
+}
+
+function sendFeedback() {
+  if (!valgtRolle) {
+    const feil = document.getElementById('fskj-feilmelding');
+    if (feil) feil.style.display = 'block';
+    return;
+  }
+  const bra    = (document.getElementById('fskj-bra')    || {}).value || '';
+  const bedre  = (document.getElementById('fskj-bedre')  || {}).value || '';
+  const teknisk = (document.getElementById('fskj-feil')  || {}).value || '';
+  const epost  = (document.getElementById('fskj-epost')  || {}).value || '';
+  const igjenBtn = document.querySelector('.fskj-igjen-btn.valgt');
+  const igjenVal = igjenBtn ? igjenBtn.textContent.trim() : '(ikke oppgitt)';
+
+  const emne = 'Tilbakemelding SkapLab';
+  const kropp = 'Rolle: ' + valgtRolle
+    + '\n\nVille brukt igjen: ' + igjenVal
+    + '\n\nHva fungerte bra:\n' + (bra || '(tomt)')
+    + '\n\nHva kan forbedres:\n' + (bedre || '(tomt)')
+    + '\n\nTekniske problemer:\n' + (teknisk || '(ingen)')
+    + (epost ? '\n\nE-post: ' + epost : '');
+
+  const mailto = 'mailto:mattesnakk@gmail.com'
+    + '?subject=' + encodeURIComponent(emne)
+    + '&body='    + encodeURIComponent(kropp);
+
+  window.location.href = mailto;
+
+  const takk = document.getElementById('fskj-takk');
+  if (takk) takk.style.display = 'block';
+  const feil = document.getElementById('fskj-feilmelding');
+  if (feil) feil.style.display = 'none';
+}
+
+function velgIgjen(btn) {
+  document.querySelectorAll('.fskj-igjen-btn').forEach(b => b.classList.remove('valgt'));
+  btn.classList.add('valgt');
+}
+
 // ── SCROLL REVEAL ──
 // Immediately show all reveal elements (prevents content being invisible)
 document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
@@ -2205,10 +2256,11 @@ const map = [
 ];
 
 const player = { x: 4.5, y: 4.5, facing: 'down', frame: 0 };
-const keys = { up: false, down: false, left: false, right: false };
+const keys = { up: false, down: false, left: false, right: false, shift: false };
 
 let score = 0, lives = 3;
 let gameRunning = false;
+let achievements = { glasses: false, star_hat: false, streak6: false };
 // Worlds unlocked by completing the previous world
 const unlockedWorlds = { school:true, dino:false, london:false, solar:false, ocean:false, future:false };
 
@@ -2731,7 +2783,9 @@ function checkLondonAfterAnswer(theme) {
   // Theme completed?
   if (!londonThemesDone[theme] && correct >= 7) {
     londonThemesDone[theme] = true;
-    dialogState = { type:'blocked', msg:'🎉 7 riktige innen ' + labels[theme] + '! Tema fullført! 🏆' };
+    dialogState = { type:'blocked', msg:'🌟 FANTASTISK! 7 riktige i ' + labels[theme] + '! Du er en ekte vitenskapsperson! 🏆✨' };
+      achievements.glasses = true; // Professor-briller unlocked!
+      showAchievement('🤓 Prestasjon: Professor-briller!');
     renderDialog();
     setTimeout(function(){ if(dialogState&&dialogState.type==='blocked'){dialogState=null;renderDialog();} }, 2200);
   }
@@ -3133,7 +3187,7 @@ const oceanNpcs = [
     lineIndex:0, talked:false,
     question:{text:'Hva er funksjonene til havet for klimaet på Jorda?', answers:['Kun dekorasjon','Absorberer CO₂ og varme, fordeler varme via strømmer','Lager vind','Produserer nitrogen'], correct:1}, solved:false },
   { id:'oc10', name:'Geolog Kari', color:'#ffcc88', x:18.5, y:3.5,
-    dialog:['Plateteltonikk former både landmassen og havbunnen!'],
+    dialog:['Platetektonikk former både landmassen og havbunnen!'],
     lineIndex:0, talked:false,
     question:{text:'Hva kalles prosessen der en tektonisk plate synker under en annen?', answers:['Spredning','Subuksjon','Kollisjon','Transformbevegelse'], correct:1}, solved:false },
 ];
@@ -4294,12 +4348,36 @@ function drawDangerDino(d) {
 }
 
 function drawPlayerAt(plSX, plSY) {
-  // Simple futuristic suit for future world, otherwise default
   const bob = Math.sin(animTick * 0.08) * 2;
-  ctx.fillStyle = '#00aaff';
-  ctx.beginPath(); ctx.arc(plSX+TILE/2, plSY+TILE/2, TILE*0.4, 0, Math.PI*2); ctx.fill();
+  const cx = plSX+TILE/2, cy = plSY+TILE/2;
+  // Body
+  ctx.fillStyle = achievements.star_hat ? '#ffd700' : '#00aaff';
+  ctx.beginPath(); ctx.arc(cx, cy, TILE*0.4, 0, Math.PI*2); ctx.fill();
+  // Head
   ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.arc(plSX+TILE/2, plSY+TILE/2-4+bob, TILE*0.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy-4+bob, TILE*0.2, 0, Math.PI*2); ctx.fill();
+  // Professor-briller achievement
+  if (achievements.glasses) {
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx-3.5, cy-4+bob, 3, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+3.5, cy-4+bob, 3, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-6.5, cy-4+bob); ctx.lineTo(cx-0.5, cy-4+bob); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+0.5, cy-4+bob); ctx.lineTo(cx+6.5, cy-4+bob); ctx.stroke();
+  }
+  // Stjernehatt achievement
+  if (achievements.star_hat) {
+    ctx.fillStyle = '#ffd700';
+    const hx = cx, hy = cy-12+bob;
+    ctx.beginPath();
+    for(let i=0;i<5;i++){
+      const a=Math.PI*2*i/5-Math.PI/2;
+      const ai=a+Math.PI/5;
+      i===0?ctx.moveTo(hx+7*Math.cos(a),hy+7*Math.sin(a)):ctx.lineTo(hx+7*Math.cos(a),hy+7*Math.sin(a));
+      ctx.lineTo(hx+3*Math.cos(ai),hy+3*Math.sin(ai));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#ff8c00'; ctx.lineWidth=1; ctx.stroke();
+  }
 }
 
 function drawWorld() {
@@ -4472,7 +4550,7 @@ function gameTick() {
   if (currentWorld === 'ocean') {
     if (!dialogState) {
       oceanTick();
-      const spd = 0.07;
+      const spd = keys.shift ? 0.14 : 0.07;
       let nx = player.x, ny = player.y;
       if (keys.up)    { ny -= spd; player.facing = 'up'; }
       if (keys.down)  { ny += spd; player.facing = 'down'; }
@@ -4525,7 +4603,7 @@ function gameTick() {
   // Future Earth world
   if (currentWorld === 'future') {
     if (!dialogState) {
-      const spd = 0.07;
+      const spd = keys.shift ? 0.14 : 0.07;
       let nx = player.x, ny = player.y;
       if (keys.up)    { ny -= spd; player.facing = 'up'; }
       if (keys.down)  { ny += spd; player.facing = 'down'; }
@@ -4613,7 +4691,7 @@ function gameTick() {
 
   // Move player
   if (!dialogState) {
-    const spd = 0.07;
+    const spd = keys.shift ? 0.14 : 0.07;
     let nx = player.x, ny = player.y;
     if (keys.up)    { ny -= spd; player.facing = 'up'; }
     if (keys.down)  { ny += spd; player.facing = 'down'; }
@@ -4717,6 +4795,13 @@ function drawNpcChar(npc, spx, spy) {
   ctx.fillStyle = '#222';
   ctx.beginPath(); ctx.arc(spx+TILE/2-3, spy+12+bob, 1.8, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.arc(spx+TILE/2+3, spy+12+bob, 1.8, 0, Math.PI*2); ctx.fill();
+  // Tema-ring over hodet – viser kategori-farge for ALLE NPC-er med theme
+  if (npc.theme) {
+    const themeColors = { chemistry:'#e74c3c', physics:'#3498db', biology:'#27ae60', technology:'#8e44ad' };
+    const tc = themeColors[npc.theme] || npc.color;
+    ctx.strokeStyle = tc; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(spx+TILE/2, spy+13+bob, 11, 0, Math.PI*2); ctx.stroke();
+  }
 }
 
 function drawSpeechBubble(worldTileX, worldTileY, text) {
@@ -5061,6 +5146,7 @@ function renderDialog() {
 function checkAnswer(npc, idx, isCorrect) {
   const btns = document.querySelectorAll('.answer-btn');
   btns.forEach(function(b) { b.onclick = null; }); // disable all buttons immediately
+  if (idx !== undefined) btns[idx].classList.add('selected'); // vis valgt svar
   // isCorrect passed directly from shuffled render; idx unused for correct check
   if (isCorrect === undefined) { isCorrect = (idx === npc.question.correct); }
 
@@ -5375,8 +5461,19 @@ function showEnding() {
   portalOpen = false;
   correctStreak = 0;
   gameRunning = true;
+  achievements.star_hat = true; // Stjernehatt for å fullføre!
+  showAchievement('⭐ Prestasjon: Stjerneeksplorer-hatt!');
 }
 
+
+function showAchievement(msg) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(0);background:linear-gradient(135deg,#1a2a3a,#0a1a2a);color:#ffd700;font-weight:700;font-size:1rem;padding:12px 24px;border-radius:12px;border:2px solid #ffd700;z-index:9999;box-shadow:0 4px 20px rgba(255,215,0,.3);transition:all 0.5s;white-space:nowrap;';
+  document.body.appendChild(el);
+  setTimeout(function() { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(-20px)'; }, 2500);
+  setTimeout(function() { if(el.parentNode) el.parentNode.removeChild(el); }, 3200);
+}
 
 // ── RESPONSIVE SCALING ──
 function scaleGame() {
@@ -5405,6 +5502,7 @@ function startGame() {
   document.getElementById('game-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
   score = 0; lives = 3; animTick = 0;
+  achievements = { glasses: false, star_hat: false, streak6: false };
   correctStreak = 0; portalOpen = false; nilsenGreeted = false;
   // Reset world locks
   Object.keys(unlockedWorlds).forEach(function(w) { unlockedWorlds[w] = (w === 'school'); });
@@ -5412,7 +5510,7 @@ function startGame() {
   assignRandomSchoolQuestions();
   transitioning = false; transitionAlpha = 0;
   dinosDead = false; dinoPortalOpen = false;
-  keys.up = false; keys.down = false; keys.left = false; keys.right = false;
+  keys.up = false; keys.down = false; keys.left = false; keys.right = false; keys.shift = false;
   document.getElementById('score-display').textContent = '0';
   document.getElementById('lives-display').textContent = '3';
   dialogState = null; renderDialog();
@@ -5446,6 +5544,7 @@ function startGame() {
 
 // D-pad
 function dpad(dir, pressed) { keys[dir] = pressed; }
+function dpadSprint(pressed) { keys.shift = pressed; }
 
 function triggerInteract() {
   if (!gameRunning) return;
@@ -5505,6 +5604,7 @@ window.addEventListener('keydown', function(e) {
   if (e.key==='ArrowDown'  ||e.key==='s'||e.key==='S') keys.down  =true;
   if (e.key==='ArrowLeft'  ||e.key==='a'||e.key==='A') keys.left  =true;
   if (e.key==='ArrowRight' ||e.key==='d'||e.key==='D') keys.right =true;
+  if (e.key==='Shift') keys.shift = true;
   if (e.key==='e'||e.key==='E') triggerInteract();
   if (e.key==='Escape') { gameRunning=false; clearInterval(gameLoopInterval); document.getElementById('game-container').classList.remove('visible'); }
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
@@ -5514,6 +5614,7 @@ window.addEventListener('keyup', function(e) {
   if (e.key==='ArrowDown'  ||e.key==='s'||e.key==='S') keys.down  =false;
   if (e.key==='ArrowLeft'  ||e.key==='a'||e.key==='A') keys.left  =false;
   if (e.key==='ArrowRight' ||e.key==='d'||e.key==='D') keys.right =false;
+  if (e.key==='Shift') keys.shift = false;
 });
 
 // Nav scroll
