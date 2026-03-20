@@ -137,6 +137,7 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filt
   .km-panel{position:static;height:auto;border-left:none;border-top:1px solid rgba(125,211,252,.1)}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
 <body>
 
@@ -1159,10 +1160,10 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filt
     </div>
     <div class="km-panel-separator"></div>
     <div style="font-size:.68rem;color:rgba(255,255,255,.25);margin-bottom:8px;line-height:1.5">
-      Åpner PDF-en for hvert valgt emne i ny fane. Last opp PDF-ene til GitHub-repositoriet ditt.
+      Slaar sammen alle valgte PDF-er til én fil. PDF-ene maa ligge i samme mappe som HTML-filen.
     </div>
-    <button class="km-panel-btn" style="width:100%;justify-content:center;margin-top:4px" onclick="visLenkeliste()">📄 Last ned valgte PDF-er</button>
-    <div id="pdf-lenkeliste" style="display:none;margin-top:10px"></div>
+    <button class="km-panel-btn" id="bok-samle-btn" style="width:100%;justify-content:center;margin-top:4px" onclick="samlePDFer()">📚 Lag samlet PDF</button>
+    <div id="bok-status" style="font-size:.72rem;color:rgba(125,211,252,.6);margin-top:8px;display:none;line-height:1.6"></div>
   </div>
 </div><!-- end km-panel -->
 </div><!-- end hub-layout -->
@@ -1305,34 +1306,108 @@ function fjernFraBok(nokkel) {
 }
 function genererArsplan() { visLenkeliste(); }
 
-function visLenkeliste() {
+function samlePDFer() {
   if (bokValgte.size === 0) {
     alert('Legg til emner ved a klikke + Bok-knappen pa fagkortene.');
     return;
   }
-  var boks = document.getElementById('pdf-lenkeliste');
-  if (!boks) return;
-  if (boks.style.display === 'block') { boks.style.display = 'none'; return; }
-  boks.innerHTML = '';
-  var intro = document.createElement('div');
-  intro.textContent = 'Klikk for a laste ned:';
-  intro.style.cssText = 'font-size:.7rem;color:rgba(255,255,255,.35);margin-bottom:6px';
-  boks.appendChild(intro);
-  bokValgte.forEach(function(nokkel) {
-    var filnavn = 'skaplab_' + nokkel + '.pdf';
-    var kort = document.querySelector('.fagkort[href="' + nokkel + '.html"]');
-    var tittel = (kort && kort.querySelector('.fagkort-tittel'))
-      ? kort.querySelector('.fagkort-tittel').textContent : nokkel;
-    var a = document.createElement('a');
-    a.href = filnavn;
-    a.target = '_blank';
-    a.setAttribute('download', '');
-    a.className = 'pdf-dl-lnk';
-    a.innerHTML = '<span>📄</span><span>' + tittel + '</span>';
-    boks.appendChild(a);
-  });
-  boks.style.display = 'block';
+
+  var status = document.getElementById('bok-status');
+  var knapp = document.getElementById('bok-samle-btn');
+  status.style.display = 'block';
+  status.textContent = 'Laster PDF-bibliotek...';
+  knapp.disabled = true;
+  knapp.style.opacity = '0.5';
+
+  // pdf-lib lastes via CDN-script – vent til den er klar
+  function ventPaaPdfLib(forsok) {
+    if (typeof PDFLib !== 'undefined') {
+      startSamling();
+    } else if (forsok < 20) {
+      setTimeout(function() { ventPaaPdfLib(forsok + 1); }, 200);
+    } else {
+      status.textContent = 'Feil: PDF-bibliotek lastet ikke. Sjekk internett-tilkobling.';
+      knapp.disabled = false; knapp.style.opacity = '1';
+    }
+  }
+  ventPaaPdfLib(0);
+
+  function startSamling() {
+    var nokkler = [...bokValgte];
+    var titler = {};
+    nokkler.forEach(function(n) {
+      var kort = document.querySelector('.fagkort[href="' + n + '.html"]');
+      titler[n] = (kort && kort.querySelector('.fagkort-tittel'))
+        ? kort.querySelector('.fagkort-tittel').textContent : n;
+    });
+
+    status.textContent = 'Henter ' + nokkler.length + ' PDF-er...';
+
+    // Hent alle PDF-er parallelt
+    var hentePromises = nokkler.map(function(nokkel) {
+      var url = 'skaplab_' + nokkel + '.pdf';
+      return fetch(url)
+        .then(function(r) {
+          if (!r.ok) throw new Error(titler[nokkel] + ' ikke funnet');
+          return r.arrayBuffer();
+        })
+        .then(function(buf) { return { nokkel: nokkel, buf: buf, tittel: titler[nokkel] }; })
+        .catch(function(e) { return { nokkel: nokkel, feil: e.message }; });
+    });
+
+    Promise.all(hentePromises).then(function(resultater) {
+      var ok = resultater.filter(function(r) { return !r.feil; });
+      var feil = resultater.filter(function(r) { return r.feil; });
+
+      if (ok.length === 0) {
+        status.innerHTML = '<span style="color:rgba(255,100,100,.8)">Ingen PDF-er funnet. Last opp PDF-filene til GitHub-repositoriet.</span>';
+        knapp.disabled = false; knapp.style.opacity = '1';
+        return;
+      }
+
+      if (feil.length > 0) {
+        status.innerHTML = 'Mangler: <span style="color:rgba(255,180,80,.8)">'
+          + feil.map(function(f) { return f.feil; }).join(', ')
+          + '</span><br>Fortsetter med ' + ok.length + ' tilgjengelige...';
+      } else {
+        status.textContent = 'Slaar sammen ' + ok.length + ' PDF-er...';
+      }
+
+      // Slå sammen med pdf-lib
+      PDFLib.PDFDocument.create().then(function(samlet) {
+        var kjede = Promise.resolve();
+        ok.forEach(function(item) {
+          kjede = kjede.then(function() {
+            return PDFLib.PDFDocument.load(item.buf).then(function(kildedok) {
+              return samlet.copyPages(kildedok, kildedok.getPageIndices());
+            }).then(function(sider) {
+              sider.forEach(function(side) { samlet.addPage(side); });
+            });
+          });
+        });
+        return kjede.then(function() { return samlet; });
+      }).then(function(samlet) {
+        return samlet.save();
+      }).then(function(bytes) {
+        // Last ned
+        var blob = new Blob([bytes], { type: 'application/pdf' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'skaplab_kompendium.pdf';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        status.innerHTML = '<span style="color:rgba(80,220,128,.9)">✓ Kompendium lastet ned (' + ok.length + ' emner, ' + Math.round(bytes.length/1024) + ' kB)</span>';
+        knapp.disabled = false; knapp.style.opacity = '1';
+      }).catch(function(e) {
+        status.innerHTML = '<span style="color:rgba(255,100,100,.8)">Feil under sammenslaaing: ' + e.message + '</span>';
+        knapp.disabled = false; knapp.style.opacity = '1';
+      });
+    });
+  }
 }
+
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
