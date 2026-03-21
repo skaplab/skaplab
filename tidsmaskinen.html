@@ -1511,6 +1511,15 @@ body { background:var(--bg); color:var(--text); font-family:var(--font-body); mi
     </div>
   </main>
 <script>
+// ══ SKAPLAB LAGRING ══
+const SL={
+  _k:(s,f)=>`skaplab_${s}_${f}`,
+  les:(s,f,d=0)=>{try{const v=localStorage.getItem(SL._k(s,f));return v!==null?(isNaN(v)?JSON.parse(v):Number(v)):d;}catch(e){return d;}},
+  skriv:(s,f,v)=>{try{localStorage.setItem(SL._k(s,f),typeof v==='object'?JSON.stringify(v):v);}catch(e){}},
+  max:(s,f,v)=>{if(v>SL.les(s,f,0))SL.skriv(s,f,v);},
+  oek:(s,f)=>SL.skriv(s,f,SL.les(s,f,0)+1),
+};
+
 // ── LANGUAGE ──
 let lang = 'no';
 function setLang(l) {
@@ -4075,6 +4084,7 @@ function gameTick() {
 }
 
 function gameOverReset() {
+  SL.oek('tidsmaskinen','spill');
   lives = 3;
   correctStreak = 0;
   assignRandomSchoolQuestions();
@@ -4819,6 +4829,10 @@ function showEnding() {
   correctStreak = 0;
   gameRunning = true;
   achievements.star_hat = true; // Stjernehatt for å fullføre!
+  SL.max('tidsmaskinen','bestScore', score);
+  SL.oek('tidsmaskinen','spill');
+  SL.skriv('tidsmaskinen','lastPlayed', Date.now());
+  SL.skriv('tidsmaskinen','fullfort', 1);
   showAchievement('⭐ Prestasjon: Stjerneeksplorer-hatt!');
 }
 
