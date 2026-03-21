@@ -611,7 +611,12 @@ function lastOppgave(idx) {
   if (!ggb) { setTimeout(function(){lastOppgave(idx);}, 300); return; }
   ggb.newConstruction();
   o.ggbKommandoer.forEach(function(cmd) {
-    try { ggb.evalCommand(cmd); } catch(e) { console.warn('GGB cmd feil:', cmd, e); }
+    // Rut ugyldige evalCommand-strenger til JS API
+    var svMatch = cmd.match(/^SetVisible\(([^,]+),\s*(true|false)\)$/);
+    if (svMatch) { ggb.setVisible(svMatch[1].trim(), svMatch[2]==='true'); return; }
+    var spMatch = cmd.match(/^SetPointSize\(([^,]+),\s*(\d+)\)$/);
+    if (spMatch) { ggb.setPointSize(spMatch[1].trim(), parseInt(spMatch[2])); return; }
+    try { ggb.evalCommand(cmd); } catch(e) { console.warn('GGB cmd:', cmd, e.message||e); }
   });
   document.getElementById('oppg-label').textContent = o.gruppe + ' · ' + o.tittel;
   document.getElementById('oppg-tekst').innerHTML = o.tekst;
