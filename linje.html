@@ -202,6 +202,15 @@ canvas{display:block;width:100%;height:100%;}
 </div>
 
 <script>
+// ══ SKAPLAB LAGRING ══
+const SL={
+  _k:(s,f)=>`skaplab_${s}_${f}`,
+  les:(s,f,d=0)=>{try{const v=localStorage.getItem(SL._k(s,f));return v!==null?(isNaN(v)?JSON.parse(v):Number(v)):d;}catch(e){return d;}},
+  skriv:(s,f,v)=>{try{localStorage.setItem(SL._k(s,f),typeof v==='object'?JSON.stringify(v):v);}catch(e){}},
+  max:(s,f,v)=>{if(v>SL.les(s,f,0))SL.skriv(s,f,v);},
+  øk:(s,f)=>SL.skriv(s,f,SL.les(s,f,0)+1),
+};
+
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let nivå='lett', stasjonX, stasjonY, fergeB;
 let treffT=0, bomT=0, skuddT=0, oppgNr=0;
@@ -531,7 +540,14 @@ function visSlutF(){
   document.getElementById('slutt').classList.add('vis');
 }
 // FIKSET SLUTT
+function lagreLinjeSlutt(){
+  SL.øk('linje','okter');
+  SL.max('linje','bestProsent', treffT+bomT>0?Math.round(treffT/(treffT+bomT)*100):0);
+  SL.max('linje','bestTreff',treffT);
+  SL.skriv('linje','lastPlayed',Date.now());
+}
 function visSlutFinal(){
+  lagreLinjeSlutt();
   const tot=treffT+bomT,noy=tot>0?Math.round(treffT/tot*100):0;
   document.getElementById('slutt-tekst').innerHTML=`${TOTAL} oppgaver!<br>Treff: <b>${treffT}</b> · Skudd: <b>${tot}</b> · Nøyaktighet: <b>${noy}%</b>`;
   document.getElementById('slutt').classList.add('vis');
