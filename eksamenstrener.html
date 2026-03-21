@@ -273,6 +273,13 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
   font-family:'Courier New',Courier,monospace;font-size:.88rem;
   color:#a8d8a8;line-height:1.6;white-space:pre;
 }
+
+.fv-grid{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.fv-btn{display:block;width:100%;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--text);cursor:pointer;font-size:.86rem;font-family:var(--font-b);text-align:left;transition:all .12s;line-height:1.4;}
+.fv-btn:hover{background:rgba(255,255,255,.08);}
+.fv-btn.valgt{background:rgba(232,184,75,.1);border-color:rgba(232,184,75,.4);color:var(--accent);}
+.fv-btn.riktig{background:rgba(91,201,142,.12);border-color:var(--green);color:var(--green);}
+.fv-btn.galt{background:rgba(224,92,110,.08);border-color:rgba(224,92,110,.3);color:var(--red);}
 </style>
 </head>
 <body>
@@ -385,38 +392,40 @@ function genLikningssystem() {
 // ══════════════════════════════════════════════════════════════════
 
 function genTallmønster() {
-  // Typer: kors (n²+4n), ramme (4n+4 for ytre), rektangel n(n+1)
   var typer = [
-    { navn:'kors', formel: n => n*n + 4*n,
-      formeltekst: 'n² + 4n',
-      beskrivelse: 'Et kors med n² kvadrater i midten og fire armer med n kvadrater'},
-    { navn:'rektangel', formel: n => n*(n+1),
-      formeltekst: 'n · (n + 1)',
-      beskrivelse: 'Rektangel der bredde = n og lengde = n+1'},
-    { navn:'trapp', formel: n => n*(n+1)/2,
-      formeltekst: 'n·(n+1)/2',
-      beskrivelse: 'Trappemønster med 1+2+3+...+n kvadrater'},
+    { navn:'kors', f:function(n){return n*n+4*n;}, tekst:'n² + 4n',
+      feil:['n + 4', '2n + 4', 'n² + 2n'], beskr:'kvadrat i midten og fire armer' },
+    { navn:'rektangel', f:function(n){return n*(n+1);}, tekst:'n · (n + 1)',
+      feil:['n + 1', 'n² + 1', '2n + 2'], beskr:'rektangel med bredde n og lengde n+1' },
+    { navn:'ramme', f:function(n){return 4*(n+1);}, tekst:'4(n + 1)',
+      feil:['4n', 'n + 4', '4n + 1'], beskr:'ramme rundt et kvadrat' },
+    { navn:'trapp', f:function(n){return n*(n+1)/2;}, tekst:'n·(n+1) / 2',
+      feil:['n² / 2', 'n + n/2', '(n+1) / 2'], beskr:'trappemønster' },
   ];
   var t = plukk(typer);
-  var sekvens = [1,2,3,4,5].map(n => t.formel(n));
+  var sekvens = [1,2,3,4,5].map(t.f);
+  // Bland alternativer
+  var alts = [t.tekst].concat(t.feil);
+  for (var i = alts.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var tmp = alts[i]; alts[i]=alts[j]; alts[j]=tmp;
+  }
+  var riktigIdx = alts.indexOf(t.tekst);
   return {
     type:'del1_mønster', del:1, nr:'2', merking:'viktig',
     poeng:3, maxPoeng:3,
-    mønster: t,
-    sekvens: sekvens,
-    spørsmål: `Se på tallmønsteret nedenfor:\n\nFigur 1: ${sekvens[0]} · Figur 2: ${sekvens[1]} · Figur 3: ${sekvens[2]} · Figur 4: ${sekvens[3]}\n\n` +
-      `a) Hva er antall kvadrater i figur 5? (1 poeng)\n` +
-      `b) Lag en formel for antall kvadrater i figur n. (2 poeng)`,
-    instruksjon: 'Del a): Tell eller beregn. Del b): Finn mønsteret og skriv det med n.',
+    mønster:t, sekvens:sekvens, alts:alts, riktigIdx:riktigIdx,
+    spørsmål:
+      'Se på tallmønsteret (' + t.beskr + '):\n\n' +
+      'Figur 1: '+sekvens[0]+' · Figur 2: '+sekvens[1]+' · Figur 3: '+sekvens[2]+' · Figur 4: '+sekvens[3]+'\n\n' +
+      'a) Hva er antall kvadrater i figur 5? (1 poeng)\n\n' +
+      'b) Velg riktig formel for antall kvadrater i figur n. (2 poeng)',
+    instruksjon: 'Del a): Tell eller beregn. Del b): Velg ett av alternativene.',
     fasitA: sekvens[4],
-    fasitB: t.formeltekst,
-    løsningssteg: [
-      `Figur 5 = ${t.formel(5)} kvadrater`,
-      `Mønster: ${t.beskrivelse}`,
-      `Formel: A(n) = ${t.formeltekst}`
-    ],
-    kommentar: `Du er på rett vei hvis du ser at forskjellen mellom figurene øker jevnt.`,
-    svarType: 'tall_og_formel',
+    fasitB: riktigIdx,
+    løsningssteg: ['Figur 5 = '+t.f(5)+' kvadrater', 'Formel: A(n) = '+t.tekst],
+    kommentar: 'Se på hvordan forskjellen mellom figurene øker.',
+    svarType: 'tall_flervalg',
     tol: 0,
   };
 }
@@ -777,7 +786,17 @@ function genEksponentiellDel2() {
   var spørsmålC = sc.navn === 'nedgang'
     ? 'c) Etter hvor mange ' + sc.xNavn + ' er verdien halvvert? (1 poeng)'
     : 'c) Etter hvor mange ' + sc.xNavn + ' er verdien mer enn dobbelt av startverdien? (1 poeng)';
-  return {
+  
+    var altsA = [
+      sc.navn === 'nedgang'
+        ? s.toLocaleString('no') + ' er startverdien, ' + vfVis + ' er vekstfaktoren (' + p + '% nedgang per periode), x er antall perioder'
+        : s.toLocaleString('no') + ' er startverdien, ' + vfVis + ' er vekstfaktoren (' + p + '% økning per periode), x er antall perioder',
+      s.toLocaleString('no') + ' er sluttpris, ' + vfVis + ' er rentesatsen, x er antall kroner',
+      s.toLocaleString('no') + ' er antall perioder, ' + vfVis + ' er startverdien, x er renten',
+      s.toLocaleString('no') + ' er vekstfaktoren, ' + vfVis + ' er konstantleddet, x er tid',
+    ];
+    var riktigIdxA = 0;
+return {
     type:'del2_eksp', del:2, nr:'3', merking:'viktig',
     poeng:3, maxPoeng:3,
     sc, s, p, vf, år, fasitB, doblingsTid,
@@ -787,7 +806,8 @@ function genEksponentiellDel2() {
       'b) Bruk funksjonen til å finne verdien etter ' + år + ' ' + sc.xNavn + '. Rund av til nærmeste hele tall. (1 poeng)\n\n' +
       spørsmålC,
     instruksjon: 'Del b) og c): Bruk kalkulator eller GeoGebra. Skriv tallsvarene nedenfor.',
-    svarType: 'eksp_abc',
+    svarType: 'eksp_flervalg',
+    altsA: altsA, riktigIdxA: riktigIdxA,
     fasitA: beskrivelseA,
     fasitB: fasitB,
     fasitC: doblingsTid,
@@ -1169,13 +1189,34 @@ function genProgrammering() {
   var harTallA = t.fasitA !== undefined;
   var harTallB = t.fasitB !== undefined;
   var harTekstA = t.fasitA_tekst !== undefined;
+  // Generer flervalg for del b)
+  var altsBBase = [
+    'Programmet skriver ut alle tallene i listen',
+    'Programmet finner det største tallet',
+    'Programmet teller antall tall over 5',
+    'Programmet regner ut gjennomsnittet',
+    'Programmet finner det minste tallet',
+    'Programmet teller antall partall',
+    'Programmet regner ut summen av tallene',
+    'Programmet sjekker om trekanten er rettvinklet',
+    'Programmet simulerer terningkast og teller',
+    'Programmet runder av et desimaltall',
+  ];
+  var riktigB = t.fasitB_tekst || 'Programmet utfører en beregning';
+  var feilAlts = altsBBase.filter(function(a){ return a !== riktigB; });
+  // Plukk 3 feil
+  var shuffled = feilAlts.sort(function(){ return 0.5-Math.random(); }).slice(0,3);
+  var altsB = [riktigB].concat(shuffled);
+  altsB.sort(function(){ return 0.5-Math.random(); });
+  var riktigIdxB = altsB.indexOf(riktigB);
   return {
-    type:'del1_prog', del:1, nr:'7', merking:'',
+    type:'del_prog', del:1, nr:'7', merking:'',
     poeng:2, maxPoeng:2,
     kode: t.kode,
     spørsmål: t.spørsmål,
     instruksjon: 'Les programkoden nøye og spor hva variablene endrer seg til for hvert steg.',
-    svarType: harTekstA ? 'prog_tekst_tall' : (harTallB ? 'prog_to_tall' : 'prog_ett_tall'),
+    svarType: 'prog_flervalg',
+    altsB: altsB, riktigIdxB: riktigIdxB,
     fasitA: t.fasitA, fasitA_tekst: t.fasitA_tekst,
     fasitB: t.fasitB, fasitB_tekst: t.fasitB_tekst,
     erRettvinklet: t.erRettvinklet,
@@ -1226,6 +1267,113 @@ function byggEksamenssett() {
 }
 
 
+
+// ── DEL 2 OPPG 1: TALLMØNSTER MED FORMEL ────────────────────────
+function genTallmønsterDel2() {
+  var typer = [
+    { navn:'kors', f:function(n){return n*n+4*n;}, tekst:'n² + 4n',
+      beskr:'kors-figur med n² i midten og 4 armer med n kvadrater',
+      sekvens_beskr: 'antall kvadrater i kors-figuren' },
+    { navn:'rektangel', f:function(n){return n*(n+1);}, tekst:'n · (n + 1)',
+      beskr:'rektangel med bredde n og lengde n+1',
+      sekvens_beskr: 'antall ruter i rektangelet' },
+    { navn:'ramme', f:function(n){return 4*(n+1);}, tekst:'4(n + 1)',
+      beskr:'ramme rundt et kvadrat med side n',
+      sekvens_beskr: 'antall kvadrater i rammen' },
+    { navn:'trapp', f:function(n){return n*(n+1)/2;}, tekst:'n·(n+1)/2',
+      beskr:'trappemønster med 1+2+...+n kvadrater',
+      sekvens_beskr: 'antall kvadrater i trappen' },
+  ];
+  var t = plukk(typer);
+  var sekvens = [1,2,3,4,5,6,7,8,9,10].map(t.f);
+  var fasit5 = t.f(5), fasit10 = t.f(10);
+  var spørFigur = rnd(6,9);
+  return {
+    type:'del2_mønster', del:2, nr:'1', merking:'viktig',
+    poeng:3, maxPoeng:3,
+    t: t, sekvens: sekvens, fasit5: fasit5, fasit10: fasit10, spørFigur: spørFigur,
+    spørsmål:
+      'Se på tallmønsteret ('+t.sekvens_beskr+'):\n\n'+
+      'Figur 1: '+sekvens[0]+' · Figur 2: '+sekvens[1]+' · Figur 3: '+sekvens[2]+' · Figur 4: '+sekvens[3]+'\n\n'+
+      'a) Lag en tabell i regneark (Excel/GeoGebra) for figurene 1–10. (1 poeng)\n'+
+      '   Skriv inn antall kvadrater i figur 10:\n\n'+
+      'b) Lag en formel for antall kvadrater i figur n. (1 poeng)\n'+
+      '   Bruk formelen til å beregne antall kvadrater i figur '+spørFigur+':\n\n'+
+      'c) Hvilken figur har nøyaktig '+t.f(15)+' kvadrater? (1 poeng)',
+    instruksjon: 'Del a): Bruk Excel eller GeoGebra Regneark. Del b): Se etter mønster mellom figurnummer og antall.',
+    svarType: 'mønster_abc',
+    fasitA: fasit10,
+    fasitB: t.f(spørFigur),
+    fasitC: 15,
+    løsning:
+      'Formel: A(n) = '+t.tekst+'\n'+
+      'a) Figur 10 = '+fasit10+'\n'+
+      'b) Figur '+spørFigur+' = '+t.f(spørFigur)+'\n'+
+      'c) A(n) = '+t.f(15)+' → n = 15',
+    kommentar: 'Se på forholdet mellom figurnummer og antall kvadrater i tabellen.',
+    tol: 0,
+  };
+}
+
+// ── DEL 2 OPPG 8: ALGEBRA/TALLTEORI (ENKEL UTFORSKING) ───────────
+function genAlgebraUtforsking() {
+  var typer = [
+    // Type 1: summer av to oddetall
+    function() {
+      var ex = [[3,5],[7,11],[9,15]].map(function(p){ return p[0]+'+'+p[1]+'='+(p[0]+p[1]); });
+      return {
+        sp: 'Påstand: Summen av to oddetall er alltid et partall.\n\n'+
+          'a) Undersøk påstanden for minst tre eksempler. (1 poeng)\n'+
+          '   Eksempel: 3+5 = ? · 7+11 = ? · 9+15 = ?\n\n'+
+          'b) Er påstanden alltid sann, noen ganger sann, eller aldri sann? (1 poeng)',
+        fasitA1:8, fasitA2:18, fasitA3:24,
+        fasitB_tekst: 'alltid',
+        løsning: '3+5=8 ✓  7+11=18 ✓  9+15=24 ✓\nAlltid sann: (2a+1)+(2b+1)=2(a+b+1) som alltid er partall.',
+        svarA_er_tall: true,
+      };
+    },
+    // Type 2: summer av tre påfølgende heltall
+    function() {
+      var start = rnd(3,8);
+      var ex = [start, start+1, start+2];
+      var sum = ex.reduce(function(a,b){return a+b;},0);
+      return {
+        sp: 'Påstand: Summen av tre påfølgende heltall er alltid delelig med 3.\n\n'+
+          'a) Regn ut: '+ex[0]+' + '+ex[1]+' + '+ex[2]+' = ? (1 poeng)\n\n'+
+          'b) Er påstanden alltid sann? Forklar med algebra. (1 poeng)',
+        fasitA1: sum, fasitA2: null, fasitA3: null,
+        fasitB_tekst: 'alltid',
+        løsning: ex.join('+')+' = '+sum+' = '+Math.floor(sum/3)+'×3 ✓\nAlltid sann: n+(n+1)+(n+2)=3n+3=3(n+1) er delelig med 3.',
+        svarA_er_tall: true,
+      };
+    },
+    // Type 3: produkt av to påfølgende tall
+    function() {
+      var n = rnd(3,7);
+      return {
+        sp: 'Påstand: Produktet av to påfølgende heltall er alltid et partall.\n\n'+
+          'a) Undersøk: '+n+' × '+(n+1)+' = ? · '+(n+2)+' × '+(n+3)+' = ? (1 poeng)\n\n'+
+          'b) Forklar hvorfor dette alltid er sant. (1 poeng)',
+        fasitA1: n*(n+1), fasitA2: (n+2)*(n+3), fasitA3: null,
+        fasitB_tekst: 'alltid',
+        løsning: n+'×'+(n+1)+'='+(n*(n+1))+' ✓  '+(n+2)+'×'+(n+3)+'='+((n+2)*(n+3))+' ✓\nAv to påfølgende er alltid ett partall, så produktet er partall.',
+        svarA_er_tall: true,
+      };
+    },
+  ];
+  var t = plukk(typer)();
+  return {
+    type:'del2_algebra', del:2, nr:'8', merking:'',
+    poeng:2, maxPoeng:2,
+    ...t,
+    spørsmål: t.sp,
+    instruksjon: 'Del a): Regn ut. Del b): Forklar med ord eller algebra.',
+    svarType: 'algebra_ab',
+    løsning: t.løsning,
+    kommentar: 'Prøv å skrive tallene generelt: et oddetall = 2n+1, et partall = 2n.',
+  };
+}
+
 // ══════════════════════════════════════════════════════════════════
 // TILSTAND
 // ══════════════════════════════════════════════════════════════════
@@ -1267,20 +1415,23 @@ function oppdaterAntallGanger() {
 function byggOppgaver(del) {
   var oppg = [];
   if (del === 1 || del === 0) {
-    oppg.push(genLikningssystem());
-    oppg.push(genTallmønster());
-    oppg.push(genStatistikkDiagram());
-    oppg.push(genStigningstall());
-    oppg.push(genProsent());
-    oppg.push(genVolumEllerAlgebra());
-    oppg.push(genProgrammering());
+    oppg.push(genLikningssystem());       // Del 1 oppg 1
+    oppg.push(genTallmønster());          // Del 1 oppg 2
+    oppg.push(genStatistikkDiagram());    // Del 1 oppg 3
+    oppg.push(genStigningstall());        // Del 1 oppg 4
+    oppg.push(genProsent());              // Del 1 oppg 5
+    oppg.push(genVolumEllerAlgebra());    // Del 1 oppg 6
+    oppg.push(genProgrammering());        // Del 1 oppg 7
   }
   if (del === 2 || del === 0) {
-    oppg.push(genPrissammenligning());
-    oppg.push(genEksponentiellDel2());
-    oppg.push(genSannsynlighet());
-    oppg.push(genStatistikkDel2());
-    oppg.push(genLineærFunksjonerDel2());
+    oppg.push(genTallmønsterDel2());      // Del 2 oppg 1
+    oppg.push(genPrissammenligning());    // Del 2 oppg 2
+    oppg.push(genEksponentiellDel2());    // Del 2 oppg 3
+    oppg.push(genSannsynlighet());        // Del 2 oppg 4
+    oppg.push(genStatistikkDel2());       // Del 2 oppg 5
+    oppg.push(genLineærFunksjonerDel2()); // Del 2 oppg 6
+    oppg.push(genProgrammering());        // Del 2 oppg 7
+    oppg.push(genAlgebraUtforsking());    // Del 2 oppg 8
   }
   oppg.forEach(function(o,i) { o._idx = i; });
   return oppg;
@@ -1366,6 +1517,14 @@ function renderSvarBoks(o) {
         +'</div></div>';
     });
     return html + '</div>';
+  }
+
+  if (o.svarType === 'tall_og_formel') {
+    return '<div class="svar-seksjon"><div class="svar-label">a) Antall kvadrater i figur 5:</div>'
+      +'<input class="svar-input" id="svar-inp" type="number" step="1" placeholder="0">'
+      +'</div><div class="svar-seksjon"><div class="svar-label">b) Formelen (vises i fasit etter sjekk):</div>'
+      +'<input class="svar-input" id="svar-formel" type="text" placeholder="A(n) = ...">'
+      +'</div>';
   }
 
   if (o.svarType === 'tall' || o.svarType === 'tekst') {
@@ -1454,12 +1613,86 @@ function renderSvarBoks(o) {
       +'<input class="svar-input" id="linf-c" type="number" step="1" placeholder="0" style="max-width:150px"></div>' : '');
   }
 
+  if (o.svarType === 'tall_flervalg') {
+    var html = '<div class="svar-seksjon"><div class="svar-label">a) Antall kvadrater i figur 5:</div>'
+      +'<input class="svar-input" id="svar-inp" type="number" step="1" placeholder="0" style="max-width:140px">'
+      +'</div><div class="svar-seksjon"><div class="svar-label">b) Velg riktig formel:</div>'
+      +'<div class="fv-grid">';
+    o.alts.forEach(function(alt, i) {
+      html += '<button class="fv-btn" data-oppg="'+o._idx+'" onclick="velgFlervalg('+o._idx+','+i+')">'+alt+'</button>';
+    });
+    return html + '</div></div>';
+  }
+
+  if (o.svarType === 'eksp_flervalg') {
+    var html = '<div class="svar-seksjon"><div class="svar-label">a) Hva betyr tallene og x? Velg:</div>'
+      +'<div class="fv-grid">';
+    o.altsA.forEach(function(alt, i) {
+      html += '<button class="fv-btn" data-oppg="eksp_a_'+o._idx+'" onclick="velgFlervalg(\'eksp_a_'+o._idx+'\','+i+')">'+alt+'</button>';
+    });
+    html += '</div></div>'
+      +'<div class="koeff-grid to" style="margin-top:8px">'
+      +'<div class="koeff-felt"><label>b) Verdi etter '+o.år+' perioder</label>'
+      +'<input class="koeff-input" id="eksp-b" type="number" step="1" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>c) Perioder til dobling/halvering</label>'
+      +'<input class="koeff-input" id="eksp-c" type="number" step="1" placeholder="0"></div>'
+      +'</div>';
+    return html;
+  }
+
+  if (o.svarType === 'prog_flervalg') {
+    var html = '<div class="kode-blokk"><pre><code>'+o.kode+'</code></pre></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Hva skrives ut?</div>'
+      +'<input class="svar-input" id="prog-a" type="'+(o.fasitA_tekst?'text':'number')+'" placeholder="'+(o.fasitA_tekst?'Skriv svar...':'Tall...')+'" style="max-width:200px">'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Hva gjør programmet?</div>'
+      +'<div class="fv-grid">';
+    o.altsB.forEach(function(alt, i) {
+      html += '<button class="fv-btn" data-oppg="prog_b_'+o._idx+'" onclick="velgFlervalg(\'prog_b_'+o._idx+'\','+i+')">'+alt+'</button>';
+    });
+    return html + '</div></div>';
+  }
+
+  // Tallmønster del 2
+  if (o.svarType === 'mønster_abc') {
+    return '<div class="svar-label">Svar — skriv tall:</div>'
+      +'<div class="koeff-grid">'
+      +'<div class="koeff-felt"><label>a) Figur 10</label><input class="koeff-input" id="mon-a" type="number" step="1" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>b) Figur '+o.spørFigur+'</label><input class="koeff-input" id="mon-b" type="number" step="1" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>c) Figurnummer</label><input class="koeff-input" id="mon-c" type="number" step="1" placeholder="0"></div>'
+      +'</div>';
+  }
+
+  // Algebra utforsking
+  if (o.svarType === 'algebra_ab') {
+    var html = '<div class="svar-label">a) Svar:</div><div class="koeff-grid to">';
+    html += '<div class="koeff-felt"><label>Eksempel 1</label><input class="koeff-input" id="alg-a1" type="number" step="1" placeholder="0"></div>';
+    if (o.fasitA2 !== null) {
+      html += '<div class="koeff-felt"><label>Eksempel 2</label><input class="koeff-input" id="alg-a2" type="number" step="1" placeholder="0"></div>';
+    }
+    html += '</div><div class="svar-seksjon" style="margin-top:8px"><div class="svar-label">b) Er påstanden alltid/noen ganger/aldri sann?</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'
+      +'<button class="su-btn" id="alg-alltid" data-val="alltid" onclick="velgAlgebra(this.dataset.val)">Alltid</button>'
+      +'<button class="su-btn" id="alg-noen" data-val="noen" onclick="velgAlgebra(this.dataset.val)">Noen ganger</button>'
+      +'<button class="su-btn" id="alg-aldri" data-val="aldri" onclick="velgAlgebra(this.dataset.val)">Aldri</button>'
+      +'</div></div>';
+    return html;
+  }
+
   // Fallback: åpent tekstfelt
   return '<div class="svar-seksjon"><div class="svar-label">Svar:</div>'
     +'<textarea class="svar-input" id="svar-inp" rows="3" placeholder="Skriv svaret ditt..."></textarea></div>';
 }
 
 var suValg = {};
+var flervalgValg = {};
+function velgFlervalg(oppgId, valIdx) {
+  flervalgValg[oppgId] = valIdx;
+  document.querySelectorAll('.fv-btn[data-oppg="'+oppgId+'"]').forEach(function(btn, i) {
+    btn.className = 'fv-btn' + (i === valIdx ? ' valgt' : '');
+  });
+}
+
 function velgSU(i, sann) {
   suValg[i] = sann;
   var s = document.getElementById('su-' + i + '-s');
@@ -1467,6 +1700,15 @@ function velgSU(i, sann) {
   if (s) { s.className = 'su-btn' + (sann ? ' valgt-sann' : ''); }
   if (u) { u.className = 'su-btn' + (!sann ? ' valgt-usann' : ''); }
 }
+var algebraValg = null;
+function velgAlgebra(val) {
+  algebraValg = val;
+  ['alltid','noen','aldri'].forEach(function(v) {
+    var btn = document.getElementById('alg-'+v);
+    if (btn) btn.className = 'su-btn' + (v===val?' valgt-sann':'');
+  });
+}
+
 
 // ══════════════════════════════════════════════════════════════════
 // SJEKK
@@ -1603,6 +1845,68 @@ function sjekk(idx) {
     melding = 'f₁: a='+(okA1?'✓':o.fasitA1)+' b='+(okB1?'✓':o.fasitB1)+'. '
       +'f₂: a='+(okA2?'✓':o.fasitA2)+' b='+(okB2?'✓':o.fasitB2)+'. '
       +(o.fasitC!==null?'Skjæring: '+(okC_l?'✓':'Fasit: '+o.fasitC+' '+o.k.xNavn):'');
+
+  } else if (o.svarType === 'tall_flervalg') {
+    var vA = parseFloat(((document.getElementById('svar-inp')||{value:''}).value+'').replace(',','.'));
+    var valB = flervalgValg[o._idx];
+    var okA = !isNaN(vA) && Math.abs(vA-o.fasitA)<=0;
+    var okB = valB === o.fasitB;
+    document.querySelectorAll('.fv-btn[data-oppg="'+o._idx+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.fasitB?'riktig':(i===valB&&!okB?'galt':''));
+    });
+    poeng=(okA?1:0)+(okB?2:0);
+    status=poeng===3?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA?'✓ ':'Fasit: '+o.fasitA+' ')+'b) '+(okB?'✓ Riktig formel!':'Riktig: '+o.alts[o.fasitB]);
+    flervalgValg[o._idx]=undefined;
+
+  } else if (o.svarType === 'eksp_flervalg') {
+    var keyA='eksp_a_'+o._idx, valA=flervalgValg[keyA];
+    var okA_e=valA===o.riktigIdxA;
+    var okB_e=sjekkTall(hentTall('eksp-b'),o.fasitB,o.tol||50);
+    var okC_e=sjekkTall(hentTall('eksp-c'),o.fasitC,1);
+    document.querySelectorAll('.fv-btn[data-oppg="eksp_a_'+o._idx+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.riktigIdxA?'riktig':(i===valA?'galt':''));
+    });
+    poeng=(okA_e?1:0)+(okB_e?1:0)+(okC_e?1:0);
+    status=poeng===3?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA_e?'✓ ':o.altsA[o.riktigIdxA].slice(0,40)+'... ')+'b) '+(okB_e?'✓ ':o.fasitB.toLocaleString('no')+' ')+'c) '+(okC_e?'✓':o.fasitC+' perioder');
+    flervalgValg[keyA]=undefined;
+
+  } else if (o.svarType === 'prog_flervalg') {
+    var fasitAT=o.fasitA_tekst||'';
+    var vA3=fasitAT?hentTekst('prog-a'):hentTall('prog-a');
+    var okA3=fasitAT
+      ?(typeof vA3==='string'&&vA3.length>1&&(vA3===fasitAT||vA3.toLowerCase().includes(o.erRettvinklet===true?'rett':o.erRettvinklet===false?'ikke':'x')))
+      :sjekkTall(parseFloat((vA3+'').replace(',','.')),o.fasitA,o.tolA||0);
+    var keyB3='prog_b_'+o._idx, valB3=flervalgValg[keyB3];
+    var okB3=valB3===o.riktigIdxB;
+    document.querySelectorAll('.fv-btn[data-oppg="prog_b_'+o._idx+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.riktigIdxB?'riktig':(i===valB3?'galt':''));
+    });
+    poeng=(okA3?1:0)+(okB3?1:0);
+    status=poeng===2?'riktig':poeng===1?'delvis':'feil';
+    melding='a) '+(okA3?'✓':'Fasit: '+(fasitAT||o.fasitA))+' b) '+(okB3?'✓':'Fasit: '+o.altsB[o.riktigIdxB]);
+    flervalgValg[keyB3]=undefined;
+
+  } else if (o.svarType === 'mønster_abc') {
+    var okA = sjekkTall(hentTall('mon-a'), o.fasitA, 0);
+    var okB = sjekkTall(hentTall('mon-b'), o.fasitB, 0);
+    var okC = sjekkTall(hentTall('mon-c'), o.fasitC, 0);
+    poeng = (okA?1:0)+(okB?1:0)+(okC?1:0);
+    status = poeng===3?'riktig':poeng>0?'delvis':'feil';
+    melding = 'a) '+(okA?'✓':('Fasit: '+o.fasitA))+' '
+      +'b) '+(okB?'✓':('Fasit: '+o.fasitB))+' '
+      +'c) '+(okC?'✓':('Fasit: '+o.fasitC));
+
+  } else if (o.svarType === 'algebra_ab') {
+    var okA_alg = sjekkTall(hentTall('alg-a1'), o.fasitA1, 0);
+    var okA2_alg = o.fasitA2 !== null ? sjekkTall(hentTall('alg-a2'), o.fasitA2, 0) : true;
+    var okB_alg = algebraValg === o.fasitB_tekst;
+    poeng = ((okA_alg&&okA2_alg)?1:0) + (okB_alg?1:0);
+    algebraValg = null;
+    status = poeng===2?'riktig':poeng===1?'delvis':'feil';
+    melding = 'a) '+(okA_alg?'✓':('Fasit: '+o.fasitA1))+(o.fasitA2!==null?' og '+(okA2_alg?'✓':o.fasitA2):'')+'. '
+      +'b) '+(okB_alg?'✓':('Fasit: '+o.fasitB_tekst));
 
   } else {
     // Fallback åpen
