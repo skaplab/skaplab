@@ -89,7 +89,7 @@ nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-fil
 .mengde-banner .mb-pil{font-size:1.3rem;color:var(--accent2);flex-shrink:0}
 code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;}
 @media(max-width:560px){.flervalg{grid-template-columns:1fr}}
-</style>
+.ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}</style>
 </head>
 <body>
 <nav>
@@ -98,7 +98,7 @@ code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padd
 <a href="matte_hub.html" class="nav-lnk">KM9</a>
 <span class="nav-sep">/</span>
 <span class="nav-tittel">Trigonometri (sin, cos, tan)</span>
-<span class="nav-trinn">10. trinn</span>
+<span class="nav-trinn">9. trinn</span>
 </nav>
 <div class="wrapper">
 <div class="kort-header">
@@ -107,7 +107,7 @@ code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padd
 <div class="kort-km-badge">KM9 · Geometri</div>
 <h1 class="kort-tittel">Trigonometri (sin, cos, tan)</h1>
 <p class="kort-sub">Trigonometri handler om sammenhengen mellom vinkler og sider i rettvinklede trekanter. Sin, cos og tan er de tre trigonometriske forholdene.</p>
-<div class="trinn-badges"><span class="trinn-b">10. trinn</span></div>
+<div class="trinn-badges"><span class="trinn-b">9. trinn</span></div>
 </div>
 </div>
 <div class="fp-tekst-rad"><span id="fpT">Steg 1 av 4</span><span id="fpP">0 %</span></div>
@@ -127,15 +127,7 @@ code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padd
 </div>
 </div>
 <div class="slide" id="s1">
-<div class="teori-kort">
-<div class="slide-label">💡 Eksempel</div>
-<h2 class="teori-overskrift">Finn en side</h2>
-<div class="eks-boks"><div class="eks-header">🔢 Løsning</div><div class="steg-liste">
-<div class="steg-item"><div class="steg-nr">1</div><div>Vinkel v = 30°, hypotenusen = 20 cm. Finn motstående katet.</div></div>
-<div class="steg-item"><div class="steg-nr">2</div><div>sin 30° = motstående / 20</div></div>
-<div class="steg-item"><div class="steg-nr">3</div><div>motstående = 20 · sin 30° = 20 · 0,5 = <strong>10 cm</strong></div></div>
-</div></div>
-</div>
+<div class="oppgave-kort" id="dyn-fv-kort"><div class="slide-label">🎲 Dynamisk oppgave</div><h2 class="teori-overskrift" id="dyn-fv-type">Oppgave</h2><p class="sporsmal" id="dyn-fv-spm">Laster...</p><div class="flervalg" id="dyn-fv-alts"></div><button class="sjekk-btn" id="dyn-fv-sjekk" disabled onclick="sjekkDynFV()">Sjekk svar</button><div class="feedback" id="dyn-fv-fb"></div><button class="ny-oppgave-btn" id="dyn-fv-ny" onclick="nyDynOppgave()" style="display:none">🎲 Ny oppgave</button></div>
 </div>
 <div class="slide" id="s2">
 <div class="oppgave-kort">
@@ -189,7 +181,59 @@ function velgFV(btn,grp,val){var g=document.getElementById(grp);g.querySelectorA
 function sjekkFV(grp,fasit,fbId){var g=document.getElementById(grp);var v=g.querySelector('.fv-btn.valgt');if(!v)return;var ok=v.dataset.v===fasit;g.querySelectorAll('.fv-btn').forEach(function(b){b.disabled=true;if(b.dataset.v===fasit)b.classList.add('riktig-svar');else if(b.classList.contains('valgt'))b.classList.add('feil-svar');});document.getElementById('sjekk_'+grp).disabled=true;var fb=document.getElementById(fbId);fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?'✓ Riktig! '+fb.dataset.ok:'✗ '+fb.dataset.feil;}
 function sjekkInp(inpId,fasit,fbId,enhet){var v=document.getElementById(inpId).value.trim().replace(',','.');var ok=Math.abs(parseFloat(v)-parseFloat(fasit))<0.06;document.getElementById(inpId).className='svar-input '+(ok?'riktig':'feil');document.getElementById(inpId).disabled=true;var fb=document.getElementById(fbId);fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+fb.dataset.ok):('✗ Fasit: '+fasit+(enhet?' '+enhet:'')+'<br>'+fb.dataset.feil);}
 function lastPDF(id){var a=document.createElement('a');a.href='skaplab_matte_'+id+'.pdf';a.download='skaplab_matte_'+id+'.pdf';a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function rndNul(a,b){var v;do{v=rnd(a,b);}while(v===0);return v;}
+function bland(a){return a.slice().sort(function(){return Math.random()-.5;});}
+function fmt(n){if(Number.isInteger(n))return String(n);return n.toFixed(2).replace('.',',');}
+function fmtBrok(t,n){if(n===1)return String(t);return t+'/'+n;}
+
+function lagOppgave(){
+  var vinkler=[30,45,60];
+  var sinV={30:0.5,45:0.707,60:0.866};
+  var cosV={30:0.866,45:0.707,60:0.5};
+  var tanV={30:0.577,45:1.0,60:1.732};
+  var typer=['finn_side','finn_vinkel','praktisk'];
+  var type=typer[rnd(0,vanskel===1?1:2)];
+  var v=vinkler[rnd(0,vanskel===1?0:2)];
+  var hyp=rnd(5,20),funksjon=rnd(0,2);
+  if(type==='finn_side'){
+    if(funksjon===0){
+      var mot=Math.round(hyp*sinV[v]*10)/10;
+      return{type:'Finn motstående katet',input:'tall',
+        spm:'v = <strong>'+v+'°</strong>, hypotenusen = <strong>'+hyp+' cm</strong>. Finn motstående katet.',
+        prefix:'mot =',fasit:mot,enhet:'cm',steg:hyp+' × sin('+v+'°) = '+hyp+' × '+sinV[v]+' = <strong>'+mot+' cm</strong>'};
+    } else if(funksjon===1){
+      var hos=Math.round(hyp*cosV[v]*10)/10;
+      return{type:'Finn hosliggende katet',input:'tall',
+        spm:'v = <strong>'+v+'°</strong>, hypotenusen = <strong>'+hyp+' cm</strong>. Finn hosliggende katet.',
+        prefix:'hos =',fasit:hos,enhet:'cm',steg:hyp+' × cos('+v+'°) = '+hyp+' × '+cosV[v]+' = <strong>'+hos+' cm</strong>'};
+    } else {
+      var hos2=rnd(4,15);
+      var mot2=Math.round(hos2*tanV[v]*10)/10;
+      return{type:'Bruk tangens',input:'tall',
+        spm:'v = <strong>'+v+'°</strong>, hosliggende = <strong>'+hos2+' cm</strong>. Finn motstående katet.',
+        prefix:'mot =',fasit:mot2,enhet:'cm',steg:hos2+' × tan('+v+'°) = '+hos2+' × '+tanV[v]+' = <strong>'+mot2+' cm</strong>'};
+    }
+  } else if(type==='finn_vinkel'){
+    var idx=rnd(0,2);
+    var ratios=[sinV[30],sinV[45],sinV[60]];
+    var vinklerN=[30,45,60];
+    var ratio=ratios[idx],vinkel=vinklerN[idx];
+    return{type:'Finn vinkel',input:'flervalg',
+      spm:'sin v = <strong>'+ratio+'</strong>. Hvilken vinkel?',
+      valg:bland(['30°','45°','60°','90°']),fasit:vinkel+'°',
+      steg:'arcsin('+ratio+') = <strong>'+vinkel+'°</strong>'};
+  } else {
+    var avstand=rnd(10,50);
+    var h=Math.round(avstand*tanV[v]*10)/10;
+    return{type:'Praktisk',input:'tall',
+      spm:'Vinkel '+v+'°, horisontal avstand <strong>'+avstand+' m</strong>. Høyde?',
+      prefix:'h ≈',fasit:h,enhet:'m',steg:avstand+' × tan('+v+'°) = <strong>'+h+' m</strong>'};
+  }
+}
+var vanskel=2,dynOppgave=null,dynValgt=null;function lagDynFlervalg(oppg){var fasit=String(oppg.fasit),alts=[fasit];var fn=parseFloat(fasit.replace(',','.'));if(!isNaN(fn)){var d=[fn*2,fn+1,fn-1,fn*3,Math.round(fn*1.5),fn+2,fn-2,fn+3,fn+5];d=d.filter(function(x){return Math.abs(x-fn)>0.01&&x>=0;});var sett=new Set([fasit]);d.forEach(function(x){if(sett.size<4){var s=Number.isInteger(x)?String(x):x.toFixed(2).replace('.',',');if(!sett.has(s)){sett.add(s);alts.push(s);}}});while(alts.length<4)alts.push(String(fn+alts.length*10));}else{alts=['???','---','···','…'];alts.unshift(fasit);}return alts.slice(0,4).sort(function(){return Math.random()-.5;});}function nyDynOppgave(){dynOppgave=lagOppgave();dynValgt=null;var fvS=document.getElementById('dyn-fv-spm'),fvT=document.getElementById('dyn-fv-type'),fvA=document.getElementById('dyn-fv-alts'),fvSj=document.getElementById('dyn-fv-sjekk'),fvFb=document.getElementById('dyn-fv-fb'),fvNy=document.getElementById('dyn-fv-ny');if(fvS){fvT.textContent=dynOppgave.type||'Oppgave';fvS.innerHTML=dynOppgave.spm;fvFb.className='feedback';fvFb.innerHTML='';fvSj.disabled=true;if(fvNy)fvNy.style.display='none';fvA.innerHTML='';lagDynFlervalg(dynOppgave).forEach(function(alt){var b=document.createElement('button');b.className='fv-btn';b.textContent=alt;b.onclick=function(){fvA.querySelectorAll('.fv-btn').forEach(function(x){x.classList.remove('valgt');});b.classList.add('valgt');dynValgt=alt;fvSj.disabled=false;};fvA.appendChild(b);});}var inS=document.getElementById('dyn-inp-spm');if(inS){var inT=document.getElementById('dyn-inp-type'),inF=document.getElementById('dyn-inp-felt'),inPr=document.getElementById('dyn-inp-prefix'),inEn=document.getElementById('dyn-inp-enhet'),inFb=document.getElementById('dyn-inp-fb'),inNy=document.getElementById('dyn-inp-ny');inT.textContent=dynOppgave.type||'Oppgave';inS.innerHTML=dynOppgave.spm;inPr.innerHTML=dynOppgave.prefix||'';inEn.textContent=dynOppgave.enhet||'';inF.value='';inF.className='svar-input';inF.disabled=false;inFb.className='feedback';inFb.innerHTML='';if(inNy)inNy.style.display='none';inF.onkeydown=function(e){if(e.key==='Enter')sjekkDynInp();};}}function sjekkDynFV(){if(!dynOppgave||dynValgt===null)return;var fasit=String(dynOppgave.fasit),ok=dynValgt===fasit;document.getElementById('dyn-fv-alts').querySelectorAll('.fv-btn').forEach(function(b){b.disabled=true;if(b.textContent===fasit)b.classList.add('riktig-svar');else if(b.classList.contains('valgt')&&!ok)b.classList.add('feil-svar');});document.getElementById('dyn-fv-sjekk').disabled=true;var fb=document.getElementById('dyn-fv-fb');fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+(dynOppgave.steg||'')):('✗ Fasit: '+fasit+(dynOppgave.steg?'<br>'+dynOppgave.steg:''));var ny=document.getElementById('dyn-fv-ny');if(ny)ny.style.display='inline-block';}function sjekkDynInp(){if(!dynOppgave)return;var felt=document.getElementById('dyn-inp-felt');if(!felt)return;var v=felt.value.trim().replace(',','.');var fr=String(dynOppgave.fasit).replace(',','.');var ok=Math.abs(parseFloat(v)-parseFloat(fr))<0.06||v===fr||v.toLowerCase()===fr.toLowerCase();felt.disabled=true;felt.className='svar-input '+(ok?'riktig':'feil');var fb=document.getElementById('dyn-inp-fb');fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+(dynOppgave.steg||'')):('✗ Fasit: '+dynOppgave.fasit+(dynOppgave.steg?'<br>'+dynOppgave.steg:''));var ny=document.getElementById('dyn-inp-ny');if(ny)ny.style.display='inline-block';}
 </script>
-<script>init(4);</script>
+<script>init(4); nyDynOppgave();</script>
 </body>
 </html>
