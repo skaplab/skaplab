@@ -170,6 +170,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .ok-nr{font-size:.68rem;color:var(--dim);width:16px;flex-shrink:0;font-family:var(--font-h);}
 .ok-ikon{font-size:.78rem;width:14px;flex-shrink:0;}
 .fremdrift{display:none;}
+.ny-oppg-btn{
+  width:100%;padding:9px;font-family:var(--font-h);font-size:.9rem;
+  background:rgba(96,165,250,.12);color:#60a5fa;
+  border:1px solid rgba(96,165,250,.3);border-radius:8px;
+  cursor:pointer;display:none;transition:background .15s;
+}
+.ny-oppg-btn:hover{background:rgba(96,165,250,.22);}
 
 /* MOBIL */
 @media(max-width:800px){
@@ -973,6 +980,7 @@ OPPGAVER.push({
   html += '<button class="sjekk-btn" id="sjekk-btn" onclick="sjekk()">✓ Sjekk svar</button>';
   html += '<div class="fb" id="fb"></div>';
   html += '<button class="neste-btn" id="neste-btn" onclick="nesteOppgave()">Neste oppgave ▶</button>';
+  html += '<button class="ny-oppg-btn" id="ny-oppg-btn" onclick="nyOppgave()">🔄 Ny oppgave, samme type</button>';
   boks.innerHTML = html;
   boks.querySelectorAll('input').forEach(function(inp){
     inp.addEventListener('keydown', function(e){ if(e.key==='Enter') sjekk(); });
@@ -1008,6 +1016,7 @@ function sjekk() {
     oppdaterFB('ok', res.melding);
     document.getElementById('sjekk-btn').disabled = true;
     document.getElementById('neste-btn').style.display = 'block';
+    var nyBtn=document.getElementById('ny-oppg-btn'); if(nyBtn) nyBtn.style.display='block';
     oppdaterFremdrift();
     oppdaterStats();
     clearInterval(pollingTimer);
@@ -1061,6 +1070,83 @@ function oppdaterFremdrift() {
 }
 
 function visHint(){var hint=document.getElementById("oppg-hint");var btn=document.getElementById("hint-toggle");if(!hint)return;if(hint.classList.contains("vis")){hint.classList.remove("vis");if(btn)btn.textContent="Vis hint";}else{hint.classList.add("vis");if(btn)btn.textContent="Skjul hint";}}
+function nyOppgave() {
+  // Regenerer kun gjeldende oppgave med nye tall
+  clearInterval(pollingTimer);
+  var id = OPPGAVER[gjeldende].id;
+  var gen = GENERATORER[id] || GENERATORER[id.replace(/\d+$/,'')];
+  // Finn riktig generator basert på ID
+  var genKey = null;
+  if (id === 'avg1') genKey = 'avg1';
+  else if (id === 'avg2') genKey = 'avg2';
+  else if (id === 'eks1') genKey = 'eks_parabel';
+  else if (id === 'eks2') genKey = 'eks_parabel';
+  else if (id === 'eks3') genKey = 'eks3';
+  else if (id === 'eks4') genKey = 'eks4';
+  else if (id === 'xy1') genKey = 'xy1';
+  else if (id === 'xy2') genKey = 'xy2';
+  else if (id === 'yx1') genKey = 'yx1';
+  else if (id === 'yx2') genKey = 'yx2';
+  else if (id === 'skj1') genKey = 'skj1';
+  else if (id === 'skj2') genKey = 'skj2';
+  else if (id === 'inp1') genKey = 'inp1';
+  else if (id === 'inp2') genKey = 'inp2';
+  else if (id === 'inp3') genKey = 'inp3';
+  if (!genKey) { lastOppgave(gjeldende); return; }
+  // Generer ny data
+  var retning = (id === 'eks1') ? 1 : (id === 'eks2') ? -1 : null;
+  var nyData = retning !== null ? GENERATORER[genKey](retning) : GENERATORER[genKey]();
+  // Oppdater oppgave-objektet med nye verdier
+  var o = OPPGAVER[gjeldende];
+  o.tekst = nyData.tekst;
+  o.hint  = nyData.hint;
+  o.ggbKommandoer = nyData.cmds;
+  // Oppdater sjekk-funksjon med ny fasit
+  if (nyData.fasitA !== undefined) {
+    o.sjekk = (function(fa,fb){ return function(ggb){
+      var a=ggb.getValue('a'),b=ggb.getValue('b');
+      var ok=Math.abs(a-fa)<=0.3&&Math.abs(b-fb)<=0.3;
+      return {ok:ok,nesten:!ok&&(Math.abs(a-fa)<=0.8||Math.abs(b-fb)<=0.8),
+        melding:ok?'✓ Riktig! a='+fa+', b='+fb+'.':'a='+a.toFixed(1)+' (skal være '+fa+'), b='+b.toFixed(1)+' (skal være '+fb+').'};
+    };})(nyData.fasitA, nyData.fasitB);
+  } else if (nyData.fasitX !== undefined && nyData.fasitY !== undefined) {
+    o.sjekk = (function(fx,fy){ return function(ggb){
+      var x=parseFloat(document.getElementById('inp-x').value.replace(',','.')),y=parseFloat(document.getElementById('inp-y').value.replace(',','.'));
+      if(isNaN(x)||isNaN(y)) return {ok:false,nesten:false,melding:'Fyll inn både x og y.'};
+      var ok=Math.abs(x-fx)<=0.015&&Math.abs(y-fy)<=0.015;
+      return {ok:ok,nesten:!ok&&Math.abs(x-fx)<=0.1&&Math.abs(y-fy)<=0.1,
+        melding:ok?'✓ Riktig! ('+fmt(fx)+', '+fmt(fy)+').':'Fasit: ('+fmt(fx)+', '+fmt(fy)+'). Du svarte ('+x.toFixed(2)+', '+y.toFixed(2)+')'};
+    };})(nyData.fasitX, nyData.fasitY);
+  } else if (nyData.fasit1 !== undefined) {
+    o.sjekk = (function(f1,f2){ return function(ggb){
+      var x1=parseFloat(document.getElementById('inp-x1').value.replace(',','.')),x2=parseFloat(document.getElementById('inp-x2').value.replace(',','.'));
+      if(isNaN(x1)||isNaN(x2)) return {ok:false,nesten:false,melding:'Fyll inn begge x-verdiene.'};
+      var s=[x1,x2].sort(function(a,b){return a-b;});
+      var ok=Math.abs(s[0]-f1)<=0.015&&Math.abs(s[1]-f2)<=0.015;
+      return {ok:ok,nesten:!ok&&Math.abs(s[0]-f1)<=0.1&&Math.abs(s[1]-f2)<=0.1,
+        melding:ok?'✓ Riktig! x='+fmt(f1)+' og x='+fmt(f2)+'.':'Fasit: '+fmt(f1)+' og '+fmt(f2)+'. Du svarte '+x1.toFixed(2)+' og '+x2.toFixed(2)+'.'};
+    };})(nyData.fasit1, nyData.fasit2);
+  } else if (nyData.fasit !== undefined) {
+    o.sjekk = (function(fv){ return function(ggb){
+      var el=document.getElementById('inp-x1')||document.getElementById('inp-y1');
+      if(!el) return {ok:false,nesten:false,melding:'Fyll inn verdien.'};
+      var v=parseFloat(el.value.replace(',','.'));
+      if(isNaN(v)) return {ok:false,nesten:false,melding:'Fyll inn verdien.'};
+      var ok=Math.abs(v-fv)<=0.5;
+      return {ok:ok,nesten:!ok&&Math.abs(v-fv)<=1,
+        melding:ok?'✓ Riktig! '+fmt(fv)+'.':'Fasit: '+fmt(fv)+'. Du svarte '+v.toFixed(2)+'.'};
+    };})(nyData.fasit);
+  } else if (nyData.testX !== undefined) {
+    o.sjekk = (function(tx,ty){ return function(ggb){
+      if(!ggb.isDefined('f')) return {ok:false,nesten:false,melding:'Skriv inn funksjonen f(x) = ... i algebrafeltet og trykk Enter.'};
+      var feil=[];
+      for(var i=0;i<tx.length;i++){var fv=ggb.getValue('f('+tx[i]+')');if(Math.abs(fv-ty[i])>0.1)feil.push('f('+tx[i]+')='+fv.toFixed(2)+' (skal være '+ty[i]+')');}
+      return {ok:feil.length===0,nesten:false,melding:feil.length===0?'✓ Riktig! Grafen treffer alle punktene.':feil[0]+'. Sjekk uttrykket.'};
+    };})(nyData.testX, nyData.testY);
+  }
+  // Last oppgaven på nytt
+  lastOppgave(gjeldende);
+}
 function nyRunde() {
   OPPGAVER = [];
   løste = [];
