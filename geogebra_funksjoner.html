@@ -170,6 +170,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .ok-nr{font-size:.68rem;color:var(--dim);width:16px;flex-shrink:0;font-family:var(--font-h);}
 .ok-ikon{font-size:.78rem;width:14px;flex-shrink:0;}
 .fremdrift{display:none;}
+.reg-info{font-size:.76rem;color:var(--dim);line-height:1.5;background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;margin-bottom:8px;}
 .ny-runde-btn{
   width:100%;padding:9px;font-family:var(--font-h);font-size:.9rem;
   background:rgba(255,255,255,.07);color:var(--dim);
@@ -599,6 +600,99 @@ var GENERATORER = {
   };
 },
 
+
+
+// ── REGRESJONS-GENERATORER ────────────────────────────────────────
+'reg_lin': function() {
+  // Linjær: y = ax + b, generer 6 punkter med støy
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var pts = [];
+  for (var i = 1; i <= 6; i++) {
+    var x = i;
+    var stoey = (Math.random() - 0.5) * 0.6;
+    var y = Math.round((a * x + b + stoey) * 10) / 10;
+    pts.push([x, y]);
+  }
+  return {
+    a: a, b: b, pts: pts,
+    tekst: 'Punktene viser en lineær sammenheng. Bruk GeoGebras <strong>regresjonsverktøy</strong>: merk alle punktene (Ctrl+A), gå til <strong>Analyse → Regresjonsanalyse</strong>, velg Lineær. Les av <strong>a</strong> og <strong>b</strong> i f(x) = ax + b.',
+    hint: 'Etter regresjon viser GeoGebra f(x) = ax + b. Rund av til én desimal. Fasit: a ≈ ' + a + ', b ≈ ' + b + '.',
+    cmds: (function(ps) {
+      var c = ['ZoomIn(0, ' + (Math.min.apply(null,ps.map(function(p){return p[1];})) - 3) + ', 8, ' + (Math.max.apply(null,ps.map(function(p){return p[1];})) + 3) + ')'];
+      var navn = 'ABCDEF';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b,
+  };
+},
+
+'reg_poly': function() {
+  // Kvadratisk: y = ax² + bx + c
+  var a = rndIkkeNull(-2, 2);
+  var b = rnd(-3, 3);
+  var c = rnd(-4, 4);
+  var pts = [];
+  for (var i = -2; i <= 3; i++) {
+    var stoey = (Math.random() - 0.5) * 0.8;
+    var y = Math.round((a*i*i + b*i + c + stoey) * 10) / 10;
+    pts.push([i, y]);
+  }
+  return {
+    a: a, b: b, c: c, pts: pts,
+    tekst: 'Punktene følger en kvadratisk sammenheng. Bruk <strong>Analyse → Regresjonsanalyse → Polynom grad 2</strong>. Les av <strong>a</strong>, <strong>b</strong> og <strong>c</strong> i f(x) = ax² + bx + c.',
+    hint: 'Etter polynom-regresjon viser GeoGebra koeffisientene. Rund av til én desimal. Fasit: a ≈ ' + a + ', b ≈ ' + b + ', c ≈ ' + c + '.',
+    cmds: (function(ps) {
+      var yvals = ps.map(function(p){return p[1];});
+      var c = ['ZoomIn(-3, ' + (Math.min.apply(null,yvals) - 3) + ', 4, ' + (Math.max.apply(null,yvals) + 3) + ')'];
+      var navn = 'ABCDEF';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b, fasitC: c,
+  };
+},
+
+'reg_eksp': function() {
+  // Eksponentiell: y = a·bˣ, b > 1
+  var a = rnd(1, 4);
+  var b = [1.5, 2, 2.5, 3][rnd(0, 3)];
+  var pts = [];
+  for (var i = 0; i <= 4; i++) {
+    var stoey = (Math.random() - 0.5) * 0.4;
+    var y = Math.round((a * Math.pow(b, i) + stoey) * 10) / 10;
+    pts.push([i, y]);
+  }
+  return {
+    a: a, b: b, pts: pts,
+    tekst: 'Punktene viser eksponentiell vekst. Bruk <strong>Analyse → Regresjonsanalyse → Eksponentiell</strong>. Les av <strong>a</strong> og <strong>b</strong> i f(x) = a·bˣ.',
+    hint: 'GeoGebra kan vise f(x) = a·eˣ — noter at b = e^(koeffisient). Fasit: a ≈ ' + a + ', b ≈ ' + b + '. Rund av til én desimal.',
+    cmds: (function(ps) {
+      var yvals = ps.map(function(p){return p[1];});
+      var c = ['ZoomIn(-1, -1, 6, ' + (Math.max.apply(null,yvals) + 4) + ')'];
+      var navn = 'ABCDE';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b,
+  };
+},
 }; // END GENERATORER
 
 
@@ -612,7 +706,7 @@ function byggOppgaver() {
       var x = parseFloat(document.getElementById('inp-x').value.replace(',','.'));
       var y = parseFloat(document.getElementById('inp-y').value.replace(',','.'));
       if (isNaN(x)||isNaN(y)) return {ok:false,nesten:false,melding:'Fyll inn b\u00e5de x- og y-koordinat.'};
-      var ok = Math.abs(x-fasitX)<=0.015 && Math.abs(y-fasitY)<=0.015;
+      var ok = Math.abs(x-fasitX)<=0.055 && Math.abs(y-fasitY)<=0.055;
       var nesten = Math.abs(x-fasitX)<=0.1 && Math.abs(y-fasitY)<=0.1;
       return {ok:ok, nesten:!ok&&nesten,
         melding: ok ? '\u2713 Riktig! (' + fmt(fasitX) + ',\u00a0' + fmt(fasitY) + ').'
@@ -625,8 +719,8 @@ function byggOppgaver() {
       var x2 = parseFloat(document.getElementById('inp-x2').value.replace(',','.'));
       if (isNaN(x1)||isNaN(x2)) return {ok:false,nesten:false,melding:'Fyll inn begge x-verdiene.'};
       var s = [x1,x2].sort(function(a,b){return a-b;});
-      var ok = Math.abs(s[0]-fasit1)<=0.015 && Math.abs(s[1]-fasit2)<=0.015;
-      return {ok:ok, nesten:!ok&&Math.abs(s[0]-fasit1)<=0.1&&Math.abs(s[1]-fasit2)<=0.1,
+      var ok = Math.abs(s[0]-fasit1)<=0.055 && Math.abs(s[1]-fasit2)<=0.055;
+      return {ok:ok, nesten:!ok&&Math.abs(s[0]-fasit1)<=0.3&&Math.abs(s[1]-fasit2)<=0.3,
         melding: ok ? '\u2713 Riktig! x = ' + fmt(fasit1) + ' og x = ' + fmt(fasit2) + '.'
                     : 'Fasit: ' + fmt(fasit1) + ' og ' + fmt(fasit2) + '. Du svarte ' + x1.toFixed(2) + ' og ' + x2.toFixed(2) + '.'};
     };
@@ -635,8 +729,8 @@ function byggOppgaver() {
     return function(ggb) {
       var x = parseFloat(document.getElementById('inp-x1').value.replace(',','.'));
       if (isNaN(x)) return {ok:false,nesten:false,melding:'Skriv inn x-verdien.'};
-      var ok = Math.abs(x-fasit)<=0.015;
-      return {ok:ok, nesten:!ok&&Math.abs(x-fasit)<=0.1,
+      var ok = Math.abs(x-fasit)<=0.055;
+      return {ok:ok, nesten:!ok&&Math.abs(x-fasit)<=0.3,
         melding: ok ? '\u2713 Riktig! x = ' + fmt(fasit) + '.'
                     : 'Fasit: x = ' + fmt(fasit) + '. Du svarte ' + x.toFixed(2) + '.'};
     };
@@ -758,6 +852,39 @@ function byggOppgaver() {
   g = GENERATORER['inp3']();
   OPPGAVER.push({id:'inp3',gruppe:'Skriv inn i GeoGebra',tittel:'15 \u00b7 Skriv inn eksponentialfunksjon',type:'geogebra_input',
     tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkInput(g.testX, g.testY)});
+
+  function sjekkAB_reg(fa, fb) {
+    return function(ggb) {
+      var a=parseFloat(document.getElementById('inp-a').value.replace(',','.'));
+      var b=parseFloat(document.getElementById('inp-b').value.replace(',','.'));
+      if(isNaN(a)||isNaN(b)) return {ok:false,nesten:false,melding:'Fyll inn a og b.'};
+      var ok=Math.abs(a-fa)<=0.15&&Math.abs(b-fb)<=0.15;
+      return {ok:ok,nesten:!ok&&Math.abs(a-fa)<=0.4&&Math.abs(b-fb)<=0.4,
+        melding:ok?'✓ Riktig! a≈'+fmt(fa)+', b≈'+fmt(fb)+'.':
+        'Fasit: a≈'+fa+', b≈'+fb+'. Du svarte a='+a.toFixed(2)+', b='+b.toFixed(2)+'.'};
+    };
+  }
+  function sjekkABC_reg(fa, fb, fc) {
+    return function(ggb) {
+      var a=parseFloat(document.getElementById('inp-a').value.replace(',','.'));
+      var b=parseFloat(document.getElementById('inp-b').value.replace(',','.'));
+      var c=parseFloat(document.getElementById('inp-c').value.replace(',','.'));
+      if(isNaN(a)||isNaN(b)||isNaN(c)) return {ok:false,nesten:false,melding:'Fyll inn a, b og c.'};
+      var ok=Math.abs(a-fa)<=0.15&&Math.abs(b-fb)<=0.15&&Math.abs(c-fc)<=0.15;
+      return {ok:ok,nesten:!ok&&Math.abs(a-fa)<=0.4&&Math.abs(b-fb)<=0.4&&Math.abs(c-fc)<=0.4,
+        melding:ok?'✓ Riktig! a≈'+fmt(fa)+', b≈'+fmt(fb)+', c≈'+fmt(fc)+'.':
+        'Fasit: a≈'+fa+', b≈'+fb+', c≈'+fc+'. ('+a.toFixed(2)+','+b.toFixed(2)+','+c.toFixed(2)+')'};
+    };
+  }
+  var gr1=GENERATORER['reg_lin']();
+  OPPGAVER.push({id:'reg1',gruppe:'Regresjon',tittel:'16 · Lineær regresjon',type:'reg_ab',
+    tekst:gr1.tekst,hint:gr1.hint,ggbKommandoer:gr1.cmds,sjekk:sjekkAB_reg(gr1.fasitA,gr1.fasitB)});
+  var gr2=GENERATORER['reg_poly']();
+  OPPGAVER.push({id:'reg2',gruppe:'Regresjon',tittel:'17 · Polynom grad 2',type:'reg_abc',
+    tekst:gr2.tekst,hint:gr2.hint,ggbKommandoer:gr2.cmds,sjekk:sjekkABC_reg(gr2.fasitA,gr2.fasitB,gr2.fasitC)});
+  var gr3=GENERATORER['reg_eksp']();
+  OPPGAVER.push({id:'reg3',gruppe:'Regresjon',tittel:'18 · Eksponentiell regresjon',type:'reg_ab',
+    tekst:gr3.tekst,hint:gr3.hint,ggbKommandoer:gr3.cmds,sjekk:sjekkAB_reg(gr3.fasitA,gr3.fasitB)});
 }
 
 var ggbAPI = null;
@@ -836,101 +963,6 @@ function byggSvarBoks(o) {
 
 // ── GRUPPE 6: INNTASTING I GEOGEBRA ──────────────────────────────
 
-OPPGAVER.push({
-  id: 'inp1',
-  gruppe: 'Skriv inn i GeoGebra',
-  tittel: '13 · Skriv inn lineær funksjon',
-  type: 'geogebra_input',
-  tekst: 'Skriv inn funksjonen <strong>f(x) = 2x − 3</strong> direkte i <strong>algebrafeltet</strong> i GeoGebra (feltet nederst i vinduet).',
-  hint: 'Klikk i algebrafeltet og skriv: f(x) = 2x - 3. Trykk Enter. Sjekk at grafen dukker opp.',
-  ggbKommandoer: [
-    'ZoomIn(-3, -8, 5, 6)',
-    'P1 = (1, -1)',
-    'P2 = (3, 3)',
-    'SetColor(P1, "Red")',
-    'SetColor(P2, "Red")',
-    'SetPointSize(P1, 6)',
-    'SetPointSize(P2, 6)',
-    'ShowLabel(P1, true)',
-    'ShowLabel(P2, true)',
-  ],
-  sjekk: function(ggb) {
-    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Funksjonen f er ikke definert ennå. Skriv f(x) = 2x - 3 i algebrafeltet og trykk Enter.' };
-    var f1 = ggb.getValue('f(1)');
-    var f3 = ggb.getValue('f(3)');
-    var f0 = ggb.getValue('f(0)');
-    var ok = Math.abs(f1 - (-1)) < 0.1 && Math.abs(f3 - 3) < 0.1 && Math.abs(f0 - (-3)) < 0.1;
-    var nesten = Math.abs(f1 - (-1)) < 0.5 || Math.abs(f3 - 3) < 0.5;
-    return {
-      ok: ok, nesten: !ok && nesten,
-      melding: ok
-        ? '✓ Riktig! f(x) = 2x − 3. f(1) = −1 ✓, f(3) = 3 ✓, f(0) = −3 ✓.'
-        : 'f(1) = ' + f1.toFixed(2) + ' (skal være −1), f(3) = ' + f3.toFixed(2) + ' (skal være 3). Sjekk uttrykket ditt.'
-    };
-  }
-});
-
-OPPGAVER.push({
-  id: 'inp2',
-  gruppe: 'Skriv inn i GeoGebra',
-  tittel: '14 · Skriv inn parabel',
-  type: 'geogebra_input',
-  tekst: 'Skriv inn parabelen <strong>f(x) = x² − 2x − 3</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
-  hint: 'Skriv: f(x) = x^2 - 2x - 3. Bruk ^ for potens. Sjekk nullpunktene: f(−1) = 0 og f(3) = 0.',
-  ggbKommandoer: [
-    'ZoomIn(-3, -6, 5, 6)',
-    'N1 = (-1, 0)',
-    'N2 = (3, 0)',
-    'Bunn = (1, -4)',
-    'SetColor(N1, "Red")', 'SetColor(N2, "Red")', 'SetColor(Bunn, "Orange")',
-    'SetPointSize(N1, 6)', 'SetPointSize(N2, 6)', 'SetPointSize(Bunn, 6)',
-    'ShowLabel(N1, true)', 'ShowLabel(N2, true)', 'ShowLabel(Bunn, true)',
-  ],
-  sjekk: function(ggb) {
-    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Skriv f(x) = x^2 - 2x - 3 i algebrafeltet og trykk Enter.' };
-    var fn1 = ggb.getValue('f(-1)');
-    var f3  = ggb.getValue('f(3)');
-    var f1  = ggb.getValue('f(1)');
-    var ok = Math.abs(fn1) < 0.1 && Math.abs(f3) < 0.1 && Math.abs(f1 - (-4)) < 0.1;
-    return {
-      ok: ok, nesten: !ok && (Math.abs(fn1)<0.5 && Math.abs(f3)<0.5),
-      melding: ok
-        ? '✓ Riktig! f(x) = x² − 2x − 3. Nullpunkter: x = −1 og x = 3. Bunnpunkt: (1, −4).'
-        : 'f(−1) = '+fn1.toFixed(2)+' (skal være 0), f(3) = '+f3.toFixed(2)+' (skal være 0). Sjekk uttrykket.'
-    };
-  }
-});
-
-OPPGAVER.push({
-  id: 'inp3',
-  gruppe: 'Skriv inn i GeoGebra',
-  tittel: '15 · Skriv inn eksponentialfunksjon',
-  type: 'geogebra_input',
-  tekst: 'Skriv inn <strong>f(x) = 2 · 3ˣ</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
-  hint: 'Skriv: f(x) = 2 * 3^x. Bruk * for ganging og ^ for potens.',
-  ggbKommandoer: [
-    'ZoomIn(-2, -1, 4, 20)',
-    'P0 = (0, 2)',
-    'P1 = (1, 6)',
-    'P2 = (2, 18)',
-    'SetColor(P0, "Red")', 'SetColor(P1, "Red")', 'SetColor(P2, "Red")',
-    'SetPointSize(P0, 6)', 'SetPointSize(P1, 6)', 'SetPointSize(P2, 6)',
-    'ShowLabel(P0, true)', 'ShowLabel(P1, true)', 'ShowLabel(P2, true)',
-  ],
-  sjekk: function(ggb) {
-    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Skriv f(x) = 2 * 3^x i algebrafeltet og trykk Enter.' };
-    var f0 = ggb.getValue('f(0)');
-    var f1 = ggb.getValue('f(1)');
-    var f2 = ggb.getValue('f(2)');
-    var ok = Math.abs(f0 - 2) < 0.1 && Math.abs(f1 - 6) < 0.1 && Math.abs(f2 - 18) < 0.1;
-    return {
-      ok: ok, nesten: !ok && (Math.abs(f0-2)<0.5 && Math.abs(f1-6)<0.5),
-      melding: ok
-        ? '✓ Riktig! f(0) = 2 ✓, f(1) = 6 ✓, f(2) = 18 ✓.'
-        : 'f(0) = '+f0.toFixed(2)+' (skal være 2), f(1) = '+f1.toFixed(2)+' (skal være 6). Sjekk uttrykket.'
-    };
-  }
-});
 
 
   if (o.type === 'avgrens' || o.type === 'slider') {
@@ -942,6 +974,19 @@ OPPGAVER.push({
     startSliderPolling(vis);
   } else if (draTyper.indexOf(o.type) >= 0) {
     html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Dra det/de oransje punktet/ene i GeoGebra til riktig posisjon, trykk deretter Sjekk svar.</div>';
+  } else if (o.type === 'reg_ab') {
+    html = '<div class="reg-info">Kjør regresjonsanalyse i GeoGebra og skriv av koeffisientene:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>a</label><input class="koeff-input" id="inp-a" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>b</label><input class="koeff-input" id="inp-b" type="number" step="0.1" placeholder="0,0"></div>'
+      + '</div>';
+  } else if (o.type === 'reg_abc') {
+    html = '<div class="reg-info">Kjør polynom-regresjon (grad 2) og skriv av koeffisientene:</div>'
+      + '<div class="koeff-grid">'
+      + '<div class="koeff-felt"><label>a (x²)</label><input class="koeff-input" id="inp-a" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>b (x)</label><input class="koeff-input" id="inp-b" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>c (konst.)</label><input class="koeff-input" id="inp-c" type="number" step="0.1" placeholder="0,0"></div>'
+      + '</div>';
   } else if (o.type === 'les_av_xy') {
     html = '<div class="svar-label">Koordinater til punktet:</div>'
       + '<div class="koeff-grid to">'
@@ -1100,6 +1145,9 @@ function nyOppgave() {
   else if (id === 'inp1') genKey = 'inp1';
   else if (id === 'inp2') genKey = 'inp2';
   else if (id === 'inp3') genKey = 'inp3';
+  else if (id === 'reg1') genKey = 'reg_lin';
+  else if (id === 'reg2') genKey = 'reg_poly';
+  else if (id === 'reg3') genKey = 'reg_eksp';
   if (!genKey) { lastOppgave(gjeldende); return; }
   // Generer ny data
   var retning = (id === 'eks1') ? 1 : (id === 'eks2') ? -1 : null;
@@ -1121,8 +1169,8 @@ function nyOppgave() {
     o.sjekk = (function(fx,fy){ return function(ggb){
       var x=parseFloat(document.getElementById('inp-x').value.replace(',','.')),y=parseFloat(document.getElementById('inp-y').value.replace(',','.'));
       if(isNaN(x)||isNaN(y)) return {ok:false,nesten:false,melding:'Fyll inn både x og y.'};
-      var ok=Math.abs(x-fx)<=0.015&&Math.abs(y-fy)<=0.015;
-      return {ok:ok,nesten:!ok&&Math.abs(x-fx)<=0.1&&Math.abs(y-fy)<=0.1,
+      var ok=Math.abs(x-fx)<=0.055&&Math.abs(y-fy)<=0.055;
+      return {ok:ok,nesten:!ok&&Math.abs(x-fx)<=0.3&&Math.abs(y-fy)<=0.3,
         melding:ok?'✓ Riktig! ('+fmt(fx)+', '+fmt(fy)+').':'Fasit: ('+fmt(fx)+', '+fmt(fy)+'). Du svarte ('+x.toFixed(2)+', '+y.toFixed(2)+')'};
     };})(nyData.fasitX, nyData.fasitY);
   } else if (nyData.fasit1 !== undefined) {
@@ -1130,8 +1178,8 @@ function nyOppgave() {
       var x1=parseFloat(document.getElementById('inp-x1').value.replace(',','.')),x2=parseFloat(document.getElementById('inp-x2').value.replace(',','.'));
       if(isNaN(x1)||isNaN(x2)) return {ok:false,nesten:false,melding:'Fyll inn begge x-verdiene.'};
       var s=[x1,x2].sort(function(a,b){return a-b;});
-      var ok=Math.abs(s[0]-f1)<=0.015&&Math.abs(s[1]-f2)<=0.015;
-      return {ok:ok,nesten:!ok&&Math.abs(s[0]-f1)<=0.1&&Math.abs(s[1]-f2)<=0.1,
+      var ok=Math.abs(s[0]-f1)<=0.055&&Math.abs(s[1]-f2)<=0.055;
+      return {ok:ok,nesten:!ok&&Math.abs(s[0]-f1)<=0.3&&Math.abs(s[1]-f2)<=0.3,
         melding:ok?'✓ Riktig! x='+fmt(f1)+' og x='+fmt(f2)+'.':'Fasit: '+fmt(f1)+' og '+fmt(f2)+'. Du svarte '+x1.toFixed(2)+' og '+x2.toFixed(2)+'.'};
     };})(nyData.fasit1, nyData.fasit2);
   } else if (nyData.fasit !== undefined) {
