@@ -405,6 +405,15 @@ html, body {
 </div>
 
 <script>
+// ══ SKAPLAB LAGRING ══
+const SL={
+  _k:(s,f)=>`skaplab_${s}_${f}`,
+  les:(s,f,d=0)=>{try{const v=localStorage.getItem(SL._k(s,f));return v!==null?(isNaN(v)?JSON.parse(v):Number(v)):d;}catch(e){return d;}},
+  skriv:(s,f,v)=>{try{localStorage.setItem(SL._k(s,f),typeof v==='object'?JSON.stringify(v):v);}catch(e){}},
+  max:(s,f,v)=>{if(v>SL.les(s,f,0))SL.skriv(s,f,v);},
+  øk:(s,f)=>SL.skriv(s,f,SL.les(s,f,0)+1),
+};
+
 // ══ KONFIG ══
 const KFG = {
   lett:    { n:8,  skip:[{n:'Hangarskip',l:5,i:'🛳️'},{n:'Slagskip',l:4,i:'⛴️'},{n:'Krysser',l:3,i:'🚢'},{n:'Destroyer',l:2,i:'🚤'},{n:'Ubåt',l:2,i:'🔱'}] },
@@ -792,7 +801,14 @@ function oppdaterLister(){
 }
 
 // ══ SPILLSLUTT ══
+function lagreBSSlutt(v){
+  SL.øk('battleships','spill');
+  SL.max('battleships','bestProsent', treff+miss>0?Math.round(treff/(treff+miss)*100):0);
+  SL.skriv('battleships','lastPlayed',Date.now());
+  SL.skriv('battleships','lastVant',v?1:0);
+}
 function spillSlutt(vant){
+  lagreBSSlutt(vant);
   fase='slutt';
   document.getElementById('skytt-btn').disabled=true;
   if(!vant){
