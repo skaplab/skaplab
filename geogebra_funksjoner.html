@@ -23,7 +23,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #topbar span.sep{color:rgba(255,255,255,.2);}
 #topbar span.tittel{color:var(--text);font-weight:600;}
 #topbar .spacer{flex:1;}
-.otabs{display:flex;gap:4px;overflow-x:auto;max-width:50vw;}
+.otabs{display:none;}
 .otab{padding:4px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
   background:transparent;color:var(--dim);cursor:pointer;font-size:.72rem;
   font-family:var(--font-b);transition:all .15s;white-space:nowrap;flex-shrink:0;}
@@ -39,7 +39,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 #app{display:flex;height:calc(100vh - var(--nav-h) - 34px);overflow:hidden;}
 #ggb-wrap{flex:1;min-width:0;background:#fff;position:relative;}
 #ggb-container{width:100%;height:100%;}
-#panel{width:300px;flex-shrink:0;background:var(--bg);border-left:1px solid var(--border);
+#panel{width:380px;flex-shrink:0;background:var(--bg);border-left:1px solid var(--border);
   display:flex;flex-direction:column;overflow-y:auto;}
 .fremdrift{display:flex;gap:5px;justify-content:center;padding:10px 0 4px;}
 .fp{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12);transition:all .3s;}
@@ -81,6 +81,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   #panel{width:100%;border-left:none;border-top:1px solid var(--border);}
   .otabs{max-width:80vw;}
 }
+
+/* Oppgaveliste i panel */
+.oppg-liste{display:flex;flex-direction:column;gap:2px;padding:8px;border-bottom:1px solid var(--border);}
+.oppg-liste-tittel{font-size:.68rem;color:var(--dim);font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;padding:4px 6px 2px;}
+.oknapp{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+  border:1px solid transparent;background:transparent;color:var(--dim);cursor:pointer;
+  font-size:.82rem;font-family:var(--font-b);text-align:left;width:100%;transition:all .12s;}
+.oknapp:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.oknapp.aktiv{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.25);color:var(--accent);}
+.oknapp.løst{background:rgba(74,222,128,.06);border-color:rgba(74,222,128,.2);color:var(--green);}
+.oknapp .ok-ikon{font-size:.8rem;width:16px;flex-shrink:0;}
+.oknapp .ok-nr{font-size:.7rem;color:var(--dim);width:18px;flex-shrink:0;font-family:var(--font-h);}
+.grp-header{font-size:.7rem;color:var(--dim);font-weight:700;text-transform:uppercase;
+  letter-spacing:.4px;padding:8px 10px 3px;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -91,7 +106,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <span class="sep">/</span>
   <span class="tittel">📈 GeoGebra – Funksjoner</span>
   <div class="spacer"></div>
-  <div class="otabs" id="oppg-tabs"></div>
   <div class="topbar-stats">
     <span>✅ <b id="st-løst">0</b></span>
     <span>🎯 <b id="st-forsøk">0</b></span>
@@ -104,6 +118,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   </div>
   <div id="panel">
     <div class="fremdrift" id="fremdrift"></div>
+    <div id="oppg-liste-wrap"></div>
     <div class="oppg-boks">
       <div class="oppg-label" id="oppg-label">Oppgave</div>
       <div class="oppg-tekst" id="oppg-tekst">Laster GeoGebra…</div>
@@ -632,6 +647,106 @@ function byggSvarBoks(o) {
   var html = '';
   var draTyper = ['dra_punkt','dra_to_punkt','dra_en_y','dra_to_y','dra_en_x','dra_en_punkt'];
 
+
+// ── GRUPPE 6: INNTASTING I GEOGEBRA ──────────────────────────────
+
+OPPGAVER.push({
+  id: 'inp1',
+  gruppe: 'Skriv inn i GeoGebra',
+  tittel: '12 · Skriv inn lineær funksjon',
+  type: 'geogebra_input',
+  tekst: 'Skriv inn funksjonen <strong>f(x) = 2x − 3</strong> direkte i <strong>algebrafeltet</strong> i GeoGebra (feltet nederst i vinduet).',
+  hint: 'Klikk i algebrafeltet og skriv: f(x) = 2x - 3. Trykk Enter. Sjekk at grafen dukker opp.',
+  ggbKommandoer: [
+    'ZoomIn(-3, -8, 5, 6)',
+    'P1 = (1, -1)',
+    'P2 = (3, 3)',
+    'SetColor(P1, "Red")',
+    'SetColor(P2, "Red")',
+    'SetPointSize(P1, 6)',
+    'SetPointSize(P2, 6)',
+    'ShowLabel(P1, true)',
+    'ShowLabel(P2, true)',
+  ],
+  sjekk: function(ggb) {
+    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Funksjonen f er ikke definert ennå. Skriv f(x) = 2x - 3 i algebrafeltet og trykk Enter.' };
+    var f1 = ggb.getValue('f(1)');
+    var f3 = ggb.getValue('f(3)');
+    var f0 = ggb.getValue('f(0)');
+    var ok = Math.abs(f1 - (-1)) < 0.1 && Math.abs(f3 - 3) < 0.1 && Math.abs(f0 - (-3)) < 0.1;
+    var nesten = Math.abs(f1 - (-1)) < 0.5 || Math.abs(f3 - 3) < 0.5;
+    return {
+      ok: ok, nesten: !ok && nesten,
+      melding: ok
+        ? '✓ Riktig! f(x) = 2x − 3. f(1) = −1 ✓, f(3) = 3 ✓, f(0) = −3 ✓.'
+        : 'f(1) = ' + f1.toFixed(2) + ' (skal være −1), f(3) = ' + f3.toFixed(2) + ' (skal være 3). Sjekk uttrykket ditt.'
+    };
+  }
+});
+
+OPPGAVER.push({
+  id: 'inp2',
+  gruppe: 'Skriv inn i GeoGebra',
+  tittel: '13 · Skriv inn parabel',
+  type: 'geogebra_input',
+  tekst: 'Skriv inn parabelen <strong>f(x) = x² − 2x − 3</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
+  hint: 'Skriv: f(x) = x^2 - 2x - 3. Bruk ^ for potens. Sjekk nullpunktene: f(−1) = 0 og f(3) = 0.',
+  ggbKommandoer: [
+    'ZoomIn(-3, -6, 5, 6)',
+    'N1 = (-1, 0)',
+    'N2 = (3, 0)',
+    'Bunn = (1, -4)',
+    'SetColor(N1, "Red")', 'SetColor(N2, "Red")', 'SetColor(Bunn, "Orange")',
+    'SetPointSize(N1, 6)', 'SetPointSize(N2, 6)', 'SetPointSize(Bunn, 6)',
+    'ShowLabel(N1, true)', 'ShowLabel(N2, true)', 'ShowLabel(Bunn, true)',
+  ],
+  sjekk: function(ggb) {
+    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Skriv f(x) = x^2 - 2x - 3 i algebrafeltet og trykk Enter.' };
+    var fn1 = ggb.getValue('f(-1)');
+    var f3  = ggb.getValue('f(3)');
+    var f1  = ggb.getValue('f(1)');
+    var ok = Math.abs(fn1) < 0.1 && Math.abs(f3) < 0.1 && Math.abs(f1 - (-4)) < 0.1;
+    return {
+      ok: ok, nesten: !ok && (Math.abs(fn1)<0.5 && Math.abs(f3)<0.5),
+      melding: ok
+        ? '✓ Riktig! f(x) = x² − 2x − 3. Nullpunkter: x = −1 og x = 3. Bunnpunkt: (1, −4).'
+        : 'f(−1) = '+fn1.toFixed(2)+' (skal være 0), f(3) = '+f3.toFixed(2)+' (skal være 0). Sjekk uttrykket.'
+    };
+  }
+});
+
+OPPGAVER.push({
+  id: 'inp3',
+  gruppe: 'Skriv inn i GeoGebra',
+  tittel: '14 · Skriv inn eksponentialfunksjon',
+  type: 'geogebra_input',
+  tekst: 'Skriv inn <strong>f(x) = 2 · 3ˣ</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
+  hint: 'Skriv: f(x) = 2 * 3^x. Bruk * for ganging og ^ for potens.',
+  ggbKommandoer: [
+    'ZoomIn(-2, -1, 4, 20)',
+    'P0 = (0, 2)',
+    'P1 = (1, 6)',
+    'P2 = (2, 18)',
+    'SetColor(P0, "Red")', 'SetColor(P1, "Red")', 'SetColor(P2, "Red")',
+    'SetPointSize(P0, 6)', 'SetPointSize(P1, 6)', 'SetPointSize(P2, 6)',
+    'ShowLabel(P0, true)', 'ShowLabel(P1, true)', 'ShowLabel(P2, true)',
+  ],
+  sjekk: function(ggb) {
+    if (!ggb.isDefined('f')) return { ok:false, nesten:false, melding:'Skriv f(x) = 2 * 3^x i algebrafeltet og trykk Enter.' };
+    var f0 = ggb.getValue('f(0)');
+    var f1 = ggb.getValue('f(1)');
+    var f2 = ggb.getValue('f(2)');
+    var ok = Math.abs(f0 - 2) < 0.1 && Math.abs(f1 - 6) < 0.1 && Math.abs(f2 - 18) < 0.1;
+    return {
+      ok: ok, nesten: !ok && (Math.abs(f0-2)<0.5 && Math.abs(f1-6)<0.5),
+      melding: ok
+        ? '✓ Riktig! f(0) = 2 ✓, f(1) = 6 ✓, f(2) = 18 ✓.'
+        : 'f(0) = '+f0.toFixed(2)+' (skal være 2), f(1) = '+f1.toFixed(2)+' (skal være 6). Sjekk uttrykket.'
+    };
+  }
+});
+
+
   if (o.type === 'avgrens' || o.type === 'slider') {
     var vis = o.sliderVis || ['a','b'];
     var labs = o.sliderLabels || vis;
@@ -641,6 +756,8 @@ function byggSvarBoks(o) {
     startSliderPolling(vis);
   } else if (draTyper.indexOf(o.type) >= 0) {
     html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Dra det/de oransje punktet/ene i GeoGebra til riktig posisjon, trykk deretter Sjekk svar.</div>';
+  } else if (o.type === 'geogebra_input') {
+    html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Skriv funksjonen i <strong>algebrafeltet</strong> i GeoGebra-vinduet og trykk <strong>Enter</strong>. Trykk deretter Sjekk svar.</div>';
   } else if (o.type === 'regresjon') {
     html = '<div class="svar-label">Les av fra GeoGebra og skriv inn:</div>'
       +(o.inputIds.length===3?'<div class="koeff-grid">':'<div class="koeff-grid to">');
@@ -699,8 +816,10 @@ function sjekk() {
     oppdaterFremdrift();
     oppdaterStats();
     clearInterval(pollingTimer);
-    var tab = document.getElementById('tab-'+gjeldende);
-    if (tab) tab.className = 'otab løst';
+    var tab=document.getElementById('tab-'+gjeldende);
+    if(tab)tab.className='oknapp løst';
+    var ikon=document.getElementById('ikon-'+gjeldende);
+    if(ikon)ikon.textContent='✓';
   } else if (res.nesten) {
     oppdaterFB('nesten', res.melding);
   } else {
@@ -719,8 +838,13 @@ function oppdaterFB(type, tekst) {
 function gåTilOppgave(idx) {
   clearInterval(pollingTimer);
   gjeldende = idx;
-  document.querySelectorAll('.otab').forEach(function(t,i){
-    t.className='otab'+(løste[i]?' løst':'')+(i===idx?' aktiv':'');
+  // Oppdater knapper i listen
+  OPPGAVER.forEach(function(o,i){
+    var btn=document.getElementById('tab-'+i);
+    if(!btn)return;
+    btn.className='oknapp'+(løste[i]?' løst':'')+(i===idx?' aktiv':'');
+    var ikon=document.getElementById('ikon-'+i);
+    if(ikon)ikon.textContent=løste[i]?'✓':i===idx?'▶':'○';
   });
   lastOppgave(idx);
 }
@@ -749,16 +873,24 @@ function oppdaterStats() {
 
 function byggTabs() {
   if (!løste.length) løste=new Array(OPPGAVER.length).fill(false);
-  var tabs=document.getElementById('oppg-tabs');
-  if (!tabs) return;
-  OPPGAVER.forEach(function(o,i){
-    var btn=document.createElement('button');
-    btn.id='tab-'+i;
-    btn.className='otab'+(i===0?' aktiv':'');
-    btn.textContent=o.tittel;
-    btn.onclick=(function(idx){return function(){gåTilOppgave(idx);};})(i);
-    tabs.appendChild(btn);
+  var wrap=document.getElementById('oppg-liste-wrap');
+  if (!wrap) return;
+  // Grupper oppgavene
+  var grupper=[];
+  OPPGAVER.forEach(function(o){if(grupper.indexOf(o.gruppe)<0)grupper.push(o.gruppe);});
+  var html='';
+  grupper.forEach(function(g){
+    html+='<div class="grp-header">'+g+'</div>';
+    OPPGAVER.forEach(function(o,i){
+      if(o.gruppe!==g)return;
+      html+='<button id="tab-'+i+'" class="oknapp" onclick="gåTilOppgave('+i+')">'
+        +'<span class="ok-nr">'+(i+1)+'</span>'
+        +'<span class="ok-ikon" id="ikon-'+i+'">○</span>'
+        +'<span>'+o.tittel.replace(/^\d+ · /,'')+'</span>'
+        +'</button>';
+    });
   });
+  wrap.innerHTML=html;
 }
 
 function byggGruppeTabs() {
