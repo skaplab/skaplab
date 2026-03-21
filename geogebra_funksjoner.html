@@ -106,6 +106,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <span class="sep">/</span>
   <span class="tittel">📈 GeoGebra – Funksjoner</span>
   <div class="spacer"></div>
+  <button onclick="nyRunde()" style="padding:3px 10px;border-radius:8px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.08);color:#ffd700;cursor:pointer;font-size:.74rem;font-family:var(--font-b);margin-right:4px;">🔀 Ny runde</button>
   <div class="topbar-stats">
     <span>✅ <b id="st-løst">0</b></span>
     <span>🎯 <b id="st-forsøk">0</b></span>
@@ -129,452 +130,526 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 <script>
 // ══════════════════════════════════════════════════════════════════
-// OPPGAVE-SAMLING 3: Avgrensning, ekstremalpunkt, x/y-verdier
-// og skjæringspunkt – med GeoGebra-kommandoer for sjekk
+// HJELPEFUNKSJONER FOR DYNAMISKE OPPGAVER
 // ══════════════════════════════════════════════════════════════════
 
-var OPPGAVER = [
+function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function rndIkkeNull(a, b) { var v; do { v = rnd(a, b); } while (v === 0); return v; }
+function pluss(n) { return n >= 0 ? '+' + n : '\u2212' + Math.abs(n); }
+function vis(n)   { return n < 0 ? '(' + n + ')' : String(n); }
+function fmt(n)   { return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ','); }
 
-// ── GRUPPE 1: AVGRENSE GRAF ────────────────────────────────────────
+// Tegnsetting for ax²+bx+c
+function lagPolynom(a, b, c) {
+  var s = '';
+  if (a === 1) s += 'x\u00b2';
+  else if (a === -1) s += '\u2212x\u00b2';
+  else s += a + 'x\u00b2';
+  if (b > 0)  s += ' + ' + b + 'x';
+  else if (b < 0) s += ' \u2212 ' + Math.abs(b) + 'x';
+  if (c > 0)  s += ' + ' + c;
+  else if (c < 0) s += ' \u2212 ' + Math.abs(c);
+  return s;
+}
+function lagLinear(a, b) {
+  var s = '';
+  if (a === 1) s = 'x'; else if (a === -1) s = '\u2212x'; else s = a + 'x';
+  if (b > 0) s += ' + ' + b; else if (b < 0) s += ' \u2212 ' + Math.abs(b);
+  return s;
+}
+function lagEksp(a, b) {
+  return (a === 1 ? '' : a + ' \u00b7 ') + b + '\u02e3';
+}
 
-{
-  id: 'avg1',
-  gruppe: 'Avgrense graf',
-  tittel: '1 · Avgrens f(x) = x²',
-  type: 'avgrens',
-  tekst: 'Bruk sliderne <strong>a</strong> og <strong>b</strong> til å avgrense grafen <strong>f(x) = x²</strong> slik at den bare vises for <strong>−2 ≤ x ≤ 3</strong>.',
-  hint: 'Dra slider a til −2 og slider b til 3. Grafen skal bare vises mellom disse verdiene.',
-  ggbKommandoer: [
-    'ZoomIn(-4, -1, 5, 12)',
-    'a = Slider(-5, 0, 0.5)',
-    'b = Slider(0, 5, 0.5)',
-    'SetValue(a, -4)',
-    'SetValue(b, 4)',
-    'bakgrunn(x) = x^2',
-    'SetColor(bakgrunn, "LightGray")',
-    'SetLineStyle(bakgrunn, 1)',
-    'SetLineThickness(bakgrunn, 1)',
-    'f(x) = If(x >= a && x <= b, x^2)',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'ShowLabel(a, true)',
-    'ShowLabel(b, true)',
-  ],
-  fasitA: -2, fasitB: 3,
-  sliderVis: ['a', 'b'],
-  sliderLabels: ['a (venstre grense)', 'b (høyre grense)'],
-  sjekk: function(ggb) {
-    var a = ggb.getValue('a'), b = ggb.getValue('b');
-    var ok = Math.abs(a - (-2)) < 0.3 && Math.abs(b - 3) < 0.3;
-    var nesten = Math.abs(a - (-2)) < 0.8 || Math.abs(b - 3) < 0.8;
-    return {
-      ok: ok, nesten: !ok && nesten,
-      melding: ok
-        ? '✓ Riktig! Grafen vises for −2 ≤ x ≤ 3.'
-        : 'a = ' + a.toFixed(1) + ' (skal være −2), b = ' + b.toFixed(1) + ' (skal være 3).'
-    };
-  }
+// GeoGebra-uttrykk (bruker * og ^ i stedet for · og ˣ)
+function ggbPolynom(a, b, c) {
+  return a + '*x^2 + ' + b + '*x + ' + c;
+}
+function ggbLinear(a, b) { return a + '*x + ' + b; }
+function ggbEksp(a, b)   { return a + ' * ' + b + '^x'; }
+
+// ══════════════════════════════════════════════════════════════════
+// GENERATORER — én per oppgave-ID
+// ══════════════════════════════════════════════════════════════════
+
+var GENERATORER = {
+
+// ── 1. Avgrense parabel ──────────────────────────────────────────
+'avg1': function() {
+  var fns = [
+    { uttrykk: 'x^2',       visning: 'x\u00b2',      farge: 'Blue'   },
+    { uttrykk: 'x^2 - 4',   visning: 'x\u00b2 \u2212 4', farge: 'Blue' },
+    { uttrykk: '2*x^2',     visning: '2x\u00b2',      farge: 'Blue'   },
+    { uttrykk: 'x^2 + 1',   visning: 'x\u00b2 + 1',   farge: 'Blue'   },
+  ];
+  var fn = fns[rnd(0, fns.length - 1)];
+  var a = rnd(-4, -1);
+  var b = rnd(2, 5);
+  return {
+    fn: fn, a: a, b: b,
+    tekst: 'Bruk sliderne <strong>a</strong> og <strong>b</strong> til \u00e5 avgrense grafen <strong>f(x) = ' + fn.visning + '</strong> slik at den bare vises for <strong>' + a + ' \u2264 x \u2264 ' + b + '</strong>.',
+    hint: 'Dra slider a til ' + a + ' og slider b til ' + b + '.',
+    cmds: [
+      'ZoomIn(' + (a-2) + ', -2, ' + (b+2) + ', 15)',
+      'a = Slider(-6, 0, 0.5)', 'b = Slider(0, 8, 0.5)',
+      'SetValue(a, ' + (a-1) + ')', 'SetValue(b, ' + (b+1) + ')',
+      'bakgrunn(x) = ' + fn.uttrykk,
+      'SetColor(bakgrunn, "LightGray")', 'SetLineStyle(bakgrunn, 1)',
+      'f(x) = If(x >= a && x <= b, ' + fn.uttrykk + ')',
+      'SetColor(f, "' + fn.farge + '")', 'SetLineThickness(f, 3)',
+    ],
+    fasitA: a, fasitB: b,
+  };
 },
 
-{
-  id: 'avg2',
-  gruppe: 'Avgrense graf',
-  tittel: '2 · Avgrens f(x) = 2ˣ',
-  type: 'avgrens',
-  tekst: 'Avgrens grafen <strong>f(x) = 2ˣ</strong> slik at den bare vises for <strong>−3 ≤ x ≤ 4</strong>.',
-  hint: 'Dra slider a til −3 og slider b til 4.',
-  ggbKommandoer: [
-    'ZoomIn(-5, -1, 6, 18)',
-    'a = Slider(-5, 0, 0.5)',
-    'b = Slider(0, 6, 0.5)',
-    'SetValue(a, -4)',
-    'SetValue(b, 5)',
-    'bakgrunn(x) = 2^x',
-    'SetColor(bakgrunn, "LightGray")',
-    'SetLineStyle(bakgrunn, 1)',
-    'f(x) = If(x >= a && x <= b, 2^x)',
-    'SetColor(f, "Purple")',
-    'SetLineThickness(f, 3)',
-  ],
-  fasitA: -3, fasitB: 4,
-  sliderVis: ['a', 'b'],
-  sliderLabels: ['a (venstre grense)', 'b (høyre grense)'],
-  sjekk: function(ggb) {
-    var a = ggb.getValue('a'), b = ggb.getValue('b');
-    var ok = Math.abs(a - (-3)) < 0.3 && Math.abs(b - 4) < 0.3;
-    return {
-      ok: ok, nesten: !ok && (Math.abs(a-(-3))<0.8 || Math.abs(b-4)<0.8),
-      melding: ok ? '✓ Riktig! Grafen vises for −3 ≤ x ≤ 4.'
-                  : 'a = ' + a.toFixed(1) + ' (skal være −3), b = ' + b.toFixed(1) + ' (skal være 4).'
-    };
-  }
+// ── 2. Avgrense eksponentiell ─────────────────────────────────────
+'avg2': function() {
+  var basar = [2, 3];
+  var base = basar[rnd(0, 1)];
+  var a = rnd(-3, -1);
+  var b = rnd(2, 4);
+  return {
+    a: a, b: b,
+    tekst: 'Avgrens grafen <strong>f(x) = ' + base + '\u02e3</strong> slik at den bare vises for <strong>' + a + ' \u2264 x \u2264 ' + b + '</strong>.',
+    hint: 'Dra slider a til ' + a + ' og slider b til ' + b + '.',
+    cmds: [
+      'ZoomIn(' + (a-2) + ', -1, ' + (b+2) + ', 20)',
+      'a = Slider(-5, 0, 0.5)', 'b = Slider(0, 6, 0.5)',
+      'SetValue(a, ' + (a-1) + ')', 'SetValue(b, ' + (b+1) + ')',
+      'bakgrunn(x) = ' + base + '^x',
+      'SetColor(bakgrunn, "LightGray")', 'SetLineStyle(bakgrunn, 1)',
+      'f(x) = If(x >= a && x <= b, ' + base + '^x)',
+      'SetColor(f, "Purple")', 'SetLineThickness(f, 3)',
+    ],
+    fasitA: a, fasitB: b,
+  };
 },
 
-// ── GRUPPE 2: EKSTREMALPUNKT ───────────────────────────────────────
-
-{
-  id: 'eks1',
-  gruppe: 'Ekstremalpunkt',
-  tittel: '3 · Dra til toppunktet',
-  type: 'dra_punkt',
-  tekst: 'Grafen viser <strong>f(x) = −x² + 4x − 1</strong>. <strong>Dra punkt E</strong> langs grafen til toppunktet. Bruk så "Sjekk svar".',
-  hint: 'GeoGebra beregner toppunktet med TurningPoint(f). Dra E til høyest mulig punkt på grafen.',
-  ggbKommandoer: [
-    'ZoomIn(-1, -3, 5, 5)',
-    'f(x) = -x^2 + 4x - 1',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'T = TurningPoint(f)',
-    'SetVisible(T, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 2, fasitY: 3,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var tx = ggb.getXcoord('T'), ty = ggb.getYcoord('T');
-    if (isNaN(ex)) return { ok:false, nesten:false, melding:'Dra punkt E til toppunktet på grafen!' };
-    var ok = Math.abs(ex - tx) < 0.2 && Math.abs(ey - ty) < 0.2;
-    var nesten = Math.abs(ex - tx) < 0.6;
-    if (ok) {
-      ggb.setVisible('T', true);
-      ggb.setColor('T', 0, 200, 0);
-      ggb.setPointSize('T', 6);
-    }
-    return {
-      ok: ok, nesten: !ok && nesten,
-      melding: ok
-        ? '✓ Riktig! Toppunkt T(' + tx.toFixed(1) + ', ' + ty.toFixed(1) + '). x = −b/(2a) = 2, f(2) = 3.'
-        : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra lenger mot toppen! Toppunktet er i x = 2.'
-    };
-  }
+// ── 3–4. Ekstremalpunkt parabel ───────────────────────────────────
+'eks_parabel': function(retning) {
+  // retning: 1=toppunkt (a<0), -1=bunnpunkt (a>0)
+  var a = retning === 1 ? rnd(-3, -1) : rnd(1, 3);
+  // Velg b,c slik at toppunkt-x er heltall: x0 = -b/(2a)
+  var x0 = rnd(-3, 3);
+  var b  = -2 * a * x0;          // b = -2ax0 → x0 = -b/2a ✓
+  var c  = rnd(-5, 5);
+  var y0 = a * x0 * x0 + b * x0 + c;
+  var type = retning === 1 ? 'toppunkt' : 'bunnpunkt';
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong>. Bruk GeoGebras <strong>ekstremalpunkt-verkt\u00f8y</strong> og finn ' + type + 'et. Skriv inn koordinatene.',
+    hint: 'Beregning \u2192 Ekstremalpunkt, klikk p\u00e5 grafen. Eller: x = \u2212b/(2a) = ' + x0 + ', f(' + x0 + ') = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-5) + ', ' + (y0 - (retning===1?2:6)) + ', ' + (x0+5) + ', ' + (y0 + (retning===1?6:2)) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
 },
 
-{
-  id: 'eks2',
-  gruppe: 'Ekstremalpunkt',
-  tittel: '4 · Dra til bunnpunktet',
-  type: 'dra_punkt',
-  tekst: 'Grafen viser <strong>f(x) = x² − 6x + 5</strong>. <strong>Dra punkt E</strong> langs grafen til bunnpunktet.',
-  hint: 'Bunnpunktet er det laveste punktet på parabelen. x = −b/(2a) = 6/2 = 3.',
-  ggbKommandoer: [
-    'ZoomIn(-1, -6, 7, 8)',
-    'f(x) = x^2 - 6x + 5',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'T = TurningPoint(f)',
-    'SetVisible(T, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 3, fasitY: -4,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var tx = ggb.getXcoord('T'), ty = ggb.getYcoord('T');
-    if (isNaN(ex)) return { ok:false, nesten:false, melding:'Dra punkt E til bunnpunktet på grafen!' };
-    var ok = Math.abs(ex - tx) < 0.2 && Math.abs(ey - ty) < 0.2;
-    if (ok) { ggb.setVisible('T', true); ggb.setColor('T', 0, 200, 0); ggb.setPointSize('T', 6); }
-    return {
-      ok: ok, nesten: !ok && Math.abs(ex-tx)<0.6,
-      melding: ok
-        ? '✓ Riktig! Bunnpunkt T(' + tx.toFixed(1) + ', ' + ty.toFixed(1) + ').'
-        : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra lenger mot bunnen! Bunnpunkt x = 3.'
-    };
-  }
+// ── 5. Kubikk – lokalt maksimum ──────────────────────────────────
+'eks3': function() {
+  // f(x) = ax³ + bx med f'(x) = 3ax² + b = 0 → x = ±sqrt(-b/3a)
+  // Enklest: f(x) = x³ - kx, f'= 3x²-k=0, x=±sqrt(k/3)
+  // For å få pent svar: k=3 → x=±1
+  var k = [3, 12, 27][rnd(0, 2)]; // gir x=±1, ±2, ±3
+  var x0 = -Math.sqrt(k / 3); // lokalt maks (negativ x)
+  var y0 = x0 * x0 * x0 - k * x0;
+  return {
+    k: k, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b3 \u2212 ' + k + 'x</strong>. Finn <strong>lokalt maksimum</strong> med GeoGebras verkt\u00f8y.',
+    hint: 'Bruk Beregning \u2192 Ekstremalpunkt og klikk p\u00e5 det \u00f8verste punktet. x = \u2212' + Math.abs(x0) + '.',
+    cmds: [
+      'ZoomIn(' + (x0-3) + ', ' + (y0-2) + ', ' + (-x0+3) + ', ' + (y0+2) + ')',
+      'f(x) = x^3 - ' + k + '*x',
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
 },
 
-{
-  id: 'eks3',
-  gruppe: 'Ekstremalpunkt',
-  tittel: '5 · To ekstremalpunkt',
-  type: 'dra_to_punkt',
-  tekst: 'Grafen viser <strong>f(x) = x³ − 3x</strong>. Funksjonen har <strong>to ekstremalpunkt</strong>. Dra punkt <strong>E1</strong> til lokalt maksimum og <strong>E2</strong> til lokalt minimum.',
-  hint: 'Derivér: f\'(x) = 3x² − 3 = 0 → x = ±1. Maks i x = −1, min i x = 1.',
-  ggbKommandoer: [
-    'ZoomIn(-3, -4, 3, 4)',
-    'f(x) = x^3 - 3x',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'Tmaks = Extremum(f, -3, 0)',
-    'Tmin = Extremum(f, 0, 3)',
-    'SetVisible(Tmaks, false)',
-    'SetVisible(Tmin, false)',
-    'E1 = Point(f)',
-    'E2 = Point(f)',
-    'SetColor(E1, "Orange")',
-    'SetColor(E2, "Green")',
-    'SetPointSize(E1, 7)',
-    'SetPointSize(E2, 7)',
-    'ShowLabel(E1, true)',
-    'ShowLabel(E2, true)',
-  ],
-  sjekk: function(ggb) {
-    var e1x = ggb.getXcoord('E1'), e1y = ggb.getYcoord('E1');
-    var e2x = ggb.getXcoord('E2'), e2y = ggb.getYcoord('E2');
-    var maks = { x: -1, y: 2 }, min = { x: 1, y: -2 };
-    // Sjekk begge kombinasjoner (E1=maks,E2=min ELLER E1=min,E2=maks)
-    var ok1 = Math.abs(e1x-maks.x)<0.2 && Math.abs(e2x-min.x)<0.2;
-    var ok2 = Math.abs(e1x-min.x)<0.2 && Math.abs(e2x-maks.x)<0.2;
-    var ok = ok1 || ok2;
-    var nesten = (Math.abs(e1x-maks.x)<0.5 || Math.abs(e1x-min.x)<0.5);
-    if (ok) {
-      ggb.setVisible('Tmaks', true); ggb.setColor('Tmaks', 0, 200, 0); ggb.setPointSize('Tmaks', 6);
-      ggb.setVisible('Tmin', true);  ggb.setColor('Tmin', 0, 200, 0);  ggb.setPointSize('Tmin', 6);
-    }
-    return {
-      ok: ok, nesten: !ok && nesten,
-      melding: ok
-        ? '✓ Riktig! Maks i (−1, 2) og min i (1, −2). f\'(x) = 3x² − 3 = 0 → x = ±1.'
-        : 'E1: (' + e1x.toFixed(2)+', '+e1y.toFixed(2)+'), E2: ('+e2x.toFixed(2)+', '+e2y.toFixed(2)+'). Hint: x = ±1.'
-    };
-  }
+// ── 6. Toppunkt med desimaler ────────────────────────────────────
+'eks4': function() {
+  // a < 0, b odd → x0 = -b/(2a) har .5-desimal
+  var a = rnd(-3, -1);
+  var b = [1, 3, 5, -1, -3, -5][rnd(0, 5)]; // odd
+  var c = rnd(-3, 3);
+  var x0 = -b / (2 * a);            // .5-desimal
+  var y0 = a * x0 * x0 + b * x0 + c;
+  y0 = Math.round(y0 * 100) / 100;  // rund til 2 des
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong>. Finn toppunktet. Rund av til to desimaler.',
+    hint: 'GeoGebra viser koordinatene n\u00e5r du klikker med ekstremalpunkt-verkt\u00f8yet. x = ' + fmt(x0) + ', y \u2248 ' + fmt(y0) + '.',
+    cmds: [
+      'ZoomIn(' + (x0-5) + ', ' + (y0-4) + ', ' + (x0+5) + ', ' + (y0+4) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
 },
 
-// ── GRUPPE 3: FINN X VED GITT Y ────────────────────────────────────
-
-{
-  id: 'xy1',
-  gruppe: 'Finn x ved gitt y',
-  tittel: '6 · Dra til y = 5 (to svar)',
-  type: 'dra_to_y',
-  tekst: 'Grafen viser <strong>f(x) = x² − 4</strong> og linjen <strong>y = 5</strong>. Dra punkt <strong>E1</strong> og <strong>E2</strong> til de to skjæringspunktene.',
-  hint: 'GeoGebra beregner skjæringspunktene med Intersect(f, yLinje). x² − 4 = 5 → x = ±3.',
-  ggbKommandoer: [
-    'ZoomIn(-5, -6, 5, 8)',
-    'f(x) = x^2 - 4',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'yLinje: y = 5',
-    'SetColor(yLinje, "Red")',
-    'SetLineStyle(yLinje, 1)',
-    'S = Intersect(f, yLinje)',
-    'SetVisible(S, false)',
-    'E1 = Point(f)',
-    'E2 = Point(f)',
-    'SetColor(E1, "Orange")',
-    'SetColor(E2, "Orange")',
-    'SetPointSize(E1, 7)',
-    'SetPointSize(E2, 7)',
-    'ShowLabel(E1, true)',
-    'ShowLabel(E2, true)',
-  ],
-  fasitY: 5,
-  sjekk: function(ggb) {
-    var e1y = ggb.getYcoord('E1'), e2y = ggb.getYcoord('E2');
-    var e1x = ggb.getXcoord('E1'), e2x = ggb.getXcoord('E2');
-    var xVals = [e1x, e2x].sort(function(a,b){return a-b;});
-    var ok = Math.abs(e1y - 5) < 0.3 && Math.abs(e2y - 5) < 0.3
-          && Math.abs(xVals[0] - (-3)) < 0.3 && Math.abs(xVals[1] - 3) < 0.3;
-    var nesten = Math.abs(e1y - 5) < 0.7 || Math.abs(e2y - 5) < 0.7;
-    if (ok) {
-      ggb.setVisible('S', true);
-      ggb.setColor('S', 0, 200, 0);
-      ggb.setPointSize('S', 6);
-    }
-    return {
-      ok: ok, nesten: !ok && nesten,
-      melding: ok
-        ? '✓ Riktig! Skjæringspunktene er (−3, 5) og (3, 5). x² − 4 = 5 → x = ±3.'
-        : 'E1 y=' + e1y.toFixed(2) + ', E2 y=' + e2y.toFixed(2) + '. Begge skal ligge på y = 5.'
-    };
-  }
+// ── 7. To x ved gitt y ────────────────────────────────────────────
+'xy1': function() {
+  // f(x) = x²-c, y=k → x=±sqrt(k+c), velg c,k slik at k+c er kvadrattall
+  var x0 = rnd(1, 4);  // fasit x = ±x0
+  var c  = rnd(0, 5);
+  var k  = x0 * x0 - c; // k+c = x0² → x=±x0
+  return {
+    x0: x0, c: c, k: k,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b2 \u2212 ' + c + '</strong> og linjen <strong>y\u00a0=\u00a0' + k + '</strong>. Bruk GeoGebras <strong>skj\u00e6ringspunkt-verkt\u00f8y</strong> og finn de to x-verdiene.',
+    hint: 'Beregning \u2192 Skj\u00e6ring, klikk p\u00e5 grafen og den r\u00f8de linjen. x\u00b2\u2212' + c + '=' + k + ' \u2192 x=\u00b1' + x0 + '.',
+    cmds: [
+      'ZoomIn(' + (-x0-3) + ', ' + (k-4) + ', ' + (x0+3) + ', ' + (k+4) + ')',
+      'f(x) = x^2 - ' + c,
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'yLinje: y = ' + k,
+      'SetColor(yLinje, "Red")', 'SetLineStyle(yLinje, 1)',
+    ],
+    fasit1: -x0, fasit2: x0,
+  };
 },
 
-{
-  id: 'xy2',
-  gruppe: 'Finn x ved gitt y',
-  tittel: '7 · Finn x der f(x) = 7',
-  type: 'dra_en_y',
-  tekst: 'Grafen viser <strong>f(x) = 2x + 1</strong> og linjen <strong>y = 7</strong>. Dra punkt <strong>E</strong> til skjæringspunktet.',
-  hint: '2x + 1 = 7 → x = 3. Skjæringspunktet er (3, 7).',
-  ggbKommandoer: [
-    'ZoomIn(-2, -3, 6, 10)',
-    'f(x) = 2x + 1',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'yLinje: y = 7',
-    'SetColor(yLinje, "Red")',
-    'SetLineStyle(yLinje, 1)',
-    'S = Intersect(f, yLinje)',
-    'SetVisible(S, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 3, fasitY: 7,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var ok = Math.abs(ex - 3) < 0.2 && Math.abs(ey - 7) < 0.2;
-    if (ok) { ggb.setVisible('S', true); ggb.setColor('S', 0, 200, 0); ggb.setPointSize('S', 6); }
-    return {
-      ok: ok, nesten: !ok && Math.abs(ey-7)<0.5,
-      melding: ok ? '✓ Riktig! Skjæringspunkt (3, 7). 2·3 + 1 = 7.'
-                  : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra E til y = 7.'
-    };
-  }
+// ── 8. En x ved gitt y (lineær) ──────────────────────────────────
+'xy2': function() {
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var x0 = rnd(-3, 3);
+  var k  = a * x0 + b;
+  return {
+    a: a, b: b, x0: x0, k: k,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagLinear(a, b) + '</strong> og linjen <strong>y\u00a0=\u00a0' + k + '</strong>. Bruk GeoGebras skj\u00e6ringspunkt-verkt\u00f8y og finn x-verdien.',
+    hint: 'Beregning \u2192 Skj\u00e6ring. ' + a + 'x' + (b>=0?'+':'')+b+'='+k+' \u2192 x='+x0+'.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (k-6) + ', ' + (x0+4) + ', ' + (k+6) + ')',
+      'f(x) = ' + ggbLinear(a, b),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'yLinje: y = ' + k,
+      'SetColor(yLinje, "Red")', 'SetLineStyle(yLinje, 1)',
+    ],
+    fasit: x0,
+  };
 },
 
-// ── GRUPPE 4: FINN Y VED GITT X ────────────────────────────────────
-
-{
-  id: 'yx1',
-  gruppe: 'Finn y ved gitt x',
-  tittel: '8 · Dra til x = 4',
-  type: 'dra_en_x',
-  tekst: 'Grafen viser <strong>f(x) = x² − 3x + 2</strong> og den vertikale linjen <strong>x = 4</strong>. Dra punkt <strong>E</strong> til skjæringspunktet mellom grafen og x = 4.',
-  hint: 'f(4) = 16 − 12 + 2 = 6. Punktet er (4, 6).',
-  ggbKommandoer: [
-    'ZoomIn(-1, -2, 6, 10)',
-    'f(x) = x^2 - 3x + 2',
-    'SetColor(f, "Blue")',
-    'SetLineThickness(f, 3)',
-    'xLinje: x = 4',
-    'SetColor(xLinje, "Orange")',
-    'SetLineStyle(xLinje, 1)',
-    'P = (4, f(4))',
-    'SetVisible(P, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 4, fasitY: 6,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var px = ggb.getXcoord('P'), py = ggb.getYcoord('P');
-    var ok = Math.abs(ex - px) < 0.2 && Math.abs(ey - py) < 0.2;
-    if (ok) { ggb.setVisible('P', true); ggb.setColor('P', 0, 200, 0); ggb.setPointSize('P', 6); }
-    return {
-      ok: ok, nesten: !ok && Math.abs(ex-4)<0.5,
-      melding: ok ? '✓ Riktig! f(4) = ' + py.toFixed(1) + '. Punktet er (' + px.toFixed(1) + ', ' + py.toFixed(1) + ').'
-                  : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra til x = 4 på grafen.'
-    };
-  }
+// ── 9. Finn y = f(x0) på parabel ─────────────────────────────────
+'yx1': function() {
+  var a = rndIkkeNull(-2, 2);
+  var b = rnd(-3, 3);
+  var c = rnd(-4, 4);
+  var x0 = rnd(1, 4);
+  var y0 = a * x0 * x0 + b * x0 + c;
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong> og linjen <strong>x\u00a0=\u00a0' + x0 + '</strong>. Skriv <strong>f(' + x0 + ')</strong> i algebrafeltet eller les av grafen.',
+    hint: 'I algebrafeltet: skriv f(' + x0 + ') og trykk Enter. f(' + x0 + ') = ' + a + '\u00b7' + x0 + '\u00b2' + (b>=0?'+':'')+b+'\u00b7'+x0+(c>=0?'+':'')+c+' = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (y0-6) + ', ' + (x0+4) + ', ' + (y0+6) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'xLinje: x = ' + x0,
+      'SetColor(xLinje, "Orange")', 'SetLineStyle(xLinje, 1)',
+    ],
+    fasit: y0,
+  };
 },
 
-{
-  id: 'yx2',
-  gruppe: 'Finn y ved gitt x',
-  tittel: '9 · Finn f(3) eksponentielt',
-  type: 'dra_en_x',
-  tekst: 'Grafen viser <strong>f(x) = 3 · 2ˣ</strong> og linjen <strong>x = 3</strong>. Dra punkt <strong>E</strong> til riktig posisjon på grafen.',
-  hint: 'f(3) = 3 · 2³ = 3 · 8 = 24. Punktet er (3, 24).',
-  ggbKommandoer: [
-    'ZoomIn(-2, -2, 5, 30)',
-    'f(x) = 3 * 2^x',
-    'SetColor(f, "Purple")',
-    'SetLineThickness(f, 3)',
-    'xLinje: x = 3',
-    'SetColor(xLinje, "Orange")',
-    'SetLineStyle(xLinje, 1)',
-    'P = (3, f(3))',
-    'SetVisible(P, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 3, fasitY: 24,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var py = ggb.getYcoord('P');
-    var ok = Math.abs(ex - 3) < 0.2 && Math.abs(ey - py) < 0.5;
-    if (ok) { ggb.setVisible('P', true); ggb.setColor('P', 0, 200, 0); ggb.setPointSize('P', 6); }
-    return {
-      ok: ok, nesten: !ok && Math.abs(ex-3)<0.5,
-      melding: ok ? '✓ Riktig! f(3) = 3 · 8 = 24. Punktet er (3, 24).'
-                  : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra til x = 3 på grafen.'
-    };
-  }
+// ── 10. Finn y = f(x0) eksponentiell ─────────────────────────────
+'yx2': function() {
+  var a = rnd(1, 4);
+  var b = [2, 3][rnd(0, 1)];
+  var x0 = rnd(1, 3);
+  var y0 = a * Math.pow(b, x0);
+  return {
+    a: a, b: b, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagEksp(a, b) + '</strong> og linjen <strong>x\u00a0=\u00a0' + x0 + '</strong>. Skriv <strong>f(' + x0 + ')</strong> i algebrafeltet.',
+    hint: 'Skriv f(' + x0 + ') i algebrafeltet. f(' + x0 + ') = ' + a + '\u00b7' + b + '\u00b3' + (x0===3?'':'\u02e3') + ' = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(-2, -2, ' + (x0+3) + ', ' + (y0+4) + ')',
+      'f(x) = ' + ggbEksp(a, b),
+      'SetColor(f, "Purple")', 'SetLineThickness(f, 3)',
+      'xLinje: x = ' + x0,
+      'SetColor(xLinje, "Orange")', 'SetLineStyle(xLinje, 1)',
+    ],
+    fasit: y0,
+  };
 },
 
-// ── GRUPPE 5: SKJÆRINGSPUNKT ────────────────────────────────────────
-
-{
-  id: 'skj1',
-  gruppe: 'Skjæringspunkt',
-  tittel: '10 · Linje møter parabel',
-  type: 'dra_to_punkt',
-  tekst: 'Grafen viser <strong>f(x) = x²</strong> og <strong>g(x) = x + 2</strong>. Dra <strong>E1</strong> og <strong>E2</strong> til de to skjæringspunktene.',
-  hint: 'x² = x + 2 → x² − x − 2 = 0 → (x−2)(x+1) = 0 → x = 2 eller x = −1.',
-  ggbKommandoer: [
-    'ZoomIn(-3, -1, 4, 6)',
-    'f(x) = x^2',
-    'g(x) = x + 2',
-    'SetColor(f, "Blue")',
-    'SetColor(g, "Red")',
-    'SetLineThickness(f, 3)',
-    'SetLineThickness(g, 2)',
-    'S = Intersect(f, g)',
-    'SetVisible(S, false)',
-    'E1 = Point(f)',
-    'E2 = Point(f)',
-    'SetColor(E1, "Orange")',
-    'SetColor(E2, "Orange")',
-    'SetPointSize(E1, 7)',
-    'SetPointSize(E2, 7)',
-    'ShowLabel(E1, true)',
-    'ShowLabel(E2, true)',
-  ],
-  sjekk: function(ggb) {
-    var e1x = ggb.getXcoord('E1'), e2x = ggb.getXcoord('E2');
-    var e1y = ggb.getYcoord('E1'), e2y = ggb.getYcoord('E2');
-    var xVals = [e1x, e2x].sort(function(a,b){return a-b;});
-    var yVals = [e1y, e2y].sort(function(a,b){return a-b;});
-    var ok = Math.abs(xVals[0] - (-1)) < 0.25 && Math.abs(xVals[1] - 2) < 0.25;
-    if (ok) { ggb.setVisible('S', true); ggb.setColor('S', 0, 200, 0); ggb.setPointSize('S', 6); }
-    return {
-      ok: ok, nesten: !ok && (Math.abs(xVals[0]-(-1))<0.6 || Math.abs(xVals[1]-2)<0.6),
-      melding: ok
-        ? '✓ Riktig! Skjæringspunktene er (−1, 1) og (2, 4). x² = x + 2 → x = −1 eller x = 2.'
-        : 'E1:('+e1x.toFixed(2)+','+e1y.toFixed(2)+'), E2:('+e2x.toFixed(2)+','+e2y.toFixed(2)+'). Hint: x = −1 og x = 2.'
-    };
-  }
+// ── 11. Skjæring: linje møter parabel ────────────────────────────
+'skj1': function() {
+  // x² = mx + n → x² - mx - n = 0 → x = (m ± sqrt(m²+4n))/2
+  // Velg heltallsrøtter x1,x2: (x-x1)(x-x2)=0 → x²-(x1+x2)x+x1·x2=0
+  // f(x)=x², g(x)=mx+n: skjæring der x²=mx+n → m=x1+x2, n=-x1*x2
+  var x1 = rnd(-3, 0), x2 = rnd(1, 3);
+  while (x1 === x2) { x1 = rnd(-3, 0); }
+  var m = x1 + x2, n = -x1 * x2;
+  var y1 = x1 * x1, y2 = x2 * x2;
+  return {
+    x1: x1, x2: x2, m: m, n: n,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b2</strong> og <strong>g(x) = ' + lagLinear(m, n) + '</strong>. Bruk skj\u00e6ringspunkt-verkt\u00f8yet og finn de to x-verdiene der grafene m\u00f8tes.',
+    hint: 'Beregning \u2192 Skj\u00e6ring, klikk p\u00e5 begge grafene. x\u00b2=' + lagLinear(m, n) + ' \u2192 x=' + x1 + ' og x=' + x2 + '.',
+    cmds: [
+      'ZoomIn(' + (x1-2) + ', -1, ' + (x2+2) + ', ' + (y2+3) + ')',
+      'f(x) = x^2',
+      'g(x) = ' + ggbLinear(m, n),
+      'SetColor(f, "Blue")', 'SetColor(g, "Red")',
+      'SetLineThickness(f, 3)', 'SetLineThickness(g, 2)',
+    ],
+    fasit1: x1, fasit2: x2,
+  };
 },
 
-{
-  id: 'skj2',
-  gruppe: 'Skjæringspunkt',
-  tittel: '11 · To linjer møtes',
-  type: 'dra_en_punkt',
-  tekst: 'Grafen viser <strong>f(x) = 2x − 1</strong> og <strong>g(x) = −x + 5</strong>. Dra punkt <strong>E</strong> til skjæringspunktet.',
-  hint: '2x − 1 = −x + 5 → 3x = 6 → x = 2, y = 3. Skjæring i (2, 3).',
-  ggbKommandoer: [
-    'ZoomIn(-1, -3, 6, 8)',
-    'f(x) = 2x - 1',
-    'g(x) = -x + 5',
-    'SetColor(f, "Blue")',
-    'SetColor(g, "Red")',
-    'SetLineThickness(f, 3)',
-    'SetLineThickness(g, 3)',
-    'S = Intersect(f, g)',
-    'SetVisible(S, false)',
-    'E = Point(f)',
-    'SetColor(E, "Orange")',
-    'SetPointSize(E, 7)',
-    'ShowLabel(E, true)',
-  ],
-  fasitX: 2, fasitY: 3,
-  sjekk: function(ggb) {
-    var ex = ggb.getXcoord('E'), ey = ggb.getYcoord('E');
-    var sx = ggb.getXcoord('S'), sy = ggb.getYcoord('S');
-    var ok = Math.abs(ex - sx) < 0.2 && Math.abs(ey - sy) < 0.2;
-    if (ok) { ggb.setVisible('S', true); ggb.setColor('S', 0, 200, 0); ggb.setPointSize('S', 6); }
-    return {
-      ok: ok, nesten: !ok && Math.abs(ex-2)<0.6,
-      melding: ok ? '✓ Riktig! Skjæring i (' + sx.toFixed(1) + ', ' + sy.toFixed(1) + '). 2x−1 = −x+5 → x = 2.'
-                  : 'E er i (' + ex.toFixed(2) + ', ' + ey.toFixed(2) + '). Dra til skjæringspunktet.'
-    };
-  }
+// ── 12. Skjæring: to linjer ───────────────────────────────────────
+'skj2': function() {
+  // f=a1*x+b1, g=a2*x+b2, a1≠a2 → x=(b2-b1)/(a1-a2) heltall
+  var a1 = rndIkkeNull(-3, 3);
+  var a2; do { a2 = rndIkkeNull(-3, 3); } while (a2 === a1);
+  var x0 = rnd(-2, 3);
+  var b1 = rnd(-4, 4);
+  var y0 = a1 * x0 + b1;
+  var b2 = y0 - a2 * x0;
+  return {
+    a1: a1, b1: b1, a2: a2, b2: b2, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagLinear(a1, b1) + '</strong> og <strong>g(x) = ' + lagLinear(a2, b2) + '</strong>. Bruk skj\u00e6ringspunkt-verkt\u00f8yet og finn skj\u00e6ringspunktet.',
+    hint: 'Beregning \u2192 Skj\u00e6ring. Sett ' + lagLinear(a1, b1) + ' = ' + lagLinear(a2, b2) + ' \u2192 x=' + x0 + ', y=' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (y0-5) + ', ' + (x0+4) + ', ' + (y0+5) + ')',
+      'f(x) = ' + ggbLinear(a1, b1),
+      'g(x) = ' + ggbLinear(a2, b2),
+      'SetColor(f, "Blue")', 'SetColor(g, "Red")',
+      'SetLineThickness(f, 3)', 'SetLineThickness(g, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
 },
 
-]; // END OPPGAVER
+// ── 13. Skriv inn lineær ──────────────────────────────────────────
+'inp1': function() {
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var x1 = rnd(0, 3), x2 = rnd(-3, -1);
+  var y1 = a*x1+b, y2 = a*x2+b;
+  return {
+    a: a, b: b, x1: x1, y1: y1, x2: x2, y2: y2,
+    tekst: 'Skriv inn funksjonen <strong>f(x) = ' + lagLinear(a, b) + '</strong> i algebrafeltet i GeoGebra. Grafen skal g\u00e5 gjennom de r\u00f8de punktene.',
+    hint: 'Klikk i algebrafeltet og skriv: f(x) = ' + a + '*x + ' + b + '. Trykk Enter.',
+    cmds: [
+      'ZoomIn(' + (x2-2) + ', ' + (Math.min(y1,y2)-3) + ', ' + (x1+3) + ', ' + (Math.max(y1,y2)+3) + ')',
+      'P1 = (' + x1 + ', ' + y1 + ')',
+      'P2 = (' + x2 + ', ' + y2 + ')',
+      'SetColor(P1, "Red")', 'SetColor(P2, "Red")',
+      'SetPointSize(P1, 6)', 'SetPointSize(P2, 6)',
+      'ShowLabel(P1, true)', 'ShowLabel(P2, true)',
+    ],
+    testX: [x1, x2, 0], testY: [y1, y2, b],
+  };
+},
 
+// ── 14. Skriv inn parabel ────────────────────────────────────────
+'inp2': function() {
+  // Bruk røtter: f(x) = (x-r1)(x-r2) = x² - (r1+r2)x + r1*r2
+  var r1 = rnd(-3, -1), r2 = rnd(1, 3);
+  var b = -(r1 + r2), c = r1 * r2;
+  var xTopp = (r1 + r2) / 2;
+  var yTopp = xTopp * xTopp + b * xTopp + c;
+  return {
+    b: b, c: c, r1: r1, r2: r2, xTopp: xTopp, yTopp: yTopp,
+    tekst: 'Skriv inn parabelen <strong>f(x) = ' + lagPolynom(1, b, c) + '</strong> i algebrafeltet. Grafen skal skj\u00e6re x-aksen i x\u00a0=\u00a0' + r1 + ' og x\u00a0=\u00a0' + r2 + '.',
+    hint: 'Skriv: f(x) = x^2 + ' + b + '*x + ' + c + '. Sjekk at f(' + r1 + ') = 0 og f(' + r2 + ') = 0.',
+    cmds: [
+      'ZoomIn(' + (r1-2) + ', ' + (yTopp-2) + ', ' + (r2+2) + ', 4)',
+      'N1 = (' + r1 + ', 0)', 'N2 = (' + r2 + ', 0)',
+      'SetColor(N1, "Red")', 'SetColor(N2, "Red")',
+      'SetPointSize(N1, 6)', 'SetPointSize(N2, 6)',
+      'ShowLabel(N1, true)', 'ShowLabel(N2, true)',
+    ],
+    testX: [r1, r2, xTopp], testY: [0, 0, yTopp],
+  };
+},
+
+// ── 15. Skriv inn eksponentiell ───────────────────────────────────
+'inp3': function() {
+  var a = rnd(1, 4);
+  var b = [2, 3][rnd(0, 1)];
+  var x0 = rnd(1, 3), x1 = rnd(-2, 0);
+  var y0 = a * Math.pow(b, x0);
+  var y1 = a * Math.pow(b, x1);
+  return {
+    a: a, b: b, x0: x0, y0: y0, x1: x1, y1: y1,
+    tekst: 'Skriv inn <strong>f(x) = ' + lagEksp(a, b) + '</strong> i algebrafeltet. Grafen skal g\u00e5 gjennom de r\u00f8de punktene.',
+    hint: 'Skriv: f(x) = ' + a + ' * ' + b + '^x. Trykk Enter.',
+    cmds: [
+      'ZoomIn(' + (x1-2) + ', -1, ' + (x0+2) + ', ' + (y0+4) + ')',
+      'P0 = (0, ' + a + ')', 'P1 = (' + x0 + ', ' + y0 + ')',
+      'SetColor(P0, "Red")', 'SetColor(P1, "Red")',
+      'SetPointSize(P0, 6)', 'SetPointSize(P1, 6)',
+      'ShowLabel(P0, true)', 'ShowLabel(P1, true)',
+    ],
+    testX: [0, x0], testY: [a, y0],
+  };
+},
+
+}; // END GENERATORER
+
+
+var OPPGAVER = [];
+
+function byggOppgaver() {
+
+  // ── Generator-helpers ──────────────────────────────────────────
+  function sjekkXY(fasitX, fasitY) {
+    return function(ggb) {
+      var x = parseFloat(document.getElementById('inp-x').value.replace(',','.'));
+      var y = parseFloat(document.getElementById('inp-y').value.replace(',','.'));
+      if (isNaN(x)||isNaN(y)) return {ok:false,nesten:false,melding:'Fyll inn b\u00e5de x- og y-koordinat.'};
+      var ok = Math.abs(x-fasitX)<=0.015 && Math.abs(y-fasitY)<=0.015;
+      var nesten = Math.abs(x-fasitX)<=0.1 && Math.abs(y-fasitY)<=0.1;
+      return {ok:ok, nesten:!ok&&nesten,
+        melding: ok ? '\u2713 Riktig! (' + fmt(fasitX) + ',\u00a0' + fmt(fasitY) + ').'
+                    : 'Fasit: (' + fmt(fasitX) + ',\u00a0' + fmt(fasitY) + '). Du svarte (' + x.toFixed(2) + ',\u00a0' + y.toFixed(2) + ').'};
+    };
+  }
+  function sjekkX2(fasit1, fasit2) {
+    return function(ggb) {
+      var x1 = parseFloat(document.getElementById('inp-x1').value.replace(',','.'));
+      var x2 = parseFloat(document.getElementById('inp-x2').value.replace(',','.'));
+      if (isNaN(x1)||isNaN(x2)) return {ok:false,nesten:false,melding:'Fyll inn begge x-verdiene.'};
+      var s = [x1,x2].sort(function(a,b){return a-b;});
+      var ok = Math.abs(s[0]-fasit1)<=0.015 && Math.abs(s[1]-fasit2)<=0.015;
+      return {ok:ok, nesten:!ok&&Math.abs(s[0]-fasit1)<=0.1&&Math.abs(s[1]-fasit2)<=0.1,
+        melding: ok ? '\u2713 Riktig! x = ' + fmt(fasit1) + ' og x = ' + fmt(fasit2) + '.'
+                    : 'Fasit: ' + fmt(fasit1) + ' og ' + fmt(fasit2) + '. Du svarte ' + x1.toFixed(2) + ' og ' + x2.toFixed(2) + '.'};
+    };
+  }
+  function sjekkX1(fasit) {
+    return function(ggb) {
+      var x = parseFloat(document.getElementById('inp-x1').value.replace(',','.'));
+      if (isNaN(x)) return {ok:false,nesten:false,melding:'Skriv inn x-verdien.'};
+      var ok = Math.abs(x-fasit)<=0.015;
+      return {ok:ok, nesten:!ok&&Math.abs(x-fasit)<=0.1,
+        melding: ok ? '\u2713 Riktig! x = ' + fmt(fasit) + '.'
+                    : 'Fasit: x = ' + fmt(fasit) + '. Du svarte ' + x.toFixed(2) + '.'};
+    };
+  }
+  function sjekkY1(fasit, tol) {
+    tol = tol || 0.015;
+    return function(ggb) {
+      var y = parseFloat(document.getElementById('inp-y1').value.replace(',','.'));
+      if (isNaN(y)) return {ok:false,nesten:false,melding:'Skriv inn y-verdien.'};
+      var ok = Math.abs(y-fasit)<=tol;
+      return {ok:ok, nesten:!ok&&Math.abs(y-fasit)<=tol*6,
+        melding: ok ? '\u2713 Riktig! y = ' + fmt(fasit) + '.'
+                    : 'Fasit: ' + fmt(fasit) + '. Du svarte ' + y.toFixed(2) + '.'};
+    };
+  }
+  function sjekkAvgrens(fasitA, fasitB) {
+    return function(ggb) {
+      var a=ggb.getValue('a'), b=ggb.getValue('b');
+      var ok = Math.abs(a-fasitA)<=0.3 && Math.abs(b-fasitB)<=0.3;
+      return {ok:ok, nesten:!ok&&(Math.abs(a-fasitA)<=0.8||Math.abs(b-fasitB)<=0.8),
+        melding: ok ? '\u2713 Riktig! a\u00a0=\u00a0'+fasitA+', b\u00a0=\u00a0'+fasitB+'.'
+                    : 'a\u00a0=\u00a0'+a.toFixed(1)+' (skal v\u00e6re '+fasitA+'), b\u00a0=\u00a0'+b.toFixed(1)+' (skal v\u00e6re '+fasitB+').'};
+    };
+  }
+  function sjekkInput(testX, testY) {
+    return function(ggb) {
+      if (!ggb.isDefined('f')) return {ok:false,nesten:false,melding:'Skriv inn funksjonen f(x) = ... i algebrafeltet og trykk Enter.'};
+      var feil = [];
+      for (var i=0; i<testX.length; i++) {
+        var fv = ggb.getValue('f('+testX[i]+')');
+        if (Math.abs(fv - testY[i]) > 0.1)
+          feil.push('f('+testX[i]+') = '+fv.toFixed(2)+' (skal v\u00e6re '+testY[i]+')');
+      }
+      var ok = feil.length === 0;
+      return {ok:ok, nesten:false,
+        melding: ok ? '\u2713 Riktig! Grafen treffer alle punktene.'
+                    : feil[0] + '. Sjekk uttrykket ditt.'};
+    };
+  }
+
+  // ── Generer og legg til oppgaver ──────────────────────────────
+  var g;
+
+  // 1. Avgrens parabel
+  g = GENERATORER['avg1']();
+  OPPGAVER.push({id:'avg1',gruppe:'Avgrense graf',tittel:'1 \u00b7 Avgrens grafen',type:'avgrens',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds,
+    sliderVis:['a','b'], sliderLabels:['a (venstre grense)','b (h\u00f8yre grense)'],
+    sjekk:sjekkAvgrens(g.fasitA, g.fasitB)});
+
+  // 2. Avgrens eksponentiell
+  g = GENERATORER['avg2']();
+  OPPGAVER.push({id:'avg2',gruppe:'Avgrense graf',tittel:'2 \u00b7 Avgrens eksponentialfunksjon',type:'avgrens',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds,
+    sliderVis:['a','b'], sliderLabels:['a (venstre grense)','b (h\u00f8yre grense)'],
+    sjekk:sjekkAvgrens(g.fasitA, g.fasitB)});
+
+  // 3. Toppunkt
+  g = GENERATORER['eks_parabel'](1);
+  OPPGAVER.push({id:'eks1',gruppe:'Ekstremalpunkt',tittel:'3 \u00b7 Toppunkt \u2013 parabel',type:'les_av_xy',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkXY(g.fasitX, g.fasitY)});
+
+  // 4. Bunnpunkt
+  g = GENERATORER['eks_parabel'](-1);
+  OPPGAVER.push({id:'eks2',gruppe:'Ekstremalpunkt',tittel:'4 \u00b7 Bunnpunkt \u2013 parabel',type:'les_av_xy',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkXY(g.fasitX, g.fasitY)});
+
+  // 5. Kubikk
+  g = GENERATORER['eks3']();
+  OPPGAVER.push({id:'eks3',gruppe:'Ekstremalpunkt',tittel:'5 \u00b7 Kubikk \u2013 lokalt maks',type:'les_av_xy',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkXY(g.fasitX, g.fasitY)});
+
+  // 6. Toppunkt med desimaler
+  g = GENERATORER['eks4']();
+  OPPGAVER.push({id:'eks4',gruppe:'Ekstremalpunkt',tittel:'6 \u00b7 Toppunkt \u2013 to desimaler',type:'les_av_xy',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkXY(g.fasitX, g.fasitY)});
+
+  // 7. To x ved gitt y
+  g = GENERATORER['xy1']();
+  OPPGAVER.push({id:'xy1',gruppe:'Finn x ved gitt y',tittel:'7 \u00b7 To x-verdier for gitt y',type:'les_av_x2',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkX2(g.fasit1, g.fasit2)});
+
+  // 8. En x ved gitt y
+  g = GENERATORER['xy2']();
+  OPPGAVER.push({id:'xy2',gruppe:'Finn x ved gitt y',tittel:'8 \u00b7 Finn x for gitt y',type:'les_av_x1',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkX1(g.fasit)});
+
+  // 9. Finn y på parabel
+  g = GENERATORER['yx1']();
+  OPPGAVER.push({id:'yx1',gruppe:'Finn y ved gitt x',tittel:'9 \u00b7 Finn f(x\u2080) p\u00e5 parabel',type:'les_av_y1',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkY1(g.fasit)});
+
+  // 10. Finn y eksponentiell
+  g = GENERATORER['yx2']();
+  OPPGAVER.push({id:'yx2',gruppe:'Finn y ved gitt x',tittel:'10 \u00b7 Finn f(x\u2080) eksponentiell',type:'les_av_y1',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkY1(g.fasit, 0.5)});
+
+  // 11. Linje møter parabel
+  g = GENERATORER['skj1']();
+  OPPGAVER.push({id:'skj1',gruppe:'Skj\u00e6ringspunkt',tittel:'11 \u00b7 Linje m\u00f8ter parabel',type:'les_av_x2',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkX2(g.fasit1, g.fasit2)});
+
+  // 12. To linjer
+  g = GENERATORER['skj2']();
+  OPPGAVER.push({id:'skj2',gruppe:'Skj\u00e6ringspunkt',tittel:'12 \u00b7 To linjer \u2013 skj\u00e6ringspunkt',type:'les_av_xy',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkXY(g.fasitX, g.fasitY)});
+
+  // 13. Skriv inn lineær
+  g = GENERATORER['inp1']();
+  OPPGAVER.push({id:'inp1',gruppe:'Skriv inn i GeoGebra',tittel:'13 \u00b7 Skriv inn line\u00e6r funksjon',type:'geogebra_input',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkInput(g.testX, g.testY)});
+
+  // 14. Skriv inn parabel
+  g = GENERATORER['inp2']();
+  OPPGAVER.push({id:'inp2',gruppe:'Skriv inn i GeoGebra',tittel:'14 \u00b7 Skriv inn parabel',type:'geogebra_input',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkInput(g.testX, g.testY)});
+
+  // 15. Skriv inn eksponentiell
+  g = GENERATORER['inp3']();
+  OPPGAVER.push({id:'inp3',gruppe:'Skriv inn i GeoGebra',tittel:'15 \u00b7 Skriv inn eksponentialfunksjon',type:'geogebra_input',
+    tekst:g.tekst, hint:g.hint, ggbKommandoer:g.cmds, sjekk:sjekkInput(g.testX, g.testY)});
+}
 
 var ggbAPI = null;
 
@@ -653,7 +728,7 @@ function byggSvarBoks(o) {
 OPPGAVER.push({
   id: 'inp1',
   gruppe: 'Skriv inn i GeoGebra',
-  tittel: '12 · Skriv inn lineær funksjon',
+  tittel: '13 · Skriv inn lineær funksjon',
   type: 'geogebra_input',
   tekst: 'Skriv inn funksjonen <strong>f(x) = 2x − 3</strong> direkte i <strong>algebrafeltet</strong> i GeoGebra (feltet nederst i vinduet).',
   hint: 'Klikk i algebrafeltet og skriv: f(x) = 2x - 3. Trykk Enter. Sjekk at grafen dukker opp.',
@@ -687,7 +762,7 @@ OPPGAVER.push({
 OPPGAVER.push({
   id: 'inp2',
   gruppe: 'Skriv inn i GeoGebra',
-  tittel: '13 · Skriv inn parabel',
+  tittel: '14 · Skriv inn parabel',
   type: 'geogebra_input',
   tekst: 'Skriv inn parabelen <strong>f(x) = x² − 2x − 3</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
   hint: 'Skriv: f(x) = x^2 - 2x - 3. Bruk ^ for potens. Sjekk nullpunktene: f(−1) = 0 og f(3) = 0.',
@@ -718,7 +793,7 @@ OPPGAVER.push({
 OPPGAVER.push({
   id: 'inp3',
   gruppe: 'Skriv inn i GeoGebra',
-  tittel: '14 · Skriv inn eksponentialfunksjon',
+  tittel: '15 · Skriv inn eksponentialfunksjon',
   type: 'geogebra_input',
   tekst: 'Skriv inn <strong>f(x) = 2 · 3ˣ</strong> i algebrafeltet. Grafen skal gå gjennom de røde punktene.',
   hint: 'Skriv: f(x) = 2 * 3^x. Bruk * for ganging og ^ for potens.',
@@ -756,6 +831,22 @@ OPPGAVER.push({
     startSliderPolling(vis);
   } else if (draTyper.indexOf(o.type) >= 0) {
     html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Dra det/de oransje punktet/ene i GeoGebra til riktig posisjon, trykk deretter Sjekk svar.</div>';
+  } else if (o.type === 'les_av_x1') {
+    html = '<div class="svar-label">Skriv inn x-verdien du fant i GeoGebra:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>x-verdi</label><input class="koeff-input" id="inp-x1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div></div></div>';
+  } else if (o.type === 'les_av_x2') {
+    html = '<div class="svar-label">Skriv inn de to x-verdiene du fant:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>x₁ (minste)</label><input class="koeff-input" id="inp-x1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div class="koeff-felt"><label>x₂ (største)</label><input class="koeff-input" id="inp-x2" type="number" step="0.01" placeholder="0,00"></div>'
+      + '</div>';
+  } else if (o.type === 'les_av_y1') {
+    html = '<div class="svar-label">Skriv inn y-verdien du fant i GeoGebra:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>y-verdi</label><input class="koeff-input" id="inp-y1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div></div></div>';
   } else if (o.type === 'geogebra_input') {
     html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Skriv funksjonen i <strong>algebrafeltet</strong> i GeoGebra-vinduet og trykk <strong>Enter</strong>. Trykk deretter Sjekk svar.</div>';
   } else if (o.type === 'regresjon') {
@@ -865,6 +956,26 @@ function oppdaterFremdrift() {
   });
 }
 
+function nyRunde() {
+  OPPGAVER = [];
+  løste = [];
+  forsøk = 0;
+  gjeldende = 0;
+  clearInterval(pollingTimer);
+  byggOppgaver();
+  løste = new Array(OPPGAVER.length).fill(false);
+  document.getElementById('oppg-liste-wrap').innerHTML = '';
+  var tabs = document.getElementById('oppg-tabs');
+  if (tabs) tabs.innerHTML = '';
+  var grp = document.getElementById('grp-tabs');
+  if (grp) grp.innerHTML = '';
+  byggTabs();
+  byggGruppeTabs();
+  oppdaterFremdrift();
+  oppdaterStats();
+  var ggb = getGGB();
+  if (ggb) lastOppgave(0);
+}
 function oppdaterStats() {
   var lc=løste.filter(Boolean).length;
   document.getElementById('st-løst').textContent=lc;
@@ -917,8 +1028,9 @@ function filtrerGruppe(grp,btn){
   for(var i=0;i<OPPGAVER.length;i++){if(!grp||OPPGAVER[i].gruppe===grp){gåTilOppgave(i);return;}}
 }
 
-function startApp(){byggTabs();byggGruppeTabs();oppdaterFremdrift();initGGB();}
+function startApp(){byggOppgaver();løste=new Array(OPPGAVER.length).fill(false);byggTabs();byggGruppeTabs();oppdaterFremdrift();initGGB();}
 window.addEventListener('DOMContentLoaded', startApp);
+
 </script>
 </body>
 </html>
