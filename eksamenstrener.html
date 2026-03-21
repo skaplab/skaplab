@@ -280,10 +280,40 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 .fv-btn.valgt{background:rgba(232,184,75,.1);border-color:rgba(232,184,75,.4);color:var(--accent);}
 .fv-btn.riktig{background:rgba(91,201,142,.12);border-color:var(--green);color:var(--green);}
 .fv-btn.galt{background:rgba(224,92,110,.08);border-color:rgba(224,92,110,.3);color:var(--red);}
+
+#modal-tid{position:fixed;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;z-index:1000;}
+#modal-tid.skjult{display:none;}
+.modal-kort{background:#16161e;border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:28px 32px;max-width:380px;width:90%;text-align:center;}
+.modal-tittel{font-family:'Playfair Display',serif;font-size:1.3rem;
+  font-weight:700;color:#e8b84b;margin-bottom:8px;}
+.modal-sub{font-size:.88rem;color:#888899;margin-bottom:22px;line-height:1.5;}
+.modal-knapper{display:flex;gap:10px;flex-direction:column;}
+.modal-ja{padding:12px;font-family:'Playfair Display',serif;font-size:.95rem;
+  font-weight:700;background:#e8b84b;color:#000;border:none;border-radius:9px;cursor:pointer;}
+.modal-nei{padding:10px;font-family:'Source Sans 3',sans-serif;font-size:.86rem;
+  background:transparent;color:#888899;border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;cursor:pointer;}
+.modal-ja:hover{filter:brightness(1.08);}
+.modal-nei:hover{color:#e8e8f0;}
+
+#tidtaker{
+  display:none;align-items:center;gap:8px;
+  font-size:.82rem;color:#888899;
+}
+#tidtaker.aktiv{display:flex;}
+#tid-display{
+  font-family:'Playfair Display',serif;font-size:1rem;
+  color:#e8b84b;min-width:52px;text-align:center;
+}
+#tid-del-info{font-size:.72rem;color:rgba(255,215,0,.5);}
+.tid-varsel{color:#e05c6e !important;}
 </style>
 </head>
 <body>
 
+<div id="modal-tid"><div class="modal-kort"><div class="modal-tittel">⏱ Ta tiden?</div><div class="modal-sub">Del 1 har 1 time, Del 2 har 4 timer på ekte eksamen. Vil du at vi teller ned mens du øver?</div><div class="modal-knapper"><button class="modal-ja" onclick="startMedTid()">Ja — ta tiden</button><button class="modal-nei" onclick="startUtenTid()">Nei — fri gjennomføring</button></div></div></div>
 <div id="header">
   <a href="index.html" id="back-link">← SkapLab</a>
   <div>
@@ -295,6 +325,10 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
     <span>✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> poeng</span>
     <span>📋 <b id="st-besvart">0</b> besvart</span>
     <span>🏆 Runde <b id="st-runde">1</b></span>
+  </div>
+  <div id="tidtaker">
+    <span id="tid-del-info"></span>
+    <span id="tid-display">–:––</span>
   </div>
 </div>
 
@@ -499,30 +533,7 @@ var KONTEKSTER_STIGN = [
   { x:'minutter', y:'meter svømt', enhetX:'min', enhetY:'meter', navn:'svømmehastighet' },
 ];
 
-function genStigningstall() {
-  var k = plukk(KONTEKSTER_STIGN);
-  var stign = rnd(2,8);
-  var b = rnd(0,5);
-  var x1 = rnd(2,5), x2 = x1 + rnd(2,4);
-  var y1 = stign*x1 + b, y2 = stign*x2 + b;
-  return {
-    type:'del1_stign', del:1, nr:'4', merking:'lavt',
-    poeng:2, maxPoeng:2,
-    k, stign, x1, y1, x2, y2,
-    fasit: stign,
-    spørsmål: `Grafen nedenfor viser ${k.navn}.\n\n` +
-      `Grafen går gjennom punktene (${x1}, ${y1}) og (${x2}, ${y2}).\n\n` +
-      `Regn ut stigningstallet.`,
-    instruksjon: 'Bruk formelen: a = (y₂ − y₁) / (x₂ − x₁). Vis utregningen.',
-    løsningssteg: [
-      `a = (${y2} − ${y1}) / (${x2} − ${x1})`,
-      `a = ${y2-y1} / ${x2-x1}`,
-      `a = ${stign}`
-    ],
-    kommentar: 'Du er på rett vei hvis du deler endring i y på endring i x.',
-    svarType: 'tall', enhet: '', tol: 0.01,
-  };
-}
+
 
 // ══════════════════════════════════════════════════════════════════
 // DEL 1 — OPPGAVE 5: PROSENT
@@ -902,118 +913,10 @@ function genSannsynlighet() {
 }
 
 // ── DEL 2 OPPG 4: STATISTIKK MED TALLSJEKK ───────────────────────
-function genStatistikkDel2() {
-  var kontekster = [
-    { tema:'mobilbruk per dag', g1:'Jenter', g2:'Gutter', enhet:'timer' },
-    { tema:'søvntimer per natt', g1:'8. trinn', g2:'10. trinn', enhet:'timer' },
-    { tema:'leksetid per dag', g1:'Gutter', g2:'Jenter', enhet:'minutter' },
-    { tema:'matpenger per uke', g1:'Jenter', g2:'Gutter', enhet:'kroner' },
-    { tema:'antall treningstimer per uke', g1:'Aktive', g2:'Lite aktive', enhet:'timer' },
-  ];
-  var k = plukk(kontekster);
-  function lagData(n, snitt, spr) {
-    var d = [];
-    for (var i=0;i<n;i++) d.push(Math.max(1, Math.round(snitt + (Math.random()-0.5)*spr*2)));
-    return d.sort(function(a,b){return a-b;});
-  }
-  var n = 10;
-  var d1 = lagData(n, rnd(4,8), 2);
-  var d2 = lagData(n, rnd(2,6), 2);
-  function median(a) { var s=[].concat(a).sort(function(x,y){return x-y;}); return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)]; }
-  function gjsnitt(a) { return Math.round(a.reduce(function(x,y){return x+y;},0)/n*10)/10; }
-  function typetall(a) {
-    var teller={};a.forEach(function(v){teller[v]=(teller[v]||0)+1;});
-    var maks=0,typ=a[0];
-    Object.keys(teller).forEach(function(v){if(teller[v]>maks){maks=teller[v];typ=parseInt(v);}});
-    return typ;
-  }
-  var sn1=gjsnitt(d1), me1=median(d1), ty1=typetall(d1);
-  var sn2=gjsnitt(d2), me2=median(d2), ty2=typetall(d2);
-  return {
-    type:'del2_stat', del:2, nr:'5', merking:'viktig',
-    poeng:4, maxPoeng:4,
-    k, d1, d2, n,
-    spørsmål:
-      'En klasse har samlet data om ' + k.tema + ' (' + k.enhet + '):\n\n' +
-      k.g1 + ': ' + d1.join(', ') + '\n' +
-      k.g2 + ': ' + d2.join(', ') + '\n\n' +
-      'Bruk dataene til å besvare:\n\n' +
-      'a) Hva er gjennomsnittet for ' + k.g1 + '? Rund av til én desimal. (1 poeng)\n\n' +
-      'b) Hva er medianen for ' + k.g1 + '? (1 poeng)\n\n' +
-      'c) Hva er gjennomsnittet for ' + k.g2 + '? Rund av til én desimal. (1 poeng)\n\n' +
-      'd) Hva er medianen for ' + k.g2 + '? (1 poeng)',
-    instruksjon: 'Bruk kalkulator eller regneark. Sorter tallene for å finne medianen.',
-    svarType: 'stat_abcd',
-    fasitA: sn1, fasitB: me1, fasitC: sn2, fasitD: me2,
-    løsning:
-      k.g1 + ': Snitt = ' + sn1 + ', Median = ' + me1 + ', Typetall = ' + ty1 + '\n' +
-      k.g2 + ': Snitt = ' + sn2 + ', Median = ' + me2 + ', Typetall = ' + ty2 + '\n' +
-      'Sortert ' + k.g1 + ': ' + d1.join(', ') + '\n' +
-      'Sortert ' + k.g2 + ': ' + d2.join(', '),
-    kommentar: 'Median: sorter tallene, ta midterste (eller snitt av de to midterste ved partall antall).',
-    tol: 0.15,
-  };
-}
+
 
 // ── DEL 2 OPPG 5: LINEÆRE FUNKSJONER MED TALLSJEKK ───────────────
-function genLineærFunksjonerDel2() {
-  var kontekster = [
-    { navn:'Avslutningsfest',
-      t1: function() { var a=rnd(100,200); return {a:a,b:0, beskr:a+' kr per elev (alt inkludert)'}; },
-      t2: function() { var a=rnd(50,100),b=rnd(2000,5000); return {a:a,b:b, beskr:a+' kr per elev + '+b.toLocaleString('no')+' kr i leie'}; },
-      t3: function() { var b=rnd(5000,9000); return {a:0,b:b, beskr:'Fast pris '+b.toLocaleString('no')+' kr for inntil 70 elever'}; },
-      enhet:'elever', xNavn:'elever' },
-    { navn:'Utleiesykkel',
-      t1: function() { var b=rnd(80,150),a=rnd(2,4); return {a:a,b:b, beskr:b+' kr startpris + '+a+' kr per minutt'}; },
-      t2: function() { var b=rnd(30,60),a=rnd(2,5); return {a:a,b:b, beskr:b+' kr startpris + '+a+' kr per minutt'}; },
-      t3: function() { var a=rnd(3,6); return {a:a,b:0, beskr:a+' kr per minutt, ingen startpris'}; },
-      enhet:'minutter', xNavn:'minutter' },
-    { navn:'Treningssenter',
-      t1: function() { var b=rnd(400,700),a=rnd(250,400); return {a:a,b:b, beskr:b+' kr innmelding + '+a+' kr/mnd'}; },
-      t2: function() { var a=rnd(350,500); return {a:a,b:0, beskr:a+' kr per måned, ingen innmelding'}; },
-      t3: function() { var b=rnd(1000,2000),a=rnd(150,250); return {a:a,b:b, beskr:b+' kr innmelding + '+a+' kr/mnd'}; },
-      enhet:'måneder', xNavn:'måneder' },
-    { navn:'Strømleverandør',
-      t1: function() { var b=rnd(80,150),a=rnd(80,120); return {a:a/100,b:b, beskr:b+' kr/mnd + '+a+' øre per kWh'}; },
-      t2: function() { var a=rnd(100,140); return {a:a/100,b:0, beskr:a+' øre per kWh, ingen fastledd'}; },
-      t3: function() { var b=rnd(200,300),a=rnd(50,70); return {a:a/100,b:b, beskr:b+' kr/mnd + '+a+' øre per kWh'}; },
-      enhet:'kWh', xNavn:'kWh' },
-  ];
-  var k = plukk(kontekster);
-  var f1 = k.t1(), f2 = k.t2(), f3 = k.t3();
-  // Brytningspunkt mellom f1 og f2
-  var bryt12 = f1.a !== f2.a ? Math.round((f2.b - f1.b) / (f1.a - f2.a)) : null;
-  // Brytningspunkt mellom f1 og f3 (om a3=0)
-  var bryt13 = f1.a !== f3.a ? Math.round((f3.b - f1.b) / (f1.a - f3.a)) : null;
-  return {
-    type:'del2_linf', del:2, nr:'6', merking:'viktig',
-    poeng:4, maxPoeng:4,
-    k, f1, f2, f3, bryt12, bryt13,
-    spørsmål:
-      k.navn + ' — tre tilbud:\n\n' +
-      'Tilbud 1: ' + f1.beskr + '\n' +
-      'Tilbud 2: ' + f2.beskr + '\n' +
-      'Tilbud 3: ' + f3.beskr + '\n\n' +
-      'a) Skriv funksjonsuttrykket for Tilbud 1: f(x) = ax + b\n' +
-      '   Stigningstall a₁ = ? og konstantledd b₁ = ? (1 poeng)\n\n' +
-      'b) Skriv funksjonsuttrykket for Tilbud 2: g(x) = ax + b\n' +
-      '   Stigningstall a₂ = ? og konstantledd b₂ = ? (1 poeng)\n\n' +
-      'c) Bruk GeoGebra til å tegne alle tre tilbudene i samme koordinatsystem.\n' +
-      '   For hvor mange ' + k.xNavn + ' er Tilbud 1 og Tilbud 2 like dyre? (2 poeng)',
-    instruksjon: 'Del a–b): Identifiser stigningstall (pris per enhet) og konstantledd (fastpris).\nDel c): Tegn i GeoGebra og finn skjæringspunkt, eller løs f(x) = g(x).',
-    svarType: 'linf_abc',
-    fasitA1: f1.a, fasitB1: f1.b,
-    fasitA2: f2.a, fasitB2: f2.b,
-    fasitC: bryt12,
-    løsning:
-      'f(x) = ' + f1.a + 'x + ' + f1.b + '\n' +
-      'g(x) = ' + f2.a + 'x + ' + f2.b + '\n' +
-      'h(x) = ' + f3.a + 'x + ' + f3.b + '\n' +
-      (bryt12 !== null ? 'Tilbud 1 = Tilbud 2 ved x = ' + bryt12 + ' ' + k.xNavn : ''),
-    kommentar: 'Stigningstall = pris per enhet. Konstantledd = fastpris/startpris.',
-    tol: 0.1,
-  };
-}
+
 
 // ══════════════════════════════════════════════════════════════════
 // PROGRAMMERING — 8 Python-koder
@@ -1375,6 +1278,260 @@ function genAlgebraUtforsking() {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// OMVENDT FLERVALG — beskrivelse → begrep
+// Brukes som ekstra delsvar i eksisterende oppgaver
+// ══════════════════════════════════════════════════════════════════
+
+// Hjelper: bland et array
+function bland(arr) {
+  var a = arr.slice();
+  for (var i = a.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var t = a[i]; a[i]=a[j]; a[j]=t;
+  }
+  return a;
+}
+
+// Hjelper: lag flervalg med én riktig og tre fra en pool
+function lagBegrepFlervalg(riktig, pool) {
+  var feil = pool.filter(function(x){ return x !== riktig; });
+  // Plukk 3 feil tilfeldig
+  feil = bland(feil).slice(0,3);
+  var alts = bland([riktig].concat(feil));
+  return { alts: alts, riktigIdx: alts.indexOf(riktig) };
+}
+
+// ── STIGNINGSTALL-OPPGAVE ─────────────────────────────────────────
+// Eksisterende genStigningstall() gir tall-svar
+// Vi utvider med en begreps-del b)
+
+var BEGREP_STIGN_POOL = [
+  'stigningstall', 'konstantledd', 'avhengig variabel', 'uavhengig variabel'
+];
+
+var STIGN_BESKRIVELSER = [
+  { beskrivelse: function(a, k) {
+      return 'Verdien ' + (a>0?'øker':'synker') + ' med ' + Math.abs(a) + ' ' + k.enhetY + ' per ' + k.enhetX.replace(/er$/,'') + '.';
+    },
+    begrep: 'stigningstall' },
+  { beskrivelse: function(a, k) {
+      return 'Verdien av ' + k.y + ' avhenger av ' + k.x + '.';
+    },
+    begrep: 'avhengig variabel' },
+  { beskrivelse: function(a, k) {
+      return k.x.charAt(0).toUpperCase()+k.x.slice(1) + ' velges fritt og bestemmer utfallet.';
+    },
+    begrep: 'uavhengig variabel' },
+];
+
+// Legg til begreps-del i stigningstall-generator
+function genStigningstall() {
+  var kontekster = [
+    { x:'mil kjørt', y:'liter bensin brukt', enhetX:'mil', enhetY:'liter' },
+    { x:'timer løpt', y:'km tilbakelagt', enhetX:'timer', enhetY:'km' },
+    { x:'uker', y:'cm høyde på plante', enhetX:'uker', enhetY:'cm' },
+    { x:'antall elever', y:'pris i kroner', enhetX:'elever', enhetY:'kroner' },
+    { x:'kWh brukt', y:'pris i kroner', enhetX:'kWh', enhetY:'kr' },
+    { x:'antall km', y:'pris for taxi', enhetX:'km', enhetY:'kr' },
+    { x:'minutter', y:'meter svømt', enhetX:'min', enhetY:'meter' },
+    { x:'antall dager', y:'gram mat spist', enhetX:'dager', enhetY:'gram' },
+  ];
+  var k = plukk(kontekster);
+  var stign = rnd(2,8);
+  var b = rnd(0,5);
+  var x1 = rnd(2,5), x2 = x1 + rnd(2,4);
+  var y1 = stign*x1 + b, y2 = stign*x2 + b;
+
+  // Velg tilfeldig begrepsoppgave
+  var beskr = plukk(STIGN_BESKRIVELSER);
+  var fv = lagBegrepFlervalg(beskr.begrep, BEGREP_STIGN_POOL);
+
+  return {
+    type:'del1_stign', del:1, nr:'4', merking:'lavt',
+    poeng:3, maxPoeng:3,
+    k:k, stign:stign, x1:x1, y1:y1, x2:x2, y2:y2,
+    begrep: { beskrivelse: beskr.beskrivelse(stign,k), alts: fv.alts, riktigIdx: fv.riktigIdx },
+    fasit: stign,
+    spørsmål:
+      'Grafen viser ' + k.y + ' som funksjon av ' + k.x + '.\n\n' +
+      'Grafen går gjennom punktene (' + x1 + ', ' + y1 + ') og (' + x2 + ', ' + y2 + ').\n\n' +
+      'a) Regn ut stigningstallet. (1 poeng)\n\n' +
+      'b) «' + beskr.beskrivelse(stign,k) + '»\n   Hvilket matematisk begrep beskriver dette? (2 poeng)',
+    instruksjon: 'Del a): Bruk formelen a = Δy/Δx. Del b): Velg ett alternativ.',
+    løsningssteg: [
+      'a = (' + y2 + ' − ' + y1 + ') / (' + x2 + ' − ' + x1 + ') = ' + (y2-y1) + '/' + (x2-x1) + ' = ' + stign,
+      'b) ' + beskr.begrep,
+    ],
+    kommentar: 'Del a): Endring i y delt på endring i x.',
+    svarType: 'stign_tall_begrep',
+    tol: 0.01,
+  };
+}
+
+// ── EKSPONENTIELL DEL 1 — ekstra begrepsoppgave ───────────────────
+
+var EKSP_BEGREP_POOL = ['vekstfaktor', 'startverdi', 'eksponent', 'prosentvis endring'];
+
+// ── LINEÆR FUNKSJON DEL 2 — begrep for konstantledd ─────────────
+// Brukes i genLineærFunksjonerDel2 — legges til som del d)
+
+var LINF_BEGREP_BESKR = [
+  { beskr: function(f, k) {
+      return 'Beløpet du betaler selv om du ikke bruker tjenesten i det hele tatt ('+ k.xNavn +' = 0).';
+    },
+    begrep: 'konstantledd' },
+  { beskr: function(f, k) {
+      return 'For hver ekstra ' + (k.xNavn==='elever'?'elev':k.xNavn==='måneder'?'måned':k.xNavn==='kWh'?'kWh':'enhet') + ' øker prisen med ' + f.a + ' kr.';
+    },
+    begrep: 'stigningstall' },
+  { beskr: function(f, k) {
+      return 'Antall ' + k.xNavn + ' avgjør hva totalprisen blir.';
+    },
+    begrep: 'uavhengig variabel' },
+  { beskr: function(f, k) {
+      return 'Totalprisen avhenger av antall ' + k.xNavn + '.';
+    },
+    begrep: 'avhengig variabel' },
+];
+
+var LINF_BEGREP_POOL = ['stigningstall', 'konstantledd', 'avhengig variabel', 'uavhengig variabel'];
+
+// ── STATISTIKK DEL 2 — hvilket sentralmål passer best ─────────────
+
+var STAT_BEGREP = [
+  { situasjon: 'I datasettet er det noen svært høye verdier som drar snittet opp.',
+    spm: 'Hvilket sentralmål er minst påvirket av disse ekstremverdiene?',
+    riktig: 'median',
+    pool: ['gjennomsnitt', 'median', 'typetall', 'standardavvik'] },
+  { situasjon: 'Halvparten av elevene er over denne verdien, og halvparten under.',
+    spm: 'Hva heter dette sentralmålet?',
+    riktig: 'median',
+    pool: ['gjennomsnitt', 'median', 'typetall', 'modus'] },
+  { situasjon: 'Denne verdien forekommer flest ganger i datasettet.',
+    spm: 'Hva heter dette sentralmålet?',
+    riktig: 'typetall',
+    pool: ['gjennomsnitt', 'median', 'typetall', 'standardavvik'] },
+  { situasjon: 'Summen av alle verdiene delt på antallet.',
+    spm: 'Hva heter dette sentralmålet?',
+    riktig: 'gjennomsnitt',
+    pool: ['gjennomsnitt', 'median', 'typetall', 'varians'] },
+];
+
+// ══════════════════════════════════════════════════════════════════
+// OPPDATERTE GENERATORER
+// ══════════════════════════════════════════════════════════════════
+
+// Disse overstyrer de opprinnelige versjonene
+
+function genStatistikkDel2() {
+  var kontekster = [
+    { tema:'mobilbruk per dag', g1:'Jenter', g2:'Gutter', enhet:'timer' },
+    { tema:'søvntimer per natt', g1:'8. trinn', g2:'10. trinn', enhet:'timer' },
+    { tema:'leksetid per dag', g1:'Gutter', g2:'Jenter', enhet:'minutter' },
+    { tema:'matpenger per uke', g1:'Jenter', g2:'Gutter', enhet:'kroner' },
+    { tema:'antall treningstimer per uke', g1:'Aktive', g2:'Lite aktive', enhet:'timer' },
+  ];
+  var k = plukk(kontekster);
+  function lagData(n, snitt, spr) {
+    var d = [];
+    for (var i=0;i<n;i++) d.push(Math.max(1, Math.round(snitt+(Math.random()-0.5)*spr*2)));
+    return d.sort(function(a,b){return a-b;});
+  }
+  var n=10, d1=lagData(n,rnd(4,8),2), d2=lagData(n,rnd(2,6),2);
+  function median(a){var s=[].concat(a).sort(function(x,y){return x-y;});return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)];}
+  function gjsnitt(a){return Math.round(a.reduce(function(x,y){return x+y;},0)/n*10)/10;}
+  var sn1=gjsnitt(d1), me1=median(d1), sn2=gjsnitt(d2), me2=median(d2);
+
+  // Begrepsoppgave
+  var sb = plukk(STAT_BEGREP);
+  var sbFv = lagBegrepFlervalg(sb.riktig, sb.pool);
+
+  return {
+    type:'del2_stat', del:2, nr:'5', merking:'viktig',
+    poeng:5, maxPoeng:5,
+    k:k, d1:d1, d2:d2, n:n,
+    spørsmål:
+      'En klasse har samlet data om ' + k.tema + ' (' + k.enhet + '):\n\n' +
+      k.g1 + ': ' + d1.join(', ') + '\n' +
+      k.g2 + ': ' + d2.join(', ') + '\n\n' +
+      'a) Hva er gjennomsnittet for ' + k.g1 + '? (1 poeng)\n' +
+      'b) Hva er medianen for ' + k.g1 + '? (1 poeng)\n' +
+      'c) Hva er gjennomsnittet for ' + k.g2 + '? (1 poeng)\n' +
+      'd) Hva er medianen for ' + k.g2 + '? (1 poeng)\n\n' +
+      'e) ' + sb.situasjon + '\n   ' + sb.spm + ' (1 poeng)',
+    instruksjon: 'Del a–d): Bruk kalkulator. Sorter tallene for å finne medianen. Del e): Velg ett alternativ.',
+    svarType: 'stat_abcde',
+    fasitA:sn1, fasitB:me1, fasitC:sn2, fasitD:me2,
+    begrep: { alts: sbFv.alts, riktigIdx: sbFv.riktigIdx },
+    løsning:
+      k.g1+': Snitt='+sn1+', Median='+me1+'\n'+
+      k.g2+': Snitt='+sn2+', Median='+me2+'\n'+
+      'e) '+sb.riktig,
+    kommentar: 'Median: sorter tallene og ta midterste verdi.',
+    tol: 0.15,
+  };
+}
+
+function genLineærFunksjonerDel2() {
+  var kontekster = [
+    { navn:'Avslutningsfest',
+      t1:function(){var a=rnd(100,200);return {a:a,b:0,beskr:a+' kr per elev (alt inkludert)'}; },
+      t2:function(){var a=rnd(50,100),b=rnd(2000,5000);return {a:a,b:b,beskr:a+' kr per elev + '+b.toLocaleString('no')+' kr leie'}; },
+      t3:function(){var b=rnd(5000,9000);return {a:0,b:b,beskr:'Fast pris '+b.toLocaleString('no')+' kr for inntil 70 elever'}; },
+      enhet:'elever', xNavn:'elever' },
+    { navn:'Utleiesykkel',
+      t1:function(){var b=rnd(80,150),a=rnd(2,4);return {a:a,b:b,beskr:b+' kr startpris + '+a+' kr per minutt'}; },
+      t2:function(){var b=rnd(30,60),a=rnd(2,5);return {a:a,b:b,beskr:b+' kr startpris + '+a+' kr per minutt'}; },
+      t3:function(){var a=rnd(3,6);return {a:a,b:0,beskr:a+' kr per minutt, ingen startpris'}; },
+      enhet:'minutter', xNavn:'minutter' },
+    { navn:'Treningssenter',
+      t1:function(){var b=rnd(400,700),a=rnd(250,400);return {a:a,b:b,beskr:b+' kr innmelding + '+a+' kr/mnd'}; },
+      t2:function(){var a=rnd(350,500);return {a:a,b:0,beskr:a+' kr per måned, ingen innmelding'}; },
+      t3:function(){var b=rnd(1000,2000),a=rnd(150,250);return {a:a,b:b,beskr:b+' kr innmelding + '+a+' kr/mnd'}; },
+      enhet:'måneder', xNavn:'måneder' },
+    { navn:'Strømleverandør',
+      t1:function(){var b=rnd(80,150),a=rnd(80,120);return {a:a/100,b:b,beskr:b+' kr/mnd + '+a+' øre per kWh'}; },
+      t2:function(){var a=rnd(100,140);return {a:a/100,b:0,beskr:a+' øre per kWh, ingen fastledd'}; },
+      t3:function(){var b=rnd(200,300),a=rnd(50,70);return {a:a/100,b:b,beskr:b+' kr/mnd + '+a+' øre per kWh'}; },
+      enhet:'kWh', xNavn:'kWh' },
+  ];
+  var k = plukk(kontekster);
+  var f1=k.t1(), f2=k.t2(), f3=k.t3();
+  var bryt12 = f1.a!==f2.a ? Math.round((f2.b-f1.b)/(f1.a-f2.a)) : null;
+
+  // Begrepsoppgave for del d)
+  var lb = plukk(LINF_BEGREP_BESKR);
+  var lbFv = lagBegrepFlervalg(lb.begrep, LINF_BEGREP_POOL);
+
+  return {
+    type:'del2_linf', del:2, nr:'6', merking:'viktig',
+    poeng:5, maxPoeng:5,
+    k:k, f1:f1, f2:f2, f3:f3, bryt12:bryt12,
+    spørsmål:
+      k.navn + ' — tre tilbud:\n\n' +
+      'Tilbud 1: ' + f1.beskr + '\n' +
+      'Tilbud 2: ' + f2.beskr + '\n' +
+      'Tilbud 3: ' + f3.beskr + '\n\n' +
+      'a) Stigningstall a₁ for Tilbud 1 = ? og konstantledd b₁ = ? (1 poeng)\n' +
+      'b) Stigningstall a₂ for Tilbud 2 = ? og konstantledd b₂ = ? (1 poeng)\n' +
+      'c) For hvor mange ' + k.xNavn + ' er Tilbud 1 og Tilbud 2 like dyre? (Bruk GeoGebra.) (2 poeng)\n\n' +
+      'd) «' + lb.beskr(f1,k) + '»\n   Hvilket matematisk begrep beskriver dette? (1 poeng)',
+    instruksjon: 'Del a–b): Identifiser stigningstall og konstantledd. Del c): GeoGebra. Del d): Velg begrep.',
+    svarType: 'linf_abcd',
+    fasitA1:f1.a, fasitB1:f1.b, fasitA2:f2.a, fasitB2:f2.b,
+    fasitC:bryt12,
+    begrep: { alts: lbFv.alts, riktigIdx: lbFv.riktigIdx, riktig: lb.begrep },
+    løsning:
+      'f(x) = '+f1.a+'x + '+f1.b+'\ng(x) = '+f2.a+'x + '+f2.b+'\n'+
+      (bryt12!==null?'Skjæring: x = '+bryt12+' '+k.xNavn+'\n':'')+
+      'd) '+lb.begrep,
+    kommentar: 'Stigningstall = pris per enhet. Konstantledd = fastpris.',
+    tol: 0.1,
+  };
+}
+
+
+// ══════════════════════════════════════════════════════════════════
 // TILSTAND
 // ══════════════════════════════════════════════════════════════════
 
@@ -1613,6 +1770,51 @@ function renderSvarBoks(o) {
       +'<input class="svar-input" id="linf-c" type="number" step="1" placeholder="0" style="max-width:150px"></div>' : '');
   }
 
+  function begrep_fv_html(prefix, alts) {
+    var html = '<div class="fv-grid">';
+    alts.forEach(function(alt,i){
+      html += '<button class="fv-btn" data-oppg="'+prefix+'" onclick="velgFlervalg(\''+prefix+'\','+i+')">'+alt+'</button>';
+    });
+    return html + '</div>';
+  }
+
+  if (o.svarType === 'stign_tall_begrep') {
+    return '<div class="svar-seksjon"><div class="svar-label">a) Stigningstallet:</div>'
+      +'<input class="svar-input" id="svar-inp" type="number" step="1" placeholder="0" style="max-width:120px">'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Velg riktig begrep:</div>'
+      + begrep_fv_html('stign_b_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
+  if (o.svarType === 'stat_abcde') {
+    return '<div class="svar-label">Sentralmål — rund av til én desimal:</div>'
+      +'<div class="koeff-grid to">'
+      +'<div class="koeff-felt"><label>a) Snitt '+o.k.g1+'</label><input class="koeff-input" id="stat-a" type="number" step="0.1" placeholder="0,0"></div>'
+      +'<div class="koeff-felt"><label>b) Median '+o.k.g1+'</label><input class="koeff-input" id="stat-b" type="number" step="0.5" placeholder="0,0"></div>'
+      +'<div class="koeff-felt"><label>c) Snitt '+o.k.g2+'</label><input class="koeff-input" id="stat-c" type="number" step="0.1" placeholder="0,0"></div>'
+      +'<div class="koeff-felt"><label>d) Median '+o.k.g2+'</label><input class="koeff-input" id="stat-d" type="number" step="0.5" placeholder="0,0"></div>'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">e) Velg riktig sentralmål:</div>'
+      + begrep_fv_html('stat_e_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
+  if (o.svarType === 'linf_abcd') {
+    return '<div class="svar-label">Funksjonskoeffisienter:</div>'
+      +'<div class="koeff-grid to">'
+      +'<div class="koeff-felt"><label>a₁ (Tilbud 1)</label><input class="koeff-input" id="linf-a1" type="number" step="0.01" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>b₁ (Tilbud 1)</label><input class="koeff-input" id="linf-b1" type="number" step="1" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>a₂ (Tilbud 2)</label><input class="koeff-input" id="linf-a2" type="number" step="0.01" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>b₂ (Tilbud 2)</label><input class="koeff-input" id="linf-b2" type="number" step="1" placeholder="0"></div>'
+      +'</div>'
+      +(o.fasitC!==null?'<div class="svar-seksjon"><div class="svar-label">c) Skjæringspunkt — antall '+o.k.xNavn+':</div>'
+      +'<input class="svar-input" id="linf-c" type="number" step="1" placeholder="0" style="max-width:150px"></div>':'')
+      +'<div class="svar-seksjon"><div class="svar-label">d) Velg riktig begrep:</div>'
+      + begrep_fv_html('linf_d_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
   if (o.svarType === 'tall_flervalg') {
     var html = '<div class="svar-seksjon"><div class="svar-label">a) Antall kvadrater i figur 5:</div>'
       +'<input class="svar-input" id="svar-inp" type="number" step="1" placeholder="0" style="max-width:140px">'
@@ -1686,6 +1888,62 @@ function renderSvarBoks(o) {
 
 var suValg = {};
 var flervalgValg = {};
+
+var tidAktiv = false;
+var tidInterval = null;
+var sekunderIgjen = 0;
+
+function startMedTid() {
+  tidAktiv = true;
+  document.getElementById('modal-tid').classList.add('skjult');
+  var del = state.del || 1;
+  startTidtaker(del);
+  startØkt(del);
+}
+
+function startUtenTid() {
+  tidAktiv = false;
+  document.getElementById('modal-tid').classList.add('skjult');
+  startØkt(state.del || 1);
+}
+
+function startTidtaker(del) {
+  clearInterval(tidInterval);
+  var el = document.getElementById('tidtaker');
+  var disp = document.getElementById('tid-display');
+  var info = document.getElementById('tid-del-info');
+  if (!tidAktiv) { el.classList.remove('aktiv'); return; }
+  // Del 1: 60 min, Del 2: 240 min, Fullt: 300 min
+  var minutter = del === 1 ? 60 : del === 2 ? 240 : 300;
+  sekunderIgjen = minutter * 60;
+  el.classList.add('aktiv');
+  info.textContent = del === 0 ? 'Fullt sett' : 'Del ' + del;
+  oppdaterTidDisplay();
+  tidInterval = setInterval(function() {
+    sekunderIgjen--;
+    oppdaterTidDisplay();
+    if (sekunderIgjen <= 0) {
+      clearInterval(tidInterval);
+      disp.textContent = '0:00';
+      disp.classList.add('tid-varsel');
+    }
+  }, 1000);
+}
+
+function oppdaterTidDisplay() {
+  var disp = document.getElementById('tid-display');
+  if (!disp) return;
+  var min = Math.floor(Math.abs(sekunderIgjen) / 60);
+  var sek = Math.abs(sekunderIgjen) % 60;
+  var prefix = sekunderIgjen < 0 ? '+' : '';
+  disp.textContent = prefix + min + ':' + (sek < 10 ? '0' : '') + sek;
+  if (sekunderIgjen <= 300 && sekunderIgjen > 0) {
+    disp.classList.add('tid-varsel');
+  } else {
+    disp.classList.remove('tid-varsel');
+  }
+}
+
 function velgFlervalg(oppgId, valIdx) {
   flervalgValg[oppgId] = valIdx;
   document.querySelectorAll('.fv-btn[data-oppg="'+oppgId+'"]').forEach(function(btn, i) {
@@ -1845,6 +2103,53 @@ function sjekk(idx) {
     melding = 'f₁: a='+(okA1?'✓':o.fasitA1)+' b='+(okB1?'✓':o.fasitB1)+'. '
       +'f₂: a='+(okA2?'✓':o.fasitA2)+' b='+(okB2?'✓':o.fasitB2)+'. '
       +(o.fasitC!==null?'Skjæring: '+(okC_l?'✓':'Fasit: '+o.fasitC+' '+o.k.xNavn):'');
+
+  } else if (o.svarType === 'stign_tall_begrep') {
+    var vA=parseFloat(((document.getElementById('svar-inp')||{value:''}).value+'').replace(',','.'));
+    var keyB='stign_b_'+o._idx, valB=flervalgValg[keyB];
+    var okA=!isNaN(vA)&&sjekkTall(vA,o.fasit,o.tol||0.01);
+    var okB=valB===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyB+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valB?'galt':''));
+    });
+    poeng=(okA?1:0)+(okB?2:0);
+    status=poeng===3?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA?'✓ ':'Fasit: '+o.fasit+' ')+'b) '+(okB?'✓ Riktig!':'Fasit: '+o.begrep.alts[o.begrep.riktigIdx]);
+    flervalgValg[keyB]=undefined;
+
+  } else if (o.svarType === 'stat_abcde') {
+    var tol_s=o.tol||0.15;
+    var okA_st=sjekkTall(hentTall('stat-a'),o.fasitA,tol_s);
+    var okB_st=sjekkTall(hentTall('stat-b'),o.fasitB,0.5);
+    var okC_st=sjekkTall(hentTall('stat-c'),o.fasitC,tol_s);
+    var okD_st=sjekkTall(hentTall('stat-d'),o.fasitD,0.5);
+    var keyE='stat_e_'+o._idx, valE=flervalgValg[keyE];
+    var okE=valE===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyE+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valE?'galt':''));
+    });
+    poeng=(okA_st?1:0)+(okB_st?1:0)+(okC_st?1:0)+(okD_st?1:0)+(okE?1:0);
+    status=poeng===5?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA_st?'✓':o.fasitA)+' b) '+(okB_st?'✓':o.fasitB)+' c) '+(okC_st?'✓':o.fasitC)+' d) '+(okD_st?'✓':o.fasitD)+' e) '+(okE?'✓':'Fasit: '+o.begrep.alts[o.begrep.riktigIdx]);
+    flervalgValg[keyE]=undefined;
+
+  } else if (o.svarType === 'linf_abcd') {
+    var tol_l=o.tol||0.1;
+    var okA1=sjekkTall(hentTall('linf-a1'),o.fasitA1,tol_l);
+    var okB1=sjekkTall(hentTall('linf-b1'),o.fasitB1,tol_l);
+    var okA2=sjekkTall(hentTall('linf-a2'),o.fasitA2,tol_l);
+    var okB2=sjekkTall(hentTall('linf-b2'),o.fasitB2,tol_l);
+    var okC_l=o.fasitC!==null?sjekkTall(hentTall('linf-c'),o.fasitC,1):true;
+    var keyD='linf_d_'+o._idx, valD=flervalgValg[keyD];
+    var okD=valD===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyD+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valD?'galt':''));
+    });
+    poeng=((okA1&&okB1)?1:0)+((okA2&&okB2)?1:0)+(okC_l?2:0)+(okD?1:0);
+    if(poeng>maxPoeng)poeng=maxPoeng;
+    status=poeng===maxPoeng?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA1&&okB1?'✓':'a₁='+o.fasitA1+',b₁='+o.fasitB1)+' b) '+(okA2&&okB2?'✓':'a₂='+o.fasitA2+',b₂='+o.fasitB2)+' c) '+(okC_l?'✓':'Fasit: '+o.fasitC)+' d) '+(okD?'✓':'Fasit: '+o.begrep.alts[o.begrep.riktigIdx]);
+    flervalgValg[keyD]=undefined;
 
   } else if (o.svarType === 'tall_flervalg') {
     var vA = parseFloat(((document.getElementById('svar-inp')||{value:''}).value+'').replace(',','.'));
@@ -2065,6 +2370,7 @@ function oppdaterProgress() {
 function byttDel(del, knapp) {
   document.querySelectorAll('.modus-tab').forEach(function(t){t.classList.remove('aktiv');});
   knapp.classList.add('aktiv');
+  if (tidAktiv) startTidtaker(del);
   startØkt(del);
 }
 
@@ -2099,7 +2405,8 @@ window.addEventListener('DOMContentLoaded', function() {
   fp.antallGanger = (fp.antallGanger || 0) + 1;
   lagreFremgang(fp);
   document.getElementById('st-runde').textContent = fp.antallGanger;
-  startØkt(1);
+  state.del = 1;
+  // Vis tidtaking-modal
 });
 
 </script>
