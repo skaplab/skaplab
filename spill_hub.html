@@ -115,6 +115,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-hei
 /* FOOTER */
 footer{text-align:center;padding:24px;color:var(--textdim);font-size:0.78rem;border-top:1px solid rgba(255,255,255,0.05);margin-top:20px;}
 footer a{color:var(--accent);text-decoration:none;}
+
+.hist-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  font-size:0.68rem; padding:2px 7px; border-radius:8px;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+  color:var(--textdim); margin-top:4px;
+}
+.hist-badge.har-data { background:rgba(255,215,0,0.07); border-color:rgba(255,215,0,0.2); color:var(--accent); }
+
 </style>
 </head>
 <body>
@@ -164,6 +173,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">6 verdener · 30+ NPC-er</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="ts-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -184,6 +194,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">7 verdener · 25 spørsmål</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="vr-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -212,6 +223,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">MAT01 · (x, y)</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="bs-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -236,6 +248,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">MAT01 · f(x) = ax + b</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="ln-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -260,6 +273,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">MAT01 · ax² + bx + c</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="kn-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -288,6 +302,7 @@ footer a{color:var(--accent);text-decoration:none;}
         <span class="tag km">NAT01 · Syre–base · pH</span>
       </div>
       <button class="spillkort-btn">▶ Spill nå</button>
+      <div class="hist-badge" id="km-hist">🎮 Ikke spilt ennå</div>
     </div>
   </a>
 
@@ -343,6 +358,35 @@ function lagStjerner(id, n) {
     g.appendChild(d);
   }));
 })();
+// ══ SKAPLAB LAGRING ══
+const SL={
+  _k:(s,f)=>`skaplab_${s}_${f}`,
+  les:(s,f,d=0)=>{try{const v=localStorage.getItem(SL._k(s,f));return v!==null?(isNaN(v)?JSON.parse(v):Number(v)):d;}catch(e){return d;}},
+};
+
+function visHistorikk() {
+  const cfg = [
+    { id:'ts-hist',   spill:'verden_rundt', felt:'spill',       label:'spill spilt',  ikon:'🌍' },
+    { id:'vr-hist',   spill:'verden_rundt', felt:'bestScore',   label:'best poeng',   ikon:'⭐' },
+    { id:'bs-hist',   spill:'battleships',  felt:'spill',       label:'spill spilt',  ikon:'⚓' },
+    { id:'ln-hist',   spill:'linje',        felt:'bestProsent', label:'% nøyaktighet',ikon:'🚀' },
+    { id:'kn-hist',   spill:'kanon',        felt:'bestProsent', label:'% nøyaktighet',ikon:'💣' },
+    { id:'km-hist',   spill:'kjemi',        felt:'bestRiktige', label:'best riktige', ikon:'⚗️' },
+  ];
+  cfg.forEach(c => {
+    const el = document.getElementById(c.id);
+    if (!el) return;
+    const v = SL.les(c.spill, c.felt, -1);
+    if (v >= 0) {
+      el.textContent = c.ikon + ' ' + v + ' ' + c.label;
+      el.classList.add('har-data');
+    } else {
+      el.textContent = '🎮 Ikke spilt ennå';
+    }
+  });
+}
+window.addEventListener('DOMContentLoaded', visHistorikk);
+
 </script>
 </body>
 </html>
