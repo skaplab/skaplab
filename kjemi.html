@@ -266,6 +266,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <script>
+
+// ══ SKAPLAB LAGRING ══
+const SL={
+  _k:(s,f)=>`skaplab_${s}_${f}`,
+  les:(s,f,d=0)=>{try{const v=localStorage.getItem(SL._k(s,f));return v!==null?(isNaN(v)?JSON.parse(v):Number(v)):d;}catch(e){return d;}},
+  skriv:(s,f,v)=>{try{localStorage.setItem(SL._k(s,f),typeof v==='object'?JSON.stringify(v):v);}catch(e){}},
+  max:(s,f,v)=>{if(v>SL.les(s,f,0))SL.skriv(s,f,v);},
+  øk:(s,f)=>SL.skriv(s,f,SL.les(s,f,0)+1),
+};
+
 // ══════════════════════════════════════════════
 // KJEMIKALIER
 // ══════════════════════════════════════════════
@@ -357,7 +367,7 @@ let nivå='lett', oppgNr=0, treffT=0, forsøkT=0;
 let begerInnhold=[];  // [{id, pH, type, farge}]
 let gjeldende=null;
 let harLøst=false;
-const TOTAL=8;
+const TOTAL=12;
 
 function velgN(n,el){
   nivå=n;
@@ -455,21 +465,58 @@ function oppdaterBeger(){
 
 function beregnPH(){
   if(begerInnhold.length===0) return 7;
-  let syreStyrke=0, baseStyrke=0;
+  const ids = begerInnhold.map(k=>k.id).sort().join('+');
+  // Tabellbasert: kjente kombinasjoner
+  const pH_tabell = {
+    'hcl':7,           // bare HCl i beger → ikke reaksjon ennå
+    'eddik':3,
+    'vann':7,
+    'bikarb':8.5,
+    'naoh':13,
+    'fenolf':7,
+    'limus':7,
+    'kobber':4,
+    'bikarb+eddik':6.0,    // nøytralisering: litt surt
+    'bikarb+hcl':2.5,      // HCl i overskudd
+    'bikarb+eddik+vann':6.2,
+    'bikarb+hcl+vann':2.8,
+    'eddik+naoh':9.0,      // base i svakt overskudd
+    'hcl+naoh':7.0,        // nøytralisering
+    'hcl+naoh+vann':7.0,
+    'bikarb+naoh':11.0,    // base dominerer
+    'eddik+vann':3.0,
+    'hcl+vann':1.0,
+    'naoh+vann':13.0,
+    'bikarb+vann':8.5,
+    'fenolf+bikarb':8.5,
+    'fenolf+naoh':13.0,
+    'fenolf+naoh+vann':13.0,
+    'fenolf+hcl':1.0,
+    'fenolf+eddik':3.0,
+    'limus+hcl':1.0,
+    'limus+eddik':3.0,
+    'limus+naoh':13.0,
+    'limus+bikarb':8.5,
+    'limus+hcl+vann':1.2,
+    'kobber+vann':4.0,
+    'kobber+hcl':1.5,
+    'kobber+eddik':3.0,
+  };
+  // Slå opp eksakt kombinasjon
+  if(pH_tabell[ids] !== undefined) return pH_tabell[ids];
+  // Fallback: beregn fra styrke
+  let syre=0, base=0;
   begerInnhold.forEach(k=>{
-    if(k.type==='syre') syreStyrke+=Math.pow(10,-(k.pH));
-    else if(k.type==='base') baseStyrke+=Math.pow(10,-(14-k.pH));
+    if(k.type==='syre') syre+=Math.pow(10,-k.pH);
+    else if(k.type==='base') base+=Math.pow(10,-(14-k.pH));
   });
-  if(syreStyrke>0&&baseStyrke>0){
-    if(syreStyrke>baseStyrke) return Math.max(1,-Math.log10(syreStyrke-baseStyrke));
-    if(baseStyrke>syreStyrke) return Math.min(13,14+Math.log10(baseStyrke-syreStyrke));
+  if(syre>0&&base>0){
+    if(syre>base) return Math.max(1,-Math.log10(syre-base));
+    if(base>syre) return Math.min(13,14+Math.log10(base-syre));
     return 7;
   }
-  if(syreStyrke>0) return Math.max(1,-Math.log10(syreStyrke/begerInnhold.length));
-  if(baseStyrke>0) return Math.min(13,14+Math.log10(baseStyrke/begerInnhold.length));
-  // Indikatorer og nøytrale
-  const nøytral=begerInnhold.filter(k=>k.type==='nøytral'||k.type==='indikator');
-  if(nøytral.length===begerInnhold.length) return 7;
+  if(syre>0) return Math.max(1,-Math.log10(syre));
+  if(base>0) return Math.min(13,14+Math.log10(base));
   return 7;
 }
 
@@ -600,7 +647,37 @@ function nesteOppgave(){
   if(oppgNr>TOTAL){ visSlutt(); return; }
   harLøst=false;
   // Velg oppgave (syklisk men variert)
-  gjeldende=OPPGAVER[(oppgNr-1)%OPPGAVER.length];
+  gjeldende=OPPGAVER[(oppgNr-1)%OPPGAVER.length
+  ,{
+    id:'lakmus_blå', emoji:'💙', navn:'Blå lakmus (basisk)', ph_mål:[8,14],
+    tekst:'Lakmus blir blå i basisk løsning. Lag en basisk løsning med lakmus-indikator.',
+    hint:'Tilsett lakmus og en base. NaOH gir sterk blåfarge.',
+    nøkkel:['limus','base'], resultat:'lakmus_blå',
+    reaksjonEmoji:'💙', reaksjonTekst:'Lakmus er blå! Løsningen er basisk (pH > 7). Lakmus brukes til å skille syrer fra baser.',
+    kjemiInfo:'Lakmus er et naturlig fargestoff fra lav (Roccella). Blå i base, rød i syre.'
+  },{
+    id:'fenolf_fargelos', emoji:'🔬', navn:'Fargeløs fenolftalein (sur)', ph_mål:[0,7],
+    tekst:'Fenolftalein er fargeløs i sur og nøytral løsning, men rosa i base. Lag en sur løsning med fenolftalein – og behold den fargeløs!',
+    hint:'Fenolftalein forblir fargeløs i syre. Tilsett en syre og fenolftalein.',
+    nøkkel:['fenolf','syre'], resultat:'fenolf_fargelos', ingenPH:false,
+    reaksjonEmoji:'🔬', reaksjonTekst:'Fenolftalein er fargeløs! Løsningen er sur (pH < 7). Indikatoren skifter farge først ved pH > 8.',
+    kjemiInfo:'Fenolftalein er en syrebase-indikator: fargeløs ved pH 0–8, rosa ved pH 8–10, lilla/rød ved pH > 10.'
+  },{
+    id:'nøytral_vann', emoji:'💧', navn:'Nøytralt vann (pH = 7)', ph_mål:[6,8],
+    tekst:'Rent vann er nøytralt med pH = 7. Lag en løsning som er så nær pH 7 som mulig – bruk bare vann!',
+    hint:'Vann alene har pH = 7. Ikke tilsett syrer eller baser.',
+    nøkkel:['vann'], resultat:'nøytral_vann', ingenPH:false,
+    reaksjonEmoji:'💧', reaksjonTekst:'pH = 7! Rent vann er nøytralt – like mange H⁺ og OH⁻-ioner.',
+    kjemiInfo:'Vann danner H⁺ og OH⁻-ioner i like mengder: H₂O ⇌ H⁺ + OH⁻. Konsentrasjonen er 10⁻⁷ mol/L → pH = 7.'
+  },{
+    id:'kobber_blå', emoji:'💎', navn:'Blå kobberløsning', ph_mål:[0,14], ingenPH:true,
+    tekst:'Kobbersulfat (CuSO₄) gir en karakteristisk blå løsning. Lag en løsning der kobberioner dominerer.',
+    hint:'Tilsett kobbersulfat. Vann løser det opp og gjør løsningen blåere.',
+    nøkkel:['kobber'], resultat:'kobber_blå',
+    reaksjonEmoji:'💎', reaksjonTekst:'Blå kobberløsning! Cu²⁺-ionene absorberer rødt lys og reflekterer blått. Brukes i galvanisering.',
+    kjemiInfo:'CuSO₄ + H₂O → Cu²⁺ + SO₄²⁻. Cu²⁺-ioner gir den karakteristiske blåfargen til kobbersulfatløsning.'
+  }
+];
   tømBeger();
 
   // Vis mål
@@ -626,7 +703,14 @@ function nesteOppgave(){
   document.getElementById('kjemi-info-boks').textContent='Klikk på et kjemikalie for å lære mer.';
 }
 
+function lagreKjemiSlutt(){
+  SL.øk('kjemi','okter');
+  SL.max('kjemi','bestRiktige',treffT);
+  SL.max('kjemi','bestProsent', forsøkT>0?Math.round(treffT/Math.max(forsøkT,treffT)*100):0);
+  SL.skriv('kjemi','lastPlayed',Date.now());
+}
 function visSlutt(){
+  lagreKjemiSlutt();
   document.getElementById('slutt-tekst').innerHTML=
     `${TOTAL} oppgaver fullført!<br>Riktige: <b>${treffT}</b> · Forsøk: <b>${forsøkT}</b>`;
   document.getElementById('slutt').classList.add('vis');
