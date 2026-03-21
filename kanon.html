@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kanonkule – SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#06101e; --surface:#0d1e30; --surface2:#0a1828;
+  --accent:#ffd700; --accent2:#4af; --green:#7fff6e; --red:#f06060;
+  --text:#e8f0ff; --textdim:#7a90b0;
+  --font-head:'Fredoka One',cursive; --font-body:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+
+/* ── SETUP ── */
+#setup{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;}
+#setup h1{font-family:var(--font-head);font-size:2rem;color:var(--accent);}
+#setup p{color:var(--textdim);font-size:0.88rem;max-width:440px;text-align:center;line-height:1.55;}
+.nivå-rad{display:flex;gap:12px;}
+.nkort{background:var(--surface);border:2px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;cursor:pointer;text-align:center;width:180px;transition:all .18s;}
+.nkort:hover{transform:translateY(-2px);}
+.nkort.valgt.lett{border-color:var(--green);background:rgba(127,255,110,0.07);}
+.nkort.valgt.medium{border-color:var(--accent);background:rgba(255,215,0,0.07);}
+.nkort.valgt.hard{border-color:var(--red);background:rgba(240,96,96,0.07);}
+.nkort .ne{font-size:1.8rem;margin-bottom:6px;}
+.nkort .nt{font-family:var(--font-head);font-size:1rem;margin-bottom:4px;}
+.nkort.lett .nt{color:var(--green);}
+.nkort.medium .nt{color:var(--accent);}
+.nkort.hard .nt{color:var(--red);}
+.nkort .nd{font-size:0.75rem;color:var(--textdim);line-height:1.4;}
+.start-btn{padding:11px 36px;font-family:var(--font-head);font-size:1.05rem;background:var(--accent2);color:#000;border:none;border-radius:10px;cursor:pointer;transition:all .15s;}
+.start-btn:hover{filter:brightness(1.1);transform:scale(1.02);}
+.tips{max-width:440px;background:rgba(68,170,255,0.07);border:1px solid rgba(68,170,255,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:var(--textdim);line-height:1.5;}
+.tips b{color:var(--accent2);}
+
+/* ── SPILLSKJERM ── */
+#game{display:none;height:100vh;flex-direction:column;}
+
+/* Topbar */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:5px 14px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(255,215,0,0.15);flex-shrink:0;gap:8px;}
+#topbar h1{font-family:var(--font-head);font-size:0.95rem;color:var(--accent);}
+#topbar .tinfo{display:flex;gap:10px;align-items:center;font-size:0.8rem;}
+#topbar a{font-size:0.72rem;color:var(--textdim);text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+.badge{font-size:0.72rem;padding:2px 9px;border-radius:10px;font-weight:700;}
+.badge.lett{background:rgba(127,255,110,0.12);color:var(--green);border:1px solid rgba(127,255,110,0.3);}
+.badge.medium{background:rgba(255,215,0,0.12);color:var(--accent);border:1px solid rgba(255,215,0,0.3);}
+.badge.hard{background:rgba(240,96,96,0.12);color:#f09090;border:1px solid rgba(240,96,96,0.3);}
+
+/* Hoveddel */
+#main{flex:1;display:flex;gap:0;min-height:0;}
+
+/* Venstre: inputpanel */
+#panel{width:210px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--surface2);border-right:1px solid rgba(255,255,255,0.06);}
+.ptittel{font-family:var(--font-head);font-size:0.78rem;color:var(--textdim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+
+/* Funksjonsdisplay */
+#funk-display{background:rgba(68,170,255,0.08);border:1px solid rgba(68,170,255,0.2);border-radius:8px;padding:8px 10px;font-family:var(--font-head);font-size:0.95rem;color:var(--accent2);text-align:center;letter-spacing:.5px;}
+
+/* Betingelser */
+#betingelser{background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:8px 10px;font-size:0.78rem;line-height:1.6;}
+#betingelser .blab{color:var(--textdim);}
+#betingelser .bval{color:var(--accent);font-weight:700;font-family:var(--font-head);}
+#betingelser .bval.ok{color:var(--green);}
+#betingelser .bval.feil{color:var(--red);}
+#topp-krav-rad{display:none;}
+
+/* Input-felt */
+.input-rad{display:flex;align-items:center;gap:6px;}
+.input-rad label{font-size:0.82rem;width:14px;color:var(--accent2);font-family:var(--font-head);}
+.koeff-input{flex:1;height:32px;background:rgba(68,170,255,0.1);border:1px solid rgba(68,170,255,0.3);border-radius:6px;color:var(--text);font-family:var(--font-head);font-size:0.95rem;text-align:center;outline:none;transition:border-color .15s;}
+.koeff-input:focus{border-color:var(--accent2);background:rgba(68,170,255,0.18);}
+.koeff-input.ok{border-color:var(--green);}
+.koeff-input.feil{border-color:var(--red);}
+#c-rad .koeff-input{background:rgba(127,255,110,0.07);border-color:rgba(127,255,110,0.3);color:var(--green);}
+
+#skyt-btn{width:100%;padding:9px;font-family:var(--font-head);font-size:1rem;background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;transition:all .15s;margin-top:2px;}
+#skyt-btn:hover{filter:brightness(1.08);transform:scale(1.01);}
+#skyt-btn:disabled{opacity:.4;cursor:default;transform:none;}
+
+#tilbakemelding{font-size:0.8rem;min-height:36px;padding:6px 8px;background:var(--surface);border-radius:6px;border:1px solid rgba(255,255,255,0.08);line-height:1.4;text-align:center;display:flex;align-items:center;justify-content:center;}
+#tilbakemelding.treff{border-color:var(--green);color:var(--green);}
+#tilbakemelding.nesten{border-color:var(--accent);color:var(--accent);}
+#tilbakemelding.bom{border-color:rgba(255,255,255,0.15);color:var(--textdim);}
+#tilbakemelding.feil{border-color:var(--red);color:#f09090;}
+
+/* Statistikk */
+.srad{display:flex;justify-content:space-between;font-size:0.78rem;}
+.srad .sv{font-family:var(--font-head);font-size:0.95rem;}
+.sv.g{color:var(--green);}
+.sv.r{color:var(--red);}
+.sv.y{color:var(--accent);}
+
+/* Neste-knapp */
+#neste-btn{width:100%;padding:8px;font-family:var(--font-head);font-size:0.92rem;background:var(--green);color:#000;border:none;border-radius:8px;cursor:pointer;display:none;margin-top:2px;}
+
+/* Canvas */
+#canvas-wrap{flex:1;position:relative;min-width:0;}
+canvas{display:block;width:100%;height:100%;}
+
+/* Hint */
+#hint-boks{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(3,10,22,0.9);border:1px solid rgba(68,170,255,0.25);border-radius:8px;padding:6px 14px;font-size:0.78rem;color:var(--textdim);white-space:nowrap;}
+#hint-boks b{color:var(--accent2);}
+
+/* SLUTT-MODAL */
+#slutt{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:50;align-items:center;justify-content:center;}
+#slutt.vis{display:flex;}
+#slutt-boks{background:var(--surface2);border-radius:14px;padding:28px 32px;text-align:center;border:2px solid rgba(255,255,255,0.1);max-width:340px;width:90%;}
+#slutt-boks h2{font-family:var(--font-head);font-size:1.6rem;color:var(--accent);margin:10px 0 6px;}
+#slutt-boks p{color:var(--textdim);font-size:0.85rem;line-height:1.6;margin-bottom:18px;}
+.sbtns{display:flex;gap:8px;justify-content:center;}
+.sbtn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;font-family:var(--font-body);}
+.sbtn.p{background:var(--accent2);color:#000;}
+.sbtn.s{background:rgba(255,255,255,0.08);color:var(--text);border:1px solid rgba(255,255,255,0.15);}
+</style>
+</head>
+<body>
+
+<!-- OPPSETT -->
+<div id="setup">
+  <h1>💣 Kanonkule</h1>
+  <p>Still inn kanonen ved å finne riktig andregradsfunksjon f(x) = ax² + bx + c. Parabelen skal treffe skipet på x-aksen!</p>
+  <div class="nivå-rad">
+    <div class="nkort lett valgt" onclick="velgN('lett',this)">
+      <div class="ne">🟢</div>
+      <div class="nt">Lett</div>
+      <div class="nd">Finn a, b, c slik at parabelen treffer skipet.<br>c = kanonhøyden er gitt.</div>
+    </div>
+    <div class="nkort medium" onclick="velgN('medium',this)">
+      <div class="ne">🟡</div>
+      <div class="nt">Middels</div>
+      <div class="nd">Som lett, men kulens toppunkt må holde seg under en maksimumshøyde.</div>
+    </div>
+    <div class="nkort hard" onclick="velgN('hard',this)">
+      <div class="ne">🔴</div>
+      <div class="nt">Vanskelig</div>
+      <div class="nd">Som middels, men uten forhåndsvisning av parabelen.</div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startSpill()">▶ Start!</button>
+  <div class="tips">
+    <b>📐 Matematikk:</b> f(x) = ax² + bx + c<br>
+    • <b>c</b> = kanonhøyden (der kula starter, alltid gitt)<br>
+    • <b>a</b> må være negativ (parabelen åpner nedover)<br>
+    • <b>b</b> styrer retningen på skuddet<br>
+    • Kula treffer bakken der f(x) = 0
+  </div>
+</div>
+
+<!-- SPILLSKJERM -->
+<div id="game">
+  <div id="topbar">
+    <h1>💣 Kanonkule</h1>
+    <div class="tinfo">
+      <span>🎯 Treff: <b id="treff-teller" style="color:var(--green)">0</b></span>
+      <span>💥 Skudd: <b id="skudd-teller" style="color:var(--accent)">0</b></span>
+      <span id="nivå-badge" class="badge lett">Lett</span>
+    </div>
+    <a href="spill_hub.html">← Hub</a>
+  </div>
+
+  <div id="main">
+    <!-- INPUT-PANEL -->
+    <div id="panel">
+      <div>
+        <div class="ptittel">Funksjon</div>
+        <div id="funk-display">f(x) = ax² + bx + c</div>
+      </div>
+
+      <div>
+        <div class="ptittel">Oppgave</div>
+        <div id="betingelser">
+          <div><span class="blab">Kanonhøyde (c): </span><span class="bval" id="b-c">–</span></div>
+          <div><span class="blab">Skipsposisjon (x): </span><span class="bval" id="b-d">–</span></div>
+          <div id="topp-krav-rad"><span class="blab">Maks topphøyde: </span><span class="bval" id="b-topp">–</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="ptittel">Koeffisienter</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div class="input-rad">
+            <label>a</label>
+            <input class="koeff-input" id="ia" type="number" step="0.1" placeholder="< 0" autocomplete="off">
+          </div>
+          <div class="input-rad">
+            <label>b</label>
+            <input class="koeff-input" id="ib" type="number" step="0.1" placeholder="?" autocomplete="off">
+          </div>
+          <div class="input-rad" id="c-rad">
+            <label>c</label>
+            <input class="koeff-input" id="ic" type="number" readonly>
+          </div>
+        </div>
+      </div>
+
+      <button id="skyt-btn" onclick="skyt()">💥 Skyt!</button>
+      <div id="tilbakemelding">Skriv inn a og b, så skyter du!</div>
+      <button id="neste-btn" onclick="nesteOppgave()">Neste oppgave ▶</button>
+
+      <div style="height:1px;background:rgba(255,255,255,0.07)"></div>
+      <div>
+        <div class="ptittel">Statistikk</div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Treff</span><span class="sv g" id="st-treff">0</span></div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Bommet</span><span class="sv r" id="st-bom">0</span></div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Nøyaktighet</span><span class="sv y" id="st-noy">–</span></div>
+      </div>
+    </div>
+
+    <!-- CANVAS -->
+    <div id="canvas-wrap">
+      <canvas id="cv"></canvas>
+      <div id="hint-boks">Hint: f(<span id="hint-d">?</span>) = 0 → a·<span id="hint-d2">?</span>² + b·<span id="hint-d3">?</span> + c = 0</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLUTT -->
+<div id="slutt">
+  <div id="slutt-boks">
+    <div style="font-size:3rem">🏆</div>
+    <h2>Økt fullført!</h2>
+    <p id="slutt-tekst"></p>
+    <div class="sbtns">
+      <button class="sbtn p" onclick="startSpill()">🔄 Spill igjen</button>
+      <button class="sbtn s" onclick="gaSetup()">⚙️ Innstillinger</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// KONSTANTER OG TILSTAND
+// ══════════════════════════════════════════════
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+let nivå = 'lett';
+let kanon_k, skip_d, topp_max;
+let skuddTeller = 0, treffTeller = 0, bomTeller = 0;
+let oppgaveNr = 0;
+let animId = null;
+let animFrames = [];
+let harTruffet = false;
+let TOTAL_OPPGAVER = 8;
+
+// Koordinatsystem (canvas-koordinater)
+let origo, skalaX, skalaY, maxX, maxY;
+
+// ══════════════════════════════════════════════
+// SETUP
+// ══════════════════════════════════════════════
+function velgN(n, el) {
+  nivå = n;
+  document.querySelectorAll('.nkort').forEach(k => k.classList.remove('valgt'));
+  el.classList.add('valgt');
+}
+
+function startSpill() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('game').style.display = 'flex';
+
+  skuddTeller = 0; treffTeller = 0; bomTeller = 0; oppgaveNr = 0;
+
+  const badge = document.getElementById('nivå-badge');
+  badge.className = 'badge ' + nivå;
+  badge.textContent = nivå === 'lett' ? '🟢 Lett' : nivå === 'medium' ? '🟡 Middels' : '🔴 Vanskelig';
+
+  document.getElementById('topp-krav-rad').style.display = (nivå === 'medium' || nivå === 'hard') ? 'block' : 'none';
+
+  resizeCanvas();
+  nesteOppgave();
+}
+
+function gaSetup() {
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('setup').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+// OPPGAVEGENERATOR
+// ══════════════════════════════════════════════
+function genererOppgave() {
+  // Kanonhøyde: 3–7
+  kanon_k = 3 + Math.floor(Math.random() * 5);
+  // Avstand til skip: 8–14 (partall for penere tall)
+  const avst = [8, 9, 10, 11, 12, 13, 14];
+  skip_d = avst[Math.floor(Math.random() * avst.length)];
+
+  if (nivå === 'medium' || nivå === 'hard') {
+    // Maks topphøyde: kanon+4 til kanon+8, maks 12
+    topp_max = Math.min(kanon_k + 4 + Math.floor(Math.random() * 5), 12);
+    document.getElementById('b-topp').textContent = `maks ${topp_max}`;
+  }
+}
+
+// Beregn riktig b gitt a (og kjente c=k, f(d)=0)
+function riktigB(a) {
+  return (-kanon_k - a * skip_d * skip_d) / skip_d;
+}
+
+// ══════════════════════════════════════════════
+// CANVAS OG KOORDINATSYSTEM
+// ══════════════════════════════════════════════
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  cv.width = wrap.clientWidth;
+  cv.height = wrap.clientHeight;
+  beregnSkala();
+}
+
+function beregnSkala() {
+  const W = cv.width, H = cv.height;
+  const marg = { left: 48, right: 24, top: 24, bottom: 42 };
+  const plotW = W - marg.left - marg.right;
+  const plotH = H - marg.top - marg.bottom;
+
+  // X: 0 til 16, Y: 0 til 14
+  maxX = 16; maxY = 14;
+  skalaX = plotW / maxX;
+  skalaY = plotH / maxY;
+  origo = { x: marg.left, y: marg.top + plotH };
+}
+
+function tx(x) { return origo.x + x * skalaX; }
+function ty(y) { return origo.y - y * skalaY; }
+
+function tegnBakgrunn() {
+  const W = cv.width, H = cv.height;
+  ctx.fillStyle = '#060e1a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Rutenett
+  ctx.strokeStyle = 'rgba(68,170,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= maxX; x++) {
+    ctx.beginPath(); ctx.moveTo(tx(x), ty(0)); ctx.lineTo(tx(x), ty(maxY)); ctx.stroke();
+  }
+  for (let y = 0; y <= maxY; y++) {
+    ctx.beginPath(); ctx.moveTo(tx(0), ty(y)); ctx.lineTo(tx(maxX), ty(y)); ctx.stroke();
+  }
+
+  // Akser
+  ctx.strokeStyle = 'rgba(68,170,255,0.5)';
+  ctx.lineWidth = 2;
+  // x-akse
+  ctx.beginPath(); ctx.moveTo(tx(0), ty(0)); ctx.lineTo(tx(maxX), ty(0)); ctx.stroke();
+  // y-akse
+  ctx.beginPath(); ctx.moveTo(tx(0), ty(0)); ctx.lineTo(tx(0), ty(maxY)); ctx.stroke();
+
+  // Piler
+  ctx.fillStyle = 'rgba(68,170,255,0.5)';
+  ctx.beginPath(); ctx.moveTo(tx(maxX), ty(0)); ctx.lineTo(tx(maxX)-8, ty(0)-4); ctx.lineTo(tx(maxX)-8, ty(0)+4); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(tx(0), ty(maxY)); ctx.lineTo(tx(0)-4, ty(maxY)+8); ctx.lineTo(tx(0)+4, ty(maxY)+8); ctx.fill();
+
+  // Tall x-akse
+  ctx.fillStyle = 'rgba(68,170,255,0.7)';
+  ctx.font = 'bold 11px Fredoka One, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let x = 1; x <= maxX - 1; x += 1) {
+    ctx.fillText(x, tx(x), ty(0) + 5);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  // Tall y-akse
+  for (let y = 1; y <= maxY - 1; y += 1) {
+    ctx.fillText(y, tx(0) - 5, ty(y));
+  }
+  ctx.fillStyle = 'rgba(68,170,255,0.5)';
+  ctx.font = 'bold 12px Fredoka One, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('x', tx(maxX) + 4, ty(0) - 6);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('y', tx(0) + 5, ty(maxY) - 4);
+}
+
+function tegnHav() {
+  // Bølge langs x-aksen (bakken/havet)
+  const t = Date.now() / 1200;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(tx(0), ty(0));
+  for (let x = 0; x <= maxX; x += 0.1) {
+    const bølge = Math.sin(x * 1.5 + t) * 0.15;
+    ctx.lineTo(tx(x), ty(bølge));
+  }
+  ctx.lineTo(tx(maxX), ty(-2));
+  ctx.lineTo(tx(0), ty(-2));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(10,50,90,0.6)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function tegnSkip(x, sunket) {
+  const sx = tx(x), sy = ty(0);
+  ctx.save();
+
+  if (sunket) {
+    // Synker litt
+    ctx.globalAlpha = 0.5;
+  }
+
+  // Skrog
+  ctx.fillStyle = sunket ? '#5a3020' : '#8a5030';
+  ctx.beginPath();
+  ctx.moveTo(sx - skalaX * 1.2, sy);
+  ctx.lineTo(sx + skalaX * 1.2, sy);
+  ctx.lineTo(sx + skalaX * 0.9, sy - skalaY * 0.6);
+  ctx.lineTo(sx - skalaX * 0.9, sy - skalaY * 0.6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Dekk
+  ctx.fillStyle = sunket ? '#7a4030' : '#c07040';
+  ctx.fillRect(sx - skalaX * 0.8, sy - skalaY * 0.9, skalaX * 1.6, skalaY * 0.3);
+
+  // Mast
+  ctx.strokeStyle = sunket ? '#6a4030' : '#a06030';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - skalaY * 0.9);
+  ctx.lineTo(sx, sy - skalaY * 1.7);
+  ctx.stroke();
+
+  // Flagg
+  if (!sunket) {
+    ctx.fillStyle = '#e03030';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - skalaY * 1.7);
+    ctx.lineTo(sx + skalaX * 0.5, sy - skalaY * 1.45);
+    ctx.lineTo(sx, sy - skalaY * 1.2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Posisjonsmarkering
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 10px Fredoka One, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(`x = ${x}`, sx, sy - skalaY * 2);
+
+  ctx.restore();
+}
+
+function tegnKanon(k) {
+  const kx = tx(0), ky = ty(k);
+  ctx.save();
+
+  // Stativ
+  ctx.fillStyle = '#607080';
+  ctx.fillRect(kx - 6, ky, 12, ty(0) - ky);
+
+  // Sokkel
+  ctx.fillStyle = '#506070';
+  ctx.fillRect(kx - 10, ty(0) - 6, 20, 10);
+
+  // Kanonrør
+  ctx.fillStyle = '#708090';
+  ctx.beginPath();
+  ctx.ellipse(kx, ky, 10, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rør
+  ctx.fillStyle = '#4a5a6a';
+  ctx.save();
+  ctx.translate(kx, ky);
+  ctx.rotate(-Math.PI * 0.2);
+  ctx.fillRect(-5, -18, 10, 18);
+  ctx.restore();
+
+  // Høydemarkering
+  ctx.fillStyle = '#ffd700';
+  ctx.font = 'bold 10px Fredoka One, sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ctx.fillText(`(0, ${k})`, kx - 14, ky);
+
+  ctx.restore();
+}
+
+function tegnParabel(a, b, c, farge, stiplet) {
+  if (stiplet) {
+    ctx.setLineDash([4, 4]);
+  } else {
+    ctx.setLineDash([]);
+  }
+  ctx.strokeStyle = farge;
+  ctx.lineWidth = stiplet ? 1.5 : 2.5;
+  ctx.beginPath();
+  let startet = false;
+  for (let x = 0; x <= maxX + 0.5; x += 0.05) {
+    const y = a * x * x + b * x + c;
+    if (y < -1 || y > maxY + 1) {
+      if (startet) { ctx.stroke(); ctx.beginPath(); startet = false; }
+      continue;
+    }
+    if (!startet) { ctx.moveTo(tx(x), ty(y)); startet = true; }
+    else ctx.lineTo(tx(x), ty(y));
+  }
+  if (startet) ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function tegnToppunkt(a, b, c, farge) {
+  const xT = -b / (2 * a);
+  const yT = a * xT * xT + b * xT + c;
+  if (xT < 0 || xT > maxX || yT < 0 || yT > maxY) return;
+  ctx.save();
+  ctx.fillStyle = farge;
+  ctx.beginPath();
+  ctx.arc(tx(xT), ty(yT), 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = farge;
+  ctx.font = 'bold 10px Fredoka One, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(`T(${xT.toFixed(1)}, ${yT.toFixed(1)})`, tx(xT), ty(yT) - 6);
+  ctx.restore();
+}
+
+function tegnEksplosjoner(ekspl) {
+  ekspl.forEach(e => {
+    ctx.save();
+    ctx.globalAlpha = e.alpha;
+    for (let i = 0; i < 8; i++) {
+      const vinkel = (i / 8) * Math.PI * 2;
+      const r = e.r * (0.5 + 0.5 * Math.random());
+      ctx.fillStyle = i % 2 === 0 ? '#ff9020' : '#ffcc40';
+      ctx.beginPath();
+      ctx.arc(
+        e.x + Math.cos(vinkel) * r,
+        e.y + Math.sin(vinkel) * r,
+        3, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// ══════════════════════════════════════════════
+// ANIMASJON
+// ══════════════════════════════════════════════
+let kulaAnimX = -1, kulaAnimProgress = 0, kulaAnimA, kulaAnimB, kulaAnimC;
+let eksplosjoner = [];
+let animating = false;
+
+function tegnHele(ekstraParabel) {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  tegnBakgrunn();
+  tegnHav();
+  tegnSkip(skip_d, harTruffet);
+  tegnKanon(kanon_k);
+
+  // Toppkrav-sone (vanskelig)
+  if (nivå === 'medium' || nivå === 'hard') {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,60,60,0.05)';
+    ctx.fillRect(tx(0), ty(topp_max), tx(maxX) - tx(0), ty(0) - ty(topp_max));
+    ctx.strokeStyle = 'rgba(255,80,80,0.5)';
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(tx(0), ty(topp_max)); ctx.lineTo(tx(maxX), ty(topp_max)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,100,100,0.7)';
+    ctx.font = 'bold 10px Fredoka One, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.fillText(`maks y = ${topp_max}`, tx(0.2), ty(topp_max) - 3);
+    ctx.restore();
+  }
+
+  if (ekstraParabel) {
+    tegnParabel(ekstraParabel.a, ekstraParabel.b, ekstraParabel.c,
+      ekstraParabel.farge, ekstraParabel.stiplet);
+    if (!ekstraParabel.stiplet) {
+      tegnToppunkt(ekstraParabel.a, ekstraParabel.b, ekstraParabel.c, ekstraParabel.farge);
+    }
+  }
+
+  if (kulaAnimProgress >= 0 && animating) {
+    const x = kulaAnimA * kulaAnimX * kulaAnimX + kulaAnimB * kulaAnimX + kulaAnimC;
+    if (x >= -0.5 && x <= maxY + 1) {
+      ctx.save();
+      ctx.fillStyle = '#ff8020';
+      ctx.shadowColor = '#ffcc40';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(tx(kulaAnimX), ty(x), 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  tegnEksplosjoner(eksplosjoner);
+}
+
+function animerSkudd(a, b, c, treff, callback) {
+  animating = true;
+  kulaAnimA = a; kulaAnimB = b; kulaAnimC = c;
+  kulaAnimX = 0;
+  eksplosjoner = [];
+
+  // Forhåndsvis parabelen stiplet (ikke på vanskelig)
+  if (nivå !== 'hard') tegnHele({ a, b, c, farge: 'rgba(255,120,30,0.35)', stiplet: true });
+
+  let xMax = skip_d + 0.5;
+  // Stopp ved y=0 (bakken)
+  const step = 0.06;
+
+  function frame() {
+    kulaAnimX += step;
+    const y = a * kulaAnimX * kulaAnimX + b * kulaAnimX + c;
+
+    if (nivå !== 'hard') tegnHele({ a, b, c, farge: 'rgba(255,120,30,0.35)', stiplet: true });
+
+    if (kulaAnimX >= xMax || y < -0.3) {
+      animating = false;
+      if (treff) {
+        // Eksplosjon på skipet
+        for (let i = 0; i < 12; i++) {
+          eksplosjoner.push({
+            x: tx(skip_d),
+            y: ty(0) - skalaY * 0.4,
+            r: 5 + Math.random() * 15,
+            alpha: 1
+          });
+        }
+        // Tegn endelig parabel
+        tegnHele({ a, b, c, farge: 'rgba(255,120,30,0.7)', stiplet: false });
+        tegnEksplosjoner(eksplosjoner);
+        let fade = 0;
+        function fadeEkspl() {
+          fade++;
+          eksplosjoner.forEach(e => { e.r *= 1.08; e.alpha = Math.max(0, 1 - fade / 20); });
+          tegnHele({ a, b, c, farge: 'rgba(255,120,30,0.7)', stiplet: false });
+          if (fade < 25) requestAnimationFrame(fadeEkspl);
+          else callback();
+        }
+        requestAnimationFrame(fadeEkspl);
+      } else {
+        tegnHele({ a, b, c, farge: 'rgba(200,80,80,0.5)', stiplet: false });
+        callback();
+      }
+      return;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ══════════════════════════════════════════════
+// SPILLOGIKK
+// ══════════════════════════════════════════════
+function nesteOppgave() {
+  oppgaveNr++;
+  harTruffet = false;
+  animating = false;
+  eksplosjoner = [];
+
+  if (oppgaveNr > TOTAL_OPPGAVER) {
+    visSluttskjerm();
+    return;
+  }
+
+  genererOppgave();
+
+  // Oppdater UI
+  document.getElementById('b-c').textContent = kanon_k;
+  document.getElementById('b-d').textContent = skip_d;
+  document.getElementById('ia').value = '';
+  document.getElementById('ib').value = '';
+  document.getElementById('ic').value = kanon_k;
+  document.getElementById('ia').className = 'koeff-input';
+  document.getElementById('ib').className = 'koeff-input';
+  document.getElementById('funk-display').textContent = 'f(x) = ax² + bx + c';
+  document.getElementById('skyt-btn').disabled = false;
+  document.getElementById('neste-btn').style.display = 'none';
+  document.getElementById('tilbakemelding').textContent = 'Skriv inn a og b, så skyter du!';
+  document.getElementById('tilbakemelding').className = '';
+
+  // Hint
+  document.getElementById('hint-d').textContent = skip_d;
+  document.getElementById('hint-d2').textContent = skip_d;
+  document.getElementById('hint-d3').textContent = skip_d;
+
+  // Oppdater toppkrav
+  if (nivå === 'medium' || nivå === 'hard') {
+    document.getElementById('b-topp').textContent = `maks ${topp_max}`;
+  }
+
+  resizeCanvas();
+  tegnHele(null);
+  oppdaterFunkDisplay();
+}
+
+function oppdaterFunkDisplay() {
+  const a = parseFloat(document.getElementById('ia').value);
+  const b = parseFloat(document.getElementById('ib').value);
+  const c = kanon_k;
+  if (isNaN(a) && isNaN(b)) { document.getElementById('funk-display').textContent = 'f(x) = ax² + bx + c'; return; }
+  const aStr = isNaN(a) ? 'a' : a;
+  const bStr = isNaN(b) ? 'b' : b;
+  document.getElementById('funk-display').textContent = `f(x) = ${aStr}x² + ${bStr}x + ${c}`;
+  // Live preview – vises ikke på vanskelig
+  if (!isNaN(a) && !isNaN(b) && a < 0 && nivå !== 'hard') {
+    tegnHele({ a, b, c, farge: 'rgba(68,170,255,0.3)', stiplet: true });
+  }
+}
+
+document.getElementById('ia').addEventListener('input', oppdaterFunkDisplay);
+document.getElementById('ib').addEventListener('input', oppdaterFunkDisplay);
+
+function skyt() {
+  if (animating) return;
+  const a = parseFloat(document.getElementById('ia').value);
+  const b = parseFloat(document.getElementById('ib').value);
+  const c = kanon_k;
+  const fb = document.getElementById('tilbakemelding');
+
+  // Valider
+  if (isNaN(a) || isNaN(b)) { fb.textContent = 'Fyll inn både a og b!'; fb.className = 'feil'; return; }
+  if (a >= 0) { fb.textContent = 'a må være negativ (parabelen åpner nedover)!'; fb.className = 'feil'; return; }
+  if (a * skip_d * skip_d + b * skip_d + c > 2) {
+    // Parabelen treffer ikke i nærheten av bakken ved skip_d - gi hint
+  }
+
+  document.getElementById('skyt-btn').disabled = true;
+  skuddTeller++;
+  document.getElementById('skudd-teller').textContent = skuddTeller;
+
+  const fVerdi = a * skip_d * skip_d + b * skip_d + c;
+  const xT = -b / (2 * a);
+  const yT = a * xT * xT + b * xT + c;
+
+  // Sjekk toppkrav (vanskelig)
+  let toppOk = true;
+  if (nivå === 'medium' || nivå === 'hard') {
+    toppOk = (yT <= topp_max);
+  }
+
+  // Treff: parabelen krysser y=0 innenfor skipets bredde (±1.5 enheter fra skip_d)
+  // Dette fanger opp treff på for- og bakenden av skipet
+  const SKIP_HALVBREDDE = 1.5;
+  function nullpunktInnenfor() {
+    const disc = b * b - 4 * a * c;
+    if (disc < 0) return false;
+    const x1 = (-b + Math.sqrt(disc)) / (2 * a);
+    const x2 = (-b - Math.sqrt(disc)) / (2 * a);
+    return [x1, x2].some(xn => xn > 0 && Math.abs(xn - skip_d) <= SKIP_HALVBREDDE);
+  }
+  const treff = nullpunktInnenfor() && toppOk;
+
+  animerSkudd(a, b, c, treff, () => {
+    if (treff) {
+      treffTeller++;
+      harTruffet = true;
+      // Finn nullpunktet for meldingen
+      const disc2 = b*b - 4*a*c;
+      const xn1 = (-b + Math.sqrt(disc2)) / (2*a);
+      const xn2 = (-b - Math.sqrt(disc2)) / (2*a);
+      const xTreff = [xn1,xn2].find(xn => xn > 0 && Math.abs(xn - skip_d) <= SKIP_HALVBREDDE);
+      fb.textContent = `🎯 TREFF! Parabelen krysser x-aksen i x = ${xTreff.toFixed(2)}. Skipet er senket!`;
+      fb.className = 'treff';
+      document.getElementById('ia').className = 'koeff-input ok';
+      document.getElementById('ib').className = 'koeff-input ok';
+      document.getElementById('neste-btn').style.display = 'block';
+    } else {
+      bomTeller++;
+      let melding = '';
+      if (a >= 0) {
+        melding = 'a må være negativ!';
+      } else if (!toppOk) {
+        melding = `Toppunktet y = ${yT.toFixed(1)} er for høyt – maks tillatt er y = ${topp_max}.`;
+      } else if (fVerdi > 0.8) {
+        melding = `f(${skip_d}) = ${fVerdi.toFixed(2)} – kula fløy over skipet.`;
+      } else if (fVerdi < -0.8) {
+        melding = `f(${skip_d}) = ${fVerdi.toFixed(2)} – kula landet for langt unna.`;
+      } else {
+        melding = `f(${skip_d}) = ${fVerdi.toFixed(2)} – nesten! Justér litt.`;
+      }
+      fb.textContent = `💨 Bom! ${melding}`;
+      fb.className = Math.abs(fVerdi) < 2 && toppOk ? 'nesten' : 'bom';
+      document.getElementById('skyt-btn').disabled = false;
+    }
+    oppdaterStats();
+  });
+}
+
+function oppdaterStats() {
+  document.getElementById('treff-teller').textContent = treffTeller;
+  document.getElementById('st-treff').textContent = treffTeller;
+  document.getElementById('st-bom').textContent = bomTeller;
+  const tot = treffTeller + bomTeller;
+  document.getElementById('st-noy').textContent = tot > 0 ? Math.round(treffTeller / tot * 100) + '%' : '–';
+}
+
+function visSluttskjerm() {
+  const tot = treffTeller + bomTeller;
+  const noy = tot > 0 ? Math.round(treffTeller / tot * 100) : 0;
+  document.getElementById('slutt-tekst').innerHTML =
+    `${TOTAL_OPPGAVER} oppgaver fullført!<br>Treff: <b>${treffTeller}</b> · Skudd: <b>${tot}</b> · Nøyaktighet: <b>${noy}%</b>`;
+  document.getElementById('slutt').classList.add('vis');
+}
+
+// ══════════════════════════════════════════════
+// TASTATUR
+// ══════════════════════════════════════════════
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (harTruffet) nesteOppgave();
+    else skyt();
+  }
+});
+
+// Resize
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  tegnHele(null);
+});
+</script>
+</body>
+</html>

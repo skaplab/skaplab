@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verden Rundt 🌍</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#06101e;display:flex;flex-direction:column;align-items:center;font-family:'Segoe UI',system-ui,sans-serif;color:#fff;overflow-x:hidden;min-height:100vh}
+#topbar{width:100%;max-width:700px;display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:rgba(0,0,0,0.55);border-bottom:1px solid rgba(255,255,255,0.1);gap:8px;flex-wrap:wrap}
+#topbar h1{font-size:1rem;font-weight:700;color:#ffd700;letter-spacing:1px}
+#hud{display:flex;gap:11px;align-items:center;font-size:0.82rem}
+#world-name{font-size:0.78rem;color:#adf;padding:2px 10px;background:rgba(100,200,255,0.12);border-radius:12px;border:1px solid rgba(100,200,255,0.28)}
+#sbar{display:none;font-size:0.78rem;color:#ffd700;padding:2px 8px;background:rgba(255,215,0,0.1);border-radius:12px;border:1px solid rgba(255,215,0,0.28)}
+#canvas-wrap{position:relative;width:100%;max-width:700px}
+canvas{display:block;image-rendering:pixelated;width:100%;max-width:700px}
+#intro{position:fixed;inset:0;top:36px;background:#06101e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;padding:20px;text-align:center}
+.isl{display:none;flex-direction:column;align-items:center;animation:fi 0.4s ease}
+.isl.vis{display:flex}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.isl .be{font-size:3.5rem;margin-bottom:14px}
+.isl h1{font-size:1.9rem;color:#ffd700;margin-bottom:10px}
+.isl h2{font-size:1.25rem;color:#adf;margin-bottom:10px}
+.isl p{color:#9ab;font-size:0.9rem;max-width:420px;line-height:1.6;margin-bottom:16px}
+.pk{display:flex;gap:8px;margin-bottom:14px}
+.pk span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.22)}
+.pk span.a{background:#ffd700}
+.ibtn{padding:11px 30px;background:#ffd700;color:#000;border:none;border-radius:10px;cursor:pointer;font-size:.95rem;font-weight:700}
+#dlg{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:94%;background:rgba(3,10,22,0.97);border:2px solid #4af;border-radius:10px;padding:12px 15px;z-index:20;box-shadow:0 0 22px rgba(68,170,255,0.2)}
+#dlg-sp{font-weight:700;color:#4af;font-size:.87rem;margin-bottom:5px}
+#dlg-tx{font-size:.84rem;line-height:1.5;color:#ddf}
+#dlg-bt{margin-top:9px;padding:5px 16px;background:#4af;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:.81rem}
+#quiz{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:94%;background:rgba(3,10,22,0.97);border:2px solid #fa0;border-radius:10px;padding:12px 15px;z-index:20;box-shadow:0 0 22px rgba(255,170,0,0.2)}
+#q-sp{font-weight:700;color:#fa0;font-size:.87rem;margin-bottom:5px}
+#q-tx{font-size:.84rem;line-height:1.5;color:#fec;margin-bottom:8px}
+.qa{display:block;width:100%;text-align:left;padding:6px 12px;margin:3px 0;background:rgba(255,170,0,0.07);border:1px solid rgba(255,170,0,0.3);color:#fff;border-radius:6px;cursor:pointer;font-size:.82rem;transition:background .12s}
+.qa:hover{background:rgba(255,170,0,0.18)}
+.qa.r{background:rgba(0,200,100,0.22);border-color:#0c8;color:#0fa}
+.qa.f{background:rgba(255,60,60,0.16);border-color:#f44;color:#f88}
+#q-fb{font-size:.79rem;margin-top:6px;min-height:1.1em;line-height:1.4}
+#q-bt{margin-top:7px;padding:5px 16px;background:#fa0;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:.81rem;display:none}
+#cs{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.93);z-index:30;align-items:center;justify-content:center;flex-direction:column;padding:22px;text-align:center}
+#cs.vis{display:flex}
+#cs-e{font-size:3.5rem;margin-bottom:13px}
+#cs-t{font-size:1.25rem;font-weight:700;color:#ffd700;margin-bottom:8px}
+#cs-x{font-size:.87rem;color:#cde;line-height:1.6;max-width:380px}
+#cs-b{margin-top:16px;padding:9px 24px;background:#ffd700;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.92rem}
+#mapov{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.9);z-index:25;align-items:center;justify-content:center}
+#mapov.vis{display:flex}
+.wmap{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:380px;padding:18px}
+.wp{text-align:center;font-size:.7rem;color:#555;padding:6px 3px;border-radius:8px;border:1px solid rgba(255,255,255,0.07)}
+.wp.d{color:#0fa;border-color:rgba(0,255,150,0.28);background:rgba(0,255,150,0.04)}
+.wp.a{color:#ffd700;border-color:rgba(255,215,0,0.38);background:rgba(255,215,0,0.07)}
+.wp span{font-size:1.55rem;display:block;margin-bottom:3px}
+#endsc{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.96);z-index:40;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:26px}
+#endsc.vis{display:flex}
+#endsc h2{font-size:1.7rem;color:#ffd700;margin-bottom:10px}
+#endsc p{color:#cde;font-size:.88rem;line-height:1.7;max-width:360px}
+.estat{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin:14px 0;width:100%;max-width:340px}
+.ec{background:rgba(255,255,255,0.05);border-radius:8px;padding:9px;border:1px solid rgba(255,255,255,0.1)}
+.ev{font-size:1.45rem;font-weight:700;color:#ffd700}
+.el{font-size:.72rem;color:#888;margin-top:2px}
+#bfl{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,215,0,0.92);color:#000;font-weight:700;font-size:.88rem;padding:5px 16px;border-radius:18px;opacity:0;pointer-events:none;z-index:35;transition:opacity .3s}
+#bfl.vis{opacity:1}
+#ctrl{width:100%;max-width:700px;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px 10px;background:rgba(0,0,0,0.35)}
+.cb{padding:9px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);color:#fff;border-radius:8px;cursor:pointer;font-size:1.1rem;user-select:none;-webkit-user-select:none;touch-action:none;text-align:center}
+.cb:active{background:rgba(255,255,255,0.18)}
+.ce{visibility:hidden}
+
+#vr-topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 16px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(68,170,255,0.15);font-family:'Segoe UI',sans-serif;}
+#vr-topbar a{font-size:0.78rem;color:#7a90b0;text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+#vr-topbar a:hover{color:#ffd700;}
+#vr-topbar span{font-size:0.9rem;font-weight:700;color:#ffd700;}
+</style>
+</head>
+<body>
+<div id="vr-topbar">
+  <span>🌍 Verden Rundt</span>
+  <a href="spill_hub.html">← Spillhub</a>
+</div>
+
+
+<div id="intro">
+  <div id="isl0" class="isl vis">
+    <div class="be">🌍</div>
+    <h1>Verden Rundt</h1>
+    <p>Reis gjennom 7 verdenshjørner og møt historiens store skikkelser. Hvert brett er formet som selve kontinentet – Civilization-stil!</p>
+    <div class="pk" id="pk0"></div>
+    <button class="ibtn" onclick="nxt()">Neste ▶</button>
+  </div>
+  <div id="isl1" class="isl">
+    <div class="be">🗺️</div>
+    <h2>7 ekte verdenskart</h2>
+    <p>Grønt = gresslette · Gult = ørken · Mørkt grønt = jungel · Grått = fjell · Lys blå = is · Mørk blå = hav</p>
+    <p style="color:#678;font-size:0.8rem">🏫 Skole → 🏰 Europa → 🦁 Afrika → 🏯 Asia → 🌎 Amerika → 🦘 Oseania → 🧊 Arktis</p>
+    <div class="pk" id="pk1"></div>
+    <button class="ibtn" onclick="nxt()">Neste ▶</button>
+  </div>
+  <div id="isl2" class="isl">
+    <div class="be">🔬</div>
+    <h2>Realfaglige spørsmål</h2>
+    <p>Geografi, naturfag og matematikk — alle spørsmål er knyttet til LK20 kompetansemål. Løs spørsmål → portal åpner seg → neste kontinent!</p>
+    <p style="color:#678;font-size:0.8rem">🕹️ Piltaster/WASD · 💬 E/mellomrom · 🗺️ M</p>
+    <div class="pk" id="pk2"></div>
+    <button class="ibtn" onclick="startGame()">🌐 Start reisen!</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <h1>🌍 Verden Rundt</h1>
+  <div id="hud">
+    <span>⭐ <b id="sc">0</b></span>
+    <span>❤️ <b id="lv">3</b></span>
+    <span>✅ <b id="sl">0</b>/25</span>
+    <span id="sbar">🔥 <b id="str">0</b></span>
+  </div>
+  <div id="world-name">Skole</div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="c" width="560" height="420"></canvas>
+  <div id="bfl"></div>
+  <div id="dlg"><div id="dlg-sp"></div><div id="dlg-tx"></div><button id="dlg-bt" onclick="nd()">Fortsett ▶</button></div>
+  <div id="quiz"><div id="q-sp"></div><div id="q-tx"></div><div id="q-as"></div><div id="q-fb"></div><button id="q-bt" onclick="cq()">Fortsett ▶</button></div>
+  <div id="cs"><div id="cs-e"></div><div id="cs-t"></div><div id="cs-x"></div><button id="cs-b" onclick="ccs()">Videre! ▶</button></div>
+  <div id="mapov">
+    <div>
+      <div style="color:#ffd700;font-size:1rem;font-weight:700;text-align:center;margin-bottom:10px">🗺️ Verdenskart</div>
+      <div class="wmap" id="wmg"></div>
+      <div style="text-align:center;margin-top:8px"><button onclick="cm()" style="padding:5px 16px;background:#ffd700;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer">Lukk (M)</button></div>
+    </div>
+  </div>
+  <div id="endsc">
+    <div style="font-size:3.5rem;margin-bottom:10px">🏆</div>
+    <h2>Verden Rundt!</h2>
+    <p>Du har reist verden rundt og lært realfag fra alle kontinenter!</p>
+    <div class="estat">
+      <div class="ec"><div class="ev" id="fs">0</div><div class="el">Poeng</div></div>
+      <div class="ec"><div class="ev" id="fl">0</div><div class="el">Løst</div></div>
+      <div class="ec"><div class="ev" id="fb2">0</div><div class="el">Beste streak</div></div>
+    </div>
+    <button onclick="location.reload()" style="padding:9px 24px;background:#ffd700;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.92rem">Spill igjen 🔄</button>
+  </div>
+</div>
+
+<div id="ctrl">
+  <div class="ce"></div><button class="cb" id="bu">▲</button><div class="ce"></div>
+  <button class="cb" id="bl">◀</button><button class="cb" id="bi">💬</button><button class="cb" id="br">▶</button>
+  <div class="ce"></div><button class="cb" id="bd">▼</button><button class="cb" onclick="tm()">🗺️</button>
+</div>
+
+<script>
+// ══ INTRO ══
+let isl=0; const NS=3;
+[0,1,2].forEach(i=>{const e=document.getElementById('pk'+i);if(!e)return;for(let j=0;j<NS;j++){const p=document.createElement('span');p.className=j===i?'a':'';e.appendChild(p);}});
+function nxt(){document.getElementById('isl'+isl).classList.remove('vis');isl++;if(isl<NS)document.getElementById('isl'+isl).classList.add('vis');}
+
+// ══ TILE-FARGER (Civ 1-stil) ══
+const TC={
+  '0':'#091e35',  // hav
+  '1':'#2d6e2d',  // gresslette
+  '2':'#c8a428',  // ørken
+  '3':'#1a4a1a',  // skog/taiga
+  '4':'#6a7272',  // fjell
+  '5':'#4a6a50',  // tundra
+  '6':'#a8c8e0',  // is
+  '7':'#7aaa28',  // savanne
+  '8':'#0a380e',  // jungel
+  'T':'#b09020',  // bord
+};
+const TD={
+  '0':'#050f1a','1':'#1e4e1e','2':'#9a7e18','3':'#0e2e0e',
+  '4':'#4a5252','5':'#2a4a30','6':'#78a8c0','7':'#4a7a10','8':'#062010','T':'#806a10'
+};
+
+// ══ VERDENER ══
+const W={
+skole:{name:'🏫 Skole',emoji:'🏫',
+  rows:["111111111111111111","1T1111111111111T11","111111111111111111","111111T11111111111","111111111111111111","1T1111111111111T11","111111111111111111","11111T11111111T111","111111111111111111","1T1111111111111T11","111111111P11111111","111111111111111111"],
+  portalTo:'europa',cond:1,sx:2.5,sy:2.5,
+  npcs:[
+    {id:'l',x:9,y:5,color:'#4af',name:'Lærer Nilsen',emoji:'👩‍🏫',
+     dlg:['Velkommen! Verden er full av realfag.','Snakk med Sofia og Aksel, løs spørsmålene, og portalen åpner seg!'],q:null},
+    {id:'s',x:3,y:4,color:'#f8a',name:'Sofia',emoji:'👧',
+     dlg:['Geografi og naturfag – min favoritt!'],
+     q:{t:'Hva er jordens gjennomsnittlige radius?',a:['6 371 km','3 959 km','12 742 km','40 075 km'],r:0,f:'Jordens gjennomsnittlige radius er 6 371 km. Omfanget ved ekvator er ca. 40 075 km.'}},
+    {id:'a',x:14,y:7,color:'#af8',name:'Aksel',emoji:'👦',
+     dlg:['Visste du at lyset bruker 8 minutter fra solen til jorda?'],
+     q:{t:'Hva er Jordens masse omtrent?',a:['6 × 10²⁴ kg','6 × 10²⁰ kg','6 × 10²⁷ kg','6 × 10¹⁸ kg'],r:0,f:'Jordens masse er ca. 5,97 × 10²⁴ kg. Dette er grunnlaget for gravitasjonskraften som holder oss på overflaten.'}},
+  ]
+},
+
+europa:{name:'🏰 Europa',emoji:'🏰',
+  rows:[
+    "00000000000000000000000000",
+    "00000110001111000000000000",
+    "00001111011111100000000000",
+    "00013331111111110000000000",
+    "00111111111111111000000000",
+    "01111111111111111100000000",
+    "11111111111111111110000000",
+    "11111111111111111110000000",
+    "01444411111111111110000000",
+    "01444411111111111100000000",
+    "00011011111111111100000000",
+    "00001001111111110000000000",
+    "00001000111111100000000000",
+    "00000000P11110000000000000",
+    "00000000011100000000000000",
+    "00000000001000000000000000",
+    "00000000000000000000000000",
+  ],
+  portalTo:'africa',cond:3,sx:12,sy:4,
+  cs:{e:'🏰',t:'Velkommen til Europa!',x:'Kontinentet med Romerriket, Alpene og demokratiets røtter. Grønn gresslette, grå fjell i sør. Møt fire store europeiske vitenskapsfolk!'},
+  npcs:[
+    {id:'sh',x:8,y:4,color:'#f0c060',name:'Shakespeare',emoji:'🎭',
+     dlg:['To be or not to be! Men først – realfag:'],
+     q:{t:'Hva er tyngdeakselerasjonen på jordens overflate?',a:['9,81 m/s²','1,62 m/s²','3,72 m/s²','24,8 m/s²'],r:0,f:'g ≈ 9,81 m/s² på jordens overflate. På Månen er den 1,62 m/s², og på Mars 3,72 m/s².'}},
+    {id:'mo',x:18,y:6,color:'#e8a0e8',name:'Mozart',emoji:'🎵',
+     dlg:['Lydbølger er fascinerende fysikk!'],
+     q:{t:'Hva er lydens hastighet i luft ved 20°C?',a:['343 m/s','299 792 km/s','1 500 m/s','1 235 km/t'],r:0,f:'Lyden beveger seg ca. 343 m/s i luft ved 20°C. Lysets hastighet er 299 792 km/s – én million ganger raskere!'}},
+    {id:'ei',x:16,y:10,color:'#80c0ff',name:'Einstein',emoji:'🔬',
+     dlg:['E = mc² – energi og masse er det samme!'],
+     q:{t:'Hva betyr "c" i Einsteins formel E = mc²?',a:['Lysets hastighet (3×10⁸ m/s)','Konsentrasjon','Coulombs konstant','Varmekapasitet'],r:0,f:'c er lysets hastighet ≈ 3 × 10⁸ m/s. Formelen sier at masse kan omdannes til enorm energi – grunnlaget for kjernekraft.'}},
+    {id:'cu',x:4,y:7,color:'#90e090',name:'Marie Curie',emoji:'⚗️',
+     dlg:['Radioaktivitet handler om ustabile atomkjerner!'],
+     q:{t:'Hva kalles den tid det tar for halvparten av et radioaktivt stoff å henfalle?',a:['Halveringstid','Reaksjonstid','Halveringsgrad','Desintegrasjonstid'],r:0,f:'Halveringstid er den tid det tar for halvparten av et radioaktivt stoff å henfalle. Karbon-14 har halveringstid 5 730 år – brukes til datering.'}},
+  ]
+},
+
+africa:{name:'🦁 Afrika',emoji:'🦁',
+  rows:[
+    "0000000000000000000000",
+    "0000022222222222000000",
+    "0002222222222222200000",
+    "0022222222222222220000",
+    "0122222222222222210000",
+    "0127777772222777210000",
+    "0177777777777777710000",
+    "0177788888777788710000",
+    "0177888888888888710000",
+    "0177888888888877100000",
+    "0017788877788771000000",
+    "0001777777777710000000",
+    "0000177777777100000000",
+    "0000011771710000000000",
+    "00000P1771000000000000",
+    "0000000771000000000000",
+    "0000000011000000000000",
+    "0000000011000000000000",
+    "0000000001000000000000",
+    "0000000000000000000000",
+  ],
+  portalTo:'asia',cond:3,sx:8,sy:3,
+  cs:{e:'🦁',t:'Velkommen til Afrika!',x:'Sahara (gul) i nord, Kongobassengets jungel (mørkgrønn) i midten, savanner (lys grønn) i sør. Møt fire store afrikanske skikkelser!'},
+  npcs:[
+    {id:'ma',x:4,y:6,color:'#f0e080',name:'Mandela',emoji:'✊',
+     dlg:['Utdanning er det mektigste våpenet!'],
+     q:{t:'Hva er Jordens akse tiltet i forhold til baneplanet?',a:['23,5°','0°','45°','90°'],r:0,f:'Jordens akse er tiltet 23,5° – dette er årsaken til årstidene! Når et halvkule er tiltet mot solen, er det sommer der.'}},
+    {id:'kl',x:14,y:3,color:'#ffd700',name:'Kleopatra',emoji:'👑',
+     dlg:['Egypt – sivilisasjonens vugge!'],
+     q:{t:'Hva er den kjemiske formelen for vann?',a:['H₂O','CO₂','NaCl','H₂SO₄'],r:0,f:'Vann (H₂O) består av to hydrogenatomer og ett oksygenatom. Vannmolekylet er polart, noe som gir vann sine unike egenskaper.'}},
+    {id:'wa',x:10,y:9,color:'#60c060',name:'Wangari',emoji:'🌳',
+     dlg:['Planter omdanner CO₂ til oksygen!'],
+     q:{t:'Hva kalles prosessen der planter omdanner sollys til energi?',a:['Fotosyntese','Respirasjon','Fermentering','Destillasjon'],r:0,f:'Fotosyntese: 6CO₂ + 6H₂O + lys → C₆H₁₂O₆ + 6O₂. Planter lagrer solenergi som glukose og produserer oksygen vi puster.'}},
+    {id:'su',x:13,y:11,color:'#e08030',name:'Sundiata',emoji:'⚔️',
+     dlg:['Mali-imperiet kontrollerte gullhandelen!'],
+     q:{t:'Hva er den hyppigste gassen i jordens atmosfære?',a:['Nitrogen (N₂) – 78%','Oksygen (O₂) – 21%','Argon (Ar) – 1%','CO₂ – 0,04%'],r:0,f:'Nitrogen (N₂) utgjør 78% av atmosfæren. Oksygen er 21%, argon 1% og CO₂ bare 0,04% – men CO₂ er avgjørende for drivhuseffekten.'}},
+  ]
+},
+
+asia:{name:'🏯 Asia',emoji:'🏯',
+  rows:[
+    "000000000000000000000000",
+    "003333333333333000000000",
+    "033333331333333100000000",
+    "033311113333333310000000",
+    "133311113331133310000000",
+    "133111111111133310000000",
+    "133111111111111110000000",
+    "133111114441111110000000",
+    "013114444444411100000000",
+    "013111144444411000000000",
+    "001111111111111000000000",
+    "001111111111113000000000",
+    "000111111111130000000000",
+    "0000P1111110000000000000",
+    "000001111100000000000000",
+    "000000111000000000000000",
+    "000000000000000000000000",
+  ],
+  portalTo:'americas',cond:3,sx:4,sy:3,
+  cs:{e:'🏯',t:'Velkommen til Asia!',x:'Sibirsk taiga (mørk grønn) i nord, fjellkjeden Himalaya (grå) midt på, India i sør. Verdens største kontinent!'},
+  npcs:[
+    {id:'ko',x:7,y:5,color:'#f0d080',name:'Konfucius',emoji:'📜',
+     dlg:['Visdom begynner med å stille spørsmål!'],
+     q:{t:'Hva er tettheten til flytende vann ved 4°C?',a:['1 000 kg/m³','997 kg/m³','1 025 kg/m³','900 kg/m³'],r:0,f:'Vann er tetteste ved 4°C med 1 000 kg/m³. Interessant nok er is (900 kg/m³) lettere enn flytende vann – derfor flyter is!'}},
+    {id:'av',x:14,y:5,color:'#80d0f0',name:'Ibn Sina',emoji:'🔬',
+     dlg:['Legekunst bygger på naturvitenskap!'],
+     q:{t:'Hva er den kjemiske formelen for karbondioksid?',a:['CO₂','CO','CH₄','C₂H₆'],r:0,f:'Karbondioksid (CO₂) dannes ved forbrenning og respirasjon. Det er en drivhusgass – absorber infrarød stråling og bidrar til global oppvarming.'}},
+    {id:'mu',x:14,y:10,color:'#e080e0',name:'Murasaki',emoji:'📖',
+     dlg:['Jeg beskrev naturen i min roman på 1000-tallet!'],
+     q:{t:'Hva er Boyles lov i kjemi/fysikk?',a:['P × V = konstant (ved fast T)','P / V = konstant','P + V = konstant','P × T = konstant'],r:0,f:'Boyles lov: ved konstant temperatur er trykk × volum konstant (PV = k). Dobler du trykket, halveres volumet til en gass.'}},
+    {id:'ga',x:9,y:13,color:'#f0f080',name:'Gandhi',emoji:'☮️',
+     dlg:['Naturen er vår læremester!'],
+     q:{t:'Hva er den elektriske ladningen til et elektron?',a:['-1,6 × 10⁻¹⁹ C','+1,6 × 10⁻¹⁹ C','0 C','-9,11 × 10⁻³¹ C'],r:0,f:'Elektronet har ladning -1,6 × 10⁻¹⁹ Coulomb. Protoner har +1,6 × 10⁻¹⁹ C. Atomer er elektrisk nøytrale fordi de har like mange elektroner og protoner.'}},
+  ]
+},
+
+americas:{name:'🌎 Amerika',emoji:'🌎',
+  rows:[
+    "000000000000000000",
+    "000066333330000000",
+    "000366333311000000",
+    "003333311111000000",
+    "001133111111000000",
+    "011111111111000000",
+    "011421111111000000",
+    "011421111111000000",
+    "001111111110000000",
+    "000111111100000000",
+    "000P11111000000000",
+    "000011111000000000",
+    "000018881000000000",
+    "000018888100000000",
+    "000018888810000000",
+    "000118888110000000",
+    "000011888110000000",
+    "000001188110000000",
+    "000000144710000000",
+    "000000444410000000",
+    "000000444100000000",
+    "000000011000000000",
+    "000000010000000000",
+    "000000000000000000",
+  ],
+  portalTo:'oceania',cond:3,sx:5,sy:3,
+  cs:{e:'🌎',t:'Velkommen til Amerika!',x:'Tundra og skog i nord (blå/grønn), Rocky Mountains/Andes (grå) langs venstre, Amazonas-jungel (mørk grønn) midt i Sør-Amerika!'},
+  npcs:[
+    {id:'li',x:7,y:5,color:'#c0a060',name:'Lincoln',emoji:'🎩',
+     dlg:['Frihet og kunnskap henger sammen!'],
+     q:{t:'Hva er Newtons 2. lov?',a:['F = m × a','F = m × v','E = mc²','P = m × v'],r:0,f:'Newtons 2. lov: Kraft = masse × akselerasjon (F = ma). Dobler du massen ved samme kraft, halveres akselerasjonen.'}},
+    {id:'fr',x:7,y:13,color:'#f06080',name:'Frida Kahlo',emoji:'🌺',
+     dlg:['Naturen inspirerte kunsten min!'],
+     q:{t:'Hva kalles prosessen der flytende vann blir gass?',a:['Fordampning','Kondensasjon','Sublimering','Frysing'],r:0,f:'Fordampning er overgang fra flytende til gass. Kondensasjon er motsatt. Sublimering er fast stoff → gass direkte (f.eks. tørris = CO₂-is).'}},
+    {id:'ha',x:4,y:16,color:'#d0a060',name:'Harriet Tubman',emoji:'⭐',
+     dlg:['Frihet er å kjenne verden rundt seg!'],
+     q:{t:'Hva er formelen for kinetisk energi?',a:['Ek = ½mv²','Ek = mgh','Ek = Fd','Ek = mv'],r:0,f:'Kinetisk energi: Ek = ½mv². Dobler du farten, firedobles den kinetiske energien (kvadrert!). Potensielle energi: Ep = mgh.'}},
+    {id:'bo',x:8,y:18,color:'#80c0e0',name:'Bolívar',emoji:'🦅',
+     dlg:['Seks nasjoner ble frie!'],
+     q:{t:'Hva er pH-skalaen og hva er nøytralt?',a:['0–14, nøytralt pH=7','0–10, nøytralt pH=5','0–14, nøytralt pH=0','1–7, nøytralt pH=4'],r:0,f:'pH-skalaen går fra 0 (sterk syre) til 14 (sterk base). pH=7 er nøytralt (rent vann). pH<7 er surt, pH>7 er basisk.'}},
+  ]
+},
+
+oceania:{name:'🦘 Oseania',emoji:'🦘',
+  rows:[
+    "0000000000000000000000",
+    "0000000001111000000000",
+    "0000000001111100000000",
+    "0000000000000000000000",
+    "0000111122222111000000",
+    "0001111222222211000000",
+    "0011112222222211100000",
+    "0011122222222111100000",
+    "0011122221111111100000",
+    "0011111111111111100000",
+    "0001111111311111000000",
+    "0001111111311110000000",
+    "000P111111110000000000",
+    "0000011110000000011000",
+    "0000001100000000011000",
+    "0000000000000000000000",
+  ],
+  portalTo:'arktis',cond:2,sx:12,sy:8,
+  cs:{e:'🦘',t:'Velkommen til Oseania!',x:'Australias gule ørken-kjerne, grønne kystlinjer, Papua Ny-Guinea i nord. Verdens mest isolerte kontinent!'},
+  npcs:[
+    {id:'da',x:13,y:6,color:'#a0c060',name:'Darwin',emoji:'🦕',
+     dlg:['Evolusjon skjer gjennom naturlig utvalg!'],
+     q:{t:'Hva er halvparten av C-14s halveringstid (5 730 år)?',a:['2 865 år','1 146 år','11 460 år','5 730 år'],r:0,f:'Halvparten av 5 730 år = 2 865 år. Etter én halveringstid er 50% igjen. Etter to er 25%. Brukes til å datere organisk materiale.'}},
+    {id:'ab',x:5,y:9,color:'#d07030',name:'Ältst Wandjuk',emoji:'🪃',
+     dlg:['Vi urfolk observerte stjernene i 65 000 år!'],
+     q:{t:'Hvilken bevegelse forårsaker dag og natt?',a:['Jordens rotasjon rundt sin egen akse','Jordens omløp rundt solen','Månens omløp rundt Jorda','Solens bevegelse'],r:0,f:'Dag og natt skyldes Jordens rotasjon rundt sin egen akse (én omdreining ≈ 24 timer). Årstidene skyldes omløpet rundt solen (365,25 dager).'}},
+    {id:'mo',x:14,y:9,color:'#60d0d0',name:'Teva',emoji:'⛵',
+     dlg:['Vi navigerte med stjernene som kart!'],
+     q:{t:'Hva er lysets bølgelengde for synlig lys?',a:['380–700 nm','1–10 mm','0,01–10 nm','700–1000 nm'],r:0,f:'Synlig lys har bølgelengde 380–700 nanometer. Under 380 nm er det UV-lys, over 700 nm er infrarødt. Regnbuen viser spekteret av synlig lys.'}},
+  ]
+},
+
+arktis:{name:'🧊 Arktis',emoji:'🧊',
+  rows:[
+    "0000000000000000000000",
+    "0066666000006666660000",
+    "0066666000006666660000",
+    "0066665000566666550000",
+    "0056665555566666550000",
+    "0556666666666666555000",
+    "5566666666666666655000",
+    "5566666666666666655000",
+    "0556666666666666550000",
+    "0056666666666666500000",
+    "00055555E555500000000000",
+    "0000555555555000000000",
+    "0000055555500000000000",
+    "0000000000000000000000",
+  ],
+  portalTo:null,cond:2,sx:3,sy:5,isEnd:true,
+  cs:{e:'🧊',t:'Arktis – siste etappe!',x:'Grønland til venstre, Svalbard til høyre, isflaten i midten. Her avslutter reisen med realfag fra jordens kaldeste region!'},
+  npcs:[
+    {id:'am',x:9,y:4,color:'#80c0ff',name:'Roald Amundsen',emoji:'🧭',
+     dlg:['Jeg nådde Sydpolen 14. desember 1911!'],
+     q:{t:'Hva er smeltetemperaturen til is ved normalt atmosfæretrykk?',a:['0°C','-10°C','4°C','-273°C'],r:0,f:'Is smelter ved 0°C (273,15 K) ved 1 atm trykk. Absolutt nullpunkt er -273,15°C (0 Kelvin) – lavest mulige temperatur.'}},
+    {id:'sa',x:12,y:6,color:'#f0a060',name:'Máret',emoji:'🦌',
+     dlg:['Vi samer lever i harmoni med naturen!'],
+     q:{t:'Hva forårsaker nordlyset (Aurora Borealis)?',a:['Ladede partikler fra solen treffer atmosfæregasser','Refleksjon av sollys fra is','Lynnedslag i stratosfæren','Radioaktivt henfalle i jordskorpen'],r:0,f:'Nordlyset oppstår når ladede partikler (solvind) kanaliseres av Jordens magnetfelt ned mot polene og kolliderer med oksygen- og nitrogenmolekyler – og sender ut lys.'}},
+    {id:'is',x:6,y:8,color:'#eef4ff',name:'Isbjørn Nanuq',emoji:'🐻‍❄️',
+     dlg:['Vi isbjørner er avhengige av havis!'],
+     q:{t:'Hva er den globale gjennomsnittstemperaturen steget med siden førindustriell tid?',a:['Ca. 1,2°C','Ca. 5°C','Ca. 0,1°C','Ca. 3°C'],r:0,f:'Siden ca. 1850 har den globale gjennomsnittstemperaturen steget ca. 1,2°C. FNs klimapanel (IPCC) advarer at 1,5°C-grensen er nær.'}},
+  ]
+}
+};
+
+// ══ SPILLKONSTANTER ══
+const TILE=32, CW=560, CH=420;
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let score=0,lives=3,nsolved=0,streak=0,bstreak=0,tsolved=0;
+let running=false,dlgState=null,cw='skole',camX=0,camY=0;
+const keys={up:0,down:0,left:0,right:0};
+const pl={x:2.5,y:2.5};
+const done=new Set();
+const ORDER=['skole','europa','africa','asia','americas','oceania','arktis'];
+let aMap,aNpcs,aW,aH,pX=-1,pY=-1;
+
+// ══ LAST VERDEN ══
+function loadW(id){
+  cw=id; const D=W[id];
+  const rows=D.rows; aH=rows.length; aW=rows[0].length;
+  aMap=rows.map(r=>r.split(''));
+  aNpcs=D.npcs.map(n=>({...n,solved:false,di:0}));
+  pl.x=D.sx; pl.y=D.sy; camX=0; camY=0; pX=-1; pY=-1;
+  for(let y=0;y<aH;y++) for(let x=0;x<aW;x++)
+    if(aMap[y][x]==='P'||aMap[y][x]==='E'){pX=x;pY=y;}
+  document.getElementById('world-name').textContent=D.name;
+  updateHUD(); bwm();
+}
+
+// ══ KAMERA ══
+function uc(){
+  let tx=Math.round(pl.x*TILE-CW/2),ty=Math.round(pl.y*TILE-CH/2);
+  camX=Math.max(0,Math.min(aW*TILE-CW,tx));
+  camY=Math.max(0,Math.min(aH*TILE-CH,ty));
+}
+
+// ══ TEGNING ══
+function drawW(){
+  ctx.fillStyle='#050f1a'; ctx.fillRect(0,0,CW,CH);
+  const sx=Math.floor(camX/TILE),sy=Math.floor(camY/TILE);
+  const ex=Math.min(aW,sx+Math.ceil(CW/TILE)+2),ey=Math.min(aH,sy+Math.ceil(CH/TILE)+2);
+  for(let y=sy;y<ey;y++) for(let x=sx;x<ex;x++){
+    const t=aMap[y][x], px=x*TILE-camX, py=y*TILE-camY;
+    if(t==='0'){
+      const w=0.85+0.06*Math.sin(Date.now()/1200+x*0.5+y*0.3);
+      ctx.fillStyle=`rgba(9,30,53,${w})`; ctx.fillRect(px,py,TILE,TILE);
+      if((x+y+((Date.now()/800|0)))%5===0){ctx.fillStyle='rgba(30,100,160,0.12)';ctx.fillRect(px+2,py+TILE*0.6,TILE-4,2);}
+      continue;
+    }
+    const col=TC[t]||'#2d6e2d', dark=TD[t]||'#1e4e1e';
+    ctx.fillStyle=col; ctx.fillRect(px,py,TILE,TILE);
+    // Civ-kant (bunn+høyre = mørkere)
+    ctx.fillStyle=dark;
+    ctx.fillRect(px,py+TILE-2,TILE,2); ctx.fillRect(px+TILE-2,py,2,TILE);
+    // Lys øvre kant
+    ctx.fillStyle='rgba(255,255,255,0.07)';
+    ctx.fillRect(px,py,TILE,2); ctx.fillRect(px,py,2,TILE);
+    // Texture
+    if(t==='1'){ctx.fillStyle='rgba(120,200,80,0.2)';ctx.fillRect(px+5,py+5,3,3);ctx.fillRect(px+TILE-9,py+TILE-9,3,3);}
+    if(t==='2'){ctx.fillStyle='rgba(220,190,80,0.2)';for(let i=0;i<3;i++)ctx.fillRect(px+2,py+8+i*10,TILE-4,2);}
+    if(t==='3'){ctx.fillStyle='rgba(10,50,10,0.45)';ctx.beginPath();ctx.arc(px+TILE/2,py+TILE/2,TILE*0.36,0,Math.PI*2);ctx.fill();}
+    if(t==='4'){ctx.fillStyle='rgba(255,255,255,0.18)';ctx.beginPath();ctx.moveTo(px+TILE/2,py+4);ctx.lineTo(px+TILE-4,py+TILE-4);ctx.lineTo(px+4,py+TILE-4);ctx.closePath();ctx.fill();}
+    if(t==='5'){ctx.fillStyle='rgba(80,110,70,0.3)';ctx.fillRect(px+3,py+10,4,4);ctx.fillRect(px+TILE-9,py+TILE-13,4,4);}
+    if(t==='6'){ctx.fillStyle='rgba(200,230,255,0.3)';ctx.fillRect(px+3,py+3,TILE-6,TILE-6);ctx.fillStyle='rgba(255,255,255,0.18)';ctx.fillRect(px+6,py+6,TILE/3,3);}
+    if(t==='7'){ctx.fillStyle='rgba(160,200,50,0.25)';for(let i=0;i<4;i++)ctx.fillRect(px+4+i*8,py+6,2,TILE-12);}
+    if(t==='8'){ctx.fillStyle='rgba(0,90,20,0.4)';ctx.beginPath();ctx.arc(px+TILE/2,py+TILE/2,TILE*0.43,0,Math.PI*2);ctx.fill();}
+    if(t==='T'){ctx.font=(TILE*0.5)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('📚',px+TILE/2,py+TILE/2);}
+    if(t==='P'||t==='E'){
+      const open=sc2()>=(W[cw].cond||1);
+      const p=0.5+0.5*Math.sin(Date.now()/300);
+      ctx.fillStyle=open?`rgba(80,255,150,${0.28+0.28*p})`:'rgba(120,120,120,0.18)';
+      ctx.fillRect(px,py,TILE,TILE);
+      ctx.font=(TILE*0.62)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(open?'🌀':'🔒',px+TILE/2,py+TILE/2);
+      if(open&&(Date.now()/500|0)%2===0){ctx.font='bold 8px Segoe UI,sans-serif';ctx.fillStyle='rgba(80,255,150,0.9)';ctx.fillText(t==='E'?'MÅL!':'PORTAL',px+TILE/2,py-5);}
+    }
+  }
+}
+
+function drawN(n){
+  const px=n.x*TILE-camX, py=n.y*TILE-camY;
+  if(px<-TILE||px>CW+TILE||py<-TILE||py>CH+TILE) return;
+  if(n.solved){ctx.fillStyle='rgba(0,220,100,0.1)';ctx.beginPath();ctx.arc(px,py,TILE*0.52,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle=n.color;ctx.beginPath();ctx.arc(px,py,TILE*0.38,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.28)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.font=(TILE*0.42)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.emoji||'👤',px,py);
+  ctx.font='bold '+(TILE*0.22)+'px Segoe UI,sans-serif';ctx.fillStyle='#fff';
+  ctx.shadowColor='#000';ctx.shadowBlur=4;ctx.fillText(n.name,px,py-TILE*0.54);ctx.shadowBlur=0;
+  const d=Math.sqrt((pl.x-n.x)**2+(pl.y-n.y)**2);
+  if(d<2&&!n.solved&&!dlgState){ctx.globalAlpha=0.7+0.3*Math.sin(Date.now()/350);ctx.font=(TILE*0.33)+'px serif';ctx.fillText('💬',px,py-TILE*0.9);ctx.globalAlpha=1;}
+  if(n.solved){ctx.font=(TILE*0.3)+'px serif';ctx.fillText('✅',px+TILE*0.4,py-TILE*0.4);}
+}
+
+function drawP(){
+  const px=pl.x*TILE-camX, py=pl.y*TILE-camY;
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(px,py+TILE*0.38,TILE*0.24,TILE*0.1,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a6aff';ctx.beginPath();ctx.arc(px,py,TILE*0.4,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#5ab0ff';ctx.lineWidth=2;ctx.stroke();
+  ctx.font=(TILE*0.48)+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧑‍🎒',px,py);
+}
+
+function drawH(){
+  const n=sc2(),need=W[cw].cond||1;
+  ctx.textAlign='left';ctx.font='bold 12px Segoe UI,sans-serif';
+  ctx.shadowColor='#000';ctx.shadowBlur=3;
+  ctx.fillStyle=n<need?'rgba(255,210,80,0.9)':'rgba(80,255,150,0.9)';
+  ctx.fillText(n<need?'Løs '+(need-n)+' spørsmål til for portalen!':'🌀 Portal åpen – finn 🌀!',8,CH-10);
+  ctx.shadowBlur=0;
+}
+
+// ══ GAME LOOP ══
+let lt=0;
+function loop(ts){
+  if(!running)return; const dt=Math.min((ts-lt)/1000,0.1); lt=ts;
+  if(!dlgState)mv(dt); uc();
+  drawW(); aNpcs.forEach(drawN); drawP(); drawH();
+  requestAnimationFrame(loop);
+}
+
+// ══ BEVEGELSE ══
+const SPD=5.5;
+function blk(x,y){
+  const tx=Math.floor(x),ty=Math.floor(y);
+  if(tx<0||ty<0||tx>=aW||ty>=aH)return true;
+  if(aMap[ty][tx]==='0')return true;
+  for(const n of aNpcs) if(Math.sqrt((n.x-x)**2+(n.y-y)**2)<0.65)return true;
+  return false;
+}
+function mv(dt){
+  let mx=0,my=0;
+  if(keys.up)my=-1; if(keys.down)my=1; if(keys.left)mx=-1; if(keys.right)mx=1;
+  if(mx&&my){mx*=0.707;my*=0.707;}
+  const m=0.35;
+  const nx=pl.x+mx*SPD*dt, ny=pl.y+my*SPD*dt;
+  if(!blk(nx+(mx?m*Math.sign(mx):0.01),pl.y)&&!blk(nx-(mx?m*Math.sign(mx):0.01),pl.y))pl.x=nx;
+  if(!blk(pl.x,ny+(my?m*Math.sign(my):0.01))&&!blk(pl.x,ny-(my?m*Math.sign(my):0.01)))pl.y=ny;
+  if(Math.floor(pl.x)===pX&&Math.floor(pl.y)===pY&&sc2()>=(W[cw].cond||1))gn();
+  for(let y=0;y<aH;y++) for(let x=0;x<aW;x++)
+    if(aMap[y][x]==='E'&&Math.floor(pl.x)===x&&Math.floor(pl.y)===y&&sc2()>=(W[cw].cond||1))ge();
+}
+
+// ══ DIALOG/QUIZ ══
+function sc2(){return aNpcs.filter(n=>n.solved).length;}
+let cn=null;
+function ia(){
+  if(dlgState){nd();return;}
+  for(const n of aNpcs) if(Math.sqrt((pl.x-n.x)**2+(pl.y-n.y)**2)<2){sd(n);return;}
+}
+function sd(n){
+  cn=n;
+  if(n.solved){dlgState={t:'d',n,i:0};sdlg(n.name+' '+n.emoji,'Godt jobbet! Du løste spørsmålet mitt.');return;}
+  if(n.dlg&&n.dlg.length){dlgState={t:'d',n,i:0};sdlg(n.name+' '+n.emoji,n.dlg[0]);}
+  else if(n.q)sq(n);
+}
+function sdlg(sp,tx){document.getElementById('dlg').style.display='block';document.getElementById('dlg-sp').textContent=sp;document.getElementById('dlg-tx').textContent=tx;}
+function nd(){
+  if(!dlgState)return; const{n,i}=dlgState,ni=(dlgState.i||0)+1;
+  if(n.dlg&&ni<n.dlg.length){dlgState.i=ni;document.getElementById('dlg-tx').textContent=n.dlg[ni];}
+  else{document.getElementById('dlg').style.display='none';dlgState=null;if(n.q&&!n.solved)setTimeout(()=>sq(n),80);}
+}
+function sq(n){
+  dlgState={t:'q',n};cn=n; const q=n.q;
+  document.getElementById('quiz').style.display='block';
+  document.getElementById('q-sp').textContent=n.name+' '+n.emoji+' – realfagsspørsmål:';
+  document.getElementById('q-tx').textContent=q.t;
+  document.getElementById('q-fb').textContent='';
+  document.getElementById('q-bt').style.display='none';
+  const d=document.getElementById('q-as');d.innerHTML='';
+  const sidx=q.a.map((_,i)=>i).sort(()=>Math.random()-0.5);
+  const nyR=sidx.indexOf(q.r);
+  sidx.forEach((oi,vi)=>{const b=document.createElement('button');b.className='qa';b.textContent=q.a[oi];b.onclick=()=>ans(vi,nyR,q.f);d.appendChild(b);});
+}
+function ans(idx,r,f){
+  document.querySelectorAll('.qa').forEach((b,i)=>{b.disabled=true;if(i===r)b.classList.add('r');else if(i===idx)b.classList.add('f');});
+  const fb=document.getElementById('q-fb');
+  if(idx===r){
+    streak++;bstreak=Math.max(bstreak,streak); const bn=streak>=3?50:0;
+    score+=100+bn; nsolved++; tsolved++; cn.solved=true;
+    fb.style.color='#0fa'; fb.textContent='✅ Riktig! '+(bn?'🔥+'+bn+'! ':'')+f;
+    if(bn)fl('🔥 STREAK +'+bn+'!');
+    if(streak>=3)document.getElementById('sbar').style.display='inline-flex';
+  } else {
+    streak=0; lives=Math.max(1,lives-1);
+    fb.style.color='#f88'; fb.textContent='❌ Feil. '+f;
+    document.getElementById('sbar').style.display='none';
+  }
+  document.getElementById('str').textContent=streak; updateHUD();
+  document.getElementById('q-bt').style.display='inline-block';
+}
+function cq(){document.getElementById('quiz').style.display='none';dlgState=null;cn=null;updateHUD();}
+function fl(t){const e=document.getElementById('bfl');e.textContent=t;e.classList.add('vis');setTimeout(()=>e.classList.remove('vis'),1400);}
+function updateHUD(){document.getElementById('sc').textContent=score;document.getElementById('lv').textContent=lives;document.getElementById('sl').textContent=tsolved;document.getElementById('str').textContent=streak;}
+
+// ══ PORTAL/SLUTT ══
+function gn(){
+  running=false; done.add(cw); const nid=W[cw].portalTo; if(!nid)return;
+  score+=200; fl('✈️ Ny verden +200!');
+  setTimeout(()=>{const cs=W[nid].cs;scs(cs.e,cs.t,cs.x,()=>{loadW(nid);running=true;requestAnimationFrame(loop);});},350);
+}
+function ge(){
+  if(document.getElementById('endsc').classList.contains('vis'))return;
+  running=false; done.add(cw); score+=500;
+  setTimeout(()=>{document.getElementById('fs').textContent=score;document.getElementById('fl').textContent=tsolved;document.getElementById('fb2').textContent=bstreak;document.getElementById('endsc').classList.add('vis');},400);
+}
+let cscb=null;
+function scs(e,t,x,cb){cscb=cb;document.getElementById('cs-e').textContent=e;document.getElementById('cs-t').textContent=t;document.getElementById('cs-x').textContent=x;document.getElementById('cs').classList.add('vis');}
+function ccs(){document.getElementById('cs').classList.remove('vis');if(cscb){cscb();cscb=null;}}
+
+// ══ KART ══
+function tm(){const e=document.getElementById('mapov');e.classList.contains('vis')?cm():(bwm(),e.classList.add('vis'));}
+function cm(){document.getElementById('mapov').classList.remove('vis');}
+function bwm(){const g=document.getElementById('wmg');g.innerHTML='';ORDER.forEach(id=>{const d=document.createElement('div');d.className='wp'+(done.has(id)?' d':'')+(id===cw?' a':'');d.innerHTML=`<span>${W[id].emoji}</span>${W[id].name.replace(/^[^ ]+ /,'')}`;g.appendChild(d);});}
+
+// ══ INPUT ══
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='w')keys.up=1;
+  if(e.key==='ArrowDown'||e.key==='s')keys.down=1;
+  if(e.key==='ArrowLeft'||e.key==='a')keys.left=1;
+  if(e.key==='ArrowRight'||e.key==='d')keys.right=1;
+  if(e.key==='e'||e.key==='E'||e.key===' ')ia();
+  if(e.key==='m'||e.key==='M')tm();
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+});
+window.addEventListener('keyup',e=>{
+  if(e.key==='ArrowUp'||e.key==='w')keys.up=0;
+  if(e.key==='ArrowDown'||e.key==='s')keys.down=0;
+  if(e.key==='ArrowLeft'||e.key==='a')keys.left=0;
+  if(e.key==='ArrowRight'||e.key==='d')keys.right=0;
+});
+['up','down','left','right'].forEach(d=>{
+  const b=document.getElementById('b'+d[0]);if(!b)return;
+  b.addEventListener('pointerdown',()=>keys[d[0]]=1);
+  b.addEventListener('pointerup',()=>keys[d[0]]=0);
+  b.addEventListener('pointerleave',()=>keys[d[0]]=0);
+});
+document.getElementById('bi').addEventListener('pointerdown',ia);
+
+// ══ START ══
+function startGame(){
+  document.getElementById('intro').style.display='none';
+  loadW('skole'); running=true; lt=performance.now();
+  requestAnimationFrame(ts=>{lt=ts;loop(ts);});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spillhub – SkapLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#06101e; --surface:#0d1e30; --surface2:#0a1828;
+  --accent:#ffd700; --accent2:#4af; --green:#7fff6e; --purple:#c084fc;
+  --text:#e8f0ff; --textdim:#7a90b0; --radius:14px;
+  --font-head:'Fredoka One',cursive; --font-body:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;}
+
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(255,215,0,0.15);position:sticky;top:0;z-index:10;backdrop-filter:blur(8px);}
+#topbar a.logo{font-family:var(--font-head);font-size:1.25rem;color:var(--accent);text-decoration:none;}
+#topbar a.hjem{font-size:0.82rem;color:var(--textdim);text-decoration:none;padding:5px 12px;border:1px solid rgba(255,215,0,0.2);border-radius:20px;transition:all 0.2s;}
+#topbar a.hjem:hover{color:var(--accent);border-color:rgba(255,215,0,0.5);}
+
+#hero{text-align:center;padding:48px 20px 32px;background:radial-gradient(ellipse at 50% 0%,rgba(255,215,0,0.07) 0%,transparent 70%);}
+#hero h1{font-family:var(--font-head);font-size:2.6rem;color:var(--accent);margin-bottom:10px;letter-spacing:1px;}
+#hero p{color:var(--textdim);font-size:1rem;max-width:520px;margin:0 auto;line-height:1.6;}
+.hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.hbadge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.2);border-radius:16px;font-size:0.8rem;color:var(--textdim);}
+
+/* FILTER */
+#filter-rad{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:16px 20px 0;}
+.fbtn{padding:5px 14px;border-radius:16px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--textdim);cursor:pointer;font-size:0.8rem;font-family:var(--font-body);transition:all .15s;}
+.fbtn:hover,.fbtn.aktiv{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.35);color:var(--accent);}
+
+/* SEKSJONER */
+.seksjon-tittel{font-family:var(--font-head);font-size:0.72rem;color:var(--textdim);text-transform:uppercase;letter-spacing:1.5px;padding:20px 24px 8px;max-width:960px;margin:0 auto;}
+
+/* SPILLGRID */
+.spill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px;padding:0 24px 16px;max-width:960px;margin:0 auto;}
+
+/* SPILLKORT */
+.spillkort{background:var(--surface);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s;text-decoration:none;color:inherit;display:block;}
+.spillkort:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.spillkort.grønn:hover{border-color:rgba(127,255,110,0.5);box-shadow:0 12px 40px rgba(127,255,110,0.1);}
+.spillkort.blå:hover{border-color:rgba(68,170,255,0.5);box-shadow:0 12px 40px rgba(68,170,255,0.1);}
+.spillkort.gull:hover{border-color:rgba(255,215,0,0.5);box-shadow:0 12px 40px rgba(255,215,0,0.1);}
+.spillkort.lilla:hover{border-color:rgba(192,132,252,0.5);box-shadow:0 12px 40px rgba(192,132,252,0.1);}
+.spillkort.rød:hover{border-color:rgba(248,113,113,0.5);box-shadow:0 12px 40px rgba(248,113,113,0.1);}
+
+/* BANNER */
+.spillkort-banner{height:150px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.banner-emoji{font-size:3.5rem;position:relative;z-index:1;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.banner-bg{position:absolute;inset:0;}
+.stars{position:absolute;inset:0;overflow:hidden;}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle 2s infinite;}
+@keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* Tema-bakgrunner */
+.bg-ts{background:linear-gradient(135deg,#0a1a0e 0%,#1a3a1a 50%,#0a2a1a 100%);}
+.bg-ts::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(127,255,110,0.12) 0%,transparent 70%);}
+.bg-vr{background:linear-gradient(135deg,#06101e 0%,#0d2040 50%,#06182e 100%);}
+.bg-vr::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(68,170,255,0.1) 0%,transparent 70%);}
+.bg-bs{background:linear-gradient(135deg,#060e1a 0%,#0a1a2e 50%,#060e1a 100%);}
+.bg-kn{background:linear-gradient(135deg,#06101e 0%,#0a1a2e 60%,#06101e 100%);}
+.bg-ln{background:linear-gradient(135deg,#0e0a1e 0%,#1a1040 50%,#0e0a1e 100%);}
+.bg-ln::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(192,132,252,0.1) 0%,transparent 70%);}
+.bg-kem{background:linear-gradient(135deg,#0e1a0a 0%,#1a2e10 50%,#0e1a0a 100%);}
+.bg-kem::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(74,222,128,0.1) 0%,transparent 70%);}
+
+/* Pixel-kart (Verden Rundt) */
+.pixel-map{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(8,1fr);opacity:.3;padding:12px;}
+.pm{border-radius:1px;}
+
+/* KORT-INNHOLD */
+.spillkort-body{padding:16px 18px 18px;}
+
+/* Vanskelighetsmerker */
+.diff-rad{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.diff{font-size:0.68rem;padding:2px 8px;border-radius:10px;font-weight:700;}
+.diff.enkel{background:rgba(127,255,110,0.12);color:#7fff6e;border:1px solid rgba(127,255,110,0.25);}
+.diff.middels{background:rgba(255,215,0,0.12);color:var(--accent);border:1px solid rgba(255,215,0,0.25);}
+.diff.hard{background:rgba(248,113,113,0.12);color:#f87171;border:1px solid rgba(248,113,113,0.25);}
+
+.spillkort-tittel{font-family:var(--font-head);font-size:1.25rem;margin-bottom:5px;}
+.spillkort.grønn .spillkort-tittel{color:var(--green);}
+.spillkort.blå .spillkort-tittel{color:var(--accent2);}
+.spillkort.gull .spillkort-tittel{color:var(--accent);}
+.spillkort.lilla .spillkort-tittel{color:var(--purple);}
+.spillkort.rød .spillkort-tittel{color:#f87171;}
+
+.spillkort-tekst{color:var(--textdim);font-size:0.84rem;line-height:1.55;margin-bottom:12px;}
+
+/* Trinn og fag */
+.meta-rad{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px;}
+.tag{font-size:0.7rem;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--textdim);}
+.tag.fag{background:rgba(68,170,255,0.07);border-color:rgba(68,170,255,0.2);color:#88bbff;}
+.tag.trinn{background:rgba(255,215,0,0.07);border-color:rgba(255,215,0,0.2);color:#ffdb70;}
+.tag.km{background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#d8b4fe;}
+
+.spillkort-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-weight:700;font-size:0.84rem;font-family:var(--font-body);border:none;cursor:pointer;transition:all .15s;}
+.spillkort.grønn .spillkort-btn{background:var(--green);color:#000;}
+.spillkort.blå .spillkort-btn{background:var(--accent2);color:#000;}
+.spillkort.gull .spillkort-btn{background:var(--accent);color:#000;}
+.spillkort.lilla .spillkort-btn{background:var(--purple);color:#000;}
+.spillkort.rød .spillkort-btn{background:#f87171;color:#000;}
+.spillkort-btn:hover{filter:brightness(1.1);transform:scale(1.02);}
+
+/* PLACEHOLDER */
+.neste-kort{border:2px dashed rgba(255,255,255,0.08);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;text-align:center;padding:28px;gap:10px;border-radius:var(--radius);}
+.neste-kort .ne{font-size:2.2rem;opacity:.3;}
+.neste-kort h3{color:rgba(255,255,255,0.2);font-family:var(--font-head);font-size:1rem;}
+.neste-kort p{color:rgba(255,255,255,0.12);font-size:0.78rem;}
+
+/* FOOTER */
+footer{text-align:center;padding:24px;color:var(--textdim);font-size:0.78rem;border-top:1px solid rgba(255,255,255,0.05);margin-top:20px;}
+footer a{color:var(--accent);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <a class="logo" href="spill_hub.html">🎮 SkapLab Spill</a>
+  <a class="hjem" href="skaplab.html">🏠 Tilbake til SkapLab</a>
+</div>
+
+<section id="hero">
+  <h1>🎮 Spillhub</h1>
+  <p>Lær matematikk og naturfag gjennom spill. Alle spill er knyttet til læreplanen (LK20) og kan brukes i klasserommet eller hjemme.</p>
+  <div class="hero-badges">
+    <div class="hbadge">🎮 6 spill</div>
+    <div class="hbadge">📐 Matematikk · 🔬 Naturfag</div>
+    <div class="hbadge">✅ Gratis – ingen innlogging</div>
+  </div>
+</section>
+
+<div id="filter-rad">
+  <button class="fbtn aktiv" onclick="filtrer('alle',this)">Alle spill</button>
+  <button class="fbtn" onclick="filtrer('matte',this)">📐 Matematikk</button>
+  <button class="fbtn" onclick="filtrer('naturfag',this)">🔬 Naturfag</button>
+  <button class="fbtn" onclick="filtrer('ungdom',this)">8.–10. trinn</button>
+  <button class="fbtn" onclick="filtrer('mellom',this)">5.–7. trinn</button>
+</div>
+
+<!-- ── EVENTYRSPILL ── -->
+<div class="seksjon-tittel">⚔️ Eventyrspill – utforsk og løs oppgaver</div>
+<div class="spill-grid">
+
+  <a href="tidsmaskinen.html" class="spillkort grønn" data-fag="naturfag matte" data-trinn="ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-ts"><div class="stars" id="ts-stars"></div></div>
+      <div class="banner-emoji">⏳</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff middels">🟡 Middels</span>
+        <span class="diff hard">🔴 Krevende</span>
+      </div>
+      <div class="spillkort-tittel">Tidsmaskinen</div>
+      <p class="spillkort-tekst">Reis gjennom tid og rom – fra dinosaurenes tid til industriell London, solsystemet og år 2324. Løs realfagsoppgaver for å komme videre. Det mest innholdsrike spillet.</p>
+      <div class="meta-rad">
+        <span class="tag fag">🔬 Realfag tverrfaglig</span>
+        <span class="tag trinn">8.–10. trinn</span>
+        <span class="tag km">6 verdener · 30+ NPC-er</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+  <a href="verden_rundt.html" class="spillkort blå" data-fag="naturfag" data-trinn="mellom ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-vr"><div class="pixel-map" id="pixel-map"></div></div>
+      <div class="banner-emoji">🌍</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff enkel">🟢 Enkel</span>
+      </div>
+      <div class="spillkort-tittel">Verden Rundt</div>
+      <p class="spillkort-tekst">Reis gjennom 7 kontinenter og møt historiske skikkelser. Kortere og enklere enn Tidsmaskinen – et godt startpunkt for yngre elever eller som intro til verdensgeografi.</p>
+      <div class="meta-rad">
+        <span class="tag fag">🌍 Geografi · Naturfag</span>
+        <span class="tag trinn">5.–9. trinn</span>
+        <span class="tag km">7 verdener · 25 spørsmål</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+</div>
+
+<!-- ── MATEMATIKKSPILL ── -->
+<div class="seksjon-tittel">📐 Matematikk – funksjoner og koordinater</div>
+<div class="spill-grid">
+
+  <a href="battleships.html" class="spillkort gull" data-fag="matte" data-trinn="mellom ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-bs"><div class="stars" id="bs-stars"></div></div>
+      <div class="banner-emoji">⚓</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff enkel">🟢 Lett</span>
+        <span class="diff middels">🟡 Middels</span>
+        <span class="diff hard">🔴 Vanskelig</span>
+      </div>
+      <div class="spillkort-tittel">Battleships</div>
+      <p class="spillkort-tekst">Tradisjonelt slagskipsspill mot datamaskinen. Tast inn (x, y)-koordinater for å skyte – du kan ikke bare klikke. Tre vanskelighetsgrader med stadig smartere AI.</p>
+      <div class="meta-rad">
+        <span class="tag fag">📐 Koordinatsystemet</span>
+        <span class="tag trinn">5.–9. trinn</span>
+        <span class="tag km">MAT01 · (x, y)</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+  <a href="linje.html" class="spillkort lilla" data-fag="matte" data-trinn="ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-ln"><div class="stars" id="ln-stars"></div>
+        <div style="position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:0.72rem;color:rgba(192,132,252,0.5);font-family:'Fredoka One',sans-serif;letter-spacing:1px">f(x) = ax + b</div>
+      </div>
+      <div class="banner-emoji">🚀</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff enkel">🟢 Lett</span>
+        <span class="diff middels">🟡 Middels</span>
+        <span class="diff hard">🔴 Vanskelig</span>
+      </div>
+      <div class="spillkort-tittel">Romferge</div>
+      <p class="spillkort-tekst">Styr romfergen til en romstasjon ved å justere stigningstallet og konstantleddet i en lineær funksjon. Jo nærmere du treffer, jo bedre poengsum.</p>
+      <div class="meta-rad">
+        <span class="tag fag">📐 Lineære funksjoner</span>
+        <span class="tag trinn">8.–10. trinn</span>
+        <span class="tag km">MAT01 · f(x) = ax + b</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+  <a href="kanon.html" class="spillkort gull" data-fag="matte" data-trinn="ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-kn"><div class="stars" id="kn-stars"></div>
+        <div style="position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:0.72rem;color:rgba(255,215,0,0.4);font-family:'Fredoka One',sans-serif;letter-spacing:1px">f(x) = ax² + bx + c</div>
+      </div>
+      <div class="banner-emoji">💣</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff enkel">🟢 Lett</span>
+        <span class="diff middels">🟡 Middels</span>
+        <span class="diff hard">🔴 Vanskelig</span>
+      </div>
+      <div class="spillkort-tittel">Kanonkule</div>
+      <p class="spillkort-tekst">Still inn en andregradsfunksjon og skyt kanonkulen i en parabel for å treffe skipet. På vanskelig: ingen forhåndsvisning og begrenset topphøyde.</p>
+      <div class="meta-rad">
+        <span class="tag fag">📐 Andregradsfunksjoner</span>
+        <span class="tag trinn">9.–10. trinn</span>
+        <span class="tag km">MAT01 · ax² + bx + c</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+</div>
+
+<!-- ── NATURFAGSPILL ── -->
+<div class="seksjon-tittel">🔬 Naturfag – kjemi og reaksjoner</div>
+<div class="spill-grid">
+
+  <a href="kjemi.html" class="spillkort rød" data-fag="naturfag" data-trinn="mellom ungdom">
+    <div class="spillkort-banner">
+      <div class="banner-bg bg-kem"><div class="stars" id="km-stars"></div></div>
+      <div class="banner-emoji">⚗️</div>
+    </div>
+    <div class="spillkort-body">
+      <div class="diff-rad">
+        <span class="diff enkel">🟢 Lett</span>
+        <span class="diff middels">🟡 Middels</span>
+        <span class="diff hard">🔴 Vanskelig</span>
+      </div>
+      <div class="spillkort-tittel">Kjemilaben</div>
+      <p class="spillkort-tekst">Bland kjemikalier i riktig rekkefølge og mengde for å oppnå en bestemt reaksjon. Syre–base, fargeendring, varme, gass eller eksplosjon – hva skjer når du blander?</p>
+      <div class="meta-rad">
+        <span class="tag fag">🔬 Kjemi · Reaksjoner</span>
+        <span class="tag trinn">7.–10. trinn</span>
+        <span class="tag km">NAT01 · Syre–base · pH</span>
+      </div>
+      <button class="spillkort-btn">▶ Spill nå</button>
+    </div>
+  </a>
+
+  <div class="neste-kort">
+    <div class="ne">🧬</div>
+    <h3>Neste spill kommer...</h3>
+    <p>Biologi? Fysikk? Si fra hva du vil se!</p>
+  </div>
+
+</div>
+
+<footer>
+  <p>SkapLab · <a href="skaplab.html">Tilbake til forsiden</a> · Gratis læremiddel for norsk skole</p>
+</footer>
+
+<script>
+function filtrer(kategori, el) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('aktiv'));
+  el.classList.add('aktiv');
+  document.querySelectorAll('.spillkort').forEach(k => {
+    if (kategori === 'alle') { k.style.display = ''; return; }
+    const fag = k.dataset.fag || '';
+    const trinn = k.dataset.trinn || '';
+    const vis = fag.includes(kategori) || trinn.includes(kategori);
+    k.style.display = vis ? '' : 'none';
+  });
+}
+
+function lagStjerner(id, n) {
+  const c = document.getElementById(id);
+  if (!c) return;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2 + 1;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s;opacity:${0.3+Math.random()*0.7}`;
+    c.appendChild(s);
+  }
+}
+['ts-stars','bs-stars','ln-stars','kn-stars','km-stars'].forEach(id => lagStjerner(id, 30));
+
+// Pixel-kart Verden Rundt
+(function(){
+  const g = document.getElementById('pixel-map');
+  if (!g) return;
+  const tiles = ['000100000110','011110001110','011111001100','001111110000','001111111000','000111111100','000011111110','000001111000'];
+  const colors = {'0':'transparent','1':'#2d6e2d'};
+  tiles.forEach(row => row.split('').forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'pm';
+    d.style.background = colors[t] || 'transparent';
+    if (t !== '0') d.style.border = '0.5px solid rgba(0,0,0,0.2)';
+    g.appendChild(d);
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kjemilaben – SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06101e;--surface:#0d1e30;--surface2:#0a1828;
+  --accent:#ffd700;--green:#4ade80;--red:#f87171;--blue:#60a5fa;
+  --text:#e8f0ff;--textdim:#7a90b0;
+  --font-head:'Fredoka One',cursive;--font-body:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+
+/* SETUP */
+#setup{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;}
+#setup h1{font-family:var(--font-head);font-size:2rem;color:#4ade80;}
+#setup p{color:var(--textdim);font-size:0.88rem;max-width:460px;text-align:center;line-height:1.55;}
+.nrad{display:flex;gap:12px;}
+.nkort{background:var(--surface);border:2px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:center;width:150px;transition:all .18s;}
+.nkort:hover{transform:translateY(-2px);}
+.nkort.valgt.lett{border-color:var(--green);background:rgba(74,222,128,0.07);}
+.nkort.valgt.middels{border-color:var(--accent);background:rgba(255,215,0,0.07);}
+.nkort.valgt.hard{border-color:#f06060;background:rgba(240,96,96,0.07);}
+.nkort .ne{font-size:1.6rem;margin-bottom:5px;}
+.nkort .nt{font-family:var(--font-head);font-size:.92rem;margin-bottom:3px;}
+.nkort.lett .nt{color:var(--green);}
+.nkort.middels .nt{color:var(--accent);}
+.nkort.hard .nt{color:#f09090;}
+.nkort .nd{font-size:.71rem;color:var(--textdim);line-height:1.4;}
+.startbtn{padding:11px 36px;font-family:var(--font-head);font-size:1.05rem;background:var(--green);color:#000;border:none;border-radius:10px;cursor:pointer;transition:all .15s;}
+.startbtn:hover{filter:brightness(1.1);transform:scale(1.02);}
+.tips{max-width:460px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--textdim);line-height:1.5;}
+.tips b{color:var(--green);}
+
+/* SPILLSKJERM */
+#game{display:none;height:100vh;flex-direction:column;}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:5px 14px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(74,222,128,0.15);flex-shrink:0;gap:8px;}
+#topbar h1{font-family:var(--font-head);font-size:.95rem;color:var(--green);}
+#topbar .ti{display:flex;gap:12px;align-items:center;font-size:.8rem;}
+#topbar a{font-size:.72rem;color:var(--textdim);text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+.badge{font-size:.72rem;padding:2px 9px;border-radius:10px;font-weight:700;}
+.badge.lett{background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.3);}
+.badge.middels{background:rgba(255,215,0,0.12);color:var(--accent);border:1px solid rgba(255,215,0,0.3);}
+.badge.hard{background:rgba(240,96,96,0.12);color:#f09090;border:1px solid rgba(240,96,96,0.3);}
+
+/* LAYOUT */
+#main{flex:1;display:flex;min-height:0;gap:0;}
+
+/* VENSTRE: oppgavepanel */
+#venstre{width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--surface2);border-right:1px solid rgba(255,255,255,0.06);}
+.ptittel{font-family:var(--font-head);font-size:.75rem;color:var(--textdim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+
+/* Mål-boks */
+#mål-boks{background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.25);border-radius:8px;padding:9px 10px;}
+#mål-emoji{font-size:2rem;text-align:center;display:block;margin-bottom:4px;}
+#mål-navn{font-family:var(--font-head);font-size:.95rem;color:var(--green);text-align:center;margin-bottom:4px;}
+#mål-tekst{font-size:.75rem;color:var(--textdim);line-height:1.45;text-align:center;}
+
+/* Bevis-boks (vanskelig: ukjent reaksjon) */
+#bevis-boks{background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.18);border-radius:8px;padding:8px 10px;display:none;}
+.blab{font-size:.74rem;color:var(--textdim);}
+.bval{font-family:var(--font-head);font-size:.85rem;}
+
+#tb{font-size:.8rem;min-height:40px;padding:6px 8px;background:var(--surface);border-radius:6px;border:1px solid rgba(255,255,255,0.08);line-height:1.45;text-align:center;display:flex;align-items:center;justify-content:center;}
+#tb.ok{border-color:var(--green);color:var(--green);}
+#tb.feil{border-color:#f09090;color:#f09090;}
+#tb.info{border-color:rgba(96,165,250,0.5);color:var(--blue);}
+
+#tøm-btn{width:100%;padding:7px;font-family:var(--font-head);font-size:.85rem;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f09090;border-radius:8px;cursor:pointer;}
+#tøm-btn:hover{background:rgba(248,113,113,0.25);}
+#neste-btn{width:100%;padding:8px;font-family:var(--font-head);font-size:.92rem;background:var(--green);color:#000;border:none;border-radius:8px;cursor:pointer;display:none;}
+
+.srad{display:flex;justify-content:space-between;font-size:.78rem;}
+.sv{font-family:var(--font-head);font-size:.92rem;}
+.sv.g{color:var(--green);}
+.sv.r{color:#f09090;}
+.sv.y{color:var(--accent);}
+
+/* MIDTEN: lab */
+#lab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px 8px;gap:8px;overflow:hidden;}
+
+/* Reagensreolet */
+#reol{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.reagens-kort{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:var(--surface);border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:8px 10px;cursor:pointer;
+  transition:all .15s;width:78px;
+}
+.reagens-kort:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.25);}
+.reagens-kort.brukt{opacity:.45;cursor:not-allowed;transform:none;}
+.reagens-farge{width:36px;height:48px;border-radius:4px 4px 6px 6px;border:1px solid rgba(255,255,255,0.15);position:relative;overflow:hidden;}
+.reagens-farge::after{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:rgba(255,255,255,0.15);}
+.reagens-navn{font-size:.68rem;font-weight:700;color:var(--text);text-align:center;line-height:1.2;}
+.reagens-pH{font-size:.65rem;color:var(--textdim);}
+
+/* Blander */
+#blander-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+#blander{
+  width:130px;height:160px;position:relative;
+  background:rgba(255,255,255,0.04);
+  border:2px solid rgba(255,255,255,0.15);
+  border-radius:4px 4px 20px 20px;
+  overflow:hidden;cursor:pointer;
+  transition:border-color .2s;
+}
+#blander:hover{border-color:rgba(255,255,255,0.3);}
+#væske{
+  position:absolute;bottom:0;left:0;right:0;
+  transition:height .4s ease, background-color .5s ease;
+  height:0;
+}
+#boblene{position:absolute;inset:0;pointer-events:none;}
+.boble{position:absolute;border-radius:50%;animation:stigOpp 1.5s ease-in infinite;opacity:.6;}
+@keyframes stigOpp{0%{transform:translateY(0);opacity:.6}100%{transform:translateY(-120px);opacity:0}}
+#blander-label{font-size:.72rem;color:var(--textdim);text-align:center;}
+#blander-innhold{font-size:.7rem;color:var(--textdim);text-align:center;max-width:150px;line-height:1.3;}
+
+/* Reaksjons-display */
+#reaksjon-display{
+  width:100%;max-width:400px;
+  background:var(--surface);border:1px solid rgba(255,255,255,0.1);
+  border-radius:10px;padding:10px 14px;
+  text-align:center;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:border-color .3s;
+}
+#reaksjon-emoji{font-size:1.8rem;margin-bottom:4px;}
+#reaksjon-tekst{font-size:.8rem;color:var(--textdim);line-height:1.4;}
+#reaksjon-btn{margin-top:7px;padding:5px 18px;font-family:var(--font-head);font-size:.85rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--text);border-radius:6px;cursor:pointer;display:none;}
+#reaksjon-btn:hover{background:rgba(255,255,255,0.15);}
+
+/* HØYRE: kjemikalie-info */
+#hoyre{width:160px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--surface2);border-left:1px solid rgba(255,255,255,0.06);}
+#kjemi-info-boks{background:var(--surface);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;font-size:.75rem;line-height:1.6;color:var(--textdim);min-height:80px;}
+#kjemi-info-boks b{color:var(--text);}
+
+/* pH-skala */
+#ph-skala{display:flex;flex-direction:column;gap:3px;}
+.ph-bar{height:18px;border-radius:4px;display:flex;align-items:center;padding:0 6px;font-size:.65rem;font-weight:700;transition:opacity .3s;}
+.ph-bar.aktiv{box-shadow:0 0 0 2px #fff;}
+
+/* SLUTT */
+#slutt{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:50;align-items:center;justify-content:center;}
+#slutt.vis{display:flex;}
+#sb{background:var(--surface2);border-radius:14px;padding:28px 32px;text-align:center;border:2px solid rgba(255,255,255,0.1);max-width:340px;width:90%;}
+#sb h2{font-family:var(--font-head);font-size:1.6rem;color:var(--green);margin:10px 0 6px;}
+#sb p{color:var(--textdim);font-size:.85rem;line-height:1.6;margin-bottom:18px;}
+.sbtns{display:flex;gap:8px;justify-content:center;}
+.sbtn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:.85rem;font-family:var(--font-body);}
+.sbtn.p{background:var(--green);color:#000;}
+.sbtn.s{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.15);}
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h1>⚗️ Kjemilaben</h1>
+  <p>Bland kjemikalier i riktig rekkefølge og mengde for å oppnå en bestemt reaksjon. Lær om syrer, baser, pH og kjemiske reaksjoner!</p>
+  <div class="nrad">
+    <div class="nkort lett valgt" onclick="velgN('lett',this)">
+      <div class="ne">🟢</div><div class="nt">Lett</div>
+      <div class="nd">Reaksjonen vises mens du blander.</div>
+    </div>
+    <div class="nkort middels" onclick="velgN('middels',this)">
+      <div class="ne">🟡</div><div class="nt">Middels</div>
+      <div class="nd">Du ser hva reaksjonen burde bli, men ikke fargen.</div>
+    </div>
+    <div class="nkort hard" onclick="velgN('hard',this)">
+      <div class="ne">🔴</div><div class="nt">Vanskelig</div>
+      <div class="nd">Kun verbal beskrivelse av ønsket reaksjon.</div>
+    </div>
+  </div>
+  <button class="startbtn" onclick="startSpill()">▶ Start!</button>
+  <div class="tips">
+    <b>🔬 Kjemi:</b> pH-skalaen går fra 0 (sterk syre) til 14 (sterk base).<br>
+    Syre + base → nøytral (pH ≈ 7) · Indikatorfarger avslører pH<br>
+    Noen reaksjoner gir gass, varme eller fargeendring!
+  </div>
+</div>
+
+<div id="game">
+  <div id="topbar">
+    <h1>⚗️ Kjemilaben</h1>
+    <div class="ti">
+      <span>✅ <b id="treff-t" style="color:var(--green)">0</b></span>
+      <span>🧪 <b id="oppg-t" style="color:var(--accent)">0</b>/8</span>
+      <span id="nbadge" class="badge lett">Lett</span>
+    </div>
+    <a href="spill_hub.html">← Hub</a>
+  </div>
+
+  <div id="main">
+    <!-- VENSTRE -->
+    <div id="venstre">
+      <div>
+        <div class="ptittel">Mål</div>
+        <div id="mål-boks">
+          <span id="mål-emoji">⚗️</span>
+          <div id="mål-navn">–</div>
+          <div id="mål-tekst">–</div>
+        </div>
+      </div>
+      <div id="bevis-boks">
+        <div class="ptittel">Hint</div>
+        <div id="bevis-tekst" class="blab"></div>
+      </div>
+      <div id="tb">Velg kjemikalier fra reolen og slipp dem i begeret!</div>
+      <button id="tøm-btn" onclick="tømBeger()">🗑️ Tøm begeret</button>
+      <button id="neste-btn" onclick="nesteOppgave()">Neste oppgave ▶</button>
+      <div style="height:1px;background:rgba(255,255,255,0.07)"></div>
+      <div>
+        <div class="ptittel">Statistikk</div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Riktige</span><span class="sv g" id="st-r">0</span></div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Forsøk</span><span class="sv y" id="st-f">0</span></div>
+      </div>
+    </div>
+
+    <!-- MIDTEN: lab -->
+    <div id="lab">
+      <div id="reol"></div>
+
+      <div id="blander-wrap">
+        <div id="blander" onclick="utførReaksjon()">
+          <div id="væske"></div>
+          <div id="boblene"></div>
+        </div>
+        <div id="blander-label">Klikk for å reagere!</div>
+        <div id="blander-innhold">Tomt</div>
+      </div>
+
+      <div id="reaksjon-display">
+        <div id="reaksjon-emoji">🧪</div>
+        <div id="reaksjon-tekst">Bland kjemikalier i begeret og klikk for å se reaksjonen.</div>
+        <button id="reaksjon-btn" onclick="utførReaksjon()">⚗️ Start reaksjonen!</button>
+      </div>
+    </div>
+
+    <!-- HØYRE -->
+    <div id="hoyre">
+      <div>
+        <div class="ptittel">Kjemikalie-info</div>
+        <div id="kjemi-info-boks">Klikk på et kjemikalie for å lære mer om det.</div>
+      </div>
+      <div>
+        <div class="ptittel" style="margin-bottom:4px">pH-skala</div>
+        <div id="ph-skala"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="slutt">
+  <div id="sb">
+    <div style="font-size:3rem">🏆</div>
+    <h2>Lab fullført!</h2>
+    <p id="slutt-tekst"></p>
+    <div class="sbtns">
+      <button class="sbtn p" onclick="startSpill()">🔄 Igjen</button>
+      <button class="sbtn s" onclick="gaSetup()">⚙️ Innstillinger</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// KJEMIKALIER
+// ══════════════════════════════════════════════
+const KJEMIKALIER = [
+  { id:'hcl',  navn:'Saltsyre (HCl)',    farge:'#ffee88', pH:1,  type:'syre',  info:'Sterk syre. pH ≈ 1. Brukes i magesaften! Reagerer heftig med baser.', kort:'HCl\npH 1' },
+  { id:'eddik', navn:'Eddikksyre',        farge:'#fff4cc', pH:3,  type:'syre',  info:'Svak syre. pH ≈ 3. Finnes i eddik. Gir sur smak til mat.', kort:'CH₃COOH\npH 3' },
+  { id:'vann',  navn:'Vann (H₂O)',        farge:'#aaddff', pH:7,  type:'nøytral',info:'Nøytralt. pH = 7. Universelt løsemiddel. Kokepunkt 100°C.', kort:'H₂O\npH 7' },
+  { id:'bikarb',navn:'Bikarbonat (NaHCO₃)',farge:'#eeeeff',pH:8.5,type:'base',  info:'Svak base. pH ≈ 8,5. Bakepulver! Reagerer med syre og lager CO₂-gass.', kort:'NaHCO₃\npH 8,5' },
+  { id:'naoh',  navn:'Natriumhydroksid',  farge:'#ffccaa', pH:13, type:'base',  info:'Sterk base. pH ≈ 13. Brukes i såpe. Svært etsende – ikke rør!', kort:'NaOH\npH 13' },
+  { id:'fenolf',navn:'Fenolftalein',       farge:'#ffffff', pH:7,  type:'indikator',info:'Indikator: fargeløs i syre, rosa/rød i base. Brukes til å teste pH.', kort:'Indikator\nfarge' },
+  { id:'limus', navn:'Lakmus',             farge:'#cc88ff', pH:7,  type:'indikator',info:'Indikator: rød i syre, blå i base. Brukes til pH-testing i undervisning.', kort:'Lakmus\nindikator' },
+  { id:'kobber',navn:'Kobbersulfat (CuSO₄)',farge:'#2299dd',pH:4,  type:'salt',  info:'Blå løsning. Reagerer med jern. Brukes i galvanisering.', kort:'CuSO₄\npH 4' },
+];
+
+// ══════════════════════════════════════════════
+// OPPGAVER
+// ══════════════════════════════════════════════
+const OPPGAVER = [
+  {
+    id:'nøytral', emoji:'⚖️', navn:'Nøytralisering', ph_mål:[1,13], ingenPH:true,
+    tekst:'Bland en syre og en base for å lage en nøytralisasjonsreaksjon. Syre + base → salt + vann!',
+    hint:'Syre + base → salt + vann. Prøv HCl + NaOH eller eddik + bikarbonat.',
+    nøkkel:['syre','base'], resultat:'nøytralisering',
+    reaksjonEmoji:'💧', reaksjonTekst:'Nøytralisering! Syre + base reagerte og dannet salt og vann. Reaksjonen: HCl + NaOH → NaCl + H₂O',
+    kjemiInfo:'Syre + Base → Salt + Vann. HCl + NaOH → NaCl + H₂O'
+  },
+  {
+    id:'sur', emoji:'🍋', navn:'Sur løsning (pH < 4)', ph_mål:[0,4],
+    tekst:'Lag en tydelig sur løsning med pH under 4. Bruk sterke eller svake syrer.',
+    hint:'Syrer har lav pH. Saltsyre (pH 1) er sterkest. Eddik er mildere.',
+    nøkkel:['syre'], resultat:'sur',
+    reaksjonEmoji:'🍋', reaksjonTekst:'Sur løsning! pH er under 4. Syren dominerer løsningen.',
+    kjemiInfo:'Syrer frigjør H⁺-ioner i vann, som gir lav pH.'
+  },
+  {
+    id:'base', emoji:'🧼', navn:'Basisk løsning (pH > 8)', ph_mål:[8,14],
+    tekst:'Lag en tydelig basisk løsning med pH over 8. Bruk NaOH for sterkest effekt.',
+    hint:'Baser har høy pH. NaOH (pH 13) er sterkest. Bikarbonat gir pH ≈ 8,5.',
+    nøkkel:['base'], resultat:'base',
+    reaksjonEmoji:'🧼', reaksjonTekst:'Basisk løsning! pH er over 10. Basen dominerer.',
+    kjemiInfo:'Baser frigjør OH⁻-ioner i vann, som gir høy pH.'
+  },
+  {
+    id:'gass', emoji:'💨', navn:'Gassutvikling (CO₂)', ph_mål:[4,7],
+    tekst:'Lag en reaksjon som produserer gass! Bikarbonat reagerer med syre og lager karbondioksid (CO₂).',
+    hint:'Bikarbonat (NaHCO₃) + syre → CO₂-gass. Prøv eddik + bikarbonat.',
+    nøkkel:['bikarb','syre'], resultat:'gass', ingenPH:true,
+    reaksjonEmoji:'💨', reaksjonTekst:'FIZZ! 💨 CO₂-bobler stiger opp! NaHCO₃ + syre → CO₂ + H₂O + salt. Gassutvikling er synlig!',
+    kjemiInfo:'NaHCO₃ + syre → CO₂-gass + vann + salt. Brukes i bakepulver!'
+  },
+  {
+    id:'fenolf_rosa', emoji:'🌸', navn:'Rosa/rød indikator', ph_mål:[8,14],
+    tekst:'Fenolftalein er fargeløs i syre og blir rosa/rød i base. Lag en basisk løsning med fenolftalein.',
+    hint:'Tilsett fenolftalein og en base. Jo mer basisk, jo rødere farge.',
+    nøkkel:['fenolf','base'], resultat:'fenolf_rosa',
+    reaksjonEmoji:'🌸', reaksjonTekst:'Fenolftalein er blitt rosa! Løsningen er basisk (pH > 8). Indikatoren avslører pH.',
+    kjemiInfo:'Fenolftalein: fargeløs ved pH < 8, rosa ved pH 8–10, dyp rød ved pH > 10.'
+  },
+  {
+    id:'lakmus_rød', emoji:'🔴', navn:'Rød lakmus', ph_mål:[0,6],
+    tekst:'Lakmus blir rød i sur løsning og blå i basisk. Lag en sur løsning med lakmus.',
+    hint:'Tilsett lakmus-indikatoren og en syre.',
+    nøkkel:['limus','syre'], resultat:'lakmus_rød',
+    reaksjonEmoji:'🔴', reaksjonTekst:'Lakmus er rød! Løsningen er sur (pH < 7). Lakmus er en naturlig indikator fra lav.',
+    kjemiInfo:'Lakmus er blå i base, rød i syre, lilla nær nøytralt.'
+  },
+  {
+    id:'kobber_jern', emoji:'⚡', navn:'Kobbersulfat-reaksjon', ph_mål:[3,6],
+    tekst:'Lag en løsning der kobbersulfat er dominerende. CuSO₄ gir blå løsning og kan reagere med jern.',
+    hint:'Kobbersulfat er en blå løsning. Tilsett gjerne vann for å løse det opp.',
+    nøkkel:['kobber'], resultat:'kobber', ingenPH:true,
+    reaksjonEmoji:'💙', reaksjonTekst:'Kobbersulfat-løsning! Den karakteristiske blåfargen skyldes Cu²⁺-ioner i vann.',
+    kjemiInfo:'CuSO₄ løst i vann gir Cu²⁺-ioner som gir blåfargen. Brukes til galvanisering.'
+  },
+  {
+    id:'varm', emoji:'🔥', navn:'Eksoterm reaksjon (varme)', ph_mål:[8,14],
+    tekst:'NaOH løst i vann er en eksoterm prosess – den avgir varme! Lag en sterk basisk løsning.',
+    hint:'Sterk base i vann gir varme. NaOH + H₂O er eksotermt.',
+    nøkkel:['naoh','vann'], resultat:'varm',
+    reaksjonEmoji:'🔥', reaksjonTekst:'Eksoterm! NaOH + H₂O avgir varme. Løsningen blir varm. Dette er en eksoterm reaksjon.',
+    kjemiInfo:'Eksoterm: reaktantene har mer energi enn produktene → varme frigjøres.'
+  },
+];
+
+// ══════════════════════════════════════════════
+// TILSTAND
+// ══════════════════════════════════════════════
+let nivå='lett', oppgNr=0, treffT=0, forsøkT=0;
+let begerInnhold=[];  // [{id, pH, type, farge}]
+let gjeldende=null;
+let harLøst=false;
+const TOTAL=8;
+
+function velgN(n,el){
+  nivå=n;
+  document.querySelectorAll('.nkort').forEach(k=>k.classList.remove('valgt'));
+  el.classList.add('valgt');
+}
+
+function startSpill(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('game').style.display='flex';
+  oppgNr=0; treffT=0; forsøkT=0;
+  const badge=document.getElementById('nbadge');
+  badge.className='badge '+nivå;
+  badge.textContent={lett:'🟢 Lett',middels:'🟡 Middels',hard:'🔴 Vanskelig'}[nivå];
+  byggReol();
+  byggPHSkala();
+  nesteOppgave();
+}
+function gaSetup(){
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('game').style.display='none';
+  document.getElementById('setup').style.display='flex';
+}
+
+// ══════════════════════════════════════════════
+// REOL OG BEGER
+// ══════════════════════════════════════════════
+function byggReol(){
+  const reol=document.getElementById('reol');
+  reol.innerHTML='';
+  KJEMIKALIER.forEach(k=>{
+    const d=document.createElement('div');
+    d.className='reagens-kort';
+    d.id='r-'+k.id;
+    d.innerHTML=`<div class="reagens-farge" style="background:${k.farge}"></div>
+      <div class="reagens-navn">${k.navn.split(' ')[0]}<br>${k.navn.split('(')[1]?.replace(')','').trim()||''}</div>
+      <div class="reagens-pH">pH ${k.pH}</div>`;
+    d.onclick=()=>leggTilBeger(k);
+    d.onmouseenter=()=>visInfo(k);
+    reol.appendChild(d);
+  });
+}
+
+function visInfo(k){
+  document.getElementById('kjemi-info-boks').innerHTML=`<b>${k.navn}</b><br>${k.info}`;
+}
+
+function leggTilBeger(k){
+  if(harLøst) return;
+  const kort=document.getElementById('r-'+k.id);
+  if(kort.classList.contains('brukt')) return;
+  // Rekkefølge-advarsel: syre/base skal tilsettes vann, ikke omvendt
+  const harVannFriFør = begerInnhold.some(b=>b.id==='vann');
+  const erSyreEllerBase = k.type==='syre'||k.type==='base';
+  if(harVannFriFør && erSyreEllerBase){
+    document.getElementById('tb').textContent='✅ Riktig! Syre/base tilsettes vann – slik gjøres det trygt i lab!';
+    document.getElementById('tb').className='info';
+  } else if(!harVannFriFør && k.id==='vann' && begerInnhold.some(b=>b.type==='syre'||b.type==='base')){
+    document.getElementById('tb').textContent='⚠️ I laboratoriet tilsettes alltid syre i vann – ikke vann i syre! Men her godtar vi det.';
+    document.getElementById('tb').className='';
+  }
+  begerInnhold.push(k);
+  kort.classList.add('brukt');
+  oppdaterBeger();
+  // Vis gassbobler visuelt dersom bikarb+syre er kombinert
+  const hB=begerInnhold.some(k=>k.id==='bikarb');
+  const hS=begerInnhold.some(k=>k.type==='syre');
+  if(hB&&hS){
+    document.getElementById('reaksjon-emoji').textContent='💨';
+    document.getElementById('reaksjon-tekst').textContent='CO₂-bobler dannes! Klikk "Start reaksjonen" for å bekrefte.';
+  }
+  if(nivå==='lett') sjekk(false);
+}
+
+function oppdaterBeger(){
+  const væske=document.getElementById('væske');
+  const label=document.getElementById('blander-innhold');
+  if(begerInnhold.length===0){
+    væske.style.height='0';
+    label.textContent='Tomt';
+    document.getElementById('reaksjon-btn').style.display='none';
+    return;
+  }
+  const ph=beregnPH();
+  const farge=phTilFarge(ph);
+  const pct=Math.min(20+begerInnhold.length*12, 80);
+  væske.style.height=pct+'%';
+  væske.style.background=farge;
+  label.textContent=begerInnhold.map(k=>k.navn.split(' ')[0]).join(' + ');
+  document.getElementById('reaksjon-btn').style.display='block';
+  // Bobler
+  tegnBobler(ph);
+}
+
+function beregnPH(){
+  if(begerInnhold.length===0) return 7;
+  let syreStyrke=0, baseStyrke=0;
+  begerInnhold.forEach(k=>{
+    if(k.type==='syre') syreStyrke+=Math.pow(10,-(k.pH));
+    else if(k.type==='base') baseStyrke+=Math.pow(10,-(14-k.pH));
+  });
+  if(syreStyrke>0&&baseStyrke>0){
+    if(syreStyrke>baseStyrke) return Math.max(1,-Math.log10(syreStyrke-baseStyrke));
+    if(baseStyrke>syreStyrke) return Math.min(13,14+Math.log10(baseStyrke-syreStyrke));
+    return 7;
+  }
+  if(syreStyrke>0) return Math.max(1,-Math.log10(syreStyrke/begerInnhold.length));
+  if(baseStyrke>0) return Math.min(13,14+Math.log10(baseStyrke/begerInnhold.length));
+  // Indikatorer og nøytrale
+  const nøytral=begerInnhold.filter(k=>k.type==='nøytral'||k.type==='indikator');
+  if(nøytral.length===begerInnhold.length) return 7;
+  return 7;
+}
+
+function phTilFarge(ph){
+  if(ph<3) return '#ffcc44';
+  if(ph<5) return '#ddee88';
+  if(ph<6.5) return '#aaddcc';
+  if(ph<7.5) return '#88bbee';
+  if(ph<9) return '#99aaff';
+  if(ph<11) return '#cc88ff';
+  return '#ff88cc';
+}
+
+function tegnBobler(ph){
+  const boblene=document.getElementById('boblene');
+  boblene.innerHTML='';
+  // Mer bobling ved ekstreme pH-verdier
+  const antall=ph<4||ph>10?5:ph<5||ph>9?2:0;
+  // Sjekk om bikarbonat + syre (CO2)
+  const harBikarb=begerInnhold.some(k=>k.id==='bikarb');
+  const harSyre=begerInnhold.some(k=>k.type==='syre');
+  const coBobler=harBikarb&&harSyre?8:0;
+  for(let i=0;i<antall+coBobler;i++){
+    const b=document.createElement('div');
+    b.className='boble';
+    const sz=4+Math.random()*6;
+    b.style.cssText=`width:${sz}px;height:${sz}px;left:${10+Math.random()*80}%;bottom:${5+Math.random()*20}%;background:rgba(255,255,255,${0.3+Math.random()*0.4});animation-delay:${Math.random()*1.5}s;animation-duration:${1+Math.random()}s;`;
+    boblene.appendChild(b);
+  }
+}
+
+function tømBeger(){
+  begerInnhold=[];
+  harLøst=false;
+  document.querySelectorAll('.reagens-kort').forEach(k=>k.classList.remove('brukt'));
+  oppdaterBeger();
+  document.getElementById('reaksjon-emoji').textContent='🧪';
+  document.getElementById('reaksjon-tekst').textContent='Bland kjemikalier i begeret og klikk for å se reaksjonen.';
+  document.getElementById('reaksjon-display').style.borderColor='rgba(255,255,255,0.1)';
+  document.getElementById('tb').textContent='Velg kjemikalier og bland dem!';
+  document.getElementById('tb').className='';
+  document.getElementById('neste-btn').style.display='none';
+}
+
+// ══════════════════════════════════════════════
+// REAKSJON OG SJEKK
+// ══════════════════════════════════════════════
+function utførReaksjon(){
+  if(begerInnhold.length===0) return;
+  sjekk(true);
+}
+
+function sjekk(visFull){
+  if(begerInnhold.length===0) return;
+  const ph=beregnPH();
+  const o=gjeldende;
+  const tb=document.getElementById('tb');
+  forsøkT++;
+  document.getElementById('st-f').textContent=forsøkT;
+
+  // Sjekk om alle nøkkel-kjemikalier er tilstede
+  const nøkkelOk=o.nøkkel.every(nøkkel=>
+    begerInnhold.some(k=>k.id===nøkkel||k.type===nøkkel)
+  );
+  const phOk=o.ingenPH ? true : (ph>=o.ph_mål[0]&&ph<=o.ph_mål[1]);
+  const riktig=nøkkelOk&&phOk;
+
+  if(visFull){
+    const rd=document.getElementById('reaksjon-display');
+    document.getElementById('reaksjon-emoji').textContent=o.reaksjonEmoji;
+    document.getElementById('reaksjon-tekst').textContent=`pH = ${ph.toFixed(1)}. `+o.reaksjonTekst;
+    rd.style.borderColor=riktig?'rgba(74,222,128,0.5)':'rgba(248,113,113,0.3)';
+    document.getElementById('reaksjon-btn').style.display='none';
+  }
+
+  if(riktig&&!harLøst){
+    harLøst=true; treffT++;
+    tb.textContent=`✅ Riktig! pH=${ph.toFixed(1)}. ${o.kjemiInfo}`;
+    tb.className='ok';
+    document.getElementById('treff-t').textContent=treffT;
+    document.getElementById('st-r').textContent=treffT;
+    document.getElementById('neste-btn').style.display='block';
+    animerSuksess();
+  } else if(visFull&&!harLøst){
+    tb.textContent=`pH=${ph.toFixed(1)}. ${nøkkelOk?'pH er feil.':'Mangler riktig type kjemikalie.'} ${o.hint}`;
+    tb.className='feil';
+  }
+}
+
+function animerSuksess(){
+  const beger=document.getElementById('blander');
+  beger.style.transition='box-shadow .3s';
+  beger.style.boxShadow='0 0 20px rgba(74,222,128,0.5)';
+  setTimeout(()=>beger.style.boxShadow='',1500);
+}
+
+// ══════════════════════════════════════════════
+// PH-SKALA
+// ══════════════════════════════════════════════
+function byggPHSkala(){
+  const s=document.getElementById('ph-skala');
+  s.innerHTML='';
+  const farger=['#ff4444','#ff8844','#ffcc44','#ddee66','#aaddaa','#88ccbb','#66aadd','#8888ff','#aa66ff','#cc44cc','#ee44aa','#ff6688','#ff88aa','#ffaabb'];
+  for(let ph=0;ph<=13;ph++){
+    const d=document.createElement('div');
+    d.className='ph-bar';
+    d.id='ph-'+ph;
+    d.style.background=farger[ph];
+    d.style.color=ph>6?'rgba(0,0,0,0.7)':'rgba(0,0,0,0.85)';
+    d.textContent=`pH ${ph}${ph===0?' (syre)':ph===7?' (nøytral)':ph===13?' (base)':''}`;
+    s.appendChild(d);
+  }
+}
+
+function oppdaterPHIndikator(ph){
+  document.querySelectorAll('.ph-bar').forEach(b=>b.classList.remove('aktiv'));
+  const idx=Math.round(Math.max(0,Math.min(13,ph)));
+  const el=document.getElementById('ph-'+idx);
+  if(el)el.classList.add('aktiv');
+}
+
+// ══════════════════════════════════════════════
+// OPPGAVE-NAVIGASJON
+// ══════════════════════════════════════════════
+function nesteOppgave(){
+  oppgNr++;
+  document.getElementById('oppg-t').textContent=oppgNr;
+  if(oppgNr>TOTAL){ visSlutt(); return; }
+  harLøst=false;
+  // Velg oppgave (syklisk men variert)
+  gjeldende=OPPGAVER[(oppgNr-1)%OPPGAVER.length];
+  tømBeger();
+
+  // Vis mål
+  document.getElementById('mål-emoji').textContent=gjeldende.emoji;
+  document.getElementById('mål-navn').textContent=gjeldende.navn;
+
+  if(nivå==='lett'){
+    document.getElementById('mål-tekst').textContent=gjeldende.tekst;
+    document.getElementById('bevis-boks').style.display='none';
+  } else if(nivå==='middels'){
+    document.getElementById('mål-tekst').textContent=gjeldende.tekst;
+    document.getElementById('bevis-boks').style.display='block';
+    document.getElementById('bevis-tekst').textContent='Hint: '+gjeldende.hint;
+  } else {
+    // Vanskelig: bare verbal beskrivelse
+    document.getElementById('mål-tekst').textContent=gjeldende.tekst.replace(/\(.*?\)/g,'').split('.')[0]+'.';
+    document.getElementById('bevis-boks').style.display='none';
+  }
+
+  document.getElementById('tb').textContent='Velg kjemikalier og bland dem!';
+  document.getElementById('tb').className='';
+  document.getElementById('neste-btn').style.display='none';
+  document.getElementById('kjemi-info-boks').textContent='Klikk på et kjemikalie for å lære mer.';
+}
+
+function visSlutt(){
+  document.getElementById('slutt-tekst').innerHTML=
+    `${TOTAL} oppgaver fullført!<br>Riktige: <b>${treffT}</b> · Forsøk: <b>${forsøkT}</b>`;
+  document.getElementById('slutt').classList.add('vis');
+}
+</script>
+</body>
+</html>

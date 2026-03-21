@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Romferge – SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06101e;--surface:#0d1e30;--surface2:#0a1828;
+  --accent:#ffd700;--accent2:#4af;--green:#7fff6e;--purple:#c084fc;
+  --text:#e8f0ff;--textdim:#7a90b0;
+  --font-head:'Fredoka One',cursive;--font-body:'Nunito',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);}
+
+/* SETUP */
+#setup{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;}
+#setup h1{font-family:var(--font-head);font-size:2rem;color:var(--purple);}
+#setup p{color:var(--textdim);font-size:0.88rem;max-width:460px;text-align:center;line-height:1.55;}
+.nrad{display:flex;gap:12px;}
+.nkort{background:var(--surface);border:2px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 18px;cursor:pointer;text-align:center;width:155px;transition:all .18s;}
+.nkort:hover{transform:translateY(-2px);}
+.nkort.valgt.lett{border-color:var(--green);background:rgba(127,255,110,0.07);}
+.nkort.valgt.middels{border-color:var(--accent);background:rgba(255,215,0,0.07);}
+.nkort.valgt.hard{border-color:#f06060;background:rgba(240,96,96,0.07);}
+.nkort .ne{font-size:1.7rem;margin-bottom:6px;}
+.nkort .nt{font-family:var(--font-head);font-size:.95rem;margin-bottom:4px;}
+.nkort.lett .nt{color:var(--green);}
+.nkort.middels .nt{color:var(--accent);}
+.nkort.hard .nt{color:#f09090;}
+.nkort .nd{font-size:.73rem;color:var(--textdim);line-height:1.4;}
+.startbtn{padding:11px 36px;font-family:var(--font-head);font-size:1.05rem;background:var(--purple);color:#000;border:none;border-radius:10px;cursor:pointer;transition:all .15s;}
+.startbtn:hover{filter:brightness(1.1);transform:scale(1.02);}
+.tips{max-width:460px;background:rgba(192,132,252,0.06);border:1px solid rgba(192,132,252,0.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--textdim);line-height:1.5;}
+.tips b{color:var(--purple);}
+
+/* SPILLSKJERM */
+#game{display:none;height:100vh;flex-direction:column;}
+
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:5px 14px;background:rgba(0,0,0,0.5);border-bottom:1px solid rgba(192,132,252,0.15);flex-shrink:0;gap:8px;}
+#topbar h1{font-family:var(--font-head);font-size:.95rem;color:var(--purple);}
+#topbar .tinfo{display:flex;gap:12px;align-items:center;font-size:.8rem;}
+#topbar a{font-size:.72rem;color:var(--textdim);text-decoration:none;padding:3px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;}
+.badge{font-size:.72rem;padding:2px 9px;border-radius:10px;font-weight:700;}
+.badge.lett{background:rgba(127,255,110,0.12);color:var(--green);border:1px solid rgba(127,255,110,0.3);}
+.badge.middels{background:rgba(255,215,0,0.12);color:var(--accent);border:1px solid rgba(255,215,0,0.3);}
+.badge.hard{background:rgba(240,96,96,0.12);color:#f09090;border:1px solid rgba(240,96,96,0.3);}
+
+#main{flex:1;display:flex;gap:0;min-height:0;}
+
+/* PANEL */
+#panel{width:210px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--surface2);border-right:1px solid rgba(255,255,255,0.06);}
+.ptittel{font-family:var(--font-head);font-size:.78rem;color:var(--textdim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+
+#funk-display{background:rgba(192,132,252,0.08);border:1px solid rgba(192,132,252,0.25);border-radius:8px;padding:8px 10px;font-family:var(--font-head);font-size:.95rem;color:var(--purple);text-align:center;}
+
+#oppgave-boks{background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:8px 10px;font-size:.78rem;line-height:1.7;}
+.olab{color:var(--textdim);}
+.oval{color:var(--accent);font-weight:700;font-family:var(--font-head);}
+
+.irad{display:flex;align-items:center;gap:6px;}
+.irad label{font-size:.85rem;width:14px;color:var(--purple);font-family:var(--font-head);}
+.kinp{flex:1;height:32px;background:rgba(192,132,252,0.1);border:1px solid rgba(192,132,252,0.3);border-radius:6px;color:var(--text);font-family:var(--font-head);font-size:.95rem;text-align:center;outline:none;transition:border-color .15s;}
+.kinp:focus{border-color:var(--purple);background:rgba(192,132,252,0.18);}
+.kinp.ok{border-color:var(--green);}
+.kinp.feil{border-color:#f06060;}
+.kinp[readonly]{background:rgba(127,255,110,0.07);border-color:rgba(127,255,110,0.3);color:var(--green);}
+
+#skyt-btn{width:100%;padding:9px;font-family:var(--font-head);font-size:1rem;background:var(--purple);color:#000;border:none;border-radius:8px;cursor:pointer;transition:all .15s;margin-top:2px;}
+#skyt-btn:hover{filter:brightness(1.08);}
+#skyt-btn:disabled{opacity:.4;cursor:default;}
+
+#tb{font-size:.8rem;min-height:40px;padding:6px 8px;background:var(--surface);border-radius:6px;border:1px solid rgba(255,255,255,0.08);line-height:1.45;text-align:center;display:flex;align-items:center;justify-content:center;}
+#tb.treff{border-color:var(--green);color:var(--green);}
+#tb.nesten{border-color:var(--accent);color:var(--accent);}
+#tb.bom{border-color:rgba(255,255,255,.12);color:var(--textdim);}
+
+#neste-btn{width:100%;padding:8px;font-family:var(--font-head);font-size:.92rem;background:var(--green);color:#000;border:none;border-radius:8px;cursor:pointer;display:none;}
+
+.srad{display:flex;justify-content:space-between;font-size:.78rem;}
+.sv{font-family:var(--font-head);font-size:.95rem;}
+.sv.g{color:var(--green);}
+.sv.r{color:#f09090;}
+.sv.y{color:var(--accent);}
+
+#canvas-wrap{flex:1;position:relative;min-width:0;}
+canvas{display:block;width:100%;height:100%;}
+
+/* HINTLINJE */
+#hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(3,10,22,0.9);border:1px solid rgba(192,132,252,0.25);border-radius:8px;padding:5px 14px;font-size:.78rem;color:var(--textdim);white-space:nowrap;}
+#hint b{color:var(--purple);}
+
+/* SLUTT */
+#slutt{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:50;align-items:center;justify-content:center;}
+#slutt.vis{display:flex;}
+#sb{background:var(--surface2);border-radius:14px;padding:28px 32px;text-align:center;border:2px solid rgba(255,255,255,0.1);max-width:340px;width:90%;}
+#sb h2{font-family:var(--font-head);font-size:1.6rem;color:var(--purple);margin:10px 0 6px;}
+#sb p{color:var(--textdim);font-size:.85rem;line-height:1.6;margin-bottom:18px;}
+.sbtns{display:flex;gap:8px;justify-content:center;}
+.sbtn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:.85rem;font-family:var(--font-body);}
+.sbtn.p{background:var(--purple);color:#000;}
+.sbtn.s{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.15);}
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <h1>🚀 Romferge</h1>
+  <p>Styr romfergen til romstasjonen ved å finne riktig lineær funksjon f(x) = ax + b. Stigningstallet a og konstantleddet b bestemmer banen!</p>
+  <div class="nrad">
+    <div class="nkort lett valgt" onclick="velgN('lett',this)">
+      <div class="ne">🟢</div><div class="nt">Lett</div>
+      <div class="nd">b er gitt. Finn bare a. Live preview.</div>
+    </div>
+    <div class="nkort middels" onclick="velgN('middels',this)">
+      <div class="ne">🟡</div><div class="nt">Middels</div>
+      <div class="nd">Finn både a og b. Live preview.</div>
+    </div>
+    <div class="nkort hard" onclick="velgN('hard',this)">
+      <div class="ne">🔴</div><div class="nt">Vanskelig</div>
+      <div class="nd">Finn a og b. Ingen forhåndsvisning.</div>
+    </div>
+  </div>
+  <button class="startbtn" onclick="startSpill()">▶ Start!</button>
+  <div class="tips">
+    <b>📐 Matematikk:</b> f(x) = ax + b<br>
+    • <b>a</b> = stigningstall – bestemer hvor bratt linjen er<br>
+    • <b>b</b> = konstantledd – hvor linjen krysser y-aksen<br>
+    • Romfergen følger linjen og skal treffe stasjonen!
+  </div>
+</div>
+
+<div id="game">
+  <div id="topbar">
+    <h1>🚀 Romferge</h1>
+    <div class="tinfo">
+      <span>🎯 <b id="treff-t" style="color:var(--green)">0</b></span>
+      <span>🚀 <b id="skudd-t" style="color:var(--purple)">0</b></span>
+      <span id="nbadge" class="badge lett">Lett</span>
+    </div>
+    <a href="spill_hub.html">← Hub</a>
+  </div>
+
+  <div id="main">
+    <div id="panel">
+      <div>
+        <div class="ptittel">Funksjon</div>
+        <div id="funk-display">f(x) = ax + b</div>
+      </div>
+      <div>
+        <div class="ptittel">Oppgave</div>
+        <div id="oppgave-boks">
+          <div><span class="olab">Romferge starter i: </span><span class="oval" id="ob-b">–</span></div>
+          <div><span class="olab">Stasjon ved x = </span><span class="oval" id="ob-x">–</span></div>
+          <div><span class="olab">Stasjonshøyde y = </span><span class="oval" id="ob-y">–</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="ptittel">Koeffisienter</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div class="irad">
+            <label>a</label>
+            <input class="kinp" id="ia" type="number" step="0.1" placeholder="?" autocomplete="off">
+          </div>
+          <div class="irad" id="b-rad">
+            <label>b</label>
+            <input class="kinp" id="ib" type="number" step="0.1" placeholder="?" autocomplete="off">
+          </div>
+        </div>
+      </div>
+      <button id="skyt-btn" onclick="skyt()">🚀 Send avsted!</button>
+      <div id="tb">Skriv inn verdier og send romfergen!</div>
+      <button id="neste-btn" onclick="nesteOppgave()">Neste oppgave ▶</button>
+      <div style="height:1px;background:rgba(255,255,255,0.07)"></div>
+      <div>
+        <div class="ptittel">Statistikk</div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Treff</span><span class="sv g" id="st-treff">0</span></div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Bommet</span><span class="sv r" id="st-bom">0</span></div>
+        <div class="srad"><span style="color:var(--textdim);font-size:.78rem">Nøyaktighet</span><span class="sv y" id="st-noy">–</span></div>
+      </div>
+    </div>
+
+    <div id="canvas-wrap">
+      <canvas id="cv"></canvas>
+      <div id="hint">Hint: f(<b id="h-x">?</b>) = <b id="h-y">?</b> → a·<b id="h-x2">?</b> + b = <b id="h-y2">?</b></div>
+    </div>
+  </div>
+</div>
+
+<div id="slutt">
+  <div id="sb">
+    <div style="font-size:3rem">🏆</div>
+    <h2>Økt fullført!</h2>
+    <p id="slutt-tekst"></p>
+    <div class="sbtns">
+      <button class="sbtn p" onclick="startSpill()">🔄 Igjen</button>
+      <button class="sbtn s" onclick="gaSetup()">⚙️ Innstillinger</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+let nivå='lett', stasjonX, stasjonY, fergeB;
+let treffT=0, bomT=0, skuddT=0, oppgNr=0;
+const TOTAL=8;
+let harTruffet=false, animId=null;
+let origo, sX, sY, maxX, maxY;
+
+// ── SETUP ──
+function velgN(n,el){
+  nivå=n;
+  document.querySelectorAll('.nkort').forEach(k=>k.classList.remove('valgt'));
+  el.classList.add('valgt');
+}
+function startSpill(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('game').style.display='flex';
+  treffT=0; bomT=0; skuddT=0; oppgNr=0;
+  const badge=document.getElementById('nbadge');
+  badge.className='badge '+nivå;
+  badge.textContent={lett:'🟢 Lett',middels:'🟡 Middels',hard:'🔴 Vanskelig'}[nivå];
+  resizeCanvas(); nesteOppgave();
+}
+function gaSetup(){
+  document.getElementById('slutt').classList.remove('vis');
+  document.getElementById('game').style.display='none';
+  document.getElementById('setup').style.display='flex';
+}
+
+// ── OPPGAVE ──
+function genOppgave(){
+  // Koordinatsystem: x 0–16, y 0–12
+  // Romferge starter på y-aksen (x=0) i b
+  // Stasjon ved x = stasjonX, y = stasjonY
+  const xVerdier=[6,7,8,9,10,11,12];
+  stasjonX=xVerdier[Math.floor(Math.random()*xVerdier.length)];
+  stasjonY=2+Math.floor(Math.random()*8); // y=2..9
+  // b = startpunkt: på lett er b gitt, ellers varierer
+  if(nivå==='lett'){
+    // b tilfeldig 1..8, a beregnes fra bruker
+    fergeB=1+Math.floor(Math.random()*7);
+  } else {
+    fergeB=1+Math.floor(Math.random()*7);
+  }
+}
+
+function riktigA(){ return (stasjonY-fergeB)/stasjonX; }
+
+function nesteOppgave(){
+  oppgNr++;
+  if(oppgNr>TOTAL){ visSlutFinal(); return; }
+  harTruffet=false;
+  genOppgave();
+
+  document.getElementById('ob-x').textContent=stasjonX;
+  document.getElementById('ob-y').textContent=stasjonY;
+  document.getElementById('ob-b').textContent=`(0, ${fergeB})`;
+  document.getElementById('ia').value='';
+  document.getElementById('ia').className='kinp';
+
+  if(nivå==='lett'){
+    document.getElementById('ib').value=fergeB;
+    document.getElementById('ib').setAttribute('readonly','');
+    document.getElementById('ib').className='kinp';
+  } else {
+    document.getElementById('ib').value='';
+    document.getElementById('ib').removeAttribute('readonly');
+    document.getElementById('ib').className='kinp';
+  }
+
+  document.getElementById('funk-display').textContent='f(x) = ax + b';
+  document.getElementById('skyt-btn').disabled=false;
+  document.getElementById('neste-btn').style.display='none';
+  document.getElementById('tb').textContent='Skriv inn verdier og send romfergen!';
+  document.getElementById('tb').className='';
+
+  // Hint
+  document.getElementById('h-x').textContent=stasjonX;
+  document.getElementById('h-y').textContent=stasjonY;
+  document.getElementById('h-x2').textContent=stasjonX;
+  document.getElementById('h-y2').textContent=stasjonY;
+
+  resizeCanvas(); tegnAlt(null);
+  oppdaterFunk();
+}
+
+// ── CANVAS ──
+function resizeCanvas(){
+  const w=document.getElementById('canvas-wrap');
+  cv.width=w.clientWidth; cv.height=w.clientHeight;
+  maxX=16; maxY=12;
+  const marg={left:48,right:24,top:24,bottom:40};
+  const pW=cv.width-marg.left-marg.right;
+  const pH=cv.height-marg.top-marg.bottom;
+  sX=pW/maxX; sY=pH/maxY;
+  origo={x:marg.left, y:marg.top+pH};
+}
+const tx=x=>origo.x+x*sX;
+const ty=y=>origo.y-y*sY;
+
+function tegnBg(){
+  ctx.fillStyle='#060e1a'; ctx.fillRect(0,0,cv.width,cv.height);
+  // Stjerner i bakgrunnen
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  const seed=oppgNr*137;
+  for(let i=0;i<60;i++){
+    const sx=(Math.sin(seed+i*17)*0.5+0.5)*cv.width;
+    const sy=(Math.sin(seed+i*31)*0.5+0.5)*cv.height;
+    const r=(Math.sin(seed+i*7)*0.5+0.5)*1.5+0.3;
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fill();
+  }
+  // Rutenett
+  ctx.strokeStyle='rgba(192,132,252,0.07)'; ctx.lineWidth=1;
+  for(let x=0;x<=maxX;x++){ctx.beginPath();ctx.moveTo(tx(x),ty(0));ctx.lineTo(tx(x),ty(maxY));ctx.stroke();}
+  for(let y=0;y<=maxY;y++){ctx.beginPath();ctx.moveTo(tx(0),ty(y));ctx.lineTo(tx(maxX),ty(y));ctx.stroke();}
+  // Akser
+  ctx.strokeStyle='rgba(192,132,252,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(tx(0),ty(0));ctx.lineTo(tx(maxX),ty(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(tx(0),ty(0));ctx.lineTo(tx(0),ty(maxY));ctx.stroke();
+  // Piler
+  ctx.fillStyle='rgba(192,132,252,0.4)';
+  ctx.beginPath();ctx.moveTo(tx(maxX),ty(0));ctx.lineTo(tx(maxX)-8,ty(0)-4);ctx.lineTo(tx(maxX)-8,ty(0)+4);ctx.fill();
+  ctx.beginPath();ctx.moveTo(tx(0),ty(maxY));ctx.lineTo(tx(0)-4,ty(maxY)+8);ctx.lineTo(tx(0)+4,ty(maxY)+8);ctx.fill();
+  // Tall
+  ctx.fillStyle='rgba(192,132,252,0.65)'; ctx.font='bold 11px Fredoka One,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let x=1;x<maxX;x+=1) ctx.fillText(x,tx(x),ty(0)+5);
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let y=1;y<maxY;y+=1) ctx.fillText(y,tx(0)-5,ty(y));
+  ctx.fillStyle='rgba(192,132,252,0.4)';
+  ctx.font='bold 12px Fredoka One,sans-serif';
+  ctx.textAlign='center';ctx.fillText('x',tx(maxX)+4,ty(0)-6);
+  ctx.textAlign='left';ctx.fillText('y',tx(0)+5,ty(maxY)-4);
+}
+
+function tegnStasjon(sunket){
+  const sx=tx(stasjonX), sy=ty(stasjonY);
+  ctx.save();
+  if(sunket)ctx.globalAlpha=0.5;
+  // Stasjon-kropp
+  ctx.fillStyle=sunket?'#444':'#607080';
+  ctx.fillRect(sx-sX*0.9,sy-sY*0.7,sX*1.8,sY*0.5);
+  // Solpaneler
+  ctx.fillStyle=sunket?'#334':'#1a50a0';
+  ctx.fillRect(sx-sX*1.8,sy-sY*0.55,sX*0.8,sY*0.2);
+  ctx.fillRect(sx+sX*1.0,sy-sY*0.55,sX*0.8,sY*0.2);
+  // Sentrum
+  ctx.fillStyle=sunket?'#446':'#4af';
+  ctx.beginPath();ctx.arc(sx,sy-sY*0.45,sX*0.35,0,Math.PI*2);ctx.fill();
+  // Etikett
+  ctx.fillStyle='rgba(68,170,255,0.8)';
+  ctx.font='bold 10px Fredoka One,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText(`(${stasjonX}, ${stasjonY})`,sx,sy-sY*0.8);
+  ctx.restore();
+}
+
+function tegnRomferge(xPos,yPos,farge){
+  const px=tx(xPos),py=ty(yPos);
+  ctx.save();
+  ctx.fillStyle=farge||'#c084fc';
+  // Kropp
+  ctx.beginPath();
+  ctx.moveTo(px-4,py+8);ctx.lineTo(px+4,py+8);ctx.lineTo(px+3,py-6);ctx.lineTo(px,py-12);ctx.lineTo(px-3,py-6);ctx.closePath();ctx.fill();
+  // Vinge
+  ctx.fillStyle='rgba(192,132,252,0.5)';
+  ctx.beginPath();ctx.moveTo(px-4,py+4);ctx.lineTo(px-12,py+8);ctx.lineTo(px-4,py+8);ctx.fill();
+  ctx.beginPath();ctx.moveTo(px+4,py+4);ctx.lineTo(px+12,py+8);ctx.lineTo(px+4,py+8);ctx.fill();
+  ctx.restore();
+}
+
+function tegnLinje(a,b,farge,stiplet){
+  if(stiplet){ctx.setLineDash([4,4]);}else{ctx.setLineDash([]);}
+  ctx.strokeStyle=farge; ctx.lineWidth=stiplet?1.5:2.5;
+  ctx.beginPath();
+  let start=true;
+  for(let x=0;x<=maxX;x+=0.05){
+    const y=a*x+b;
+    if(y<-0.5||y>maxY+0.5){if(!start){ctx.stroke();ctx.beginPath();}start=true;continue;}
+    start?ctx.moveTo(tx(x),ty(y)):ctx.lineTo(tx(x),ty(y));
+    start=false;
+  }
+  if(!start)ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function tegnAlt(animState){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  tegnBg();
+  tegnStasjon(harTruffet);
+
+  if(animState&&animState.linje){
+    tegnLinje(animState.a,animState.b,animState.farge,animState.stiplet);
+  }
+  if(animState&&animState.fergeX!==undefined){
+    const a=animState.a, b=animState.b;
+    const fy=a*animState.fergeX+b;
+    if(fy>=-0.5&&fy<=maxY+0.5){
+      tegnRomferge(animState.fergeX,fy,animState.fergeFarge);
+      // Eksosflammer
+      ctx.save();
+      ctx.fillStyle=`rgba(255,150,30,${0.5+0.5*Math.sin(Date.now()/80)})`;
+      const px=tx(animState.fergeX),py=ty(fy);
+      ctx.beginPath();ctx.moveTo(px-3,py+10);ctx.lineTo(px,py+18);ctx.lineTo(px+3,py+10);ctx.fill();
+      ctx.restore();
+    }
+  }
+  if(animState&&animState.ekspl){
+    const px=tx(stasjonX),py=ty(stasjonY);
+    for(let i=0;i<10;i++){
+      ctx.save();
+      ctx.globalAlpha=animState.ekspl.alpha;
+      ctx.fillStyle=i%2?'#c084fc':'#a855f7';
+      const vinkel=i/10*Math.PI*2;
+      const r=animState.ekspl.r*(0.5+0.5*((i*7)%3)/3);
+      ctx.beginPath();ctx.arc(px+Math.cos(vinkel)*r,py+Math.sin(vinkel)*r,3,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+    }
+  }
+  // Startpunkt-markering
+  ctx.fillStyle='rgba(192,132,252,0.8)';
+  ctx.font='bold 10px Fredoka One,sans-serif';
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  if(!animState||!animState.fergeX){
+    tegnRomferge(0,fergeB);
+    ctx.fillText(`(0,${fergeB})`,tx(0)-14,ty(fergeB));
+  }
+}
+
+// ── LIVE PREVIEW ──
+function oppdaterFunk(){
+  const a=parseFloat(document.getElementById('ia').value);
+  const b=nivå==='lett'?fergeB:parseFloat(document.getElementById('ib').value);
+  const bStr=nivå==='lett'?fergeB:(isNaN(b)?'b':b);
+  const aStr=isNaN(a)?'a':a;
+  document.getElementById('funk-display').textContent=`f(x) = ${aStr}x + ${bStr}`;
+  if(!isNaN(a)&&!isNaN(b)&&nivå!=='hard'){
+    tegnAlt({a,b,linje:true,farge:'rgba(192,132,252,0.3)',stiplet:true,fergeX:0,fergeFarge:'rgba(192,132,252,0.5)'});
+  }
+}
+document.getElementById('ia').addEventListener('input',oppdaterFunk);
+document.getElementById('ib').addEventListener('input',oppdaterFunk);
+
+// ── SKYT ──
+function skyt(){
+  if(harTruffet)return;
+  const a=parseFloat(document.getElementById('ia').value);
+  const b=nivå==='lett'?fergeB:parseFloat(document.getElementById('ib').value);
+  const tb=document.getElementById('tb');
+  if(isNaN(a)||isNaN(b)){tb.textContent='Fyll inn alle verdier!';return;}
+  document.getElementById('skyt-btn').disabled=true;
+  skuddT++;
+  document.getElementById('skudd-t').textContent=skuddT;
+
+  const fVerdi=a*stasjonX+b;
+  const avvik=Math.abs(fVerdi-stasjonY);
+  const treff=avvik<=0.6;
+  const nesten=!treff&&avvik<=1.8;
+
+  // Animer
+  let t=0;
+  const farge=treff?'rgba(127,255,110,0.8)':nesten?'rgba(255,215,0,0.7)':'rgba(248,113,113,0.7)';
+  const linjeF=treff?'rgba(127,255,110,0.6)':nesten?'rgba(255,215,0,0.4)':'rgba(248,113,113,0.5)';
+  const steg=0.12;
+
+  function frame(){
+    t+=steg;
+    const fergeX=t;
+    const fergeY=a*fergeX+b;
+    if(fergeX>stasjonX+0.2||fergeY<-0.5||fergeY>maxY+0.5){
+      // Slutt
+      if(treff){
+        harTruffet=true; treffT++;
+        let eks={r:4,alpha:1};
+        let fade=0;
+        function blinkEks(){
+          fade++;
+          eks.r*=1.12; eks.alpha=Math.max(0,1-fade/22);
+          tegnAlt({a,b,linje:true,farge:linjeF,stiplet:false,ekspl:eks});
+          if(fade<25)requestAnimationFrame(blinkEks);
+          else{
+            document.getElementById('ia').className='kinp ok';
+            if(nivå!=='lett')document.getElementById('ib').className='kinp ok';
+            const ra=riktigA();
+            tb.textContent=`🎯 Treff! a = ${ra.toFixed(2)}. f(${stasjonX}) = ${fVerdi.toFixed(2)} ≈ ${stasjonY}`;
+            tb.className='treff';
+            document.getElementById('neste-btn').style.display='block';
+            oppdaterStats();
+          }
+        }
+        requestAnimationFrame(blinkEks);
+      } else {
+        bomT++;
+        const ra=riktigA();
+        let hintTekst='';
+        if(avvik<=1.8) hintTekst=`Nesten! Prøv a ≈ ${ra.toFixed(2)}.`;
+        else if(fVerdi>stasjonY) hintTekst=`For høyt (f(${stasjonX})=${fVerdi.toFixed(1)}). Reduser a.`;
+        else hintTekst=`For lavt (f(${stasjonX})=${fVerdi.toFixed(1)}). Øk a.`;
+        tb.textContent=`${nesten?'🌟':'💨'} ${hintTekst}`;
+        tb.className=nesten?'nesten':'bom';
+        tegnAlt({a,b,linje:true,farge:linjeF,stiplet:false});
+        document.getElementById('skyt-btn').disabled=false;
+        oppdaterStats();
+      }
+      return;
+    }
+    tegnAlt({a,b,linje:true,farge:linjeF,stiplet:nivå!=='hard',fergeX,fergeFarge:farge});
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function oppdaterStats(){
+  document.getElementById('treff-t').textContent=treffT;
+  document.getElementById('st-treff').textContent=treffT;
+  document.getElementById('st-bom').textContent=bomT;
+  const tot=treffT+bomT;
+  document.getElementById('st-noy').textContent=tot>0?Math.round(treffT/tot*100)+'%':'–';
+}
+
+// Kall riktig funksjon
+function visSlutF(){
+  const tot=treffT+bomT;
+  const noy=tot>0?Math.round(treffT/tot*100):0;
+  document.getElementById('slutt-tekst').innerHTML=
+    `${TOTAL} oppgaver fullført!<br>Treff: <b>${treffT}</b> · Skudd: <b>${tot}</b> · Nøyaktighet: <b>${noy}%</b>`;
+  document.getElementById('slutt').classList.add('vis');
+}
+// FIKSET SLUTT
+function visSlutFinal(){
+  const tot=treffT+bomT,noy=tot>0?Math.round(treffT/tot*100):0;
+  document.getElementById('slutt-tekst').innerHTML=`${TOTAL} oppgaver!<br>Treff: <b>${treffT}</b> · Skudd: <b>${tot}</b> · Nøyaktighet: <b>${noy}%</b>`;
+  document.getElementById('slutt').classList.add('vis');
+}
+
+window.addEventListener('keydown',e=>{if(e.key==='Enter'&&!harTruffet)skyt();if(e.key==='Enter'&&harTruffet)nesteOppgave();});
+window.addEventListener('resize',()=>{resizeCanvas();tegnAlt(null);});
+</script>
+</body>
+</html>
