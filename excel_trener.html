@@ -134,10 +134,50 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
 .fasit-formel{font-family:var(--font-m);color:var(--accent2);font-size:.83rem;}
 
 /* ── HINT-PANEL ── */
-#hint-panel{background:var(--bg2);border-left:1px solid var(--border);
-  padding:16px 14px;overflow-y:auto;}
-.hint-tittel{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-  color:var(--dim);margin-bottom:10px;}
+#hint-panel{
+  background:var(--bg2);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 14px;gap:0;
+  position:sticky;top:0;height:calc(100vh - 98px);overflow-y:auto;
+}
+.svar-display-skjult{display:none;}
+.svar-display-synlig{
+  display:flex;flex-direction:column;align-items:center;
+  width:100%;margin:16px 0 0;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border2);border-radius:12px;
+  padding:14px 12px;gap:6px;
+}
+.sd-celle-id{
+  font-size:.68rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--dim);
+}
+.sd-formel{
+  font-family:var(--font-m);font-size:.8rem;color:var(--accent2);
+  word-break:break-all;text-align:center;line-height:1.4;
+}
+.sd-verdi{
+  font-family:var(--font-d);font-size:1.8rem;font-weight:700;
+  color:var(--accent);line-height:1.1;
+}
+#hint-innhold{width:100%;margin-top:16px;}
+#hint-innhold.hint-skjult{display:none;}
+#hint-innhold.hint-synlig{display:block;}
+#hint-knapp{
+  background:none;border:none;cursor:pointer;
+  font-size:2.4rem;line-height:1;padding:8px;
+  border-radius:50%;transition:transform .15s, background .15s;
+  display:flex;align-items:center;justify-content:center;
+  width:60px;height:60px;flex-shrink:0;
+}
+#hint-knapp:hover{background:rgba(255,255,255,.07);transform:scale(1.08);}
+#hint-knapp.aktiv{background:rgba(232,184,75,.12);}
+#hint-knapp.aktiv #hint-pære{filter:brightness(1.3);}
+#hint-innhold{
+  width:100%;margin-top:14px;
+}
+#hint-innhold.hint-skjult{display:none;}
+#hint-innhold.hint-synlig{display:block;}
 .hint-steg{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
 .hint-nr{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(91,133,217,.2);
   color:var(--accent2);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
@@ -161,6 +201,22 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
 .res-label{font-size:.76rem;color:var(--dim);margin-top:2px;}
 .ny-btn{padding:13px 30px;font-family:var(--font-d);font-size:.95rem;font-weight:700;
   background:var(--accent);color:#000;border:none;border-radius:9px;cursor:pointer;}
+
+.fv-seksjon{margin:14px 0;padding:14px 0 0;}
+.fv-tittel{font-size:.88rem;color:var(--text);margin-bottom:10px;line-height:1.4;}
+.fv-grid{display:flex;flex-direction:column;gap:6px;}
+.fv-alt{display:block;width:100%;padding:10px 14px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  color:var(--text);cursor:pointer;text-align:left;
+  font-family:var(--font-b);font-size:.86rem;transition:all .12s;}
+.fv-alt:hover{background:rgba(255,255,255,.08);}
+.fv-alt.fv-valgt{background:rgba(232,184,75,.08);border-color:rgba(232,184,75,.3);color:var(--gold);}
+.fv-alt.fv-riktig{background:rgba(91,201,142,.1);border-color:rgba(91,201,142,.4);color:var(--accent);}
+.fv-alt.fv-galt{background:rgba(224,92,110,.08);border-color:rgba(224,92,110,.3);color:var(--red);}
+.fv-tekst{display:block;font-weight:600;margin-bottom:0;}
+.fv-begr{font-size:.78rem;color:var(--dim);margin-top:5px;line-height:1.5;font-weight:400;}
+.fv-alt.fv-riktig .fv-begr{color:rgba(91,201,142,.8);}
+.fv-alt.fv-galt .fv-begr{color:rgba(224,92,110,.7);}
 </style>
 </head>
 <body>
@@ -184,8 +240,16 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
     <div style="font-family:var(--font-d);font-size:1.4rem;color:var(--text);margin-bottom:8px">Velg en oppgave til venstre</div>
     <div style="font-size:.88rem">Skriv Excel-formler direkte i cellene og trykk Sjekk for å se om du har riktig.</div>
   </div></div>
-  <div id="hint-panel"><div class="hint-tittel">💡 Slik gjør du det</div>
-    <div style="font-size:.82rem;color:var(--dim)">Velg en oppgave for å se tips.</div>
+  <div id="hint-panel">
+    <button id="hint-knapp" onclick="toggleHint()" title="Vis fremgangsmåte">
+      <span id="hint-pære">💡</span>
+    </button>
+    <div id="svar-display" class="svar-display-skjult">
+      <div class="sd-celle-id" id="sd-celle"></div>
+      <div class="sd-formel" id="sd-formel"></div>
+      <div class="sd-verdi" id="sd-verdi"></div>
+    </div>
+    <div id="hint-innhold" class="hint-skjult"></div>
   </div>
 </div>
 <div id="resultat">
@@ -329,6 +393,14 @@ function ExcelFormelParser(getCelle) {
       if (L2===null||R2===null) return null;
       return uttr[sisteMulDiv]==='*'?L2*R2:(R2!==0?L2/R2:null);
     }
+    // Potens ^
+    var pIdx = uttr.lastIndexOf('^');
+    if (pIdx>0) {
+      var Lp = evaluerUttrykk(uttr.slice(0,pIdx));
+      var Rp = evaluerUttrykk(uttr.slice(pIdx+1));
+      if (Lp===null||Rp===null) return null;
+      return Math.pow(Lp, Rp);
+    }
 
     // Parentes
     if (uttr.startsWith('(')&&uttr.endsWith(')')) {
@@ -370,8 +442,9 @@ var EXCEL_OPPGAVER = [
   kolonner: ['A: Dag', 'B: Timer søvn'],
   radStart: 2,
   data: function() {
-    var timer = [7,6,8,5,7,8,6,9,7,6];
-    return timer.map(function(t,i){ return {A: 'Dag '+(i+1), B: t}; });
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    var timer=[];for(var i=0;i<10;i++) timer.push(rnd(5,9));
+    return timer.map(function(t,i){return {A:'Dag '+(i+1),B:t};});
   },
 
   låsteCeller: function(data) {
@@ -407,9 +480,10 @@ var EXCEL_OPPGAVER = [
   kolonner: ['A: Elev', 'B: Minutter'],
   radStart: 2,
   data: function() {
-    // Inkluder én ekstremverdi for å gjøre median vs gjennomsnitt tydelig
-    var min = [45,60,30,55,40,480,50,35,65,55];
-    return min.map(function(m,i){ return {A: 'Elev '+(i+1), B: m}; });
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    var min=[];for(var i=0;i<9;i++) min.push(rnd(20,80));
+    min.push(rnd(300,600));  // garantert ekstremverdi
+    return min.sort(function(a,b){return a-b;}).map(function(m,i){return {A:'Elev '+(i+1),B:m};});
   },
 
   låsteCeller: function(data) {
@@ -430,11 +504,41 @@ var EXCEL_OPPGAVER = [
   },
   tol: { C12: 0.5, C13: 0.5 },
 
+  // Flervalg: hvilken middelverdi passer best?
+  flervalg: {
+    spørsmål: 'c) Hvilken middelverdi passer best til å beskrive mobilbruken i klassen?',
+    alternativer: [
+      {
+        tekst: 'Gjennomsnitt',
+        riktig: false,
+        begrunnelse: 'Ikke best her — én elev brukte 480 min og drar gjennomsnittet opp til over 90 min, selv om de fleste bruker under 70 min. Gjennomsnitt er sårbart for ekstremverdier.'
+      },
+      {
+        tekst: 'Median',
+        riktig: true,
+        begrunnelse: 'Riktig! Medianen er midtverdien og påvirkes ikke av ekstremverdiene. Den gir et mer representativt bilde av hva som er typisk for klassen.'
+      },
+      {
+        tekst: 'Typetall (modus)',
+        riktig: false,
+        begrunnelse: 'Typetallet er den verdien som forekommer flest ganger. Det kan fungere, men sier lite om fordelingen og er upålitelig ved få målinger.'
+      },
+      {
+        tekst: 'Ingen av dem passer',
+        riktig: false,
+        begrunnelse: 'Feil — medianen passer godt. Alle tre sentralmål er gyldige verktøy, men medianen er mest robust for datasett med ekstremverdier.'
+      },
+    ],
+    riktigIdx: 1,
+  },
+  poeng: 4, maxPoeng: 4,
+
   hint: [
     '1. C12: =GJENNOMSNITT(B2:B11)',
     '2. C13: =MEDIAN(B2:B11)',
     'Legg merke til at én elev brukte 480 minutter (8 timer!)',
     'Gjennomsnittet dras opp av ekstremverdier — medianen er mer representativ her.',
+    'Sammenlign C12 og C13: de bør gi svært ulike tall for dette datasettet.',
   ],
   fasitFormel: { C12: '=GJENNOMSNITT(B2:B11)', C13: '=MEDIAN(B2:B11)' },
   forklaringFasit: 'Medianen passer best fordi én elev (480 min) drar gjennomsnittet unaturlig høyt.',
@@ -450,8 +554,9 @@ var EXCEL_OPPGAVER = [
   kolonner: ['A: Dag', 'B: Skritt'],
   radStart: 2,
   data: function() {
-    var skritt = [8200,5400,11000,9800,6300,12500,7600];
-    return skritt.map(function(s,i){return {A: ['Man','Tir','Ons','Tor','Fre','Lør','Søn'][i], B:s};});
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    var skritt=[];for(var i=0;i<7;i++) skritt.push(rnd(3000,15000));
+    return skritt.map(function(s,i){return {A:['Man','Tir','Ons','Tor','Fre','Lør','Søn'][i],B:s};});
   },
 
   låsteCeller: function(data) {
@@ -488,9 +593,12 @@ var EXCEL_OPPGAVER = [
   kolonner: ['A: Klasse A', 'B: Klasse B'],
   radStart: 2,
   data: function() {
-    var a = [120,95,140,110,130,105,125,115,135,100];
-    var b = [80,200,90,85,195,88,92,190,86,94];
-    return a.map(function(v,i){return {A:v, B:b[i]};});
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    var a=[],b=[];
+    for(var i=0;i<7;i++){a.push(rnd(100,145));b.push(rnd(70,105));}
+    for(var j=0;j<3;j++) b.push(rnd(180,220));
+    b.sort(function(x,y){return x-y;});
+    return a.map(function(v,i){return {A:v,B:b[i]};});
   },
 
   låsteCeller: function(data) {
@@ -579,20 +687,29 @@ var EXCEL_OPPGAVER = [
     return Array(11).fill(null).map(function(_,i){ return {A:null,B:null}; });
   },
 
+  _genOk2: function() {
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    if (!this._start) { this._start=rnd(5,20)*1000; this._rente=rnd(2,6); }
+    return {start:this._start,rente:this._rente};
+  },
   låsteCeller: function(data) {
-    return {'A1':'År','B1':'Beløp (kr)','A2':'0','B2':'10000'};
+    var g=this._genOk2();
+    this.intro='Du setter '+g.start.toLocaleString('no')+' kr i banken med '+g.rente+'% rente per år.';
+    this.mål='Lag en tabell som viser beløpet hvert år i 10 år. Skriv =B2*'+(1+g.rente/100).toFixed(2)+' i B3 og dra ned.';
+    return {'A1':'År','B1':'Beløp (kr)','A2':'0','B2':g.start};
   },
   inputCeller: ['A3','A4','A5','A6','A7','A8','A9','A10','A11','A12',
                 'B3','B4','B5','B6','B7','B8','B9','B10','B11','B12'],
   cellLabels: {'A3':'1','B3':'=B2*1.04'},
 
   fasit: function(data) {
-    var fasit = {'A2':0,'B2':10000};
-    var beløp = 10000;
-    for (var i=1;i<=10;i++) {
-      beløp = Math.round(beløp * 1.04 * 100) / 100;
-      fasit['A'+(i+2)] = i;
-      fasit['B'+(i+2)] = beløp;
+    var g=this._genOk2();
+    var fasit={'A2':0,'B2':g.start};
+    var beløp=g.start;
+    var vf=1+g.rente/100;
+    for(var i=1;i<=10;i++){
+      beløp=Math.round(beløp*vf*100)/100;
+      fasit['A'+(i+2)]=i; fasit['B'+(i+2)]=beløp;
     }
     return fasit;
   },
@@ -671,18 +788,17 @@ var EXCEL_OPPGAVER = [
   kolonner: ['A: Post','B: Beløp (kr)'],
   radStart: 2,
   data: function() {
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
     return [
-      {A:'Lønn/stipend',B:8500},
+      {A:'Lønn/stipend',B:rnd(7,12)*500},
       {A:'Barnetrygd',B:1800},
-      {A:'Sum inntekter',B:null},
-      {A:'',B:null},
-      {A:'Husleie',B:4200},
-      {A:'Mat',B:2000},
-      {A:'Transport',B:600},
-      {A:'Telefon',B:400},
-      {A:'Fritid',B:800},
-      {A:'Sum utgifter',B:null},
-      {A:'',B:null},
+      {A:'Sum inntekter',B:null},{A:'',B:null},
+      {A:'Husleie',B:rnd(3,6)*500},
+      {A:'Mat',B:rnd(1500,2500)},
+      {A:'Transport',B:rnd(400,800)},
+      {A:'Telefon',B:rnd(300,500)},
+      {A:'Fritid',B:rnd(500,1200)},
+      {A:'Sum utgifter',B:null},{A:'',B:null},
       {A:'OVERSKUDD',B:null},
     ];
   },
@@ -811,7 +927,8 @@ function visOppgave(id) {
     +'<div class="mål-boks">📌 ' + o.mål + '</div>'
     +'<div id="formel-bar"><span id="formel-celle-id">—</span><span style="color:var(--dim);margin:0 6px">fx</span><span id="formel-innhold"></span></div>'
     +'<div id="regneark-wrap"></div>'
-    +'<div class="knapp-rad">'
+    +(o.flervalg ? lagFlervalgHTML(o, alleredeSvart) : '')
+  +'<div class="knapp-rad">'
       +'<button class="sjekk-btn" id="sjekk-btn" onclick="sjekkSvar()" '+(alleredeSvart?'disabled':'')+'>✓ Sjekk svar</button>'
       +'<button class="reset-btn" onclick="nullstillOppgave()">↩ Nullstill</button>'
       +'<button class="neste-btn" id="neste-btn" onclick="nesteOppgave()" '+(alleredeSvart?'style="display:block"':'')+'> Neste ▶</button>'
@@ -935,6 +1052,33 @@ function celleEndret(ref, oppgId) {
   document.getElementById('formel-celle-id').textContent = ref;
   document.getElementById('formel-innhold').textContent =
     verdi + (evalV !== null && verdi.startsWith('=') ? '  →  ' + formaterTall(evalV) : '');
+
+  // Oppdater svar-display til høyre
+  oppdaterSvarDisplay(ref, verdi, evalV);
+}
+
+function oppdaterSvarDisplay(ref, formel, evalV) {
+  var sd = document.getElementById('svar-display');
+  var sdCelle = document.getElementById('sd-celle');
+  var sdFormel = document.getElementById('sd-formel');
+  var sdVerdi = document.getElementById('sd-verdi');
+  if (!sd || !sdCelle || !sdFormel || !sdVerdi) return;
+
+  if (evalV !== null && formel && formel.startsWith('=')) {
+    sd.className = 'svar-display-synlig';
+    sdCelle.textContent = ref;
+    sdFormel.textContent = formel;
+    sdVerdi.textContent = formaterTall(evalV);
+  } else if (!formel || formel === '') {
+    // Tom celle - skjul display
+    sd.className = 'svar-display-skjult';
+  } else {
+    // Tall-input uten formel
+    sd.className = 'svar-display-synlig';
+    sdCelle.textContent = ref;
+    sdFormel.textContent = 'Verdi';
+    sdVerdi.textContent = formel;
+  }
 }
 
 function oppdaterFormelBar(ref) {
@@ -1015,8 +1159,9 @@ function sjekkSvar() {
     melding = riktige + ' av ' + totalt + ' celler riktige. ' + poeng + ' / ' + o.maxPoeng + ' poeng.';
     // Vis hvilke som er gale
     var feilInfo = detaljer.filter(function(d){return !d.ok;}).map(function(d){
-      return d.ref + ': fikk ' + (d.evalV!==null?formaterTall(d.evalV):'(tom)') + ', fasit: ' + formaterTall(d.fasit);
-    }).join(' · ');
+      var fikkStr = d.evalV !== null ? formaterTall(d.evalV) : '(tom eller ugyldig formel)';
+      return d.ref + ': fikk ' + fikkStr + ', fasit: ' + formaterTall(d.fasit);
+    }).join('\n');
     if (feilInfo) melding += '\n' + feilInfo;
   } else {
     melding = 'Ingen riktige ennå. Se hint til høyre og prøv igjen.';
@@ -1027,6 +1172,34 @@ function sjekkSvar() {
   // Vis fasit-boks
   fb.insertAdjacentHTML('afterend', lagFasitBoks(o));
 
+  // Sjekk flervalg
+  if (o.flervalg) {
+    var fvValgt = flervalgValg[o.id];
+    var fvOk = fvValgt === o.flervalg.riktigIdx;
+    if (fvOk) poeng++;
+    // maxPoeng er allerede inkludert i o.maxPoeng
+    // Oppdater visning - vis begrunnelse for alle alternativer
+    var fvContainer = document.getElementById('fv-'+id);
+    if (fvContainer) {
+      var knapper = fvContainer.querySelectorAll('.fv-alt');
+      knapper.forEach(function(btn, i) {
+        var alt = o.flervalg.alternativer[i];
+        btn.className = 'fv-alt' + (alt.riktig?' fv-riktig':(i===fvValgt?' fv-galt':''));
+        btn.disabled = true;
+        var begrEl = btn.querySelector('.fv-begr');
+        if (begrEl) begrEl.remove();
+        if (alt.riktig || i===fvValgt) {
+          var begr = document.createElement('div');
+          begr.className = 'fv-begr';
+          begr.textContent = alt.begrunnelse;
+          btn.appendChild(begr);
+        }
+      });
+    }
+    // Oppdater state
+    if (state.svar[id]) state.svar[id].poeng = poeng;
+  }
+
   document.getElementById('sjekk-btn').disabled = true;
   document.getElementById('neste-btn').style.display = 'block';
 
@@ -1036,10 +1209,18 @@ function sjekkSvar() {
 
 function lagFasitBoks(o) {
   if (!o.fasitFormel) return '';
-  var linjer = Object.entries ? Object.entries(o.fasitFormel) : Object.keys(o.fasitFormel).map(function(k){return [k, o.fasitFormel[k]];});
-  var html = '<div class="fasit-boks vis"><div class="fasit-tittel">📖 Fasit-formler</div>';
+  var data = state.data[o.id];
+  var fasitVerdier = data ? o.fasit(data) : {};
+  var linjer = Object.keys(o.fasitFormel).map(function(k){return [k, o.fasitFormel[k]];});
+  var html = '<div class="fasit-boks vis"><div class="fasit-tittel">📖 Fasit — formel og tallverdi</div>';
   linjer.forEach(function(kv) {
-    html += '<div class="fasit-formel" style="margin-bottom:4px"><span style="color:var(--gold);margin-right:8px">'+kv[0]+'</span><span style="color:var(--accent2)">'+kv[1]+'</span></div>';
+    var ref = kv[0], formel = kv[1];
+    var tallverdi = fasitVerdier[ref] !== undefined ? formaterTall(fasitVerdier[ref]) : '';
+    html += '<div class="fasit-formel" style="margin-bottom:6px;display:flex;align-items:baseline;gap:8px">'
+      + '<span style="color:var(--gold);min-width:36px">'+ref+'</span>'
+      + '<span style="color:var(--accent2)">'+formel+'</span>'
+      + (tallverdi ? '<span style="color:var(--dim);font-size:.78rem;margin-left:auto">→ '+tallverdi+'</span>' : '')
+      + '</div>';
   });
   if (o.forklaringFasit) html += '<div style="font-size:.83rem;color:var(--dim);margin-top:8px;line-height:1.5">'+o.forklaringFasit+'</div>';
   return html + '</div>';
@@ -1055,10 +1236,65 @@ function nesteOppgave() {
   }
 }
 
+
+// ── FLERVALG-TILSTAND ─────────────────────────────────────────────
+var flervalgValg = {};
+
+function lagFlervalgHTML(o, låst) {
+  if (!o.flervalg) return '';
+  var fv = o.flervalg;
+  var valgt = flervalgValg[o.id];
+  var html = '<div class="fv-seksjon" id="fv-'+o.id+'">'
+    + '<div class="fv-tittel">'+fv.spørsmål+'</div>'
+    + '<div class="fv-grid">';
+  fv.alternativer.forEach(function(alt, i) {
+    var klasse = 'fv-alt';
+    if (låst) {
+      klasse += alt.riktig ? ' fv-riktig' : (i === valgt ? ' fv-galt' : '');
+    } else if (i === valgt) {
+      klasse += ' fv-valgt';
+    }
+    var begrInfo = (låst || i === valgt) ? '<div class="fv-begr">' + alt.begrunnelse + '</div>' : '';
+    html += '<button class="'+klasse+'" data-oppg="'+o.id+'" data-idx="'+i+'" '+(låst?'disabled':'')+' onclick="velgFlervalg(this.dataset.oppg,+this.dataset.idx)">';
+      + '<span class="fv-tekst">'+alt.tekst+'</span>'
+      + begrInfo
+      + '</button>';
+  });
+  return html + '</div></div>';
+}
+
+function velgFlervalg(oppgId, idx) {
+  flervalgValg[oppgId] = idx;
+  var o = EXCEL_OPPGAVER.find(function(x){return x.id===oppgId;});
+  if (!o || !o.flervalg) return;
+  // Oppdater knapper
+  var fv = o.flervalg;
+  var container = document.getElementById('fv-'+oppgId);
+  if (!container) return;
+  var knapper = container.querySelectorAll('.fv-alt');
+  knapper.forEach(function(btn, i) {
+    btn.className = 'fv-alt' + (i===idx?' fv-valgt':'');
+    // Vis begrunnelse for valgt alternativ
+    var begrEl = btn.querySelector('.fv-begr');
+    if (begrEl) {
+      begrEl.remove();
+    }
+    if (i===idx) {
+      var begr = document.createElement('div');
+      begr.className = 'fv-begr';
+      begr.textContent = fv.alternativer[i].begrunnelse;
+      btn.appendChild(begr);
+    }
+  });
+}
 function nullstillOppgave() {
   var id = state.gjeldende;
   state.celleVerdier[id] = {};
   delete state.svar[id];
+  delete state.data[id];
+  delete flervalgValg[id];
+  var oNull = EXCEL_OPPGAVER.find(function(x){return x.id===id;});
+  if (oNull && oNull._start) { delete oNull._start; delete oNull._rente; }
   var fp = lastFremgang();
   fp.excel_svar = state.svar;
   lagreFremgang(fp);
@@ -1080,21 +1316,40 @@ function nyRunde() {
 }
 
 // ── HINT-PANEL ────────────────────────────────────────────────────
+var hintSynlig = false;
+
+function toggleHint() {
+  hintSynlig = !hintSynlig;
+  var innhold = document.getElementById('hint-innhold');
+  var knapp = document.getElementById('hint-knapp');
+  innhold.className = hintSynlig ? 'hint-synlig' : 'hint-skjult';
+  knapp.className = hintSynlig ? 'aktiv' : '';
+}
+
 function visHint(o) {
-  var hint = document.getElementById('hint-panel');
-  hint.innerHTML = '<div class="hint-tittel">💡 Slik gjør du det i Excel</div>';
+  hintSynlig = false;
+  var knapp = document.getElementById('hint-knapp');
+  var innhold = document.getElementById('hint-innhold');
+  if (knapp) knapp.className = '';
+  if (!innhold) return;
+  innhold.className = 'hint-skjult';
+  // Nullstill svar-display
+  var sd = document.getElementById('svar-display');
+  if (sd) sd.className = 'svar-display-skjult';
+
+  var html = '<div class="hint-tittel" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:10px">Slik gjør du det i Excel</div>';
 
   if (o.hint) {
     o.hint.forEach(function(h, i) {
       var erFormel = h.match(/^[A-Z][0-9]+:/);
-      hint.innerHTML += '<div class="hint-steg">'
+      html += '<div class="hint-steg">'
         + '<div class="hint-nr">'+(i+1)+'</div>'
         + '<div class="hint-tekst'+(erFormel?' formel':'')+'">'+h+'</div>'
         + '</div>';
     });
   }
 
-  hint.innerHTML += '<div class="excel-info" style="margin-top:20px">'
+  html += '<div class="excel-info" style="margin-top:20px">'
     + '<div class="excel-info-tittel">📌 Excel-tips</div>'
     + '<div class="excel-info-tekst">'
     + 'Formler starter alltid med <code>=</code><br>'
@@ -1103,6 +1358,8 @@ function visHint(o) {
     + 'Potens: <code>A2^2</code> = A2²<br>'
     + 'Norsk decimal: <code>1,04</code>'
     + '</div></div>';
+
+  innhold.innerHTML = html;
 }
 
 // ── STATISTIKK ────────────────────────────────────────────────────
