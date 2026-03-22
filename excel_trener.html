@@ -750,14 +750,25 @@ var EXCEL_OPPGAVER = [
 
   kolonner: ['A: Måned','B: Saldo start','C: Renter (8%/12)','D: Betaling','E: Saldo slutt'],
   radStart: 2,
+  _lån: null,
   data: function() {
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+    var lånAlts  = [20000,30000,40000,50000,60000];
+    var renteAlts = [5,6,7,8,9,10];
+    this._lån   = lånAlts[rnd(0,lånAlts.length-1)];
+    this._rente  = renteAlts[rnd(0,renteAlts.length-1)];
+    // Betaling: ca. 1.5x månedlig rente, rundet til nærmeste 500
+    var månRente = this._lån * this._rente/100/12;
+    this._betaling = Math.round(månRente * 1.5 / 500) * 500 || 500;
     return Array(12).fill(null).map(function(){return {A:null,B:null,C:null,D:null,E:null};});
   },
 
   låsteCeller: function(data) {
+    var lån = this._lån, rente = this._rente, bet = this._betaling;
+    this.intro = 'Du tar opp et lån på '+lån.toLocaleString('no')+' kr med '+rente+'% årlig rente. Du betaler '+bet.toLocaleString('no')+' kr per måned.';
     var c = {'A1':'Måned','B1':'Saldo start','C1':'Renter','D1':'Betaling','E1':'Saldo slutt',
-             'A2':'1','B2':'50000','D2':'1000'};
-    for (var i=2;i<=12;i++) c['D'+(i+1)] = 1000;
+             'A2':'1','B2':lån};
+    for (var i=2;i<=13;i++) c['D'+i] = bet;
     return c;
   },
   inputCeller: ['C2','E2','A3','B3',
@@ -767,15 +778,15 @@ var EXCEL_OPPGAVER = [
 
   fasit: function(data) {
     var fasit = {};
-    var saldo = 50000, rente_månedlig = 0.08/12;
-    fasit['B2'] = 50000;
+    var saldo = this._lån, rm = this._rente/100/12, bet = this._betaling;
+    fasit['B2'] = saldo;
     for (var i=0;i<12;i++) {
       var rad = i+2;
-      var renter = Math.round(saldo * rente_månedlig * 100)/100;
-      var ny = Math.round((saldo + renter - 1000)*100)/100;
-      fasit['A'+(rad)] = i+1;
-      fasit['C'+(rad)] = renter;
-      fasit['E'+(rad)] = ny;
+      var renter = Math.round(saldo * rm * 100)/100;
+      var ny = Math.round((saldo + renter - bet)*100)/100;
+      fasit['A'+rad] = i+1;
+      fasit['C'+rad] = renter;
+      fasit['E'+rad] = ny;
       if (i<11) { fasit['A'+(rad+1)] = i+2; fasit['B'+(rad+1)] = ny; }
       saldo = ny;
     }
@@ -785,12 +796,12 @@ var EXCEL_OPPGAVER = [
   sjekkCeller: ['C2','E2','E6'],
 
   hint: [
-    'C2: =B2*8%/12  (månedlig rente = årsrente/12)',
+    'C2: =B2*'+this._rente+'%/12  (månedlig rente = årsrente/12)',
     'E2: =B2+C2-D2  (ny saldo = gammel + renter - betaling)',
     'B3: =E2  (neste måneds startsaldo = forrige sluttsaldo)',
     'Kopier rad 2 formler ned til rad 13',
   ],
-  fasitFormel: {C2:'=B2*8%/12', E2:'=B2+C2-D2', B3:'=E2'},
+  fasitFormel: function(){return {C2:'=B2*'+this._rente+'%/12', E2:'=B2+C2-D2', B3:'=E2'};},
 },
 
 {
@@ -1250,7 +1261,8 @@ function lagFasitBoks(o) {
   if (!o.fasitFormel) return '';
   var data = state.data[o.id];
   var fasitVerdier = data ? o.fasit(data) : {};
-  var linjer = Object.keys(o.fasitFormel).map(function(k){return [k, o.fasitFormel[k]];});
+  var ff = typeof o.fasitFormel==='function'?o.fasitFormel():o.fasitFormel;
+  var linjer = Object.keys(ff).map(function(k){return [k, ff[k]];});
   var html = '<div class="fasit-boks vis"><div class="fasit-tittel">📖 Fasit — formel og tallverdi</div>';
   linjer.forEach(function(kv) {
     var ref = kv[0], formel = kv[1];
