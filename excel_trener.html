@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel-trener · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f14;--bg2:#16161e;--bg3:#1e1e2a;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --text:#e8e8f0;--dim:#888899;
+  --accent:#5bc98e;--accent2:#5b8dd9;--gold:#e8b84b;
+  --red:#e05c6e;--orange:#e8874b;
+  --font-d:'Playfair Display',serif;
+  --font-b:'Source Sans 3',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:16px;}
+
+/* ── HEADER ── */
+#header{background:linear-gradient(135deg,#16161e,#1a1e2a);border-bottom:1px solid var(--border);
+  padding:14px 24px;display:flex;align-items:center;gap:12px;}
+.logo{font-family:var(--font-d);font-size:1.4rem;font-weight:900;color:var(--accent);}
+.undertittel{font-size:.78rem;color:var(--dim);}
+.spacer{flex:1;}
+.header-stat{font-size:.82rem;color:var(--dim);}
+.header-stat b{color:var(--gold);}
+a.tilbake{font-size:.78rem;color:var(--dim);text-decoration:none;}
+a.tilbake:hover{color:var(--text);}
+
+/* ── PROGRESS ── */
+#prog-wrap{padding:10px 24px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;}
+#prog-bar{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+#prog-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .4s;}
+#prog-tekst{font-size:.76rem;color:var(--dim);white-space:nowrap;}
+
+/* ── LAYOUT ── */
+#app{display:grid;grid-template-columns:200px 1fr 240px;min-height:calc(100vh - 98px);}
+
+/* ── SIDEBAR ── */
+#sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:10px 6px;overflow-y:auto;}
+.grp-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--dim);padding:10px 8px 4px;}
+.oppg-knapp{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;
+  border-radius:7px;background:transparent;border:1px solid transparent;
+  color:var(--dim);cursor:pointer;font-size:.8rem;font-family:var(--font-b);text-align:left;transition:all .12s;}
+.oppg-knapp:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.oppg-knapp.aktiv{background:rgba(91,201,142,.07);border-color:rgba(91,201,142,.2);color:var(--accent);}
+.oppg-knapp.fullfort{background:rgba(91,201,142,.06);border-color:rgba(91,201,142,.15);color:var(--accent);}
+.oppg-knapp.feil{background:rgba(224,92,110,.06);border-color:rgba(224,92,110,.15);color:var(--red);}
+.merking-lavt{font-size:.6rem;padding:1px 5px;border-radius:5px;margin-left:auto;
+  background:rgba(91,201,142,.15);color:var(--accent);}
+.merking-viktig{font-size:.6rem;padding:1px 5px;border-radius:5px;margin-left:auto;
+  background:rgba(232,184,75,.15);color:var(--gold);}
+
+/* ── HOVED-PANEL ── */
+#panel{padding:24px 28px;overflow-y:auto;max-width:900px;}
+.oppg-header{margin-bottom:16px;}
+.oppg-gruppe{font-size:.7rem;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--accent2);font-weight:700;margin-bottom:4px;}
+.oppg-tittel{font-family:var(--font-d);font-size:1.5rem;font-weight:700;line-height:1.2;}
+.oppg-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.meta-tag{font-size:.72rem;padding:3px 10px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.1);color:var(--dim);}
+.meta-poeng{background:rgba(232,184,75,.08);border-color:rgba(232,184,75,.25);color:var(--gold);}
+
+.intro-boks{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:14px 18px;margin-bottom:14px;font-size:.9rem;line-height:1.6;}
+.mål-boks{background:rgba(91,133,217,.08);border:1px solid rgba(91,133,217,.2);
+  border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.85rem;
+  color:var(--accent2);line-height:1.5;}
+
+/* ── REGNEARK ── */
+#regneark-wrap{overflow-x:auto;margin-bottom:16px;}
+table.regneark{border-collapse:collapse;font-size:.82rem;min-width:100%;}
+table.regneark th{background:rgba(255,255,255,.06);color:var(--dim);font-weight:600;
+  padding:5px 10px;border:1px solid var(--border2);font-size:.75rem;
+  text-align:center;min-width:32px;}
+table.regneark td{border:1px solid rgba(255,255,255,.06);padding:0;min-width:80px;}
+table.regneark td.rad-header{background:rgba(255,255,255,.04);color:var(--dim);
+  font-size:.72rem;text-align:center;padding:4px 6px;min-width:32px;font-family:var(--font-m);}
+table.regneark td.låst{background:rgba(255,255,255,.02);color:var(--text);
+  padding:5px 8px;font-size:.83rem;}
+table.regneark td.låst.tall{text-align:right;font-family:var(--font-m);color:#a0d8ff;}
+table.regneark td.låst.tom{background:transparent;}
+table.regneark td.input-celle{padding:0;}
+table.regneark td.input-celle input{
+  width:100%;border:none;outline:none;background:rgba(91,133,217,.08);
+  color:var(--text);font-family:var(--font-m);font-size:.82rem;
+  padding:5px 7px;transition:background .12s;
+}
+table.regneark td.input-celle input:focus{background:rgba(91,133,217,.18);}
+table.regneark td.input-celle input.riktig{background:rgba(91,201,142,.12);color:var(--accent);}
+table.regneark td.input-celle input.galt{background:rgba(224,92,110,.1);color:var(--red);}
+table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color:var(--gold);}
+.celle-label{font-size:.62rem;color:var(--dim);padding:2px 6px;
+  background:rgba(91,133,217,.05);border-bottom:1px solid rgba(255,255,255,.05);}
+
+/* Formel-visning over regnearket */
+#formel-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:8px;margin-bottom:8px;font-size:.82rem;}
+#formel-celle-id{font-family:var(--font-m);color:var(--gold);min-width:32px;font-size:.78rem;}
+#formel-innhold{font-family:var(--font-m);color:var(--accent2);flex:1;}
+
+/* ── KNAPPER ── */
+.knapp-rad{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+.sjekk-btn{padding:11px 26px;font-family:var(--font-d);font-size:.95rem;font-weight:700;
+  background:var(--accent);color:#000;border:none;border-radius:9px;cursor:pointer;transition:filter .15s;}
+.sjekk-btn:hover{filter:brightness(1.08);}
+.sjekk-btn:disabled{opacity:.3;cursor:default;}
+.neste-btn{padding:11px 22px;font-family:var(--font-d);font-size:.9rem;font-weight:700;
+  background:var(--accent2);color:#fff;border:none;border-radius:9px;cursor:pointer;display:none;}
+.neste-btn:hover{filter:brightness(1.1);}
+.reset-btn{padding:11px 18px;font-size:.85rem;font-family:var(--font-b);
+  background:transparent;color:var(--dim);border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;cursor:pointer;}
+.reset-btn:hover{color:var(--text);}
+
+/* Feedback */
+.fb{padding:12px 16px;border-radius:9px;font-size:.86rem;line-height:1.5;
+  display:none;margin-top:12px;}
+.fb.riktig{background:rgba(91,201,142,.1);border:1px solid rgba(91,201,142,.3);color:var(--accent);display:block;}
+.fb.delvis{background:rgba(232,184,75,.08);border:1px solid rgba(232,184,75,.25);color:var(--gold);display:block;}
+.fb.feil{background:rgba(224,92,110,.1);border:1px solid rgba(224,92,110,.3);color:var(--red);display:block;}
+.fasit-boks{background:var(--bg3);border:1px solid rgba(91,201,142,.15);border-radius:9px;
+  padding:12px 16px;margin-top:10px;font-size:.84rem;line-height:1.6;display:none;}
+.fasit-boks.vis{display:block;}
+.fasit-tittel{color:var(--accent);font-size:.75rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:6px;}
+.fasit-formel{font-family:var(--font-m);color:var(--accent2);font-size:.83rem;}
+
+/* ── HINT-PANEL ── */
+#hint-panel{background:var(--bg2);border-left:1px solid var(--border);
+  padding:16px 14px;overflow-y:auto;}
+.hint-tittel{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--dim);margin-bottom:10px;}
+.hint-steg{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
+.hint-nr{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(91,133,217,.2);
+  color:var(--accent2);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.hint-tekst{font-size:.8rem;color:var(--dim);line-height:1.5;font-family:var(--font-m);}
+.hint-tekst.formel{color:var(--accent2);}
+
+.excel-info{margin-top:20px;padding:12px;background:rgba(232,135,75,.06);
+  border:1px solid rgba(232,135,75,.15);border-radius:8px;}
+.excel-info-tittel{font-size:.7rem;color:var(--orange);font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:6px;}
+.excel-info-tekst{font-size:.78rem;color:var(--dim);line-height:1.5;}
+.excel-info-tekst code{font-family:var(--font-m);color:var(--accent2);font-size:.82rem;}
+
+/* ── RESULTAT ── */
+#resultat{display:none;padding:40px;max-width:620px;}
+.res-tittel{font-family:var(--font-d);font-size:2.2rem;font-weight:900;margin-bottom:8px;}
+.res-score{font-family:var(--font-d);font-size:3.5rem;font-weight:900;color:var(--accent);line-height:1;margin:14px 0;}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.res-kort{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.res-tall{font-family:var(--font-d);font-size:1.5rem;font-weight:700;color:var(--accent2);}
+.res-label{font-size:.76rem;color:var(--dim);margin-top:2px;}
+.ny-btn{padding:13px 30px;font-family:var(--font-d);font-size:.95rem;font-weight:700;
+  background:var(--accent);color:#000;border:none;border-radius:9px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="header">
+  <a href="index.html" class="tilbake">← SkapLab</a>
+  <div>
+    <div class="logo">📊 Excel-trener</div>
+    <div class="undertittel">Statistikk og økonomi · LK20</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="header-stat">✅ <b id="st-poeng">0</b> poeng · <b id="st-fullfort">0</b>/8 fullført</div>
+</div>
+<div id="prog-wrap">
+  <span id="prog-tekst" style="font-size:.76rem;color:var(--dim)">Velg en oppgave</span>
+  <div id="prog-bar"><div id="prog-fill" style="width:0%"></div></div>
+</div>
+<div id="app">
+  <div id="sidebar"></div>
+  <div id="panel"><div style="padding:40px;color:var(--dim);text-align:center">
+    <div style="font-size:3rem;margin-bottom:16px">📊</div>
+    <div style="font-family:var(--font-d);font-size:1.4rem;color:var(--text);margin-bottom:8px">Velg en oppgave til venstre</div>
+    <div style="font-size:.88rem">Skriv Excel-formler direkte i cellene og trykk Sjekk for å se om du har riktig.</div>
+  </div></div>
+  <div id="hint-panel"><div class="hint-tittel">💡 Slik gjør du det</div>
+    <div style="font-size:.82rem;color:var(--dim)">Velg en oppgave for å se tips.</div>
+  </div>
+</div>
+<div id="resultat">
+  <div class="res-tittel">Ferdig! 🎉</div>
+  <div class="res-score" id="res-score">0 / 0</div>
+  <div class="res-grid">
+    <div class="res-kort"><div class="res-tall" id="res-stat">0/0</div><div class="res-label">Statistikk</div></div>
+    <div class="res-kort"><div class="res-tall" id="res-ok">0/0</div><div class="res-label">Økonomi</div></div>
+    <div class="res-kort"><div class="res-tall" id="res-ganger">1</div><div class="res-label">Besøk</div></div>
+    <div class="res-kort"><div class="res-tall" id="res-pst">0%</div><div class="res-label">Poengprosent</div></div>
+  </div>
+  <button class="ny-btn" onclick="nyRunde()">🔄 Prøv igjen</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// FORMEL-PARSER FOR PSEUDO-REGNEARK
+// Støtter norsk og engelsk Excel-syntaks
+// ══════════════════════════════════════════════════════════════════
+
+function ExcelFormelParser(getCelle) {
+  // getCelle(kolonne, rad) → numerisk verdi eller null
+  // kolonne: 'A','B','C'... rad: 1,2,3...
+
+  function kolTilIdx(k) {
+    k = k.toUpperCase().replace('$','');
+    var idx = 0;
+    for (var i=0;i<k.length;i++) idx = idx*26 + (k.charCodeAt(i)-64);
+    return idx; // A=1, B=2...
+  }
+
+  function parseRef(ref) {
+    // '$B$3' → {kol:'B', rad:3}
+    ref = ref.replace(/\$/g,'');
+    var m = ref.match(/^([A-Za-z]+)(\d+)$/);
+    if (!m) return null;
+    return { kol: m[1].toUpperCase(), rad: parseInt(m[2]) };
+  }
+
+  function parseRange(range) {
+    // 'B2:B11' → array av {kol,rad}
+    range = range.replace(/\$/g,'');
+    var parts = range.split(':');
+    if (parts.length !== 2) return [];
+    var fra = parseRef(parts[0]);
+    var til = parseRef(parts[1]);
+    if (!fra||!til) return [];
+    var celler = [];
+    var fraCIdx = kolTilIdx(fra.kol);
+    var tilCIdx = kolTilIdx(til.kol);
+    for (var r=fra.rad; r<=til.rad; r++) {
+      for (var c=fraCIdx; c<=tilCIdx; c++) {
+        var kolNavn = String.fromCharCode(64+c);
+        celler.push({kol:kolNavn, rad:r});
+      }
+    }
+    return celler;
+  }
+
+  function hentVerdier(range) {
+    return parseRange(range)
+      .map(function(c){ return getCelle(c.kol, c.rad); })
+      .filter(function(v){ return v !== null && !isNaN(v); });
+  }
+
+  function evaluerFunksjon(navn, arg) {
+    navn = navn.toUpperCase();
+    // Sjekk om arg er range eller kommaseparert
+    var verdier;
+    if (arg.includes(':')) {
+      verdier = hentVerdier(arg);
+    } else {
+      // Kommaseparert liste av refs/tall
+      verdier = arg.split(/[;,]/).map(function(a){
+        a = a.trim();
+        if (/^-?\d+([.,]\d+)?$/.test(a)) return parseFloat(a.replace(',','.'));
+        var ref = parseRef(a);
+        if (ref) return getCelle(ref.kol, ref.rad);
+        return null;
+      }).filter(function(v){ return v !== null && !isNaN(v); });
+    }
+    if (!verdier.length) return null;
+
+    switch(navn) {
+      case 'SUM': return verdier.reduce(function(a,b){return a+b;},0);
+      case 'GJENNOMSNITT': case 'AVERAGE':
+        return verdier.reduce(function(a,b){return a+b;},0)/verdier.length;
+      case 'MEDIAN':
+        var s=[].concat(verdier).sort(function(a,b){return a-b;});
+        var n=s.length;
+        return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)];
+      case 'MAKS': case 'MAX': return Math.max.apply(null,verdier);
+      case 'MIN': return Math.min.apply(null,verdier);
+      case 'ANTALL': case 'COUNT': return verdier.length;
+      case 'ANTALL.HVIS': case 'COUNTIF':
+        // Forenklet: teller verdier lik en gitt verdi
+        return verdier.length; // placeholder
+      default: return null;
+    }
+  }
+
+  function evaluerUttrykk(uttr) {
+    // Fjern mellomrom
+    uttr = uttr.trim().replace(/,/g, '.');
+
+    // Tall
+    if (/^-?\d+(\.\d+)?$/.test(uttr)) return parseFloat(uttr);
+
+    // Funksjonskall: NAVN(arg)
+    var fnMatch = uttr.match(/^([A-ZÆØÅ\.]+)\((.+)\)$/i);
+    if (fnMatch) return evaluerFunksjon(fnMatch[1], fnMatch[2]);
+
+    // Cellereferanse
+    var ref = parseRef(uttr);
+    if (ref) return getCelle(ref.kol, ref.rad);
+
+    // Aritmetikk: splitt på + - * /
+    // Prioriter: finn siste + eller - (lavest prioritet) utenfor parentes
+    var parenDybde = 0;
+    var sisteAddSub = -1;
+    var sisteMulDiv = -1;
+    for (var i=uttr.length-1;i>=0;i--) {
+      var c = uttr[i];
+      if (c===')') parenDybde++;
+      if (c==='(') parenDybde--;
+      if (parenDybde===0) {
+        if ((c==='+'||c==='-') && i>0 && sisteAddSub===-1) sisteAddSub=i;
+        if ((c==='*'||c==='/') && sisteMulDiv===-1) sisteMulDiv=i;
+      }
+    }
+
+    if (sisteAddSub>0) {
+      var L = evaluerUttrykk(uttr.slice(0,sisteAddSub));
+      var R = evaluerUttrykk(uttr.slice(sisteAddSub+1));
+      if (L===null||R===null) return null;
+      return uttr[sisteAddSub]==='+'?L+R:L-R;
+    }
+    if (sisteMulDiv>0) {
+      var L2 = evaluerUttrykk(uttr.slice(0,sisteMulDiv));
+      var R2 = evaluerUttrykk(uttr.slice(sisteMulDiv+1));
+      if (L2===null||R2===null) return null;
+      return uttr[sisteMulDiv]==='*'?L2*R2:(R2!==0?L2/R2:null);
+    }
+
+    // Parentes
+    if (uttr.startsWith('(')&&uttr.endsWith(')')) {
+      return evaluerUttrykk(uttr.slice(1,-1));
+    }
+
+    return null;
+  }
+
+  return {
+    evaluer: function(formel) {
+      if (!formel || typeof formel !== 'string') return null;
+      formel = formel.trim();
+      if (!formel.startsWith('=')) return isNaN(formel) ? null : parseFloat(formel.replace(',','.'));
+      var uttr = formel.slice(1).trim();
+      var result = evaluerUttrykk(uttr);
+      if (result === null) return null;
+      return Math.round(result * 10000) / 10000; // maks 4 desimaler
+    }
+  };
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// EXCEL-TRENER — OPPGAVEDATA
+// ══════════════════════════════════════════════════════════════════
+
+var EXCEL_OPPGAVER = [
+
+// ── STATISTIKK ───────────────────────────────────────────────────
+
+{
+  id: 'stat1', gruppe: 'Statistikk', tittel: 'Gjennomsnitt',
+  merking: 'lavt',
+  intro: 'En klasse registrerte antall timer søvn per natt i 10 dager.',
+  mål: 'Bruk formelen =GJENNOMSNITT(B2:B11) til å finne gjennomsnittet.',
+  poeng: 2, maxPoeng: 2,
+
+  kolonner: ['A: Dag', 'B: Timer søvn'],
+  radStart: 2,
+  data: function() {
+    var timer = [7,6,8,5,7,8,6,9,7,6];
+    return timer.map(function(t,i){ return {A: 'Dag '+(i+1), B: t}; });
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Dag','B1':'Timer søvn'};
+    data.forEach(function(r,i){ c['A'+(i+2)] = r.A; c['B'+(i+2)] = r.B; });
+    return c;
+  },
+  inputCeller: ['B12'],
+  cellLabels: {'B12': '=GJENNOMSNITT(...)'},
+
+  fasit: function(data) {
+    var sum = data.reduce(function(a,r){return a+r.B;},0);
+    return { B12: Math.round(sum/data.length*100)/100 };
+  },
+  tol: { B12: 0.05 },
+
+  hint: [
+    '1. Klikk på celle B12',
+    '2. Skriv: =GJENNOMSNITT(B2:B11)',
+    '3. Trykk Enter',
+    'Norsk Excel bruker semikolon (;) i stedet for kolon (:) i noen versjoner — prøv begge.',
+  ],
+  fasitFormel: { B12: '=GJENNOMSNITT(B2:B11)' },
+},
+
+{
+  id: 'stat2', gruppe: 'Statistikk', tittel: 'Median',
+  merking: 'viktig',
+  intro: 'Klassen målte antall minutters mobilbruk en dag.',
+  mål: 'Finn gjennomsnitt i C2 og median i C3. Forklar deretter hvilken som passer best.',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: Elev', 'B: Minutter'],
+  radStart: 2,
+  data: function() {
+    // Inkluder én ekstremverdi for å gjøre median vs gjennomsnitt tydelig
+    var min = [45,60,30,55,40,480,50,35,65,55];
+    return min.map(function(m,i){ return {A: 'Elev '+(i+1), B: m}; });
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Elev','B1':'Minutter','A12':'Gjennomsnitt','A13':'Median'};
+    data.forEach(function(r,i){ c['A'+(i+2)]=r.A; c['B'+(i+2)]=r.B; });
+    return c;
+  },
+  inputCeller: ['C12','C13'],
+  cellLabels: {'C12':'=GJENNOMSNITT(...)','C13':'=MEDIAN(...)'},
+
+  fasit: function(data) {
+    var vals = data.map(function(r){return r.B;}).sort(function(a,b){return a-b;});
+    var sum = vals.reduce(function(a,b){return a+b;},0);
+    var snitt = Math.round(sum/vals.length*100)/100;
+    var n = vals.length;
+    var median = n%2===0?(vals[n/2-1]+vals[n/2])/2:vals[Math.floor(n/2)];
+    return { C12: snitt, C13: median };
+  },
+  tol: { C12: 0.5, C13: 0.5 },
+
+  hint: [
+    '1. C12: =GJENNOMSNITT(B2:B11)',
+    '2. C13: =MEDIAN(B2:B11)',
+    'Legg merke til at én elev brukte 480 minutter (8 timer!)',
+    'Gjennomsnittet dras opp av ekstremverdier — medianen er mer representativ her.',
+  ],
+  fasitFormel: { C12: '=GJENNOMSNITT(B2:B11)', C13: '=MEDIAN(B2:B11)' },
+  forklaringFasit: 'Medianen passer best fordi én elev (480 min) drar gjennomsnittet unaturlig høyt.',
+},
+
+{
+  id: 'stat3', gruppe: 'Statistikk', tittel: 'Maks, Min og Spredning',
+  merking: '',
+  intro: 'Klassen fikk registrert skritt per dag i en uke.',
+  mål: 'Finn høyeste verdi (MAKS), laveste (MIN) og differansen mellom dem.',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: Dag', 'B: Skritt'],
+  radStart: 2,
+  data: function() {
+    var skritt = [8200,5400,11000,9800,6300,12500,7600];
+    return skritt.map(function(s,i){return {A: ['Man','Tir','Ons','Tor','Fre','Lør','Søn'][i], B:s};});
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Dag','B1':'Skritt','A9':'Høyest','A10':'Lavest','A11':'Spredning'};
+    data.forEach(function(r,i){ c['A'+(i+2)]=r.A; c['B'+(i+2)]=r.B; });
+    return c;
+  },
+  inputCeller: ['B9','B10','B11'],
+  cellLabels: {'B9':'=MAKS(...)','B10':'=MIN(...)','B11':'=B9-B10'},
+
+  fasit: function(data) {
+    var vals = data.map(function(r){return r.B;});
+    var maks = Math.max.apply(null,vals);
+    var min = Math.min.apply(null,vals);
+    return { B9: maks, B10: min, B11: maks-min };
+  },
+  tol: { B9: 0, B10: 0, B11: 0 },
+
+  hint: [
+    '1. B9: =MAKS(B2:B8)',
+    '2. B10: =MIN(B2:B8)',
+    '3. B11: =B9-B10  (spredning = maks minus min)',
+  ],
+  fasitFormel: { B9: '=MAKS(B2:B8)', B10: '=MIN(B2:B8)', B11: '=B9-B10' },
+},
+
+{
+  id: 'stat4', gruppe: 'Statistikk', tittel: 'Sammenlign to grupper',
+  merking: 'viktig',
+  intro: 'To klasser ble testet i lesehastighet (ord per minutt). Klasse A: 120,95,140,110,130,105,125,115,135,100. Klasse B: 80,200,90,85,195,88,92,190,86,94.',
+  mål: 'Beregn gjennomsnitt og median for begge klasser. Hvilken klasse leser raskest i snitt? Hvilken er mest jevn?',
+  poeng: 4, maxPoeng: 4,
+
+  kolonner: ['A: Klasse A', 'B: Klasse B'],
+  radStart: 2,
+  data: function() {
+    var a = [120,95,140,110,130,105,125,115,135,100];
+    var b = [80,200,90,85,195,88,92,190,86,94];
+    return a.map(function(v,i){return {A:v, B:b[i]};});
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Klasse A','B1':'Klasse B',
+             'A12':'Gjennomsnitt A','A13':'Median A',
+             'B12':'Gjennomsnitt B','B13':'Median B'};
+    data.forEach(function(r,i){ c['A'+(i+2)]=r.A; c['B'+(i+2)]=r.B; });
+    return c;
+  },
+  inputCeller: ['C12','C13','D12','D13'],
+  cellLabels: {'C12':'Snitt A','C13':'Median A','D12':'Snitt B','D13':'Median B'},
+
+  fasit: function(data) {
+    function snitt(arr){ return Math.round(arr.reduce(function(a,b){return a+b;})/arr.length*10)/10; }
+    function median(arr){ var s=[].concat(arr).sort(function(a,b){return a-b;}); var n=s.length; return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)]; }
+    var a = data.map(function(r){return r.A;}), b = data.map(function(r){return r.B;});
+    return { C12: snitt(a), C13: median(a), D12: snitt(b), D13: median(b) };
+  },
+  tol: { C12:0.2, C13:0.5, D12:0.2, D13:0.5 },
+
+  hint: [
+    'C12: =GJENNOMSNITT(A2:A11)',
+    'C13: =MEDIAN(A2:A11)',
+    'D12: =GJENNOMSNITT(B2:B11)',
+    'D13: =MEDIAN(B2:B11)',
+    'Klasse B har noen svært høye verdier (200, 195, 190) som drar gjennomsnittet opp.',
+    'Medianen avslører at flertallet av klasse B faktisk leser saktere enn klasse A.',
+  ],
+  fasitFormel: {C12:'=GJENNOMSNITT(A2:A11)',C13:'=MEDIAN(A2:A11)',D12:'=GJENNOMSNITT(B2:B11)',D13:'=MEDIAN(B2:B11)'},
+},
+
+// ── ØKONOMI ──────────────────────────────────────────────────────
+
+{
+  id: 'ok1', gruppe: 'Økonomi', tittel: 'Tallmønster med formel',
+  merking: 'viktig',
+  intro: 'Et mønster har n² + 4n kvadrater i figur n.',
+  mål: 'Fyll inn figurnummer 1–10 i kolonne A, og skriv en formel i B2 som beregner antall kvadrater. Dra formelen ned til B11.',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: Figurnummer', 'B: Antall kvadrater'],
+  radStart: 2,
+  data: function() {
+    return [{A:null,B:null},{A:null,B:null},{A:null,B:null},{A:null,B:null},{A:null,B:null},
+            {A:null,B:null},{A:null,B:null},{A:null,B:null},{A:null,B:null},{A:null,B:null}];
+  },
+
+  låsteCeller: function(data) {
+    return {'A1':'Figurnummer','B1':'Antall kvadrater'};
+  },
+  inputCeller: ['A2','A3','A4','A5','A6','A7','A8','A9','A10','A11',
+                'B2','B3','B4','B5','B6','B7','B8','B9','B10','B11'],
+  cellLabels: {'A2':'1','B2':'=A2^2+4*A2'},
+
+  fasit: function(data) {
+    var fasit = {};
+    for (var i=1;i<=10;i++) {
+      fasit['A'+(i+1)] = i;
+      fasit['B'+(i+1)] = i*i + 4*i;
+    }
+    return fasit;
+  },
+  tol: {},
+
+  // Sjekk bare noen nøkkelceller
+  sjekkCeller: ['B2','B6','B11'],
+  hint: [
+    '1. Skriv 1 i A2, 2 i A3, osv — eller skriv 1 i A2, 2 i A3, merk begge og dra ned',
+    '2. I B2: skriv =A2^2+4*A2',
+    '3. Klikk B2, kopier ned til B11 (Ctrl+D eller dra i hjørnet)',
+    'NB: ^ betyr "opphøyd i" i Excel. A2^2 = A2²',
+  ],
+  fasitFormel: { B2: '=A2^2+4*A2 (dra ned)' },
+},
+
+{
+  id: 'ok2', gruppe: 'Økonomi', tittel: 'Sparing med renter',
+  merking: 'viktig',
+  intro: 'Du setter 10 000 kroner i banken med 4% rente per år.',
+  mål: 'Lag en tabell som viser beløpet hvert år i 10 år. Bruk formelen =B2*1.04 og dra ned.',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: År', 'B: Beløp (kr)'],
+  radStart: 2,
+  data: function() {
+    return Array(11).fill(null).map(function(_,i){ return {A:null,B:null}; });
+  },
+
+  låsteCeller: function(data) {
+    return {'A1':'År','B1':'Beløp (kr)','A2':'0','B2':'10000'};
+  },
+  inputCeller: ['A3','A4','A5','A6','A7','A8','A9','A10','A11','A12',
+                'B3','B4','B5','B6','B7','B8','B9','B10','B11','B12'],
+  cellLabels: {'A3':'1','B3':'=B2*1.04'},
+
+  fasit: function(data) {
+    var fasit = {'A2':0,'B2':10000};
+    var beløp = 10000;
+    for (var i=1;i<=10;i++) {
+      beløp = Math.round(beløp * 1.04 * 100) / 100;
+      fasit['A'+(i+2)] = i;
+      fasit['B'+(i+2)] = beløp;
+    }
+    return fasit;
+  },
+  tol: {},
+  sjekkCeller: ['B7','B12'],
+
+  hint: [
+    '1. A3: skriv 1, A4: 2, ... dra ned til A12 (år 10)',
+    '2. B3: skriv =B2*1.04',
+    '3. Kopier B3 ned til B12',
+    'Resultatet: etter 10 år har du ca. 14 802 kr',
+    'Vekstfaktor = 1 + rente/100 = 1 + 4/100 = 1.04',
+  ],
+  fasitFormel: { B3: '=B2*1.04 (dra ned)' },
+},
+
+{
+  id: 'ok3', gruppe: 'Økonomi', tittel: 'Lån med månedlig nedbetaling',
+  merking: '',
+  intro: 'Du tar opp et lån på 50 000 kr med 8% årlig rente. Du betaler 1 000 kr per måned.',
+  mål: 'Lag en tabell som viser saldo etter renter og betaling. Når er lånet under 40 000 kr?',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: Måned','B: Saldo start','C: Renter (8%/12)','D: Betaling','E: Saldo slutt'],
+  radStart: 2,
+  data: function() {
+    return Array(12).fill(null).map(function(){return {A:null,B:null,C:null,D:null,E:null};});
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Måned','B1':'Saldo start','C1':'Renter','D1':'Betaling','E1':'Saldo slutt',
+             'A2':'1','B2':'50000','D2':'1000'};
+    for (var i=2;i<=12;i++) c['D'+(i+1)] = 1000;
+    return c;
+  },
+  inputCeller: ['C2','E2','A3','B3',
+                'C3','E3','A4','B4','C4','E4',
+                'A5','B5','C5','E5','A6','B6','C6','E6'],
+  cellLabels: {'C2':'=B2*8%/12','E2':'=B2+C2-D2','B3':'=E2'},
+
+  fasit: function(data) {
+    var fasit = {};
+    var saldo = 50000, rente_månedlig = 0.08/12;
+    fasit['B2'] = 50000;
+    for (var i=0;i<12;i++) {
+      var rad = i+2;
+      var renter = Math.round(saldo * rente_månedlig * 100)/100;
+      var ny = Math.round((saldo + renter - 1000)*100)/100;
+      fasit['A'+(rad)] = i+1;
+      fasit['C'+(rad)] = renter;
+      fasit['E'+(rad)] = ny;
+      if (i<11) { fasit['A'+(rad+1)] = i+2; fasit['B'+(rad+1)] = ny; }
+      saldo = ny;
+    }
+    return fasit;
+  },
+  tol: {},
+  sjekkCeller: ['C2','E2','E6'],
+
+  hint: [
+    'C2: =B2*8%/12  (månedlig rente = årsrente/12)',
+    'E2: =B2+C2-D2  (ny saldo = gammel + renter - betaling)',
+    'B3: =E2  (neste måneds startsaldo = forrige sluttsaldo)',
+    'Kopier rad 2 formler ned til rad 13',
+  ],
+  fasitFormel: {C2:'=B2*8%/12', E2:'=B2+C2-D2', B3:'=E2'},
+},
+
+{
+  id: 'ok4', gruppe: 'Økonomi', tittel: 'Månedlig budsjett',
+  merking: 'lavt',
+  intro: 'Sett opp et enkelt månedlig budsjett med inntekter og utgifter.',
+  mål: 'Bruk SUM for å summere inntekter og utgifter, og beregn overskudd/underskudd.',
+  poeng: 3, maxPoeng: 3,
+
+  kolonner: ['A: Post','B: Beløp (kr)'],
+  radStart: 2,
+  data: function() {
+    return [
+      {A:'Lønn/stipend',B:8500},
+      {A:'Barnetrygd',B:1800},
+      {A:'Sum inntekter',B:null},
+      {A:'',B:null},
+      {A:'Husleie',B:4200},
+      {A:'Mat',B:2000},
+      {A:'Transport',B:600},
+      {A:'Telefon',B:400},
+      {A:'Fritid',B:800},
+      {A:'Sum utgifter',B:null},
+      {A:'',B:null},
+      {A:'OVERSKUDD',B:null},
+    ];
+  },
+
+  låsteCeller: function(data) {
+    var c = {'A1':'Post','B1':'Beløp (kr)'};
+    var radMap = {2:'Lønn/stipend',3:'Barnetrygd',4:'Sum inntekter',
+                  6:'Husleie',7:'Mat',8:'Transport',9:'Telefon',10:'Fritid',
+                  11:'Sum utgifter',13:'OVERSKUDD'};
+    var beløp = {2:8500,3:1800,7:4200,8:2000,9:600,10:400,11:800};
+    for (var k in radMap) c['A'+k] = radMap[k];
+    for (var k in beløp) c['B'+k] = beløp[k];
+    return c;
+  },
+  inputCeller: ['B4','B12','B13'],
+  cellLabels: {'B4':'=SUM(B2:B3)','B12':'=SUM(B7:B11)','B13':'=B4-B12'},
+
+  fasit: function(data) {
+    return { B4: 8500+1800, B12: 4200+2000+600+400+800, B13: (8500+1800)-(4200+2000+600+400+800) };
+  },
+  tol: { B4:0, B12:0, B13:0 },
+
+  hint: [
+    'B4: =SUM(B2:B3)  (sum av inntekter)',
+    'B12: =SUM(B7:B11)  (sum av utgifter)',
+    'B13: =B4-B12  (overskudd = inntekter - utgifter)',
+    'Er resultatet positivt har du råd. Negativt betyr underskudd.',
+  ],
+  fasitFormel: {B4:'=SUM(B2:B3)',B12:'=SUM(B7:B11)',B13:'=B4-B12'},
+},
+
+]; // END EXCEL_OPPGAVER
+
+
+// ══════════════════════════════════════════════════════════════════
+// EXCEL-TRENER — MOTOR
+// ══════════════════════════════════════════════════════════════════
+
+var state = {
+  gjeldende: null,   // oppgave-id
+  data: {},          // generert data per oppgave-id
+  celleVerdier: {},  // {oppgaveId: {celleRef: verdi}}
+  svar: {},          // {oppgaveId: {poeng, maxPoeng, status}}
+};
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var fp = lastFremgang();
+  fp.excel_besok = (fp.excel_besok||0) + 1;
+  lagreFremgang(fp);
+  document.getElementById('res-ganger').textContent = fp.excel_besok;
+  byggSidebar();
+  // Last fremgang
+  if (fp.excel_svar) state.svar = fp.excel_svar;
+  oppdaterStats();
+});
+
+function lastFremgang() {
+  try { return JSON.parse(localStorage.getItem('excel_trener_v1')||'{}'); } catch(e){ return {}; }
+}
+function lagreFremgang(data) {
+  try { localStorage.setItem('excel_trener_v1', JSON.stringify(data)); } catch(e){}
+}
+
+// ── SIDEBAR ──────────────────────────────────────────────────────
+function byggSidebar() {
+  var sb = document.getElementById('sidebar');
+  sb.innerHTML = '';
+  var grupper = {};
+  EXCEL_OPPGAVER.forEach(function(o) {
+    if (!grupper[o.gruppe]) grupper[o.gruppe] = [];
+    grupper[o.gruppe].push(o);
+  });
+  Object.keys(grupper).forEach(function(grp) {
+    var lbl = document.createElement('div');
+    lbl.className = 'grp-label';
+    lbl.textContent = grp;
+    sb.appendChild(lbl);
+    grupper[grp].forEach(function(o) {
+      var sv = state.svar[o.id];
+      var btn = document.createElement('button');
+      btn.className = 'oppg-knapp' +
+        (o.id===state.gjeldende?' aktiv':'') +
+        (sv && sv.status==='riktig'?' fullfort':'') +
+        (sv && sv.status==='feil'?' feil':'');
+      var merk = o.merking==='lavt'
+        ? '<span class="merking-lavt">🍎</span>'
+        : o.merking==='viktig'
+        ? '<span class="merking-viktig">⭐</span>' : '';
+      btn.innerHTML = '<span style="font-size:.72rem;width:18px">'+(sv?sv.status==='riktig'?'✓':sv.status==='delvis'?'~':'○':'○')+'</span>'
+        + '<span>' + o.tittel + '</span>' + merk;
+      btn.onclick = function(){ visOppgave(o.id); };
+      sb.appendChild(btn);
+    });
+  });
+}
+
+// ── VIS OPPGAVE ───────────────────────────────────────────────────
+function visOppgave(id) {
+  state.gjeldende = id;
+  var o = EXCEL_OPPGAVER.find(function(x){return x.id===id;});
+  if (!o) return;
+
+  // Generer data hvis ikke allerede gjort
+  if (!state.data[id]) state.data[id] = o.data();
+  if (!state.celleVerdier[id]) state.celleVerdier[id] = {};
+
+  var alleredeSvart = !!state.svar[id];
+  var panel = document.getElementById('panel');
+
+  var merk = o.merking==='viktig'
+    ? '<span class="meta-tag" style="background:rgba(232,184,75,.08);border-color:rgba(232,184,75,.25);color:var(--gold)">⭐ Viktig å mestre</span>'
+    : o.merking==='lavt'
+    ? '<span class="meta-tag" style="background:rgba(91,201,142,.08);border-color:rgba(91,201,142,.25);color:var(--accent)">🍎 Lavthengende frukt</span>' : '';
+
+  panel.innerHTML =
+    '<div class="oppg-header">'
+      +'<div class="oppg-gruppe">' + o.gruppe + '</div>'
+      +'<div class="oppg-tittel">' + o.tittel + '</div>'
+      +'<div class="oppg-meta">'
+        +'<span class="meta-tag meta-poeng">🏅 '+o.maxPoeng+' poeng</span>'
+        + merk
+      +'</div>'
+    +'</div>'
+    +'<div class="intro-boks">' + o.intro + '</div>'
+    +'<div class="mål-boks">📌 ' + o.mål + '</div>'
+    +'<div id="formel-bar"><span id="formel-celle-id">—</span><span style="color:var(--dim);margin:0 6px">fx</span><span id="formel-innhold"></span></div>'
+    +'<div id="regneark-wrap"></div>'
+    +'<div class="knapp-rad">'
+      +'<button class="sjekk-btn" id="sjekk-btn" onclick="sjekkSvar()" '+(alleredeSvart?'disabled':'')+'>✓ Sjekk svar</button>'
+      +'<button class="reset-btn" onclick="nullstillOppgave()">↩ Nullstill</button>'
+      +'<button class="neste-btn" id="neste-btn" onclick="nesteOppgave()" '+(alleredeSvart?'style="display:block"':'')+'> Neste ▶</button>'
+    +'</div>'
+    +'<div class="fb" id="fb"></div>'
+    +(alleredeSvart ? lagFasitBoks(o) : '');
+
+  byggRegneark(o, alleredeSvart);
+  visHint(o);
+  byggSidebar();
+  oppdaterProgress(o);
+}
+
+// ── BYGG REGNEARK ─────────────────────────────────────────────────
+function byggRegneark(o, låst) {
+  var data = state.data[o.id];
+  var låsteC = o.låsteCeller(data);
+  var celleV = state.celleVerdier[o.id];
+
+  // Finn maks rad og kolonne
+  var alleRefs = Object.keys(låsteC).concat(o.inputCeller || []);
+  var maksRad = 1, maxKolIdx = 1;
+  alleRefs.forEach(function(ref) {
+    var m = ref.match(/^([A-Z]+)(\d+)$/);
+    if (m) {
+      maksRad = Math.max(maksRad, parseInt(m[2]));
+      maxKolIdx = Math.max(maxKolIdx, m[1].charCodeAt(0)-64);
+    }
+  });
+
+  var tabell = '<table class="regneark"><tr><th></th>';
+  for (var k=1; k<=maxKolIdx; k++) tabell += '<th>' + String.fromCharCode(64+k) + '</th>';
+  tabell += '</tr>';
+
+  for (var r=1; r<=maksRad; r++) {
+    tabell += '<tr><td class="rad-header">' + r + '</td>';
+    for (var k=1; k<=maxKolIdx; k++) {
+      var kNavn = String.fromCharCode(64+k);
+      var ref = kNavn + r;
+      var erInput = o.inputCeller && o.inputCeller.indexOf(ref) >= 0;
+      var erLåst = låsteC.hasOwnProperty(ref);
+
+      if (erInput) {
+        var lagretVerdi = celleV[ref] !== undefined ? celleV[ref] : '';
+        var cssKlasse = '';
+        if (låst && state.svar[o.id]) {
+          var tol = (o.tol && o.tol[ref] !== undefined) ? o.tol[ref] : 0.5;
+          var fasit = o.fasit(data);
+          if (fasit[ref] !== undefined) {
+            var evalV = evaluerCelle(ref, o.id);
+            cssKlasse = (evalV !== null && Math.abs(evalV - fasit[ref]) <= tol) ? ' riktig' : ' galt';
+          }
+        }
+        tabell += '<td class="input-celle">';
+        if (o.cellLabels && o.cellLabels[ref]) {
+          tabell += '<div class="celle-label">' + o.cellLabels[ref] + '</div>';
+        }
+        tabell += '<input type="text" id="celle-'+ref+'" value="'+escHtml(lagretVerdi)+'"'
+          + ' class="'+cssKlasse.trim()+'"'
+          + (låst?' readonly':'')
+          + ' onfocus="oppdaterFormelBar(\''+ref+'\')"'
+          + ' oninput="celleEndret(\''+ref+'\',\''+o.id+'\')"'
+          + ' onkeydown="celleTab(event,\''+ref+'\',\''+o.id+'\')"'
+          + '></td>';
+      } else if (erLåst) {
+        var verdi = låsteC[ref];
+        var erTall = typeof verdi === 'number';
+        tabell += '<td class="låst' + (erTall?' tall':verdi===''?' tom':'') + '">'
+          + (erTall ? formaterTall(verdi) : escHtml(verdi||'')) + '</td>';
+      } else {
+        tabell += '<td class="låst tom"></td>';
+      }
+    }
+    tabell += '</tr>';
+  }
+  tabell += '</table>';
+  document.getElementById('regneark-wrap').innerHTML = tabell;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formaterTall(v) {
+  if (v === null || v === undefined) return '';
+  return typeof v === 'number' ? v.toLocaleString('no') : String(v);
+}
+
+// ── FORMEL-EVALUERING ─────────────────────────────────────────────
+function evaluerCelle(ref, oppgId) {
+  var celleV = state.celleVerdier[oppgId] || {};
+  var o = EXCEL_OPPGAVER.find(function(x){return x.id===oppgId;});
+  if (!o) return null;
+  var data = state.data[oppgId];
+  var låsteC = o.låsteCeller(data);
+
+  function getCelle(kol, rad) {
+    var r = kol + rad;
+    if (celleV[r] !== undefined && celleV[r] !== '') {
+      var parser2 = ExcelFormelParser(function(k2,r2){ return låsteC[k2+r2] !== undefined ? parseFloat(låsteC[k2+r2]) : null; });
+      var v = parser2.evaluer(celleV[r]);
+      return v;
+    }
+    if (låsteC[r] !== undefined) return typeof låsteC[r]==='number' ? låsteC[r] : parseFloat(låsteC[r]);
+    return null;
+  }
+
+  var parser = ExcelFormelParser(getCelle);
+  var formel = celleV[ref] || '';
+  return parser.evaluer(formel);
+}
+
+function celleEndret(ref, oppgId) {
+  var el = document.getElementById('celle-'+ref);
+  if (!el) return;
+  var verdi = el.value;
+  if (!state.celleVerdier[oppgId]) state.celleVerdier[oppgId] = {};
+  state.celleVerdier[oppgId][ref] = verdi;
+
+  // Vis beregnet verdi i formel-bar
+  var evalV = evaluerCelle(ref, oppgId);
+  document.getElementById('formel-celle-id').textContent = ref;
+  document.getElementById('formel-innhold').textContent =
+    verdi + (evalV !== null && verdi.startsWith('=') ? '  →  ' + formaterTall(evalV) : '');
+}
+
+function oppdaterFormelBar(ref) {
+  var el = document.getElementById('celle-'+ref);
+  document.getElementById('formel-celle-id').textContent = ref;
+  document.getElementById('formel-innhold').textContent = el ? el.value : '';
+}
+
+function celleTab(e, ref, oppgId) {
+  if (e.key === 'Tab' || e.key === 'Enter') {
+    e.preventDefault();
+    celleEndret(ref, oppgId);
+    // Finn neste inputcelle
+    var o = EXCEL_OPPGAVER.find(function(x){return x.id===oppgId;});
+    if (!o || !o.inputCeller) return;
+    var idx = o.inputCeller.indexOf(ref);
+    var neste = o.inputCeller[idx+1];
+    if (neste) {
+      var el = document.getElementById('celle-'+neste);
+      if (el) el.focus();
+    }
+  }
+}
+
+// ── SJEKK SVAR ────────────────────────────────────────────────────
+function sjekkSvar() {
+  var id = state.gjeldende;
+  var o = EXCEL_OPPGAVER.find(function(x){return x.id===id;});
+  if (!o) return;
+  var data = state.data[id];
+  var fasit = o.fasit(data);
+
+  // Finn hvilke celler som sjekkes
+  var sjekkC = o.sjekkCeller || o.inputCeller || [];
+
+  var riktige = 0, totalt = sjekkC.length;
+  var detaljer = [];
+
+  sjekkC.forEach(function(ref) {
+    if (fasit[ref] === undefined) { totalt--; return; }
+    var evalV = evaluerCelle(ref, id);
+    var tol = (o.tol && o.tol[ref] !== undefined) ? o.tol[ref] : 0.5;
+    var ok = evalV !== null && Math.abs(evalV - fasit[ref]) <= Math.max(tol, Math.abs(fasit[ref])*0.02);
+    if (ok) riktige++;
+    var el = document.getElementById('celle-'+ref);
+    if (el) el.className = ok ? 'riktig' : 'galt';
+    detaljer.push({ref:ref, evalV:evalV, fasit:fasit[ref], ok:ok});
+  });
+
+  // Fargellegg alle inputceller
+  (o.inputCeller||[]).forEach(function(ref) {
+    if (sjekkC.indexOf(ref) >= 0) return; // allerede håndtert
+    var evalV = evaluerCelle(ref, id);
+    if (fasit[ref]!==undefined && evalV!==null) {
+      var tol = (o.tol&&o.tol[ref]!==undefined)?o.tol[ref]:0.5;
+      var ok2 = Math.abs(evalV-fasit[ref])<=Math.max(tol,Math.abs(fasit[ref])*0.02);
+      var el2 = document.getElementById('celle-'+ref);
+      if (el2) el2.className = ok2?'riktig':'galt';
+    }
+  });
+
+  var poeng = totalt > 0 ? Math.round(riktige/totalt * o.maxPoeng) : 0;
+  var status = riktige===totalt ? 'riktig' : riktige > 0 ? 'delvis' : 'feil';
+
+  state.svar[id] = { poeng:poeng, maxPoeng:o.maxPoeng, status:status };
+
+  // Lagre
+  var fp = lastFremgang();
+  fp.excel_svar = state.svar;
+  lagreFremgang(fp);
+
+  // Vis tilbakemelding
+  var fb = document.getElementById('fb');
+  var melding = '';
+  if (status === 'riktig') {
+    melding = '✓ Alle celler riktige! ' + poeng + ' / ' + o.maxPoeng + ' poeng.';
+  } else if (status === 'delvis') {
+    melding = riktige + ' av ' + totalt + ' celler riktige. ' + poeng + ' / ' + o.maxPoeng + ' poeng.';
+    // Vis hvilke som er gale
+    var feilInfo = detaljer.filter(function(d){return !d.ok;}).map(function(d){
+      return d.ref + ': fikk ' + (d.evalV!==null?formaterTall(d.evalV):'(tom)') + ', fasit: ' + formaterTall(d.fasit);
+    }).join(' · ');
+    if (feilInfo) melding += '\n' + feilInfo;
+  } else {
+    melding = 'Ingen riktige ennå. Se hint til høyre og prøv igjen.';
+  }
+  fb.className = 'fb ' + status;
+  fb.textContent = melding;
+
+  // Vis fasit-boks
+  fb.insertAdjacentHTML('afterend', lagFasitBoks(o));
+
+  document.getElementById('sjekk-btn').disabled = true;
+  document.getElementById('neste-btn').style.display = 'block';
+
+  oppdaterStats();
+  byggSidebar();
+}
+
+function lagFasitBoks(o) {
+  if (!o.fasitFormel) return '';
+  var linjer = Object.entries ? Object.entries(o.fasitFormel) : Object.keys(o.fasitFormel).map(function(k){return [k, o.fasitFormel[k]];});
+  var html = '<div class="fasit-boks vis"><div class="fasit-tittel">📖 Fasit-formler</div>';
+  linjer.forEach(function(kv) {
+    html += '<div class="fasit-formel" style="margin-bottom:4px"><span style="color:var(--gold);margin-right:8px">'+kv[0]+'</span><span style="color:var(--accent2)">'+kv[1]+'</span></div>';
+  });
+  if (o.forklaringFasit) html += '<div style="font-size:.83rem;color:var(--dim);margin-top:8px;line-height:1.5">'+o.forklaringFasit+'</div>';
+  return html + '</div>';
+}
+
+// ── NAVIGASJON ────────────────────────────────────────────────────
+function nesteOppgave() {
+  var idx = EXCEL_OPPGAVER.findIndex(function(x){return x.id===state.gjeldende;});
+  if (idx < EXCEL_OPPGAVER.length-1) {
+    visOppgave(EXCEL_OPPGAVER[idx+1].id);
+  } else {
+    visResultat();
+  }
+}
+
+function nullstillOppgave() {
+  var id = state.gjeldende;
+  state.celleVerdier[id] = {};
+  delete state.svar[id];
+  var fp = lastFremgang();
+  fp.excel_svar = state.svar;
+  lagreFremgang(fp);
+  visOppgave(id);
+}
+
+function nyRunde() {
+  state.svar = {};
+  state.celleVerdier = {};
+  state.data = {};
+  var fp = lastFremgang();
+  fp.excel_svar = {};
+  lagreFremgang(fp);
+  document.getElementById('resultat').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+  document.getElementById('prog-wrap').style.display = 'flex';
+  byggSidebar();
+  visOppgave(EXCEL_OPPGAVER[0].id);
+}
+
+// ── HINT-PANEL ────────────────────────────────────────────────────
+function visHint(o) {
+  var hint = document.getElementById('hint-panel');
+  hint.innerHTML = '<div class="hint-tittel">💡 Slik gjør du det i Excel</div>';
+
+  if (o.hint) {
+    o.hint.forEach(function(h, i) {
+      var erFormel = h.match(/^[A-Z][0-9]+:/);
+      hint.innerHTML += '<div class="hint-steg">'
+        + '<div class="hint-nr">'+(i+1)+'</div>'
+        + '<div class="hint-tekst'+(erFormel?' formel':'')+'">'+h+'</div>'
+        + '</div>';
+    });
+  }
+
+  hint.innerHTML += '<div class="excel-info" style="margin-top:20px">'
+    + '<div class="excel-info-tittel">📌 Excel-tips</div>'
+    + '<div class="excel-info-tekst">'
+    + 'Formler starter alltid med <code>=</code><br>'
+    + 'Celleområde: <code>B2:B11</code><br>'
+    + 'Absolutt ref: <code>$B$2</code><br>'
+    + 'Potens: <code>A2^2</code> = A2²<br>'
+    + 'Norsk decimal: <code>1,04</code>'
+    + '</div></div>';
+}
+
+// ── STATISTIKK ────────────────────────────────────────────────────
+function oppdaterStats() {
+  var totPoeng = 0, totMax = 0, fullfort = 0;
+  var statPoeng = 0, statMax = 0, okPoeng = 0, okMax = 0;
+  EXCEL_OPPGAVER.forEach(function(o) {
+    totMax += o.maxPoeng;
+    if (o.gruppe==='Statistikk') statMax += o.maxPoeng;
+    else okMax += o.maxPoeng;
+    var sv = state.svar[o.id];
+    if (sv) {
+      totPoeng += sv.poeng;
+      fullfort++;
+      if (o.gruppe==='Statistikk') statPoeng += sv.poeng;
+      else okPoeng += sv.poeng;
+    }
+  });
+  document.getElementById('st-poeng').textContent = totPoeng;
+  document.getElementById('st-fullfort').textContent = fullfort;
+  document.getElementById('res-score').textContent = totPoeng+' / '+totMax;
+  document.getElementById('res-stat').textContent = statPoeng+'/'+statMax;
+  document.getElementById('res-ok').textContent = okPoeng+'/'+okMax;
+  document.getElementById('res-pst').textContent = totMax>0 ? Math.round(totPoeng/totMax*100)+'%' : '0%';
+}
+
+function oppdaterProgress(o) {
+  var idx = EXCEL_OPPGAVER.findIndex(function(x){return x.id===o.id;});
+  var fullfort = Object.keys(state.svar).length;
+  var pst = Math.round(fullfort/EXCEL_OPPGAVER.length*100);
+  document.getElementById('prog-tekst').textContent = 'Oppgave '+(idx+1)+' av '+EXCEL_OPPGAVER.length;
+  document.getElementById('prog-fill').style.width = pst+'%';
+}
+
+function visResultat() {
+  oppdaterStats();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('prog-wrap').style.display = 'none';
+  document.getElementById('resultat').style.display = 'block';
+}
+
+</script>
+</body>
+</html>
