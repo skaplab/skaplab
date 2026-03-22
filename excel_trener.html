@@ -138,7 +138,14 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
   background:var(--bg2);border-left:1px solid var(--border);
   display:flex;flex-direction:column;align-items:center;
   padding:20px 14px;gap:0;
-  position:sticky;top:0;height:calc(100vh - 98px);overflow-y:auto;
+  position:sticky;top:0;
+  height:calc(100vh - 98px);
+  overflow:hidden;
+}
+#hint-innhold{
+  width:100%;margin-top:16px;
+  overflow-y:auto;
+  flex:1;
 }
 .svar-display-skjult{display:none;}
 .svar-display-synlig{
@@ -160,9 +167,8 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
   font-family:var(--font-d);font-size:1.8rem;font-weight:700;
   color:var(--accent);line-height:1.1;
 }
-#hint-innhold{width:100%;margin-top:16px;}
 #hint-innhold.hint-skjult{display:none;}
-#hint-innhold.hint-synlig{display:block;}
+#hint-innhold.hint-synlig{display:block;overflow-y:auto;}
 #hint-knapp{
   background:none;border:none;cursor:pointer;
   font-size:2.4rem;line-height:1;padding:8px;
@@ -217,6 +223,15 @@ table.regneark td.input-celle input.nesten{background:rgba(232,184,75,.08);color
 .fv-begr{font-size:.78rem;color:var(--dim);margin-top:5px;line-height:1.5;font-weight:400;}
 .fv-alt.fv-riktig .fv-begr{color:rgba(91,201,142,.8);}
 .fv-alt.fv-galt .fv-begr{color:rgba(224,92,110,.7);}
+
+.kopier-ned-wrap{margin:6px 0 10px;display:flex;gap:8px;align-items:center;}
+.kopier-ned-btn{
+  padding:5px 14px;font-size:.78rem;font-family:var(--font-b);
+  background:rgba(91,133,217,.1);border:1px solid rgba(91,133,217,.25);
+  color:var(--accent2);border-radius:7px;cursor:pointer;transition:all .12s;
+}
+.kopier-ned-btn:hover{background:rgba(91,133,217,.2);}
+.kopier-ned-info{font-size:.72rem;color:var(--dim);}
 </style>
 </head>
 <body>
@@ -1006,6 +1021,30 @@ function byggRegneark(o, låst) {
   }
   tabell += '</table>';
   document.getElementById('regneark-wrap').innerHTML = tabell;
+  
+  // Legg til kopier-ned-knapper for kolonner med ≥2 inputceller
+  if (!låst) {
+    var kolGrupper = {};
+    (o.inputCeller||[]).forEach(function(ref) {
+      var mm = ref.match(/^([A-Z]+)(\d+)$/);
+      if (!mm) return;
+      if (!kolGrupper[mm[1]]) kolGrupper[mm[1]] = [];
+      kolGrupper[mm[1]].push({ref:ref, rad:parseInt(mm[2])});
+    });
+    Object.keys(kolGrupper).forEach(function(kol) {
+      var celler = kolGrupper[kol].sort(function(a,b){return a.rad-b.rad;});
+      if (celler.length < 3) return; // Bare for kolonner med 3+ celler
+      var startRef = celler[0].ref;
+      var startEl = document.getElementById('celle-'+startRef);
+      if (!startEl) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'kopier-ned-wrap';
+      wrap.innerHTML = '<button class="kopier-ned-btn" data-ref="'+startRef+'" data-oppg="'+o.id+'" onclick="kopierNed(this.dataset.ref,this.dataset.oppg)">'
+        + '⬇ Kopier formel ned i kolonne '+kol+'</button>'
+        + '<span class="kopier-ned-info">Skriv formel i '+startRef+' f\xf8rst</span>';
+      startEl.parentElement.parentElement.parentElement.insertAdjacentElement('afterend', wrap);
+    });
+  }
 }
 
 function escHtml(s) {
@@ -1287,6 +1326,64 @@ function velgFlervalg(oppgId, idx) {
     }
   });
 }
+
+// ── KOPIER NED ────────────────────────────────────────────────────
+function kopierNed(startRef, oppgId) {
+  var o = EXCEL_OPPGAVER.find(function(x){return x.id===oppgId;});
+  if (!o || !o.inputCeller) return;
+  
+  // Finn kolonne og startrad
+  var m = startRef.match(/^([A-Z]+)(\d+)$/);
+  if (!m) return;
+  var kol = m[1], startRad = parseInt(m[2]);
+  
+  // Finn alle inputceller i samme kolonne, sortert etter rad
+  var kolCeller = o.inputCeller.filter(function(ref) {
+    var mm = ref.match(/^([A-Z]+)(\d+)$/);
+    return mm && mm[1] === kol && parseInt(mm[2]) > startRad;
+  }).sort(function(a,b){ return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]); });
+  
+  if (!kolCeller.length) return;
+  
+  // Hent kilde-formelen
+  var kildeEl = document.getElementById('celle-'+startRef);
+  if (!kildeEl) return;
+  var kildeFormel = kildeEl.value;
+  if (!kildeFormel.startsWith('=')) return;
+  
+  // Kopier med justerte radnumre
+  var forrige = startRad;
+  kolCeller.forEach(function(ref) {
+    var mm = ref.match(/^([A-Z]+)(\d+)$/);
+    var nyRad = parseInt(mm[2]);
+    var diff = nyRad - forrige;
+    
+    // Juster alle cellereferanser i formelen (ikke absolutte)
+    var nyFormel = kildeFormel.replace(/([A-Z]+)(\d+)/g, function(_, k, r) {
+      // Ikke juster absolutte referanser ($B$2)
+      return k + (parseInt(r) + (nyRad - startRad));
+    });
+    
+    var el = document.getElementById('celle-'+ref);
+    if (el) {
+      el.value = nyFormel;
+      if (!state.celleVerdier[oppgId]) state.celleVerdier[oppgId] = {};
+      state.celleVerdier[oppgId][ref] = nyFormel;
+    }
+    forrige = nyRad;
+  });
+  
+  // Gi visuell bekreftelse
+  var btn = event.target.closest('.kopier-ned-btn');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    btn.style.color = 'var(--accent)';
+    btn.style.borderColor = 'var(--accent)';
+    setTimeout(function(){ btn.textContent = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
+  }
+}
+
 function nullstillOppgave() {
   var id = state.gjeldende;
   state.celleVerdier[id] = {};
