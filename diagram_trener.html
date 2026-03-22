@@ -128,7 +128,7 @@ a.tilbake:hover{color:var(--text);}
     <div class="undertittel">Les av og tolke grafer · LK20</div>
   </div>
   <div class="spacer"></div>
-  <div class="header-stat">✅ <b id="st-poeng">0</b> poeng · <b id="st-fullfort">0</b>/4 fullført</div>
+  <div class="header-stat">✅ <b id="st-poeng">0</b> poeng · <b id="st-fullfort">0</b>/14 fullført</div>
 </div>
 <div id="prog-wrap">
   <span id="prog-tekst" style="font-size:.76rem;color:var(--dim)">Velg en oppgave</span>
@@ -181,6 +181,14 @@ function bland(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.f
 var DIAGRAM_FARGER = ['#5b8dd9', '#e8874b', '#5bc98e', '#e05c6e', '#a78bfa'];
 var DIAGRAM_NAVN   = ['f', 'g', 'h'];
 
+function pentIntervall(range, ønsketAntall) {
+    var rå = range / ønsketAntall;
+    var exp = Math.floor(Math.log10(rå));
+    var mant = rå / Math.pow(10, exp);
+    var nice = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
+    return nice * Math.pow(10, exp);
+  }
+
 function lagKoordinatsystem(opts) {
   // opts: { funksjoner: [{a,b,type:'lin'|'exp'}], xMin, xMax, yMin, yMax, bredde, høyde, merkPunkter }
   var W = opts.bredde || 480, H = opts.høyde || 340;
@@ -193,14 +201,6 @@ function lagKoordinatsystem(opts) {
   function sy(y) { return H - pad.b - (y - yMin) / (yMax - yMin) * (H - pad.t - pad.b); }
 
   // Pene akse-intervaller
-  function pentIntervall(range, ønsketAntall) {
-    var rå = range / ønsketAntall;
-    var exp = Math.floor(Math.log10(rå));
-    var mant = rå / Math.pow(10, exp);
-    var nice = mant < 1.5 ? 1 : mant < 3.5 ? 2 : mant < 7.5 ? 5 : 10;
-    return nice * Math.pow(10, exp);
-  }
-
   var xInt = pentIntervall(xMax - xMin, 6);
   var yInt = pentIntervall(yMax - yMin, 5);
 
@@ -598,6 +598,692 @@ var DIAGRAM_OPPGAVER = [
   ],
 },
 
+// ══════════════════════════════════════════════════════════════════
+// FIRE NYE DIAGRAM-OPPGAVER (diag5–diag8)
+// ══════════════════════════════════════════════════════════════════
+
+// ── DIAG 5: SØYLEDIAGRAM ─────────────────────────────────────────
+{
+  id: 'diag5', gruppe: 'Diagram', tittel: 'Les av søylediagram',
+  merking: 'lavt', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var kontekster = [
+      { tema:'Antall elever som deltar i ulike fritidsaktiviteter',
+        kategorier:['Fotball','Håndball','Svømming','Dans','Ingen'],
+        yEtikett:'Antall elever' },
+      { tema:'Gjennomsnittlig skjermtid per dag (minutter)',
+        kategorier:['8. trinn','9. trinn','10. trinn','Voksen'],
+        yEtikett:'Minutter' },
+      { tema:'Antall solgte varer per ukedag',
+        kategorier:['Man','Tir','Ons','Tor','Fre'],
+        yEtikett:'Antall solgt' },
+      { tema:'Temperatur (°C) kl. 12 hver dag',
+        kategorier:['Man','Tir','Ons','Tor','Fre','Lør','Søn'],
+        yEtikett:'Grader (°C)' },
+    ];
+    var k = plukk(kontekster);
+    var n = k.kategorier.length;
+    var verdier = [];
+    for (var i=0;i<n;i++) verdier.push(rnd(20,90)*5);
+    var maks = Math.max.apply(null, verdier);
+    var min = Math.min.apply(null, verdier);
+    var maksCat = k.kategorier[verdier.indexOf(maks)];
+    var minCat  = k.kategorier[verdier.indexOf(min)];
+    var sum = verdier.reduce(function(a,b){return a+b;},0);
+    var snitt = Math.round(sum/n);
+
+    // SVG søylediagram
+    var W=480, H=300, padL=50, padB=36, padT=20, padR=16;
+    var grafW = W-padL-padR, grafH = H-padT-padB;
+    var yMax = Math.ceil(maks*1.15/50)*50;
+    var barW = Math.floor(grafW/n*0.6);
+    var barGap = Math.floor(grafW/n);
+
+    function sy(v){ return padT + grafH - (v/yMax)*grafH; }
+    function sx(i){ return padL + i*barGap + barGap/2 - barW/2; }
+
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" '
+      +'style="width:100%;max-width:'+W+'px;background:#1a1a28;border-radius:10px;display:block">';
+
+    // Y-akse merker
+    var yInt = pentIntervall(yMax, 5);
+    svg += '<g stroke="rgba(255,255,255,.07)" stroke-width="0.5">';
+    for (var gy=0;gy<=yMax;gy+=yInt) {
+      var lyy = sy(gy);
+      svg += '<line x1="'+padL+'" y1="'+lyy+'" x2="'+(W-padR)+'" y2="'+lyy+'"/>';
+    }
+    svg += '</g>';
+    svg += '<g fill="rgba(255,255,255,.5)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">';
+    for (var my2=0;my2<=yMax;my2+=yInt) {
+      svg += '<text x="'+(padL-4)+'" y="'+(sy(my2)+3)+'">'
+        +(my2>=1000?(my2/1000).toFixed(1)+'k':my2)+'</text>';
+    }
+    svg += '</g>';
+
+    // Søyler
+    var farger = ['#5b8dd9','#e8874b','#5bc98e','#e05c6e','#a78bfa','#e8b84b','#5dcaa5'];
+    verdier.forEach(function(v,i) {
+      var x=sx(i), y=sy(v), h2=grafH-(y-padT);
+      svg += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h2+'" fill="'+farger[i%farger.length]+'" rx="3" opacity="0.85"/>';
+      svg += '<text x="'+(x+barW/2)+'" y="'+(y-5)+'" fill="'+farger[i%farger.length]+'" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">'+v+'</text>';
+    });
+
+    // X-akse etiketter
+    svg += '<g fill="rgba(255,255,255,.6)" font-size="10" text-anchor="middle" font-family="sans-serif">';
+    k.kategorier.forEach(function(kat,i) {
+      svg += '<text x="'+(sx(i)+barW/2)+'" y="'+(H-padB+14)+'">'+kat+'</text>';
+    });
+    svg += '</g>';
+
+    // Akser
+    svg += '<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>';
+    svg += '<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>';
+    svg += '<text x="'+padL+'" y="'+(padT-5)+'" fill="rgba(255,255,255,.5)" font-size="11" font-family="sans-serif">'+k.yEtikett+'</text>';
+    svg += '</svg>';
+
+    return { k, verdier, maks, min, maksCat, minCat, sum, snitt, svg };
+  },
+
+  spørsmål: function(d) {
+    return d.k.tema+'.\n\n'
+      +'a) Hvilken kategori har høyest verdi, og hva er verdien? (1 poeng)\n\n'
+      +'b) Hva er differansen mellom høyeste og laveste verdi? (1 poeng)\n\n'
+      +'c) Hva er gjennomsnittet? Rund av til nærmeste hele tall. (1 poeng)';
+  },
+  svarType: 'søyle_abc',
+  fasit: function(d) { return { maks:d.maks, diff:d.maks-d.min, snitt:d.snitt }; },
+  løsning: function(d) {
+    return 'a) '+d.maksCat+': '+d.maks
+      +'\nb) '+d.maks+' − '+d.min+' = '+(d.maks-d.min)
+      +'\nc) ('+d.verdier.join('+')+') / '+d.verdier.length+' = '+d.snitt;
+  },
+  hint: ['Les av høyden på søylene.',
+    'Differanse = høyeste minus laveste.',
+    'Gjennomsnitt = sum av alle / antall kategorier.'],
+},
+
+// ── DIAG 6: EKSPONENTIELL AVLESNING ──────────────────────────────
+{
+  id: 'diag6', gruppe: 'Diagram', tittel: 'Les av eksponentiell vekst',
+  merking: 'viktig', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var startVerdier = [500,1000,2000,5000,10000];
+    var vfAlts = [1.1, 1.15, 1.2, 1.25, 1.3];
+    var sv = plukk(startVerdier);
+    var vf = plukk(vfAlts);
+    var xMax = 10;
+    var kontekster = [
+      {xNavn:'år', yNavn:'bakterier', intro:'En bakteriekultur vokser eksponentielt.'},
+      {xNavn:'år', yNavn:'kr', intro:'En investering vokser med fast prosent per år.'},
+      {xNavn:'måneder', yNavn:'brukere', intro:'Antall brukere i en app vokser eksponentielt.'},
+    ];
+    var k = plukk(kontekster);
+
+    // Finn to merkede punkter
+    var x1 = 2, x2 = 5;
+    var y1 = Math.round(sv * Math.pow(vf,x1));
+    var y2 = Math.round(sv * Math.pow(vf,x2));
+    var yMax = Math.ceil(sv*Math.pow(vf,xMax)*1.05/1000)*1000;
+
+    var svg = lagKoordinatsystem({
+      funksjoner:[{type:'exp', a:sv, b:vf, navn:'f'}],
+      xMin:0, xMax:xMax, yMin:0, yMax:yMax,
+      merkPunkter:[
+        {x:0,  y:sv, label:'(0, '+sv.toLocaleString('no')+')',  farge:'#5bc98e', labelOffset:[8,-10]},
+        {x:x1, y:y1, label:'('+x1+', '+y1.toLocaleString('no')+')', farge:'#5bc98e', labelOffset:[8,14]},
+      ],
+    });
+
+    // Omtrentlig vekstfaktor fra de to punktene
+    var vfBeregnet = Math.round(Math.pow(y1/sv, 1/x1)*100)/100;
+
+    return {k, sv, vf, vfBeregnet, x1, y1, x2, y2, xMax, yMax, svg};
+  },
+
+  spørsmål: function(d) {
+    return d.k.intro+'\n\nTo punkter er merket på grafen: (0, '+d.sv.toLocaleString('no')+') og ('+d.x1+', '+d.y1.toLocaleString('no')+').\n\n'
+      +'a) Hva er startverdien f(0)? (1 poeng)\n\n'
+      +'b) Regn ut den omtrentlige vekstfaktoren fra de to punktene. (1 poeng)\n\n'
+      +'c) Hva er f('+d.x2+')? Bruk vekstfaktoren du fant. (1 poeng)';
+  },
+  svarType: 'eksp_avles',
+  fasit: function(d) {
+    return { sv:d.sv, vf:d.vfBeregnet, y2:Math.round(d.sv*Math.pow(d.vfBeregnet,d.x2)) };
+  },
+  løsning: function(d) {
+    var vf = d.vfBeregnet;
+    var y2 = Math.round(d.sv*Math.pow(vf,d.x2));
+    return 'a) f(0) = '+d.sv.toLocaleString('no')
+      +'\nb) vf = ³√('+d.y1.toLocaleString('no')+'/'+d.sv.toLocaleString('no')+') = '+vf
+      +'\nc) f('+d.x2+') = '+d.sv.toLocaleString('no')+' · '+vf+'^'+d.x2+' ≈ '+y2.toLocaleString('no');
+  },
+  hint: [
+    'Startverdi = verdien der x = 0 (der grafen krysser y-aksen).',
+    'Vekstfaktor: vf = (y₁/y₀)^(1/x₁)',
+    'f(x) = startverdi · vekstfaktor^x',
+  ],
+},
+
+// ── DIAG 7: LES AV KONSTANTLEDD ──────────────────────────────────
+{
+  id: 'diag7', gruppe: 'Diagram', tittel: 'Konstantledd og funksjonsutrykk',
+  merking: 'viktig', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var a = rnd(2,8)*50;
+    var b = rnd(1,6)*500;
+    var x1 = rnd(2,5), x2 = x1 + rnd(3,6);
+    var y1 = a*x1+b, y2 = a*x2+b;
+    var xMax = x2+3;
+    var yMax = Math.ceil((a*xMax+b)/500+1)*500;
+
+    var kontekster = [
+      {xNavn:'km', yNavn:'kr', intro:'En taxa tar en startpris pluss pris per km.'},
+      {xNavn:'måneder', yNavn:'kr', intro:'Et treningssenter tar innmeldingsavgift pluss månedspris.'},
+      {xNavn:'timer', yNavn:'kr', intro:'En håndverker tar en fastpris pluss timepris.'},
+      {xNavn:'enheter', yNavn:'kr', intro:'En produksjonslinje har faste kostnader pluss variabel kostnad.'},
+    ];
+    var k = plukk(kontekster);
+
+    // Flervalg for funksjonsutrykk
+    var riktigFn = 'f(x) = '+a+'x + '+b;
+    var feilAlts = [
+      'f(x) = '+a+'x',
+      'f(x) = '+(a+50)+'x + '+b,
+      'f(x) = '+a+'x + '+(b+500),
+    ];
+    feilAlts = bland(feilAlts).slice(0,3);
+    var alts = bland([riktigFn].concat(feilAlts));
+    var riktigIdx = alts.indexOf(riktigFn);
+
+    var svg = lagKoordinatsystem({
+      funksjoner:[{type:'lin', a:a, b:b, navn:'f'}],
+      xMin:0, xMax:xMax, yMin:0, yMax:yMax,
+      merkPunkter:[
+        {x:0,  y:b,  label:'(0, '+b+')',  farge:'#e8b84b', labelOffset:[8,-10]},
+        {x:x1, y:y1, label:'('+x1+', '+y1+')', farge:'#5bc98e', labelOffset:[8,14]},
+        {x:x2, y:y2, label:'('+x2+', '+y2+')', farge:'#5bc98e', labelOffset:[8,-10]},
+      ],
+    });
+
+    return {k, a, b, x1, y1, x2, y2, alts, riktigIdx, svg};
+  },
+
+  spørsmål: function(d) {
+    return d.k.intro+'\n\nGrafen viser prisen som funksjon av antall '+d.k.xNavn+'.\n'
+      +'Tre punkter er merket: (0, '+d.b+'), ('+d.x1+', '+d.y1+') og ('+d.x2+', '+d.y2+').\n\n'
+      +'a) Hva er konstantleddet (startprisen)? (1 poeng)\n\n'
+      +'b) Regn ut stigningstallet. (1 poeng)\n\n'
+      +'c) Velg riktig funksjonsuttrykk. (1 poeng)';
+  },
+  svarType: 'kl_abc',
+  fasit: function(d) { return {b:d.b, a:d.a, riktigIdx:d.riktigIdx, alts:d.alts}; },
+  løsning: function(d) {
+    return 'a) Konstantledd = '+d.b+' (y-verdi når x = 0)'
+      +'\nb) a = ('+d.y2+' − '+d.y1+') / ('+d.x2+' − '+d.x1+') = '+(d.y2-d.y1)+'/'+(d.x2-d.x1)+' = '+d.a
+      +'\nc) '+d.alts[d.riktigIdx];
+  },
+  hint: [
+    'Konstantledd = der grafen krysser y-aksen (x = 0).',
+    'Stigningstall = (y₂ − y₁) / (x₂ − x₁)',
+    'Funksjonsuttrykk: f(x) = stigningstall · x + konstantledd',
+  ],
+},
+
+// ── DIAG 8: PROPORSJONALITET ──────────────────────────────────────
+{
+  id: 'diag8', gruppe: 'Diagram', tittel: 'Proporsjonalitet',
+  merking: '', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var k_prop = rnd(3,9)*100;    // proporsjonal: f(x) = k·x
+    var k_omv  = rnd(2,6)*1000;  // omvendt: g(x) = k/x
+    var xMax = 10, yMax = 3500;
+
+    // Flervalg: hva kjennetegner direkte proporsjonalitet?
+    var alts = bland([
+      'Grafen er en rett linje gjennom origo',
+      'Grafen er en rett linje som ikke går gjennom origo',
+      'Grafen er en kurve som avtar',
+      'Grafen er alltid brattere enn 45 grader',
+    ]);
+    var riktigIdx = alts.indexOf('Grafen er en rett linje gjennom origo');
+
+    // Merket punkt på proporsjonal
+    var xM = rnd(3,7), yM = k_prop * xM;
+
+    var svg = lagKoordinatsystem({
+      funksjoner:[
+        {type:'lin', a:k_prop, b:0, navn:'f'},
+        {type:'exp', a:k_omv,  b:0.6, navn:'g'},
+      ],
+      xMin:0.5, xMax:xMax, yMin:0, yMax:yMax,
+      merkPunkter:[
+        {x:xM, y:yM, label:'('+xM+', '+yM+')', farge:'#5b8dd9', labelOffset:[8,-10]},
+      ],
+    });
+
+    return {k_prop, k_omv, xM, yM, alts, riktigIdx, xMax, yMax, svg};
+  },
+
+  spørsmål: function(d) {
+    return 'Grafen viser to funksjoner f(x) og g(x).\n\n'
+      +'a) Hvilken av grafene viser direkte proporsjonalitet? (1 poeng)\n\n'
+      +'b) Hva kjennetegner en direkte proporsjonal funksjon? Velg riktig påstand. (1 poeng)\n\n'
+      +'c) Punktet ('+d.xM+', '+d.yM+') ligger på f(x). Hva er proporsjonalitetskonstanten k? (1 poeng)';
+  },
+  svarType: 'prop_abc',
+  fasit: function(d) { return {fn:'f', riktigIdx:d.riktigIdx, alts:d.alts, k:d.k_prop}; },
+  løsning: function(d) {
+    return 'a) f(x) — rett linje gjennom origo'
+      +'\nb) '+d.alts[d.riktigIdx]
+      +'\nc) k = y/x = '+d.yM+' / '+d.xM+' = '+d.k_prop;
+  },
+  hint: [
+    'Direkte proporsjonalitet: y = kx — alltid rett linje gjennom (0, 0).',
+    'Omvendt proporsjonalitet: y = k/x — kurve som nærmer seg aksene.',
+    'Proporsjonalitetskonstant k = y / x for et hvilket som helst punkt på linjen.',
+  ],
+},
+
+// ══════════════════════════════════════════════════════════════════
+// FIRE NYE DIAGRAM-OPPGAVER (diag11–diag14)
+// ══════════════════════════════════════════════════════════════════
+
+// ── DIAG 11: ABSOLUTT OG RELATIV ENDRING ─────────────────────────
+{
+  id: 'diag11', gruppe: 'Diagram', tittel: 'Absolutt og relativ endring',
+  merking: 'viktig', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var kontekster = [
+      { tema:'Antall turister (i tusen)', xNavn:'år', yNavn:'turister (tusen)' },
+      { tema:'Omsetning i en butikk (kr)', xNavn:'år', yNavn:'kr' },
+      { tema:'Antall abonnenter', xNavn:'kvartal', yNavn:'abonnenter' },
+      { tema:'Strømforbruk (kWh)', xNavn:'måned', yNavn:'kWh' },
+    ];
+    var k = plukk(kontekster);
+    var x1 = rnd(2,4), x2 = x1 + rnd(3,6);
+    var y1 = rnd(4,12)*500;
+    var endr = rnd(1,5)*100 * (Math.random()>0.3?1:-1);
+    var y2 = y1 + endr;
+    if (y2 < 200) { endr = Math.abs(endr); y2 = y1 + endr; }
+    var xMax = x2 + 2;
+    var yMin = 0;
+    var yMax = Math.ceil(Math.max(y1,y2)*1.3/500)*500;
+    var abs_endr = y2 - y1;
+    var rel_endr = Math.round(abs_endr/y1*1000)/10; // én desimal
+
+    var svg = lagKoordinatsystem({
+      funksjoner: [{ type:'lin', a:(y2-y1)/(x2-x1), b:y1-(y2-y1)/(x2-x1)*x1, navn:'f' }],
+      xMin:0, xMax:xMax, yMin:0, yMax:yMax,
+      merkPunkter: [
+        { x:x1, y:y1, label:'('+x1+', '+y1+')', farge:'#5b8dd9', labelOffset:[8,-12] },
+        { x:x2, y:y2, label:'('+x2+', '+y2+')', farge:'#e8874b', labelOffset:[8,14] },
+      ],
+    });
+    return { k, x1, y1, x2, y2, abs_endr, rel_endr, xMax, yMax, svg };
+  },
+
+  spørsmål: function(d) {
+    return d.k.tema+' er avlest i to punkter på grafen:\n'
+      +'('+d.x1+', '+d.y1+') og ('+d.x2+', '+d.y2+').\n\n'
+      +'a) Hva er den absolutte endringen fra '+d.x1+' til '+d.x2+'? (1 poeng)\n\n'
+      +'b) Hva er den relative endringen i prosent? Én desimal. (1 poeng)\n\n'
+      +'c) Er endringen en økning eller nedgang? (1 poeng)';
+  },
+  svarType: 'endr_abc',
+  fasit: function(d) {
+    return { abs: d.abs_endr, rel: d.rel_endr, retning: d.abs_endr >= 0 ? 0 : 1 };
+  },
+  løsning: function(d) {
+    return 'a) Absolutt endring: '+d.y2+' − '+d.y1+' = '+d.abs_endr
+      +'\nb) Relativ endring: '+d.abs_endr+' / '+d.y1+' × 100 = '+d.rel_endr+' %'
+      +'\nc) '+(d.abs_endr>=0?'Økning':'Nedgang');
+  },
+  hint: [
+    'Absolutt endring = y₂ − y₁ (bare differansen).',
+    'Relativ endring = (y₂ − y₁) / y₁ × 100 %',
+    'Positivt tall = økning. Negativt = nedgang.',
+  ],
+},
+
+// ── DIAG 12: SEKTORDIAGRAM ────────────────────────────────────────
+{
+  id: 'diag12', gruppe: 'Diagram', tittel: 'Les av sektordiagram',
+  merking: 'lavt', poeng: 3, maxPoeng: 3,
+
+  generer: function() {
+    var kontekster = [
+      { tema:'Transportmidler til skolen',
+        kategorier:['Sykkel','Buss','Gange','Bil','Annet'] },
+      { tema:'Favorittfag',
+        kategorier:['Matematikk','Norsk','Naturfag','Engelsk','Gym'] },
+      { tema:'Bruk av fritid',
+        kategorier:['Skjerm','Sport','Venner','Lekser','Annet'] },
+      { tema:'Energikilder i Norge',
+        kategorier:['Vannkraft','Vindkraft','Solenergi','Gass','Annet'] },
+    ];
+    var k = plukk(kontekster);
+    var n = k.kategorier.length;
+
+    // Generer prosentandeler som summerer til 100
+    var deler = [];
+    var rest = 100;
+    for (var i=0;i<n-1;i++) {
+      var max_del = rest - (n-1-i)*5;
+      var del = rnd(10, Math.min(45, max_del));
+      deler.push(del);
+      rest -= del;
+    }
+    deler.push(rest);
+    // Bland litt
+    deler = bland(deler);
+
+    var maks = Math.max.apply(null, deler);
+    var min  = Math.min.apply(null, deler);
+    var maksCat = k.kategorier[deler.indexOf(maks)];
+    var minCat  = k.kategorier[deler.indexOf(min)];
+
+    // SVG sektordiagram
+    var W=380, H=300, cx=160, cy=150, r=110;
+    var farger=['#5b8dd9','#e8874b','#5bc98e','#e05c6e','#a78bfa','#e8b84b'];
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" '
+      +'style="width:100%;max-width:'+W+'px;background:#1a1a28;border-radius:10px;display:block">';
+
+    var startVinkel = -Math.PI/2;
+    deler.forEach(function(del,i) {
+      var vinkel = del/100 * 2*Math.PI;
+      var sluttVinkel = startVinkel + vinkel;
+      var x1s = cx + r*Math.cos(startVinkel);
+      var y1s = cy + r*Math.sin(startVinkel);
+      var x2s = cx + r*Math.cos(sluttVinkel);
+      var y2s = cy + r*Math.sin(sluttVinkel);
+      var storBue = vinkel > Math.PI ? 1 : 0;
+      svg += '<path d="M'+cx+','+cy+' L'+x1s.toFixed(1)+','+y1s.toFixed(1)
+        +' A'+r+','+r+' 0 '+storBue+',1 '+x2s.toFixed(1)+','+y2s.toFixed(1)+' Z" '
+        +'fill="'+farger[i]+'" stroke="#1a1a28" stroke-width="2" opacity="0.88"/>';
+      // Prosentlabel midt i sektoren
+      var midVinkel = startVinkel + vinkel/2;
+      var labelR = r*0.65;
+      var lx = cx + labelR*Math.cos(midVinkel);
+      var ly = cy + labelR*Math.sin(midVinkel);
+      if (del >= 10) {
+        svg += '<text x="'+lx.toFixed(1)+'" y="'+(ly+4).toFixed(1)+'" fill="white" '
+          +'font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace" font-weight="600">'+del+'%</text>';
+      }
+      startVinkel = sluttVinkel;
+    });
+
+    // Leggende
+    var lx = cx + r + 14, ly = 60;
+    deler.forEach(function(del,i) {
+      svg += '<rect x="'+lx+'" y="'+(ly-10)+'" width="12" height="12" fill="'+farger[i]+'" rx="2"/>';
+      svg += '<text x="'+(lx+16)+'" y="'+ly+'" fill="rgba(255,255,255,.75)" font-size="11" font-family="sans-serif">'
+        +k.kategorier[i]+'</text>';
+      ly += 18;
+    });
+    svg += '</svg>';
+
+    return { k, deler, maks, min, maksCat, minCat, svg };
+  },
+
+  spørsmål: function(d) {
+    return d.k.tema+' — sektordiagrammet viser fordelingen i prosent.\n\n'
+      +'a) Hvilken kategori er størst, og hva er andelen? (1 poeng)\n\n'
+      +'b) Hva er differansen mellom størst og minst andel? (1 poeng)\n\n'
+      +'c) Kategoriene «'+d.k.kategorier[0]+'» og «'+d.k.kategorier[1]+'» til sammen — hva er den samlede andelen? (1 poeng)';
+  },
+  svarType: 'sektor_abc',
+  fasit: function(d) {
+    return { maks:d.maks, diff:d.maks-d.min, sum01:d.deler[0]+d.deler[1] };
+  },
+  løsning: function(d) {
+    return 'a) '+d.maksCat+': '+d.maks+'%'
+      +'\nb) '+d.maks+' − '+d.min+' = '+(d.maks-d.min)+' prosentpoeng'
+      +'\nc) '+d.deler[0]+' + '+d.deler[1]+' = '+(d.deler[0]+d.deler[1])+'%';
+  },
+  hint: [
+    'Les prosentandelen direkte fra sektoren.',
+    'Differanse = størst % minus minst %.',
+    'Legg bare sammen de to angitte sektorene.',
+  ],
+},
+
+// ── DIAG 13: DOBBELT LINJEDIAGRAM ────────────────────────────────
+{
+  id: 'diag13', gruppe: 'Diagram', tittel: 'Dobbelt linjediagram',
+  merking: 'viktig', poeng: 4, maxPoeng: 4,
+
+  generer: function() {
+    var kontekster = [
+      { tema:'Temperatur (°C) i to byer over måneder',
+        xNavn:'Måned', yNavn:'°C', kurve1:'By A', kurve2:'By B',
+        xLabels:['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Des'] },
+      { tema:'Ukentlig trening (timer) for to elever over uker',
+        xNavn:'Uke', yNavn:'Timer', kurve1:'Elev A', kurve2:'Elev B',
+        xLabels:['1','2','3','4','5','6','7','8'] },
+      { tema:'Salg (enheter) for to produkter',
+        xNavn:'Kvartal', yNavn:'Enheter', kurve1:'Produkt 1', kurve2:'Produkt 2',
+        xLabels:['K1','K2','K3','K4'] },
+    ];
+    var k = plukk(kontekster);
+    var n = k.xLabels.length;
+    var v1=[], v2=[];
+    for (var i=0;i<n;i++) {
+      v1.push(rnd(5,40)*5);
+      v2.push(rnd(5,40)*5);
+    }
+
+    // Finn maks, min, skjæring (omtrentlig)
+    var maks1=Math.max.apply(null,v1), maks2=Math.max.apply(null,v2);
+    var yMax=Math.ceil(Math.max(maks1,maks2)*1.2/20)*20;
+
+    // Finn om kurvene krysser
+    var krysser=false, kryssIdx=-1;
+    for (var j=0;j<n-1;j++) {
+      if ((v1[j]-v2[j])*(v1[j+1]-v2[j+1])<0) { krysser=true; kryssIdx=j; break; }
+    }
+
+    // SVG — diskret linjediagram
+    var W=480, H=300, padL=46, padB=40, padT=20, padR=16;
+    var grafW=W-padL-padR, grafH=H-padT-padB;
+    var xStep=grafW/(n-1);
+    function sy(v){ return padT+grafH-(v/yMax)*grafH; }
+    function sxi(i){ return padL+i*xStep; }
+
+    var yInt=pentIntervall(yMax,5);
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" '
+      +'style="width:100%;max-width:'+W+'px;background:#1a1a28;border-radius:10px;display:block">';
+
+    // Rutenett
+    svg+='<g stroke="rgba(255,255,255,.07)" stroke-width="0.5">';
+    for (var gy=0;gy<=yMax;gy+=yInt) svg+='<line x1="'+padL+'" y1="'+sy(gy)+'" x2="'+(W-padR)+'" y2="'+sy(gy)+'"/>';
+    svg+='</g>';
+
+    // Y-akse
+    svg+='<g fill="rgba(255,255,255,.5)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">';
+    for (var my=0;my<=yMax;my+=yInt)
+      svg+='<text x="'+(padL-4)+'" y="'+(sy(my)+3)+'">'+my+'</text>';
+    svg+='</g>';
+
+    // X-labels
+    svg+='<g fill="rgba(255,255,255,.55)" font-size="10" text-anchor="middle" font-family="sans-serif">';
+    k.xLabels.forEach(function(lab,i){ svg+='<text x="'+sxi(i)+'" y="'+(H-padB+14)+'">'+lab+'</text>'; });
+    svg+='</g>';
+
+    // Akser
+    svg+='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>';
+    svg+='<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>';
+
+    // Linjer
+    [[v1,'#5b8dd9',k.kurve1],[v2,'#e8874b',k.kurve2]].forEach(function(linje){
+      var pts=linje[0].map(function(v,i){return sxi(i).toFixed(1)+','+sy(v).toFixed(1);}).join(' ');
+      svg+='<polyline points="'+pts+'" fill="none" stroke="'+linje[1]+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      linje[0].forEach(function(v,i){
+        svg+='<circle cx="'+sxi(i)+'" cy="'+sy(v)+'" r="3.5" fill="'+linje[1]+'" stroke="#1a1a28" stroke-width="1.5"/>';
+      });
+    });
+
+    // Leggende
+    [[k.kurve1,'#5b8dd9'],[k.kurve2,'#e8874b']].forEach(function(l,i){
+      var lx2=padL+8+i*110;
+      svg+='<rect x="'+lx2+'" y="'+(padT+2)+'" width="16" height="3" fill="'+l[1]+'" rx="1"/>';
+      svg+='<text x="'+(lx2+20)+'" y="'+(padT+8)+'" fill="rgba(255,255,255,.8)" font-size="11" font-family="sans-serif">'+l[0]+'</text>';
+    });
+
+    svg+='</svg>';
+
+    // Spørsmål-data: maks i begge, hvilken er høyest totalt, krysser de?
+    var sumA=v1.reduce(function(a,b){return a+b;},0);
+    var sumB=v2.reduce(function(a,b){return a+b;},0);
+    var høyestTotalt = sumA>sumB?0:1; // 0=kurve1, 1=kurve2
+
+    var idxMaks1=v1.indexOf(maks1), idxMaks2=v2.indexOf(maks2);
+
+    return { k, n, v1, v2, maks1, maks2, idxMaks1, idxMaks2,
+             yMax, krysser, kryssIdx, høyestTotalt, sumA, sumB, svg };
+  },
+
+  spørsmål: function(d) {
+    return d.k.tema+'.\n\n'
+      +'a) Hva er høyeste verdi for '+d.k.kurve1+', og ved hvilken '+d.k.xNavn.toLowerCase()+'? (1 poeng)\n\n'
+      +'b) Hva er høyeste verdi for '+d.k.kurve2+', og ved hvilken '+d.k.xNavn.toLowerCase()+'? (1 poeng)\n\n'
+      +'c) Hvilken kurve har høyest samlet sum? (1 poeng)\n\n'
+      +'d) Krysser de to kurvene hverandre? (1 poeng)';
+  },
+  svarType: 'dobbel_abcd',
+  fasit: function(d) {
+    return {
+      maks1:d.maks1, idxMaks1:d.idxMaks1,
+      maks2:d.maks2, idxMaks2:d.idxMaks2,
+      høyest:d.høyestTotalt,
+      krysser:d.krysser?0:1  // 0=ja, 1=nei
+    };
+  },
+  løsning: function(d) {
+    var f=this.fasit(d);
+    return 'a) '+d.k.kurve1+': '+d.maks1+' ved '+d.k.xNavn.toLowerCase()+' '+d.k.xLabels[d.idxMaks1]
+      +'\nb) '+d.k.kurve2+': '+d.maks2+' ved '+d.k.xNavn.toLowerCase()+' '+d.k.xLabels[d.idxMaks2]
+      +'\nc) '+(d.høyestTotalt===0?d.k.kurve1:d.k.kurve2)+' (sum: '+(d.høyestTotalt===0?d.sumA:d.sumB)+')'
+      +'\nd) '+(d.krysser?'Ja, kurvene krysser hverandre':'Nei, kurvene krysser ikke');
+  },
+  hint: [
+    'Les av høyeste punkt på hver kurve — se hvilken x-verdi det tilsvarer.',
+    'Summer alle verdier for hver kurve.',
+    'Kryssing: se om den ene kurven går fra å være over til under den andre.',
+  ],
+},
+
+// ── DIAG 14: TABELL → LINEÆR ELLER EKSPONENTIELL ─────────────────
+{
+  id: 'diag14', gruppe: 'Diagram', tittel: 'Tabell: lineær eller eksponentiell?',
+  merking: 'viktig', poeng: 4, maxPoeng: 4,
+
+  generer: function() {
+    var erLin = Math.random() > 0.5;
+    var xVerdier = [0,1,2,3,4,5];
+    var a, b, yVerdier, formel;
+
+    if (erLin) {
+      a = rnd(3,9)*10;
+      b = rnd(2,8)*100;
+      yVerdier = xVerdier.map(function(x){ return a*x+b; });
+      formel = 'f(x) = '+a+'x + '+b;
+    } else {
+      b = rnd(3,8)*100;
+      var vf = 1 + rnd(2,5)*0.1;  // 1.2 – 1.5
+      yVerdier = xVerdier.map(function(x){ return Math.round(b*Math.pow(vf,x)); });
+      formel = 'f(x) = '+b+' · '+vf+'^x';
+      a = vf; // brukt som vf
+    }
+
+    // Kontekster
+    var kontekster = [
+      { xNavn:'År', yNavn:'Verdi (kr)', tema:'vekst over tid' },
+      { xNavn:'Dag', yNavn:'Antall', tema:'utvikling' },
+      { xNavn:'Uke', yNavn:'Brukere', tema:'brukervekst' },
+    ];
+    var k = plukk(kontekster);
+
+    // Tabell HTML (lages som SVG-lignende display)
+    var W=480, H=120;
+    var colW = Math.floor((W-40)/xVerdier.length);
+    var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" '
+      +'style="width:100%;max-width:'+W+'px;background:#1a1a28;border-radius:10px;display:block">';
+    // Header
+    svg+='<rect x="20" y="15" width="'+colW+'" height="32" fill="rgba(255,255,255,.06)" rx="4"/>';
+    svg+='<text x="'+(20+colW/2)+'" y="36" fill="rgba(255,255,255,.7)" font-size="12" text-anchor="middle" font-family="sans-serif">'+k.xNavn+'</text>';
+    svg+='<rect x="20" y="52" width="'+colW+'" height="32" fill="rgba(91,141,217,.1)" rx="4"/>';
+    svg+='<text x="'+(20+colW/2)+'" y="73" fill="rgba(91,141,217,.9)" font-size="12" text-anchor="middle" font-family="sans-serif">'+k.yNavn+'</text>';
+    xVerdier.forEach(function(x,i) {
+      var cx2=20+(i+1)*colW;
+      svg+='<rect x="'+cx2+'" y="15" width="'+colW+'" height="32" fill="rgba(255,255,255,.03)" rx="4"/>';
+      svg+='<text x="'+(cx2+colW/2)+'" y="36" fill="rgba(255,255,255,.85)" font-size="13" text-anchor="middle" font-family="JetBrains Mono,monospace">'+x+'</text>';
+      svg+='<rect x="'+cx2+'" y="52" width="'+colW+'" height="32" fill="rgba(91,141,217,.06)" rx="4"/>';
+      svg+='<text x="'+(cx2+colW/2)+'" y="73" fill="#5b8dd9" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">'+yVerdier[i].toLocaleString('no')+'</text>';
+    });
+    // Differanse-rad
+    var differanser=[];
+    for(var di=1;di<yVerdier.length;di++) differanser.push(yVerdier[di]-yVerdier[di-1]);
+    var forholdstall=[];
+    for(var fi=1;fi<yVerdier.length;fi++) forholdstall.push(Math.round(yVerdier[fi]/yVerdier[fi-1]*100)/100);
+    var diff_lik = differanser.every(function(d){ return d===differanser[0]; });
+    var forh_lik = forholdstall.every(function(f){ return Math.abs(f-forholdstall[0])<0.01; });
+    svg+='<text x="25" y="105" fill="rgba(255,255,255,.35)" font-size="10" font-family="sans-serif">Δy:</text>';
+    differanser.forEach(function(d,i){
+      svg+='<text x="'+(20+(i+1.5)*colW)+'" y="105" fill="rgba(255,255,255,.35)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">'+d+'</text>';
+    });
+    svg+='</svg>';
+
+    // Flervalg for type
+    var riktigType = erLin ? 'Lineær' : 'Eksponentiell';
+    var typeAlts = ['Lineær','Eksponentiell'];
+    var riktigTypeIdx = typeAlts.indexOf(riktigType);
+
+    // Beregn neste verdi (x=6)
+    var nesteX = 6;
+    var nesteY = erLin ? a*nesteX+b : Math.round(b*Math.pow(a,nesteX));
+
+    return { k, erLin, xVerdier, yVerdier, differanser, forholdstall,
+             diff_lik, forh_lik, formel, a, b, riktigType, typeAlts,
+             riktigTypeIdx, nesteX, nesteY, svg };
+  },
+
+  spørsmål: function(d) {
+    return 'Tabellen viser '+d.k.tema+' over '+d.k.xNavn.toLowerCase()+' 0–5.\n\n'
+      +'a) Beregn differansen mellom påfølgende y-verdier (Δy). Er de like? (1 poeng)\n\n'
+      +'b) Er funksjonen lineær eller eksponentiell? Begrunn med tallene fra tabellen. (1 poeng)\n\n'
+      +'c) Hva er '+(d.erLin?'stigningstallet':'vekstfaktoren')+'? (1 poeng)\n\n'
+      +'d) Hva er neste verdi (ved '+d.k.xNavn.toLowerCase()+' = '+d.nesteX+')? (1 poeng)';
+  },
+  svarType: 'tabell_abcd',
+  fasit: function(d) {
+    return {
+      diff_lik: d.diff_lik, riktigTypeIdx: d.riktigTypeIdx,
+      typeAlts: d.typeAlts,
+      parameter: d.erLin ? d.a : Math.round(d.forholdstall[0]*100)/100,
+      nesteY: d.nesteY,
+    };
+  },
+  løsning: function(d) {
+    var f=this.fasit(d);
+    return 'a) Δy: '+d.differanser.join(', ')+(d.diff_lik?' (like — lineær!!)':' (ikke like)')
+      +'\nb) '+d.riktigType+(d.erLin
+        ?' — like differanser → lineær'
+        :' — fast forholdstall '+Math.round(d.forholdstall[0]*100)/100+' → eksponentiell')
+      +'\nc) '+(d.erLin?'Stigningstall = '+d.a:'Vekstfaktor = '+Math.round(d.forholdstall[0]*100)/100)
+      +'\nd) f('+d.nesteX+') = '+d.nesteY.toLocaleString('no');
+  },
+  hint: [
+    'd) Beregn y₂ − y₁, y₃ − y₂ osv. — er de like? Da er det lineært.',
+    'Eksponentiell: sjekk forholdstallet y₂/y₁, y₃/y₂ — er de like?',
+    'Lineær: neste verdi = forrige + Δy. Eksponentiell: neste = forrige × vekstfaktor.',
+  ],
+},
+
 ]; // END DIAGRAM_OPPGAVER
 
 
@@ -736,6 +1422,129 @@ function lagSvarHTML(o, d, låst) {
       +'<textarea class="tekst-svar" id="svar-stign-b" placeholder="Skriv hva stigningstallet betyr i denne sammenhengen..."'+(låst?' readonly':'')+'></textarea>'
       +'</div>';
   }
+
+  if (o.svarType === 'søyle_abc') {
+    return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Høyeste verdi:</div>'
+      +'<input class="svar-input" id="svar-maks" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:110px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Differanse:</div>'
+      +'<input class="svar-input" id="svar-diff" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:110px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Gjennomsnitt:</div>'
+      +'<input class="svar-input" id="svar-snitt" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:110px"></div>'
+      +'</div>';
+  }
+  if (o.svarType === 'eksp_avles') {
+    return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Startverdi f(0):</div>'
+      +'<input class="svar-input" id="svar-sv" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:120px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Vekstfaktor:</div>'
+      +'<input class="svar-input" id="svar-vf" type="number" step="0.01" placeholder="1.0X"'+(låst?' readonly':'')+' style="max-width:120px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) f('+d.x2+'):</div>'
+      +'<input class="svar-input" id="svar-y2" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:120px"></div>'
+      +'</div>';
+  }
+  if (o.svarType === 'kl_abc') {
+    var f2=o.fasit(d);
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Konstantledd b:</div>'
+      +'<input class="svar-input" id="svar-b" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:130px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Stigningstall a:</div>'
+      +'<input class="svar-input" id="svar-a" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:130px"></div>'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Riktig funksjonsuttrykk:</div>'
+      +'<div class="fv-grid">'
+      +f2.alts.map(function(alt,i){
+        return '<button class="fv-alt'+(state.flervalgValg[o.id]===i?' fv-valgt':'')+'"'
+          +(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="'+i+'" onclick="velgFV(this)">'+alt+'</button>';
+      }).join('')
+      +'</div></div>';
+  }
+  if (o.svarType === 'prop_abc') {
+    var f3=o.fasit(d);
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Hvilken graf er direkte proporsjonal?</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_a']===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_a" data-idx="0" onclick="velgFV(this)">f(x)</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_a']===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_a" data-idx="1" onclick="velgFV(this)">g(x)</button>'
+      +'</div></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Konstanten k:</div>'
+      +'<input class="svar-input" id="svar-k" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:130px"></div>'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Hva kjennetegner direkte proporsjonalitet?</div>'
+      +'<div class="fv-grid">'
+      +f3.alts.map(function(alt,i){
+        return '<button class="fv-alt'+(state.flervalgValg[o.id]===i?' fv-valgt':'')+'"'
+          +(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="'+i+'" onclick="velgFV(this)">'+alt+'</button>';
+      }).join('')
+      +'</div></div>';
+  }
+
+  if (o.svarType === 'endr_abc') {
+    var fas=o.fasit(d);
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Absolutt endring:</div>'
+      +'<input class="svar-input" id="svar-abs" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Relativ endring (%):</div>'
+      +'<input class="svar-input" id="svar-rel" type="number" step="0.1" placeholder="0.0"'+(låst?' readonly':'')+'></div>'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Økning eller nedgang?</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id]===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="0" onclick="velgFV(this)">Økning</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id]===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="1" onclick="velgFV(this)">Nedgang</button>'
+      +'</div></div>';
+  }
+  if (o.svarType === 'sektor_abc') {
+    return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Størst andel (%):</div>'
+      +'<input class="svar-input" id="svar-maks" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:100px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Differanse (pp):</div>'
+      +'<input class="svar-input" id="svar-diff" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:100px"></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Sum to første (%):</div>'
+      +'<input class="svar-input" id="svar-sum01" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+' style="max-width:100px"></div>'
+      +'</div>';
+  }
+  if (o.svarType === 'dobbel_abcd') {
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Maks '+d.k.kurve1+' (verdi):</div>'
+      +'<input class="svar-input" id="svar-maks1" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">a) ...ved '+d.k.xNavn+' nr:</div>'
+      +'<input class="svar-input" id="svar-idx1" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Maks '+d.k.kurve2+' (verdi):</div>'
+      +'<input class="svar-input" id="svar-maks2" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) ...ved '+d.k.xNavn+' nr:</div>'
+      +'<input class="svar-input" id="svar-idx2" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">c) Høyest samlet:</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_c']===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_c" data-idx="0" onclick="velgFV(this)">'+d.k.kurve1+'</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_c']===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_c" data-idx="1" onclick="velgFV(this)">'+d.k.kurve2+'</button>'
+      +'</div></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">d) Krysser kurvene?</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_d']===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_d" data-idx="0" onclick="velgFV(this)">Ja</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_d']===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_d" data-idx="1" onclick="velgFV(this)">Nei</button>'
+      +'</div></div></div>';
+  }
+  if (o.svarType === 'tabell_abcd') {
+    var ft=o.fasit(d);
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+      +'<div class="svar-seksjon"><div class="svar-label">a) Er differansene like?</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_a']===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_a" data-idx="0" onclick="velgFV(this)">Ja, like</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id+'_a']===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'_a" data-idx="1" onclick="velgFV(this)">Nei, ulike</button>'
+      +'</div></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Funksjontype:</div>'
+      +'<div class="fv-grid">'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id]===0?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="0" onclick="velgFV(this)">Lineær</button>'
+      +'<button class="fv-alt'+(state.flervalgValg[o.id]===1?' fv-valgt':'')+'"'+(låst?' disabled':'')+' data-oppg="'+o.id+'" data-idx="1" onclick="velgFV(this)">Eksponentiell</button>'
+      +'</div></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">c) '+(d.erLin?'Stigningstall':'Vekstfaktor')+':</div>'
+      +'<input class="svar-input" id="svar-param" type="number" step="0.01" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'<div class="svar-seksjon"><div class="svar-label">d) f('+d.nesteX+'):</div>'
+      +'<input class="svar-input" id="svar-neste" type="number" step="1" placeholder="0"'+(låst?' readonly':'')+'></div>'
+      +'</div>';
+  }
   return '';
 }
 
@@ -803,6 +1612,110 @@ function sjekkSvar() {
     poeng=(okFV?1:0)+(okB3?1:0)+(okC3?1:0);
     fb='a) '+(okFV?'✓ '+f.alts[f.riktigIdx]:'Fasit: '+f.alts[f.riktigIdx])+'\nb) '+(okB3?'✓':'Skriv: «Kurven buer oppover, veksten akselererer»')+'\nc) '+(okC3?'✓ Vekstfaktor ≈ '+f.vekstfaktor:'Fasit: ≈ '+f.vekstfaktor);
 
+  } else if (o.svarType === 'søyle_abc') {
+    var f5=o.fasit(d);
+    var okA=tol(hentTall('svar-maks'),f5.maks,0);
+    var okB=tol(hentTall('svar-diff'),f5.diff,0);
+    var okC=tol(hentTall('svar-snitt'),f5.snitt,1);
+    ['svar-maks','svar-diff','svar-snitt'].forEach(function(id2,i){
+      var el=document.getElementById(id2); if(el) el.className='svar-input '+([okA,okB,okC][i]?'riktig':'galt');
+    });
+    poeng=(okA?1:0)+(okB?1:0)+(okC?1:0);
+    fb='a) '+(okA?'✓':f5.maks)+' · b) '+(okB?'✓':f5.diff)+' · c) '+(okC?'✓':f5.snitt);
+
+  } else if (o.svarType === 'eksp_avles') {
+    var f6=o.fasit(d);
+    var okA6=tol(hentTall('svar-sv'),f6.sv,0);
+    var okB6=tol(hentTall('svar-vf'),f6.vf,0.03);
+    var okC6=tol(hentTall('svar-y2'),f6.y2,f6.y2*0.05);
+    ['svar-sv','svar-vf','svar-y2'].forEach(function(id2,i){
+      var el=document.getElementById(id2); if(el) el.className='svar-input '+([okA6,okB6,okC6][i]?'riktig':'galt');
+    });
+    poeng=(okA6?1:0)+(okB6?1:0)+(okC6?1:0);
+    fb='a) '+(okA6?'✓':'Fasit: '+f6.sv.toLocaleString('no'))+' · b) '+(okB6?'✓':'Fasit: '+f6.vf)+' · c) '+(okC6?'✓':'Fasit: '+f6.y2.toLocaleString('no'));
+
+  } else if (o.svarType === 'kl_abc') {
+    var f7=o.fasit(d);
+    var okA7=tol(hentTall('svar-b'),f7.b,0);
+    var okB7=tol(hentTall('svar-a'),f7.a,0);
+    var okC7=state.flervalgValg[o.id]===f7.riktigIdx;
+    document.querySelectorAll('.fv-alt[data-oppg="'+id+'"]').forEach(function(btn,i){
+      btn.className='fv-alt '+(i===f7.riktigIdx?'fv-riktig':(i===state.flervalgValg[id]?'fv-galt':''));
+    });
+    ['svar-b','svar-a'].forEach(function(id2,i){
+      var el=document.getElementById(id2); if(el) el.className='svar-input '+([okA7,okB7][i]?'riktig':'galt');
+    });
+    poeng=(okA7?1:0)+(okB7?1:0)+(okC7?1:0);
+    fb='a) '+(okA7?'✓':'Fasit: '+f7.b)+' · b) '+(okB7?'✓':'Fasit: '+f7.a)+' · c) '+(okC7?'✓':'Fasit: '+f7.alts[f7.riktigIdx]);
+
+  } else if (o.svarType === 'prop_abc') {
+    var f8=o.fasit(d);
+    var okA8=state.flervalgValg[o.id+'_a']===0; // f(x) er proporsjonal
+    var okB8=state.flervalgValg[o.id]===f8.riktigIdx;
+    var okC8=tol(hentTall('svar-k'),f8.k,0);
+    document.querySelectorAll('.fv-alt[data-oppg="'+id+'_a"]').forEach(function(btn,i){
+      btn.className='fv-alt '+(i===0?'fv-riktig':(i===state.flervalgValg[id+'_a']?'fv-galt':''));
+    });
+    document.querySelectorAll('.fv-alt[data-oppg="'+id+'"]').forEach(function(btn,i){
+      btn.className='fv-alt '+(i===f8.riktigIdx?'fv-riktig':(i===state.flervalgValg[id]?'fv-galt':''));
+    });
+    var elK=document.getElementById('svar-k'); if(elK) elK.className='svar-input '+(okC8?'riktig':'galt');
+    poeng=(okA8?1:0)+(okB8?1:0)+(okC8?1:0);
+    fb='a) '+(okA8?'✓':'Fasit: f(x)')+' · b) '+(okB8?'✓':'Se fasit')+' · c) k = '+(okC8?'✓':f8.k);
+
+  } else if (o.svarType === 'endr_abc') {
+    var fe=o.fasit(d);
+    var okA=tol(hentTall('svar-abs'),fe.abs,Math.max(1,Math.abs(fe.abs)*0.02));
+    var okB=tol(hentTall('svar-rel'),fe.rel,0.5);
+    var okC=state.flervalgValg[id]===fe.retning;
+    ['svar-abs','svar-rel'].forEach(function(eid,i){var el=document.getElementById(eid);if(el)el.className='svar-input '+([okA,okB][i]?'riktig':'galt');});
+    document.querySelectorAll('.fv-alt[data-oppg="'+id+'"]').forEach(function(b,i){b.className='fv-alt '+(i===fe.retning?'fv-riktig':(i===state.flervalgValg[id]?'fv-galt':''));});
+    poeng=(okA?1:0)+(okB?1:0)+(okC?1:0);
+    fb='a) '+(okA?'✓':fe.abs)+' · b) '+(okB?'✓':fe.rel+'%')+' · c) '+(okC?'✓':(fe.retning===0?'Økning':'Nedgang'));
+
+  } else if (o.svarType === 'sektor_abc') {
+    var fs=o.fasit(d);
+    var okA=tol(hentTall('svar-maks'),fs.maks,0);
+    var okB=tol(hentTall('svar-diff'),fs.diff,0);
+    var okC=tol(hentTall('svar-sum01'),fs.sum01,0);
+    ['svar-maks','svar-diff','svar-sum01'].forEach(function(eid,i){var el=document.getElementById(eid);if(el)el.className='svar-input '+([okA,okB,okC][i]?'riktig':'galt');});
+    poeng=(okA?1:0)+(okB?1:0)+(okC?1:0);
+    fb='a) '+(okA?'✓':fs.maks+'%')+' · b) '+(okB?'✓':fs.diff+'pp')+' · c) '+(okC?'✓':fs.sum01+'%');
+
+  } else if (o.svarType === 'dobbel_abcd') {
+    var fd=o.fasit(d);
+    var okA1=tol(hentTall('svar-maks1'),fd.maks1,0);
+    var okA2=tol(hentTall('svar-idx1'),fd.idxMaks1,0);
+    var okB1=tol(hentTall('svar-maks2'),fd.maks2,0);
+    var okB2=tol(hentTall('svar-idx2'),fd.idxMaks2,0);
+    var okC=state.flervalgValg[id+'_c']===fd.høyest;
+    var okD=state.flervalgValg[id+'_d']===fd.krysser;
+    ['_c','_d'].forEach(function(suf,si){
+      var fv2=si===0?fd.høyest:fd.krysser;
+      document.querySelectorAll('.fv-alt[data-oppg="'+id+suf+'"]').forEach(function(b,i){b.className='fv-alt '+(i===fv2?'fv-riktig':(i===state.flervalgValg[id+suf]?'fv-galt':''));});
+    });
+    ['svar-maks1','svar-idx1','svar-maks2','svar-idx2'].forEach(function(eid,i){var el=document.getElementById(eid);if(el)el.className='svar-input '+([okA1,okA2,okB1,okB2][i]?'riktig':'galt');});
+    poeng=(okA1&&okA2?1:0)+(okB1&&okB2?1:0)+(okC?1:0)+(okD?1:0);
+    fb='a) '+(okA1&&okA2?'✓':'Fasit: '+fd.maks1+' ved '+d.k.xLabels[fd.idxMaks1])
+      +' · b) '+(okB1&&okB2?'✓':'Fasit: '+fd.maks2+' ved '+d.k.xLabels[fd.idxMaks2])
+      +' · c) '+(okC?'✓':'Se fasit')+' · d) '+(okD?'✓':(fd.krysser===0?'Ja':'Nei'));
+
+  } else if (o.svarType === 'tabell_abcd') {
+    var ft=o.fasit(d);
+    var okA=state.flervalgValg[id+'_a']===(ft.diff_lik?0:1);
+    var okB=state.flervalgValg[id]===ft.riktigTypeIdx;
+    var okC=tol(hentTall('svar-param'),ft.parameter,d.erLin?0:0.05);
+    var okD=tol(hentTall('svar-neste'),ft.nesteY,d.erLin?0:ft.nesteY*0.03);
+    ['_a'].forEach(function(suf){
+      var fv3=ft.diff_lik?0:1;
+      document.querySelectorAll('.fv-alt[data-oppg="'+id+suf+'"]').forEach(function(b,i){b.className='fv-alt '+(i===fv3?'fv-riktig':(i===state.flervalgValg[id+suf]?'fv-galt':''));});
+    });
+    document.querySelectorAll('.fv-alt[data-oppg="'+id+'"]').forEach(function(b,i){b.className='fv-alt '+(i===ft.riktigTypeIdx?'fv-riktig':(i===state.flervalgValg[id]?'fv-galt':''));});
+    ['svar-param','svar-neste'].forEach(function(eid,i){var el=document.getElementById(eid);if(el)el.className='svar-input '+([okC,okD][i]?'riktig':'galt');});
+    poeng=(okA?1:0)+(okB?1:0)+(okC?1:0)+(okD?1:0);
+    fb='a) '+(okA?'✓':(ft.diff_lik?'Like':'Ulike'))+' · b) '+(okB?'✓':ft.typeAlts[ft.riktigTypeIdx])
+      +' · c) '+(okC?'✓':ft.parameter)+' · d) '+(okD?'✓':ft.nesteY.toLocaleString('no'));
+
   } else if (o.svarType === 'diag_stign') {
     var okA4 = tol(hentTall('svar-stign'), f.stign, 0);
     var elS = document.getElementById('svar-stign');
@@ -862,6 +1775,7 @@ function nullstill() {
   delete state.data[id]; delete state.svar[id];
   delete state.flervalgValg[id];
   delete state.flervalgValg[id+'_c']; delete state.flervalgValg[id+'_d'];
+  delete state.flervalgValg[id+'_a'];
   var fp=lastFremgang(); fp.svar=state.svar; lagreFremgang(fp);
   visOppgave(id);
 }
