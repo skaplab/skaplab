@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoGebra – Linjediagram · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+<style>:root{
+  --bg:#06101e;--card:#131f35;--border:rgba(255,255,255,.08);
+  --accent:#ffd700;--green:#4ade80;--red:#f87171;--dim:#7a90b0;
+  --text:#e8f0ff;--font-h:'Fredoka One',cursive;--font-b:'Nunito',sans-serif;
+  --nav-h:40px;--grp-h:30px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-b);}
+
+/* TOPBAR */
+#topbar{
+  height:var(--nav-h);display:flex;align-items:center;gap:8px;
+  padding:0 14px;background:rgba(6,16,30,.97);
+  border-bottom:1px solid var(--border);font-size:.8rem;flex-shrink:0;z-index:10;
+}
+#topbar a{color:var(--dim);text-decoration:none;}
+#topbar a:hover{color:var(--text);}
+.sep{color:rgba(255,255,255,.2);}
+.tittel{color:var(--text);font-weight:600;}
+.spacer{flex:1;}
+.topbar-stats{display:flex;gap:10px;font-size:.76rem;color:var(--dim);}
+.topbar-stats b{color:var(--accent);font-family:var(--font-h);}
+
+/* GRUPPE-TABS */
+.grp-tabs{
+  height:var(--grp-h);display:flex;align-items:center;
+  gap:3px;padding:0 10px;
+  background:rgba(0,0,0,.25);border-bottom:1px solid var(--border);
+  overflow-x:auto;flex-shrink:0;
+}
+.grp-tab{
+  padding:2px 10px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);background:transparent;
+  color:var(--dim);cursor:pointer;font-size:.71rem;
+  font-family:var(--font-b);white-space:nowrap;transition:all .15s;
+}
+.grp-tab.aktiv{background:rgba(255,215,0,.1);border-color:var(--accent);color:var(--accent);}
+
+/* === TRE-KOLONNE LAYOUT === */
+#app{
+  display:grid;
+  grid-template-columns:260px 1fr 220px;
+  grid-template-rows:1fr;
+  grid-template-areas:"venstre ggb meny";
+  height:calc(100vh - var(--nav-h) - var(--grp-h));
+  overflow:hidden;
+}
+
+/* VENSTRE KOLONNE: oppgave + svar */
+#venstre{
+  grid-area:venstre;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  background:var(--bg);
+  overflow-y:auto;
+  min-height:0;
+}
+.oppg-hode{padding:14px 14px 8px;flex-shrink:0;}
+.oppg-label{
+  font-size:.64rem;color:var(--accent);font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;
+}
+.oppg-tekst{font-size:.88rem;line-height:1.55;color:var(--text);}
+.oppg-tekst strong{color:var(--accent);}
+.hint-toggle{
+  font-size:.71rem;color:var(--dim);background:none;border:none;
+  cursor:pointer;padding:5px 0 0;display:block;
+}
+.hint-toggle:hover{color:var(--accent);}
+.oppg-hint{
+  display:none;font-size:.72rem;color:var(--dim);
+  line-height:1.45;background:rgba(255,255,255,.04);
+  border-radius:6px;padding:7px 9px;margin-top:6px;
+}
+.oppg-hint.vis{display:block;}
+
+/* SVAR-SEKSJON */
+.svar-seksjon{
+  padding:10px 14px 14px;
+  display:flex;flex-direction:column;
+  gap:8px;flex-shrink:0;
+}
+.svar-label{font-size:.74rem;color:var(--dim);margin-bottom:2px;}
+
+/* Input */
+.koeff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.koeff-grid.to{grid-template-columns:1fr 1fr;}
+.koeff-felt{display:flex;flex-direction:column;gap:3px;}
+.koeff-felt label{font-size:.7rem;color:var(--dim);text-align:center;}
+.koeff-input{
+  height:46px;background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.2);
+  border-radius:8px;color:var(--text);
+  font-family:var(--font-h);font-size:1.15rem;
+  text-align:center;outline:none;
+  transition:border-color .15s;width:100%;
+}
+.koeff-input:focus{border-color:var(--accent);}
+.koeff-input.ok{border-color:var(--green);background:rgba(74,222,128,.07);}
+.koeff-input.feil{border-color:var(--red);background:rgba(248,113,113,.07);}
+
+/* Sliders */
+.slider-info{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.sval{background:rgba(255,255,255,.06);border-radius:8px;padding:8px;text-align:center;}
+.sval-n{font-family:var(--font-h);font-size:1.4rem;color:var(--accent);}
+.sval-l{font-size:.68rem;color:var(--dim);margin-top:2px;}
+
+/* Knapper */
+.sjekk-btn{
+  width:100%;padding:12px;font-family:var(--font-h);font-size:1rem;
+  background:var(--accent);color:#000;border:none;border-radius:9px;
+  cursor:pointer;transition:filter .15s;
+}
+.sjekk-btn:hover{filter:brightness(1.08);}
+.sjekk-btn:disabled{opacity:.35;cursor:default;}
+.fb{padding:9px 11px;border-radius:8px;font-size:.82rem;line-height:1.5;display:none;}
+.fb.ok{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green);display:block;}
+.fb.feil{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);display:block;}
+.fb.nesten{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);color:var(--accent);display:block;}
+.neste-btn{
+  width:100%;padding:9px;font-family:var(--font-h);font-size:.9rem;
+  background:var(--green);color:#000;border:none;border-radius:8px;
+  cursor:pointer;display:none;
+}
+
+/* MIDTRE KOLONNE: GeoGebra */
+#ggb-wrap{grid-area:ggb;background:#fff;min-width:0;min-height:0;}
+#ggb-container{width:100%;height:100%;}
+
+/* HØYRE KOLONNE: meny */
+#meny{
+  grid-area:meny;
+  display:flex;flex-direction:column;
+  border-left:1px solid var(--border);
+  background:rgba(0,0,0,.18);
+  overflow-y:auto;
+  min-height:0;
+}
+.meny-hode{
+  padding:8px 10px 4px;font-size:.64rem;color:var(--dim);
+  font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  flex-shrink:0;position:sticky;top:0;
+  background:rgba(6,16,30,.95);border-bottom:1px solid var(--border);
+}
+.grp-header{
+  font-size:.66rem;color:var(--dim);font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;
+  padding:8px 10px 3px;flex-shrink:0;
+}
+.oknapp{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:6px;
+  border:1px solid transparent;background:transparent;
+  color:var(--dim);cursor:pointer;font-size:.79rem;
+  font-family:var(--font-b);text-align:left;
+  width:calc(100% - 8px);margin:1px 4px;
+  transition:all .12s;
+}
+.oknapp:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.oknapp.aktiv{background:rgba(255,215,0,.08);border-color:rgba(255,215,0,.2);color:var(--accent);}
+.oknapp.løst{background:rgba(74,222,128,.06);border-color:rgba(74,222,128,.15);color:var(--green);}
+.ok-nr{font-size:.68rem;color:var(--dim);width:16px;flex-shrink:0;font-family:var(--font-h);}
+.ok-ikon{font-size:.78rem;width:14px;flex-shrink:0;}
+.fremdrift{display:none;}
+.reg-info{font-size:.76rem;color:var(--dim);line-height:1.5;background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;margin-bottom:8px;}
+.ny-runde-btn{
+  width:100%;padding:9px;font-family:var(--font-h);font-size:.9rem;
+  background:rgba(255,255,255,.07);color:var(--dim);
+  border:none;border-radius:8px;
+  cursor:pointer;display:none;margin-top:6px;
+}
+.ny-runde-btn:hover{background:rgba(255,255,255,.12);color:var(--text);}
+.ny-oppg-btn{
+  width:100%;padding:9px;font-family:var(--font-h);font-size:.9rem;
+  background:rgba(96,165,250,.25);color:#bfdbfe;
+  border:none;border-radius:8px;
+  cursor:pointer;display:none;margin-top:6px;
+}
+.ny-oppg-btn:hover{background:rgba(96,165,250,.38);}
+
+/* MOBIL */
+@media(max-width:800px){
+  html,body{overflow:auto;}
+  #app{
+    grid-template-columns:1fr;
+    grid-template-rows:50vw auto auto;
+    grid-template-areas:"ggb" "venstre" "meny";
+    height:auto;
+  }
+  #meny{max-height:200px;border-left:none;border-top:1px solid var(--border);}
+  #venstre{border-right:none;border-bottom:1px solid var(--border);}
+}</style>
+</head>
+<body>
+<div id="header" style="display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--border)">
+  <a href="index.html" style="color:var(--dim);text-decoration:none;font-size:.82rem">← SkapLab</a>
+  <div style="font-family:var(--font-h);font-size:1.3rem;color:var(--accent)">📈 GeoGebra – Linjediagram</div>
+  <div style="font-size:.75rem;color:var(--dim);margin-left:4px">Plot datapunkter og tegn linjediagram · LK20</div>
+  <div style="flex:1"></div>
+  <div id="header-stat" style="font-size:.82rem;color:var(--dim)"></div>
+</div>
+<div id="app-wrap" style="display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 50px)">
+  <div id="sidebar" style="background:var(--card);border-right:1px solid var(--border);overflow-y:auto;padding:8px 6px"></div>
+  <div id="main" style="display:flex;flex-direction:column">
+    <div id="ggb-wrap"><div id="ggb-container"></div></div>
+    <div id="oppg-panel" style="padding:16px 20px;overflow-y:auto;flex:1">
+      <div style="color:var(--dim);padding:40px;text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">📈</div>
+        <div style="font-family:var(--font-h);font-size:1.2rem;color:var(--text);margin-bottom:6px">Velg en oppgave til venstre</div>
+        <div style="font-size:.88rem;line-height:1.6">Plot datapunkter og tegn linjediagram · LK20</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+
+// ══════════════════════════════════════════════════════════════════
+// HJELPEFUNKSJONER FOR DYNAMISKE OPPGAVER
+// ══════════════════════════════════════════════════════════════════
+
+function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function rndIkkeNull(a, b) { var v; do { v = rnd(a, b); } while (v === 0); return v; }
+function pluss(n) { return n >= 0 ? '+' + n : '\u2212' + Math.abs(n); }
+function vis(n)   { return n < 0 ? '(' + n + ')' : String(n); }
+function fmt(n)   { return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ','); }
+
+// Tegnsetting for ax²+bx+c
+function lagPolynom(a, b, c) {
+  var s = '';
+  if (a === 1) s += 'x\u00b2';
+  else if (a === -1) s += '\u2212x\u00b2';
+  else s += a + 'x\u00b2';
+  if (b > 0)  s += ' + ' + b + 'x';
+  else if (b < 0) s += ' \u2212 ' + Math.abs(b) + 'x';
+  if (c > 0)  s += ' + ' + c;
+  else if (c < 0) s += ' \u2212 ' + Math.abs(c);
+  return s;
+}
+function lagLinear(a, b) {
+  var s = '';
+  if (a === 1) s = 'x'; else if (a === -1) s = '\u2212x'; else s = a + 'x';
+  if (b > 0) s += ' + ' + b; else if (b < 0) s += ' \u2212 ' + Math.abs(b);
+  return s;
+}
+function lagEksp(a, b) {
+  return (a === 1 ? '' : a + ' \u00b7 ') + b + '\u02e3';
+}
+
+// GeoGebra-uttrykk (bruker * og ^ i stedet for · og ˣ)
+function ggbPolynom(a, b, c) {
+  return a + '*x^2 + ' + b + '*x + ' + c;
+}
+function ggbLinear(a, b) { return a + '*x + ' + b; }
+function ggbEksp(a, b)   { return a + ' * ' + b + '^x'; }
+
+// ══════════════════════════════════════════════════════════════════
+// GENERATORER — én per oppgave-ID
+// ══════════════════════════════════════════════════════════════════
+
+var GENERATORER = {
+
+// ── 1. Avgrense parabel ──────────────────────────────────────────
+'avg1': function() {
+  var fns = [
+    { uttrykk: 'x^2',       visning: 'x\u00b2',      farge: 'Blue'   },
+    { uttrykk: 'x^2 - 4',   visning: 'x\u00b2 \u2212 4', farge: 'Blue' },
+    { uttrykk: '2*x^2',     visning: '2x\u00b2',      farge: 'Blue'   },
+    { uttrykk: 'x^2 + 1',   visning: 'x\u00b2 + 1',   farge: 'Blue'   },
+  ];
+  var fn = fns[rnd(0, fns.length - 1)];
+  var a = rnd(-4, -1);
+  var b = rnd(2, 5);
+  return {
+    fn: fn, a: a, b: b,
+    tekst: 'Bruk sliderne <strong>a</strong> og <strong>b</strong> til \u00e5 avgrense grafen <strong>f(x) = ' + fn.visning + '</strong> slik at den bare vises for <strong>' + a + ' \u2264 x \u2264 ' + b + '</strong>.',
+    hint: 'Dra slider a til ' + a + ' og slider b til ' + b + '.',
+    cmds: [
+      'ZoomIn(' + (a-2) + ', -2, ' + (b+2) + ', 15)',
+      'a = Slider(-6, 0, 0.5)', 'b = Slider(0, 8, 0.5)',
+      'SetValue(a, ' + (a-1) + ')', 'SetValue(b, ' + (b+1) + ')',
+      'bakgrunn(x) = ' + fn.uttrykk,
+      'SetColor(bakgrunn, "LightGray")', 'SetLineStyle(bakgrunn, 1)',
+      'f(x) = If(x >= a && x <= b, ' + fn.uttrykk + ')',
+      'SetColor(f, "' + fn.farge + '")', 'SetLineThickness(f, 3)',
+    ],
+    fasitA: a, fasitB: b,
+  };
+},
+
+// ── 2. Avgrense eksponentiell ─────────────────────────────────────
+'avg2': function() {
+  var basar = [2, 3];
+  var base = basar[rnd(0, 1)];
+  var a = rnd(-3, -1);
+  var b = rnd(2, 4);
+  return {
+    a: a, b: b,
+    tekst: 'Avgrens grafen <strong>f(x) = ' + base + '\u02e3</strong> slik at den bare vises for <strong>' + a + ' \u2264 x \u2264 ' + b + '</strong>.',
+    hint: 'Dra slider a til ' + a + ' og slider b til ' + b + '.',
+    cmds: [
+      'ZoomIn(' + (a-2) + ', -1, ' + (b+2) + ', 20)',
+      'a = Slider(-5, 0, 0.5)', 'b = Slider(0, 6, 0.5)',
+      'SetValue(a, ' + (a-1) + ')', 'SetValue(b, ' + (b+1) + ')',
+      'bakgrunn(x) = ' + base + '^x',
+      'SetColor(bakgrunn, "LightGray")', 'SetLineStyle(bakgrunn, 1)',
+      'f(x) = If(x >= a && x <= b, ' + base + '^x)',
+      'SetColor(f, "Purple")', 'SetLineThickness(f, 3)',
+    ],
+    fasitA: a, fasitB: b,
+  };
+},
+
+// ── 3–4. Ekstremalpunkt parabel ───────────────────────────────────
+'eks_parabel': function(retning) {
+  // retning: 1=toppunkt (a<0), -1=bunnpunkt (a>0)
+  var a = retning === 1 ? rnd(-3, -1) : rnd(1, 3);
+  // Velg b,c slik at toppunkt-x er heltall: x0 = -b/(2a)
+  var x0 = rnd(-3, 3);
+  var b  = -2 * a * x0;          // b = -2ax0 → x0 = -b/2a ✓
+  var c  = rnd(-5, 5);
+  var y0 = a * x0 * x0 + b * x0 + c;
+  var type = retning === 1 ? 'toppunkt' : 'bunnpunkt';
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong>. Bruk GeoGebras <strong>ekstremalpunkt-verkt\u00f8y</strong> og finn ' + type + 'et. Skriv inn koordinatene.',
+    hint: 'Beregning \u2192 Ekstremalpunkt, klikk p\u00e5 grafen. Eller: x = \u2212b/(2a) = ' + x0 + ', f(' + x0 + ') = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-5) + ', ' + (y0 - (retning===1?2:6)) + ', ' + (x0+5) + ', ' + (y0 + (retning===1?6:2)) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
+},
+
+// ── 5. Kubikk – lokalt maksimum ──────────────────────────────────
+'eks3': function() {
+  // f(x) = ax³ + bx med f'(x) = 3ax² + b = 0 → x = ±sqrt(-b/3a)
+  // Enklest: f(x) = x³ - kx, f'= 3x²-k=0, x=±sqrt(k/3)
+  // For å få pent svar: k=3 → x=±1
+  var k = [3, 12, 27][rnd(0, 2)]; // gir x=±1, ±2, ±3
+  var x0 = -Math.sqrt(k / 3); // lokalt maks (negativ x)
+  var y0 = x0 * x0 * x0 - k * x0;
+  return {
+    k: k, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b3 \u2212 ' + k + 'x</strong>. Finn <strong>lokalt maksimum</strong> med GeoGebras verkt\u00f8y.',
+    hint: 'Bruk Beregning \u2192 Ekstremalpunkt og klikk p\u00e5 det \u00f8verste punktet. x = \u2212' + Math.abs(x0) + '.',
+    cmds: [
+      'ZoomIn(' + (x0-3) + ', ' + (y0-2) + ', ' + (-x0+3) + ', ' + (y0+2) + ')',
+      'f(x) = x^3 - ' + k + '*x',
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
+},
+
+// ── 6. Toppunkt med desimaler ────────────────────────────────────
+'eks4': function() {
+  // a < 0, b odd → x0 = -b/(2a) har .5-desimal
+  var a = rnd(-3, -1);
+  var b = [1, 3, 5, -1, -3, -5][rnd(0, 5)]; // odd
+  var c = rnd(-3, 3);
+  var x0 = -b / (2 * a);            // .5-desimal
+  var y0 = a * x0 * x0 + b * x0 + c;
+  y0 = Math.round(y0 * 100) / 100;  // rund til 2 des
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong>. Finn toppunktet. Rund av til to desimaler.',
+    hint: 'GeoGebra viser koordinatene n\u00e5r du klikker med ekstremalpunkt-verkt\u00f8yet. x = ' + fmt(x0) + ', y \u2248 ' + fmt(y0) + '.',
+    cmds: [
+      'ZoomIn(' + (x0-5) + ', ' + (y0-4) + ', ' + (x0+5) + ', ' + (y0+4) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
+},
+
+// ── 7. To x ved gitt y ────────────────────────────────────────────
+'xy1': function() {
+  // f(x) = x²-c, y=k → x=±sqrt(k+c), velg c,k slik at k+c er kvadrattall
+  var x0 = rnd(1, 4);  // fasit x = ±x0
+  var c  = rnd(0, 5);
+  var k  = x0 * x0 - c; // k+c = x0² → x=±x0
+  return {
+    x0: x0, c: c, k: k,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b2 \u2212 ' + c + '</strong> og linjen <strong>y\u00a0=\u00a0' + k + '</strong>. Bruk GeoGebras <strong>skj\u00e6ringspunkt-verkt\u00f8y</strong> og finn de to x-verdiene.',
+    hint: 'Beregning \u2192 Skj\u00e6ring, klikk p\u00e5 grafen og den r\u00f8de linjen. x\u00b2\u2212' + c + '=' + k + ' \u2192 x=\u00b1' + x0 + '.',
+    cmds: [
+      'ZoomIn(' + (-x0-3) + ', ' + (k-4) + ', ' + (x0+3) + ', ' + (k+4) + ')',
+      'f(x) = x^2 - ' + c,
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'yLinje: y = ' + k,
+      'SetColor(yLinje, "Red")', 'SetLineStyle(yLinje, 1)',
+    ],
+    fasit1: -x0, fasit2: x0,
+  };
+},
+
+// ── 8. En x ved gitt y (lineær) ──────────────────────────────────
+'xy2': function() {
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var x0 = rnd(-3, 3);
+  var k  = a * x0 + b;
+  return {
+    a: a, b: b, x0: x0, k: k,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagLinear(a, b) + '</strong> og linjen <strong>y\u00a0=\u00a0' + k + '</strong>. Bruk GeoGebras skj\u00e6ringspunkt-verkt\u00f8y og finn x-verdien.',
+    hint: 'Beregning \u2192 Skj\u00e6ring. ' + a + 'x' + (b>=0?'+':'')+b+'='+k+' \u2192 x='+x0+'.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (k-6) + ', ' + (x0+4) + ', ' + (k+6) + ')',
+      'f(x) = ' + ggbLinear(a, b),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'yLinje: y = ' + k,
+      'SetColor(yLinje, "Red")', 'SetLineStyle(yLinje, 1)',
+    ],
+    fasit: x0,
+  };
+},
+
+// ── 9. Finn y = f(x0) på parabel ─────────────────────────────────
+'yx1': function() {
+  var a = rndIkkeNull(-2, 2);
+  var b = rnd(-3, 3);
+  var c = rnd(-4, 4);
+  var x0 = rnd(1, 4);
+  var y0 = a * x0 * x0 + b * x0 + c;
+  return {
+    a: a, b: b, c: c, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagPolynom(a, b, c) + '</strong> og linjen <strong>x\u00a0=\u00a0' + x0 + '</strong>. Skriv <strong>f(' + x0 + ')</strong> i algebrafeltet eller les av grafen.',
+    hint: 'I algebrafeltet: skriv f(' + x0 + ') og trykk Enter. f(' + x0 + ') = ' + a + '\u00b7' + x0 + '\u00b2' + (b>=0?'+':'')+b+'\u00b7'+x0+(c>=0?'+':'')+c+' = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (y0-6) + ', ' + (x0+4) + ', ' + (y0+6) + ')',
+      'f(x) = ' + ggbPolynom(a, b, c),
+      'SetColor(f, "Blue")', 'SetLineThickness(f, 3)',
+      'xLinje: x = ' + x0,
+      'SetColor(xLinje, "Orange")', 'SetLineStyle(xLinje, 1)',
+    ],
+    fasit: y0,
+  };
+},
+
+// ── 10. Finn y = f(x0) eksponentiell ─────────────────────────────
+'yx2': function() {
+  var a = rnd(1, 4);
+  var b = [2, 3][rnd(0, 1)];
+  var x0 = rnd(1, 3);
+  var y0 = a * Math.pow(b, x0);
+  return {
+    a: a, b: b, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagEksp(a, b) + '</strong> og linjen <strong>x\u00a0=\u00a0' + x0 + '</strong>. Skriv <strong>f(' + x0 + ')</strong> i algebrafeltet.',
+    hint: 'Skriv f(' + x0 + ') i algebrafeltet. f(' + x0 + ') = ' + a + '\u00b7' + b + '\u00b3' + (x0===3?'':'\u02e3') + ' = ' + y0 + '.',
+    cmds: [
+      'ZoomIn(-2, -2, ' + (x0+3) + ', ' + (y0+4) + ')',
+      'f(x) = ' + ggbEksp(a, b),
+      'SetColor(f, "Purple")', 'SetLineThickness(f, 3)',
+      'xLinje: x = ' + x0,
+      'SetColor(xLinje, "Orange")', 'SetLineStyle(xLinje, 1)',
+    ],
+    fasit: y0,
+  };
+},
+
+// ── 11. Skjæring: linje møter parabel ────────────────────────────
+'skj1': function() {
+  // x² = mx + n → x² - mx - n = 0 → x = (m ± sqrt(m²+4n))/2
+  // Velg heltallsrøtter x1,x2: (x-x1)(x-x2)=0 → x²-(x1+x2)x+x1·x2=0
+  // f(x)=x², g(x)=mx+n: skjæring der x²=mx+n → m=x1+x2, n=-x1*x2
+  var x1 = rnd(-3, 0), x2 = rnd(1, 3);
+  while (x1 === x2) { x1 = rnd(-3, 0); }
+  var m = x1 + x2, n = -x1 * x2;
+  var y1 = x1 * x1, y2 = x2 * x2;
+  return {
+    x1: x1, x2: x2, m: m, n: n,
+    tekst: 'Grafen viser <strong>f(x) = x\u00b2</strong> og <strong>g(x) = ' + lagLinear(m, n) + '</strong>. Bruk skj\u00e6ringspunkt-verkt\u00f8yet og finn de to x-verdiene der grafene m\u00f8tes.',
+    hint: 'Beregning \u2192 Skj\u00e6ring, klikk p\u00e5 begge grafene. x\u00b2=' + lagLinear(m, n) + ' \u2192 x=' + x1 + ' og x=' + x2 + '.',
+    cmds: [
+      'ZoomIn(' + (x1-2) + ', -1, ' + (x2+2) + ', ' + (y2+3) + ')',
+      'f(x) = x^2',
+      'g(x) = ' + ggbLinear(m, n),
+      'SetColor(f, "Blue")', 'SetColor(g, "Red")',
+      'SetLineThickness(f, 3)', 'SetLineThickness(g, 2)',
+    ],
+    fasit1: x1, fasit2: x2,
+  };
+},
+
+// ── 12. Skjæring: to linjer ───────────────────────────────────────
+'skj2': function() {
+  // f=a1*x+b1, g=a2*x+b2, a1≠a2 → x=(b2-b1)/(a1-a2) heltall
+  var a1 = rndIkkeNull(-3, 3);
+  var a2; do { a2 = rndIkkeNull(-3, 3); } while (a2 === a1);
+  var x0 = rnd(-2, 3);
+  var b1 = rnd(-4, 4);
+  var y0 = a1 * x0 + b1;
+  var b2 = y0 - a2 * x0;
+  return {
+    a1: a1, b1: b1, a2: a2, b2: b2, x0: x0, y0: y0,
+    tekst: 'Grafen viser <strong>f(x) = ' + lagLinear(a1, b1) + '</strong> og <strong>g(x) = ' + lagLinear(a2, b2) + '</strong>. Bruk skj\u00e6ringspunkt-verkt\u00f8yet og finn skj\u00e6ringspunktet.',
+    hint: 'Beregning \u2192 Skj\u00e6ring. Sett ' + lagLinear(a1, b1) + ' = ' + lagLinear(a2, b2) + ' \u2192 x=' + x0 + ', y=' + y0 + '.',
+    cmds: [
+      'ZoomIn(' + (x0-4) + ', ' + (y0-5) + ', ' + (x0+4) + ', ' + (y0+5) + ')',
+      'f(x) = ' + ggbLinear(a1, b1),
+      'g(x) = ' + ggbLinear(a2, b2),
+      'SetColor(f, "Blue")', 'SetColor(g, "Red")',
+      'SetLineThickness(f, 3)', 'SetLineThickness(g, 3)',
+    ],
+    fasitX: x0, fasitY: y0,
+  };
+},
+
+// ── 13. Skriv inn lineær ──────────────────────────────────────────
+'inp1': function() {
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var x1 = rnd(0, 3), x2 = rnd(-3, -1);
+  var y1 = a*x1+b, y2 = a*x2+b;
+  return {
+    a: a, b: b, x1: x1, y1: y1, x2: x2, y2: y2,
+    tekst: 'Skriv inn funksjonen <strong>f(x) = ' + lagLinear(a, b) + '</strong> i algebrafeltet i GeoGebra. Grafen skal g\u00e5 gjennom de r\u00f8de punktene.',
+    hint: 'Klikk i algebrafeltet og skriv: f(x) = ' + a + '*x + ' + b + '. Trykk Enter.',
+    cmds: [
+      'ZoomIn(' + (x2-2) + ', ' + (Math.min(y1,y2)-3) + ', ' + (x1+3) + ', ' + (Math.max(y1,y2)+3) + ')',
+      'P1 = (' + x1 + ', ' + y1 + ')',
+      'P2 = (' + x2 + ', ' + y2 + ')',
+      'SetColor(P1, "Red")', 'SetColor(P2, "Red")',
+      'SetPointSize(P1, 6)', 'SetPointSize(P2, 6)',
+      'ShowLabel(P1, true)', 'ShowLabel(P2, true)',
+    ],
+    testX: [x1, x2, 0], testY: [y1, y2, b],
+  };
+},
+
+// ── 14. Skriv inn parabel ────────────────────────────────────────
+'inp2': function() {
+  // Bruk røtter: f(x) = (x-r1)(x-r2) = x² - (r1+r2)x + r1*r2
+  var r1 = rnd(-3, -1), r2 = rnd(1, 3);
+  var b = -(r1 + r2), c = r1 * r2;
+  var xTopp = (r1 + r2) / 2;
+  var yTopp = xTopp * xTopp + b * xTopp + c;
+  return {
+    b: b, c: c, r1: r1, r2: r2, xTopp: xTopp, yTopp: yTopp,
+    tekst: 'Skriv inn parabelen <strong>f(x) = ' + lagPolynom(1, b, c) + '</strong> i algebrafeltet. Grafen skal skj\u00e6re x-aksen i x\u00a0=\u00a0' + r1 + ' og x\u00a0=\u00a0' + r2 + '.',
+    hint: 'Skriv: f(x) = x^2 + ' + b + '*x + ' + c + '. Sjekk at f(' + r1 + ') = 0 og f(' + r2 + ') = 0.',
+    cmds: [
+      'ZoomIn(' + (r1-2) + ', ' + (yTopp-2) + ', ' + (r2+2) + ', 4)',
+      'N1 = (' + r1 + ', 0)', 'N2 = (' + r2 + ', 0)',
+      'SetColor(N1, "Red")', 'SetColor(N2, "Red")',
+      'SetPointSize(N1, 6)', 'SetPointSize(N2, 6)',
+      'ShowLabel(N1, true)', 'ShowLabel(N2, true)',
+    ],
+    testX: [r1, r2, xTopp], testY: [0, 0, yTopp],
+  };
+},
+
+// ── 15. Skriv inn eksponentiell ───────────────────────────────────
+'inp3': function() {
+  var a = rnd(1, 4);
+  var b = [2, 3][rnd(0, 1)];
+  var x0 = rnd(1, 3), x1 = rnd(-2, 0);
+  var y0 = a * Math.pow(b, x0);
+  var y1 = a * Math.pow(b, x1);
+  return {
+    a: a, b: b, x0: x0, y0: y0, x1: x1, y1: y1,
+    tekst: 'Skriv inn <strong>f(x) = ' + lagEksp(a, b) + '</strong> i algebrafeltet. Grafen skal g\u00e5 gjennom de r\u00f8de punktene.',
+    hint: 'Skriv: f(x) = ' + a + ' * ' + b + '^x. Trykk Enter.',
+    cmds: [
+      'ZoomIn(' + (x1-2) + ', -1, ' + (x0+2) + ', ' + (y0+4) + ')',
+      'P0 = (0, ' + a + ')', 'P1 = (' + x0 + ', ' + y0 + ')',
+      'SetColor(P0, "Red")', 'SetColor(P1, "Red")',
+      'SetPointSize(P0, 6)', 'SetPointSize(P1, 6)',
+      'ShowLabel(P0, true)', 'ShowLabel(P1, true)',
+    ],
+    testX: [0, x0], testY: [a, y0],
+  };
+},
+
+
+
+// ── REGRESJONS-GENERATORER ────────────────────────────────────────
+'reg_lin': function() {
+  // Linjær: y = ax + b, generer 6 punkter med støy
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-5, 5);
+  var pts = [];
+  for (var i = 1; i <= 6; i++) {
+    var x = i;
+    var stoey = (Math.random() - 0.5) * 0.6;
+    var y = Math.round((a * x + b + stoey) * 10) / 10;
+    pts.push([x, y]);
+  }
+  return {
+    a: a, b: b, pts: pts,
+    tekst: 'Punktene viser en lineær sammenheng. Skriv følgende i <strong>algebrafeltet</strong> og trykk Enter:<br><code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font-size:.9em">RegLin({A,B,C,D,E,F})</code><br>GeoGebra tegner regresjonslinjen og viser <strong>a</strong> og <strong>b</strong> i f(x) = ax + b. Rund av til <strong>to desimaler</strong>.',
+    hint: 'Skriv RegLin({A,B,C,D,E,F}) i algebrafeltet. Koeffisientene vises på linjen i algebrafeltet til venstre. Fasit: a ≈ ' + a.toFixed(2) + ', b ≈ ' + b.toFixed(2) + '.',
+    cmds: (function(ps) {
+      var c = ['ZoomIn(0, ' + (Math.min.apply(null,ps.map(function(p){return p[1];})) - 3) + ', 8, ' + (Math.max.apply(null,ps.map(function(p){return p[1];})) + 3) + ')'];
+      var navn = 'ABCDEF';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b,
+  };
+},
+
+'reg_poly': function() {
+  // Kvadratisk: y = ax² + bx + c
+  var a = rndIkkeNull(-2, 2);
+  var b = rnd(-3, 3);
+  var c = rnd(-4, 4);
+  var pts = [];
+  for (var i = -2; i <= 3; i++) {
+    var stoey = (Math.random() - 0.5) * 0.8;
+    var y = Math.round((a*i*i + b*i + c + stoey) * 10) / 10;
+    pts.push([i, y]);
+  }
+  return {
+    a: a, b: b, c: c, pts: pts,
+    tekst: 'Punktene følger en kvadratisk sammenheng. Skriv følgende i <strong>algebrafeltet</strong>:<br><code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font-size:.9em">RegPoly({A,B,C,D,E,F}, 2)</code><br>GeoGebra tegner parabelen og viser <strong>a</strong>, <strong>b</strong> og <strong>c</strong>. Rund av til <strong>to desimaler</strong>.',
+    hint: 'Skriv RegPoly({A,B,C,D,E,F}, 2) i algebrafeltet. Koeffisientene vises i algebrafeltet. Fasit: a ≈ ' + a.toFixed(2) + ', b ≈ ' + b.toFixed(2) + ', c ≈ ' + c.toFixed(2) + '.',
+    cmds: (function(ps) {
+      var yvals = ps.map(function(p){return p[1];});
+      var c = ['ZoomIn(-3, ' + (Math.min.apply(null,yvals) - 3) + ', 4, ' + (Math.max.apply(null,yvals) + 3) + ')'];
+      var navn = 'ABCDEF';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b, fasitC: c,
+  };
+},
+
+'reg_eksp': function() {
+  // Eksponentiell: y = a·bˣ, b > 1
+  var a = rnd(1, 4);
+  var b = [1.5, 2, 2.5, 3][rnd(0, 3)];
+  var pts = [];
+  for (var i = 0; i <= 4; i++) {
+    var stoey = (Math.random() - 0.5) * 0.4;
+    var y = Math.round((a * Math.pow(b, i) + stoey) * 10) / 10;
+    pts.push([i, y]);
+  }
+  return {
+    a: a, b: b, pts: pts,
+    tekst: 'Punktene viser eksponentiell vekst. Skriv følgende i <strong>algebrafeltet</strong>:<br><code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font-size:.9em">RegExp({A,B,C,D,E})</code><br>GeoGebra viser regresjonen som f(x) = a·bˣ. Les av <strong>a</strong> og <strong>b</strong> og rund av til <strong>to desimaler</strong>.',
+    hint: 'Skriv RegExp({A,B,C,D,E}) i algebrafeltet. GeoGebra viser f(x) = a·bˣ direkte i algebrafeltet. Fasit: a ≈ ' + a.toFixed(2) + ', b ≈ ' + b.toFixed(2) + '.',
+    cmds: (function(ps) {
+      var yvals = ps.map(function(p){return p[1];});
+      var c = ['ZoomIn(-1, -1, 6, ' + (Math.max.apply(null,yvals) + 4) + ')'];
+      var navn = 'ABCDE';
+      ps.forEach(function(p, i) {
+        c.push(navn[i] + ' = (' + p[0] + ', ' + p[1] + ')');
+        c.push('SetColor(' + navn[i] + ', "DarkBlue")');
+        c.push('SetPointSize(' + navn[i] + ', 5)');
+        c.push('ShowLabel(' + navn[i] + ', false)');
+      });
+      return c;
+    })(pts),
+    fasitA: a, fasitB: b,
+  };
+},
+
+
+// ── GRAFTYPE-GENERATORER ──────────────────────────────────────────
+
+'teg_proporsjonal': function() {
+  var k = rndIkkeNull(-4, 4);
+  var px = rnd(1, 3);
+  var py = k * px;
+  return {
+    k: k,
+    tekst: 'Juster slideren <strong>k</strong> slik at grafen viser den proporsjonale funksjonen <strong>f(x) = ' + k + 'x</strong>. Grafen skal gå gjennom det røde punktet P(' + px + ', ' + py + ').',
+    hint: 'En proporsjonal funksjon f(x) = kx går alltid gjennom origo. Her er k = ' + k + '. Sjekk at f(' + px + ') = ' + py + '.',
+    cmds: [
+      'ZoomIn(-5, -5, 5, 5)',
+      'k = Slider(-6, 6, 0.5)',
+      'SetValue(k, 1)',
+      'f(x) = k * x',
+      'SetColor(f, "Blue")',
+      'SetLineThickness(f, 3)',
+      'P = (' + px + ', ' + py + ')',
+      'SetColor(P, "Red")',
+      'SetPointSize(P, 6)',
+      'ShowLabel(P, true)',
+    ],
+    fasitK: k,
+  };
+},
+
+'teg_lineaer': function() {
+  var a = rndIkkeNull(-3, 3);
+  var b = rnd(-4, 4);
+  var px1 = 0, py1 = b;
+  var px2 = 2, py2 = a * 2 + b;
+  return {
+    a: a, b: b,
+    tekst: 'Juster <strong>a</strong> (stigningstall) og <strong>b</strong> (konstantledd) slik at grafen viser <strong>f(x) = ' + a + 'x' + (b >= 0 ? ' + ' + b : ' − ' + Math.abs(b)) + '</strong>. Grafen skal gå gjennom begge røde punktene.',
+    hint: 'a = ' + a + ' betyr at grafen stiger/synker ' + a + ' for hver enhet. b = ' + b + ' er skjæringen med y-aksen. f(0) = ' + b + ', f(2) = ' + py2 + '.',
+    cmds: [
+      'ZoomIn(-5, -8, 5, 8)',
+      'a = Slider(-5, 5, 0.5)',
+      'b = Slider(-6, 6, 0.5)',
+      'SetValue(a, 1)',
+      'SetValue(b, 0)',
+      'f(x) = a * x + b',
+      'SetColor(f, "Blue")',
+      'SetLineThickness(f, 3)',
+      'P1 = (' + px1 + ', ' + py1 + ')',
+      'P2 = (' + px2 + ', ' + py2 + ')',
+      'SetColor(P1, "Red")', 'SetColor(P2, "Red")',
+      'SetPointSize(P1, 6)', 'SetPointSize(P2, 6)',
+      'ShowLabel(P1, true)', 'ShowLabel(P2, true)',
+    ],
+    fasitA: a, fasitB: b,
+  };
+},
+
+'teg_kvadratisk': function() {
+  var a = rndIkkeNull(-2, 2);
+  var px = rnd(1, 3);
+  var py = a * px * px;
+  return {
+    a: a,
+    tekst: 'Juster slideren <strong>a</strong> slik at grafen viser <strong>f(x) = ' + a + 'x²</strong>. Grafen skal gå gjennom det røde punktet P(' + px + ', ' + py + ').',
+    hint: 'f(x) = ax² er en parabel gjennom origo. a = ' + a + ' bestemmer åpningen. f(' + px + ') = ' + a + ' · ' + (px*px) + ' = ' + py + '.',
+    cmds: [
+      'ZoomIn(-4, -8, 4, 8)',
+      'a = Slider(-4, 4, 0.5)',
+      'SetValue(a, 1)',
+      'f(x) = a * x^2',
+      'SetColor(f, "Blue")',
+      'SetLineThickness(f, 3)',
+      'P = (' + px + ', ' + py + ')',
+      'SetColor(P, "Red")',
+      'SetPointSize(P, 6)',
+      'ShowLabel(P, true)',
+    ],
+    fasitA: a,
+  };
+},
+
+'teg_omvendt': function() {
+  var k = [2, 3, 4, 6, -2, -3, -4, -6][rnd(0, 7)];
+  var px = k > 0 ? rnd(1, 3) : rnd(-3, -1);
+  var py = k / px;
+  return {
+    k: k,
+    tekst: 'Juster slideren <strong>k</strong> slik at grafen viser den omvendt proporsjonale funksjonen <strong>f(x) = ' + k + '/x</strong>. Grafen skal gå gjennom P(' + px + ', ' + py + ').',
+    hint: 'f(x) = k/x har to grener og går aldri gjennom origo. k = ' + k + '. Sjekk: f(' + px + ') = ' + k + '/' + px + ' = ' + py + '.',
+    cmds: [
+      'ZoomIn(-6, -6, 6, 6)',
+      'k = Slider(-8, 8, 1)',
+      'SetValue(k, 1)',
+      'f(x) = k / x',
+      'SetColor(f, "Blue")',
+      'SetLineThickness(f, 3)',
+      'P = (' + px + ', ' + py + ')',
+      'SetColor(P, "Red")',
+      'SetPointSize(P, 6)',
+      'ShowLabel(P, true)',
+    ],
+    fasitK: k,
+  };
+},
+
+'teg_eksponentiell': function() {
+  var a = rnd(1, 3);
+  var b = [2, 3, 0.5][rnd(0, 2)];
+  var px = rnd(1, 3);
+  var py = a * Math.pow(b, px);
+  var vekst = b > 1 ? 'vekst' : 'nedgang';
+  return {
+    a: a, b: b,
+    tekst: 'Juster <strong>a</strong> (startverdi) og <strong>b</strong> (vekstfaktor) slik at grafen viser eksponentiell ' + vekst + ': <strong>f(x) = ' + a + ' · ' + b + 'ˣ</strong>. Grafen skal gå gjennom de røde punktene.',
+    hint: 'f(0) = a = ' + a + '. f(' + px + ') = ' + a + ' · ' + b + '³' + (px === 3 ? '' : 'ˣ') + ' = ' + py.toFixed(1) + '. b > 1 gir vekst, 0 < b < 1 gir nedgang.',
+    cmds: [
+      'ZoomIn(-2, -1, px+3, py+4)'.replace('px', px).replace('py', py),
+      'a = Slider(0.1, 5, 0.1)',
+      'b = Slider(0.1, 4, 0.1)',
+      'SetValue(a, 1)',
+      'SetValue(b, 2)',
+      'f(x) = a * b^x',
+      'SetColor(f, "Blue")',
+      'SetLineThickness(f, 3)',
+      'P0 = (0, ' + a + ')',
+      'P1 = (' + px + ', ' + py.toFixed(1) + ')',
+      'SetColor(P0, "Red")', 'SetColor(P1, "Red")',
+      'SetPointSize(P0, 6)', 'SetPointSize(P1, 6)',
+      'ShowLabel(P0, true)', 'ShowLabel(P1, true)',
+    ],
+    fasitA: a, fasitB: b,
+  };
+},
+}; // END GENERATORER
+
+
+var OPPGAVER = [];
+
+function byggOppgaver() {
+  byggLinjediagramOppgaver();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LINJEDIAGRAM-OPPGAVER — 4 stk
+// ══════════════════════════════════════════════════════════════════
+
+function byggLinjediagramOppgaver() {
+  function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function plukk(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function fmt(n){ return Number.isInteger(n)?String(n):n.toFixed(1); }
+
+  // ── Sjekk-hjelpere ────────────────────────────────────────────
+
+  // Sjekk at alle fasit-punkter finnes i GeoGebra-konstruksjonen
+  function sjekkPunkter(fasitPunkter, tol) {
+    return function(ggb) {
+      tol = tol || 0.15;
+      var navnene = ggb.getAllObjectNames();
+      var funnet = [], mangler = [];
+      fasitPunkter.forEach(function(fp) {
+        var ok = navnene.some(function(n) {
+          if (ggb.getObjectType(n) !== 'point') return false;
+          return Math.abs(ggb.getXcoord(n)-fp[0]) <= tol
+              && Math.abs(ggb.getYcoord(n)-fp[1]) <= tol;
+        });
+        if (ok) funnet.push(fp);
+        else mangler.push('('+fp[0]+', '+fp[1]+')');
+      });
+      var ok = mangler.length === 0;
+      var nesten = funnet.length >= Math.ceil(fasitPunkter.length * 0.7);
+      return {
+        ok: ok, nesten: !ok && nesten,
+        melding: ok
+          ? '✓ Alle '+fasitPunkter.length+' punkter er riktig plassert!'
+          : 'Mangler punkt: '+mangler.slice(0,3).join(', ')+(mangler.length>3?' ...':'')
+      };
+    };
+  }
+
+  // Sjekk punkter OG at det finnes minst n-1 segmenter
+  function sjekkPunkterOgLinjer(fasitPunkter, tol) {
+    return function(ggb) {
+      var pSjekk = sjekkPunkter(fasitPunkter, tol)(ggb);
+      var navnene = ggb.getAllObjectNames();
+      var segmenter = navnene.filter(function(n) {
+        var t = ggb.getObjectType(n);
+        return t === 'segment' || t === 'line';
+      }).length;
+      var linjerOk = segmenter >= fasitPunkter.length - 1;
+      if (!pSjekk.ok) return pSjekk;
+      if (!linjerOk) return {
+        ok: false, nesten: true,
+        melding: 'Punktene er riktige! Husk å tegne linjestykkene mellom dem ('+segmenter+'/'+(fasitPunkter.length-1)+' tegnet).'
+      };
+      return { ok: true, nesten: false, melding: '✓ Punkter og linjesegmenter er riktige!' };
+    };
+  }
+
+  // Tallsvar-sjekk
+  function sjekkTallsvar(fasit, tol, feltId) {
+    feltId = feltId || 'inp-tall';
+    return function(ggb) {
+      var el = document.getElementById(feltId);
+      var v = parseFloat((el?el.value:'').replace(',','.'));
+      if (isNaN(v)) return {ok:false,nesten:false,melding:'Skriv inn et tall.'};
+      var ok = Math.abs(v-fasit) <= tol;
+      var nesten = Math.abs(v-fasit) <= tol*3;
+      return {ok:ok, nesten:!ok&&nesten,
+        melding: ok ? '✓ Riktig! Svaret er '+fmt(fasit)+'.'
+                    : 'Fasit: '+fmt(fasit)+'. Du svarte '+fmt(v)+'.'};
+    };
+  }
+
+  // ── OPPGAVE 1: Plot datapunkter ───────────────────────────────
+  var kontekster1 = [
+    { tema:'Temperatur i en by', xNavn:'Dag', yNavn:'°C',
+      xLabels:['Man','Tir','Ons','Tor','Fre','Lør','Søn'] },
+    { tema:'Mobilbruk per elev', xNavn:'Elev', yNavn:'min/dag',
+      xLabels:['1','2','3','4','5','6'] },
+    { tema:'Nedbør per måned', xNavn:'Måned', yNavn:'mm',
+      xLabels:['Jan','Feb','Mar','Apr','Mai','Jun'] },
+  ];
+  var k1 = plukk(kontekster1);
+  var n1 = k1.xLabels.length;
+  var y1vals = []; for (var i=0;i<n1;i++) y1vals.push(rnd(5,30));
+  var pts1 = y1vals.map(function(y,i){ return [i+1, y]; });
+  var maks1 = Math.max.apply(null,y1vals), min1 = Math.min.apply(null,y1vals);
+  var idxMaks1 = y1vals.indexOf(maks1)+1;
+
+  OPPGAVER.push({
+    id:'linje1', gruppe:'Linjediagram', tittel:'1 · Plot datapunkter',
+    tekst: '<b>'+k1.tema+'</b> ('+k1.yNavn+'):<br><br>'
+      +'<table style="border-collapse:collapse;font-size:.9rem;margin:6px 0">'
+      +'<tr>'+k1.xLabels.map(function(x){return '<th style="padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)">'+x+'</th>';}).join('')+'</tr>'
+      +'<tr>'+y1vals.map(function(y){return '<td style="padding:4px 10px;text-align:center;border:1px solid rgba(255,255,255,.08);color:#ffd700">'+y+'</td>';}).join('')+'</tr>'
+      +'</table><br>'
+      +'Plot alle punktene i koordinatsystemet. Bruk x-verdiene 1, 2, 3, … for dagene.<br><br>'
+      +'<b>Spørsmål:</b> Hva er høyeste verdi (y-verdi)?<br>'
+      +'<input id="inp-tall" type="number" step="1" placeholder="0" '
+      +'style="margin-top:6px;padding:8px 12px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:8px;color:#e8f0ff;font-size:1rem;width:120px">',
+    hint:'Bruk Punkt-verktøyet (trykk A i verktøylinjen) og klikk på koordinatene. Eks: klikk på (1, '+y1vals[0]+') for '+k1.xLabels[0]+'.',
+    ggbKommandoer: ['SetAxesRatio(1,1)', 'ZoomIn(-1,'+(n1+1)+',-5,'+(maks1+8)+')'],
+    sjekk: function(ggb) {
+      var pSjekk = sjekkPunkter(pts1, 0.2)(ggb);
+      var tallSjekk = sjekkTallsvar(maks1, 0, 'inp-tall')(ggb);
+      if (!pSjekk.ok) return pSjekk;
+      return tallSjekk;
+    }
+  });
+
+  // ── OPPGAVE 2: Plot og tegn linjesegmenter ────────────────────
+  var kontekster2 = [
+    { tema:'Sykkeltur — tilbakelagt avstand', xNavn:'Time', yNavn:'km' },
+    { tema:'Sparekonto — saldo', xNavn:'Måned', yNavn:'kr' },
+    { tema:'Plantehøyde over uker', xNavn:'Uke', yNavn:'cm' },
+  ];
+  var k2 = plukk(kontekster2);
+  var n2 = 6;
+  var y2vals = [rnd(0,5)];
+  for (var j=1;j<n2;j++) y2vals.push(y2vals[j-1]+rnd(-3,8));
+  var pts2 = y2vals.map(function(y,i){ return [i, y]; });
+  var størstStign = 0, størstIdx = 1;
+  for (var s=1;s<n2;s++) {
+    var d = y2vals[s]-y2vals[s-1];
+    if (d > størstStign) { størstStign=d; størstIdx=s; }
+  }
+  var yMax2 = Math.max.apply(null,y2vals)+8;
+  var yMin2 = Math.min.apply(null,y2vals)-3;
+
+  OPPGAVER.push({
+    id:'linje2', gruppe:'Linjediagram', tittel:'2 · Tegn linjediagram',
+    tekst: '<b>'+k2.tema+'</b>:<br><br>'
+      +'<table style="border-collapse:collapse;font-size:.9rem;margin:6px 0">'
+      +'<tr>'+[0,1,2,3,4,5].map(function(x){return '<th style="padding:4px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)">'+k2.xNavn+' '+x+'</th>';}).join('')+'</tr>'
+      +'<tr>'+y2vals.map(function(y){return '<td style="padding:4px 9px;text-align:center;border:1px solid rgba(255,255,255,.08);color:#ffd700">'+y+'</td>';}).join('')+'</tr>'
+      +'</table><br>'
+      +'1) Plot alle punktene. 2) Tegn linjesegment mellom hvert nabopar.<br>'
+      +'Bruk <b>Segment</b>-verktøyet (velg to punkt etter hverandre).<br><br>'
+      +'<b>Spørsmål:</b> Mellom hvilke to x-verdier steg grafen mest?<br>'
+      +'Fra x = <input id="inp-fra" type="number" step="1" placeholder="?" '
+      +'style="width:60px;padding:6px 8px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:6px;color:#e8f0ff;font-size:.95rem"> '
+      +'til x = <input id="inp-til" type="number" step="1" placeholder="?" '
+      +'style="width:60px;padding:6px 8px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:6px;color:#e8f0ff;font-size:.95rem">',
+    hint:'Tegn segment fra (0,'+y2vals[0]+') til (1,'+y2vals[1]+'), deretter (1,'+y2vals[1]+') til (2,'+y2vals[2]+'), osv. Se hvilke to x-verdier som gir bratteste stigning.',
+    ggbKommandoer: ['ZoomIn(-0.5,'+(n2-0.5)+','+Math.floor(yMin2)+','+Math.ceil(yMax2)+')'],
+    sjekk: function(ggb) {
+      var pSjekk = sjekkPunkterOgLinjer(pts2, 0.2)(ggb);
+      if (!pSjekk.ok && !pSjekk.nesten) return pSjekk;
+      var elFra = document.getElementById('inp-fra');
+      var elTil = document.getElementById('inp-til');
+      var fra = parseInt((elFra?elFra.value:''));
+      var til = parseInt((elTil?elTil.value:''));
+      var okTall = (fra === størstIdx-1 && til === størstIdx) || (fra === størstIdx && til === størstIdx-1);
+      if (!pSjekk.ok) return pSjekk;
+      return {ok: okTall, nesten: false,
+        melding: okTall ? '✓ Riktig! Steepest fra x='+( størstIdx-1)+' til x='+størstIdx+'.'
+                        : 'Fasit: fra x='+(størstIdx-1)+' til x='+størstIdx+'.'};
+    }
+  });
+
+  // ── OPPGAVE 3: To datasett i samme diagram ────────────────────
+  var n3 = 5;
+  var yA = []; for (var a=0;a<n3;a++) yA.push(rnd(8,25));
+  var yB = []; for (var b=0;b<n3;b++) yB.push(rnd(8,25));
+  var sumA = yA.reduce(function(s,v){return s+v;},0);
+  var sumB = yB.reduce(function(s,v){return s+v;},0);
+  var høyestKurve = sumA > sumB ? 'A' : 'B';
+  var ptsA = yA.map(function(y,i){return [i+1,y];});
+  var ptsB = yB.map(function(y,i){return [i+1,y];});
+  var allePts = ptsA.concat(ptsB);
+  var yMaks3 = Math.max.apply(null,yA.concat(yB))+6;
+
+  OPPGAVER.push({
+    id:'linje3', gruppe:'Linjediagram', tittel:'3 · To datasett',
+    tekst:'Plot <b>begge</b> datasettene i samme koordinatsystem og tegn linjesegmenter.<br><br>'
+      +'<table style="border-collapse:collapse;font-size:.88rem;margin:6px 0">'
+      +'<tr><th style="padding:4px 8px;background:rgba(91,141,217,.15);border:1px solid rgba(255,255,255,.1)">x</th>'
+      +[1,2,3,4,5].map(function(x){return '<th style="padding:4px 8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)">'+x+'</th>';}).join('')+'</tr>'
+      +'<tr><td style="padding:4px 8px;border:1px solid rgba(255,255,255,.08);color:#5b8dd9">Kurve A</td>'
+      +yA.map(function(y){return '<td style="padding:4px 8px;text-align:center;border:1px solid rgba(255,255,255,.07);color:#5b8dd9">'+y+'</td>';}).join('')+'</tr>'
+      +'<tr><td style="padding:4px 8px;border:1px solid rgba(255,255,255,.08);color:#e8874b">Kurve B</td>'
+      +yB.map(function(y){return '<td style="padding:4px 8px;text-align:center;border:1px solid rgba(255,255,255,.07);color:#e8874b">'+y+'</td>';}).join('')+'</tr>'
+      +'</table><br>'
+      +'<b>Spørsmål:</b> Hvilken kurve har høyest totalsum?<br>'
+      +'<div style="display:flex;gap:8px;margin-top:6px">'
+      +'<button id="fv-A" onclick="velgKurve(\'A\')" style="padding:8px 18px;border-radius:7px;border:2px solid rgba(91,141,217,.3);background:rgba(91,141,217,.08);color:#5b8dd9;cursor:pointer;font-size:.9rem">Kurve A</button>'
+      +'<button id="fv-B" onclick="velgKurve(\'B\')" style="padding:8px 18px;border-radius:7px;border:2px solid rgba(232,135,75,.3);background:rgba(232,135,75,.08);color:#e8874b;cursor:pointer;font-size:.9rem">Kurve B</button>'
+      +'</div><input type="hidden" id="inp-kurve" value="">',
+    hint:'Bruk ulike farger i GeoGebra: tegn alle A-punktene og segmentene, deretter B. Sammenlign totalsummene: A='+sumA+', B='+sumB,
+    ggbKommandoer:['ZoomIn(0,6,0,'+Math.ceil(yMaks3)+')'],
+    sjekk: function(ggb) {
+      var el = document.getElementById('inp-kurve');
+      if (!el||!el.value) return {ok:false,nesten:false,melding:'Velg kurve A eller B.'};
+      var ok = el.value === høyestKurve;
+      return {ok:ok, nesten:false,
+        melding: ok ? '✓ Riktig! Kurve '+høyestKurve+' har høyest sum ('+Math.max(sumA,sumB)+').'
+                    : 'Fasit: Kurve '+høyestKurve+'. (A='+sumA+', B='+sumB+')'};
+    }
+  });
+
+  // ── OPPGAVE 4: Les av og beregn stigningstall ─────────────────
+  var n4 = 6;
+  var a4 = rnd(2,8), b4 = rnd(0,5);
+  var y4vals = [0,1,2,3,4,5].map(function(x){return a4*x+b4;});
+  var pts4 = y4vals.map(function(y,i){return [i,y];});
+  var x1_4=2, x2_4=4;
+  var y1_4=a4*x1_4+b4, y2_4=a4*x2_4+b4;
+
+  OPPGAVER.push({
+    id:'linje4', gruppe:'Linjediagram', tittel:'4 · Stigningstall fra diagram',
+    tekst:'Tabellen viser en <b>lineær sammenheng</b>:<br><br>'
+      +'<table style="border-collapse:collapse;font-size:.9rem;margin:6px 0">'
+      +'<tr>'+[0,1,2,3,4,5].map(function(x){return '<th style="padding:4px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)">x = '+x+'</th>';}).join('')+'</tr>'
+      +'<tr>'+y4vals.map(function(y){return '<td style="padding:4px 9px;text-align:center;border:1px solid rgba(255,255,255,.08);color:#ffd700">'+y+'</td>';}).join('')+'</tr>'
+      +'</table><br>'
+      +'1) Plot alle punktene og tegn linjesegmenter.<br>'
+      +'2) Bruk punktene ('+x1_4+', '+y1_4+') og ('+x2_4+', '+y2_4+') til å beregne stigningstallet.<br><br>'
+      +'<b>Stigningstall a =</b> '
+      +'<input id="inp-tall" type="number" step="1" placeholder="0" '
+      +'style="width:100px;padding:8px 12px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:8px;color:#e8f0ff;font-size:1rem">',
+    hint:'Stigningstall = (y₂ − y₁) / (x₂ − x₁) = ('+y2_4+' − '+y1_4+') / ('+x2_4+' − '+x1_4+')',
+    ggbKommandoer:['ZoomIn(-0.5,5.5,'+(b4-3)+','+(Math.max.apply(null,y4vals)+5)+')'],
+    sjekk: function(ggb) {
+      var pSjekk = sjekkPunkterOgLinjer(pts4, 0.2)(ggb);
+      if (!pSjekk.ok && !pSjekk.nesten) return pSjekk;
+      var tallSjekk = sjekkTallsvar(a4, 0, 'inp-tall')(ggb);
+      return tallSjekk;
+    }
+  });
+}
+
+// Hjelpefunksjon for kurvevalg (brukes i oppgave 3)
+function velgKurve(k) {
+  var el = document.getElementById('inp-kurve');
+  if (el) el.value = k;
+  document.querySelectorAll('#fv-A,#fv-B').forEach(function(btn){
+    var er = btn.id === 'fv-'+k;
+    btn.style.fontWeight = er ? '700' : '400';
+    btn.style.transform = er ? 'scale(1.05)' : 'scale(1)';
+  });
+}
+
+
+
+function initGGB() {
+  var wrap = document.getElementById('ggb-wrap');
+  var containerWidth = wrap.offsetWidth || Math.round(window.innerWidth * 0.70) || 700;
+  var containerHeight = wrap.offsetHeight || Math.round(window.innerHeight - 44) || 600;
+  var params = {
+    appName: 'graphing',
+    width: containerWidth,
+    height: containerHeight,
+    showToolBar: true,
+    showAlgebraInput: true,
+    showMenuBar: true,
+    enableRightClick: true,
+    enableShiftDragZoom: true,
+    showZoomButtons: true,
+    enableFileFeatures: false,
+    enableUndoRedo: true,
+    language: 'no',
+    appletOnLoad: function(api) {
+      ggbAPI = api;
+      lastOppgave(gjeldende);
+    }
+  };
+  try {
+    var applet = new GGBApplet(params, true);
+    applet.inject('ggb-container');
+  } catch(e) {
+    document.getElementById('ggb-container').innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:center;height:560px;color:#f87171;font-size:.9rem;padding:20px;text-align:center;">⚠️ Kunne ikke laste GeoGebra. Sjekk internettforbindelsen.</div>';
+  }
+}
+
+function getGGB() {
+  if (ggbAPI) return ggbAPI;
+  if (window.ggbApplet) return window.ggbApplet;
+  return null;
+}
+
+var gjeldende = 0;
+var løste = [];
+var forsøk = 0;
+
+function lastOppgave(idx) {
+  if (!løste.length) løste = new Array(OPPGAVER.length).fill(false);
+  var o = OPPGAVER[idx];
+  var ggb = getGGB();
+  if (!ggb) { setTimeout(function(){lastOppgave(idx);}, 300); return; }
+  ggb.newConstruction();
+  o.ggbKommandoer.forEach(function(cmd) {
+    // Rut ugyldige evalCommand-strenger til JS API
+    var svMatch = cmd.match(/^SetVisible\(([^,]+),\s*(true|false)\)$/);
+    if (svMatch) { ggb.setVisible(svMatch[1].trim(), svMatch[2]==='true'); return; }
+    var spMatch = cmd.match(/^SetPointSize\(([^,]+),\s*(\d+)\)$/);
+    if (spMatch) { ggb.setPointSize(spMatch[1].trim(), parseInt(spMatch[2])); return; }
+    try { ggb.evalCommand(cmd); } catch(e) { console.warn('GGB cmd:', cmd, e.message||e); }
+  });
+  document.getElementById('oppg-label').textContent = o.gruppe + ' · ' + o.tittel;
+  document.getElementById('oppg-tekst').innerHTML = o.tekst;
+  document.getElementById('oppg-hint').textContent = o.hint;
+  var hb=document.getElementById("hint-toggle"); if(hb) hb.textContent="Vis hint";
+  var ho=document.getElementById("oppg-hint"); if(ho) ho.classList.remove("vis");
+  byggSvarBoks(o);
+  oppdaterFB('', '');
+  oppdaterFremdrift();
+  oppdaterStats();
+}
+
+function byggSvarBoks(o) {
+  var boks = document.getElementById('svar-boks');
+  var html = '';
+  var draTyper = ['dra_punkt','dra_to_punkt','dra_en_y','dra_to_y','dra_en_x','dra_en_punkt'];
+
+
+// ── GRUPPE 6: INNTASTING I GEOGEBRA ──────────────────────────────
+
+
+
+  if (o.type === 'avgrens' || o.type === 'slider' || o.type === 'slider_k' || o.type === 'slider_a' || o.type === 'slider_ab') {
+    var vis = o.sliderVis || ['a','b'];
+    var labs = o.sliderLabels || vis;
+    html = '<div class="svar-label">Nåværende verdier:</div><div class="slider-info">';
+    vis.forEach(function(v,i){ html += '<div class="sval"><div class="sval-n" id="vis-'+v+'">–</div><div class="sval-l">'+(labs[i]||v)+'</div></div>'; });
+    html += '</div>';
+    startSliderPolling(vis);
+  } else if (draTyper.indexOf(o.type) >= 0) {
+    html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Dra det/de oransje punktet/ene i GeoGebra til riktig posisjon, trykk deretter Sjekk svar.</div>';
+  } else if (o.type === 'reg_ab') {
+    html = '<div class="reg-info">Kjør regresjonsanalyse i GeoGebra og skriv av koeffisientene:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>a</label><input class="koeff-input" id="inp-a" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>b</label><input class="koeff-input" id="inp-b" type="number" step="0.1" placeholder="0,0"></div>'
+      + '</div>';
+  } else if (o.type === 'reg_abc') {
+    html = '<div class="reg-info">Kjør polynom-regresjon (grad 2) og skriv av koeffisientene:</div>'
+      + '<div class="koeff-grid">'
+      + '<div class="koeff-felt"><label>a (x²)</label><input class="koeff-input" id="inp-a" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>b (x)</label><input class="koeff-input" id="inp-b" type="number" step="0.1" placeholder="0,0"></div>'
+      + '<div class="koeff-felt"><label>c (konst.)</label><input class="koeff-input" id="inp-c" type="number" step="0.1" placeholder="0,0"></div>'
+      + '</div>';
+  } else if (o.type === 'les_av_xy') {
+    html = '<div class="svar-label">Koordinater til punktet:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>x-koordinat</label><input class="koeff-input" id="inp-x" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div class="koeff-felt"><label>y-koordinat</label><input class="koeff-input" id="inp-y" type="number" step="0.01" placeholder="0,00"></div>'
+      + '</div>';
+  } else if (o.type === 'les_av_x1') {
+    html = '<div class="svar-label">Skriv inn x-verdien du fant i GeoGebra:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>x-verdi</label><input class="koeff-input" id="inp-x1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div></div></div>';
+  } else if (o.type === 'les_av_x2') {
+    html = '<div class="svar-label">Skriv inn de to x-verdiene du fant:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>x₁ (minste)</label><input class="koeff-input" id="inp-x1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div class="koeff-felt"><label>x₂ (største)</label><input class="koeff-input" id="inp-x2" type="number" step="0.01" placeholder="0,00"></div>'
+      + '</div>';
+  } else if (o.type === 'les_av_y1') {
+    html = '<div class="svar-label">Skriv inn y-verdien du fant i GeoGebra:</div>'
+      + '<div class="koeff-grid to">'
+      + '<div class="koeff-felt"><label>y-verdi</label><input class="koeff-input" id="inp-y1" type="number" step="0.01" placeholder="0,00"></div>'
+      + '<div></div></div>';
+  } else if (o.type === 'geogebra_input') {
+    html = '<div class="svar-label" style="margin-bottom:10px;line-height:1.5;">Skriv funksjonen i <strong>algebrafeltet</strong> i GeoGebra-vinduet og trykk <strong>Enter</strong>. Trykk deretter Sjekk svar.</div>';
+  } else if (o.type === 'regresjon') {
+    html = '<div class="svar-label">Les av fra GeoGebra og skriv inn:</div>'
+      +(o.inputIds.length===3?'<div class="koeff-grid">':'<div class="koeff-grid to">');
+    o.inputLabels.forEach(function(lbl,i){ html += '<div class="koeff-felt"><label>'+lbl+'</label><input class="koeff-input" id="'+o.inputIds[i]+'" type="number" step="0.1" placeholder="?"></div>'; });
+    html += '</div>';
+  } else if (o.type === 'input_abc') {
+    html = '<div class="svar-label">Skriv inn koeffisientene:</div><div class="koeff-grid">'
+      +'<div class="koeff-felt"><label>a</label><input class="koeff-input" id="inp-a" type="number" step="0.5" placeholder="?"></div>'
+      +'<div class="koeff-felt"><label>b</label><input class="koeff-input" id="inp-b" type="number" step="0.5" placeholder="?"></div>'
+      +'<div class="koeff-felt"><label>c</label><input class="koeff-input" id="inp-c" type="number" step="0.5" placeholder="?"></div>'
+      +'</div>';
+  } else if (o.type === 'input_xy') {
+    html = '<div class="svar-label">Skriv inn koordinatene:</div><div class="koeff-grid to">'
+      +'<div class="koeff-felt"><label>'+(o.inputLabels[0]||'x')+'</label><input class="koeff-input" id="inp-x" type="number" step="0.5" placeholder="?"></div>'
+      +'<div class="koeff-felt"><label>'+(o.inputLabels[1]||'y')+'</label><input class="koeff-input" id="inp-y" type="number" step="0.5" placeholder="?"></div>'
+      +'</div>';
+  }
+  html += '<button class="sjekk-btn" id="sjekk-btn" onclick="sjekk()">✓ Sjekk svar</button>';
+  html += '<div class="fb" id="fb"></div>';
+  html += '<button class="neste-btn" id="neste-btn" onclick="nesteOppgave()">Neste oppgave ▶</button>';
+  html += '<button class="ny-oppg-btn" id="ny-oppg-btn" onclick="nyOppgave()">🔄 Ny oppgave, samme type</button>';
+  html += '<button class="ny-runde-btn" id="ny-runde-btn" onclick="nyRunde()">🔀 Ny runde – alle oppgaver</button>';
+  boks.innerHTML = html;
+  boks.querySelectorAll('input').forEach(function(inp){
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter') sjekk(); });
+  });
+}
+
+var pollingTimer = null;
+function startSliderPolling(vars) {
+  vars = vars || ['a','b'];
+  clearInterval(pollingTimer);
+  pollingTimer = setInterval(function() {
+    var ggb = getGGB();
+    if (!ggb) return;
+    try {
+      vars.forEach(function(v) {
+        var val = ggb.getValue(v);
+        var el = document.getElementById('vis-'+v);
+        if (el) el.textContent = isNaN(val) ? '–' : val.toFixed(2);
+      });
+    } catch(e) {}
+  }, 300);
+}
+
+function sjekk() {
+  var ggb = getGGB();
+  if (!ggb) return;
+  var o = OPPGAVER[gjeldende];
+  forsøk++;
+  oppdaterStats();
+  var res = o.sjekk(ggb);
+  if (res.ok) {
+    løste[gjeldende] = true;
+    oppdaterFB('ok', res.melding);
+    document.getElementById('sjekk-btn').disabled = true;
+    document.getElementById('neste-btn').style.display = 'block';
+    var nyBtn=document.getElementById('ny-oppg-btn'); if(nyBtn) nyBtn.style.display='block';
+    var nrBtn=document.getElementById('ny-runde-btn'); if(nrBtn) nrBtn.style.display='block';
+    oppdaterFremdrift();
+    oppdaterStats();
+    clearInterval(pollingTimer);
+    var tab=document.getElementById('tab-'+gjeldende);
+    if(tab)tab.className='oknapp løst';
+    var ikon=document.getElementById('ikon-'+gjeldende);
+    if(ikon)ikon.textContent='✓';
+  } else if (res.nesten) {
+    oppdaterFB('nesten', res.melding);
+  } else {
+    oppdaterFB('feil', res.melding);
+  }
+}
+
+function oppdaterFB(type, tekst) {
+  var fb = document.getElementById('fb');
+  if (!fb) return;
+  if (!type) { fb.className='fb'; fb.innerHTML=''; return; }
+  fb.className = 'fb '+type;
+  fb.innerHTML = tekst;
+}
+
+function gåTilOppgave(idx) {
+  clearInterval(pollingTimer);
+  gjeldende = idx;
+  // Oppdater knapper i listen
+  OPPGAVER.forEach(function(o,i){
+    var btn=document.getElementById('tab-'+i);
+    if(!btn)return;
+    btn.className='oknapp'+(løste[i]?' løst':'')+(i===idx?' aktiv':'');
+    var ikon=document.getElementById('ikon-'+i);
+    if(ikon)ikon.textContent=løste[i]?'✓':i===idx?'▶':'○';
+  });
+  lastOppgave(idx);
+}
+
+function nesteOppgave() {
+  var neste = gjeldende+1;
+  if (neste < OPPGAVER.length) gåTilOppgave(neste);
+}
+
+function oppdaterFremdrift() {
+  var fp = document.getElementById('fremdrift');
+  if (!fp) return;
+  fp.innerHTML='';
+  OPPGAVER.forEach(function(o,i){
+    var d=document.createElement('div');
+    d.className='fp'+(løste[i]?' løst':i===gjeldende?' aktiv':'');
+    fp.appendChild(d);
+  });
+}
+
+function visHint(){var hint=document.getElementById("oppg-hint");var btn=document.getElementById("hint-toggle");if(!hint)return;if(hint.classList.contains("vis")){hint.classList.remove("vis");if(btn)btn.textContent="Vis hint";}else{hint.classList.add("vis");if(btn)btn.textContent="Skjul hint";}}
+function nyOppgave() {
+  // Regenerer kun gjeldende oppgave med nye tall
+  clearInterval(pollingTimer);
+  var id = OPPGAVER[gjeldende].id;
+  var gen = GENERATORER[id] || GENERATORER[id.replace(/\d+$/,'')];
+  // Finn riktig generator basert på ID
+  var genKey = null;
+  if (id === 'avg1') genKey = 'avg1';
+  else if (id === 'avg2') genKey = 'avg2';
+  else if (id === 'eks1') genKey = 'eks_parabel';
+  else if (id === 'eks2') genKey = 'eks_parabel';
+  else if (id === 'eks3') genKey = 'eks3';
+  else if (id === 'eks4') genKey = 'eks4';
+  else if (id === 'xy1') genKey = 'xy1';
+  else if (id === 'xy2') genKey = 'xy2';
+  else if (id === 'yx1') genKey = 'yx1';
+  else if (id === 'yx2') genKey = 'yx2';
+  else if (id === 'skj1') genKey = 'skj1';
+  else if (id === 'skj2') genKey = 'skj2';
+  else if (id === 'inp1') genKey = 'inp1';
+  else if (id === 'inp2') genKey = 'inp2';
+  else if (id === 'inp3') genKey = 'inp3';
+  else if (id === 'reg1') genKey = 'reg_lin';
+  else if (id === 'reg2') genKey = 'reg_poly';
+  else if (id === 'reg3') genKey = 'reg_eksp';
+  else if (id === 'teg1') genKey = 'teg_proporsjonal';
+  else if (id === 'teg2') genKey = 'teg_lineaer';
+  else if (id === 'teg3') genKey = 'teg_kvadratisk';
+  else if (id === 'teg4') genKey = 'teg_omvendt';
+  else if (id === 'teg5') genKey = 'teg_eksponentiell';
+  if (!genKey) { lastOppgave(gjeldende); return; }
+  // Generer ny data
+  var retning = (id === 'eks1') ? 1 : (id === 'eks2') ? -1 : null;
+  var nyData = retning !== null ? GENERATORER[genKey](retning) : GENERATORER[genKey]();
+  // Oppdater oppgave-objektet med nye verdier
+  var o = OPPGAVER[gjeldende];
+  o.tekst = nyData.tekst;
+  o.hint  = nyData.hint;
+  o.ggbKommandoer = nyData.cmds;
+  // Oppdater sjekk-funksjon med ny fasit
+  if (nyData.fasitA !== undefined) {
+    o.sjekk = (function(fa,fb){ return function(ggb){
+      var a=ggb.getValue('a'),b=ggb.getValue('b');
+      var ok=Math.abs(a-fa)<=0.3&&Math.abs(b-fb)<=0.3;
+      return {ok:ok,nesten:!ok&&(Math.abs(a-fa)<=0.8||Math.abs(b-fb)<=0.8),
+        melding:ok?'✓ Riktig! a='+fa+', b='+fb+'.':'a='+a.toFixed(1)+' (skal være '+fa+'), b='+b.toFixed(1)+' (skal være '+fb+').'};
+    };})(nyData.fasitA, nyData.fasitB);
+  } else if (nyData.fasitX !== undefined && nyData.fasitY !== undefined) {
+    o.sjekk = (function(fx,fy){ return function(ggb){
+      var x=parseFloat(document.getElementById('inp-x').value.replace(',','.')),y=parseFloat(document.getElementById('inp-y').value.replace(',','.'));
+      if(isNaN(x)||isNaN(y)) return {ok:false,nesten:false,melding:'Fyll inn både x og y.'};
+      var ok=Math.abs(x-fx)<=0.055&&Math.abs(y-fy)<=0.055;
+      return {ok:ok,nesten:!ok&&Math.abs(x-fx)<=0.3&&Math.abs(y-fy)<=0.3,
+        melding:ok?'✓ Riktig! ('+fmt(fx)+', '+fmt(fy)+').':'Fasit: ('+fmt(fx)+', '+fmt(fy)+'). Du svarte ('+x.toFixed(2)+', '+y.toFixed(2)+')'};
+    };})(nyData.fasitX, nyData.fasitY);
+  } else if (nyData.fasit1 !== undefined) {
+    o.sjekk = (function(f1,f2){ return function(ggb){
+      var x1=parseFloat(document.getElementById('inp-x1').value.replace(',','.')),x2=parseFloat(document.getElementById('inp-x2').value.replace(',','.'));
+      if(isNaN(x1)||isNaN(x2)) return {ok:false,nesten:false,melding:'Fyll inn begge x-verdiene.'};
+      var s=[x1,x2].sort(function(a,b){return a-b;});
+      var ok=Math.abs(s[0]-f1)<=0.055&&Math.abs(s[1]-f2)<=0.055;
+      return {ok:ok,nesten:!ok&&Math.abs(s[0]-f1)<=0.3&&Math.abs(s[1]-f2)<=0.3,
+        melding:ok?'✓ Riktig! x='+fmt(f1)+' og x='+fmt(f2)+'.':'Fasit: '+fmt(f1)+' og '+fmt(f2)+'. Du svarte '+x1.toFixed(2)+' og '+x2.toFixed(2)+'.'};
+    };})(nyData.fasit1, nyData.fasit2);
+  } else if (nyData.fasit !== undefined) {
+    o.sjekk = (function(fv){ return function(ggb){
+      var el=document.getElementById('inp-x1')||document.getElementById('inp-y1');
+      if(!el) return {ok:false,nesten:false,melding:'Fyll inn verdien.'};
+      var v=parseFloat(el.value.replace(',','.'));
+      if(isNaN(v)) return {ok:false,nesten:false,melding:'Fyll inn verdien.'};
+      var ok=Math.abs(v-fv)<=0.5;
+      return {ok:ok,nesten:!ok&&Math.abs(v-fv)<=1,
+        melding:ok?'✓ Riktig! '+fmt(fv)+'.':'Fasit: '+fmt(fv)+'. Du svarte '+v.toFixed(2)+'.'};
+    };})(nyData.fasit);
+  } else if (nyData.testX !== undefined) {
+    o.sjekk = (function(tx,ty){ return function(ggb){
+      if(!ggb.isDefined('f')) return {ok:false,nesten:false,melding:'Skriv inn funksjonen f(x) = ... i algebrafeltet og trykk Enter.'};
+      var feil=[];
+      for(var i=0;i<tx.length;i++){var fv=ggb.getValue('f('+tx[i]+')');if(Math.abs(fv-ty[i])>0.1)feil.push('f('+tx[i]+')='+fv.toFixed(2)+' (skal være '+ty[i]+')');}
+      return {ok:feil.length===0,nesten:false,melding:feil.length===0?'✓ Riktig! Grafen treffer alle punktene.':feil[0]+'. Sjekk uttrykket.'};
+    };})(nyData.testX, nyData.testY);
+  }
+  // Last oppgaven på nytt
+  lastOppgave(gjeldende);
+}
+function nyRunde() {
+  OPPGAVER = [];
+  løste = [];
+  forsøk = 0;
+  gjeldende = 0;
+  clearInterval(pollingTimer);
+  byggOppgaver();
+  løste = new Array(OPPGAVER.length).fill(false);
+  document.getElementById('oppg-liste-wrap').innerHTML = '';
+  var tabs = document.getElementById('oppg-tabs');
+  if (tabs) tabs.innerHTML = '';
+  var grp = document.getElementById('grp-tabs');
+  if (grp) grp.innerHTML = '';
+  byggTabs();
+  byggGruppeTabs();
+  oppdaterFremdrift();
+  oppdaterStats();
+  var ggb = getGGB();
+  if (ggb) lastOppgave(0);
+}
+function oppdaterStats() {
+  var lc=løste.filter(Boolean).length;
+  document.getElementById('st-løst').textContent=lc;
+  document.getElementById('st-forsøk').textContent=forsøk;
+}
+
+function byggTabs() {
+  if (!løste.length) løste=new Array(OPPGAVER.length).fill(false);
+  var wrap=document.getElementById('oppg-liste-wrap');
+  if (!wrap) return;
+  // Grupper oppgavene
+  var grupper=[];
+  OPPGAVER.forEach(function(o){if(grupper.indexOf(o.gruppe)<0)grupper.push(o.gruppe);});
+  var html='';
+  grupper.forEach(function(g){
+    html+='<div class="grp-header">'+g+'</div>';
+    OPPGAVER.forEach(function(o,i){
+      if(o.gruppe!==g)return;
+      html+='<button id="tab-'+i+'" class="oknapp" onclick="gåTilOppgave('+i+')">'
+        +'<span class="ok-nr">'+(i+1)+'</span>'
+        +'<span class="ok-ikon" id="ikon-'+i+'">○</span>'
+        +'<span>'+o.tittel.replace(/^\d+ · /,'')+'</span>'
+        +'</button>';
+    });
+  });
+  wrap.innerHTML=html;
+}
+
+function byggGruppeTabs() {
+  var grupper=[];
+  OPPGAVER.forEach(function(o){if(grupper.indexOf(o.gruppe)<0)grupper.push(o.gruppe);});
+  var el=document.getElementById('grp-tabs');
+  if(!el)return;
+  var allBtn=document.createElement('button');
+  allBtn.className='grp-tab aktiv';allBtn.textContent='Alle ('+OPPGAVER.length+')';
+  allBtn.onclick=function(){filtrerGruppe(null,allBtn);};
+  el.appendChild(allBtn);
+  grupper.forEach(function(g){
+    var n=OPPGAVER.filter(function(o){return o.gruppe===g;}).length;
+    var btn=document.createElement('button');
+    btn.className='grp-tab';btn.textContent=g+' ('+n+')';
+    btn.onclick=(function(grp,b){return function(){filtrerGruppe(grp,b);};})(g,btn);
+    el.appendChild(btn);
+  });
+}
+
+function filtrerGruppe(grp,btn){
+  document.querySelectorAll('.grp-tab').forEach(function(b){b.classList.remove('aktiv');});
+  btn.classList.add('aktiv');
+  for(var i=0;i<OPPGAVER.length;i++){if(!grp||OPPGAVER[i].gruppe===grp){gåTilOppgave(i);return;}}
+}
+
+function startApp(){byggOppgaver();løste=new Array(OPPGAVER.length).fill(false);byggTabs();byggGruppeTabs();oppdaterFremdrift();initGGB();}
+window.addEventListener('DOMContentLoaded', startApp);
+
+
+</script>
+</body>
+</html>
