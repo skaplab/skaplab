@@ -588,33 +588,108 @@ function genProsent() {
 
 function genVolumEllerAlgebra() {
   var typer = [
-    // Volum prisme
+
+    // A: Volum av prisme (gitte mål) + begreps-flervalg om formelen
     function() {
-      var l = rnd(15,35), b = rnd(10,l-5), h = rnd(5,15);
-      var vol = l*b*h;
-      var liter = vol/1000;
+      var gjenst = [
+        {navn:'koffert', art:'en koffert'},
+        {navn:'matboks', art:'en matboks'},
+        {navn:'gaveeske', art:'en gaveeske'},
+        {navn:'bokhylle', art:'en bokhylle'},
+        {navn:'akvariet', art:'et akvarium'},
+        {navn:'sandkasse', art:'en sandkasse'},
+        {navn:'kjøleskap', art:'et kjøleskap'},
+        {navn:'verktøykasse', art:'en verktøykasse'},
+      ];
+      var g = plukk(gjenst);
+      var l = rnd(20,60), b = rnd(15,40), hh = rnd(10,30);
+      var vol_cm3 = l * b * hh;
+      var liter = vol_cm3 / 1000;
+      var fv = lagBegrepFlervalg('V = l · b · h', [
+        'V = l · b · h',
+        'V = l + b + h',
+        'V = 2(l + b) · h',
+        'V = l² · h',
+      ]);
       return {
-        spørsmål: `En kasse har lengde ${l} cm, bredde ${b} cm og høyde ${h} cm.\n\n` +
-          `a) Foreslå hva kassen kan brukes til.\n` +
-          `b) Regn ut volumet i liter.`,
-        fasit: parseFloat(liter.toFixed(2)), enhet:'liter',
-        løsning: `V = ${l} × ${b} × ${h} = ${vol} cm³ = ${liter} liter`,
-        kommentar: 'V = lengde × bredde × høyde. Husk: 1 dm³ = 1 liter = 1000 cm³',
-        svarType:'tall', tol:0.01,
+        spørsmål: 'Mål på ' + g.art + ':\nLengde: ' + l + ' cm, bredde: ' + b + ' cm, høyde: ' + hh + ' cm.\n\n' +
+          'a) Regn ut volumet i liter. (1 poeng)\n\n' +
+          'b) Hva er formelen for volum av et prisme? (1 poeng)',
+        fasit: parseFloat(liter.toFixed(3)),
+        løsning: 'V = ' + l + ' × ' + b + ' × ' + hh + ' = ' + vol_cm3 + ' cm³ = ' + liter.toFixed(3) + ' liter\nb) V = l · b · h',
+        kommentar: '1 liter = 1 dm³ = 1000 cm³. Del cm³ på 1000 for å få liter.',
+        svarType: 'volum_tall_fv',
+        begrep: fv,
+        tol: 0.005,
       };
     },
-    // Algebrauttrykk for areal
+
+    // B: Algebrauttrykk for areal → flervalg
     function() {
-      var a = plukk(['a','b','x','n']);
-      var k = rnd(2,4);
+      var var_ = plukk(['a', 'b', 'x', 'n']);
+      var k = rnd(2, 4);
+      var riktig = k + var_ + '\u00b2';
+      var fv = lagBegrepFlervalg(riktig, [
+        riktig,
+        k + var_ + ' + ' + var_,
+        (k+1) + var_ + '\u00b2',
+        var_ + '\u00b2 + ' + k,
+      ]);
       return {
-        spørsmål: `Et rektangel har lengde ${a} og bredde ${k}${a}.\n\nSkriv et uttrykk for arealet av rektangelet.`,
-        fasit: `${k}${a}²`, enhet:'',
-        løsning: `Areal = ${a} × ${k}${a} = ${k}${a}²`,
-        kommentar: 'Areal = lengde × bredde.',
-        svarType:'tekst',
+        spørsmål: 'Et rektangel har lengde ' + var_ + ' og bredde ' + k + var_ + '.\n\nVelg riktig uttrykk for arealet av rektangelet.',
+        fasit: null,
+        løsning: 'Areal = ' + var_ + ' × ' + k + var_ + ' = ' + k + var_ + '\u00b2',
+        kommentar: 'Areal = lengde × bredde = ' + var_ + ' × ' + k + var_ + '.',
+        svarType: 'volum_ren_fv',
+        begrep: fv,
+        tol: 0,
       };
     },
+
+    // C: Pytagoras — er trekanten rettvinklet?
+    function() {
+      var erRett = Math.random() > 0.5;
+      var trippeler = [[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15]];
+      var feil = [[3,4,6],[5,6,8],[4,5,7],[3,5,6],[6,7,9]];
+      var sider = erRett ? plukk(trippeler) : plukk(feil);
+      var a = sider[0], b = sider[1], c = sider[2];
+      var a2b2 = a*a + b*b, c2 = c*c;
+      var fv = lagBegrepFlervalg(
+        erRett ? 'Ja, trekanten er rettvinklet' : 'Nei, trekanten er ikke rettvinklet',
+        ['Ja, trekanten er rettvinklet', 'Nei, trekanten er ikke rettvinklet']
+      );
+      return {
+        spørsmål: 'En trekant har sidekanter ' + a + ' cm, ' + b + ' cm og ' + c + ' cm.\n\n' +
+          'a) Regn ut ' + a + '\u00b2 + ' + b + '\u00b2 og ' + c + '\u00b2. (1 poeng)\n\n' +
+          'b) Er trekanten rettvinklet? (1 poeng)',
+        fasitA1: a2b2, fasitA2: c2,
+        løsning: a + '\u00b2 + ' + b + '\u00b2 = ' + a2b2 + '\n' + c + '\u00b2 = ' + c2 + '\n' +
+          (erRett ? 'Siden ' + a2b2 + ' = ' + c2 + ' er trekanten rettvinklet ✓' :
+                    'Siden ' + a2b2 + ' \u2260 ' + c2 + ' er trekanten ikke rettvinklet'),
+        kommentar: 'Pytagoras: a\u00b2 + b\u00b2 = c\u00b2 for rettvinklede trekanter.',
+        svarType: 'pytagoras_ab',
+        begrep: fv, erRett: erRett,
+        a2b2: a2b2, c2: c2,
+        tol: 0,
+      };
+    },
+
+    // D: Areal av sammensatt figur
+    function() {
+      var l = rnd(8,20), b = rnd(6,l-2);
+      var hull_l = rnd(2, Math.floor(l/2)), hull_b = rnd(2, Math.floor(b/2));
+      var areal = l*b - hull_l*hull_b;
+      return {
+        spørsmål: 'Et rektangel har lengde ' + l + ' cm og bredde ' + b + ' cm.\n' +
+          'Et rektangulært hull på ' + hull_l + ' cm × ' + hull_b + ' cm er kuttet ut fra hjørnet.\n\n' +
+          'Regn ut arealet av figuren som er igjen.',
+        fasit: areal,
+        løsning: 'Areal = ' + l + ' × ' + b + ' − ' + hull_l + ' × ' + hull_b + ' = ' + l*b + ' − ' + hull_l*hull_b + ' = ' + areal + ' cm\u00b2',
+        kommentar: 'Regn ut stort areal minus hullet.',
+        svarType: 'tall', tol: 0,
+      };
+    },
+
   ];
   var t = plukk(typer)();
   return {
@@ -1497,7 +1572,11 @@ function genLineærFunksjonerDel2() {
   ];
   var k = plukk(kontekster);
   var f1=k.t1(), f2=k.t2(), f3=k.t3();
-  var bryt12 = f1.a!==f2.a ? Math.round((f2.b-f1.b)/(f1.a-f2.a)) : null;
+  var bryt12 = null;
+  if (f1.a !== f2.a) {
+    var _b = Math.round((f2.b - f1.b) / (f1.a - f2.a));
+    bryt12 = (_b >= 1 && _b <= 500) ? _b : null;
+  }
 
   // Begrepsoppgave for del d)
   var lb = plukk(LINF_BEGREP_BESKR);
@@ -1815,6 +1894,31 @@ function renderSvarBoks(o) {
       +'</div>';
   }
 
+  if (o.svarType === 'volum_tall_fv') {
+    return '<div class="svar-seksjon"><div class="svar-label">a) Volum i liter:</div>'
+      +'<input class="svar-input" id="svar-inp" type="number" step="0.001" placeholder="0,000" style="max-width:150px">'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Velg riktig formel:</div>'
+      + begrep_fv_html('volum_b_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
+  if (o.svarType === 'volum_ren_fv') {
+    return '<div class="svar-seksjon"><div class="svar-label">Velg riktig uttrykk:</div>'
+      + begrep_fv_html('volum_fv_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
+  if (o.svarType === 'pytagoras_ab') {
+    return '<div class="koeff-grid to">'
+      +'<div class="koeff-felt"><label>a² + b² =</label><input class="koeff-input" id="pyt-a" type="number" step="1" placeholder="0"></div>'
+      +'<div class="koeff-felt"><label>c² =</label><input class="koeff-input" id="pyt-c" type="number" step="1" placeholder="0"></div>'
+      +'</div>'
+      +'<div class="svar-seksjon"><div class="svar-label">b) Er trekanten rettvinklet?</div>'
+      + begrep_fv_html('pyt_b_'+o._idx, o.begrep.alts)
+      +'</div>';
+  }
+
   if (o.svarType === 'tall_flervalg') {
     var html = '<div class="svar-seksjon"><div class="svar-label">a) Antall kvadrater i figur 5:</div>'
       +'<input class="svar-input" id="svar-inp" type="number" step="1" placeholder="0" style="max-width:140px">'
@@ -2103,6 +2207,43 @@ function sjekk(idx) {
     melding = 'f₁: a='+(okA1?'✓':o.fasitA1)+' b='+(okB1?'✓':o.fasitB1)+'. '
       +'f₂: a='+(okA2?'✓':o.fasitA2)+' b='+(okB2?'✓':o.fasitB2)+'. '
       +(o.fasitC!==null?'Skjæring: '+(okC_l?'✓':'Fasit: '+o.fasitC+' '+o.k.xNavn):'');
+
+  } else if (o.svarType === 'volum_tall_fv') {
+    var vA=parseFloat(((document.getElementById('svar-inp')||{value:''}).value+'').replace(',','.'));
+    var keyB='volum_b_'+o._idx, valB=flervalgValg[keyB];
+    var okA=!isNaN(vA)&&sjekkTall(vA,o.fasit,o.tol||0.005);
+    var okB=valB===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyB+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valB?'galt':''));
+    });
+    poeng=(okA?1:0)+(okB?1:0);
+    status=poeng===2?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA?'✓':('Fasit: '+o.fasit+' liter'))+' b) '+(okB?'✓':'Fasit: V = l · b · h');
+    flervalgValg[keyB]=undefined;
+
+  } else if (o.svarType === 'volum_ren_fv') {
+    var keyFv='volum_fv_'+o._idx, valFv=flervalgValg[keyFv];
+    var okFv=valFv===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyFv+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valFv?'galt':''));
+    });
+    poeng=okFv?2:0;
+    status=okFv?'riktig':'feil';
+    melding=okFv?'✓ Riktig uttrykk!':'Fasit: '+o.begrep.alts[o.begrep.riktigIdx];
+    flervalgValg[keyFv]=undefined;
+
+  } else if (o.svarType === 'pytagoras_ab') {
+    var okA_p=sjekkTall(hentTall('pyt-a'),o.a2b2,0);
+    var okC_p=sjekkTall(hentTall('pyt-c'),o.c2,0);
+    var keyPB='pyt_b_'+o._idx, valPB=flervalgValg[keyPB];
+    var okB_p=valPB===o.begrep.riktigIdx;
+    document.querySelectorAll('.fv-btn[data-oppg="'+keyPB+'"]').forEach(function(btn,i){
+      btn.className='fv-btn '+(i===o.begrep.riktigIdx?'riktig':(i===valPB?'galt':''));
+    });
+    poeng=((okA_p&&okC_p)?1:0)+(okB_p?1:0);
+    status=poeng===2?'riktig':poeng>0?'delvis':'feil';
+    melding='a) '+(okA_p?'✓':'Fasit: '+o.a2b2)+' og '+(okC_p?'✓':'Fasit: '+o.c2)+' b) '+(okB_p?'✓':'Fasit: '+(o.erRett?'Rettvinklet':'Ikke rettvinklet'));
+    flervalgValg[keyPB]=undefined;
 
   } else if (o.svarType === 'stign_tall_begrep') {
     var vA=parseFloat(((document.getElementById('svar-inp')||{value:''}).value+'').replace(',','.'));
