@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labyrintkoden 🐍</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a1628; --bg2:#111e35; --bg3:#162540;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+  --text:#e8f0ff; --dim:#7a90b0;
+  --accent:#e8c84b; --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+  --font-d:'Playfair Display',serif;
+  --font-b:'Source Sans 3',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);}
+
+/* ── HEADER ── */
+#header{
+  background:linear-gradient(90deg,#0e1f3a,#162540);
+  border-bottom:1px solid var(--border);
+  padding:10px 20px;
+  display:flex;align-items:center;gap:14px;
+}
+.logo{font-family:var(--font-d);font-size:1.3rem;font-weight:900;color:var(--accent);}
+.undertittel{font-size:.76rem;color:var(--dim);}
+.spacer{flex:1;}
+a.tilbake{font-size:.78rem;color:var(--dim);text-decoration:none;}
+a.tilbake:hover{color:var(--text);}
+
+/* ── LAYOUT ── */
+#app{
+  display:grid;
+  grid-template-columns:190px 1fr 320px;
+  height:calc(100vh - 52px);
+  overflow:hidden;
+}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+  padding:10px 6px;
+}
+.sidebar-tittel{font-size:.65rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--dim);padding:6px 8px 4px;}
+.brett-knapp{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:7px 10px;border-radius:8px;background:transparent;
+  border:1px solid transparent;color:var(--dim);cursor:pointer;
+  font-size:.8rem;font-family:var(--font-b);text-align:left;
+  transition:all .12s;margin-bottom:2px;
+}
+.brett-knapp:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.brett-knapp.aktiv{background:rgba(232,200,75,.08);border-color:rgba(232,200,75,.25);color:var(--accent);}
+.brett-knapp.løst{border-color:rgba(74,222,128,.2);}
+.brett-knapp.løst .brett-nr{background:rgba(74,222,128,.15);color:var(--green);}
+.brett-nr{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:700;flex-shrink:0;}
+.brett-navn{flex:1;font-size:.78rem;}
+.brett-stjerner{font-size:.7rem;}
+
+/* ── LABYRINT-PANEL ── */
+#labyrint-panel{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;
+  overflow:hidden;padding:16px;
+  background:var(--bg);
+}
+#brett-tittel{
+  font-family:var(--font-d);font-size:1.1rem;font-weight:700;
+  color:var(--accent);margin-bottom:4px;align-self:flex-start;
+}
+#brett-mål{
+  font-size:.84rem;color:var(--dim);margin-bottom:10px;
+  align-self:flex-start;line-height:1.4;max-width:100%;
+}
+#canvas-wrap{
+  position:relative;border-radius:10px;overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 2px rgba(232,200,75,.15);
+  flex-shrink:0;
+}
+#labyrint-canvas{display:block;}
+
+#stjerne-guide{
+  font-size:.72rem;color:var(--dim);margin-top:8px;
+  align-self:flex-start;
+}
+
+/* ── KODE-PANEL ── */
+#kode-panel{
+  background:var(--bg2);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#kode-header{
+  padding:12px 14px 8px;border-bottom:1px solid var(--border);
+}
+.kode-tittel{font-size:.8rem;font-weight:700;color:var(--blue);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.kode-beskrivelse{font-size:.76rem;color:var(--dim);}
+
+#kode-editor-wrap{flex:1;position:relative;overflow:hidden;}
+#kode-editor{
+  width:100%;height:100%;
+  background:rgba(0,0,0,.3);
+  border:none;outline:none;resize:none;
+  color:#a8d8a8;
+  font-family:var(--font-m);font-size:.88rem;line-height:1.6;
+  padding:12px 14px;
+  caret-color:var(--accent);
+}
+#kode-editor::placeholder{color:var(--dim);font-style:italic;}
+#kode-editor:focus{background:rgba(0,0,0,.4);}
+
+/* Linjemarker */
+#kode-linjemarkering{
+  font-size:.72rem;color:var(--accent);font-family:var(--font-m);
+  padding:4px 14px;background:rgba(232,200,75,.06);
+  min-height:22px;
+}
+
+/* ── KNAPPER ── */
+#kode-knapper{
+  padding:10px 12px;border-top:1px solid var(--border);
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+.kjør-btn{
+  flex:1;padding:10px;font-family:var(--font-d);font-size:.9rem;font-weight:700;
+  background:var(--green);color:#000;border:none;border-radius:9px;
+  cursor:pointer;transition:filter .15s;
+}
+.kjør-btn:hover{filter:brightness(1.1);}
+.kjør-btn:disabled{opacity:.4;cursor:default;}
+.reset-btn{
+  padding:10px 14px;font-size:.82rem;font-family:var(--font-b);
+  background:transparent;color:var(--dim);
+  border:1px solid rgba(255,255,255,.1);border-radius:9px;cursor:pointer;
+}
+.reset-btn:hover{color:var(--text);}
+.hint-knapp{
+  padding:10px;font-size:1.1rem;background:transparent;
+  border:1px solid rgba(255,255,255,.1);border-radius:9px;cursor:pointer;
+  transition:all .15s;
+}
+.hint-knapp:hover{background:rgba(255,255,255,.05);}
+.hint-knapp.aktiv{background:rgba(232,200,75,.1);border-color:rgba(232,200,75,.3);}
+#neste-brett-btn{
+  display:none;width:100%;padding:10px;
+  font-family:var(--font-d);font-size:.88rem;font-weight:700;
+  background:var(--accent);color:#000;border:none;border-radius:9px;
+  cursor:pointer;
+}
+#neste-brett-btn:hover{filter:brightness(1.08);}
+
+/* ── RESULTAT ── */
+#resultat-boks{
+  display:none;margin:0 12px 8px;padding:10px 12px;
+  border-radius:8px;font-size:.83rem;line-height:1.5;
+}
+.resultat-fullført{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--green);}
+.resultat-feil{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--red);}
+.resultat-advarsel{background:rgba(232,200,75,.08);border:1px solid rgba(232,200,75,.25);color:var(--accent);}
+
+/* ── HINT-PANEL ── */
+#hint-panel{
+  display:none;margin:0 12px 8px;padding:10px 12px;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  font-size:.82rem;
+}
+.hint-tittel{font-size:.72rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--blue);margin-bottom:6px;}
+.hint-steg{display:flex;gap:8px;margin-bottom:5px;align-items:flex-start;}
+.hint-nr{width:18px;height:18px;border-radius:50%;background:rgba(96,165,250,.2);
+  color:var(--blue);font-size:.68rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fasit-kode{
+  font-family:var(--font-m);font-size:.82rem;color:#a8d8a8;
+  background:rgba(0,0,0,.3);padding:8px 10px;border-radius:6px;
+  white-space:pre;overflow-x:auto;margin-top:6px;
+}
+
+/* ── KOMMANDO-GUIDE ── */
+#kommando-guide{
+  padding:8px 14px;border-top:1px solid var(--border);
+  font-size:.72rem;color:var(--dim);
+}
+.kommando{display:inline-block;background:rgba(255,255,255,.07);
+  border-radius:4px;padding:1px 6px;font-family:var(--font-m);
+  color:#a8d8a8;margin:1px;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html" class="tilbake">← SkapLab</a>
+  <div>
+    <div class="logo">🐍 Labyrintkoden</div>
+    <div class="undertittel">Styr figuren med Python · LK20 Programmering</div>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<div id="app">
+  <div id="sidebar">
+    <div class="sidebar-tittel">Brett</div>
+    <div id="brett-liste"></div>
+  </div>
+
+  <div id="labyrint-panel">
+    <div id="brett-tittel">Brett 1</div>
+    <div id="brett-mål"></div>
+    <div id="canvas-wrap">
+      <canvas id="labyrint-canvas"></canvas>
+    </div>
+    <div id="stjerne-guide"></div>
+  </div>
+
+  <div id="kode-panel">
+    <div id="kode-header">
+      <div class="kode-tittel">🐍 Python-kode</div>
+      <div class="kode-beskrivelse">Skriv kommandoer for å styre figuren</div>
+    </div>
+    <div id="kode-editor-wrap">
+      <textarea id="kode-editor" placeholder="# Skriv Python-kode her&#10;# Eksempel:&#10;gå_frem()&#10;snu_høyre()&#10;gå_frem()" spellcheck="false"></textarea>
+    </div>
+    <div id="kode-linjemarkering"></div>
+    <div id="resultat-boks"></div>
+    <div id="hint-panel"></div>
+    <div id="kode-knapper">
+      <button class="kjør-btn" onclick="kjørKode()" id="kjør-btn">▶ Kjør</button>
+      <button class="reset-btn" onclick="tilbakestill()">↩ Tilbakestill</button>
+      <button class="hint-knapp" id="hint-knapp" onclick="toggleHint()" title="Hint">💡</button>
+    </div>
+    <button id="neste-brett-btn" onclick="nesteBrett()">Neste brett →</button>
+    <div id="kommando-guide">
+      <span class="kommando">gå_frem()</span>
+      <span class="kommando">gå_frem(n)</span>
+      <span class="kommando">snu_høyre()</span>
+      <span class="kommando">snu_venstre()</span>
+      <span class="kommando">snu_rundt()</span>
+      <span class="kommando">for i in range(n):</span>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// LABYRINT-BRETT: 10 brett med progressiv vanskelighet
+// 0=vegg, 1=gang, 2=start, 3=mål
+// Spiller starter mot HØYRE (øst)
+// ══════════════════════════════════════════════════════════════════
+
+var BRETT = [
+
+// ── BRETT 1: Rett frem ─────────────────────────────────
+// Konsept: sekvens (3× gå_frem)
+// Fasit: gå_frem() / gå_frem() / gå_frem()
+{
+  id: 1, tittel: 'Rett frem',
+  mål: 'Nå stjernen! Bruk gå_frem() for å gå ett steg.',
+  hint: ['Spilleren peker mot høyre.', 'Kall gå_frem() tre ganger.', 'Eller bruk: for i in range(3): gå_frem()'],
+  fasit: 'gå_frem(3)',
+  stjerner: [1, 2, 99],  // gå_frem(3) = 1 linje = 3★
+  kart: [
+    [0,0,0,0,0,0,0],
+    [0,2,1,1,3,0,0],
+    [0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 2: Sving til høyre ────────────────────────────
+{
+  id: 2, tittel: 'Første sving',
+  mål: 'Gå frem og sving! Bruk snu_høyre() for å dreie 90° høyre.',
+  hint: ['Gå frem til hjørnet.', 'Snu høyre.', 'Gå frem til målet.'],
+  fasit: 'gå_frem(2)\nsnu_høyre()\ngå_frem(2)',
+  stjerner: [3, 4, 99],
+  kart: [
+    [0,0,0,0,0,0,0],
+    [0,2,1,1,0,0,0],
+    [0,0,0,1,0,0,0],
+    [0,0,0,1,0,0,0],
+    [0,0,0,3,0,0,0],
+    [0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 3: Løkke ──────────────────────────────────────
+{
+  id: 3, tittel: 'Gjenta med løkke',
+  mål: 'Lang sti! Bruk for i in range(n): gå_frem() i stedet for mange linjer.',
+  hint: ['Tell antall steg til mål.', 'for i in range(6):', '    gå_frem()'],
+  fasit: 'for i in range(6):\n    gå_frem()',
+  stjerner: [2, 4, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,1,1,3,0],
+    [0,0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 4: S-sving ────────────────────────────────────
+{
+  id: 4, tittel: 'S-kurve',
+  mål: 'Navigér gjennom to svinger.',
+  hint: ['Gå frem, sving ned.', 'Gå frem, sving opp.', 'Gå frem til mål.'],
+  fasit: 'for i in range(2):\n    gå_frem()\nsnu_høyre()\nfor i in range(2):\n    gå_frem()\nsnu_venstre()\nfor i in range(2):\n    gå_frem()',
+  stjerner: [8, 5, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0],
+    [0,2,1,1,0,0,0,0],
+    [0,0,0,1,0,0,0,0],
+    [0,0,0,1,1,0,0,0],
+    [0,0,0,0,1,0,0,0],
+    [0,0,0,0,1,1,3,0],
+    [0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 5: Løkke med sving ────────────────────────────
+{
+  id: 5, tittel: 'Løkke med sving',
+  mål: 'Gå frem og snu — og gjenta! Bruk løkke for å gjenta sekvensen.',
+  hint: ['Gjenta 3 ganger:', 'gå_frem(), gå_frem(), snu_høyre()'],
+  fasit: 'for i in range(3):\n    gå_frem()\n    gå_frem()\n    snu_høyre()',
+  stjerner: [4, 6, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0],
+    [0,2,1,1,0,0,0,0],
+    [0,0,0,1,0,0,0,0],
+    [0,0,0,1,1,0,0,0],
+    [0,0,0,0,1,0,0,0],
+    [0,0,0,0,1,1,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,3,0,0],
+    [0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 6: Spiral ─────────────────────────────────────
+{
+  id: 6, tittel: 'Spiralgang',
+  mål: 'Tre svinger — bruk løkker smart.',
+  hint: ['Gå 3, snu høyre. Gå 2, snu høyre. Gå 2, snu venstre.'],
+  fasit: 'for i in range(3):\n    gå_frem()\nsnu_høyre()\nfor i in range(2):\n    gå_frem()\nsnu_høyre()\ngå_frem()\ngå_frem()\nsnu_venstre()\ngå_frem()',
+  stjerner: [9, 7, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,0,0,0],
+    [0,0,0,0,1,0,0,0],
+    [0,0,0,0,1,1,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,3,0,0],
+    [0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 7: Snu rundt ──────────────────────────────────
+{
+  id: 7, tittel: 'Blindvei og retur',
+  mål: 'Gå inn, snu, og gå ut igjen! Bruk snu_rundt().',
+  hint: ['snu_rundt() snur 180°.', 'Gå inn 2 steg, hent noe, snu og gå ut.'],
+  fasit: 'gå_frem()\ngå_frem()\nsnu_rundt()\ngå_frem()\ngå_frem()\nsnu_høyre()\ngå_frem()\ngå_frem()\ngå_frem()',
+  stjerner: [9, 6, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,0,0,0],
+    [0,0,0,0,1,0,0,0],
+    [0,0,0,0,1,1,3,0],
+    [0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 8: Kompleks løkke ─────────────────────────────
+{
+  id: 8, tittel: 'Sikksakk',
+  mål: 'Sikksakk-mønster — bruk løkke med annenhver sving.',
+  hint: ['Gjenta 4 ganger: gå frem, snu, gå frem, snu.'],
+  fasit: 'for i in range(4):\n    gå_frem()\n    snu_høyre()\n    gå_frem()\n    snu_venstre()',
+  stjerner: [4, 8, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,2,1,0,1,0,1,0,1,0],
+    [0,0,1,0,1,0,1,0,1,0],
+    [0,0,1,1,1,0,1,1,1,0],
+    [0,0,0,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,0,3,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 9: Optimaliser ────────────────────────────────
+{
+  id: 9, tittel: 'Korteste kode',
+  mål: 'Nå målet med færrest mulig kodelinjer! Klarer du det på 3?',
+  hint: ['Løkken kan gjøre mye på én linje.', 'for i in range(4): gå_frem()'],
+  fasit: 'for i in range(4):\n    gå_frem()\nsnu_høyre()\nfor i in range(3):\n    gå_frem()',
+  stjerner: [4, 6, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,1,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,3,0,0],
+    [0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+// ── BRETT 10: Fri labyrint ──────────────────────────────
+{
+  id: 10, tittel: 'Stor labyrint',
+  mål: 'Den endelige utfordringen! Finn veien gjennom den store labyrinten.',
+  hint: ['Analyser labyrinten.' ,'Gå rad for rad.', 'Bruk løkker der veien er lang og rett.'],
+  fasit: 'for i in range(3):\n    gå_frem()\nsnu_høyre()\nfor i in range(4):\n    gå_frem()\nsnu_venstre()\nfor i in range(2):\n    gå_frem()\nsnu_høyre()\nfor i in range(3):\n    gå_frem()',
+  stjerner: [12, 8, 1],
+  kart: [
+    [0,0,0,0,0,0,0,0,0,0],
+    [0,2,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,1,0],
+    [0,0,0,0,0,0,0,0,1,0],
+    [0,0,0,0,1,1,1,1,1,0],
+    [0,0,0,0,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,3,0,0],
+    [0,0,0,0,0,0,0,0,0,0],
+  ],
+  startDir: 'Ø',
+},
+
+]; // END BRETT
+
+
+// ══════════════════════════════════════════════════════════════════
+// PYTHON-KODE PARSER — tolker begrenset Python-subset
+// Returnerer liste av instruksjoner: [{cmd, linje}]
+// ══════════════════════════════════════════════════════════════════
+
+function parsePython(kode) {
+  var linjer = kode.split('\n');
+  var instruksjoner = [];
+  var feil = null;
+  var MAX_STEG = 500;
+
+  function tolkLinjer(linjeArr, indentNivå) {
+    var i = 0;
+    while (i < linjeArr.length) {
+      var linje = linjeArr[i];
+      var trimmet = linje.trim();
+      if (!trimmet || trimmet.startsWith('#')) { i++; continue; }
+
+      // Mål innrykk
+      var innrykk = linje.length - linje.trimStart().length;
+      if (innrykk < indentNivå * 4) break;  // ut av blokk
+
+      var linjeNr = linjeArr._offset ? linjeArr._offset + i + 1 : i + 1;
+
+      // for i in range(n):
+      var forMatch = trimmet.match(/^for\s+\w+\s+in\s+range\s*\(\s*(\d+)\s*\)\s*:/);
+      if (forMatch) {
+        var n = parseInt(forMatch[1]);
+        if (n > 100) { feil = 'Linje ' + linjeNr + ': range(' + n + ') er for stor (maks 100).'; return; }
+
+        // Hent innrykket blokk
+        var blokk = [];
+        var j = i + 1;
+        while (j < linjeArr.length) {
+          var nesteTrimmet = linjeArr[j].trim();
+          if (!nesteTrimmet) { j++; continue; }
+          var nesteInnrykk = linjeArr[j].length - linjeArr[j].trimStart().length;
+          if (nesteInnrykk <= innrykk) break;
+          blokk.push(linjeArr[j]);
+          j++;
+        }
+        if (!blokk.length) { feil = 'Linje ' + linjeNr + ': Løkken mangler innhold (husk innrykk med 4 mellomrom).'; return; }
+
+        blokk._offset = linjeNr;
+        for (var rep = 0; rep < n; rep++) {
+          tolkLinjer(blokk, indentNivå + 1);
+          if (feil) return;
+          if (instruksjoner.length > MAX_STEG) {
+            feil = 'For mange steg (maks ' + MAX_STEG + '). Uendelig løkke?';
+            return;
+          }
+        }
+        i = j;
+        continue;
+      }
+
+      // Kommandoer
+      var kommandoer = {
+        'snu_høyre()':    'høyre',
+        'snu_hoyre()':    'høyre',
+        'snu_venstre()':  'venstre',
+        'snu_rundt()':    'rundt',
+      };
+      // gå_frem(n) — med valgfritt argument
+      var fremMatch = trimmet.match(/^g[å|a]_frem\s*\(\s*(\d*)\s*\)/);
+      if (fremMatch) {
+        var fN = fremMatch[1] ? parseInt(fremMatch[1]) : 1;
+        if (fN > 50) { feil = 'Linje '+linjeNr+': gå_frem('+fN+') er for stort (maks 50).'; return; }
+        for (var f = 0; f < fN; f++) instruksjoner.push({cmd:'frem', linje:linjeNr});
+        i++; continue;
+      }
+      // hopp(n)
+      var hoppMatch = trimmet.match(/^hopp\s*\(\s*(\d+)\s*\)/);
+      if (hoppMatch) {
+        var hN = parseInt(hoppMatch[1]);
+        for (var h = 0; h < hN; h++) instruksjoner.push({cmd:'frem', linje:linjeNr});
+        i++; continue;
+      }
+
+      var cmd = kommandoer[trimmet];
+      if (cmd) {
+        instruksjoner.push({cmd: cmd, linje: linjeNr});
+      } else if (trimmet !== '') {
+        // Ukjent kommando
+        feil = 'Linje ' + linjeNr + ': Ukjent kommando «' + trimmet + '».\nTillatte kommandoer: gå_frem(), snu_høyre(), snu_venstre(), snu_rundt()';
+        return;
+      }
+      i++;
+    }
+  }
+
+  tolkLinjer(linjer, 0);
+  if (feil) return { ok: false, feil: feil };
+  if (!instruksjoner.length) return { ok: false, feil: 'Ingen kommandoer funnet. Skriv f.eks. gå_frem()' };
+  return { ok: true, instruksjoner: instruksjoner };
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// LABYRINT-SPILL MOTOR
+// ══════════════════════════════════════════════════════════════════
+
+var TILE = 44;
+var FARGER = {
+  vegg:    '#1a2744',
+  veggKant:'#243354',
+  gang:    '#2a3f58',
+  start:   '#1a3a1a',
+  startKant:'#2d6e2d',
+  mål:     '#3a3000',
+  spiller: '#e8c84b',
+  retning: '#fff',
+  bakgrunn:'#0a1628',
+  highlight:'rgba(255,220,50,.15)',
+};
+
+// Retninger: 0=Ø, 1=S, 2=V, 3=N
+var RETNING_NAVN = ['Ø','S','V','N'];
+var DX = [1,0,-1,0];
+var DY = [0,1,0,-1];
+
+var state = {
+  brett: null,
+  kart: null,
+  px: 0, py: 0,       // spillerposisjon (col, row)
+  retning: 0,          // 0=Ø
+  gjeldendeBrett: 0,
+  løst: [],
+  stjerner: [],
+  animerer: false,
+  animKø: [],
+  animTimer: null,
+  animFeil: null,
+  animFeilPos: null,
+};
+
+// ── INIT ─────────────────────────────────────────────────────────
+function lastBrett(idx) {
+  state.gjeldendeBrett = idx;
+  var brett = BRETT[idx];
+  state.brett = brett;
+  state.kart = brett.kart.map(function(r){ return r.slice(); });
+  state.animFeil = null;
+  state.animFeilPos = null;
+  state.animerer = false;
+  if (state.animTimer) { clearTimeout(state.animTimer); state.animTimer = null; }
+  state.animKø = [];
+
+  // Finn startposisjon
+  brett.kart.forEach(function(rad, r) {
+    rad.forEach(function(celle, c) {
+      if (celle === 2) { state.px = c; state.py = r; }
+    });
+  });
+  state.retning = brett.startDir === 'N' ? 3 : brett.startDir === 'V' ? 2 : brett.startDir === 'S' ? 1 : 0;
+
+  oppdaterBrettInfo();
+  tilbakestillEditor();
+  tegnAlt();
+}
+
+function tilbakestillSpiller() {
+  var brett = state.brett;
+  brett.kart.forEach(function(rad, r) {
+    rad.forEach(function(celle, c) {
+      if (celle === 2) { state.px = c; state.py = r; }
+    });
+  });
+  state.retning = brett.startDir === 'N' ? 3 : brett.startDir === 'V' ? 2 : brett.startDir === 'S' ? 1 : 0;
+  state.kart = brett.kart.map(function(r){ return r.slice(); });
+  state.animFeil = null;
+  state.animFeilPos = null;
+  tegnAlt();
+}
+
+// ── TEGNING ───────────────────────────────────────────────────────
+function tegnAlt() {
+  var cv = document.getElementById('labyrint-canvas');
+  if (!cv) return;
+  var brett = state.brett;
+  var rows = brett.kart.length;
+  var cols = brett.kart[0].length;
+  cv.width  = cols * TILE;
+  cv.height = rows * TILE;
+  var ctx = cv.getContext('2d');
+
+  // Bakgrunn
+  ctx.fillStyle = FARGER.bakgrunn;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  // Tiles
+  brett.kart.forEach(function(rad, r) {
+    rad.forEach(function(celle, c) {
+      var x = c * TILE, y = r * TILE;
+      if (celle === 0) {
+        // Vegg
+        ctx.fillStyle = FARGER.vegg;
+        ctx.fillRect(x,y,TILE,TILE);
+        // Lys topkant
+        ctx.fillStyle = FARGER.veggKant;
+        ctx.fillRect(x,y,TILE,3);
+        ctx.fillRect(x,y,3,TILE);
+      } else {
+        // Gang / start / mål
+        ctx.fillStyle = celle === 2 ? FARGER.start : celle === 3 ? FARGER.mål : FARGER.gang;
+        ctx.fillRect(x,y,TILE,TILE);
+        // Subtil grid
+        ctx.strokeStyle = 'rgba(0,0,0,.15)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x+0.5,y+0.5,TILE-1,TILE-1);
+
+        if (celle === 2) {
+          // Start-markering
+          ctx.fillStyle = '#2d6e2d';
+          ctx.font = 'bold 18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('▶', x+TILE/2, y+TILE/2);
+        }
+        if (celle === 3) {
+          // Mål — blinkende stjerne
+          var puls = 0.7 + 0.3 * Math.sin(Date.now()/300);
+          ctx.fillStyle = 'rgba(255,215,0,' + puls + ')';
+          ctx.font = 'bold ' + Math.round(TILE*0.55) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('⭐', x+TILE/2, y+TILE/2);
+        }
+      }
+    });
+  });
+
+  // Highlight neste steg i animasjonen
+  if (state.animKø.length > 0) {
+    var neste = state.animKø[0];
+    if (neste && neste.nx !== undefined) {
+      ctx.fillStyle = FARGER.highlight;
+      ctx.fillRect(neste.nx*TILE, neste.ny*TILE, TILE, TILE);
+    }
+  }
+
+  // Feil-highlight
+  if (state.animFeilPos) {
+    ctx.fillStyle = 'rgba(255,50,50,0.3)';
+    ctx.fillRect(state.animFeilPos.x*TILE, state.animFeilPos.y*TILE, TILE, TILE);
+  }
+
+  // Spiller
+  tegnSpiller(ctx);
+
+  // Be om neste frame for mål-animasjon
+  requestAnimationFrame(tegnAlt);
+}
+
+function tegnSpiller(ctx) {
+  var px = state.px, py = state.py;
+  var cx = px * TILE + TILE/2;
+  var cy = py * TILE + TILE/2;
+  var r  = TILE * 0.35;
+
+  // Kropp
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = state.animFeil ? '#e05c6e' : FARGER.spiller;
+  ctx.fill();
+  ctx.strokeStyle = state.animFeil ? '#c04050' : '#b8961a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Retningspil
+  var dir = state.retning;
+  var nx = cx + DX[dir] * r * 0.6;
+  var ny = cy + DY[dir] * r * 0.6;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(nx, ny);
+  ctx.strokeStyle = FARGER.retning;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Pil-hode
+  ctx.beginPath();
+  ctx.arc(nx, ny, 4, 0, Math.PI*2);
+  ctx.fillStyle = FARGER.retning;
+  ctx.fill();
+}
+
+// ── KJØ R KODE ─────────────────────────────────────────────────────
+function kjørKode() {
+  if (state.animerer) return;
+  var kode = document.getElementById('kode-editor').value;
+  var resultat = parsePython(kode);
+
+  if (!resultat.ok) {
+    visResultat('feil', '❌ ' + resultat.feil);
+    return;
+  }
+
+  // Simuler steg og bygg animasjonskø
+  var simPx = state.px, simPy = state.py, simRetning = state.retning;
+  var animKø = [];
+  var brettkart = state.brett.kart;
+
+  for (var i = 0; i < resultat.instruksjoner.length; i++) {
+    var instr = resultat.instruksjoner[i];
+    var gammelPx = simPx, gammelPy = simPy;
+
+    if (instr.cmd === 'høyre') {
+      simRetning = (simRetning + 1) % 4;
+      animKø.push({type:'snu', retning:simRetning, linje:instr.linje});
+    } else if (instr.cmd === 'venstre') {
+      simRetning = (simRetning + 3) % 4;
+      animKø.push({type:'snu', retning:simRetning, linje:instr.linje});
+    } else if (instr.cmd === 'rundt') {
+      simRetning = (simRetning + 2) % 4;
+      animKø.push({type:'snu', retning:simRetning, linje:instr.linje});
+    } else if (instr.cmd === 'frem') {
+      var nx = simPx + DX[simRetning];
+      var ny = simPy + DY[simRetning];
+      // Sjekk grenser og vegger
+      if (ny < 0 || ny >= brettkart.length || nx < 0 || nx >= brettkart[0].length
+          || brettkart[ny][nx] === 0) {
+        animKø.push({type:'feil', px:simPx, py:simPy, retning:simRetning,
+          nx:simPx + DX[simRetning], ny:simPy + DY[simRetning],
+          melding:'Krasjet i vegg! (linje ' + instr.linje + ')', linje:instr.linje});
+        break;
+      }
+      simPx = nx; simPy = ny;
+      animKø.push({type:'flytt', nx:nx, ny:ny, retning:simRetning, linje:instr.linje});
+
+      if (brettkart[ny][nx] === 3) {
+        animKø.push({type:'mål', px:nx, py:ny});
+        break;
+      }
+    }
+  }
+
+  // Sjekk om vi nådde målet
+  var nådeMål = animKø.length > 0 && animKø[animKø.length-1].type === 'mål';
+  if (!nådeMål && animKø[animKø.length-1] && animKø[animKø.length-1].type !== 'feil') {
+    animKø.push({type:'stopp', melding:'Kom ikke til mål. Trenger du flere steg?'});
+  }
+
+  tilbakestillSpiller();
+  state.animKø = animKø;
+  state.animerer = true;
+  spillAnimasjon();
+}
+
+function spillAnimasjon() {
+  if (state.animKø.length === 0) {
+    state.animerer = false;
+    return;
+  }
+  var steg = state.animKø.shift();
+
+  if (steg.type === 'flytt' || steg.type === 'snu') {
+    state.px = steg.nx !== undefined ? steg.nx : state.px;
+    state.py = steg.ny !== undefined ? steg.ny : state.py;
+    state.retning = steg.retning;
+    markerLinje(steg.linje);
+    state.animTimer = setTimeout(spillAnimasjon, 350);
+
+  } else if (steg.type === 'feil') {
+    state.px = steg.px; state.py = steg.py; state.retning = steg.retning;
+    state.animFeil = steg.melding;
+    state.animFeilPos = { x: Math.max(0, Math.min(state.brett.kart[0].length-1, steg.nx || steg.px)),
+                          y: Math.max(0, Math.min(state.brett.kart.length-1, steg.ny || steg.py)) };
+    markerLinje(steg.linje);
+    visResultat('feil', '💥 ' + steg.melding);
+    state.animerer = false;
+
+  } else if (steg.type === 'mål') {
+    var brett = state.brett;
+    var kode = document.getElementById('kode-editor').value;
+    var antallLinjer = kode.split('\n').filter(function(l){ return l.trim(); }).length;
+    var minLinjer = brett.fasit.split('\n').filter(function(l){ return l.trim(); }).length;
+    var stjerner = antallLinjer <= brett.stjerner[0] ? 3 : antallLinjer <= brett.stjerner[1] ? 2 : 1;
+    state.løst[state.gjeldendeBrett] = true;
+    if (!state.stjerner[state.gjeldendeBrett] || state.stjerner[state.gjeldendeBrett] < stjerner) {
+      state.stjerner[state.gjeldendeBrett] = stjerner;
+    }
+    lagreFremgang();
+
+    // Bygg tilbakemelding med linje-info
+    var stjerneTekst = '⭐'.repeat(stjerner);
+    var karakterTekst = antallLinjer <= brett.stjerner[0]
+      ? ' Perfekt!' : antallLinjer <= brett.stjerner[1] ? ' Bra gjort!' : ' Klarte det!';
+    var linjeTekst = '\nDu brukte ' + antallLinjer + ' linje' + (antallLinjer===1?'':'r') + ' kode.';
+    var minTekst = antallLinjer <= minLinjer
+      ? ' Det er minste mulige! 🏆'
+      : ' Minste mulige er ' + minLinjer + ' linje' + (minLinjer===1?'':'r') + '.';
+    var forbedring = antallLinjer > brett.stjerner[0] && antallLinjer > minLinjer
+      ? '\nKlarer du det på ' + brett.stjerner[0] + ' linje' + (brett.stjerner[0]===1?'':'r') + ' for 3 stjerner?'
+      : '';
+
+    visResultat('fullført', '🌟 Fullført! ' + stjerneTekst + karakterTekst
+      + linjeTekst + minTekst + forbedring);
+    visNesteKnapp(state.gjeldendeBrett < BRETT.length - 1);
+    byggBrettListe();
+    state.animerer = false;
+
+  } else if (steg.type === 'stopp') {
+    visResultat('advarsel', '🤔 ' + steg.melding);
+    state.animerer = false;
+  }
+}
+
+// ── UI HJELPEFUNKSJONER ───────────────────────────────────────────
+function markerLinje(linjeNr) {
+  if (!linjeNr) return;
+  var el = document.getElementById('kode-linjemarkering');
+  if (el) el.textContent = '▶ Linje ' + linjeNr;
+}
+
+function visResultat(type, melding) {
+  var el = document.getElementById('resultat-boks');
+  if (!el) return;
+  el.className = 'resultat-boks resultat-' + type;
+  el.textContent = melding;
+  el.style.display = 'block';
+}
+
+function visNesteKnapp(vis) {
+  var el = document.getElementById('neste-brett-btn');
+  if (el) el.style.display = vis ? 'inline-block' : 'none';
+}
+
+function oppdaterBrettInfo() {
+  var brett = state.brett;
+  var el = document.getElementById('brett-tittel');
+  if (el) el.textContent = 'Brett ' + brett.id + ': ' + brett.tittel;
+  var mål = document.getElementById('brett-mål');
+  if (mål) mål.textContent = brett.mål;
+  var sj = brett.stjerner;
+  var guide = document.getElementById('stjerne-guide');
+  if (guide) guide.textContent = '⭐⭐⭐ Perfekt: maks ' + sj[0] + ' linje' + (sj[0]>1?'r':'')
+    + ' | ⭐⭐ Bra: maks ' + sj[1] + ' linjer | ⭐ Fullført';
+  document.getElementById('neste-brett-btn').style.display = 'none';
+}
+
+function tilbakestillEditor() {
+  var el = document.getElementById('kode-editor');
+  if (el) el.value = '';
+  var res = document.getElementById('resultat-boks');
+  if (res) { res.style.display='none'; }
+  var lm = document.getElementById('kode-linjemarkering');
+  if (lm) lm.textContent = '';
+}
+
+function toggleHint() {
+  var el = document.getElementById('hint-panel');
+  if (!el) return;
+  var vis = el.style.display === 'block';
+  el.style.display = vis ? 'none' : 'block';
+  if (!vis) {
+    var brett = state.brett;
+    el.innerHTML = brett.hint.map(function(h,i){ return '<div class="hint-steg"><span class="hint-nr">'+(i+1)+'</span><span>'+h+'</span></div>'; }).join('');
+  }
+  document.getElementById('hint-knapp').className = vis ? 'hint-knapp' : 'hint-knapp aktiv';
+}
+
+function visHintFasit() {
+  var brett = state.brett;
+  var el = document.getElementById('hint-panel');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="hint-tittel">📖 Fasitforslag</div>'
+    + '<pre class="fasit-kode">' + brett.fasit + '</pre>'
+    + '<div style="font-size:.75rem;color:var(--dim);margin-top:6px">Prøv gjerne å finne kortere løsning!</div>';
+}
+
+function byggBrettListe() {
+  var liste = document.getElementById('brett-liste');
+  if (!liste) return;
+  liste.innerHTML = BRETT.map(function(b, i) {
+    var løst = state.løst[i];
+    var sj = state.stjerner[i] || 0;
+    var aktiv = i === state.gjeldendeBrett;
+    return '<button class="brett-knapp' + (aktiv?' aktiv':'') + (løst?' løst':'') + '" onclick="lastBrett('+i+')">'
+      + '<span class="brett-nr">' + b.id + '</span>'
+      + '<span class="brett-navn">' + b.tittel + '</span>'
+      + '<span class="brett-stjerner">' + (sj>0?'⭐'.repeat(sj):'') + '</span>'
+      + '</button>';
+  }).join('');
+}
+
+function nesteBrett() {
+  if (state.gjeldendeBrett < BRETT.length - 1) {
+    lastBrett(state.gjeldendeBrett + 1);
+  }
+}
+
+function tilbakestill() {
+  if (state.animTimer) { clearTimeout(state.animTimer); state.animTimer = null; }
+  state.animerer = false;
+  state.animKø = [];
+  state.animFeil = null;
+  state.animFeilPos = null;
+  tilbakestillSpiller();
+  tilbakestillEditor();
+}
+
+// ── LAGRING ───────────────────────────────────────────────────────
+function lagreFremgang() {
+  try {
+    localStorage.setItem('labyrint_v1', JSON.stringify({
+      løst: state.løst, stjerner: state.stjerner
+    }));
+  } catch(e) {}
+}
+
+function lastFremgang() {
+  try {
+    var d = JSON.parse(localStorage.getItem('labyrint_v1') || '{}');
+    state.løst = d.løst || [];
+    state.stjerner = d.stjerner || [];
+  } catch(e) {}
+}
+
+// ── START ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  lastFremgang();
+  byggBrettListe();
+  lastBrett(0);
+  requestAnimationFrame(tegnAlt);
+});
+
+</script>
+</body>
+</html>
