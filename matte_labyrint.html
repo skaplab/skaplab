@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matematikklabyrinten 🚪</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080f; --bg2:#0a0f1e; --bg3:#0f1628;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.12);
+  --text:#e8f0ff; --dim:#7a90b0;
+  --accent:#e8c84b; --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+  --font-d:'Playfair Display',serif; --font-b:'Source Sans 3',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+/* ── HEADER ── */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  background:rgba(5,8,15,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--border);
+  padding:8px 20px;
+  display:flex;align-items:center;gap:16px;
+  height:50px;
+}
+.logo{font-family:var(--font-d);font-size:1.2rem;font-weight:900;color:var(--accent);}
+#rom-teller{font-size:.82rem;color:var(--dim);font-weight:600;}
+.spacer{flex:1;}
+a.tilbake{font-size:.78rem;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+a.tilbake:hover{color:var(--text);border-color:var(--border2);}
+
+/* ── FREMGANGSBAR ── */
+#fremgang-wrap{
+  position:fixed;top:50px;left:0;right:0;z-index:9;
+  background:rgba(5,8,15,.85);padding:6px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+#fremgangs-bar{display:flex;gap:4px;align-items:center;}
+.fp-prikk{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);transition:all .3s;}
+.fp-prikk.ferdig{background:#4ade80;border-color:#4ade80;box-shadow:0 0 6px #4ade8088;}
+.fp-prikk.aktiv{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px #e8c84b88;transform:scale(1.15);}
+.fp-label{font-size:.7rem;color:var(--dim);margin-left:4px;}
+
+/* ── ROM-CANVAS ── */
+#canvas-wrap{
+  position:fixed;top:82px;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);
+}
+#rom-canvas{
+  display:block;
+  width:100%;height:100%;
+  cursor:pointer;
+  image-rendering:crisp-edges;
+}
+
+/* ── KLIKK-GUIDE ── */
+#klikk-guide{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:16px;z-index:5;pointer-events:none;
+}
+.guide-pil{
+  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.1);border-radius:8px;
+  padding:6px 14px;font-size:.78rem;color:var(--dim);
+}
+
+/* ── OVERLAY ── */
+#overlay{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;
+}
+.overlay-innhold{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:20px;
+  padding:40px 48px;max-width:540px;width:90%;text-align:center;
+  box-shadow:0 8px 48px rgba(0,0,0,.6);
+}
+.overlay-emoji{font-size:3.5rem;margin-bottom:12px;display:block;}
+.overlay-emoji.konfetti{animation:bounce .6s infinite alternate;}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.overlay-innhold h2{font-family:var(--font-d);font-size:1.7rem;font-weight:900;margin-bottom:12px;color:var(--text);}
+.feil-innhold h2{color:var(--red);}
+.fullfort-innhold h2{color:var(--accent);}
+.overlay-innhold p{font-size:.95rem;color:var(--dim);line-height:1.6;margin-bottom:10px;}
+.overlay-innhold strong{color:var(--text);}
+.ros-tekst{font-size:.92rem;color:#c8d8ff;line-height:1.7;margin-bottom:8px;}
+.ros-sub{font-size:.88rem;color:var(--accent);font-weight:600;}
+.rekord-tekst{font-size:.88rem;color:var(--green);margin:8px 0;}
+.overlay-btns{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.overlay-btn{
+  padding:12px 28px;border-radius:10px;border:none;cursor:pointer;
+  font-family:var(--font-d);font-size:1rem;font-weight:700;
+  transition:filter .15s;
+}
+.overlay-btn:hover{filter:brightness(1.1);}
+.feil-innhold .overlay-btn{background:var(--red);color:#fff;}
+.spill-igjen{background:var(--green);color:#000;}
+.tilbake-btn{background:rgba(255,255,255,.1);color:var(--text);border:1px solid var(--border2);}
+.overlay-sub{font-size:.88rem;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">🚪 Matematikklabyrinten</div>
+  <span id="rom-teller">Rom 1 av 15</span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tilbake">← Spillhub</a>
+</div>
+
+<div id="fremgang-wrap">
+  <div id="fremgangs-bar"></div>
+  <div class="fp-label">Klikk på en dør for å svare</div>
+</div>
+
+<div id="canvas-wrap">
+  <canvas id="rom-canvas"></canvas>
+</div>
+
+<div id="klikk-guide">
+  <div class="guide-pil">← Venstre dør</div>
+  <div class="guide-pil">↑ Rett frem</div>
+  <div class="guide-pil">Høyre dør →</div>
+</div>
+
+<div id="overlay"></div>
+
+
+<script>
+var SPØRSMÅL = [
+
+// ── Tall og algebra ───────────────────────────────────────────────
+{k:'Algebra',v:1,spm:'Hva er verdien av x når 3x + 5 = 20?',rett:'x = 5',galt:['x = 4','x = 6']},
+{k:'Algebra',v:1,spm:'Hva er 2³ + 3²?',rett:'17',galt:['13','15']},
+{k:'Algebra',v:1,spm:'Hva er 15% av 200?',rett:'30',galt:['25','35']},
+{k:'Algebra',v:1,spm:'Hva er 0,3²?',rett:'0,09',galt:['0,6','0,03']},
+{k:'Algebra',v:2,spm:'Forenkle: 4x + 3y − 2x + y',rett:'2x + 4y',galt:['2x + 2y','6x + 4y']},
+{k:'Algebra',v:2,spm:'Løs: 2(x − 3) = 8',rett:'x = 7',galt:['x = 5','x = 4']},
+{k:'Algebra',v:2,spm:'Hva er 4² · 2³?',rett:'128',galt:['96','64']},
+{k:'Algebra',v:2,spm:'Hva er største felles divisor av 36 og 48?',rett:'12',galt:['6','18']},
+{k:'Algebra',v:2,spm:'Hva er løsningen av x² = 49?',rett:'x = ±7',galt:['x = 7','x = ±9']},
+{k:'Algebra',v:3,spm:'Faktoriser: x² − 9',rett:'(x − 3)(x + 3)',galt:['(x − 3)²','(x + 9)(x − 1)']},
+{k:'Algebra',v:3,spm:'Løs likningssystemet: x + y = 10 og x − y = 4',rett:'x = 7 og y = 3',galt:['x = 6 og y = 4','x = 8 og y = 2']},
+{k:'Algebra',v:3,spm:'Hva er 2¹⁰?',rett:'1024',galt:['512','2048']},
+
+// ── Lineære funksjoner ────────────────────────────────────────────
+{k:'Lineær',v:1,spm:'Hva er stigningstallet i y = 3x − 5?',rett:'3',galt:['-5','5']},
+{k:'Lineær',v:1,spm:'Hva er y når x = 3 i y = 2x + 1?',rett:'7',galt:['5','9']},
+{k:'Lineær',v:2,spm:'Hvilken funksjon har y-skjæring 4 og stigningstall −2?',rett:'y = −2x + 4',galt:['y = 2x + 4','y = −2x − 4']},
+{k:'Lineær',v:2,spm:'To punkter: (0, 2) og (3, 8). Hva er stigningstallet?',rett:'2',galt:['3','6']},
+{k:'Lineær',v:2,spm:'Hva er x-verdien der y = 2x − 6 krysser x-aksen?',rett:'x = 3',galt:['x = −3','x = 6']},
+{k:'Lineær',v:2,spm:'Proporsjonale størrelser: y = 5x. Hva er y når x = 7?',rett:'35',galt:['40','30']},
+
+// ── Kvadratiske funksjoner ────────────────────────────────────────
+{k:'Kvadratisk',v:2,spm:'Hva er toppunktet til y = −(x − 3)² + 5?',rett:'(3, 5)',galt:['(−3, 5)','(3, −5)']},
+{k:'Kvadratisk',v:3,spm:'Løs x² − 5x + 6 = 0',rett:'x = 2 eller x = 3',galt:['x = 1 eller x = 6','x = −2 eller x = −3']},
+{k:'Kvadratisk',v:2,spm:'Hva er bunnpunktet y-verdi for y = x² − 4x + 7?',rett:'3',galt:['7','−4']},
+{k:'Kvadratisk',v:2,spm:'Nullpunktene til y = x² − 9 er:',rett:'x = 3 og x = −3',galt:['x = 9 og x = −9','x = 3']},
+
+// ── Geometri ──────────────────────────────────────────────────────
+{k:'Geometri',v:1,spm:'Hva er summen av vinklene i en trekant?',rett:'180°',galt:['360°','270°']},
+{k:'Geometri',v:1,spm:'En kvadrat har areal 64. Hva er sidelengden?',rett:'8',galt:['16','4']},
+{k:'Geometri',v:1,spm:'Hva er arealet av en trekant med grunnlinje 8 og høyde 5?',rett:'20',galt:['40','13']},
+{k:'Geometri',v:2,spm:'Hva er omkretsen av en sirkel med radius 5? (π ≈ 3,14)',rett:'31,4',galt:['78,5','15,7']},
+{k:'Geometri',v:2,spm:'Arealet av et rektangel er 48. Den ene siden er 6. Hva er den andre?',rett:'8',galt:['7','9']},
+{k:'Geometri',v:2,spm:'Vinkelsummen i en femkant er:',rett:'540°',galt:['360°','720°']},
+{k:'Geometri',v:2,spm:'Hva er hypotenusen i en rettvinklet trekant med kateter 3 og 4?',rett:'5',galt:['6','7']},
+{k:'Geometri',v:3,spm:'Arealet av en sirkel med diameter 10. (π ≈ 3,14)',rett:'78,5',galt:['31,4','314']},
+
+// ── Statistikk ────────────────────────────────────────────────────
+{k:'Statistikk',v:1,spm:'Hva kalles den verdien som forekommer flest ganger i et datasett?',rett:'Typetallet',galt:['Medianen','Gjennomsnittet']},
+{k:'Statistikk',v:1,spm:'Hva er gjennomsnittet av 10, 20 og 30?',rett:'20',galt:['25','15']},
+{k:'Statistikk',v:2,spm:'Hva er medianen i tallfølgen: 3, 7, 2, 9, 5?',rett:'5',galt:['7','3']},
+{k:'Statistikk',v:2,spm:'Datasett: 4, 6, 8, 8, 10. Hva er typetallet?',rett:'8',galt:['6','10']},
+{k:'Statistikk',v:2,spm:'Hva er variasjonsbredden i: 3, 7, 12, 5, 9?',rett:'9',galt:['7','12']},
+
+// ── Sannsynlighet ─────────────────────────────────────────────────
+{k:'Sannsynlighet',v:1,spm:'Du kaster en terning. Hva er sannsynligheten for å få 6?',rett:'1/6',galt:['1/3','1/2']},
+{k:'Sannsynlighet',v:2,spm:'En pose har 3 røde og 7 blå kuler. Hva er P(rød)?',rett:'3/10',galt:['3/7','7/10']},
+{k:'Sannsynlighet',v:2,spm:'To myntkast. Hva er P(begge kron)?',rett:'1/4',galt:['1/2','1/3']},
+{k:'Sannsynlighet',v:2,spm:'Hva er sannsynligheten for å IKKE få 6 på en terning?',rett:'5/6',galt:['1/6','4/6']},
+{k:'Sannsynlighet',v:3,spm:'Kortspill: 52 kort, 4 ess. Hva er P(ess)?',rett:'1/13',galt:['1/4','4/52']},
+
+// ── Økonomi og prosent ────────────────────────────────────────────
+{k:'Økonomi',v:1,spm:'Hva er 40% av 250?',rett:'100',galt:['80','125']},
+{k:'Økonomi',v:2,spm:'En vare koster 400 kr og er satt ned 25%. Hva er ny pris?',rett:'300 kr',galt:['350 kr','320 kr']},
+{k:'Økonomi',v:2,spm:'Du setter inn 5000 kr med 4% rente. Hva er saldoen etter 1 år?',rett:'5200 kr',galt:['5400 kr','5040 kr']},
+{k:'Økonomi',v:2,spm:'En pris øker fra 200 til 250 kr. Hva er den prosentvise økningen?',rett:'25%',galt:['20%','50%']},
+{k:'Økonomi',v:3,spm:'MVA er 25%. En vare koster 600 kr eks. MVA. Hva er prisen inkl. MVA?',rett:'750 kr',galt:['825 kr','700 kr']},
+{k:'Økonomi',v:3,spm:'Du låner 10 000 kr til 5% rente per år. Hva betaler du i renter etter 1 år?',rett:'500 kr',galt:['1000 kr','250 kr']},
+
+// ── Potenser og røtter ────────────────────────────────────────────
+{k:'Potenser',v:1,spm:'Hva er √144?',rett:'12',galt:['14','11']},
+{k:'Potenser',v:2,spm:'Hva er 10⁻³ skrevet som desimaltall?',rett:'0,001',galt:['0,01','0,0001']},
+{k:'Potenser',v:2,spm:'Omregn: 3,5 × 10³ til vanlig tall',rett:'3500',galt:['350','35000']},
+{k:'Potenser',v:3,spm:'Hva er ∛27?',rett:'3',galt:['4','9']},
+{k:'Potenser',v:3,spm:'Hva er 5! (5 fakultet)?',rett:'120',galt:['60','24']},
+
+]; // END SPØRSMÅL
+
+// ══════════════════════════════════════════════════════════════════
+// DYNAMISKE SPØRSMÅLSGENERATORER
+// Hver generator returnerer { spm, rett, galt: [str, str], k, v }
+// ══════════════════════════════════════════════════════════════════
+
+function R(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function plukk(arr){ return arr[R(0,arr.length-1)]; }
+function fmt(n){ return Number.isInteger(n)?String(n):n.toFixed(2).replace('.',','); }
+function fmtBrøk(t,n){ return t+'/'+n; }
+function ulike2(a,b,arr){
+  var pool=arr.filter(function(x){return x!==a&&x!==b;});
+  pool.sort(function(){return Math.random()-0.5;});
+  return [pool[0],pool[1]];
+}
+
+var GENERATORER = [
+
+// ── Algebra: løs likning ax + b = c ──────────────────────────────
+function() {
+  var a=R(2,7), x=R(1,9), b=R(1,10);
+  var c=a*x+b;
+  var rett='x = '+x;
+  var g=[x-1,x+1,x+2,x-2].filter(function(v){return v>0&&v!==x;});
+  return {k:'Algebra',v:2,
+    spm:'Løs likningen: '+a+'x + '+b+' = '+c,
+    rett:rett, galt:['x = '+g[0],'x = '+g[1]]};
+},
+
+// ── Algebra: løs ax - b = c ───────────────────────────────────────
+function() {
+  var a=R(2,6), x=R(2,9), b=R(1,8);
+  var c=a*x-b;
+  var rett='x = '+x;
+  return {k:'Algebra',v:2,
+    spm:'Løs likningen: '+a+'x \u2212 '+b+' = '+c,
+    rett:rett, galt:['x = '+(x-1),'x = '+(x+2)]};
+},
+
+// ── Algebra: beregn a² + b² ───────────────────────────────────────
+function() {
+  var a=R(2,8), b=R(2,8);
+  var rett=a*a+b*b;
+  return {k:'Algebra',v:1,
+    spm:'Hva er '+a+'\u00b2 + '+b+'\u00b2?',
+    rett:String(rett), galt:[String(rett+a),String(rett-b+1)]};
+},
+
+// ── Algebra: (a+b)² ───────────────────────────────────────────────
+function() {
+  var a=R(2,7), b=R(1,5);
+  var rett=(a+b)*(a+b);
+  return {k:'Algebra',v:3,
+    spm:'Hva er ('+a+' + '+b+')\u00b2?',
+    rett:String(rett), galt:[String(a*a+b*b),String(rett+2*a)]};
+},
+
+// ── Algebra: 2(x+a)=b, finn x ────────────────────────────────────
+function() {
+  var x=R(1,8), a=R(1,5);
+  var b=2*(x+a);
+  var rett='x = '+x;
+  return {k:'Algebra',v:2,
+    spm:'Løs: 2(x + '+a+') = '+b,
+    rett:rett, galt:['x = '+(x+1),'x = '+(x-1)]};
+},
+
+// ── Lineær: finn y ved gitt x ─────────────────────────────────────
+function() {
+  var a=plukk([-3,-2,-1,1,2,3,4]), b=R(-5,5), x=R(1,8);
+  var y=a*x+b;
+  var bSign=b<0?'\u2212'+Math.abs(b):(b>0?'+ '+b:'');
+  return {k:'Lineær',v:1,
+    spm:'Funksjonen er y = '+a+'x '+bSign+'. Hva er y når x = '+x+'?',
+    rett:String(y), galt:[String(y+a),String(y-a)]};
+},
+
+// ── Lineær: finn x når y=0 ───────────────────────────────────────
+function() {
+  var a=R(1,5), b=plukk([-10,-8,-6,-4,2,4,6,8,10]);
+  var x=-b/a;
+  if(!Number.isInteger(x)){a=R(1,4);b=plukk([-8,-6,-4,2,4,6,8]);x=-b/a;}
+  if(!Number.isInteger(x)){a=2;b=-6;x=3;}
+  var bSign=b<0?'\u2212'+Math.abs(b):'+ '+b;
+  return {k:'Lineær',v:2,
+    spm:'Hva er nullpunktet til y = '+a+'x '+bSign+'?',
+    rett:'x = '+x, galt:['x = '+(x+1),'x = '+(x-1)]};
+},
+
+// ── Lineær: stigningstall fra to punkt ───────────────────────────
+function() {
+  var a=R(1,5), b=R(-3,3);
+  var x1=R(0,3), x2=x1+R(1,4);
+  var y1=a*x1+b, y2=a*x2+b;
+  return {k:'Lineær',v:2,
+    spm:'Hva er stigningstallet gjennom ('+x1+', '+y1+') og ('+x2+', '+y2+')?',
+    rett:String(a), galt:[String(a+1),String(a-1)]};
+},
+
+// ── Geometri: areal trekant ───────────────────────────────────────
+function() {
+  var g=R(3,12)*2, h=R(2,10);
+  var A=g*h/2;
+  return {k:'Geometri',v:1,
+    spm:'Arealet av en trekant med grunnlinje '+g+' og høyde '+h+' er:',
+    rett:String(A), galt:[String(g*h),String(A+h)]};
+},
+
+// ── Geometri: areal rektangel ─────────────────────────────────────
+function() {
+  var l=R(3,14), b=R(3,12);
+  var A=l*b;
+  return {k:'Geometri',v:1,
+    spm:'Arealet av et rektangel med lengde '+l+' og bredde '+b+':',
+    rett:String(A), galt:[String(A+l),String(2*(l+b))]};
+},
+
+// ── Geometri: omkrets sirkel ──────────────────────────────────────
+function() {
+  var r=plukk([3,4,5,6,7,10]);
+  var ok=Math.round(2*3.14*r*10)/10;
+  return {k:'Geometri',v:2,
+    spm:'Hva er omkretsen av en sirkel med radius '+r+'? (\u03c0 \u2248 3,14)',
+    rett:fmt(ok), galt:[fmt(Math.round(3.14*r*r*10)/10),fmt(ok+r)]};
+},
+
+// ── Geometri: Pytagoras hypotenus ─────────────────────────────────
+function() {
+  var pts=[[3,4,5],[5,12,13],[6,8,10],[8,15,17]];
+  var t=plukk(pts);
+  return {k:'Geometri',v:2,
+    spm:'Rettvinklet trekant med kateter '+t[0]+' og '+t[1]+'. Hva er hypotenusen?',
+    rett:String(t[2]), galt:[String(t[2]+1),String(t[2]+3)]};
+},
+
+// ── Geometri: vinkelsum polygon ───────────────────────────────────
+function() {
+  var n=R(4,8), sum=(n-2)*180;
+  return {k:'Geometri',v:2,
+    spm:'Hva er vinkelsummen i en '+n+'-kant?',
+    rett:String(sum)+'\u00b0', galt:[String(sum+180)+'\u00b0',String(sum-180)+'\u00b0']};
+},
+
+// ── Geometri: manglende side rektangel ───────────────────────────
+function() {
+  var A=plukk([24,36,40,48,60,72]), b=plukk([3,4,5,6]);
+  while(A%b!==0){b=plukk([3,4,5,6]);}
+  var l=A/b;
+  return {k:'Geometri',v:2,
+    spm:'Arealet av et rektangel er '+A+'. Én side er '+b+'. Hva er den andre?',
+    rett:String(l), galt:[String(l+1),String(l-1)]};
+},
+
+// ── Statistikk: gjennomsnitt ──────────────────────────────────────
+function() {
+  var n=R(4,6), tall=[];
+  for(var i=0;i<n;i++) tall.push(R(2,15));
+  var sum=tall.reduce(function(s,v){return s+v;},0);
+  if(sum%n!==0){tall[0]+=n-(sum%n); sum=tall.reduce(function(s,v){return s+v;},0);}
+  var gj=sum/n;
+  tall.sort(function(a,b){return a-b;});
+  return {k:'Statistikk',v:2,
+    spm:'Hva er gjennomsnittet av: '+tall.join(', ')+'?',
+    rett:fmt(gj), galt:[fmt(gj+1),fmt(gj-1)]};
+},
+
+// ── Statistikk: median (odde antall) ─────────────────────────────
+function() {
+  var tall=[];
+  for(var i=0;i<5;i++) tall.push(R(2,20));
+  var sortert=tall.slice().sort(function(a,b){return a-b;});
+  var med=sortert[2];
+  return {k:'Statistikk',v:2,
+    spm:'Hva er medianen i: '+tall.join(', ')+'?',
+    rett:String(med), galt:[String(sortert[1]),String(sortert[3])]};
+},
+
+// ── Statistikk: variasjonsbredde ─────────────────────────────────
+function() {
+  var tall=[];
+  for(var i=0;i<5;i++) tall.push(R(3,20));
+  var maks=Math.max.apply(null,tall), min=Math.min.apply(null,tall);
+  var vb=maks-min;
+  return {k:'Statistikk',v:1,
+    spm:'Variasjonsbredden i: '+tall.join(', ')+'?',
+    rett:String(vb), galt:[String(vb+2),String(vb-1)]};
+},
+
+// ── Sannsynlighet: kuler i pose ───────────────────────────────────
+function() {
+  var r=R(2,5), b=R(3,8), tot=r+b;
+  return {k:'Sannsynlighet',v:2,
+    spm:'Pose med '+r+' røde og '+b+' blå kuler. Hva er P(rød)?',
+    rett:fmtBrøk(r,tot), galt:[fmtBrøk(r,b),fmtBrøk(b,tot)]};
+},
+
+// ── Sannsynlighet: to hendelser ───────────────────────────────────
+function() {
+  var sider=plukk([4,6,8,10]);
+  var gunstige=R(1,sider-1);
+  return {k:'Sannsynlighet',v:2,
+    spm:'En '+sider+'-sidet terning. Hva er P(f\u00e5r '+gunstige+')?',
+    rett:fmtBrøk(1,sider), galt:[fmtBrøk(2,sider),fmtBrøk(1,sider-1)]};
+},
+
+// ── Økonomi: rabatt ───────────────────────────────────────────────
+function() {
+  var pris=plukk([200,300,400,500,600,800]);
+  var pst=plukk([10,20,25,30,40]);
+  var rabatt=pris*pst/100, ny=pris-rabatt;
+  return {k:'\u00d8konomi',v:2,
+    spm:'En vare koster '+pris+' kr og er satt ned '+pst+'%. Hva er ny pris?',
+    rett:String(ny)+' kr', galt:[String(ny+rabatt/2)+' kr',String(ny-rabatt/4)+' kr']};
+},
+
+// ── Økonomi: prosentøkning ────────────────────────────────────────
+function() {
+  var fra=plukk([100,200,400,500]);
+  var pst=plukk([10,20,25,50]);
+  var til=fra+fra*pst/100;
+  return {k:'\u00d8konomi',v:2,
+    spm:'Prisen øker fra '+fra+' til '+til+' kr. Hva er prosentvis økning?',
+    rett:String(pst)+'%', galt:[String(pst-5)+'%',String(pst+10)+'%']};
+},
+
+// ── Økonomi: rente ────────────────────────────────────────────────
+function() {
+  var kapital=plukk([2000,5000,8000,10000]);
+  var rente=plukk([2,3,4,5]);
+  var r=kapital*rente/100;
+  return {k:'\u00d8konomi',v:2,
+    spm:'Setter inn '+kapital.toLocaleString('no')+' kr med '+rente+'% rente/år. Renten etter 1 år?',
+    rett:String(r)+' kr', galt:[String(r*2)+' kr',String(r/2)+' kr']};
+},
+
+// ── Økonomi: prosent av tall ──────────────────────────────────────
+function() {
+  var pst=plukk([10,20,25,40,50]);
+  var av=plukk([200,300,400,500,600]);
+  var rett=av*pst/100;
+  return {k:'\u00d8konomi',v:1,
+    spm:'Hva er '+pst+'% av '+av+'?',
+    rett:String(rett), galt:[String(rett+pst),String(rett-pst/2)]};
+},
+
+// ── Potenser: a^b ────────────────────────────────────────────────
+function() {
+  var base=R(2,5), exp=R(2,4);
+  var v=Math.pow(base,exp);
+  return {k:'Potenser',v:2,
+    spm:'Hva er '+base+'\u207f?'.replace('\u207f',exp===2?'\u00b2':exp===3?'\u00b3':'\u2074'),
+    rett:String(v), galt:[String(v+base),String(v-exp)]};
+},
+
+// ── Potenser: kvadratrot ──────────────────────────────────────────
+function() {
+  var rots=[[4,2],[9,3],[16,4],[25,5],[36,6],[49,7],[64,8],[81,9],[100,10],[121,11],[144,12]];
+  var t=plukk(rots);
+  return {k:'Potenser',v:1,
+    spm:'Hva er \u221a'+t[0]+'?',
+    rett:String(t[1]), galt:[String(t[1]+1),String(t[1]-1)]};
+},
+
+// ── Potenser: 10-potenser ─────────────────────────────────────────
+function() {
+  var e=plukk([-3,-2,-1,2,3,4]);
+  var v=Math.pow(10,e);
+  var svar=e<0?'0,'+('0'.repeat(-e-1))+'1':String(v);
+  return {k:'Potenser',v:2,
+    spm:'Hva er 10'+( e<0?'\u207b'+Math.abs(e):String(e))+' som desimaltall?',
+    rett:svar, galt:[svar+'0',svar.replace(/0+$/,'')]||[String(v*10),String(v/10)]};
+},
+
+// ── Kvadratisk: toppunkt/bunnpunkt y-verdi ────────────────────────
+function() {
+  var h=R(-3,3), k=R(1,8), tegn=plukk([-1,1]);
+  var fTekst=(tegn>0?'':'−')+'(x '+(h>0?'− '+h:'+ '+Math.abs(h))+')² '+(k>=0?'+ '+k:'− '+Math.abs(k));
+  var navn=tegn>0?'bunnpunkt':'toppunkt';
+  return {k:'Kvadratisk',v:3,
+    spm:'Hva er '+navn+'-y-verdien til y = '+fTekst+'?',
+    rett:String(tegn>0?k:k), galt:[String(k+1),String(k-1)]};
+},
+
+// ── Kvadratisk: finn nullpunkt x²-n ───────────────────────────────
+function() {
+  var r=plukk([2,3,4,5,6,7]);
+  return {k:'Kvadratisk',v:3,
+    spm:'Nullpunktene til y = x\u00b2 \u2212 '+r*r+' er:',
+    rett:'x = '+r+' og x = \u2212'+r,
+    galt:['x = '+r,'x = '+(r+1)+' og x = \u2212'+(r+1)]};
+},
+
+]; // END GENERATORER
+
+// Kjør alle generatorer og bland med statisk bank
+function byggDynamiskBank() {
+  var dynamiske = GENERATORER.map(function(fn) {
+    try { return fn(); } catch(e) { return null; }
+  }).filter(Boolean);
+  return SPØRSMÅL.concat(dynamiske);
+}
+
+// Overstyr velgSpørsmål til å bruke den blandede banken
+function velgSpørsmål() {
+  var bank = byggDynamiskBank();
+  // Bland
+  for (var i = bank.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var t = bank[i]; bank[i]=bank[j]; bank[j]=t;
+  }
+  var lette   = bank.filter(function(q){return q.v===1;});
+  var middels = bank.filter(function(q){return q.v===2;});
+  var tunge   = bank.filter(function(q){return q.v===3;});
+  var valgt   = lette.slice(0,3).concat(middels.slice(0,8)).concat(tunge.slice(0,4));
+  // Bland rekkefølge
+  for (var i2=valgt.length-1; i2>0; i2--) {
+    var j2=Math.floor(Math.random()*(i2+1));
+    var t2=valgt[i2]; valgt[i2]=valgt[j2]; valgt[j2]=t2;
+  }
+  return valgt.slice(0,15).map(function(q) {
+    var svar=[q.rett,q.galt[0],q.galt[1]];
+    for(var i3=svar.length-1;i3>0;i3--){
+      var j3=Math.floor(Math.random()*(i3+1));
+      var t3=svar[i3];svar[i3]=svar[j3];svar[j3]=t3;
+    }
+    return {spm:q.spm,rett:q.rett,k:q.k,v:q.v,frem:svar[0],venstre:svar[1],høyre:svar[2]};
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// ROMTEGNING v2 — ekte perspektivrom med dører på veggene
+// ══════════════════════════════════════════════════════════════════
+
+// Konverter hex-farge til rgba-streng
+function hexTilRgba(hex, a) {
+  var r=parseInt(hex.slice(1,3),16);
+  var g=parseInt(hex.slice(3,5),16);
+  var b=parseInt(hex.slice(5,7),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
+
+function tegnRom(fase) {
+  var cv = document.getElementById('rom-canvas');
+  if (!cv) return;
+  var W = cv.width  = cv.offsetWidth  || 800;
+  var H = cv.height = cv.offsetHeight || 520;
+  var ctx = cv.getContext('2d');
+  var rom = ROMFARGER[state.romNr % 15];
+  var q   = state.rommer[state.romNr];
+
+  ctx.clearRect(0, 0, W, H);
+
+  // ── PERSPEKTIV-GRUNNPUNKTER ──────────────────────────────────────
+  // Fluktpunkt (FP) er midten litt over midten
+  var FPx = W * 0.5;
+  var FPy = H * 0.38;
+
+  // Hjørnene på bakre vegg (innerste rektangel)
+  var bVL = { x: W * 0.30, y: H * 0.22 };  // bak venstre
+  var bVR = { x: W * 0.70, y: H * 0.22 };  // bak høyre
+  var bHL = { x: W * 0.30, y: H * 0.68 };  // bak høyre-ned (gulv)
+  var bHR = { x: W * 0.70, y: H * 0.68 };  // bak venstre-ned
+
+  // Hjørnene på fremre kant (lerretet)
+  var fVL = { x: 0,   y: 0   };   // frem venstre topp
+  var fVR = { x: W,   y: 0   };   // frem høyre topp
+  var fHL = { x: 0,   y: H   };   // frem venstre bunn
+  var fHR = { x: W,   y: H   };   // frem høyre bunn
+
+  // ── TAK ──────────────────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(fVL.x, fVL.y);
+  ctx.lineTo(fVR.x, fVR.y);
+  ctx.lineTo(bVR.x, bVR.y);
+  ctx.lineTo(bVL.x, bVL.y);
+  ctx.closePath();
+  ctx.fillStyle = rom.tak;
+  ctx.fill();
+
+  // ── GULV ──────────────────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(fHL.x, fHL.y);
+  ctx.lineTo(fHR.x, fHR.y);
+  ctx.lineTo(bHR.x, bHR.y);
+  ctx.lineTo(bHL.x, bHL.y);
+  ctx.closePath();
+  ctx.fillStyle = rom.gulv;
+  ctx.fill();
+
+  // ── VENSTRE VEGG ──────────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(fVL.x, fVL.y);
+  ctx.lineTo(bVL.x, bVL.y);
+  ctx.lineTo(bHL.x, bHL.y);
+  ctx.lineTo(fHL.x, fHL.y);
+  ctx.closePath();
+  ctx.fillStyle = rom.vegg;
+  ctx.fill();
+
+  // ── HØYRE VEGG ────────────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(fVR.x, fVR.y);
+  ctx.lineTo(bVR.x, bVR.y);
+  ctx.lineTo(bHR.x, bHR.y);
+  ctx.lineTo(fHR.x, fHR.y);
+  ctx.closePath();
+  ctx.fillStyle = rom.vegg;
+  ctx.fill();
+
+  // ── BAKRE VEGG ────────────────────────────────────────────────────
+  ctx.beginPath();
+  ctx.rect(bVL.x, bVL.y, bVR.x-bVL.x, bHL.y-bVL.y);
+  ctx.fillStyle = rom.vegg;
+  ctx.fill();
+
+  // ── RUTENETT PÅ GULV ──────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for (var gi = 1; gi < 5; gi++) {
+    var t = gi / 5;
+    // Linjer fra front til bak (konvergerende)
+    var yL = fHL.y + (bHL.y - fHL.y) * t;
+    var xL = (bHL.x - fHL.x) * t;
+    ctx.beginPath(); ctx.moveTo(fHL.x, yL); ctx.lineTo(bHL.x, yL + (bHL.y-fHL.y)*(1-t)*0.3); ctx.stroke();
+    // Horisontale
+    var gY = bHL.y + (fHL.y - bHL.y) * t;
+    var gXL = fHL.x + (bHL.x - fHL.x) * (1-t);
+    var gXR = fHR.x - (fHR.x - bHR.x) * (1-t);
+    ctx.beginPath(); ctx.moveTo(gXL, gY); ctx.lineTo(gXR, gY); ctx.stroke();
+  }
+  // Diagonaler gulv mot FP
+  ctx.beginPath(); ctx.moveTo(fHL.x,fHL.y); ctx.lineTo(bHL.x,bHL.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fHR.x,fHR.y); ctx.lineTo(bHR.x,bHR.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.33,H); ctx.lineTo(bHL.x+(bHR.x-bHL.x)*0.1,bHL.y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W*0.67,H); ctx.lineTo(bHL.x+(bHR.x-bHL.x)*0.9,bHL.y); ctx.stroke();
+
+  // ── KANTER ────────────────────────────────────────────────────────
+  ctx.strokeStyle = hexTilRgba(rom.lysFarge, 0.2);
+  ctx.lineWidth = 1.5;
+  // Tak-kanter
+  ctx.beginPath();
+  ctx.moveTo(fVL.x,fVL.y); ctx.lineTo(bVL.x,bVL.y);
+  ctx.moveTo(fVR.x,fVR.y); ctx.lineTo(bVR.x,bVR.y);
+  ctx.moveTo(bVL.x,bVL.y); ctx.lineTo(bVR.x,bVR.y);
+  // Gulv-kanter
+  ctx.moveTo(fHL.x,fHL.y); ctx.lineTo(bHL.x,bHL.y);
+  ctx.moveTo(fHR.x,fHR.y); ctx.lineTo(bHR.x,bHR.y);
+  ctx.moveTo(bHL.x,bHL.y); ctx.lineTo(bHR.x,bHR.y);
+  // Vertikaler
+  ctx.moveTo(bVL.x,bVL.y); ctx.lineTo(bHL.x,bHL.y);
+  ctx.moveTo(bVR.x,bVR.y); ctx.lineTo(bHR.x,bHR.y);
+  ctx.stroke();
+
+  // ── LYS I TAKET ───────────────────────────────────────────────────
+  var lysGrad = ctx.createRadialGradient(W/2, H*0.1, 0, W/2, H*0.1, H*0.55);
+  lysGrad.addColorStop(0, hexTilRgba(rom.lysFarge, 0.18));
+  lysGrad.addColorStop(0.5, hexTilRgba(rom.lysFarge, 0.05));
+  lysGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = lysGrad;
+  ctx.fillRect(0, 0, W, H*0.6);
+
+  // Lyskilde (pære i taket)
+  ctx.beginPath();
+  ctx.arc(W/2, H*0.08, 6, 0, Math.PI*2);
+  ctx.fillStyle = hexTilRgba(rom.lysFarge, 0.9);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(W/2, H*0.08, 12, 0, Math.PI*2);
+  ctx.fillStyle = hexTilRgba(rom.lysFarge, 0.3);
+  ctx.fill();
+
+  // ── ROMNUMMER I TAK ────────────────────────────────────────────────
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold ' + Math.round(H*0.07) + 'px "Playfair Display", serif';
+  ctx.fillStyle = hexTilRgba(rom.lysFarge, 0.22);
+  ctx.fillText('ROM ' + (state.romNr + 1), W/2, H * 0.17);
+  ctx.restore();
+
+  // ── DØRER ──────────────────────────────────────────────────────────
+  var coords = {
+    bVL:bVL, bVR:bVR, bHL:bHL, bHR:bHR,
+    fVL:fVL, fVR:fVR, fHL:fHL, fHR:fHR
+  };
+  tegnDørFrem   (ctx, W, H, coords, rom, q, fase);
+  tegnDørVenstre(ctx, W, H, coords, rom, q, fase);
+  tegnDørHøyre  (ctx, W, H, coords, rom, q, fase);
+
+  // ── OPPGAVE PÅ GULVET ──────────────────────────────────────────────
+  tegnGulvTekst(ctx, W, H, q, rom);
+}
+
+// ── FREMRE DØR (på bakre vegg) ─────────────────────────────────────
+function tegnDørFrem(ctx, W, H, c, rom, q, fase) {
+  var svar = q ? q.frem : '';
+  var erRett = q && svar === q.rett;
+  var erValgt = state.valgtDør === 'frem' && fase !== 'spill';
+
+  // Dør skalert innenfor bakre vegg
+  var bW = c.bVR.x - c.bVL.x;
+  var bH = c.bHL.y - c.bVL.y;
+  var dw = bW * 0.38, dh = bH * 0.72;
+  var dx = c.bVL.x + (bW - dw)/2;
+  var dy = c.bHL.y - dh;
+
+  tegnDørForm(ctx, dx, dy, dw, dh, svar, erRett, erValgt, fase, rom, false);
+
+  // Lagre hit-koordinater
+  state.dørHit = state.dørHit || {};
+  state.dørHit.frem = {x:dx, y:dy, w:dw, h:dh};
+}
+
+// ── VENSTRE DØR (på venstre vegg, i perspektiv) ────────────────────
+function tegnDørVenstre(ctx, W, H, c, rom, q, fase) {
+  var svar = q ? q.venstre : '';
+  var erRett = q && svar === q.rett;
+  var erValgt = state.valgtDør === 'venstre' && fase !== 'spill';
+
+  // Perspektivert dør på venstre vegg
+  // Dør-polygon: fire hjørnepunkt i perspektiv
+  // Venstre vegg: fra (0,0)-(bVL)-(bHL)-(0,H)
+  // Dør sitter ca midt på venstre vegg, 60% av vegghøyden
+
+  var vx1 = c.fVL.x, vy1 = c.fVL.y;  // topp-venstre vegg
+  var vx2 = c.bVL.x, vy2 = c.bVL.y;  // topp-høyre vegg (bakre)
+  var vx3 = c.bHL.x, vy3 = c.bHL.y;  // bunn-høyre
+  var vx4 = c.fHL.x, vy4 = c.fHL.y;  // bunn-venstre
+
+  // Interpoler langs veggen: dør er fra t=0.15 til t=0.60 (venstre-høyre)
+  var tL = 0.18, tR = 0.58;
+  var tB = 0.05, tT = 0.75;  // bunn og topp (som andel fra bunn)
+
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function veggPkt(tH, tV) {
+    // tH: 0=fremre kant, 1=bakre kant; tV: 0=bunn, 1=topp
+    return {
+      x: lerp(lerp(vx4,vx3,tH), lerp(vx1,vx2,tH), tV),
+      y: lerp(lerp(vy4,vy3,tH), lerp(vy1,vy2,tH), tV)
+    };
+  }
+
+  var p1 = veggPkt(tL, tT);  // topp venstre
+  var p2 = veggPkt(tR, tT);  // topp høyre (bakre)
+  var p3 = veggPkt(tR, tB);  // bunn høyre
+  var p4 = veggPkt(tL, tB);  // bunn venstre
+
+  tegnDørPerspektiv(ctx, p1, p2, p3, p4, svar, erRett, erValgt, fase, rom, true);
+
+  // Lagre hit-boks (AABB for klikk)
+  state.dørHit = state.dørHit || {};
+  var xVals = [p1.x,p2.x,p3.x,p4.x], yVals = [p1.y,p2.y,p3.y,p4.y];
+  state.dørHit.venstre = {
+    x:Math.min.apply(null,xVals), y:Math.min.apply(null,yVals),
+    w:Math.max.apply(null,xVals)-Math.min.apply(null,xVals),
+    h:Math.max.apply(null,yVals)-Math.min.apply(null,yVals)
+  };
+}
+
+// ── HØYRE DØR (på høyre vegg, i perspektiv) ────────────────────────
+function tegnDørHøyre(ctx, W, H, c, rom, q, fase) {
+  var svar = q ? q.høyre : '';
+  var erRett = q && svar === q.rett;
+  var erValgt = state.valgtDør === 'høyre' && fase !== 'spill';
+
+  var vx1 = c.fVR.x, vy1 = c.fVR.y;
+  var vx2 = c.bVR.x, vy2 = c.bVR.y;
+  var vx3 = c.bHR.x, vy3 = c.bHR.y;
+  var vx4 = c.fHR.x, vy4 = c.fHR.y;
+
+  var tL = 0.18, tR = 0.58;
+  var tB = 0.05, tT = 0.75;
+
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function veggPkt(tH, tV) {
+    return {
+      x: lerp(lerp(vx4,vx3,tH), lerp(vx1,vx2,tH), tV),
+      y: lerp(lerp(vy4,vy3,tH), lerp(vy1,vy2,tH), tV)
+    };
+  }
+
+  var p1 = veggPkt(tL, tT);
+  var p2 = veggPkt(tR, tT);
+  var p3 = veggPkt(tR, tB);
+  var p4 = veggPkt(tL, tB);
+
+  tegnDørPerspektiv(ctx, p2, p1, p4, p3, svar, erRett, erValgt, fase, rom, false);
+
+  state.dørHit = state.dørHit || {};
+  var xVals=[p1.x,p2.x,p3.x,p4.x],yVals=[p1.y,p2.y,p3.y,p4.y];
+  state.dørHit.høyre = {
+    x:Math.min.apply(null,xVals), y:Math.min.apply(null,yVals),
+    w:Math.max.apply(null,xVals)-Math.min.apply(null,xVals),
+    h:Math.max.apply(null,yVals)-Math.min.apply(null,yVals)
+  };
+}
+
+// ── TEGN DØR (flat, for bakre vegg) ─────────────────────────────────
+function tegnDørForm(ctx, dx, dy, dw, dh, svar, erRett, erValgt, fase, rom, speilX) {
+  var farge  = erValgt ? (erRett ? '#4ade80' : '#f87171') : hexTilRgba(rom.lysFarge, 0.6);
+  var fyllfg = erValgt ? hexTilRgba(erRett?'#4ade80':'#f87171',0.12) : 'rgba(0,0,0,0.55)';
+
+  // Dørpanel
+  ctx.fillStyle = fyllfg;
+  ctx.strokeStyle = farge;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.rect(dx,dy,dw,dh); ctx.fill(); ctx.stroke();
+
+  // Dørpanel-detaljer (to rektangler inni)
+  ctx.strokeStyle = hexTilRgba(erValgt?farge:rom.lysFarge, 0.25);
+  ctx.lineWidth = 1;
+  var m = dw*0.1;
+  ctx.strokeRect(dx+m, dy+m, dw-2*m, dh*0.42-m);
+  ctx.strokeRect(dx+m, dy+dh*0.42+m*0.5, dw-2*m, dh*0.55-m);
+
+  // Dørknapp
+  var kx = dx + dw*(speilX?0.25:0.75), ky = dy + dh*0.55;
+  ctx.beginPath(); ctx.arc(kx, ky, dh*0.04, 0, Math.PI*2);
+  ctx.fillStyle = farge; ctx.fill();
+
+  // Svar-tekst
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = erValgt ? farge : '#ffffff';
+  ctx.font = 'bold '+Math.min(dw*0.2, 18)+'px "Source Sans 3",sans-serif';
+  var linjer = bryttTekst(ctx, svar||'', dw*0.85);
+  var lh = Math.min(dw*0.2,18)*1.35;
+  var startY = dy+dh*0.25 - (linjer.length-1)*lh/2;
+  linjer.forEach(function(l,i){ctx.fillText(l, dx+dw/2, startY+i*lh);});
+  if(fase!=='spill'&&erValgt) {
+    ctx.font='bold '+(dh*0.15)+'px sans-serif';
+    ctx.fillText(erRett?'✓':'✗', dx+dw/2, dy+dh*0.82);
+  }
+  ctx.restore();
+}
+
+// ── TEGN DØR I PERSPEKTIV (sidevegg) ────────────────────────────────
+function tegnDørPerspektiv(ctx, tl, tr, br, bl, svar, erRett, erValgt, fase, rom, erVenstre) {
+  var farge  = erValgt ? (erRett?'#4ade80':'#f87171') : hexTilRgba(rom.lysFarge,0.55);
+  var fyllfg = erValgt ? hexTilRgba(erRett?'#4ade80':'#f87171',0.12) : 'rgba(0,0,0,0.55)';
+
+  // Dørform (parallelogram)
+  ctx.beginPath();
+  ctx.moveTo(tl.x,tl.y); ctx.lineTo(tr.x,tr.y);
+  ctx.lineTo(br.x,br.y); ctx.lineTo(bl.x,bl.y);
+  ctx.closePath();
+  ctx.fillStyle=fyllfg; ctx.fill();
+  ctx.strokeStyle=farge; ctx.lineWidth=2; ctx.stroke();
+
+  // Indre panel-linjer (enkel detalj)
+  var lerp=function(a,b,t){return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};};
+  ctx.strokeStyle=hexTilRgba(erValgt?farge:rom.lysFarge,0.2);
+  ctx.lineWidth=1;
+  var itl=lerp(lerp(tl,bl,0.1),lerp(tr,br,0.1),0.1);
+  var itr=lerp(lerp(tl,bl,0.1),lerp(tr,br,0.1),0.9);
+  var ibl=lerp(lerp(tl,bl,0.48),lerp(tr,br,0.48),0.1);
+  var ibr=lerp(lerp(tl,bl,0.48),lerp(tr,br,0.48),0.9);
+  ctx.beginPath();
+  ctx.moveTo(itl.x,itl.y);ctx.lineTo(itr.x,itr.y);ctx.lineTo(ibr.x,ibr.y);ctx.lineTo(ibl.x,ibl.y);ctx.closePath();ctx.stroke();
+
+  // Dørknapp
+  var knapp = lerp(lerp(tl,bl,0.5), lerp(tr,br,0.5), erVenstre?0.75:0.25);
+  ctx.beginPath(); ctx.arc(knapp.x, knapp.y, 4, 0, Math.PI*2);
+  ctx.fillStyle=farge; ctx.fill();
+
+  // Midtpunkt for tekst
+  var cx=(tl.x+tr.x+br.x+bl.x)/4;
+  var cy=(tl.y+tr.y+br.y+bl.y)/4;
+  var bW=Math.max(Math.abs(tr.x-tl.x),Math.abs(br.x-bl.x));
+
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle= erValgt ? farge : '#ffffff';
+  var fs=Math.min(bW*0.2, 15);
+  ctx.font='bold '+fs+'px "Source Sans 3",sans-serif';
+  var linjer=bryttTekst(ctx,svar||'',bW*0.75);
+  var lh=fs*1.35;
+  var startY=cy-dh*0.06 - (linjer.length-1)*lh/2;
+  linjer.forEach(function(l,i){ctx.fillText(l, cx, startY+i*lh);});
+  if(fase!=='spill'&&erValgt){
+    ctx.font='bold '+(bW*0.15)+'px sans-serif';
+    ctx.fillText(erRett?'✓':'✗', cx, cy+lh*linjer.length);
+  }
+  ctx.restore();
+}
+
+var dh = 100; // fallback for perspektiv-tekst
+
+function tegnGulvTekst(ctx, W, H, q, rom) {
+  if (!q) return;
+  var cx=W/2, cy=H*0.84;
+  ctx.save();
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  // Skyggeboks
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.ellipse(cx, cy, W*0.28, H*0.10, 0,0,Math.PI*2); ctx.fill();
+
+  // Emne
+  ctx.font='500 11px "Source Sans 3",sans-serif';
+  ctx.fillStyle=hexTilRgba(rom.lysFarge,0.8);
+  ctx.fillText(q.k, cx, cy-H*0.065);
+
+  // Spørsmål
+  var fs=15;
+  ctx.font='bold '+fs+'px "Source Sans 3",sans-serif';
+  ctx.fillStyle='#ffffff';
+  var linjer=bryttTekst(ctx,q.spm,W*0.52);
+  var lh=fs*1.4, startY=cy-(linjer.length-1)*lh/2;
+  linjer.forEach(function(l,i){ctx.fillText(l,cx,startY+i*lh);});
+  ctx.restore();
+}
+
+function bryttTekst(ctx, tekst, maksBredde) {
+  if (!tekst) return [''];
+  var ord=tekst.split(' '), linjer=[], linje='';
+  ord.forEach(function(ord2){
+    var test=linje?linje+' '+ord2:ord2;
+    if(ctx.measureText(test).width>maksBredde&&linje){linjer.push(linje);linje=ord2;}
+    else linje=test;
+  });
+  if(linje) linjer.push(linje);
+  return linjer;
+}
+
+// Oppdater klikk-deteksjon til å bruke state.dørHit
+function hvaKlikket(mx, my, W, H) {
+  var hit = state.dørHit || {};
+  var sider = ['frem','venstre','høyre'];
+  for (var i=0;i<sider.length;i++){
+    var s=sider[i], b=hit[s];
+    if(b&&mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h) return s;
+  }
+  return null;
+}
+
+
+var state = {
+  rommer:    [],   // velgte 15 spørsmål for denne runden
+  romNr:     0,    // 0-indeksert, 0-14
+  feil:      0,    // antall feil i historikk
+  rekord:    0,    // beste gjennomføring (antall rom uten feil)
+  valgtDør:  null, // 'frem'/'venstre'/'høyre'
+  fase:      'spill', // 'spill' | 'feil' | 'fullført'
+};
+
+// Romfarger — 15 unike, varme og distinkte
+var ROMFARGER = [
+  { vegg:'#1a1035', gulv:'#120a28', tak:'#0d0820', lysFarge:'#9b6aff' },  // 1 — lilla
+  { vegg:'#0d2a1a', gulv:'#071a10', tak:'#041209', lysFarge:'#4ade80' },  // 2 — grønn
+  { vegg:'#2a1200', gulv:'#1a0c00', tak:'#100700', lysFarge:'#fb923c' },  // 3 — oransje
+  { vegg:'#001a2a', gulv:'#00101a', tak:'#000a10', lysFarge:'#38bdf8' },  // 4 — blå
+  { vegg:'#2a0a0a', gulv:'#1a0505', tak:'#100303', lysFarge:'#f87171' },  // 5 — rød
+  { vegg:'#1a1a00', gulv:'#0f0f00', tak:'#090900', lysFarge:'#facc15' },  // 6 — gul
+  { vegg:'#0a1a1a', gulv:'#050f0f', tak:'#030808', lysFarge:'#2dd4bf' },  // 7 — teal
+  { vegg:'#1a0a1a', gulv:'#0f050f', tak:'#080308', lysFarge:'#e879f9' },  // 8 — rosa
+  { vegg:'#001a10', gulv:'#00100a', tak:'#000a06', lysFarge:'#34d399' },  // 9 — mint
+  { vegg:'#150f00', gulv:'#0e0900', tak:'#080500', lysFarge:'#fbbf24' },  // 10 — amber
+  { vegg:'#0a0a1a', gulv:'#050510', tak:'#030308', lysFarge:'#818cf8' },  // 11 — indigo
+  { vegg:'#1a0010', gulv:'#0f0009', tak:'#080005', lysFarge:'#fb7185' },  // 12 — rose
+  { vegg:'#001510', gulv:'#000d09', tak:'#000705', lysFarge:'#6ee7b7' },  // 13 — emerald
+  { vegg:'#0f0015', gulv:'#09000e', tak:'#060009', lysFarge:'#c084fc' },  // 14 — fiolett
+  { vegg:'#1a1005', gulv:'#0e0a03', tak:'#080502', lysFarge:'#fde68a' },  // 15 — kremgull
+];
+
+// ── TEGN PERSPEKTIVROM ────────────────────────────────────────────
+
+
+
+
+
+
+
+
+// ── KLIKK-HÅNDTERING ─────────────────────────────────────────────
+function setupKlikk() {
+  var cv = document.getElementById('rom-canvas');
+  if (!cv) return;
+  cv.addEventListener('click', function(e) {
+    if (state.fase !== 'spill') return;
+    var rect = cv.getBoundingClientRect();
+    var mx = e.clientX - rect.left;
+    var my = e.clientY - rect.top;
+    var W = cv.width, H = cv.height;
+    var side = hvaKlikket(mx, my, W, H);
+    if (side) velgDør(side);
+  });
+  cv.addEventListener('touchend', function(e) {
+    if (state.fase !== 'spill') return;
+    e.preventDefault();
+    var rect = cv.getBoundingClientRect();
+    var t = e.changedTouches[0];
+    var mx = t.clientX - rect.left;
+    var my = t.clientY - rect.top;
+    var W = cv.width, H = cv.height;
+    var side = hvaKlikket(mx, my, W, H);
+    if (side) velgDør(side);
+  }, {passive: false});
+}
+
+
+
+function velgDør(side) {
+  if (state.fase !== 'spill') return;
+  state.valgtDør = side;
+  state.fase = 'svar';
+  tegnRom('svar');
+  var q    = state.rommer[state.romNr];
+  var rett = q[side] === q.rett;
+
+  setTimeout(function() {
+    if (rett) {
+      if (state.romNr >= 14) {
+        // FULLFØRT
+        oppdaterRekord(15);
+        state.fase = 'fullført';
+        visFullførtSkjerm();
+      } else {
+        state.romNr++;
+        state.valgtDør = null;
+        state.fase = 'spill';
+        tegnRom('spill');
+        oppdaterUI();
+      }
+    } else {
+      state.fase = 'feil';
+      oppdaterRekord(state.romNr);
+      setTimeout(function() {
+        visFeilSkjerm(state.romNr + 1, q.rett);
+      }, 600);
+    }
+  }, 900);
+}
+
+// ── UI ────────────────────────────────────────────────────────────
+function oppdaterUI() {
+  var el = document.getElementById('rom-teller');
+  if (el) el.textContent = 'Rom ' + (state.romNr + 1) + ' av 15';
+  // Fremgangsbar
+  var bar = document.getElementById('fremgangs-bar');
+  if (bar) {
+    bar.innerHTML = '';
+    for (var i = 0; i < 15; i++) {
+      var prikk = document.createElement('div');
+      prikk.className = 'fp-prikk' + (i < state.romNr ? ' ferdig' : i === state.romNr ? ' aktiv' : '');
+      bar.appendChild(prikk);
+    }
+  }
+}
+
+function visFeilSkjerm(romNr, rettSvar) {
+  var overlay = document.getElementById('overlay');
+  if (!overlay) return;
+  overlay.innerHTML = '<div class="overlay-innhold feil-innhold">'
+    + '<div class="overlay-emoji">💥</div>'
+    + '<h2>Feil svar i rom ' + romNr + '!</h2>'
+    + '<p>Riktig svar var: <strong>' + rettSvar + '</strong></p>'
+    + '<p class="overlay-sub">Du starter tilbake fra rom 1. Prøv igjen!</p>'
+    + '<button class="overlay-btn" onclick="startNyRunde()">▶ Start på nytt</button>'
+    + '</div>';
+  overlay.style.display = 'flex';
+}
+
+function visFullførtSkjerm() {
+  var overlay = document.getElementById('overlay');
+  if (!overlay) return;
+  var rekordTekst = state.rekord >= 15
+    ? '<p class="rekord-tekst">🏆 Du har fullført labyrinten!</p>'
+    : '';
+  overlay.innerHTML = '<div class="overlay-innhold fullfort-innhold">'
+    + '<div class="overlay-emoji konfetti">🎉</div>'
+    + '<h2>Gratulerer! Du kom ut av labyrinten!</h2>'
+    + '<p class="ros-tekst">Imponerende! Du har vist fremragende matematisk kløkt og navigert gjennom alle 15 rom med skarpt hode og sikre beregninger. Det krever både kunnskap, konsentrasjon og mot — og det har du vist i rikt monn!</p>'
+    + '<p class="ros-sub">Alle 15 oppgaver løst uten en eneste feil. Du er en ekte matematikk-mester! 🌟</p>'
+    + rekordTekst
+    + '<div class="overlay-btns">'
+    + '<button class="overlay-btn spill-igjen" onclick="startNyRunde()">🔄 Spill igjen</button>'
+    + '<button class="overlay-btn tilbake-btn" onclick="window.location.href=\'spill_hub.html\'">🏠 Tilbake til spillhub</button>'
+    + '</div></div>';
+  overlay.style.display = 'flex';
+}
+
+function startNyRunde() {
+  state.rommer   = velgSpørsmål();
+  state.romNr    = 0;
+  state.valgtDør = null;
+  state.fase     = 'spill';
+  document.getElementById('overlay').style.display = 'none';
+  oppdaterUI();
+  tegnRom('spill');
+}
+
+function oppdaterRekord(antall) {
+  if (antall > state.rekord) {
+    state.rekord = antall;
+    try { localStorage.setItem('matte_lab_rekord', antall); } catch(e) {}
+  }
+}
+
+// ── ANIMASJONSLOOP ────────────────────────────────────────────────
+var animTimer = null;
+function startAnimasjon() {
+  if (animTimer) cancelAnimationFrame(animTimer);
+  function loop() {
+    if (state.fase === 'spill' || state.fase === 'svar') tegnRom(state.fase);
+    animTimer = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  try { state.rekord = parseInt(localStorage.getItem('matte_lab_rekord')||'0'); } catch(e) {}
+  state.rommer = velgSpørsmål();
+  setupKlikk();
+  oppdaterUI();
+  startAnimasjon();
+});
+
+
+</script>
+</body>
+</html>
