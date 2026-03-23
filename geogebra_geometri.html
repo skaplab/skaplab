@@ -296,22 +296,23 @@ function byggGeometriOppgaver() {
   // Sjekk vinkel via GeoGebra evalCommand + getValue
   function hentVinkelGrader(ggb, p1, toppunkt, p2) {
     try {
-      var navn = 'v_tmp_';
-      ggb.evalCommand(navn + '=Angle('+p1+','+toppunkt+','+p2+')');
-      var rad = ggb.getValue(navn);
-      ggb.deleteObject(navn);
-      return rad * 180 / Math.PI;
+      var tx=ggb.getXcoord(toppunkt), ty=ggb.getYcoord(toppunkt);
+      var ax=ggb.getXcoord(p1)-tx,   ay=ggb.getYcoord(p1)-ty;
+      var bx=ggb.getXcoord(p2)-tx,   by=ggb.getYcoord(p2)-ty;
+      var dot=ax*bx+ay*by;
+      var magA=Math.sqrt(ax*ax+ay*ay), magB=Math.sqrt(bx*bx+by*by);
+      if (magA<1e-10||magB<1e-10) return null;
+      return Math.acos(Math.max(-1,Math.min(1,dot/(magA*magB))))*180/Math.PI;
     } catch(e) { return null; }
   }
 
   // Sjekk avstand mellom to punkt
   function hentAvstand(ggb, p1, p2) {
     try {
-      var navn = 'd_tmp_';
-      ggb.evalCommand(navn + '=Distance('+p1+','+p2+')');
-      var d = ggb.getValue(navn);
-      ggb.deleteObject(navn);
-      return d;
+      var x1=ggb.getXcoord(p1), y1=ggb.getYcoord(p1);
+      var x2=ggb.getXcoord(p2), y2=ggb.getYcoord(p2);
+      if (isNaN(x1)||isNaN(y1)||isNaN(x2)||isNaN(y2)) return null;
+      return Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
     } catch(e) { return null; }
   }
 
@@ -442,17 +443,20 @@ function byggGeometriOppgaver() {
       'ZoomIn(-1,'+(b3+2)+',-1,'+(h3+3)+')'
     ],
     sjekk: function(ggb) {
-      // Robust: scan alle punkt, finn fire hjørner uavhengig av navn
-      var tol = 0.25;
-      var hjørner = [
-        [0,0],[b3,0],[b3,h3],[0,h3]
-      ];
+      // Godtar punkt, polygon-vertices og alle koordinatbærende objekt
+      var tol = 0.3;
+      var hjørner = [[0,0],[b3,0],[b3,h3],[0,h3]];
       var navnene = ggb.getAllObjectNames();
+      var allePkt = [];
+      navnene.forEach(function(n) {
+        try {
+          var x=ggb.getXcoord(n), y=ggb.getYcoord(n);
+          if (!isNaN(x)&&!isNaN(y)) allePkt.push([x,y]);
+        } catch(e) {}
+      });
       var funnet = hjørner.map(function(hj) {
-        return navnene.some(function(n) {
-          if (ggb.getObjectType(n)!=='point') return false;
-          return Math.abs(ggb.getXcoord(n)-hj[0])<=tol
-              && Math.abs(ggb.getYcoord(n)-hj[1])<=tol;
+        return allePkt.some(function(p) {
+          return Math.abs(p[0]-hj[0])<=tol && Math.abs(p[1]-hj[1])<=tol;
         });
       });
       // A og B er forhåndsplassert — de to første hjørnene er der allerede
@@ -523,65 +527,87 @@ function byggGeometriOppgaver() {
   });
 
 
-  // GEO5
-  var s45alts=[3,4,5,6,7,8];
-  var s45 = s45alts[rnd(0,s45alts.length-1)];
-  var hyp45 = Math.round(s45*Math.sqrt(2)*100)/100;
-
+  // GEO5a: Likebeint rettvinklet — gitt katet, finn hypotenus
+  var s45a_alts=[3,4,5,6,7,8];
+  var s45a = s45a_alts[rnd(0,s45a_alts.length-1)];
+  var hyp45a = Math.round(s45a*Math.sqrt(2)*100)/100;
   OPPGAVER.push({
-    id:'geo5', gruppe:'Geometri', tittel:'5 \u00b7 Likebeint rettvinklet (45-45-90)',
-    tekst:'<b>A=(0,0)</b> og <b>B=('+s45+',0)</b> er gitt. Likebeint og rettvinklet i A. Plasser C=(0,'+s45+').<br><br>'
-      +'<b>a) Katet AC</b>: <input id="inp-katet" type="number" step="1" placeholder="0" style="width:100px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff"><br><br>'
-      +'<b>b) Hypotenus</b> = katet\u00b7\u221a2 (2 des.): <input id="inp-hyp" type="number" step="0.01" placeholder="0.00" style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff"><br><br>'
-      +'<b>c) Vinkel ABC</b> (grader): <input id="inp-vinkel" type="number" step="1" placeholder="0" style="width:100px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
-    hint:'C=(0,'+s45+'). Katet='+s45+', hypotenus='+s45+'\u00b7\u221a2\u2248'+hyp45+'. Vinkel ABC=45\u00b0.',
-    ggbKommandoer:['A=(0,0)','B=('+s45+',0)','SetColor(A,"#ffd700")','SetColor(B,"#ffd700")','SetPointSize(A,5)','SetPointSize(B,5)','ZoomIn(-1,'+(s45+2)+',-1,'+(s45+3)+')'],
-    sjekk: function(ggb) {
-      if (!punktEksisterer(ggb,'C')) return {ok:false,nesten:false,melding:'Plasser C.'};
-      var ac=hentAvstand(ggb,'A','C'), vA=hentVinkelGrader(ggb,'B','A','C');
-      if (!ac||Math.abs(ac-s45)>0.2) return {ok:false,nesten:false,melding:'AC='+(ac?ac.toFixed(2):'?')+', skal='+s45+'.'};
-      if (!vA||Math.abs(vA-90)>2)    return {ok:false,nesten:true, melding:'Vinkel A='+(vA?Math.round(vA)+'\u00b0':'?')+', skal 90\u00b0.'};
-      var kS=sjekkTall(s45,0.05,'inp-katet')(ggb);
-      var hS=sjekkTall(hyp45,0.05,'inp-hyp')(ggb);
-      var vS=sjekkTall(45,1,'inp-vinkel')(ggb);
-      if (!kS.ok) return {ok:false,nesten:true,melding:'C \u2713! a) '+kS.melding};
-      if (!hS.ok) return {ok:false,nesten:true,melding:'Katet \u2713! b) '+hS.melding};
-      if (!vS.ok) return {ok:false,nesten:true,melding:'Hypotenus \u2713! c) '+vS.melding};
-      return {ok:true,nesten:false,melding:'\u2713 45-45-90: katet, hypotenus og vinkel riktige!'};
-    }
+    id:'geo5a', gruppe:'Pytagoras', tittel:'5 \u00b7 45-45-90: finn hypotenus',
+    tekst:'<b>A=(0,0)</b> og <b>B=('+s45a+',0)</b> er gitt (katet).<br>'
+      +'Trekant ABC er likebeint og rettvinklet i A: AC = AB = '+s45a+'.<br>'
+      +'Plasser C=(0,'+s45a+') i GeoGebra for \u00e5 bekrefte figuren.<br><br>'
+      +'<b>Hypotenus = katet \u00b7 \u221a2</b><br>'
+      +'Hypotenus = <input id="inp-hyp" type="number" step="0.01" placeholder="0.00" '
+      +'style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
+    hint:'Hypotenus = katet \u00b7 \u221a2 = '+s45a+' \u00b7 \u221a2 \u2248 '+hyp45a+'.',
+    ggbKommandoer:['A=(0,0)','B=('+s45a+',0)','SetColor(A,"#ffd700")','SetColor(B,"#ffd700")','SetPointSize(A,5)','SetPointSize(B,5)','ZoomIn(-1,'+(s45a+2)+',-1,'+(s45a+2)+')'],
+    sjekk: function(ggb) { return sjekkTall(hyp45a,0.06,'inp-hyp')(ggb); }
+  });
+
+  // GEO5b: Likebeint rettvinklet — gitt hypotenus, finn katet
+  var s45b_vals=[4,5,6,7];
+  var s45b = s45b_vals[rnd(0,s45b_vals.length-1)];
+  var hyp45b = Math.round(s45b*Math.sqrt(2)*100)/100;
+  OPPGAVER.push({
+    id:'geo5b', gruppe:'Pytagoras', tittel:'6 \u00b7 45-45-90: finn katet',
+    tekst:'Hypotenus BC = '+hyp45b+' er gitt.<br>'
+      +'Trekant ABC er likebeint og rettvinklet i A.<br>'
+      +'<b>Katet = hypotenus / \u221a2</b><br>'
+      +'Katet = <input id="inp-katet" type="number" step="0.01" placeholder="0.00" '
+      +'style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
+    hint:'Katet = hypotenus / \u221a2 = '+hyp45b+' / \u221a2 \u2248 '+s45b+'.',
+    ggbKommandoer:['ZoomIn(-1,10,-1,10)'],
+    sjekk: function(ggb) { return sjekkTall(s45b,0.06,'inp-katet')(ggb); }
+  });
+
+  // GEO6a: 30-60-90 — gitt hypotenus, finn lang katet
+  var s30a_vals=[2,3,4,5,6];
+  var s30a = s30a_vals[rnd(0,s30a_vals.length-1)];
+  var hyp30a  = s30a*2;
+  var lang30a = Math.round(s30a*Math.sqrt(3)*100)/100;
+  OPPGAVER.push({
+    id:'geo6a', gruppe:'Pytagoras', tittel:'7 \u00b7 30-60-90: hypotenus \u2192 lang katet',
+    tekst:'Hypotenus = '+hyp30a+' er gitt. Forholdet: 1:\u221a3:2<br>'
+      +'<b>Lang katet = hypotenus \u00b7 \u221a3 / 2</b><br>'
+      +'Lang katet = <input id="inp-lang" type="number" step="0.01" placeholder="0.00" '
+      +'style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
+    hint:'Lang katet = '+hyp30a+' \u00b7 \u221a3/2 \u2248 '+lang30a+'. Kort katet = '+hyp30a+'/2 = '+s30a+'.',
+    ggbKommandoer:['ZoomIn(-1,12,-1,10)'],
+    sjekk: function(ggb) { return sjekkTall(lang30a,0.06,'inp-lang')(ggb); }
+  });
+
+  // GEO6b: 30-60-90 — gitt lang katet, finn kort katet
+  var s30b_vals=[2,3,4,5,6];
+  var s30b = s30b_vals[rnd(0,s30b_vals.length-1)];
+  var lang30b = Math.round(s30b*Math.sqrt(3)*100)/100;
+  OPPGAVER.push({
+    id:'geo6b', gruppe:'Pytagoras', tittel:'8 \u00b7 30-60-90: lang katet \u2192 kort katet',
+    tekst:'Lang katet = '+lang30b+' er gitt. Forholdet: 1:\u221a3:2<br>'
+      +'<b>Kort katet = lang katet / \u221a3</b><br>'
+      +'Kort katet = <input id="inp-kort" type="number" step="0.01" placeholder="0.00" '
+      +'style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
+    hint:'Kort katet = '+lang30b+' / \u221a3 \u2248 '+s30b+'. Hyp = 2 \u00b7 kort = '+(s30b*2)+'.',
+    ggbKommandoer:['ZoomIn(-1,12,-1,10)'],
+    sjekk: function(ggb) { return sjekkTall(s30b,0.06,'inp-kort')(ggb); }
+  });
+
+  // GEO6c: 30-60-90 — gitt lang katet, finn hypotenus
+  var s30c_vals=[2,3,4,5,6];
+  var s30c = s30c_vals[rnd(0,s30c_vals.length-1)];
+  var lang30c = Math.round(s30c*Math.sqrt(3)*100)/100;
+  var hyp30c  = s30c*2;
+  OPPGAVER.push({
+    id:'geo6c', gruppe:'Pytagoras', tittel:'9 \u00b7 30-60-90: lang katet \u2192 hypotenus',
+    tekst:'Lang katet = '+lang30c+' er gitt. Forholdet: 1:\u221a3:2<br>'
+      +'<b>Hypotenus = 2 \u00b7 lang katet / \u221a3</b><br>'
+      +'Hypotenus = <input id="inp-hyp" type="number" step="0.01" placeholder="0.00" '
+      +'style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
+    hint:'Hypotenus = 2 \u00b7 ('+lang30c+' / \u221a3) = 2 \u00b7 '+s30c+' = '+hyp30c+'.',
+    ggbKommandoer:['ZoomIn(-1,12,-1,10)'],
+    sjekk: function(ggb) { return sjekkTall(hyp30c,0.06,'inp-hyp')(ggb); }
   });
 
 
-
-    // GEO6
-  var s30alts=[2,3,4,5,6];
-  var s30=s30alts[rnd(0,s30alts.length-1)];
-  var lang30=Math.round(s30*Math.sqrt(3)*100)/100;
-  var kort30=s30, hyp30=s30*2, cx30=lang30, cy30=s30;
-
-  OPPGAVER.push({
-    id:'geo6', gruppe:'Geometri', tittel:'6 \u00b7 30-60-90 trekant',
-    tekst:'<b>A=(0,0)</b> og <b>B=('+lang30+',0)</b> er gitt (lang katet). Plasser C=('+lang30+','+cy30+'). 90\u00b0 i B, 30\u00b0 i A.<br>'
-      +'Forholdet 1:\u221a3:2 = '+kort30+':'+lang30+':'+hyp30+'<br><br>'
-      +'<b>a) Kort katet</b>: <input id="inp-kort" type="number" step="1" placeholder="0" style="width:100px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff"><br><br>'
-      +'<b>b) Lang katet</b> (2 des.): <input id="inp-lang" type="number" step="0.01" placeholder="0.00" style="width:110px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff"><br><br>'
-      +'<b>c) Hypotenus</b>: <input id="inp-hyp" type="number" step="1" placeholder="0" style="width:100px;padding:6px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.15);border-radius:7px;color:#e8f0ff">',
-    hint:'C=('+lang30+','+cy30+'). Kort='+kort30+', lang='+lang30+' (\u2248'+kort30+'\u00b7\u221a3), hyp='+hyp30+' (=2\u00b7'+kort30+'). 90\u00b0 i B.',
-    ggbKommandoer:['A=(0,0)','B=('+lang30+',0)','SetColor(A,"#ffd700")','SetColor(B,"#ffd700")','SetPointSize(A,5)','SetPointSize(B,5)','ZoomIn(-1,'+(lang30+2)+',-1,'+(cy30+3)+')'],
-    sjekk: function(ggb) {
-      if (!punktEksisterer(ggb,'C')) return {ok:false,nesten:false,melding:'Plasser C.'};
-      var vB=hentVinkelGrader(ggb,'A','B','C'), vA=hentVinkelGrader(ggb,'B','A','C');
-      if (!vB||Math.abs(vB-90)>2) return {ok:false,nesten:false,melding:'Vinkel B='+(vB?Math.round(vB)+'\u00b0':'?')+', skal 90\u00b0. C=('+lang30+','+cy30+').'};
-      if (!vA||Math.abs(vA-30)>2) return {ok:false,nesten:true, melding:'90\u00b0 i B \u2713, men A='+(vA?Math.round(vA)+'\u00b0':'?')+', skal 30\u00b0.'};
-      var kS=sjekkTall(kort30,0.1,'inp-kort')(ggb);
-      var lS=sjekkTall(lang30,0.05,'inp-lang')(ggb);
-      var hS=sjekkTall(hyp30,0.1,'inp-hyp')(ggb);
-      if (!kS.ok) return {ok:false,nesten:true,melding:'Trekant \u2713! a) '+kS.melding};
-      if (!lS.ok) return {ok:false,nesten:true,melding:'Kort \u2713! b) '+lS.melding};
-      if (!hS.ok) return {ok:false,nesten:true,melding:'Lang \u2713! c) '+hS.melding};
-      return {ok:true,nesten:false,melding:'\u2713 30-60-90: kort, lang og hypotenus riktige!'};
-    }
-  });
 
 
 
@@ -670,6 +696,8 @@ function initGGB() {
     showToolBar: true,
     showAlgebraInput: true,
     showMenuBar: true,
+    showGrid: true,
+    showAxes: true,
     enableRightClick: true,
     enableShiftDragZoom: true,
     showZoomButtons: true,
