@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmedetektiven 🕵️ · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090f;--bg2:#0d0f1a;--bg3:#111420;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e0e8ff;--dim:#5a6888;--dimmer:#2a3050;
+  --blå:#60a5fa;--grønn:#34d399;--gul:#fbbf24;--rød:#f87171;--lilla:#a78bfa;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+#topbar{height:46px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(8,9,15,.96);border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(8px);}
+.logo{font-family:var(--font-h);font-size:1.05rem;font-weight:800;color:var(--lilla);}
+.logo span{color:var(--text);opacity:.4;}
+.spacer{flex:1;}
+#opp-teller{font-size:.73rem;color:var(--dim);font-family:var(--font-m);}
+.tbtn{font-size:.72rem;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.iw{max-width:560px;width:92%;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.imerke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--lilla);
+  background:rgba(167,139,250,.09);border:1px solid rgba(167,139,250,.22);padding:4px 14px;border-radius:20px;}
+.itittel{font-family:var(--font-h);font-size:2rem;font-weight:800;line-height:1.15;}
+.itittel em{color:var(--lilla);font-style:normal;}
+.imelding{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;
+  padding:14px 18px;display:flex;gap:12px;text-align:left;max-width:480px;}
+.iav{font-size:2rem;flex-shrink:0;}
+.imt{font-size:.82rem;color:var(--dim);line-height:1.6;}
+.imn{display:block;font-size:.68rem;color:var(--lilla);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.inivåer{display:flex;gap:10px;width:100%;max-width:420px;}
+.inv{flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border2);background:rgba(255,255,255,.03);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.inv:hover,.inv.aktiv{border-color:var(--lilla);background:rgba(167,139,250,.07);}
+.inv .ne{font-size:1.4rem;}.inv .nt{font-family:var(--font-h);font-size:.86rem;font-weight:700;}
+.inv .nd{font-size:.69rem;color:var(--dim);text-align:center;line-height:1.4;}
+.startbtn{padding:12px 34px;background:var(--lilla);color:#000;border:none;border-radius:10px;
+  font-family:var(--font-h);font-size:.95rem;font-weight:800;cursor:pointer;transition:filter .15s;}
+.startbtn:hover{filter:brightness(1.1);}
+
+/* GAME */
+#game{position:fixed;inset:0;top:46px;display:none;flex-direction:column;}
+#oppdrag{background:rgba(167,139,250,.06);border-bottom:1px solid rgba(167,139,250,.15);
+  padding:5px 18px;font-size:.74rem;color:#8878b0;display:none;align-items:center;gap:8px;}
+#oppdrag b{color:var(--lilla);}
+#main{flex:1;display:flex;min-height:0;}
+
+/* Venstre */
+#venstre{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:10px;display:flex;flex-direction:column;}
+.ptittel{font-size:.6rem;text-transform:uppercase;letter-spacing:1.8px;color:var(--dimmer);margin-bottom:3px;}
+#opp-navn{font-family:var(--font-h);font-size:.95rem;font-weight:700;}
+#opp-tekst{font-size:.79rem;color:var(--dim);line-height:1.65;margin-top:4px;}
+#alt-boks{display:flex;flex-direction:column;gap:6px;}
+.alt-btn{padding:10px 12px;border-radius:8px;border:1px solid var(--border2);background:rgba(255,255,255,.04);
+  color:var(--text);cursor:pointer;font-family:var(--font-b);font-size:.8rem;line-height:1.4;text-align:left;transition:all .15s;}
+.alt-btn:hover:not(:disabled){background:rgba(255,255,255,.09);border-color:rgba(167,139,250,.4);}
+.alt-btn.rett{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.5);color:var(--grønn);}
+.alt-btn.feil-v{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--rød);}
+.alt-btn:disabled{opacity:.75;cursor:default;}
+#feedback{font-size:.78rem;padding:10px 11px;border-radius:8px;line-height:1.55;display:none;}
+#feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--grønn);}
+#feedback.feil{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.25);color:var(--rød);}
+#nestebtn{padding:9px 14px;border-radius:8px;background:var(--lilla);color:#000;border:none;
+  cursor:pointer;font-family:var(--font-h);font-size:.84rem;font-weight:700;display:none;}
+#stats{display:flex;gap:14px;font-size:.72rem;color:var(--dim);}
+#stats b{color:var(--text);}
+
+/* Midtre: animasjons-canvas */
+#cw{flex:1;position:relative;background:var(--bg3);overflow:hidden;display:flex;flex-direction:column;}
+#anim-canvas{display:block;width:100%;flex:1;}
+#kontroll-panel{padding:8px 16px;background:rgba(0,0,0,.3);border-top:1px solid var(--border);
+  display:flex;gap:10px;align-items:center;}
+.kbtn{padding:5px 14px;border-radius:6px;border:1px solid var(--border2);background:rgba(255,255,255,.05);
+  color:var(--dim);cursor:pointer;font-family:var(--font-m);font-size:.75rem;transition:all .15s;}
+.kbtn:hover{background:rgba(167,139,250,.15);color:var(--lilla);}
+#steg-info{font-size:.72rem;color:var(--dim);font-family:var(--font-m);flex:1;text-align:center;}
+
+/* Høyre: info */
+#hoyre{width:210px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:10px;display:flex;flex-direction:column;}
+#algo-info{display:none;}
+#algo-info .anavn{font-family:var(--font-h);font-size:.9rem;font-weight:700;color:var(--lilla);margin-bottom:6px;}
+.fakta-rad{font-size:.72rem;color:var(--dim);line-height:1.6;padding:4px 8px;
+  background:rgba(255,255,255,.03);border-radius:6px;border-left:2px solid var(--lilla);margin-bottom:4px;}
+.fakta-rad b{color:var(--blå);}
+#obs-plh{font-size:.75rem;color:var(--dimmer);line-height:1.6;}
+
+/* Slutt */
+#slutt{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.87);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.sluttboks{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px 42px;max-width:460px;width:90%;text-align:center;}
+.sluttboks h2{font-family:var(--font-h);font-size:1.5rem;margin:10px 0 8px;}
+.sluttboks p{font-size:.85rem;color:var(--dim);line-height:1.6;margin-bottom:14px;}
+.slutt-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="iw">
+    <div class="imerke">🕵️ ALGORITMEDETEKTIVEN · SkapLab</div>
+    <h1 class="itittel">Gjenkjenn <em>algoritmer</em><br>i aksjon</h1>
+    <div class="imelding">
+      <div class="iav">🤖</div>
+      <div class="imt">
+        <span class="imn">Systemet, velkomst</span>
+        «En algoritme er en oppskrift datamaskinen følger. Se på animasjonen, observer bevegelsesmønsteret — og identifiser hvilken algoritme som kjører. Lett å se, vanskelig å forveksle.»
+      </div>
+    </div>
+    <div class="inivåer">
+      <div class="inv aktiv" onclick="velgNivå('lett',this)">
+        <div class="ne">🟢</div><div class="nt">Nybegynner</div>
+        <div class="nd">Sorteringsalgoritmer. Åpenbare forskjeller.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('middels',this)">
+        <div class="ne">🟡</div><div class="nt">Utvikler</div>
+        <div class="nd">Sortering + søk. Mer like kandidater.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('hard',this)">
+        <div class="ne">🔴</div><div class="nt">Arkitekt</div>
+        <div class="nd">Alle algoritmer. Subtile mønstre.</div>
+      </div>
+    </div>
+    <button class="startbtn" onclick="startSpill()">🕵️ Start etterforskning</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <div class="logo">Algoritme<span>detektiven</span></div>
+  <span id="opp-teller">Oppgave 1</span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<div id="game">
+  <div id="oppdrag"><span>🕵️</span><span id="oppdrag-tekst"></span></div>
+  <div id="main">
+    <div id="venstre">
+      <div><div class="ptittel">Oppdrag</div>
+        <div id="opp-navn">–</div>
+        <div id="opp-tekst"></div>
+      </div>
+      <div><div class="ptittel">Hvilken algoritme er dette?</div>
+        <div id="alt-boks"></div>
+      </div>
+      <div id="feedback"></div>
+      <button id="nestebtn" onclick="nesteOppgave()">Neste ▶</button>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="ptittel">Statistikk</div>
+      <div id="stats"><span>✅ <b id="str">0</b></span><span>🔍 <b id="stf">0</b> forsøk</span></div>
+    </div>
+
+    <div id="cw">
+      <canvas id="anim-canvas"></canvas>
+      <div id="kontroll-panel">
+        <button class="kbtn" onclick="stegBakover()">◀ Tilbake</button>
+        <button class="kbtn" onclick="togglePause()" id="pause-btn">⏸ Pause</button>
+        <button class="kbtn" onclick="stegFremover()">Fremover ▶</button>
+        <button class="kbtn" onclick="startOmIgjen()">↺ Start om</button>
+        <span id="steg-info">Steg 0</span>
+      </div>
+    </div>
+
+    <div id="hoyre">
+      <div><div class="ptittel">Ledetråder</div>
+        <div id="obs-plh" style="font-size:.75rem;color:var(--dimmer);line-height:1.6;">
+          Observer mønsteret. Hvilke elementer sammenlignes? Hvordan beveger de seg?
+        </div>
+      </div>
+      <div id="algo-info">
+        <div class="ptittel">Algoritme avslørt</div>
+        <div class="anavn" id="anavn"></div>
+        <div id="afakta"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="slutt">
+  <div class="sluttboks">
+    <div style="font-size:3rem">🕵️</div>
+    <h2 id="slutt-h">Sak avsluttet!</h2>
+    <p id="slutt-p">Alle algoritmer identifisert.</p>
+    <div class="slutt-btns">
+      <button class="startbtn" onclick="startSpill()">🔄 Ny etterforskning</button>
+      <button class="tbtn" style="padding:10px 18px" onclick="window.location.href='spill_hub.html'">🏠 Hub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// ALGORITMEDETEKTIVEN · Visuell algoritmegjenkenning · SkapLab
+// ══════════════════════════════════════════════════════════════════
+
+// ── ALGORITME-BIBLIOTEK ───────────────────────────────────────────
+// Hver algoritme produserer et array av "steg" (states)
+// Hvert steg: { arr, aktive:[], sammenlignes:[], ferdig:[], beskrivelse }
+
+function lagBoblesort(arr) {
+  var steg = [], a = arr.slice();
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],besk:'Start — boblesortering'});
+  var n = a.length, ferdig = [];
+  for (var i = 0; i < n-1; i++) {
+    for (var j = 0; j < n-1-i; j++) {
+      steg.push({arr:a.slice(),aktive:[j,j+1],sammenlignes:[j,j+1],ferdig:ferdig.slice(),besk:'Sammenligner '+a[j]+' og '+a[j+1]});
+      if (a[j] > a[j+1]) {
+        var tmp=a[j]; a[j]=a[j+1]; a[j+1]=tmp;
+        steg.push({arr:a.slice(),aktive:[j,j+1],sammenlignes:[],ferdig:ferdig.slice(),besk:'Byttet! '+a[j]+' ↔ '+a[j+1]});
+      }
+    }
+    ferdig.unshift(n-1-i);
+  }
+  ferdig.unshift(0);
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:ferdig.slice(),besk:'Ferdig sortert!'});
+  return steg;
+}
+
+function lagSelectionSort(arr) {
+  var steg = [], a = arr.slice(), n = a.length, ferdig = [];
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],besk:'Start — utvalgssortering'});
+  for (var i = 0; i < n-1; i++) {
+    var minIdx = i;
+    steg.push({arr:a.slice(),aktive:[i],sammenlignes:[],ferdig:ferdig.slice(),besk:'Søker minimum fra posisjon '+i});
+    for (var j = i+1; j < n; j++) {
+      steg.push({arr:a.slice(),aktive:[minIdx,j],sammenlignes:[j],ferdig:ferdig.slice(),besk:'Sammenligner min('+a[minIdx]+') med '+a[j]});
+      if (a[j] < a[minIdx]) { minIdx = j; }
+    }
+    if (minIdx !== i) {
+      var tmp2=a[i]; a[i]=a[minIdx]; a[minIdx]=tmp2;
+      steg.push({arr:a.slice(),aktive:[i,minIdx],sammenlignes:[],ferdig:ferdig.slice(),besk:'Setter minimum ('+a[i]+') på plass '+i});
+    }
+    ferdig.push(i);
+  }
+  ferdig.push(n-1);
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:ferdig.slice(),besk:'Ferdig sortert!'});
+  return steg;
+}
+
+function lagInsertionSort(arr) {
+  var steg = [], a = arr.slice(), n = a.length, ferdig = [0];
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],besk:'Start — innsettingssortering'});
+  for (var i = 1; i < n; i++) {
+    var key = a[i], j = i-1;
+    steg.push({arr:a.slice(),aktive:[i],sammenlignes:[],ferdig:ferdig.slice(),besk:'Tar '+key+' til innsetting'});
+    while (j >= 0 && a[j] > key) {
+      steg.push({arr:a.slice(),aktive:[j,j+1],sammenlignes:[j],ferdig:ferdig.slice(),besk:a[j]+' > '+key+', skifter '+a[j]+' høyre'});
+      a[j+1] = a[j]; j--;
+    }
+    a[j+1] = key;
+    ferdig.push(i);
+    steg.push({arr:a.slice(),aktive:[j+1],sammenlignes:[],ferdig:ferdig.slice(),besk:'Satt inn '+key+' på plass '+(j+1)});
+  }
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:a.map(function(_,i){return i;}),besk:'Ferdig sortert!'});
+  return steg;
+}
+
+function lagMergeSort(arr) {
+  var steg = [], a = arr.slice();
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],besk:'Start — flettesortering (merge sort)'});
+  function merge(a, l, m, r) {
+    var left = a.slice(l, m+1), right = a.slice(m+1, r+1);
+    var i=0, j=0, k=l;
+    while (i < left.length && j < right.length) {
+      steg.push({arr:a.slice(),aktive:[l+i, m+1+j],sammenlignes:[l+i,m+1+j],ferdig:[],besk:'Fletter: '+left[i]+' vs '+right[j]});
+      if (left[i] <= right[j]) { a[k++] = left[i++]; }
+      else { a[k++] = right[j++]; }
+      steg.push({arr:a.slice(),aktive:[k-1],sammenlignes:[],ferdig:[],besk:'La inn '+a[k-1]});
+    }
+    while (i < left.length) { a[k++] = left[i++]; }
+    while (j < right.length) { a[k++] = right[j++]; }
+  }
+  function msort(a, l, r) {
+    if (l >= r) return;
+    var m = Math.floor((l+r)/2);
+    msort(a, l, m);
+    msort(a, m+1, r);
+    merge(a, l, m, r);
+  }
+  msort(a, 0, a.length-1);
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:a.map(function(_,i){return i;}),besk:'Ferdig — alle blokker flettet!'});
+  return steg;
+}
+
+function lagQuickSort(arr) {
+  var steg = [], a = arr.slice();
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],besk:'Start — quicksort'});
+  function partition(a, low, high) {
+    var pivot = a[high], i = low-1;
+    steg.push({arr:a.slice(),aktive:[high],sammenlignes:[],ferdig:[],besk:'Pivot valgt: '+pivot});
+    for (var j = low; j < high; j++) {
+      steg.push({arr:a.slice(),aktive:[j,high],sammenlignes:[j],ferdig:[],besk:a[j]+' vs pivot '+pivot});
+      if (a[j] <= pivot) {
+        i++;
+        var tmp=a[i]; a[i]=a[j]; a[j]=tmp;
+        if (i!==j) steg.push({arr:a.slice(),aktive:[i,j],sammenlignes:[],ferdig:[],besk:'Byttet '+a[j]+' og '+a[i]});
+      }
+    }
+    var tmp2=a[i+1]; a[i+1]=a[high]; a[high]=tmp2;
+    steg.push({arr:a.slice(),aktive:[i+1],sammenlignes:[],ferdig:[],besk:'Pivot '+pivot+' på plass '+(i+1)});
+    return i+1;
+  }
+  function qs(a, low, high) {
+    if (low < high) {
+      var pi = partition(a, low, high);
+      qs(a, low, pi-1);
+      qs(a, pi+1, high);
+    }
+  }
+  qs(a, 0, a.length-1);
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:a.map(function(_,i){return i;}),besk:'Ferdig sortert!'});
+  return steg;
+}
+
+function lagLinearSearch(arr, mål) {
+  var steg = [], a = arr.slice();
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],mål:mål,besk:'Søker etter '+mål+' — lineært søk'});
+  for (var i = 0; i < a.length; i++) {
+    steg.push({arr:a.slice(),aktive:[i],sammenlignes:[i],ferdig:[],mål:mål,besk:'Sjekker posisjon '+i+': '+a[i]});
+    if (a[i] === mål) {
+      steg.push({arr:a.slice(),aktive:[i],sammenlignes:[],ferdig:[i],mål:mål,besk:'Funnet '+mål+' på posisjon '+i+'!'});
+      return steg;
+    }
+  }
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],mål:mål,besk:mål+' ikke funnet'});
+  return steg;
+}
+
+function lagBinarySearch(sortArr, mål) {
+  var steg = [], a = sortArr.slice();
+  steg.push({arr:a.slice(),aktive:[],sammenlignes:[],ferdig:[],mål:mål,besk:'Søker etter '+mål+' — binært søk (må være sortert!)'});
+  var low=0, high=a.length-1;
+  while (low <= high) {
+    var mid = Math.floor((low+high)/2);
+    var aktiveRange = [];
+    for(var ki=low;ki<=high;ki++) aktiveRange.push(ki);
+    steg.push({arr:a.slice(),aktive:aktiveRange,sammenlignes:[mid],ferdig:[],mål:mål,besk:'Søkerom ['+low+'–'+high+'], sjekker midten: '+a[mid]});
+    if (a[mid] === mål) {
+      steg.push({arr:a.slice(),aktive:[mid],sammenlignes:[],ferdig:[mid],mål:mål,besk:'Funnet '+mål+' på posisjon '+mid+'!'});
+      return steg;
+    } else if (a[mid] < mål) {
+      steg.push({arr:a.slice(),aktive:aktiveRange,sammenlignes:[],ferdig:[],mål:mål,besk:a[mid]+' < '+mål+' — søk høyre halvdel'});
+      low = mid+1;
+    } else {
+      steg.push({arr:a.slice(),aktive:aktiveRange,sammenlignes:[],ferdig:[],mål:mål,besk:a[mid]+' > '+mål+' — søk venstre halvdel'});
+      high = mid-1;
+    }
+  }
+  return steg;
+}
+
+// ── ALGO-METADATA ─────────────────────────────────────────────────
+var ALGO_META = {
+  boble:     { navn:'Boblesortering',      tid:'O(n²)', stabil:true,  besk:'Sammenligner naboer og bobler store verdier oppover.' },
+  utvalg:    { navn:'Utvalgssortering',    tid:'O(n²)', stabil:false, besk:'Finner minimum i usortert del og plasserer det foran.' },
+  innsetting:{ navn:'Innsettingssortering',tid:'O(n²)', stabil:true,  besk:'Bygger sortert del ett element om gangen fra venstre.' },
+  flette:    { navn:'Flettesortering',     tid:'O(n log n)', stabil:true, besk:'Del og hersk: splitter, sorterer og fletter halvdeler.' },
+  quick:     { navn:'Quicksort',           tid:'O(n log n)', stabil:false, besk:'Velger pivot, partisjonerer og rekurserer på delene.' },
+  lineær:    { navn:'Lineært søk',         tid:'O(n)',  stabil:null,  besk:'Sjekker hvert element fra start til mål er funnet.' },
+  binær:     { navn:'Binært søk',          tid:'O(log n)', stabil:null, besk:'Halverer søkerommet gjentatte ganger (krever sortert array).' },
+};
+
+// ── OPPGAVER ──────────────────────────────────────────────────────
+function lagOppgave(algoId, oppdrag, alternativer, hint) {
+  var n = 12, arr = [];
+  for (var i=0;i<n;i++) arr.push(Math.floor(Math.random()*90)+10);
+  var sortert = arr.slice().sort(function(a,b){return a-b;});
+  var mål = sortert[Math.floor(Math.random()*n)];
+
+  var steg;
+  if (algoId==='boble')      steg = lagBoblesort(arr.slice());
+  else if (algoId==='utvalg') steg = lagSelectionSort(arr.slice());
+  else if (algoId==='innsetting') steg = lagInsertionSort(arr.slice());
+  else if (algoId==='flette') steg = lagMergeSort(arr.slice());
+  else if (algoId==='quick')  steg = lagQuickSort(arr.slice());
+  else if (algoId==='lineær') steg = lagLinearSearch(arr.slice(), mål);
+  else if (algoId==='binær')  steg = lagBinarySearch(sortert.slice(), mål);
+  else steg = lagBoblesort(arr.slice());
+
+  return { algoId:algoId, steg:steg, alternativer:alternativer, oppdrag:oppdrag, hint:hint };
+}
+
+function lagOppgaveSett(nivå) {
+  if (nivå==='lett') return [
+    lagOppgave('boble', 'Naboer sammenlignes hele veien. Observer bevegelsen — store tall flyter oppover.',
+      ['Boblesortering','Utvalgssortering','Lineært søk','Flettesortering'],
+      'Boblesortering sammenligner alltid to naboer og bytter om nødvendig.'),
+    lagOppgave('utvalg', 'Algoritmen finner alltid det minste elementet og plasserer det på riktig plass.',
+      ['Utvalgssortering','Boblesortering','Innsettingssortering','Binært søk'],
+      'Utvalgssortering markerer ett fast element (minimum) og søker gjennom resten.'),
+    lagOppgave('innsetting', 'Venstre del er alltid sortert. Hvert nye element settes inn på riktig plass.',
+      ['Innsettingssortering','Boblesortering','Utvalgssortering','Quicksort'],
+      'Innsettingssortering ligner på hvordan du sorterer kort i hånden.'),
+    lagOppgave('lineær', 'Søker etter ett spesifikt tall. Sjekker posisjon for posisjon fra venstre.',
+      ['Lineært søk','Binært søk','Boblesortering','Utvalgssortering'],
+      'Lineært søk er det enkleste: sjekk ett og ett element i rekkefølge.'),
+  ];
+  if (nivå==='middels') return [
+    lagOppgave('flette', 'Algoritmen deler arrayet gjentatte ganger, sorterer delene og fletter dem.',
+      ['Flettesortering','Quicksort','Innsettingssortering','Boblesortering'],
+      'Flettesortering: del → sorter halvdeler → flett tilbake.'),
+    lagOppgave('binær', 'Søkerommet halveres for hvert steg. Krever sortert input.',
+      ['Binært søk','Lineært søk','Utvalgssortering','Quicksort'],
+      'Binært søk sjekker midten og eliminerer halve søkerommet.'),
+    lagOppgave('quick', 'En pivotverdi velges. Alle smaller går til venstre, alle større til høyre.',
+      ['Quicksort','Flettesortering','Boblesortering','Binært søk'],
+      'Quicksort bruker en pivot og partisjonering — veldig rask i praksis.'),
+    lagOppgave('boble', 'Store verdier vandrer langsomt mot høyre for hvert pass gjennom arrayet.',
+      ['Boblesortering','Innsettingssortering','Utvalgssortering','Flettesortering'],
+      'Legg merke til at høyre del gradvis blir ferdig-sortert.'),
+    lagOppgave('innsetting', 'Det sorterte området vokser fra venstre. Hvert element "glir inn" på riktig plass.',
+      ['Innsettingssortering','Boblesortering','Flettesortering','Lineært søk'],
+      'Innsettingssortering er effektiv på nesten-sorterte arrays.'),
+  ];
+  // hard
+  return [
+    lagOppgave('flette',    'Del og hersk-strategi. Observer det rekursive mønsteret.',
+      ['Flettesortering','Quicksort','Innsettingssortering','Binært søk'], 'Flettesortering deler alltid i to like halvdeler.'),
+    lagOppgave('quick',     'Pivoten er synlig — ett element som alt sammenlignes mot.',
+      ['Quicksort','Flettesortering','Utvalgssortering','Boblesortering'], 'Quicksort: pivot velges (ofte sist), deretter partisjonering.'),
+    lagOppgave('binær',     'Søkerommet krymper geometrisk — halvert for hvert steg.',
+      ['Binært søk','Lineært søk','Quicksort','Flettesortering'], 'Binært søk: O(log n) vs lineært søk O(n).'),
+    lagOppgave('utvalg',    'For hvert pass finner algoritmen absolutt minimum av resten.',
+      ['Utvalgssortering','Innsettingssortering','Boblesortering','Quicksort'], 'Utvalgssortering: n-1 pass, hvert finner globalt minimum.'),
+    lagOppgave('lineær',    'Sekvensielt søk, ett element om gangen — ingen snarveier.',
+      ['Lineært søk','Binært søk','Boblesortering','Utvalgssortering'], 'Lineært søk fungerer på usorterte arrays, binært ikke.'),
+    lagOppgave('boble',     'Mange bytter, sakte fremgang — karakteristisk for dette mønsteret.',
+      ['Boblesortering','Utvalgssortering','Innsettingssortering','Flettesortering'], 'Boblesortering har O(n²) i gjennomsnitt.'),
+  ];
+}
+
+// ── CANVAS-TEGNING ────────────────────────────────────────────────
+var canvas, ctx, W, H;
+var animId2 = null, stegNr = 0, pauset = false;
+var animTimer = null, TEMPO = 600;  // ms per steg
+var gjeldendePakke = null;
+
+function resizeCanvas() {
+  var cw = document.getElementById('cw');
+  W = canvas.width = cw.offsetWidth;
+  H = canvas.height = cw.offsetHeight - 44; // minus kontroll-panel
+}
+
+function tegnSteg(steg) {
+  if (!ctx || !steg) return;
+  ctx.clearRect(0, 0, W, H);
+
+  var arr = steg.arr;
+  var n = arr.length;
+  var maks = Math.max.apply(null, arr);
+  var padding = 24, topPad = 30;
+  var bw = (W - padding*2) / n;
+  var maxH = H - topPad - 20;
+
+  // Bakteppe
+  ctx.fillStyle = 'rgba(255,255,255,0.02)';
+  ctx.fillRect(padding, topPad, W-padding*2, maxH);
+
+  arr.forEach(function(val, i) {
+    var h2 = (val/maks) * maxH;
+    var x = padding + i*bw;
+    var y = topPad + maxH - h2;
+    var bPad = bw > 16 ? 3 : 1;
+
+    // Farge basert på tilstand
+    var farge = '#334466';
+    if (steg.ferdig && steg.ferdig.indexOf(i) >= 0) farge = '#22c55e';
+    else if (steg.sammenlignes && steg.sammenlignes.indexOf(i) >= 0) farge = '#f87171';
+    else if (steg.aktive && steg.aktive.indexOf(i) >= 0) farge = '#a78bfa';
+    if (steg.ferdig && steg.ferdig.length === n) farge = '#22c55e';
+
+    // Bar
+    ctx.fillStyle = farge;
+    ctx.beginPath();
+    ctx.roundRect(x+bPad, y, bw-bPad*2, h2, [3,3,0,0]);
+    ctx.fill();
+
+    // Verdi-tekst
+    if (bw > 24) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = 'bold ' + Math.min(12, bw*0.5) + 'px DM Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(val, x+bw/2, y-5);
+    }
+
+    // Mål-markering for søk
+    if (steg.mål !== undefined && val === steg.mål) {
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = '10px DM Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('▲', x+bw/2, topPad+maxH+14);
+    }
+  });
+
+  // Steg-beskrivelse
+  ctx.fillStyle = 'rgba(160,180,255,0.7)';
+  ctx.font = '12px DM Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(steg.besk || '', padding, 18);
+
+  // Mål-label
+  if (steg.mål !== undefined) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.textAlign = 'right';
+    ctx.fillText('Søker etter: ' + steg.mål, W-padding, 18);
+  }
+
+  document.getElementById('steg-info').textContent =
+    'Steg ' + stegNr + ' / ' + (gjeldendePakke ? gjeldendePakke.steg.length-1 : 0);
+}
+
+// ── ANIMASJONSLOOP ────────────────────────────────────────────────
+function startAnimasjon() {
+  if (animTimer) clearInterval(animTimer);
+  pauset = false;
+  document.getElementById('pause-btn').textContent = '⏸ Pause';
+  animTimer = setInterval(function() {
+    if (!pauset && gjeldendePakke) {
+      if (stegNr < gjeldendePakke.steg.length - 1) {
+        stegNr++;
+        tegnSteg(gjeldendePakke.steg[stegNr]);
+      } else {
+        clearInterval(animTimer);
+      }
+    }
+  }, TEMPO);
+}
+
+function togglePause() {
+  pauset = !pauset;
+  document.getElementById('pause-btn').textContent = pauset ? '▶ Fortsett' : '⏸ Pause';
+}
+
+function stegFremover() {
+  pauset = true;
+  document.getElementById('pause-btn').textContent = '▶ Fortsett';
+  if (gjeldendePakke && stegNr < gjeldendePakke.steg.length-1) {
+    stegNr++;
+    tegnSteg(gjeldendePakke.steg[stegNr]);
+    document.getElementById('steg-info').textContent = 'Steg ' + stegNr + ' / ' + (gjeldendePakke.steg.length-1);
+  }
+}
+
+function stegBakover() {
+  pauset = true;
+  document.getElementById('pause-btn').textContent = '▶ Fortsett';
+  if (stegNr > 0) {
+    stegNr--;
+    tegnSteg(gjeldendePakke.steg[stegNr]);
+    document.getElementById('steg-info').textContent = 'Steg ' + stegNr + ' / ' + (gjeldendePakke.steg.length-1);
+  }
+}
+
+function startOmIgjen() {
+  stegNr = 0;
+  pauset = false;
+  document.getElementById('pause-btn').textContent = '⏸ Pause';
+  if (gjeldendePakke) tegnSteg(gjeldendePakke.steg[0]);
+  startAnimasjon();
+}
+
+// ── SPILLLOGIKK ───────────────────────────────────────────────────
+var nivå='lett', OPPGAVER=[], TOTAL=0, oppgNr=0, riktige=0, forsøk=0, harSvart=false;
+
+function velgNivå(n,el) {
+  nivå=n;
+  document.querySelectorAll('.inv').forEach(function(e){e.classList.remove('aktiv');});
+  el.classList.add('aktiv');
+}
+
+function startSpill() {
+  OPPGAVER = lagOppgaveSett(nivå);
+  TOTAL = OPPGAVER.length;
+  oppgNr=0; riktige=0; forsøk=0;
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('game').style.display='flex';
+  canvas = document.getElementById('anim-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  nesteOppgave();
+}
+
+function nesteOppgave() {
+  oppgNr++;
+  if (oppgNr > TOTAL) { visSlutt(); return; }
+  harSvart = false;
+  gjeldendePakke = OPPGAVER[oppgNr-1];
+  stegNr = 0;
+
+  document.getElementById('opp-teller').textContent = 'Oppgave '+oppgNr+' av '+TOTAL;
+  document.getElementById('opp-navn').textContent = 'Algoritme #'+oppgNr;
+  document.getElementById('opp-tekst').textContent = gjeldendePakke.oppdrag;
+  document.getElementById('nestebtn').style.display='none';
+  var fb=document.getElementById('feedback'); fb.style.display='none';
+  document.getElementById('algo-info').style.display='none';
+  document.getElementById('obs-plh').style.display='block';
+  document.getElementById('oppdrag').style.display='flex';
+  document.getElementById('oppdrag-tekst').innerHTML = '<b>System:</b> Observer animasjonen og identifiser algoritmen.';
+
+  // Alternativ-knapper (blandet)
+  var altBoks=document.getElementById('alt-boks');
+  altBoks.innerHTML='';
+  var alts = gjeldendePakke.alternativer.slice().sort(function(){return Math.random()-.5;});
+  alts.forEach(function(a) {
+    var btn=document.createElement('button');
+    btn.className='alt-btn'; btn.textContent=a;
+    btn.onclick=function(){sjekkSvar(a,btn);};
+    altBoks.appendChild(btn);
+  });
+
+  startAnimasjon();
+  tegnSteg(gjeldendePakke.steg[0]);
+}
+
+function sjekkSvar(valgt, btnEl) {
+  if (harSvart) return;
+  harSvart=true; forsøk++;
+  document.getElementById('stf').textContent=forsøk;
+
+  var meta = ALGO_META[gjeldendePakke.algoId];
+  var riktig = valgt === meta.navn;
+
+  document.querySelectorAll('.alt-btn').forEach(function(b) {
+    b.disabled=true;
+    if (b.textContent === meta.navn) b.classList.add('rett');
+    else if (b===btnEl && !riktig) b.classList.add('feil-v');
+  });
+
+  if (riktig) {
+    riktige++; document.getElementById('str').textContent=riktige;
+    visFB(true,'✅ Riktig! '+meta.besk);
+  } else {
+    var msg='❌ Feil. Det var '+meta.navn+'. ';
+    if (nivå==='lett') msg+='💡 Hint: '+gjeldendePakke.hint;
+    else msg+=meta.besk;
+    visFB(false,msg);
+  }
+
+  // Vis algo-info
+  document.getElementById('obs-plh').style.display='none';
+  document.getElementById('algo-info').style.display='block';
+  document.getElementById('anavn').textContent=meta.navn;
+  document.getElementById('afakta').innerHTML=
+    '<div class="fakta-rad"><b>Tidskompleksitet:</b> '+meta.tid+'</div>'+
+    '<div class="fakta-rad"><b>Stabil:</b> '+(meta.stabil===null?'N/A':meta.stabil?'Ja':'Nei')+'</div>'+
+    '<div class="fakta-rad">'+meta.besk+'</div>';
+
+  document.getElementById('nestebtn').style.display='block';
+}
+
+function visFB(ok,tekst) {
+  var fb=document.getElementById('feedback');
+  fb.textContent=tekst; fb.className=ok?'ok':'feil'; fb.style.display='block';
+}
+
+function visSlutt() {
+  if(animTimer) clearInterval(animTimer);
+  var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;
+  document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Skarpskodd detektiv!':snitt>=50?'👍 Godt arbeid!':'💪 Øv mer på mønstrene!';
+  document.getElementById('slutt-p').textContent='Du identifiserte '+riktige+' av '+TOTAL+' algoritmer riktig ('+snitt+'%).';
+  document.getElementById('slutt').style.display='flex';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debug-rommet 🐛 · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080e;--bg2:#0a0c18;--bg3:#0e1020;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#dde8ff;--dim:#5060a0;--dimmer:#22304a;
+  --rød:#f87171;--grønn:#34d399;--gul:#fbbf24;--blå:#60a5fa;--oransje:#fb923c;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+#topbar{height:46px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(6,8,14,.96);border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(8px);}
+.logo{font-family:var(--font-h);font-size:1.05rem;font-weight:800;color:var(--rød);}
+.logo span{color:var(--text);opacity:.4;}
+.spacer{flex:1;}
+#opp-teller{font-size:.73rem;color:var(--dim);font-family:var(--font-m);}
+.tbtn{font-size:.72rem;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.iw{max-width:560px;width:92%;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.imerke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--rød);
+  background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.22);padding:4px 14px;border-radius:20px;}
+.itittel{font-family:var(--font-h);font-size:2rem;font-weight:800;line-height:1.15;}
+.itittel em{color:var(--rød);font-style:normal;}
+.imelding{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;
+  padding:14px 18px;display:flex;gap:12px;text-align:left;max-width:480px;}
+.iav{font-size:2rem;flex-shrink:0;}.imt{font-size:.82rem;color:var(--dim);line-height:1.6;}
+.imn{display:block;font-size:.68rem;color:var(--rød);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.inivåer{display:flex;gap:10px;width:100%;max-width:420px;}
+.inv{flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border2);background:rgba(255,255,255,.03);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.inv:hover,.inv.aktiv{border-color:var(--rød);background:rgba(248,113,113,.07);}
+.inv .ne{font-size:1.4rem;}.inv .nt{font-family:var(--font-h);font-size:.86rem;font-weight:700;}
+.inv .nd{font-size:.69rem;color:var(--dim);text-align:center;line-height:1.4;}
+.startbtn{padding:12px 34px;background:var(--rød);color:#fff;border:none;border-radius:10px;
+  font-family:var(--font-h);font-size:.95rem;font-weight:800;cursor:pointer;transition:filter .15s;}
+.startbtn:hover{filter:brightness(1.1);}
+
+/* GAME */
+#game{position:fixed;inset:0;top:46px;display:none;flex-direction:column;}
+#oppdrag{background:rgba(248,113,113,.06);border-bottom:1px solid rgba(248,113,113,.15);
+  padding:5px 18px;font-size:.74rem;color:#906060;display:flex;align-items:center;gap:8px;}
+#oppdrag b{color:var(--rød);}
+#main{flex:1;display:flex;min-height:0;}
+
+/* Venstre */
+#venstre{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:10px;display:flex;flex-direction:column;}
+.ptittel{font-size:.6rem;text-transform:uppercase;letter-spacing:1.8px;color:var(--dimmer);margin-bottom:3px;}
+#opp-navn{font-family:var(--font-h);font-size:.95rem;font-weight:700;}
+#opp-tekst{font-size:.79rem;color:var(--dim);line-height:1.65;margin-top:4px;}
+#forventet-boks{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);
+  border-radius:8px;padding:8px 10px;font-size:.78rem;color:#50c090;font-family:var(--font-m);line-height:1.6;}
+#output-boks{background:rgba(0,0,0,.3);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 10px;font-size:.78rem;font-family:var(--font-m);line-height:1.7;min-height:48px;}
+.output-ok{color:var(--grønn);}
+.output-feil{color:var(--rød);}
+#feedback{font-size:.78rem;padding:10px 11px;border-radius:8px;line-height:1.55;display:none;}
+#feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--grønn);}
+#feedback.feil{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.25);color:var(--rød);}
+#nestebtn{padding:9px 14px;border-radius:8px;background:var(--rød);color:#fff;border:none;
+  cursor:pointer;font-family:var(--font-h);font-size:.84rem;font-weight:700;display:none;}
+#stats{display:flex;gap:14px;font-size:.72rem;color:var(--dim);}
+#stats b{color:var(--text);}
+
+/* Midtre: kodeeditor */
+#cw{flex:1;display:flex;flex-direction:column;background:var(--bg3);overflow:hidden;}
+#kode-header{padding:8px 16px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;}
+.kode-tittel{font-size:.72rem;color:var(--dim);font-family:var(--font-m);}
+.kode-badge{font-size:.65rem;padding:2px 8px;border-radius:10px;background:rgba(251,146,60,.15);
+  border:1px solid rgba(251,146,60,.3);color:var(--oransje);}
+#kode-wrap{flex:1;overflow:auto;display:flex;}
+#linjenummer{padding:12px 10px 12px 16px;background:rgba(0,0,0,.2);
+  font-family:var(--font-m);font-size:.85rem;line-height:1.8;color:var(--dimmer);
+  text-align:right;user-select:none;min-width:44px;}
+#kode-display{flex:1;padding:12px 16px;font-family:var(--font-m);font-size:.85rem;
+  line-height:1.8;white-space:pre;overflow:auto;}
+.kode-linje{display:block;border-radius:3px;padding:0 4px;cursor:pointer;transition:background .1s;}
+.kode-linje:hover{background:rgba(255,255,255,.04);}
+.kode-linje.feil-linje{background:rgba(248,113,113,.18);border-left:3px solid var(--rød);}
+.kode-linje.valgt{background:rgba(251,191,36,.18);border-left:3px solid var(--gul);}
+.kode-linje.rett-linje{background:rgba(52,211,153,.18);border-left:3px solid var(--grønn);}
+
+/* Syntaks-farger */
+.kw{color:#c792ea;}  /* nøkkelord */
+.fn{color:#82aaff;}  /* funksjon */
+.str{color:#c3e88d;} /* streng */
+.num{color:#f78c6c;} /* tall */
+.kom{color:#546e7a;font-style:italic;} /* kommentar */
+.op{color:#89ddff;}  /* operator */
+.var{color:#eeffff;} /* variabel */
+
+/* Høyre */
+#hoyre{width:210px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:10px;display:flex;flex-direction:column;}
+#hint-boks{font-size:.75rem;color:var(--dim);line-height:1.65;background:rgba(251,191,36,.05);
+  border:1px solid rgba(251,191,36,.15);border-radius:8px;padding:8px 10px;display:none;}
+#hint-boks b{color:var(--gul);}
+#forklaring-boks{font-size:.75rem;color:var(--dim);line-height:1.65;display:none;}
+#forklaring-boks .ftittel{font-family:var(--font-h);font-size:.88rem;color:var(--rød);font-weight:700;margin-bottom:6px;}
+
+/* Slutt */
+#slutt{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.87);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.sluttboks{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px 42px;max-width:460px;width:90%;text-align:center;}
+.sluttboks h2{font-family:var(--font-h);font-size:1.5rem;margin:10px 0 8px;}
+.sluttboks p{font-size:.85rem;color:var(--dim);line-height:1.6;margin-bottom:14px;}
+.slutt-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="iw">
+    <div class="imerke">🐛 DEBUG-ROMMET · SkapLab</div>
+    <h1 class="itittel">Finn <em>feilen</em><br>i koden</h1>
+    <div class="imelding">
+      <div class="iav">👩‍💻</div>
+      <div class="imt">
+        <span class="imn">Ada, senior-utvikler</span>
+        «Noen har sendt inn kode med feil. Du ser hva programmet skal gjøre, og hva det faktisk gjør. Finn linjen som er gal og klikk på den. Les nøye — én linje er alltid feil.»
+      </div>
+    </div>
+    <div class="inivåer">
+      <div class="inv aktiv" onclick="velgNivå('lett',this)">
+        <div class="ne">🟢</div><div class="nt">Junior</div>
+        <div class="nd">Løkke-feil og enkle logikkfeil. Hint tilgjengelig.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('middels',this)">
+        <div class="ne">🟡</div><div class="nt">Utvikler</div>
+        <div class="nd">Off-by-one, grense-feil, betingelser. Ingen hint.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('hard',this)">
+        <div class="ne">🔴</div><div class="nt">Senior</div>
+        <div class="nd">Rekursjon, algoritmer, logikk. Tøffe feil.</div>
+      </div>
+    </div>
+    <button class="startbtn" onclick="startSpill()">🐛 Finn feilene</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <div class="logo">Debug<span>-rommet</span></div>
+  <span id="opp-teller">Oppgave 1</span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<div id="game">
+  <div id="oppdrag"><span>🐛</span><span id="oppdrag-tekst"></span></div>
+  <div id="main">
+    <div id="venstre">
+      <div><div class="ptittel">Oppgave</div>
+        <div id="opp-navn">–</div>
+        <div id="opp-tekst"></div>
+      </div>
+      <div><div class="ptittel">Forventet output</div>
+        <div id="forventet-boks">–</div>
+      </div>
+      <div><div class="ptittel">Faktisk output</div>
+        <div id="output-boks"><span class="output-feil">Klikk en linje for å se output</span></div>
+      </div>
+      <div id="feedback"></div>
+      <button id="nestebtn" onclick="nesteOppgave()">Neste oppgave ▶</button>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="ptittel">Statistikk</div>
+      <div id="stats"><span>✅ <b id="str">0</b></span><span>🐛 <b id="stf">0</b> forsøk</span></div>
+    </div>
+
+    <div id="cw">
+      <div id="kode-header">
+        <span class="kode-tittel">kode.py</span>
+        <span class="kode-badge">⚠️ En linje har feil — klikk for å velge</span>
+        <div class="spacer" style="flex:1"></div>
+        <button class="tbtn" id="hint-btn" onclick="visHint()" style="font-size:.72rem;">💡 Hint</button>
+      </div>
+      <div id="kode-wrap">
+        <div id="linjenummer"></div>
+        <div id="kode-display"></div>
+      </div>
+    </div>
+
+    <div id="hoyre">
+      <div><div class="ptittel">Ada sier</div>
+        <div style="font-size:.75rem;color:var(--dimmer);line-height:1.6;" id="ada-tips">
+          Klikk på linjer for å se kode-output. Sammenlignen med forventet output.
+        </div>
+      </div>
+      <div id="hint-boks"><b>💡 Hint:</b> <span id="hint-tekst"></span></div>
+      <div id="forklaring-boks">
+        <div class="ftittel">Feilen forklart</div>
+        <div id="forklaring-tekst"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="slutt">
+  <div class="sluttboks">
+    <div style="font-size:3rem">🐛</div>
+    <h2 id="slutt-h">Alle bugs drept!</h2>
+    <p id="slutt-p">Ada er imponert.</p>
+    <div class="slutt-btns">
+      <button class="startbtn" onclick="startSpill()">🔄 Ny runde</button>
+      <button class="tbtn" style="padding:10px 18px" onclick="window.location.href='spill_hub.html'">🏠 Hub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// DEBUG-ROMMET · Finn feilen i koden · SkapLab
+// ══════════════════════════════════════════════════════════════════
+
+// ── OPPGAVE-FORMAT ────────────────────────────────────────────────
+// linjer: array av kode-linjer (rent tekstlig Python-pseudokode)
+// feilLinje: 0-indeksert linjenummer
+// forventet: tekst som viser hva koden SKAL gi
+// faktiskFeil: hva koden GIR med feilen
+// forklaring: hva som er feil og hvorfor
+// hint: ledetråd uten å avsløre svaret
+
+var ALLE_OPPGAVER = {
+lett: [
+  {
+    navn:'Summer liste',
+    oppdrag:'Funksjonen skal summere alle tall i en liste.',
+    linjer:[
+      'def summer(liste):',
+      '    total = 0',
+      '    for tall in liste:',
+      '        total = tall       # ← her er feilen?',
+      '    return total',
+      '',
+      'print(summer([1, 2, 3, 4, 5]))',
+    ],
+    feilLinje: 3,
+    forventet: '15',
+    faktiskFeil: '5  (bare siste tall)',
+    forklaring: 'Linje 4: total = tall erstatter total i stedet for å legge til. Riktig er: total += tall (eller total = total + tall)',
+    hint: 'Hva skjer med total-variabelen for hvert steg? Skal den erstattes eller oppdateres?',
+  },
+  {
+    navn:'Teller i løkke',
+    oppdrag:'Skal telle og skrive ut tallene 1 til 5.',
+    linjer:[
+      'for i in range(0, 5):',
+      '    print(i)',
+    ],
+    feilLinje: 0,
+    forventet: '1\n2\n3\n4\n5',
+    faktiskFeil: '0\n1\n2\n3\n4  (starter på 0!)',
+    forklaring: 'range(0, 5) gir [0,1,2,3,4]. For å få 1–5 må vi skrive range(1, 6)',
+    hint: 'range(start, slutt) starter på start. Hva er riktig startverdi for å begynne på 1?',
+  },
+  {
+    navn:'Finn største tall',
+    oppdrag:'Finn det største tallet i en liste.',
+    linjer:[
+      'def finn_størst(liste):',
+      '    størst = 0',
+      '    for tall in liste:',
+      '        if tall > størst:',
+      '            størst = tall',
+      '    return størst',
+      '',
+      'print(finn_størst([-5, -3, -1, -8]))',
+    ],
+    feilLinje: 1,
+    forventet: '-1',
+    faktiskFeil: '0  (feil startverdi)',
+    forklaring: 'Linje 2: størst = 0 virker for positive tall, men ved negative tall er 0 alltid "størst". Riktig: størst = liste[0]',
+    hint: 'Hva skjer om alle tallene i listen er negative? Vil størst = 0 gi riktig svar da?',
+  },
+  {
+    navn:'Enkel if/else',
+    oppdrag:'Skal skrive "voksen" om alder ≥ 18, ellers "barn".',
+    linjer:[
+      'alder = 20',
+      '',
+      'if alder > 18:',
+      '    print("voksen")',
+      'else:',
+      '    print("barn")',
+    ],
+    feilLinje: 2,
+    forventet: 'voksen',
+    faktiskFeil: 'voksen — men alder=18 gir feil svar: "barn"',
+    forklaring: 'Linje 3: alder > 18 er strengt større enn. Betingelsen skal være >= 18 (større enn eller lik)',
+    hint: 'Hva skjer om alder = 18? Skal det gi "voksen" eller "barn"? Sjekk tegnet i betingelsen.',
+  },
+  {
+    navn:'Gjenta hilsen',
+    oppdrag:'Skal skrive "Hei!" 3 ganger.',
+    linjer:[
+      'for i in range(3):',
+      '    print("Hei!")',
+      'print("Hei!")',
+    ],
+    feilLinje: 2,
+    forventet: 'Hei!\nHei!\nHei!',
+    faktiskFeil: 'Hei!\nHei!\nHei!\nHei!  (4 ganger — én ekstra linje utenfor løkken)',
+    forklaring: 'Linje 3: print("Hei!") er utenfor løkken (ikke innrykket) og kjøres én ekstra gang. Linjen skal slettes eller innrykkes.',
+    hint: 'Teller du antall "Hei!" i faktisk output? Hvor mange er det? Hva kan gi den ekstra?',
+  },
+],
+
+middels: [
+  {
+    navn:'Fakultet (n!)',
+    oppdrag:'Beregn n! — produktet av alle tall fra 1 til n.',
+    linjer:[
+      'def fakultet(n):',
+      '    resultat = 1',
+      '    for i in range(1, n):   # ← off-by-one?',
+      '        resultat *= i',
+      '    return resultat',
+      '',
+      'print(fakultet(5))  # skal gi 120',
+    ],
+    feilLinje: 2,
+    forventet: '120',
+    faktiskFeil: '24  (mangler siste faktor n)',
+    forklaring: 'range(1, n) stopper FØR n. Riktig: range(1, n+1). 5! = 1×2×3×4×5 = 120, men range(1,5) gir bare 1×2×3×4 = 24',
+    hint: 'Hva er range(1, 5)? Inkluderer det 5? Hva trengs for å inkludere n i produktet?',
+  },
+  {
+    navn:'Er listen sortert?',
+    oppdrag:'Sjekker om en liste er sortert stigende.',
+    linjer:[
+      'def er_sortert(liste):',
+      '    for i in range(len(liste)):',
+      '        if liste[i] > liste[i + 1]:',
+      '            return False',
+      '    return True',
+      '',
+      'print(er_sortert([1, 2, 3, 4]))',
+    ],
+    feilLinje: 1,
+    forventet: 'True',
+    faktiskFeil: 'IndexError: list index out of range  (går ett for langt)',
+    forklaring: 'range(len(liste)) gir [0..n-1], men vi sjekker liste[i+1] — ved i=n-1 er i+1=n som er utenfor listen. Riktig: range(len(liste) - 1)',
+    hint: 'Hva er den siste verdien i range(len(liste))? Hva skjer når vi prøver liste[i+1] ved den verdien?',
+  },
+  {
+    navn:'Telle forekomster',
+    oppdrag:'Tell hvor mange ganger et element finnes i en liste.',
+    linjer:[
+      'def tell(liste, element):',
+      '    antall = 0',
+      '    for x in liste:',
+      '        if x == element:',
+      '            antall += 1',
+      '            return antall  # ← returnerer for tidlig?',
+      '    return antall',
+      '',
+      'print(tell([1,2,1,3,1], 1))',
+    ],
+    feilLinje: 5,
+    forventet: '3',
+    faktiskFeil: '1  (returnerer ved første treff)',
+    forklaring: 'Linje 6: return antall er innrykket inni if-blokken og kjøres ved første treff. Riktig: return antall skal ligge utenfor løkken (linje 7 er riktig, linje 6 skal fjernes)',
+    hint: 'Når kjøres linje 6? Hva er innrykket forteller deg om hvilken blokk den tilhører?',
+  },
+  {
+    navn:'Streng reversering',
+    oppdrag:'Reverser en streng tegn for tegn.',
+    linjer:[
+      'def reverser(tekst):',
+      '    resultat = ""',
+      '    for i in range(len(tekst)):',
+      '        resultat = resultat + tekst[i]',
+      '    return resultat',
+      '',
+      'print(reverser("hallo"))',
+    ],
+    feilLinje: 3,
+    forventet: 'ollah',
+    faktiskFeil: 'hallo  (ikke reversert — legger til i feil ende)',
+    forklaring: 'Linje 4: resultat + tekst[i] legger tegnet bakerst. For å reversere skal tekst[i] legges FORAN: resultat = tekst[i] + resultat',
+    hint: 'Resultat bygges opp tegn for tegn. Legges hvert nytt tegn foran eller bak? Hva trenger vi for "h-a-l-l-o" → "o-l-l-a-h"?',
+  },
+  {
+    navn:'Gjennomsnitt',
+    oppdrag:'Beregn gjennomsnittet av tallene i en liste.',
+    linjer:[
+      'def gjennomsnitt(liste):',
+      '    sum = 0',
+      '    for tall in liste:',
+      '        sum += tall',
+      '    return sum / len(liste) - 1  # ← aritmetikk-feil?',
+      '',
+      'print(gjennomsnitt([2, 4, 6, 8]))',
+    ],
+    feilLinje: 4,
+    forventet: '5.0',
+    faktiskFeil: '4.0  (minus 1 for mye)',
+    forklaring: 'Linje 5: sum / len(liste) - 1 trekker fra 1 etter divisjonen. Riktig: sum / len(liste). (2+4+6+8)/4 = 5, ikke 4)',
+    hint: 'Gjennomsnitt = sum / antall. Er det noe ekstra i formelen på linje 5 som ikke skal være der?',
+  },
+],
+
+hard: [
+  {
+    navn:'Rekursiv Fibonacci',
+    oppdrag:'Beregner Fibonacci-tall rekursivt. fib(6) = 8.',
+    linjer:[
+      'def fib(n):',
+      '    if n <= 0:',
+      '        return 0',
+      '    if n == 1:',
+      '        return 1',
+      '    return fib(n - 1) + fib(n - 1)  # ← rekursjonsfeil?',
+      '',
+      'print(fib(6))  # skal gi 8',
+    ],
+    feilLinje: 5,
+    forventet: '8',
+    faktiskFeil: '32  (dobler i stedet for å summere to ulike)',
+    forklaring: 'Linje 6: fib(n-1) + fib(n-1) beregner fib(n-1) to ganger. Fibonacci er fib(n-1) + fib(n-2). Andre kall skal være fib(n-2)',
+    hint: 'Fibonacci er definert som F(n) = F(n-1) + F(n-2). Hva er de to rekursive kallene her?',
+  },
+  {
+    navn:'Binært søk',
+    oppdrag:'Binært søk i en sortert liste. Søker etter 7.',
+    linjer:[
+      'def binær_søk(liste, mål):',
+      '    low, high = 0, len(liste) - 1',
+      '    while low <= high:',
+      '        mid = (low + high) // 2',
+      '        if liste[mid] == mål:',
+      '            return mid',
+      '        elif liste[mid] < mål:',
+      '            low = mid      # ← off-by-one i søket?',
+      '        else:',
+      '            high = mid - 1',
+      '    return -1',
+      '',
+      'print(binær_søk([1,3,5,7,9,11], 7))',
+    ],
+    feilLinje: 7,
+    forventet: '3',
+    faktiskFeil: 'Uendelig løkke — programmet henger',
+    forklaring: 'Linje 8: low = mid setter low til mid i stedet for mid+1. Hvis mål > liste[mid] og low=mid, forandrer ingenting seg og løkken er uendelig. Riktig: low = mid + 1',
+    hint: 'Hva skjer med low og high i hvert steg? Kan det oppstå en situasjon der de aldri nærmer seg hverandre?',
+  },
+  {
+    navn:'Merge sort',
+    oppdrag:'Flettesortering skal gi [1,2,3,4,5,6].',
+    linjer:[
+      'def merge(l1, l2):',
+      '    resultat = []',
+      '    i, j = 0, 0',
+      '    while i < len(l1) and j < len(l2):',
+      '        if l1[i] < l2[j]:',
+      '            resultat.append(l1[i])',
+      '            i += 1',
+      '        else:',
+      '            resultat.append(l2[j])',
+      '            j += 1',
+      '    return resultat  # ← mangler noe her?',
+      '',
+      'print(merge([1,3,5], [2,4,6]))',
+    ],
+    feilLinje: 10,
+    forventet: '[1, 2, 3, 4, 5, 6]',
+    faktiskFeil: '[1, 2, 3, 4, 5, 6]... men stopper tidlig: [1, 2, 3]',
+    forklaring: 'Linje 11: return resultat mangler de resterende elementene fra l1 eller l2. Riktig: return resultat + l1[i:] + l2[j:]',
+    hint: 'Hva skjer når én av listene er tom men den andre fortsatt har elementer? Returneres de?',
+  },
+  {
+    navn:'Palindrom-sjekk',
+    oppdrag:'Sjekker om et ord er et palindrom (leses likt begge veier).',
+    linjer:[
+      'def er_palindrom(tekst):',
+      '    n = len(tekst)',
+      '    for i in range(n // 2):',
+      '        if tekst[i] != tekst[n - i]:  # ← indeks-feil?',
+      '            return False',
+      '    return True',
+      '',
+      'print(er_palindrom("racecar"))',
+    ],
+    feilLinje: 3,
+    forventet: 'True',
+    faktiskFeil: 'IndexError: string index out of range',
+    forklaring: 'Linje 4: tekst[n - i] er feil. Siste tegn er tekst[n-1], ikke tekst[n]. Når i=0 gir n-i=n som er utenfor. Riktig: tekst[n - 1 - i]',
+    hint: 'Hva er indeksen til det siste tegnet i en streng med lengde n? Er det n eller n-1?',
+  },
+  {
+    navn:'GCD — Euklids algoritme',
+    oppdrag:'Beregner største felles divisor med Euklids algoritme.',
+    linjer:[
+      'def gcd(a, b):',
+      '    while b != 0:',
+      '        a, b = b, a % b',
+      '    return b  # ← feil returverdi?',
+      '',
+      'print(gcd(48, 18))  # skal gi 6',
+    ],
+    feilLinje: 3,
+    forventet: '6',
+    faktiskFeil: '0  (returnerer b etter løkken, men b=0 når løkken stopper)',
+    forklaring: 'Linje 4: return b returnerer 0 fordi løkken stopper NÅR b==0. GCD er da lagret i a. Riktig: return a',
+    hint: 'Løkken stopper når b == 0. Hva er verdien av a på det tidspunktet? Er det a eller b som inneholder svaret?',
+  },
+],
+};
+
+// ── SPILLLOGIKK ───────────────────────────────────────────────────
+var nivå='lett', OPPGAVER=[], TOTAL=0, oppgNr=0, riktige=0, forsøk=0, harSvart=false;
+var valgteLinjer = new Set();
+
+function velgNivå(n,el) {
+  nivå=n;
+  document.querySelectorAll('.inv').forEach(function(e){e.classList.remove('aktiv');});
+  el.classList.add('aktiv');
+}
+
+function startSpill() {
+  OPPGAVER = ALLE_OPPGAVER[nivå].slice();
+  OPPGAVER.sort(function(){return Math.random()-.5;});
+  TOTAL=OPPGAVER.length;
+  oppgNr=0; riktige=0; forsøk=0;
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('game').style.display='flex';
+  nesteOppgave();
+}
+
+function nesteOppgave() {
+  oppgNr++;
+  if (oppgNr>TOTAL) { visSlutt(); return; }
+  harSvart=false; valgteLinjer.clear();
+  var o = OPPGAVER[oppgNr-1];
+
+  document.getElementById('opp-teller').textContent='Oppgave '+oppgNr+' av '+TOTAL;
+  document.getElementById('opp-navn').textContent=o.navn;
+  document.getElementById('opp-tekst').textContent=o.oppdrag;
+  document.getElementById('forventet-boks').textContent=o.forventet;
+  document.getElementById('output-boks').innerHTML='<span style="color:var(--dim)">Klikk en linje for å se output</span>';
+  document.getElementById('nestebtn').style.display='none';
+  var fb=document.getElementById('feedback');fb.style.display='none';
+  document.getElementById('hint-boks').style.display='none';
+  document.getElementById('forklaring-boks').style.display='none';
+  document.getElementById('ada-tips').textContent='Les koden, se på forventet vs faktisk output, klikk linjen du tror er feil.';
+  document.getElementById('oppdrag-tekst').innerHTML='<b>Ada:</b> '+o.oppdrag;
+
+  byggeKode(o);
+}
+
+function byggeKode(o) {
+  var lnEl = document.getElementById('linjenummer');
+  var kdEl = document.getElementById('kode-display');
+  lnEl.innerHTML=''; kdEl.innerHTML='';
+
+  o.linjer.forEach(function(linje, i) {
+    // Linjenummer
+    var lnDiv=document.createElement('div');
+    lnDiv.textContent=(i+1);
+    lnDiv.style.lineHeight='1.8';
+    lnEl.appendChild(lnDiv);
+
+    // Kode-linje
+    var kDiv=document.createElement('span');
+    kDiv.className='kode-linje';
+    kDiv.dataset.idx=i;
+    kDiv.innerHTML=syntaksFarge(linje)||'&nbsp;';
+    kDiv.onclick=function(){klikketLinje(i,kDiv,o);};
+    kdEl.appendChild(kDiv);
+    kdEl.appendChild(document.createTextNode('\n'));
+  });
+}
+
+function syntaksFarge(linje) {
+  if (!linje.trim()) return '';
+  var h = linje
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Kommentar
+  h = h.replace(/(#.*)$/, '<span class="kom">$1</span>');
+  // Nøkkelord
+  var kw = ['def','return','for','in','while','if','elif','else','and','or','not','True','False','None'];
+  kw.forEach(function(k){
+    h = h.replace(new RegExp('\\b('+k+')\\b','g'), '<span class="kw">$1</span>');
+  });
+  // Strenger
+  h = h.replace(/"([^"]*)"/g, '<span class="str">"$1"</span>');
+  h = h.replace(/'([^']*)'/g, "<span class='str'>'$1'</span>");
+  // Tall
+  h = h.replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+  // Operatorer
+  h = h.replace(/([+\-*\/=!<>&|%]+)/g, '<span class="op">$1</span>');
+  // Funksjonsnavn
+  h = h.replace(/\b([a-z_]+)\s*(?=\()/g, '<span class="fn">$1</span>');
+  return h;
+}
+
+function klikketLinje(idx, el, o) {
+  if (harSvart) return;
+
+  // Fjern forrige valg
+  document.querySelectorAll('.kode-linje').forEach(function(k){ k.classList.remove('valgt'); });
+  el.classList.add('valgt');
+  forsøk++;
+  document.getElementById('stf').textContent=forsøk;
+
+  // Vis faktisk output fra denne linjen
+  var outputEl=document.getElementById('output-boks');
+  var erFeil = idx===o.feilLinje;
+  outputEl.innerHTML='<span class="'+(erFeil?'output-feil':'output-ok')+'">'+
+    (erFeil?o.faktiskFeil:'Denne linjen ser riktig ut.')+'</span>';
+
+  if (erFeil) {
+    harSvart=true; riktige++;
+    document.getElementById('str').textContent=riktige;
+    el.classList.remove('valgt'); el.classList.add('feil-linje');
+    visFB(true,'✅ Riktig! Linje '+(idx+1)+' inneholder feilen.');
+    document.getElementById('forklaring-boks').style.display='block';
+    document.getElementById('forklaring-tekst').textContent=o.forklaring;
+    document.getElementById('nestebtn').style.display='block';
+    document.getElementById('ada-tips').textContent='Se forklaringen til høyre for å forstå hva som var galt.';
+  } else {
+    visFB(false,'❌ Ikke denne. Prøv igjen.'+(nivå==='lett'?' Se på hint om du sitter fast.':''));
+    document.getElementById('ada-tips').textContent='Ikke den linjen. Se nøyere på output vs forventet.';
+  }
+}
+
+function visHint() {
+  var o=OPPGAVER[oppgNr-1];
+  document.getElementById('hint-tekst').textContent=o.hint;
+  document.getElementById('hint-boks').style.display='block';
+}
+
+function visFB(ok,tekst) {
+  var fb=document.getElementById('feedback');
+  fb.textContent=tekst; fb.className=ok?'ok':'feil'; fb.style.display='block';
+}
+
+function visSlutt() {
+  var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;
+  document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Elite-debugger!':snitt>=50?'👍 Solid arbeid!':'💪 Bugs er tricky — fortsett!';
+  document.getElementById('slutt-p').textContent='Du fant '+riktige+' av '+TOTAL+' bugs riktig ('+snitt+'%). Ada er '+
+    (snitt>=80?'imponert!':snitt>=50?'fornøyd.':'oppmuntrende.');
+  document.getElementById('slutt').style.display='flex';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strømlaben ⚡ · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b14;--bg2:#0c1220;--bg3:#0f1626;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8f0ff;--dim:#6b7a99;--dimmer:#2a3550;
+  --yellow:#fbbf24;--blue:#60a5fa;--green:#34d399;
+  --red:#f87171;--orange:#fb923c;--purple:#a78bfa;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+/* ── TOPBAR ── */
+#topbar{height:48px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(7,11,20,.96);border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(8px);}
+.logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--yellow);}
+.logo span{color:var(--text);opacity:.45;}
+.spacer{flex:1;}
+#oppg-teller{font-size:.76rem;color:var(--dim);}
+.tbtn{font-size:.74rem;color:var(--dim);text-decoration:none;
+  padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+.tbtn:hover{color:var(--text);}
+
+/* ── INTRO ── */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;}
+.iw{max-width:540px;width:92%;display:flex;flex-direction:column;
+  align-items:center;gap:16px;text-align:center;}
+.imerke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;
+  color:var(--yellow);background:rgba(251,191,36,.1);
+  border:1px solid rgba(251,191,36,.25);padding:4px 14px;border-radius:20px;}
+.itittel{font-family:var(--font-h);font-size:2.2rem;font-weight:800;line-height:1.15;}
+.itittel em{color:var(--yellow);font-style:normal;}
+.imelding{background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:12px;padding:14px 18px;display:flex;gap:12px;text-align:left;max-width:460px;}
+.iav{font-size:2rem;flex-shrink:0;}
+.imt{font-size:.82rem;color:var(--dim);line-height:1.6;}
+.imn{display:block;font-size:.68rem;color:var(--yellow);font-weight:600;
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.inivåer{display:flex;gap:10px;width:100%;max-width:400px;}
+.inv{flex:1;padding:12px 8px;border-radius:var(--r);border:2px solid var(--border2);
+  background:rgba(255,255,255,.03);cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;}
+.inv:hover,.inv.aktiv{border-color:var(--yellow);background:rgba(251,191,36,.07);}
+.inv .ne{font-size:1.5rem;}.inv .nt{font-family:var(--font-h);font-size:.88rem;font-weight:700;}
+.inv .nd{font-size:.7rem;color:var(--dim);text-align:center;line-height:1.4;}
+.startbtn{padding:12px 34px;background:var(--yellow);color:#000;border:none;
+  border-radius:var(--r);font-family:var(--font-h);font-size:.95rem;font-weight:800;
+  cursor:pointer;transition:filter .15s;letter-spacing:.3px;}
+.startbtn:hover{filter:brightness(1.1);}
+
+/* ── GAME ── */
+#game{position:fixed;inset:0;top:48px;display:none;flex-direction:column;}
+#oppdrag{background:rgba(251,191,36,.06);border-bottom:1px solid rgba(251,191,36,.15);
+  padding:5px 18px;font-size:.74rem;color:#a89040;display:none;align-items:center;gap:8px;}
+#oppdrag b{color:var(--yellow);}
+#main{flex:1;display:flex;min-height:0;}
+
+/* Venstre */
+#venstre{width:250px;flex-shrink:0;border-right:1px solid var(--border);
+  background:var(--bg2);overflow-y:auto;padding:12px;gap:10px;display:flex;flex-direction:column;}
+.ptittel{font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dimmer);margin-bottom:3px;}
+#oppg-navn{font-family:var(--font-h);font-size:.95rem;font-weight:700;}
+#oppg-tekst{font-size:.8rem;color:var(--dim);line-height:1.6;margin-top:4px;}
+#oppg-hint{font-size:.76rem;color:var(--yellow);background:rgba(251,191,36,.08);
+  border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 10px;
+  display:none;line-height:1.5;}
+#feedback{font-size:.8rem;padding:10px;border-radius:8px;line-height:1.5;display:none;}
+#feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--green);}
+#feedback.feil{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.bgrad{display:flex;gap:6px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.05);color:var(--text);cursor:pointer;
+  font-family:var(--font-b);font-size:.79rem;font-weight:500;transition:all .15s;}
+.btn:hover{background:rgba(255,255,255,.1);}
+.btn.pri{background:var(--yellow);color:#000;border-color:var(--yellow);font-weight:700;}
+.btn.pri:hover{filter:brightness(1.1);}
+#stats{display:flex;gap:14px;font-size:.73rem;color:var(--dim);}
+#stats b{color:var(--text);}
+#krets-info{font-size:.75rem;color:var(--dim);line-height:1.6;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;display:none;}
+#krets-info b{color:var(--blue);}
+
+/* Midtre: canvas */
+#cw{flex:1;position:relative;background:var(--bg3);overflow:hidden;}
+#c{display:block;width:100%;height:100%;}
+#tips{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  background:rgba(7,11,20,.88);border:1px solid var(--border2);border-radius:8px;
+  padding:5px 14px;font-size:.72rem;color:var(--dim);pointer-events:none;
+  opacity:0;transition:opacity .3s;backdrop-filter:blur(4px);}
+#tips.vis{opacity:1;}
+
+/* Instrumenter */
+#instr{position:absolute;bottom:10px;right:10px;display:flex;gap:7px;}
+.inst{background:rgba(7,11,20,.92);border:1px solid var(--border2);border-radius:10px;
+  padding:8px 12px;min-width:90px;text-align:center;backdrop-filter:blur(6px);}
+.ilabel{font-size:.58rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.ival{font-family:var(--font-h);font-size:1.5rem;font-weight:800;color:var(--yellow);}
+.ienhet{font-size:.65rem;color:var(--dim);}
+
+/* Høyre: komponentkasse */
+#hoyre{width:190px;flex-shrink:0;border-left:1px solid var(--border);
+  background:var(--bg2);overflow-y:auto;padding:10px;gap:6px;display:flex;flex-direction:column;}
+.kbtn{padding:9px 8px;border-radius:8px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.04);cursor:pointer;font-size:.73rem;
+  color:var(--text);display:flex;align-items:center;gap:7px;transition:all .15s;
+  user-select:none;}
+.kbtn:hover{background:rgba(255,255,255,.09);border-color:rgba(251,191,36,.4);}
+.kbtn.sel{border-color:var(--yellow);background:rgba(251,191,36,.1);color:var(--yellow);}
+.kikon{font-size:1.1rem;flex-shrink:0;}
+.knavn{font-weight:600;font-size:.73rem;}
+.kinfo{font-size:.63rem;color:var(--dim);}
+
+/* Slutt */
+#slutt{display:none;position:fixed;inset:0;z-index:50;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;}
+.sluttboks{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;
+  padding:32px 42px;max-width:460px;width:90%;text-align:center;}
+.sluttboks h2{font-family:var(--font-h);font-size:1.5rem;margin:10px 0 8px;}
+.sluttboks p{font-size:.86rem;color:var(--dim);line-height:1.6;margin-bottom:14px;}
+.slutt-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="iw">
+    <div class="imerke">⚡ STRØMLABEN · SkapLab</div>
+    <h1 class="itittel">Bygg <em>elektriske</em><br>kretser</h1>
+    <div class="imelding">
+      <div class="iav">👨‍🔧</div>
+      <div class="imt">
+        <span class="imn">Ingeniør Morten, veileder</span>
+        «Velg komponenter, plasser dem på brettet og dra ledninger mellom terminalene. Koble riktig — strøm, spenning og motstand henger sammen gjennom Ohms lov: U = R · I»
+      </div>
+    </div>
+    <div class="inivåer">
+      <div class="inv aktiv" onclick="velgNivå('lett',this)">
+        <div class="ne">🟢</div><div class="nt">Lærling</div>
+        <div class="nd">Serieskretser. Hint vises.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('middels',this)">
+        <div class="ne">🟡</div><div class="nt">Elektriker</div>
+        <div class="nd">Parallell og blandet.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('hard',this)">
+        <div class="ne">🔴</div><div class="nt">Ingeniør</div>
+        <div class="nd">Transistorer og komplekse kretser.</div>
+      </div>
+    </div>
+    <button class="startbtn" onclick="startSpill()">⚡ Start oppdraget</button>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">Strøm<span>laben</span></div>
+  <span id="oppg-teller">Oppgave 1</span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <div id="oppdrag"><span>⚡</span><span id="oppdrag-tekst"></span></div>
+  <div id="main">
+    <div id="venstre">
+      <div><div class="ptittel">Oppdrag</div>
+        <div id="oppg-navn">–</div>
+        <div id="oppg-tekst"></div>
+      </div>
+      <div id="oppg-hint"></div>
+      <div id="feedback"></div>
+      <div id="krets-info"></div>
+      <div class="bgrad">
+        <button class="btn pri" onclick="sjekkKrets()">🔌 Sjekk kretsen</button>
+        <button class="btn" onclick="tøm()">🗑️ Tøm</button>
+      </div>
+      <button class="btn" id="nestebtn" style="display:none" onclick="nesteOppgave()">Neste oppdrag ▶</button>
+      <button class="btn" id="hintbtn" onclick="visHint()">💡 Vis hint</button>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="ptittel">Statistikk</div>
+      <div id="stats"><span>✅ <b id="str">0</b></span><span>🔋 <b id="stf">0</b> forsøk</span></div>
+    </div>
+
+    <div id="cw">
+      <canvas id="c"></canvas>
+      <div id="tips">Dra fra en terminal (sirkel) til en annen for å koble</div>
+      <div id="instr">
+        <div class="inst"><div class="ilabel">Spenning</div>
+          <div class="ival" id="iv">–</div><div class="ienhet">V</div></div>
+        <div class="inst"><div class="ilabel">Strøm</div>
+          <div class="ival" id="ii">–</div><div class="ienhet">A</div></div>
+        <div class="inst"><div class="ilabel">Motstand</div>
+          <div class="ival" id="ir">–</div><div class="ienhet">Ω</div></div>
+      </div>
+    </div>
+
+    <div id="hoyre">
+      <div class="ptittel">Komponent&shy;kasse</div>
+      <div id="kgrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLUTT -->
+<div id="slutt">
+  <div class="sluttboks">
+    <div style="font-size:3rem">🏆</div>
+    <h2 id="slutt-h">Alle oppdrag fullført!</h2>
+    <p id="slutt-p">Du mestrer elektriske kretser.</p>
+    <div class="slutt-btns">
+      <button class="btn pri" onclick="startSpill()">🔄 Spill igjen</button>
+      <button class="btn" onclick="window.location.href='spill_hub.html'">🏠 Hub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════
+// STRØMLABEN v2 — Terminal-basert kretssimulator
+// ══════════════════════════════════════════════════════════════════
+
+// ── KOMPONENT-DEFINISJONER ────────────────────────────────────────
+// type: 'kilde'|'motstand'|'pære'|'led'|'transistor'|'kondensator'
+// For transistor: terminaler er [B, C, E] (base, collector, emitter)
+const KOMP_DEF = [
+  { id:'b9',  symbol:'⚡', farge:'#60a5fa', navn:'9V batteri',   info:'Spenningskilde 9V',  type:'kilde',    verdi:9,   w:60,h:34 },
+  { id:'b6',  symbol:'⚡', farge:'#60a5fa', navn:'6V batteri',   info:'Spenningskilde 6V',  type:'kilde',    verdi:6,   w:60,h:34 },
+  { id:'b12', symbol:'⚡', farge:'#60a5fa', navn:'12V batteri',  info:'Spenningskilde 12V', type:'kilde',    verdi:12,  w:60,h:34 },
+  { id:'r100',symbol:'▭',  farge:'#34d399', navn:'100 Ω',        info:'Motstand 100 Ω',     type:'motstand', verdi:100, w:60,h:28 },
+  { id:'r200',symbol:'▭',  farge:'#34d399', navn:'200 Ω',        info:'Motstand 200 Ω',     type:'motstand', verdi:200, w:60,h:28 },
+  { id:'r300',symbol:'▭',  farge:'#34d399', navn:'300 Ω',        info:'Motstand 300 Ω',     type:'motstand', verdi:300, w:60,h:28 },
+  { id:'r500',symbol:'▭',  farge:'#34d399', navn:'500 Ω',        info:'Motstand 500 Ω',     type:'motstand', verdi:500, w:60,h:28 },
+  { id:'r1k', symbol:'▭',  farge:'#34d399', navn:'1000 Ω',       info:'Motstand 1 kΩ',      type:'motstand', verdi:1000,w:60,h:28 },
+  { id:'pære',symbol:'💡', farge:'#fbbf24', navn:'Lyspære 50Ω',  info:'Glødelampe 50 Ω',    type:'pære',     verdi:50,  w:40,h:40 },
+  { id:'led', symbol:'◀',  farge:'#fbbf24', navn:'LED 20Ω',      info:'Lysdiode 20 Ω',      type:'led',      verdi:20,  w:40,h:36 },
+  { id:'npn', symbol:'T',  farge:'#a78bfa', navn:'NPN transistor',info:'β=100, NPN type',   type:'transistor',verdi:100,w:50,h:56 },
+];
+
+// ── OPPGAVER ──────────────────────────────────────────────────────
+// krevd: array av {type, antall} som MÅ finnes i kretsen
+// fasit: {U, I, R, type} — hva kretsen skal produsere
+// sjekk: function(analyse) → bool
+
+const OPPG_LETT = [
+  { id:'L1', navn:'Enkel serieskrets',
+    tekst:'Koble ett 9V-batteri og én 100Ω-motstand i serie.\nU = 9V, R = 100Ω → I = ?',
+    hint:'I = U/R = 9/100 = 0,09 A. Koble + på batteriet til én terminal på motstanden, den andre terminalen tilbake til − på batteriet.',
+    oppdrag:'Testkrets for labbenken. Koble batteri og motstand i lukket serie-sløyfe.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:1}],
+    fasit:{U:9, R:100, I:0.09, type:'serie'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,100,5) && nær(a.I_tot,0.09,0.005); }
+  },
+  { id:'L2', navn:'Pæren lyser',
+    tekst:'Koble 6V-batteri og lyspære (50Ω) i serie.\nStrøm = ?  Lyser pæren?',
+    hint:'I = 6/50 = 0,12 A. Koble batteriet og pæren i lukket løkke.',
+    oppdrag:'Prøvebelysning: koble pæren til 6V-kilden i serie.',
+    krevd:[{type:'kilde',antall:1},{type:'pære',antall:1}],
+    fasit:{U:6, R:50, I:0.12, type:'serie'},
+    sjekk: function(a){ return a.lukket && nær(a.U,6) && a.harPære && nær(a.I_tot,0.12,0.01); }
+  },
+  { id:'L3', navn:'To motstander i serie',
+    tekst:'Koble 9V-batteri, 100Ω og 200Ω alle i serie.\nR_tot = 100+200 = 300Ω → I = ?',
+    hint:'I = 9/300 = 0,03 A. Kobl dem i kjede: batteri → R1 → R2 → tilbake til batteri.',
+    oppdrag:'Spenningsdeler: to motstander i serie for jevn fordeling.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:9, R:300, I:0.03, type:'serie'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,300,15) && nær(a.I_tot,0.03,0.003); }
+  },
+  { id:'L4', navn:'LED i krets',
+    tekst:'Koble 6V-batteri og LED (20Ω) i serie.\nI = 6/20 = 0,3 A — merk: LED er polarisert!',
+    hint:'LED har en positiv (anode) og negativ (katode) terminal. Koble + fra batteriet til anoden.',
+    oppdrag:'Indikatorkrets: LED som statuslys på utstyr.',
+    krevd:[{type:'kilde',antall:1},{type:'led',antall:1}],
+    fasit:{U:6, R:20, I:0.3, type:'serie'},
+    sjekk: function(a){ return a.lukket && nær(a.U,6) && a.harLED && nær(a.I_tot,0.3,0.02); }
+  },
+];
+
+const OPPG_MIDDELS = [
+  { id:'M1', navn:'Parallell — to motstander',
+    tekst:'Koble to 100Ω-motstander PARALLELT med 9V.\n1/R = 1/100+1/100 → R=50Ω, I=0,18A',
+    hint:'Begge motstander kobles mellom samme to noder. Bruk junction-punkter.',
+    oppdrag:'Strømdeler: begge grenene henter strøm fra samme kilde.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:9, R:50, I:0.18, type:'parallell'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,50,5) && nær(a.I_tot,0.18,0.02); }
+  },
+  { id:'M2', navn:'To pærer parallelt',
+    tekst:'Koble to lyspærer (50Ω) parallelt med 9V.\nHver pære: I = 9/50 = 0,18 A. Total I = 0,36 A.',
+    hint:'Sammenlign med serie: her er spenningen lik over begge — de lyser like sterkt.',
+    oppdrag:'Parallellforbundet belysning — standard huslys-prinsipp.',
+    krevd:[{type:'kilde',antall:1},{type:'pære',antall:2}],
+    fasit:{U:9, R:25, I:0.36, type:'parallell'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && a.antallPærer===2 && nær(a.I_tot,0.36,0.04); }
+  },
+  { id:'M3', navn:'Blandet: serie + parallell',
+    tekst:'12V kilde. R1=100Ω i serie med [R2=200Ω ∥ R3=200Ω].\nR23=100Ω, R_tot=200Ω, I=0,06A',
+    hint:'Koble R2 og R3 parallelt mellom to noder. Koble R1 i serie foran dem.',
+    oppdrag:'Kombinert krets: én serie-motstand, to parallell-motstander.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:3}],
+    fasit:{U:12, R:200, I:0.06, type:'blandet'},
+    sjekk: function(a){ return a.lukket && nær(a.U,12) && nær(a.R_tot,200,15) && nær(a.I_tot,0.06,0.006); }
+  },
+  { id:'M4', navn:'Spenningsdeler',
+    tekst:'9V kilde, R1=150Ω og R2=300Ω i serie.\nU over R2 = I×R2 = 0,02×300 = 6V',
+    hint:'I = 9/450 = 0,02 A. Spenningsfallet fordeles proporsjonalt med motstandene.',
+    oppdrag:'Spenningsdeler: hent ut ønsket spenning fra to motstander.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:9, R:450, I:0.02, type:'serie'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,450,25) && nær(a.I_tot,0.02,0.002); }
+  },
+  { id:'M5', navn:'Tre motstander parallelt',
+    tekst:'9V kilde, R1=300Ω, R2=300Ω, R3=300Ω alle parallelt.\n1/R=3/300=0,01 → R=100Ω, I=0,09A',
+    hint:'Tre parallelle grener gir 1/3 av hver motstandsverdi som total R.',
+    oppdrag:'Tre parallelle forbrukere — beregn totalstrøm.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:3}],
+    fasit:{U:9, R:100, I:0.09, type:'parallell'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,100,8) && nær(a.I_tot,0.09,0.01); }
+  },
+];
+
+const OPPG_HARD = [
+  { id:'H1', navn:'Avansert blandet krets',
+    tekst:'12V. [R1=100Ω ∥ R2=100Ω] i serie med R3=200Ω.\nR12=50Ω, R_tot=250Ω, I=0,048A',
+    hint:'Koble R1 og R2 parallelt, deretter R3 i serie med parallell-blokken.',
+    oppdrag:'Kompleks krets: parallell-blokk i serie med enkelt motstand.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:3}],
+    fasit:{U:12, R:250, I:0.048, type:'blandet'},
+    sjekk: function(a){ return a.lukket && nær(a.U,12) && nær(a.R_tot,250,20) && nær(a.I_tot,0.048,0.006); }
+  },
+  { id:'H2', navn:'Transistor som bryter',
+    tekst:'NPN-transistor (β=100). Base-strøm I_B=0,01A.\nI_C = β × I_B = 100 × 0,01 = 1A.\nKoble: 12V → R_C(100Ω) → Collector; R_B(200Ω) → Base.',
+    hint:'Transistoren er aktiv når I_B > 0. Koble R_B mellom + og base, R_C mellom + og collector, emitter til −.',
+    oppdrag:'Transistorbryter: lav base-strøm styrer stor collector-strøm.',
+    krevd:[{type:'kilde',antall:1},{type:'transistor',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:12, transistorAktiv:true, I_C:1.0, type:'transistor'},
+    sjekk: function(a){ return a.lukket && a.transistorAktiv && nær(a.U,12) && nær(a.I_C||0,1.0,0.15); }
+  },
+  { id:'H3', navn:'Transistorforsterker',
+    tekst:'NPN transistor, β=100. 9V kilde.\nR_B=900Ω → I_B=0,01A → I_C=1A → U_CE ≈ 9−1×(nær 0) V',
+    hint:'R_B kobler +9V til base. Emitter til −. R_C=9Ω kobler + til collector. I_B=9/900=0,01A, I_C=1A.',
+    oppdrag:'Transistorforsterker: beregn forsterkningsfaktoren i praksis.',
+    krevd:[{type:'kilde',antall:1},{type:'transistor',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:9, transistorAktiv:true, type:'transistor'},
+    sjekk: function(a){ return a.lukket && a.transistorAktiv && nær(a.U,9); }
+  },
+  { id:'H4', navn:'Wheatstone-bro (to parallelle grener)',
+    tekst:'9V. To grener parallelt:\nGren A: R1=100Ω + R2=200Ω\nGren B: R3=300Ω\nR_A=300Ω, R_B=300Ω → R_tot=150Ω, I=0,06A',
+    hint:'Koble R1 og R2 i serie (gren A), R3 alene (gren B). Begge grener parallelt mellom + og −.',
+    oppdrag:'Bro-krets: to parallelle grener med ulik intern sammensetning.',
+    krevd:[{type:'kilde',antall:1},{type:'motstand',antall:3}],
+    fasit:{U:9, R:150, I:0.06, type:'blandet'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && nær(a.R_tot,150,15) && nær(a.I_tot,0.06,0.008); }
+  },
+  { id:'H5', navn:'Kompleks nett med LED',
+    tekst:'9V. R1=100Ω i serie med [LED(20Ω) ∥ R2=500Ω].\nR_par = 1/(1/20+1/500) ≈ 19,2Ω\nR_tot ≈ 119,2Ω, I ≈ 0,075A',
+    hint:'Koble LED og R2 parallelt, deretter R1 i serie med den parallelle blokken.',
+    oppdrag:'Blandede komponenter: LED og motstand i parallell, serie-motstand foran.',
+    krevd:[{type:'kilde',antall:1},{type:'led',antall:1},{type:'motstand',antall:2}],
+    fasit:{U:9, R:119.2, I:0.0755, type:'blandet'},
+    sjekk: function(a){ return a.lukket && nær(a.U,9) && a.harLED && nær(a.I_tot,0.0755,0.012); }
+  },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+let nivå = 'lett', OPPGAVER = OPPG_LETT, TOTAL = OPPG_LETT.length;
+let oppgNr = 0, riktige = 0, forsøk = 0, harLøst = false;
+let gjeldende = null;
+let W, H, canvas, ctx;
+
+// Krets-state
+// komponent: {id, defId, x, y, vinkel, def, terminaler:[{id,lx,ly,navn}]}
+// ledning: {id, fraKomp, fraTerminal, tilKomp, tilTerminal}
+// junction: felles punkt der 3+ terminaler møtes (beregnes)
+let komponenter = [];
+let ledninger = [];
+let valgtDef = null;      // komponent som er valgt i kassen
+let dragTerminal = null;  // {kompId, termIdx, startX, startY}
+let musX = 0, musY = 0;
+let dragKomp = null;      // komponent som flyttes
+let dragOffset = {x:0,y:0};
+let høyreKlikk = null;    // element som skal slettes
+
+function nær(a, b, tol) {
+  if (tol === undefined) tol = Math.abs(b)*0.05+0.001;
+  return Math.abs(a-b) <= tol;
+}
+
+// ── KOMPONENT-GEOMETRI ────────────────────────────────────────────
+// Returnerer absolutte terminal-posisjoner for en komponent
+function terminalerFor(k) {
+  var d = k.def;
+  if (d.type === 'transistor') {
+    // NPN: tre terminaler — B (venstre midt), C (høyre topp), E (høyre bunn)
+    return [
+      { id: k.id+'_B', lx: -d.w/2-8, ly: 0,         navn:'B (Base)' },
+      { id: k.id+'_C', lx:  d.w/2+8, ly: -d.h/4,    navn:'C (Collector)' },
+      { id: k.id+'_E', lx:  d.w/2+8, ly:  d.h/4,    navn:'E (Emitter)' },
+    ];
+  } else {
+    // To terminaler: venstre (−/inn) og høyre (+/ut)
+    return [
+      { id: k.id+'_p1', lx: -d.w/2-8, ly: 0, navn: d.type==='kilde' ? '−' : 'A' },
+      { id: k.id+'_p2', lx:  d.w/2+8, ly: 0, navn: d.type==='kilde' ? '+' : 'B' },
+    ];
+  }
+}
+
+function termAbsPos(k, termIdx) {
+  var terms = terminalerFor(k);
+  var t = terms[termIdx];
+  // Roter (foreløpig ingen rotasjon, vinkel=0)
+  return { x: k.x + t.lx, y: k.y + t.ly, id: t.id, navn: t.navn };
+}
+
+function finnNærTerminal(mx, my, unntakKompId) {
+  var snapR = 18;
+  for (var ki = 0; ki < komponenter.length; ki++) {
+    var k = komponenter[ki];
+    if (unntakKompId && k.id === unntakKompId) continue;
+    var terms = terminalerFor(k);
+    for (var ti = 0; ti < terms.length; ti++) {
+      var pos = termAbsPos(k, ti);
+      var d = Math.sqrt((pos.x-mx)*(pos.x-mx)+(pos.y-my)*(pos.y-my));
+      if (d < snapR) return { k: k, ti: ti, pos: pos };
+    }
+  }
+  return null;
+}
+
+function finnKomp(mx, my) {
+  for (var ki = komponenter.length-1; ki >= 0; ki--) {
+    var k = komponenter[ki];
+    var dx = Math.abs(mx - k.x), dy = Math.abs(my - k.y);
+    if (dx < k.def.w/2+12 && dy < k.def.h/2+12) return k;
+  }
+  return null;
+}
+
+function finnLedning(mx, my) {
+  var tol = 8;
+  for (var i = 0; i < ledninger.length; i++) {
+    var l = ledninger[i];
+    var p1 = getTermPos(l.fraKomp, l.fraTermIdx);
+    var p2 = getTermPos(l.tilKomp, l.tilTermIdx);
+    if (!p1 || !p2) continue;
+    // Avstand punkt til linjestykke
+    var dx = p2.x-p1.x, dy = p2.y-p1.y;
+    var len2 = dx*dx+dy*dy;
+    if (len2 === 0) continue;
+    var t = Math.max(0,Math.min(1,((mx-p1.x)*dx+(my-p1.y)*dy)/len2));
+    var nearX = p1.x+t*dx, nearY = p1.y+t*dy;
+    if (Math.sqrt((mx-nearX)*(mx-nearX)+(my-nearY)*(my-nearY)) < tol) return l;
+  }
+  return null;
+}
+
+function getTermPos(kompId, termIdx) {
+  var k = komponenter.find(function(c){ return c.id===kompId; });
+  if (!k) return null;
+  return termAbsPos(k, termIdx);
+}
+
+// ── KRETS-ANALYSE (graf-basert) ───────────────────────────────────
+function analyserKrets() {
+  if (komponenter.length === 0) return null;
+  var kilde = komponenter.find(function(k){ return k.def.type==='kilde'; });
+  if (!kilde) return null;
+
+  // Bygg adjacency-liste: terminal-ID → [terminal-ID]
+  // Alle terminaler på samme komponent er IKKE forbundet
+  // Terminaler forbundet via ledning er i samme netnode
+  var netMap = {};   // terminalId → netnodeId
+  var nettId = 0;
+
+  function finnEllerLagNett(termId) {
+    if (netMap[termId] === undefined) netMap[termId] = nettId++;
+    return netMap[termId];
+  }
+
+  // Slå sammen netter via ledninger
+  function slåSammen(t1, t2) {
+    var n1 = finnEllerLagNett(t1), n2 = finnEllerLagNett(t2);
+    if (n1 === n2) return;
+    // Erstatt alle n2 med n1
+    var keys = Object.keys(netMap);
+    for (var i=0; i<keys.length; i++) {
+      if (netMap[keys[i]] === n2) netMap[keys[i]] = n1;
+    }
+  }
+
+  // Registrer alle terminaler
+  komponenter.forEach(function(k) {
+    terminalerFor(k).forEach(function(t, ti) {
+      finnEllerLagNett(t.id);
+    });
+  });
+
+  // Slå sammen via ledninger
+  ledninger.forEach(function(l) {
+    var k1 = komponenter.find(function(c){ return c.id===l.fraKomp; });
+    var k2 = komponenter.find(function(c){ return c.id===l.tilKomp; });
+    if (!k1||!k2) return;
+    var t1 = terminalerFor(k1)[l.fraTermIdx];
+    var t2 = terminalerFor(k2)[l.tilTermIdx];
+    if (t1&&t2) slåSammen(t1.id, t2.id);
+  });
+
+  // Finn kilde-noder
+  var kildeTerms = terminalerFor(kilde);
+  var netNeg = netMap[kildeTerms[0].id];  // − terminal
+  var netPos = netMap[kildeTerms[1].id];  // + terminal
+
+  if (netNeg === undefined || netPos === undefined || netNeg === netPos) {
+    return { lukket: false };
+  }
+
+  // Finn alle komponenter mellom netPos og netNeg
+  var aktive = [];
+  komponenter.forEach(function(k) {
+    if (k.id === kilde.id) return;
+    var terms = terminalerFor(k);
+    if (k.def.type === 'transistor') {
+      // Sjekk base og collector/emitter
+      var netB = netMap[terms[0].id];
+      var netC = netMap[terms[1].id];
+      var netE = netMap[terms[2].id];
+      if ((netC===netPos&&netE===netNeg)||(netC===netNeg&&netE===netPos)) {
+        aktive.push({ k:k, erTransistor:true, netB:netB, netC:netC, netE:netE });
+      }
+    } else {
+      var n0 = netMap[terms[0].id], n1 = netMap[terms[1].id];
+      if (n0!==undefined && n1!==undefined && n0!==n1) {
+        aktive.push({ k:k, n0:n0, n1:n1 });
+      }
+    }
+  });
+
+  if (aktive.length === 0) return { lukket: false };
+
+  // Sjekk om det finnes en sammenhengende sti fra netPos til netNeg
+  var lukket = harSti(netPos, netNeg, aktive);
+  if (!lukket) return { lukket: false };
+
+  // ── Transistoranalyse ──────────────────────────────────────────
+  var transistorEl = aktive.find(function(a){ return a.erTransistor; });
+  var transistorAktiv = false;
+  var I_C = 0;
+  if (transistorEl) {
+    var β = transistorEl.k.def.verdi;  // typisk 100
+    // Finn base-krets-motstand
+    var R_B_el = aktive.filter(function(a){
+      return !a.erTransistor && (a.n0===transistorEl.netB||a.n1===transistorEl.netB);
+    });
+    var R_B = R_B_el.reduce(function(s,a){return s+a.k.def.verdi;},0) || 1000;
+    var I_B = kilde.def.verdi / R_B;
+    I_C = β * I_B;
+    transistorAktiv = I_B > 0;
+  }
+
+  // ── Motstandsberegning ─────────────────────────────────────────
+  var R_tot = beregnR(netPos, netNeg, aktive.filter(function(a){return !a.erTransistor;}));
+  var I_tot = kilde.def.verdi / R_tot;
+
+  // Typer
+  var ikkeTransistor = aktive.filter(function(a){return !a.erTransistor;});
+  var type = bestemType(ikkeTransistor, netPos, netNeg);
+
+  return {
+    lukket:          lukket,
+    U:               kilde.def.verdi,
+    R_tot:           R_tot,
+    I_tot:           I_tot,
+    type:            type,
+    harPære:         aktive.some(function(a){return a.k&&a.k.def.type==='pære';}),
+    harLED:          aktive.some(function(a){return a.k&&a.k.def.type==='led';}),
+    antallPærer:     aktive.filter(function(a){return a.k&&a.k.def.type==='pære';}).length,
+    transistorAktiv: transistorAktiv,
+    I_C:             I_C,
+  };
+}
+
+function harSti(fra, til, aktive) {
+  // BFS i nettgraf
+  var besøkt = {};
+  var kø = [fra];
+  besøkt[fra] = true;
+  while (kø.length > 0) {
+    var nå = kø.shift();
+    if (nå === til) return true;
+    aktive.forEach(function(a) {
+      if (a.erTransistor) {
+        if (a.netC===nå&&!besøkt[a.netE]){ besøkt[a.netE]=true; kø.push(a.netE); }
+        if (a.netE===nå&&!besøkt[a.netC]){ besøkt[a.netC]=true; kø.push(a.netC); }
+      } else {
+        if (a.n0===nå&&!besøkt[a.n1]){ besøkt[a.n1]=true; kø.push(a.n1); }
+        if (a.n1===nå&&!besøkt[a.n0]){ besøkt[a.n0]=true; kø.push(a.n0); }
+      }
+    });
+  }
+  return false;
+}
+
+function beregnR(netPos, netNeg, elementer) {
+  if (!elementer || elementer.length === 0) return Infinity;
+
+  // Rekursiv nettverks-reduksjon
+  // Finn alle unike noder
+  var noderSet = {};
+  noderSet[netPos] = true; noderSet[netNeg] = true;
+  elementer.forEach(function(a){ noderSet[a.n0]=true; noderSet[a.n1]=true; });
+  var alleNoder = Object.keys(noderSet).map(Number);
+
+  // Bygg adj-liste med motstander
+  var adj = {};
+  alleNoder.forEach(function(n){ adj[n] = []; });
+  elementer.forEach(function(a, i){
+    adj[a.n0].push({til:a.n1, R:a.k.def.verdi, idx:i});
+    adj[a.n1].push({til:a.n0, R:a.k.def.verdi, idx:i});
+  });
+
+  // Bruk nettverksreduksjon: kollapser serie-noder
+  // En serie-node har grad == 2 og er ikke kilde/sluk
+  var ferdig = false;
+  var maks_iter = 20;
+  while (!ferdig && maks_iter-- > 0) {
+    ferdig = true;
+
+    // Parallell-reduksjon: to elementer mellom samme noder → 1/R = 1/R1 + 1/R2
+    var par_redusert = false;
+    var noder_i_adj = Object.keys(adj).map(Number);
+    for (var ni=0; ni<noder_i_adj.length && !par_redusert; ni++) {
+      var n = noder_i_adj[ni];
+      var nabo_count = {};
+      adj[n].forEach(function(e){ nabo_count[e.til] = (nabo_count[e.til]||0)+1; });
+      var parallelNabo = Object.keys(nabo_count).find(function(m){ return nabo_count[m]>1; });
+      if (parallelNabo !== undefined) {
+        var m = parseInt(parallelNabo);
+        var kanter = adj[n].filter(function(e){ return e.til===m; });
+        var inv = 0; kanter.forEach(function(e){ inv += 1/e.R; });
+        var R_eq = 1/inv;
+        // Fjern alle parallelle kanter, legg til én
+        adj[n] = adj[n].filter(function(e){ return e.til!==m; });
+        adj[m] = adj[m].filter(function(e){ return e.til!==n; });
+        adj[n].push({til:m, R:R_eq, idx:-1});
+        adj[m].push({til:n, R:R_eq, idx:-1});
+        ferdig = false; par_redusert = true;
+      }
+    }
+
+    // Serie-reduksjon: node med grad==2, ikke netPos eller netNeg
+    var noder2 = Object.keys(adj).map(Number).filter(function(n){
+      return n!==netPos && n!==netNeg && adj[n] && adj[n].length===2;
+    });
+    if (noder2.length > 0) {
+      var mNode = noder2[0];
+      var a_kant = adj[mNode][0], b_kant = adj[mNode][1];
+      var R_serie = a_kant.R + b_kant.R;
+      // Koble a direkte til b med serie-R
+      adj[a_kant.til] = adj[a_kant.til].filter(function(e){ return e.til!==mNode; });
+      adj[b_kant.til] = adj[b_kant.til].filter(function(e){ return e.til!==mNode; });
+      adj[a_kant.til].push({til:b_kant.til, R:R_serie, idx:-1});
+      adj[b_kant.til].push({til:a_kant.til, R:R_serie, idx:-1});
+      delete adj[mNode];
+      ferdig = false;
+    }
+  }
+
+  // Etter reduksjon: adj[netPos] burde inneholde én kant til netNeg
+  if (adj[netPos]) {
+    var kant = adj[netPos].find(function(e){ return e.til===netNeg; });
+    if (kant) return kant.R;
+    // Ellers: sum av gjenstående
+    if (adj[netPos].length > 0) {
+      var inv2 = 0;
+      adj[netPos].forEach(function(e){ inv2 += 1/e.R; });
+      return 1/inv2;
+    }
+  }
+  // Fallback: sum alle R
+  return elementer.reduce(function(s,a){ return s+a.k.def.verdi; }, 0);
+}
+
+function bestemType(elementer, netPos, netNeg) {
+  if (elementer.length === 0) return 'tom';
+  var grad = {};
+  elementer.forEach(function(a){
+    grad[a.n0]=(grad[a.n0]||0)+1;
+    grad[a.n1]=(grad[a.n1]||0)+1;
+  });
+  var harKnutepunkt = Object.values(grad).some(function(g){return g>2;});
+  var antallNoder = new Set(elementer.flatMap(function(a){return[a.n0,a.n1];})).size;
+  if (!harKnutepunkt) return 'serie';
+  if (antallNoder === 2) return 'parallell';
+  return 'blandet';
+}
+
+// ── TEGNING ───────────────────────────────────────────────────────
+var animasjonsId = null;
+var animT = 0;
+
+function tegn() {
+  if (!ctx) return;
+  ctx.clearRect(0,0,W,H);
+  animT += 0.025;
+
+  // Rutenett
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+  for(var gx=0;gx<W;gx+=30){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+  for(var gy=0;gy<H;gy+=30){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
+
+  // Ledninger
+  ledninger.forEach(function(l){ tegnLedning(l); });
+
+  // Aktiv drag-ledning
+  if (dragTerminal) {
+    var p = getTermPos(dragTerminal.kompId, dragTerminal.termIdx);
+    if (p) {
+      var snap = finnNærTerminal(musX, musY, dragTerminal.kompId);
+      var ex = snap ? snap.pos.x : musX;
+      var ey = snap ? snap.pos.y : musY;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y);
+      // Ortoganale segmenter
+      var mx2 = (p.x+ex)/2;
+      ctx.lineTo(mx2, p.y); ctx.lineTo(mx2, ey); ctx.lineTo(ex,ey);
+      ctx.strokeStyle='rgba(251,191,36,0.6)';ctx.lineWidth=2.5;
+      ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+      if (snap) {
+        ctx.beginPath();ctx.arc(snap.pos.x,snap.pos.y,10,0,Math.PI*2);
+        ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.stroke();
+      }
+    }
+  }
+
+  // Komponenter
+  komponenter.forEach(function(k){ tegnKomp(k); });
+
+  // Terminaler (alltid synlige)
+  komponenter.forEach(function(k){
+    var terms = terminalerFor(k);
+    terms.forEach(function(t,ti){
+      var pos = termAbsPos(k,ti);
+      var erDrag = dragTerminal && dragTerminal.kompId===k.id && dragTerminal.termIdx===ti;
+      var erNær = !dragTerminal && Math.sqrt((pos.x-musX)*(pos.x-musX)+(pos.y-musY)*(pos.y-musY)) < 18;
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,5,0,Math.PI*2);
+      ctx.fillStyle = erDrag ? '#fbbf24' : erNær ? '#fff' : 'rgba(255,255,255,0.5)';
+      ctx.fill();
+      ctx.strokeStyle = erDrag ? '#fbbf24' : '#333';
+      ctx.lineWidth=1.5; ctx.stroke();
+      // Terminal-etikett
+      if (erNær || erDrag) {
+        ctx.font='bold 10px DM Sans,sans-serif';
+        ctx.fillStyle='#fbbf24';ctx.textAlign='center';ctx.textBaseline='bottom';
+        ctx.fillText(t.navn, pos.x, pos.y-7);
+      }
+    });
+  });
+
+  animasjonsId = requestAnimationFrame(tegn);
+}
+
+function tegnLedning(l) {
+  var p1 = getTermPos(l.fraKomp, l.fraTermIdx);
+  var p2 = getTermPos(l.tilKomp, l.tilTermIdx);
+  if (!p1||!p2) return;
+
+  // Ortogonale ledningssegmenter
+  var mx = (p1.x+p2.x)/2;
+  ctx.beginPath();
+  ctx.moveTo(p1.x,p1.y);
+  ctx.lineTo(mx,p1.y);
+  ctx.lineTo(mx,p2.y);
+  ctx.lineTo(p2.x,p2.y);
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=2.5;ctx.stroke();
+
+  // Animert strøm-prikk
+  var t = (animT*0.6)%1;
+  // Langs de tre segmentene
+  var segs=[{x1:p1.x,y1:p1.y,x2:mx,y2:p1.y},{x1:mx,y1:p1.y,x2:mx,y2:p2.y},{x1:mx,y1:p2.y,x2:p2.x,y2:p2.y}];
+  var totLen=0;
+  segs.forEach(function(s){totLen+=Math.sqrt((s.x2-s.x1)*(s.x2-s.x1)+(s.y2-s.y1)*(s.y2-s.y1));});
+  var targetLen=t*totLen, len=0;
+  for(var si=0;si<segs.length;si++){
+    var s=segs[si];
+    var sLen=Math.sqrt((s.x2-s.x1)*(s.x2-s.x1)+(s.y2-s.y1)*(s.y2-s.y1));
+    if(len+sLen>=targetLen){
+      var frac=(targetLen-len)/sLen;
+      var px=s.x1+(s.x2-s.x1)*frac, py=s.y1+(s.y2-s.y1)*frac;
+      ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);
+      ctx.fillStyle='#fff8';ctx.fill();
+      break;
+    }
+    len+=sLen;
+  }
+}
+
+function tegnKomp(k) {
+  var d = k.def;
+  ctx.save();
+  ctx.translate(k.x, k.y);
+
+  if (d.type === 'transistor') {
+    tegnTransistor(k);
+    ctx.restore(); return;
+  }
+
+  // Glow
+  var gl = ctx.createRadialGradient(0,0,0,0,0,d.w*0.8);
+  gl.addColorStop(0,d.farge+'22');gl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gl;
+  ctx.beginPath();ctx.ellipse(0,0,d.w*0.8,d.h*0.8,0,0,Math.PI*2);ctx.fill();
+
+  // Kropp
+  ctx.beginPath();
+  ctx.roundRect(-d.w/2,-d.h/2,d.w,d.h,6);
+  ctx.fillStyle=d.type==='kilde'?'#0f2340':d.type==='pære'||d.type==='led'?'#2d2200':'#0d2218';
+  ctx.fill();
+  ctx.strokeStyle=d.farge;ctx.lineWidth=1.8;ctx.stroke();
+
+  // Symbol
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=d.type==='pære'||d.type==='led'?'18px sans-serif':'bold 11px DM Sans,sans-serif';
+  ctx.fillStyle=d.type==='pære'||d.type==='led'?'#fbbf24':d.farge;
+
+  if (d.type==='kilde') {
+    // Batteri-symbol
+    ctx.fillStyle='#60a5fa';
+    ctx.font='bold 10px DM Sans,sans-serif';
+    ctx.fillText(d.verdi+'V',0,-1);
+    // + og − tegn
+    ctx.font='bold 14px sans-serif';
+    ctx.fillStyle='#f87171';ctx.fillText('−',-d.w/2+6,0);
+    ctx.fillStyle='#34d399';ctx.fillText('+',d.w/2-8,0);
+  } else if (d.type==='motstand') {
+    // Zigzag
+    tegnZigzag(ctx, d.w, d.farge);
+    ctx.font='bold 9px DM Sans,sans-serif';
+    ctx.fillStyle=d.farge;
+    ctx.fillText(d.verdi+'Ω',0,d.h/2-2);
+  } else if (d.type==='pære') {
+    ctx.fillText('💡',0,-2);
+  } else if (d.type==='led') {
+    tegnLED(ctx, d);
+  }
+
+  // Lednings-stubber
+  ctx.strokeStyle=d.farge+'88';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-d.w/2-8,0);ctx.lineTo(-d.w/2,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(d.w/2,0);ctx.lineTo(d.w/2+8,0);ctx.stroke();
+
+  ctx.restore();
+}
+
+function tegnZigzag(ctx, w, farge) {
+  ctx.strokeStyle=farge;ctx.lineWidth=1.8;
+  var steps=6, sw=w*0.55, sh=8;
+  ctx.beginPath();
+  ctx.moveTo(-sw/2,0);
+  for(var i=0;i<steps;i++){
+    ctx.lineTo(-sw/2+sw/steps*(i+0.5),(i%2===0?-1:1)*sh);
+    ctx.lineTo(-sw/2+sw/steps*(i+1),0);
+  }
+  ctx.stroke();
+}
+
+function tegnLED(ctx, d) {
+  // Trekant + strek
+  ctx.fillStyle='#fbbf24';ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(-8,8);ctx.lineTo(-8,-8);ctx.lineTo(8,0);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(8,-8);ctx.lineTo(8,8);ctx.stroke();
+  // Stråler
+  ctx.strokeStyle='#ffd700aa';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(12,-8);ctx.lineTo(18,-14);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(12,-4);ctx.lineTo(18,-8);ctx.stroke();
+}
+
+function tegnTransistor(k) {
+  var d = k.def;
+  // NPN-symbol
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;
+  // Ytre sirkel
+  ctx.beginPath();ctx.arc(0,0,d.w/2,0,Math.PI*2);
+  ctx.fillStyle='#0d0821';ctx.fill();ctx.stroke();
+  // Base-linje (vertikal midt)
+  ctx.beginPath();ctx.moveTo(-d.w/2-8,0);ctx.lineTo(-6,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-6,-d.h/4);ctx.lineTo(-6,d.h/4);ctx.stroke();
+  // Collector (oppe)
+  ctx.beginPath();ctx.moveTo(-6,-d.h/8);ctx.lineTo(d.w/2,    -d.h/4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(d.w/2,-d.h/4);ctx.lineTo(d.w/2+8,-d.h/4);ctx.stroke();
+  // Emitter (nede) med pil
+  ctx.beginPath();ctx.moveTo(-6,d.h/8);ctx.lineTo(d.w/2,d.h/4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(d.w/2,d.h/4);ctx.lineTo(d.w/2+8,d.h/4);ctx.stroke();
+  // NPN-pil på emitter
+  var ex=d.w/2, ey=d.h/4;
+  ctx.fillStyle='#a78bfa';
+  ctx.beginPath();ctx.moveTo(ex-5,ey-4);ctx.lineTo(ex+3,ey);ctx.lineTo(ex-5,ey+4);ctx.fill();
+  // Etiketter
+  ctx.font='bold 9px DM Sans,sans-serif';ctx.fillStyle='#a78bfa';ctx.textAlign='center';
+  ctx.fillText('B',-d.w/2-14,-2);
+  ctx.fillText('C',d.w/2+14,-d.h/4-2);
+  ctx.fillText('E',d.w/2+14, d.h/4+8);
+  ctx.fillText('NPN',0,d.h/2+8);
+}
+
+// ── INTERAKSJON ───────────────────────────────────────────────────
+function canvasMouseDown(e) {
+  var rect=canvas.getBoundingClientRect();
+  var mx=(e.clientX-rect.left)*(W/rect.width);
+  var my=(e.clientY-rect.top)*(H/rect.height);
+
+  if (e.button===2) {
+    // Høyreklikk: slett
+    var l=finnLedning(mx,my);
+    if(l){ledninger=ledninger.filter(function(x){return x!==l;});oppdaterInstr();return;}
+    var k=finnKomp(mx,my);
+    if(k){
+      var kid=k.id;
+      komponenter=komponenter.filter(function(c){return c.id!==kid;});
+      ledninger=ledninger.filter(function(l){return l.fraKomp!==kid&&l.tilKomp!==kid;});
+      oppdaterInstr();
+    }
+    return;
+  }
+
+  // Plasser ny komponent
+  if (valgtDef) {
+    var nyId = valgtDef.id+'_'+Date.now();
+    var nyK = { id:nyId, x:mx, y:my, def:valgtDef };
+    komponenter.push(nyK);
+    document.querySelectorAll('.kbtn').forEach(function(b){b.classList.remove('sel');});
+    valgtDef = null;
+    oppdaterInstr();
+    visTips('Dra fra en terminal (liten sirkel) til en annen for å koble ledning. Høyreklikk for å slette.');
+    return;
+  }
+
+  // Sjekk om nær terminal → start wire-drag
+  var term = finnNærTerminal(mx, my, null);
+  if (term) {
+    dragTerminal = { kompId: term.k.id, termIdx: term.ti };
+    return;
+  }
+
+  // Sjekk om klikk på komponent → start drag
+  var komp = finnKomp(mx, my);
+  if (komp) {
+    dragKomp = komp;
+    dragOffset = { x: mx - komp.x, y: my - komp.y };
+  }
+}
+
+function canvasMouseMove(e) {
+  var rect=canvas.getBoundingClientRect();
+  musX=(e.clientX-rect.left)*(W/rect.width);
+  musY=(e.clientY-rect.top)*(H/rect.height);
+  if (dragKomp) {
+    dragKomp.x = musX - dragOffset.x;
+    dragKomp.y = musY - dragOffset.y;
+    oppdaterInstr();
+  }
+}
+
+function canvasMouseUp(e) {
+  var rect=canvas.getBoundingClientRect();
+  var mx=(e.clientX-rect.left)*(W/rect.width);
+  var my=(e.clientY-rect.top)*(H/rect.height);
+
+  if (dragTerminal) {
+    var snap = finnNærTerminal(mx, my, dragTerminal.kompId);
+    if (snap) {
+      // Koble, unngå dobbel-kobling
+      var finnes = ledninger.some(function(l){
+        return (l.fraKomp===dragTerminal.kompId&&l.fraTermIdx===dragTerminal.termIdx&&l.tilKomp===snap.k.id&&l.tilTermIdx===snap.ti)||
+               (l.tilKomp===dragTerminal.kompId&&l.tilTermIdx===dragTerminal.termIdx&&l.fraKomp===snap.k.id&&l.fraTermIdx===snap.ti);
+      });
+      if (!finnes) {
+        ledninger.push({
+          id:'w'+Date.now(),
+          fraKomp:dragTerminal.kompId, fraTermIdx:dragTerminal.termIdx,
+          tilKomp:snap.k.id, tilTermIdx:snap.ti
+        });
+        oppdaterInstr();
+      }
+    }
+    dragTerminal = null;
+  }
+  if (dragKomp) { dragKomp = null; oppdaterInstr(); }
+}
+
+function oppdaterInstr() {
+  var a = analyserKrets();
+  if (a && a.lukket) {
+    document.getElementById('iv').textContent = a.U||'–';
+    document.getElementById('ii').textContent = a.I_tot ? a.I_tot.toFixed(3) : '–';
+    document.getElementById('ir').textContent = a.R_tot ? Math.round(a.R_tot) : '–';
+    var info = document.getElementById('krets-info');
+    info.style.display='block';
+    var type={'serie':'Serieskrets','parallell':'Parallellkrets','blandet':'Blandet krets','transistor':'Transistorkrets'}[a.type]||a.type;
+    info.innerHTML='<b>'+type+'</b><br>'
+      +'U = '+a.U+'V, R ≈ '+Math.round(a.R_tot)+'Ω, I ≈ '+a.I_tot.toFixed(3)+'A'
+      +(a.transistorAktiv?'<br>Transistor aktiv! I_C ≈ '+a.I_C.toFixed(2)+'A':'');
+  } else {
+    ['iv','ii','ir'].forEach(function(id){document.getElementById(id).textContent='–';});
+    document.getElementById('krets-info').style.display='none';
+  }
+}
+
+// ── OPPGAVEHÅNDTERING ─────────────────────────────────────────────
+function nesteOppgave() {
+  oppgNr++;
+  if (oppgNr > TOTAL) { visSlutt(); return; }
+  harLøst = false;
+  gjeldende = OPPGAVER[oppgNr-1];
+
+  document.getElementById('oppg-teller').textContent = 'Oppgave '+oppgNr+' av '+TOTAL;
+  document.getElementById('oppg-navn').textContent = gjeldende.navn;
+  document.getElementById('oppg-tekst').textContent = gjeldende.tekst;
+  document.getElementById('nestebtn').style.display='none';
+  document.getElementById('oppg-hint').style.display='none';
+  var fb=document.getElementById('feedback');fb.style.display='none';
+  document.getElementById('krets-info').style.display='none';
+
+  var strip=document.getElementById('oppdrag');
+  var ot=document.getElementById('oppdrag-tekst');
+  if(gjeldende.oppdrag){ot.innerHTML='<b>Ingeniør Morten:</b> '+gjeldende.oppdrag;strip.style.display='flex';}
+
+  tøm();
+}
+
+function tøm() {
+  komponenter=[];ledninger=[];valgtDef=null;dragTerminal=null;dragKomp=null;
+  document.querySelectorAll('.kbtn').forEach(function(b){b.classList.remove('sel');});
+  ['iv','ii','ir'].forEach(function(id){document.getElementById(id).textContent='–';});
+  document.getElementById('krets-info').style.display='none';
+  var fb=document.getElementById('feedback');fb.style.display='none';
+}
+
+function sjekkKrets() {
+  if(harLøst) return;
+  forsøk++;
+  document.getElementById('stf').textContent=forsøk;
+
+  var a=analyserKrets();
+  var o=gjeldende;
+
+  if(!a||!a.lukket){
+    visFB(false,'⚠️ Kretsen er ikke lukket. Koble alle terminaler slik at strømmen kan flyte rundt.');
+    return;
+  }
+
+  oppdaterInstr();
+  var riktig=false;
+  try{riktig=o.sjekk(a);}catch(e){riktig=false;}
+
+  if(riktig){
+    harLøst=true;riktige++;
+    document.getElementById('str').textContent=riktige;
+    document.getElementById('nestebtn').style.display='block';
+    var txt='✅ Korrekt! U='+a.U+'V, R≈'+Math.round(a.R_tot)+'Ω, I≈'+a.I_tot.toFixed(3)+'A.';
+    if(a.transistorAktiv) txt+=' Transistor aktiv! I_C≈'+a.I_C.toFixed(2)+'A.';
+    visFB(true, txt);
+  } else {
+    var msg='❌ ';
+    if(!nær(a.U,o.fasit.U,1)) msg+='Feil spenningskilde: du har '+a.U+'V, trenger '+o.fasit.U+'V. ';
+    else if(o.fasit.R&&!nær(a.R_tot,o.fasit.R,o.fasit.R*0.1)) msg+='R_tot='+Math.round(a.R_tot)+'Ω, forventet ≈'+o.fasit.R+'Ω. Sjekk koblingen. ';
+    else if(o.fasit.I&&!nær(a.I_tot,o.fasit.I,o.fasit.I*0.1)) msg+='I='+a.I_tot.toFixed(3)+'A, forventet ≈'+o.fasit.I+'A. ';
+    else if(o.fasit.transistorAktiv&&!a.transistorAktiv) msg+='Transistoren er ikke aktiv — sjekk base-koblingen. ';
+    else msg+='Kretsen er feil sammenkoblet. ';
+    if(nivå==='lett') msg+='💡 '+o.hint;
+    visFB(false,msg);
+  }
+}
+
+function visHint() {
+  var h=document.getElementById('oppg-hint');
+  h.textContent='💡 '+gjeldende.hint;h.style.display='block';
+}
+
+function visFB(ok,tekst) {
+  var fb=document.getElementById('feedback');
+  fb.textContent=tekst;fb.className=ok?'ok':'feil';fb.style.display='block';
+}
+
+function visTips(tekst) {
+  var t=document.getElementById('tips');t.textContent=tekst;t.classList.add('vis');
+  setTimeout(function(){t.classList.remove('vis');},3000);
+}
+
+function visSlutt() {
+  var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;
+  document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Fremragende ingeniørarbeid!':snitt>=50?'👍 Godt jobbet!':'💪 Fortsett å øve!';
+  document.getElementById('slutt-p').textContent='Du fikk '+riktige+' av '+TOTAL+' riktig ('+snitt+'%). Ohms lov: U = R · I';
+  document.getElementById('slutt').style.display='flex';
+}
+
+// ── KOMPONENT-KASSE ───────────────────────────────────────────────
+function byggKasse() {
+  var grid=document.getElementById('kgrid');grid.innerHTML='';
+  KOMP_DEF.forEach(function(d){
+    var btn=document.createElement('div');btn.className='kbtn';btn.dataset.id=d.id;
+    btn.innerHTML='<span class="kikon" style="color:'+d.farge+'">'+
+      (d.type==='transistor'?'T':d.type==='kilde'?'⚡':d.type==='pære'?'💡':d.type==='led'?'◀':'▭')+
+      '</span><span><div class="knavn">'+d.navn+'</div><div class="kinfo">'+d.info+'</div></span>';
+    btn.onclick=function(){
+      if(valgtDef&&valgtDef.id===d.id){
+        valgtDef=null;document.querySelectorAll('.kbtn').forEach(function(b){b.classList.remove('sel');});
+      } else {
+        valgtDef=d;
+        document.querySelectorAll('.kbtn').forEach(function(b){b.classList.remove('sel');});
+        btn.classList.add('sel');
+        visTips('Klikk i brettet for å plassere: '+d.navn);
+      }
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+function velgNivå(n,el){
+  nivå=n;
+  document.querySelectorAll('.inv').forEach(function(e){e.classList.remove('aktiv');});
+  el.classList.add('aktiv');
+}
+
+function startSpill(){
+  if(nivå==='lett'){OPPGAVER=OPPG_LETT;TOTAL=OPPG_LETT.length;}
+  else if(nivå==='middels'){OPPGAVER=OPPG_MIDDELS;TOTAL=OPPG_MIDDELS.length;}
+  else{OPPGAVER=OPPG_HARD;TOTAL=OPPG_HARD.length;}
+  oppgNr=0;riktige=0;forsøk=0;
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('game').style.display='flex';
+
+  canvas=document.getElementById('c');ctx=canvas.getContext('2d');
+  var cw=document.getElementById('cw');
+  W=canvas.width=cw.offsetWidth;H=canvas.height=cw.offsetHeight;
+  window.addEventListener('resize',function(){
+    W=canvas.width=cw.offsetWidth;H=canvas.height=cw.offsetHeight;
+  });
+  canvas.addEventListener('mousedown',canvasMouseDown);
+  canvas.addEventListener('mousemove',canvasMouseMove);
+  canvas.addEventListener('mouseup',canvasMouseUp);
+  canvas.addEventListener('contextmenu',function(e){e.preventDefault();});
+
+  byggKasse();
+  if(animasjonsId) cancelAnimationFrame(animasjonsId);
+  tegn();
+  nesteOppgave();
+  visTips('Velg komponent fra kassen til høyre, klikk for å plassere. Dra mellom terminaler for å koble.');
+}
+</script>
+</body>
+</html>
