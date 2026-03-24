@@ -153,6 +153,26 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .sbtn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:.85rem;font-family:var(--font-body);}
 .sbtn.p{background:var(--green);color:#000;}
 .sbtn.s{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.15);}
+
+/* ── FLAMME ── */
+.flamme-salt-btn{
+  padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.06);color:var(--text);cursor:pointer;
+  font-family:inherit;transition:all .15s;min-width:70px;text-align:center;
+}
+.flamme-salt-btn:hover{background:rgba(255,255,255,0.12);}
+.flamme-salt-btn.valgt{border-color:var(--accent);background:rgba(255,200,50,0.15);color:var(--accent);}
+.flamme-salt-navn{font-size:.78rem;font-weight:700;}
+.flamme-salt-ion{font-size:.68rem;color:var(--textdim);}
+.flamme-alt-btn{
+  padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);color:var(--text);cursor:pointer;
+  font-family:inherit;font-size:.8rem;text-align:left;transition:all .15s;
+}
+.flamme-alt-btn:hover:not(:disabled){background:rgba(255,255,255,0.12);}
+.flamme-alt-btn.rett{background:rgba(74,222,128,0.2);border-color:rgba(74,222,128,0.5);color:var(--green);}
+.flamme-alt-btn.feil-valg{background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.4);color:#f87171;}
+.flamme-alt-btn:disabled{opacity:0.7;cursor:default;}
 </style>
 </head>
 <body>
@@ -232,6 +252,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         <div id="blander-innhold">Tomt</div>
       </div>
 
+
       <div id="reaksjon-display">
         <div id="reaksjon-emoji">🧪</div>
         <div id="reaksjon-tekst">Bland kjemikalier i begeret og klikk for å se reaksjonen.</div>
@@ -240,6 +261,21 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
     </div>
 
     <!-- HØYRE -->
+    
+    <!-- FLAMME-PANEL — søster til #lab i #main -->
+    <div id="flamme-panel" style="display:none;flex:1;flex-direction:column;align-items:center;gap:10px;padding:12px 8px;overflow-y:auto;">
+      <div style="font-size:.72rem;color:var(--textdim);text-transform:uppercase;letter-spacing:1px;text-align:center;">Salthylle – klikk et salt, hold det til flammen</div>
+      <div id="flamme-salthylle" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;"></div>
+      <div style="position:relative;width:200px;height:260px;flex-shrink:0;">
+        <canvas id="flamme-canvas" style="width:200px;height:260px;border-radius:8px;background:rgba(0,0,0,0.3);"></canvas>
+      </div>
+      <button id="flamme-svar-knapp" onclick="visFlammeAlternativer()"
+        style="padding:9px 26px;background:var(--accent);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.9rem;">
+        🔍 Svar på oppgaven
+      </button>
+      <div id="flamme-svar-boks" style="display:none;grid-template-columns:1fr 1fr;gap:6px;width:100%;max-width:380px;"></div>
+    </div>
+
     <div id="hoyre">
       <div>
         <div class="ptittel">Kjemikalie-info</div>
@@ -287,108 +323,206 @@ const KJEMIKALIER = [
   { id:'naoh',  navn:'Natriumhydroksid',  farge:'#ffccaa', pH:13, type:'base',  info:'Sterk base. pH ≈ 13. Brukes i såpe. Svært etsende – ikke rør!', kort:'NaOH\npH 13' },
   { id:'fenolf',navn:'Fenolftalein',       farge:'#ffffff', pH:7,  type:'indikator',info:'Indikator: fargeløs i syre, rosa/rød i base. Brukes til å teste pH.', kort:'Indikator\nfarge' },
   { id:'limus', navn:'Lakmus',             farge:'#cc88ff', pH:7,  type:'indikator',info:'Indikator: rød i syre, blå i base. Brukes til pH-testing i undervisning.', kort:'Lakmus\nindikator' },
-  { id:'kobber',navn:'Kobbersulfat (CuSO₄)',farge:'#2299dd',pH:4,  type:'salt',  info:'Blå løsning. Reagerer med jern. Brukes i galvanisering.', kort:'CuSO₄\npH 4' },
+  { id:'kobber',navn:'Kobbersulfat (CuSO₄)',farge:'#2299dd',pH:4,  type:'salt',  info:'Blå løsning. Reagerer med jern. Brukes i galvanisering.', kort:'CuSO₄\npH 4' },,
+  { id:'jod',  navn:'Jod (I₂)',       farge:'#8b4513',pH:5,type:'indikator',info:'Brun-oransje. Lager blå/svart med stivelse!', kort:'I₂\\nbrun' },
+  { id:'stiv', navn:'Stivelse',          farge:'#f0ead6',pH:7,type:'polymer',  info:'Hvitaktig. Reagerer spektakulært med jod!', kort:'Stivelse\\npH 7' },
 ];
 
 // ══════════════════════════════════════════════
 // OPPGAVER
 // ══════════════════════════════════════════════
-const OPPGAVER = [
-  {
-    id:'nøytral', emoji:'⚖️', navn:'Nøytralisering', ph_mål:[1,13], ingenPH:true,
-    tekst:'Bland en syre og en base for å lage en nøytralisasjonsreaksjon. Syre + base → salt + vann!',
-    hint:'Syre + base → salt + vann. Prøv HCl + NaOH eller eddik + bikarbonat.',
-    nøkkel:['syre','base'], resultat:'nøytralisering',
-    reaksjonEmoji:'💧', reaksjonTekst:'Nøytralisering! Syre + base reagerte og dannet salt og vann. Reaksjonen: HCl + NaOH → NaCl + H₂O',
-    kjemiInfo:'Syre + Base → Salt + Vann. HCl + NaOH → NaCl + H₂O'
-  },
-  {
-    id:'sur', emoji:'🍋', navn:'Sur løsning (pH < 4)', ph_mål:[0,4],
-    tekst:'Lag en tydelig sur løsning med pH under 4. Bruk sterke eller svake syrer.',
-    hint:'Syrer har lav pH. Saltsyre (pH 1) er sterkest. Eddik er mildere.',
-    nøkkel:['syre'], resultat:'sur',
-    reaksjonEmoji:'🍋', reaksjonTekst:'Sur løsning! pH er under 4. Syren dominerer løsningen.',
-    kjemiInfo:'Syrer frigjør H⁺-ioner i vann, som gir lav pH.'
-  },
-  {
-    id:'base', emoji:'🧼', navn:'Basisk løsning (pH > 8)', ph_mål:[8,14],
-    tekst:'Lag en tydelig basisk løsning med pH over 8. Bruk NaOH for sterkest effekt.',
-    hint:'Baser har høy pH. NaOH (pH 13) er sterkest. Bikarbonat gir pH ≈ 8,5.',
-    nøkkel:['base'], resultat:'base',
-    reaksjonEmoji:'🧼', reaksjonTekst:'Basisk løsning! pH er over 10. Basen dominerer.',
-    kjemiInfo:'Baser frigjør OH⁻-ioner i vann, som gir høy pH.'
-  },
-  {
-    id:'gass', emoji:'💨', navn:'Gassutvikling (CO₂)', ph_mål:[4,7],
-    tekst:'Lag en reaksjon som produserer gass! Bikarbonat reagerer med syre og lager karbondioksid (CO₂).',
-    hint:'Bikarbonat (NaHCO₃) + syre → CO₂-gass. Prøv eddik + bikarbonat.',
-    nøkkel:['bikarb','syre'], resultat:'gass', ingenPH:true,
-    reaksjonEmoji:'💨', reaksjonTekst:'FIZZ! 💨 CO₂-bobler stiger opp! NaHCO₃ + syre → CO₂ + H₂O + salt. Gassutvikling er synlig!',
-    kjemiInfo:'NaHCO₃ + syre → CO₂-gass + vann + salt. Brukes i bakepulver!'
-  },
-  {
-    id:'fenolf_rosa', emoji:'🌸', navn:'Rosa/rød indikator', ph_mål:[8,14],
-    tekst:'Fenolftalein er fargeløs i syre og blir rosa/rød i base. Lag en basisk løsning med fenolftalein.',
-    hint:'Tilsett fenolftalein og en base. Jo mer basisk, jo rødere farge.',
-    nøkkel:['fenolf','base'], resultat:'fenolf_rosa',
-    reaksjonEmoji:'🌸', reaksjonTekst:'Fenolftalein er blitt rosa! Løsningen er basisk (pH > 8). Indikatoren avslører pH.',
-    kjemiInfo:'Fenolftalein: fargeløs ved pH < 8, rosa ved pH 8–10, dyp rød ved pH > 10.'
-  },
-  {
-    id:'lakmus_rød', emoji:'🔴', navn:'Rød lakmus', ph_mål:[0,6],
-    tekst:'Lakmus blir rød i sur løsning og blå i basisk. Lag en sur løsning med lakmus.',
-    hint:'Tilsett lakmus-indikatoren og en syre.',
-    nøkkel:['limus','syre'], resultat:'lakmus_rød',
-    reaksjonEmoji:'🔴', reaksjonTekst:'Lakmus er rød! Løsningen er sur (pH < 7). Lakmus er en naturlig indikator fra lav.',
-    kjemiInfo:'Lakmus er blå i base, rød i syre, lilla nær nøytralt.'
-  },
-  {
-    id:'kobber_jern', emoji:'⚡', navn:'Kobbersulfat-reaksjon', ph_mål:[3,6],
-    tekst:'Lag en løsning der kobbersulfat er dominerende. CuSO₄ gir blå løsning og kan reagere med jern.',
-    hint:'Kobbersulfat er en blå løsning. Tilsett gjerne vann for å løse det opp.',
-    nøkkel:['kobber'], resultat:'kobber', ingenPH:true,
-    reaksjonEmoji:'💙', reaksjonTekst:'Kobbersulfat-løsning! Den karakteristiske blåfargen skyldes Cu²⁺-ioner i vann.',
-    kjemiInfo:'CuSO₄ løst i vann gir Cu²⁺-ioner som gir blåfargen. Brukes til galvanisering.'
-  },
-  {
-    id:'varm', emoji:'🔥', navn:'Eksoterm reaksjon (varme)', ph_mål:[8,14],
-    tekst:'NaOH løst i vann er en eksoterm prosess – den avgir varme! Lag en sterk basisk løsning.',
-    hint:'Sterk base i vann gir varme. NaOH + H₂O er eksotermt.',
-    nøkkel:['naoh','vann'], resultat:'varm',
-    reaksjonEmoji:'🔥', reaksjonTekst:'Eksoterm! NaOH + H₂O avgir varme. Løsningen blir varm. Dette er en eksoterm reaksjon.',
-    kjemiInfo:'Eksoterm: reaktantene har mer energi enn produktene → varme frigjøres.'
-  },
-,{
-    id:'lakmus_blå', emoji:'💙', navn:'Blå lakmus (basisk)', ph_mål:[8,14],
-    tekst:'Lakmus blir blå i basisk løsning. Lag en basisk løsning med lakmus-indikator.',
-    hint:'Tilsett lakmus og en base. NaOH gir sterk blåfarge.',
-    nøkkel:['limus','base'], resultat:'lakmus_blå',
-    reaksjonEmoji:'💙', reaksjonTekst:'Lakmus er blå! Løsningen er basisk (pH > 7). Lakmus brukes til å skille syrer fra baser.',
-    kjemiInfo:'Lakmus er et naturlig fargestoff fra lav (Roccella). Blå i base, rød i syre.'
-  },{
-    id:'fenolf_fargelos', emoji:'🔬', navn:'Fargeløs fenolftalein (sur)', ph_mål:[0,7],
-    tekst:'Fenolftalein er fargeløs i sur og nøytral løsning, men rosa i base. Lag en sur løsning med fenolftalein – og behold den fargeløs!',
-    hint:'Fenolftalein forblir fargeløs i syre. Tilsett en syre og fenolftalein.',
-    nøkkel:['fenolf','syre'], resultat:'fenolf_fargelos', ingenPH:false,
-    reaksjonEmoji:'🔬', reaksjonTekst:'Fenolftalein er fargeløs! Løsningen er sur (pH < 7). Indikatoren skifter farge først ved pH > 8.',
-    kjemiInfo:'Fenolftalein er en syrebase-indikator: fargeløs ved pH 0–8, rosa ved pH 8–10, lilla/rød ved pH > 10.'
-  },{
-    id:'nøytral_vann', emoji:'💧', navn:'Nøytralt vann (pH = 7)', ph_mål:[6,8],
-    tekst:'Rent vann er nøytralt med pH = 7. Lag en løsning som er så nær pH 7 som mulig – bruk bare vann!',
-    hint:'Vann alene har pH = 7. Ikke tilsett syrer eller baser.',
-    nøkkel:['vann'], resultat:'nøytral_vann', ingenPH:false,
-    reaksjonEmoji:'💧', reaksjonTekst:'pH = 7! Rent vann er nøytralt – like mange H⁺ og OH⁻-ioner.',
-    kjemiInfo:'Vann danner H⁺ og OH⁻-ioner i like mengder: H₂O ⇌ H⁺ + OH⁻. Konsentrasjonen er 10⁻⁷ mol/L → pH = 7.'
-  },{
-    id:'kobber_blå', emoji:'💎', navn:'Blå kobberløsning', ph_mål:[0,14], ingenPH:true,
-    tekst:'Kobbersulfat (CuSO₄) gir en karakteristisk blå løsning. Lag en løsning der kobberioner dominerer.',
-    hint:'Tilsett kobbersulfat. Vann løser det opp og gjør løsningen blåere.',
-    nøkkel:['kobber'], resultat:'kobber_blå',
-    reaksjonEmoji:'💎', reaksjonTekst:'Blå kobberløsning! Cu²⁺-ionene absorberer rødt lys og reflekterer blått. Brukes i galvanisering.',
-    kjemiInfo:'CuSO₄ + H₂O → Cu²⁺ + SO₄²⁻. Cu²⁺-ioner gir den karakteristiske blåfargen til kobbersulfatløsning.'
-  }
-
+// ══════════════════ OPPGAVER LETT ══════════════════
+const OPPG_LETT = [
+  { id:'L_nøytral', emoji:'⚖️', navn:'Nøytralisering',
+    tekst:'Bland en syre og en base. pH skal bli nær 7.',
+    hint:'Syre + base → salt + vann. Prøv HCl + NaOH.',
+    nøkkel:['syre','base'], ingenPH:true,
+    reaksjonEmoji:'⚖️', reaksjonTekst:'Nøytralisering!',
+    kjemiInfo:'Syre + Base → Salt + Vann.' },
+  { id:'L_sur', emoji:'🍋', navn:'Sur løsning (pH < 4)',
+    tekst:'Lag en sur løsning med pH under 4. Bruk en syre.',
+    hint:'Saltsyre er sterkest (pH 1). Eddiksyre er svakere (pH 3).',
+    nøkkel:['syre'], ph_mål:[0,4],
+    reaksjonEmoji:'🍋', reaksjonTekst:'Sur løsning!',
+    kjemiInfo:'Syrer frigjør H⁺-ioner i vann.' },
+  { id:'L_gass', emoji:'💨', navn:'Gassutvikling (CO₂)',
+    tekst:'Lag CO₂-bobler! Bland bikarbonat med en syre.',
+    hint:'Bikarbonat + syre → CO₂. Prøv eddik + bikarbonat.',
+    nøkkel:['bikarb','syre'], ingenPH:true,
+    reaksjonEmoji:'💨', reaksjonTekst:'FIZZ! CO₂-bobler!',
+    kjemiInfo:'NaHCO₃ + syre → CO₂-gass + H₂O + salt.' },
+  { id:'L_jod_stiv', emoji:'🔵', navn:'Jod-stivelse test',
+    tekst:'Bland jod og stivelse for en dramatisk fargeendring!',
+    hint:'Jod + stivelse → mørk blå/svart farge.',
+    nøkkel:['jod','stiv'], ingenPH:true,
+    reaksjonEmoji:'🔵', reaksjonTekst:'Mørk blå! Jod setter seg inn i stivelsens helix-struktur.',
+    kjemiInfo:'I₂ + stivelse → blå kompleks. Brukes til å påvise stivelse i mat.' },
+  { id:'L_lakmus_rød', emoji:'🔴', navn:'Rød lakmus',
+    tekst:'Lakmus skal bli rød! Lag en sur løsning med lakmus.',
+    hint:'Lakmus + syre → rød. Bruk saltsyre eller eddiksyre.',
+    nøkkel:['limus','syre'], ph_mål:[0,6],
+    reaksjonEmoji:'🔴', reaksjonTekst:'Lakmus er rød! Sur løsning.',
+    kjemiInfo:'Lakmus er blå i base, rød i syre.' },
+  { id:'L_base', emoji:'🧼', navn:'Basisk løsning (pH > 10)',
+    tekst:'Lag en basisk løsning med pH over 10.',
+    hint:'NaOH er en sterk base med pH 13.',
+    nøkkel:['base'], ph_mål:[10,14],
+    reaksjonEmoji:'🧼', reaksjonTekst:'Basisk løsning! pH over 10.',
+    kjemiInfo:'Baser frigjør OH⁻-ioner i vann.' },
 ];
+
+// ══════════════════ OPPGAVER MIDDELS ══════════════════
+const OPPG_MIDDELS = [
+  { id:'M_fenolf_rosa', emoji:'🌸', navn:'Rosa fenolftalein',
+    tekst:'Fenolftalein er fargeløs i syre, rosa i base. Gjør den rosa!',
+    hint:'Fenolftalein + base → rosa.',
+    nøkkel:['fenolf','base'], ph_mål:[8,14],
+    reaksjonEmoji:'🌸', reaksjonTekst:'Fenolftalein er rosa!',
+    kjemiInfo:'Fenolftalein: fargeløs pH 0–8, rosa pH 8–10.' },
+  { id:'M_lakmus_blå', emoji:'💙', navn:'Blå lakmus',
+    tekst:'Lakmus skal bli blå. Lag en basisk løsning med lakmus.',
+    hint:'Lakmus + base → blå.',
+    nøkkel:['limus','base'], ph_mål:[8,14],
+    reaksjonEmoji:'💙', reaksjonTekst:'Lakmus er blå! Basisk løsning.',
+    kjemiInfo:'Lakmus er et naturlig fargestoff fra lav.' },
+  { id:'M_fenolf_fargelos', emoji:'🔬', navn:'Fargeløs fenolftalein',
+    tekst:'Fenolftalein skal forbli fargeløs. Lag en sur løsning med fenolftalein.',
+    hint:'Fenolftalein er fargeløs i syre.',
+    nøkkel:['fenolf','syre'], ph_mål:[0,7],
+    reaksjonEmoji:'🔬', reaksjonTekst:'Fenolftalein er fargeløs! Sur løsning.',
+    kjemiInfo:'Fenolftalein skifter farge først over pH 8.' },
+  { id:'M_varm', emoji:'🔥', navn:'Eksoterm reaksjon',
+    tekst:'NaOH i vann avgir varme. Lag en varm, basisk løsning.',
+    hint:'NaOH + vann er eksotermt.',
+    nøkkel:['naoh','vann'], ph_mål:[8,14],
+    reaksjonEmoji:'🔥', reaksjonTekst:'Eksoterm! NaOH + H₂O avgir varme.',
+    kjemiInfo:'Eksoterm: energi frigjøres som varme.' },
+  { id:'M_kobber_blå', emoji:'💎', navn:'Blå kobberløsning',
+    tekst:'Lag en blå løsning med kobbersulfat.',
+    hint:'CuSO₄ i vann gir blå Cu²⁺-løsning.',
+    nøkkel:['kobber'], ingenPH:true,
+    reaksjonEmoji:'💎', reaksjonTekst:'Blå kobberløsning! Cu²⁺-ioner gir blåfargen.',
+    kjemiInfo:'CuSO₄ + H₂O → Cu²⁺ + SO₄²⁻.' },
+  { id:'M_nøytral_vann', emoji:'💧', navn:'Nøytralt vann',
+    tekst:'Lag en nøytral løsning med bare vann (pH = 7).',
+    hint:'Rent vann har pH = 7. Tilsett ingenting annet.',
+    nøkkel:['vann'], bareVann:true, ph_mål:[6,8],
+    reaksjonEmoji:'💧', reaksjonTekst:'pH = 7! Rent vann er nøytralt.',
+    kjemiInfo:'H₂O ⇌ H⁺ + OH⁻. Konsentrasjonen er 10⁻⁷ mol/L.' },
+  { id:'M_jod_stiv_sur', emoji:'⬜', navn:'Jod-stivelse forsvinner',
+    tekst:'Bland jod og stivelse, tilsett en sterk syre. Hva skjer med blåfargen?',
+    hint:'Syre bryter ned jod-stivelse-komplekset.',
+    nøkkel:['jod','stiv','syre'], ph_mål:[0,4],
+    reaksjonEmoji:'⬜', reaksjonTekst:'Blåfargen forsvant! Syre bryter ned I₂-stivelse-komplekset.',
+    kjemiInfo:'I sur løsning reduseres jod og mister evnen til å farge stivelse.' },
+];
+
+// ══════════════════ OPPGAVER VANSKELIG ══════════════════
+const OPPG_HARD = [
+  { id:'H_nøytral_presis', emoji:'⚖️', navn:'Presis nøytralisering',
+    tekst:'Lag en løsning med nøyaktig pH 7. Tre stoffer kreves.',
+    hint:'HCl + NaOH + vann → pH 7.',
+    nøkkel:['hcl','naoh','vann'], ph_mål:[6.5,7.5],
+    reaksjonEmoji:'⚖️', reaksjonTekst:'pH = 7! Perfekt nøytralisering.',
+    kjemiInfo:'HCl + NaOH → NaCl + H₂O. Vann fortynner.' },
+  { id:'H_buffer', emoji:'🛡️', navn:'Acetatbuffer',
+    tekst:'Lag en buffersone rundt pH 5–6. Bruk tre stoffer.',
+    hint:'Eddik + NaOH + vann → acetatbuffer.',
+    nøkkel:['eddik','naoh','vann'], ph_mål:[5,7],
+    reaksjonEmoji:'🛡️', reaksjonTekst:'Acetatbuffer! pH ≈ 5–6.',
+    kjemiInfo:'Buffer: svak syre + konjugert base motstår pH-endring.' },
+  { id:'H_fenolf_forsvin', emoji:'🎭', navn:'Fenolftalein tur-retur',
+    tekst:'Gjør fenolftalein rosa, tilsett så syre til den er fargeløs igjen.',
+    hint:'Fenolftalein + NaOH → rosa. Legg til HCl → fargeløs.',
+    nøkkel:['fenolf','naoh','hcl'], ph_mål:[0,7],
+    reaksjonEmoji:'🎭', reaksjonTekst:'Fargeløs igjen! Syre nøytraliserte basen.',
+    kjemiInfo:'Nøytralisering fjerner basen som holdt fenolftalein rosa.' },
+  { id:'H_dobbel_ind', emoji:'🌈', navn:'To indikatorer + base',
+    tekst:'Bruk begge indikatorene og en base. Begge skal skifte farge.',
+    hint:'Lakmus + fenolftalein + NaOH → blå lakmus og rosa fenolftalein.',
+    nøkkel:['limus','fenolf','naoh'], ph_mål:[10,14],
+    reaksjonEmoji:'🌈', reaksjonTekst:'Begge indikatorer skiftet farge!',
+    kjemiInfo:'Ulike indikatorer reagerer ved forskjellig pH.' },
+  { id:'H_jod_base', emoji:'🟡', navn:'Jod reduseres i base',
+    tekst:'Bland jod og stivelse, tilsett NaOH. Fargen forsvinner!',
+    hint:'NaOH reduserer I₂ → I⁻ som ikke farger stivelse.',
+    nøkkel:['jod','stiv','naoh'], ph_mål:[10,14],
+    reaksjonEmoji:'🟡', reaksjonTekst:'Fargen forsvant! NaOH reduserte I₂ → I⁻.',
+    kjemiInfo:'I₂ + 2NaOH → NaI + NaIO + H₂O.' },
+  { id:'H_gass_salt', emoji:'🌊', navn:'Gass og nøytralt salt',
+    tekst:'Lag CO₂-gass OG en nær-nøytral løsning. Tre stoffer.',
+    hint:'Eddik + bikarbonat + vann → CO₂ + natriumacetat.',
+    nøkkel:['eddik','bikarb','vann'], ph_mål:[5,8],
+    reaksjonEmoji:'🌊', reaksjonTekst:'CO₂-bobler og nøytral salt-løsning!',
+    kjemiInfo:'CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑.' },
+];
+
+// ══════════════════ FLAMME-OPPGAVER ══════════════════
+const FLAMME_LETT = [
+  { id:'FL_gul', emoji:'🔥', navn:'Gul flamme', type:'flamme',
+    tekst:'Hold et salt til brenneren og observer flammen. Hvilket salt gir GUL flamme?',
+    hint:'Natrium (Na) gir alltid gul flamme. NaCl er bordsalt.',
+    alternativer:['NaCl – Natriumklorid','KCl – Kaliumklorid','CaCl₂ – Kalsiumklorid','CuCl₂ – Kobberklorid'],
+    riktigIdx:0,
+    feilTekst:['','KCl gir lilla/fiolett flamme – det er kalium.','CaCl₂ gir rødt/oransje flamme – det er kalsium.','CuCl₂ gir blågrønn flamme – det er kobber.'],
+    kjemiInfo:'Natrium (Na) gir gul flamme ved 589 nm. Brukes til å identifisere Na⁺ i laboratoriet.',
+    visFlamme:'nacl' },
+];
+
+const FLAMME_MIDDELS = [
+  { id:'FM_lilla', emoji:'💜', navn:'Lilla flamme – hvilket ion?', type:'flamme',
+    tekst:'Du holder et salt til brenneren og ser en lilla flamme. Hvilket ion er ansvarlig?',
+    hint:'Kalium-ioner (K⁺) gir lilla/fiolett flamme.',
+    alternativer:['Na⁺ (Natrium)','K⁺ (Kalium)','Ca²⁺ (Kalsium)','Cu²⁺ (Kobber)'],
+    riktigIdx:1,
+    feilTekst:['Na⁺ gir GUL flamme (589 nm) – ikke lilla.','','Ca²⁺ gir rødt/oransje flamme – ikke lilla.','Cu²⁺ gir blågrønn flamme – ikke lilla.'],
+    kjemiInfo:'K⁺ gir lilla flamme ved 767 og 404 nm. NB: Na-forurensning kan maskere lilla med gult!',
+    visFlamme:'kcl' },
+  { id:'FM_rød', emoji:'🔴', navn:'Rødt fyrverkeri – hvilket salt?', type:'flamme',
+    tekst:'Røde nødlys og rødt fyrverkeri bruker et bestemt salt. Hvilket?',
+    hint:'Strontium gir skarlagenrød flamme og brukes i nødlys.',
+    alternativer:['LiCl – Litiumklorid','KCl – Kaliumklorid','SrCl₂ – Strontiumklorid','NaCl – Natriumklorid'],
+    riktigIdx:2,
+    feilTekst:['LiCl gir karmoisin-rød – men til nødlys brukes SrCl₂ (skarlagenrød).','KCl gir lilla/fiolett flamme – ikke rød.','','NaCl gir gul flamme – ikke rød.'],
+    kjemiInfo:'SrCl₂ brukes i røde nødlys og fyrverkeri. Sr²⁺ sender ut skarlagenrødt lys ved 606–670 nm.',
+    visFlamme:'srcl2' },
+];
+
+const FLAMME_HARD = [
+  { id:'FH_grønn', emoji:'💚', navn:'Grønt fyrverkeri – hvilket salt?', type:'flamme',
+    tekst:'Grønne fyrverkeri bruker et spesifikt salt. Hvilket?',
+    hint:'Kobber-ioner gir blågrønn flamme. CuCl₂ brukes i grønne fyrverkeri.',
+    alternativer:['CaCl₂','CuCl₂','KCl','SrCl₂'],
+    riktigIdx:1,
+    feilTekst:['CaCl₂ gir rødt/oransje – ikke grønt.','','KCl gir lilla/fiolett – ikke grønt.','SrCl₂ gir skarlagenrød – ikke grønt.'],
+    kjemiInfo:'Cu²⁺ gir blågrønn flamme ved 510–570 nm. Brukes i grønne fyrverkeri.',
+    visFlamme:'cucl2' },
+  { id:'FH_skille', emoji:'🔬', navn:'Skille Li⁺ fra Sr²⁺', type:'flamme',
+    tekst:'Litium og strontium gir begge rødlige flammer. Hva er beste måten å skille dem?',
+    hint:'Li gir mer karmoisin/rosa-rød (671 nm), Sr er mer skarlagenrød (606–670 nm).',
+    alternativer:['De kan ikke skilles – begge er røde','Li er mer rosa/karmoisin (671 nm), Sr er mer skarlagenrød (606–670 nm)','Sr gir alltid sterkere flamme enn Li','Tilsett vann – da skifter en av dem farge'],
+    riktigIdx:1,
+    feilTekst:['De KAN skilles! Bølgelengdene er ulike: Li ved 671 nm, Sr ved 606–670 nm.','','Styrken er ikke måten å skille dem – fargetone/bølgelengde er nøkkelen.','Vann endrer ikke flammefargen til metallionene.'],
+    kjemiInfo:'For nøyaktig identifisering brukes emisjonsspektroskopi (EAS). Flammeprøve er grovsortering.',
+    visFlamme:'licl' },
+  { id:'FH_natrium', emoji:'⚠️', navn:'Natrium-forurensning', type:'flamme',
+    tekst:'En flammeprøve med KCl gir gul farge i stedet for lilla. Hva er mest sannsynlig forklaring?',
+    hint:'Natrium er ekstremt lett å oppdage – selv spormengder gir gul flamme.',
+    alternativer:['KCl produserer alltid gul flamme','Spor av natrium (f.eks. fra fingre på glasstaven) forurenser prøven','Gul og lilla er samme farge i flammeprøver','Temperaturen er for høy for KCl'],
+    riktigIdx:1,
+    feilTekst:['KCl gir LILLA flamme – gul betyr natrium-forurensning.','','Gul (589 nm) og lilla (767/404 nm) er svært ulike bølgelengder.','Temperatur påvirker intensiteten, ikke hvilken farge ionet sender ut.'],
+    kjemiInfo:'Na sender ut lys ~1000× mer effektivt enn K. Alltid bruk ren glasstav ved flammeprøver!',
+    visFlamme:'nacl' },
+];
+
+// Slå sammen beger- og flamme-oppgaver per nivå
+const OPPG_LETT_FULL    = OPPG_LETT.concat(FLAMME_LETT);
+const OPPG_MIDDELS_FULL = OPPG_MIDDELS.concat(FLAMME_MIDDELS);
+const OPPG_HARD_FULL    = OPPG_HARD.concat(FLAMME_HARD);
+
+
+// Aktiv liste (endres av velgN)
+let OPPGAVER = OPPG_LETT_FULL;
 
 // ══════════════════════════════════════════════
 // TILSTAND
@@ -397,15 +531,19 @@ let nivå='lett', oppgNr=0, treffT=0, forsøkT=0;
 let begerInnhold=[];  // [{id, pH, type, farge}]
 let gjeldende=null;
 let harLøst=false;
-const TOTAL=12;
+let TOTAL=OPPG_LETT_FULL.length;
 
 function velgN(n,el){
   nivå=n;
+  if(n==='lett') OPPGAVER=OPPG_LETT_FULL;
+  else if(n==='middels') OPPGAVER=OPPG_MIDDELS_FULL;
+  else OPPGAVER=OPPG_HARD_FULL;
   document.querySelectorAll('.nkort').forEach(k=>k.classList.remove('valgt'));
   el.classList.add('valgt');
 }
 
 function startSpill(){
+  TOTAL=OPPGAVER.length;
   document.getElementById('setup').style.display='none';
   document.getElementById('slutt').classList.remove('vis');
   document.getElementById('game').style.display='flex';
@@ -531,6 +669,10 @@ function beregnPH(){
     'kobber+vann':4.0,
     'kobber+hcl':1.5,
     'kobber+eddik':3.0,
+    'jod':5.0,'stiv':7.0,'jod+stiv':7.0,
+    'hcl+jod+stiv':1.0,'eddik+jod+stiv':3.0,'jod+naoh+stiv':13.0,
+    'eddik+naoh+vann':6.5,'hcl+naoh+vann':7.0,
+    'limus+fenolf+naoh':13.0,'hcl+limus+fenolf':1.0,
   };
   // Slå opp eksakt kombinasjon
   if(pH_tabell[ids] !== undefined) return pH_tabell[ids];
@@ -599,6 +741,179 @@ function utførReaksjon(){
   sjekk(true);
 }
 
+// Lager dynamisk reaksjonstekst basert på hva som faktisk er i begeret
+function lagReaksjonstekst(o, beger) {
+  const ids = beger.map(k=>k.id);
+  const typer = beger.map(k=>k.type);
+  const harHcl    = ids.includes('hcl');
+  const harEddik  = ids.includes('eddik');
+  const harJod    = ids.includes('jod');
+  const harStiv   = ids.includes('stiv');
+  const harNaoh   = ids.includes('naoh');
+  const harBikarb = ids.includes('bikarb');
+  const harVann   = ids.includes('vann');
+  const harLimus  = ids.includes('limus');
+  const harFenolf = ids.includes('fenolf');
+  const harKobber = ids.includes('kobber');
+  const harSyre   = typer.includes('syre');
+  const harBase   = typer.includes('base');
+
+  // Nøytralisering
+  if (o.id === 'nøytral') {
+    if (harHcl && harNaoh)    return 'HCl + NaOH → NaCl + H₂O. Saltsyre og natriumhydroksid nøytraliserer hverandre!';
+    if (harEddik && harNaoh)  return 'CH₃COOH + NaOH → CH₃COONa + H₂O. Eddiksyre og NaOH gir natriumacetat!';
+    if (harHcl && harBikarb)  return 'HCl + NaHCO₃ → NaCl + H₂O + CO₂. Merk gassutvikling!';
+    if (harEddik && harBikarb)return 'CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂. Eddik + bikarbonat!';
+    if (harSyre && harBase)   return 'Syre + base → salt + vann. Nøytralisering oppnådd!';
+    return o.reaksjonTekst;
+  }
+
+  // Gassutvikling
+  if (o.id === 'gass') {
+    if (harHcl && harBikarb)   return 'HCl + NaHCO₃ → NaCl + H₂O + CO₂↑. Saltsyre og bikarbonat gir CO₂-bobler!';
+    if (harEddik && harBikarb) return 'CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑. Eddiksyre og bikarbonat — kjennIgjen lukten!';
+    return 'Syre + NaHCO₃ → CO₂↑ + H₂O + salt. Gassutvikling!';
+  }
+
+  // Sur løsning
+  if (o.id === 'sur') {
+    if (harHcl)   return 'HCl i vann → H⁺ + Cl⁻. Sterk syre gir lav pH!';
+    if (harEddik) return 'CH₃COOH ⇌ CH₃COO⁻ + H⁺. Svak syre, delvis ionisert. pH ≈ 3.';
+    if (harKobber) return 'CuSO₄ er svakt surt (pH ≈ 4). Cu²⁺ reagerer svakt med vann.';
+    return o.reaksjonTekst;
+  }
+
+  // Basisk løsning
+  if (o.id === 'base') {
+    if (harNaoh)   return 'NaOH → Na⁺ + OH⁻. Sterk base gir høy pH!';
+    if (harBikarb) return 'NaHCO₃ ⇌ Na⁺ + HCO₃⁻. Svak base, pH ≈ 8,5.';
+    return o.reaksjonTekst;
+  }
+
+  // Fenolftalein rosa
+  if (o.id === 'fenolf_rosa') {
+    if (harNaoh)   return 'Fenolftalein + NaOH → ROSA! Sterk base gir intens farge.';
+    if (harBikarb) return 'Fenolftalein + bikarbonat → svakt rosa. pH ≈ 8,5 er akkurat over grensen.';
+    return o.reaksjonTekst;
+  }
+
+  // Fenolftalein fargeløs
+  if (o.id === 'fenolf_fargelos') {
+    if (harHcl)   return 'Fenolftalein + HCl → fargeløs. Sterk syre holder pH godt under 8.';
+    if (harEddik) return 'Fenolftalein + eddiksyre → fargeløs. pH ≈ 3, langt under grensen på 8.';
+    return o.reaksjonTekst;
+  }
+
+  // Lakmus rød
+  if (o.id === 'lakmus_rød') {
+    if (harHcl)   return 'Lakmus + HCl → RØD! Sterk syre gir klar rødfarging.';
+    if (harEddik) return 'Lakmus + eddiksyre → rød. Selv svak syre farger lakmus rødt.';
+    return o.reaksjonTekst;
+  }
+
+  // Lakmus blå
+  if (o.id === 'lakmus_blå') {
+    if (harNaoh)   return 'Lakmus + NaOH → BLÅ! Sterk base gir klar blåfarging.';
+    if (harBikarb) return 'Lakmus + bikarbonat → blå. pH ≈ 8,5 er tilstrekkelig basisk.';
+    return o.reaksjonTekst;
+  }
+
+  // Nøytralt vann
+  if (o.id === 'nøytral_vann') {
+    return 'H₂O er nøytralt: pH = 7. Like mange H⁺ og OH⁻-ioner.';
+  }
+
+  // Eksoterm
+  if (o.id === 'varm') {
+    return 'NaOH(s) + H₂O(l) → Na⁺(aq) + OH⁻(aq) + varme. Eksoterm løsning!';
+  }
+
+  // Kobber
+  if (o.id === 'kobber_jern' || o.id === 'kobber_blå') {
+    return 'CuSO₄ + H₂O → Cu²⁺(aq) + SO₄²⁻(aq). Cu²⁺-ioner gir blåfarge!';
+  }
+
+  return o.reaksjonTekst;
+}
+
+
+// Beskriver hva som faktisk skjer i begeret, uavhengig av oppgaven
+function beskriv(beger) {
+  if (!beger || beger.length === 0) return '';
+  const ids   = beger.map(k=>k.id);
+  const typer = beger.map(k=>k.type);
+  const harHcl    = ids.includes('hcl');
+  const harEddik  = ids.includes('eddik');
+  const harJod    = ids.includes('jod');
+  const harStiv   = ids.includes('stiv');
+  const harNaoh   = ids.includes('naoh');
+  const harBikarb = ids.includes('bikarb');
+  const harVann   = ids.includes('vann');
+  const harLimus  = ids.includes('limus');
+  const harFenolf = ids.includes('fenolf');
+  const harKobber = ids.includes('kobber');
+  const harSyre   = typer.includes('syre');
+  const harBase   = typer.includes('base');
+  const antall    = beger.length;
+
+  if (antall < 2) {
+    if (harHcl)     return 'Bare saltsyre i begeret – en sterk syre med pH ≈ 1.';
+    if (harEddik)   return 'Bare eddiksyre – en svak syre med pH ≈ 3.';
+    if (harNaoh)    return 'Bare NaOH – en sterk base med pH ≈ 13.';
+    if (harBikarb)  return 'Bare bikarbonat – en svak base med pH ≈ 8,5.';
+    if (harVann)    return 'Rent vann, pH = 7. Nøytralt.';
+    if (harKobber)  return 'Kobbersulfat løses i vann – blå Cu²⁺-løsning, pH ≈ 4.';
+    if (harJod)     return 'Jod (I₂) er brun-oransje i vann.';
+    if (harStiv)    return 'Stivelse i vann – hvitaktig, nøytral løsning.';
+    if (harLimus)   return 'Lakmus alene er nøytral (pH 7).';
+    if (harFenolf)  return 'Fenolftalein alene er fargeløs (pH 7).';
+    return '';
+  }
+
+  // To eller flere stoffer
+  if (harHcl && harNaoh)
+    return '⚗️ Du lagde en nøytral løsning! HCl + NaOH → NaCl + H₂O. Syre og base nøytraliserte hverandre.';
+  if (harEddik && harNaoh)
+    return '⚗️ Du lagde natriumacetat! CH₃COOH + NaOH → CH₃COONa + H₂O. Svak syre + sterk base → basisk salt.';
+  if (harHcl && harBikarb)
+    return '💨 Du lagde CO₂-gass! HCl + NaHCO₃ → NaCl + H₂O + CO₂↑. Gassutvikling!';
+  if (harEddik && harBikarb)
+    return '💨 Du lagde CO₂-gass! CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑. Kjenner du lukten av eddik?';
+  if (harJod && harStiv && harNaoh)
+    return '🟡 Fargen forsvant! NaOH reduserer I₂ → I⁻. Jodidet farger ikke stivelse blått.';
+  if (harJod && harStiv && (harHcl || harEddik))
+    return '⬜ Blåfargen forsvant! Syre bryter ned jod-stivelse-komplekset.';
+  if (harJod && harStiv)
+    return '🔵 Mørk blå/svart farge! Jod setter seg inn i stivelsens helix-struktur.';
+
+  if (harNaoh && harBikarb)
+    return '⚗️ Sterk base dominerer: NaOH + NaHCO₃ → Na₂CO₃ + H₂O. Basisk løsning (pH ≈ 11).';
+  if (harSyre && harBase)
+    return '⚗️ Syre og base reagerte – nøytralisering! pH ble ' + beregnPH().toFixed(1) + '.';
+  if (harFenolf && harNaoh)
+    return '🌸 Fenolftalein + NaOH → ROSA! Sterk base (pH > 8) farger indikatoren.';
+  if (harFenolf && harBikarb)
+    return '🌸 Fenolftalein + bikarbonat → svakt rosa ved pH ≈ 8,5.';
+  if (harFenolf && harSyre)
+    return '🔬 Fenolftalein forblir fargeløs i sur løsning (pH < 8).';
+  if (harLimus && harNaoh)
+    return '💙 Lakmus + NaOH → BLÅ! Basisk løsning (pH > 7) farger lakmus blått.';
+  if (harLimus && harBikarb)
+    return '💙 Lakmus + bikarbonat → blå ved pH ≈ 8,5.';
+  if (harLimus && harSyre)
+    return '🔴 Lakmus + syre → RØD! Sur løsning (pH < 7) farger lakmus rødt.';
+  if (harKobber && harVann)
+    return '💎 CuSO₄ løst i vann → blå Cu²⁺-løsning, pH ≈ 4.';
+  if (harNaoh && harVann)
+    return '🔥 NaOH + H₂O → eksoterm løsning! Na⁺ + OH⁻, pH ≈ 13. Løsningen blir varm.';
+  if (harHcl && harVann)
+    return '🍋 HCl i vann → H⁺ + Cl⁻. Sterk syrelig løsning, pH ≈ 1.';
+  if (harEddik && harVann)
+    return '🍋 Eddiksyre i vann → svak sur løsning, pH ≈ 3.';
+
+  return '';
+}
+
 function sjekk(visFull){
   if(begerInnhold.length===0) return;
   const ph=beregnPH();
@@ -608,7 +923,11 @@ function sjekk(visFull){
   document.getElementById('st-f').textContent=forsøkT;
 
   // Sjekk om alle nøkkel-kjemikalier er tilstede
-  const nøkkelOk=o.nøkkel.every(nøkkel=>
+  // bareVann: sjekk at KUN vann er i begeret
+  const bareVannOk = o.bareVann
+    ? begerInnhold.every(k=>k.id==='vann')
+    : true;
+  const nøkkelOk=bareVannOk && o.nøkkel.every(nøkkel=>
     begerInnhold.some(k=>k.id===nøkkel||k.type===nøkkel)
   );
   const phOk=o.ingenPH ? true : (ph>=o.ph_mål[0]&&ph<=o.ph_mål[1]);
@@ -617,7 +936,8 @@ function sjekk(visFull){
   if(visFull){
     const rd=document.getElementById('reaksjon-display');
     document.getElementById('reaksjon-emoji').textContent=o.reaksjonEmoji;
-    document.getElementById('reaksjon-tekst').textContent=`pH = ${ph.toFixed(1)}. `+o.reaksjonTekst;
+    const dynTekst = lagReaksjonstekst(o, begerInnhold);
+    document.getElementById('reaksjon-tekst').textContent=`pH = ${ph.toFixed(1)}. `+dynTekst;
     rd.style.borderColor=riktig?'rgba(74,222,128,0.5)':'rgba(248,113,113,0.3)';
     document.getElementById('reaksjon-btn').style.display='none';
   }
@@ -631,7 +951,17 @@ function sjekk(visFull){
     document.getElementById('neste-btn').style.display='block';
     animerSuksess();
   } else if(visFull&&!harLøst){
-    tb.textContent=`pH=${ph.toFixed(1)}. ${nøkkelOk?'pH er feil.':'Mangler riktig type kjemikalie.'} ${o.hint}`;
+    // Beskriv hva som faktisk skjedde
+    const faktisk = beskriv(begerInnhold);
+    let feilMsg = '';
+    if (faktisk) {
+      feilMsg = faktisk + ' — men det var ikke det oppgaven ba om. ';
+    }
+    // Hint ved feil: kun på lett nivå
+    if (nivå === 'lett') {
+      feilMsg += '💡 Hint: ' + o.hint;
+    }
+    tb.textContent = feilMsg || `pH=${ph.toFixed(1)} – dette var ikke riktig. Prøv igjen!`;
     tb.className='feil';
   }
 }
@@ -678,7 +1008,14 @@ function nesteOppgave(){
   harLøst=false;
   // Velg oppgave (syklisk men variert)
   gjeldende=OPPGAVER[(oppgNr-1)%OPPGAVER.length];
-  tømBeger();
+  if (gjeldende.type === 'flamme') {
+    skjulFlammePanel && skjulFlammePanel();  // reset
+    tømBeger();
+    visFlammePanel(gjeldende);
+  } else {
+    skjulFlammePanel && skjulFlammePanel();
+    tømBeger();
+  }
 
   // Vis mål
   document.getElementById('mål-emoji').textContent=gjeldende.emoji;
@@ -687,6 +1024,7 @@ function nesteOppgave(){
   if(nivå==='lett'){
     document.getElementById('mål-tekst').textContent=gjeldende.tekst;
     document.getElementById('bevis-boks').style.display='none';
+    if(gjeldende.type==='flamme') { setTimeout(function(){ document.getElementById('flamme-svar-knapp') && (document.getElementById('flamme-svar-knapp').style.display='block'); },100); }
   } else if(nivå==='middels'){
     document.getElementById('mål-tekst').textContent=gjeldende.tekst;
     document.getElementById('bevis-boks').style.display='block';
@@ -714,6 +1052,245 @@ function visSlutt(){
   document.getElementById('slutt-tekst').innerHTML=
     `${TOTAL} oppgaver fullført!<br>Riktige: <b>${treffT}</b> · Forsøk: <b>${forsøkT}</b>`;
   document.getElementById('slutt').classList.add('vis');
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// FLAMMEPRØVE-SYSTEM
+// ══════════════════════════════════════════════════════════════════
+
+// Saltdata for flammeprøver
+const FLAMMESALTER = [
+  { id:'nacl',  navn:'NaCl',       fullt:'Natriumklorid (NaCl)',  ion:'Na⁺',  farge:'#ffdd00', fargenavn:'Gul',              rgb:[255,220,0],   info:'Natrium farger flammen gult. Finnes i bordsalt. Forurenser ofte andre prøver!' },
+  { id:'kcl',   navn:'KCl',        fullt:'Kaliumklorid (KCl)',    ion:'K⁺',   farge:'#cc55ff', fargenavn:'Lilla/Fiolett',    rgb:[200,80,255],  info:'Kalium gir lilla flamme. Vanskelig å se om natriumforurensning er tilstede.' },
+  { id:'cacl2', navn:'CaCl₂',      fullt:'Kalsiumklorid (CaCl₂)',ion:'Ca²⁺', farge:'#ff5500', fargenavn:'Rødt/Oransjerødt', rgb:[255,80,0],    info:'Kalsium gir rødt-oransje flamme. Brukes i signalraketter og pyroteknikk.' },
+  { id:'cucl2', navn:'CuCl₂',      fullt:'Kobberklorid (CuCl₂)', ion:'Cu²⁺', farge:'#00dd88', fargenavn:'Blågrønn',         rgb:[0,210,130],   info:'Kobber gir blågrønn flamme. Brukes i grønne fyrverkeri.' },
+  { id:'licl',  navn:'LiCl',       fullt:'Litiumklorid (LiCl)',   ion:'Li⁺',  farge:'#ff1144', fargenavn:'Karminrød',        rgb:[255,20,60],   info:'Litium gir karmoisin-rød flamme. Skiller seg fra Ca ved mer rød/rosa tone.' },
+  { id:'srcl2', navn:'SrCl₂',      fullt:'Strontiumklorid (SrCl₂)',ion:'Sr²⁺',farge:'#ff2200',fargenavn:'Skarlagenrød',     rgb:[255,30,0],    info:'Strontium gir skarlagenrød flamme. Brukes i røde nødlys og fyrverkeri.' },
+];
+
+// Flamme-animasjonsvariabler
+var flammeCtx = null, flammeCanvas = null;
+var flammeTimer = null;
+var gjeldendeFlamme = null;  // nåværende flamme-farge (rgb)
+var mål_farge = null;         // ønsket farge
+var flamme_t = 0;
+
+function startFlammeAnimasjon(rgb) {
+  gjeldendeFlamme = rgb || [40, 80, 255];  // standard blå
+  mål_farge = rgb;
+  flamme_t = 0;
+  if (flammeTimer) cancelAnimationFrame(flammeTimer);
+  tegn_flamme_loop();
+}
+
+function tegn_flamme_loop() {
+  tegn_flamme();
+  flammeTimer = requestAnimationFrame(tegn_flamme_loop);
+}
+
+function tegn_flamme() {
+  var cv = document.getElementById('flamme-canvas');
+  if (!cv) return;
+  var ctx = cv.getContext('2d');
+  var W = cv.width = 200;
+  var H = cv.height = 260;
+  ctx.clearRect(0,0,W,H);
+
+  var t = Date.now() / 1000;
+  var rgb = gjeldendeFlamme || [40,80,255];
+  var r=rgb[0], g=rgb[1], b=rgb[2];
+
+  // ── Gassbrenner-kropp (metall) ──
+  var bx = W/2 - 22, bw = 44, by = H*0.72, bh = H*0.26;
+  // Hoved-rør
+  var metalGrad = ctx.createLinearGradient(bx,0,bx+bw,0);
+  metalGrad.addColorStop(0,'#555');
+  metalGrad.addColorStop(0.4,'#999');
+  metalGrad.addColorStop(0.6,'#bbb');
+  metalGrad.addColorStop(1,'#666');
+  ctx.fillStyle = metalGrad;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, bw, bh, [4,4,8,8]);
+  ctx.fill();
+
+  // Lufthull-ringe
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 2;
+  for (var ri=0; ri<3; ri++) {
+    ctx.beginPath();
+    ctx.ellipse(W/2, by + bh*0.25 + ri*bh*0.22, bw/2-3, 5, 0, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  // Fot/base
+  ctx.fillStyle = '#444';
+  ctx.beginPath();
+  ctx.roundRect(bx-8, H*0.96, bw+16, H*0.04, [0,0,4,4]);
+  ctx.fill();
+
+  // Brenner-topp (munning)
+  ctx.fillStyle = '#888';
+  ctx.beginPath();
+  ctx.roundRect(bx-3, by-6, bw+6, 10, [3,3,0,0]);
+  ctx.fill();
+
+  // ── Flamme ──
+  var flammeY = by - 6;  // starter ved brenner-topp
+  var nh = H * 0.55;     // flamme-høyde
+
+  // Puls og svaing
+  var sway  = Math.sin(t*2.1)*6 + Math.sin(t*3.7)*3;
+  var pulse = 0.85 + 0.15*Math.sin(t*4.3);
+
+  // Tegn 3 lag flamme (indre → ytre)
+  var lag = [
+    { scale:0.35, alpha:0.95, br:255, bg:255, bb:220 },  // hvit kjerne
+    { scale:0.60, alpha:0.8,  br:r*1.0, bg:g*0.9, bb:b*0.5 },
+    { scale:1.0,  alpha:0.5,  br:r*0.7, bg:g*0.5, bb:b*0.2 },
+  ];
+
+  lag.forEach(function(l) {
+    var fw = W*0.25*l.scale*pulse;
+    var fh = nh*l.scale*pulse;
+    var fx = W/2 + sway*l.scale;
+    var fy = flammeY;
+
+    var flGrad = ctx.createRadialGradient(fx, fy - fh*0.3, 0, fx, fy, fh);
+    var cr = Math.min(255,Math.round(l.br));
+    var cg = Math.min(255,Math.round(l.bg));
+    var cb = Math.min(255,Math.round(l.bb));
+    flGrad.addColorStop(0, 'rgba('+cr+','+cg+','+cb+','+l.alpha+')');
+    flGrad.addColorStop(0.5,'rgba('+Math.round(cr*0.7)+','+Math.round(cg*0.5)+','+Math.round(cb*0.3)+','+l.alpha*0.6+')');
+    flGrad.addColorStop(1, 'rgba('+Math.round(cr*0.3)+','+Math.round(cg*0.2)+',0,0)');
+
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.bezierCurveTo(
+      fx + fw, fy - fh*0.3,
+      fx + fw*0.6 + sway, fy - fh*0.8,
+      fx, fy - fh
+    );
+    ctx.bezierCurveTo(
+      fx - fw*0.6 + sway*0.5, fy - fh*0.8,
+      fx - fw, fy - fh*0.3,
+      fx, fy
+    );
+    ctx.fillStyle = flGrad;
+    ctx.fill();
+  });
+
+  // Gnister
+  if (mål_farge && Math.random() < 0.3) {
+    for (var si=0; si<2; si++) {
+      var gx = W/2 + (Math.random()-0.5)*40;
+      var gy = flammeY - nh*0.4 - Math.random()*nh*0.4;
+      ctx.beginPath();
+      ctx.arc(gx, gy, 1.5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba('+r+','+g+','+b+',0.9)';
+      ctx.fill();
+    }
+  }
+
+  // Varmebølge-effekt (shimmer)
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 20;
+  for (var wi=0; wi<3; wi++) {
+    var wx = W/2 + sway + (wi-1)*20;
+    ctx.beginPath();
+    ctx.moveTo(wx, flammeY);
+    ctx.lineTo(wx + (Math.random()-0.5)*10, flammeY - nh - 20);
+    ctx.stroke();
+  }
+}
+
+// ── Vis/skjul flamme-panel ────────────────────────────────────────
+function visFlammePanel(oppgave) {
+  document.getElementById('lab').style.display = 'none';
+  var fp = document.getElementById('flamme-panel');
+  fp.style.display = 'flex';
+
+  // Byggher salt-knapper
+  var salthylle = document.getElementById('flamme-salthylle');
+  salthylle.innerHTML = '';
+  FLAMMESALTER.forEach(function(s) {
+    var btn = document.createElement('button');
+    btn.className = 'flamme-salt-btn';
+    btn.dataset.id = s.id;
+    btn.innerHTML = '<div class="flamme-salt-navn">'+s.navn+'</div>'
+                  + '<div class="flamme-salt-ion">'+s.ion+'</div>';
+    btn.onclick = function() {
+      document.querySelectorAll('.flamme-salt-btn').forEach(function(b){b.classList.remove('valgt');});
+      btn.classList.add('valgt');
+      startFlammeAnimasjon(s.rgb);
+      document.getElementById('kjemi-info-boks').textContent = s.info;
+    };
+    salthylle.appendChild(btn);
+  });
+
+  // Start nøytral blå flamme
+  startFlammeAnimasjon(null);
+  document.getElementById('flamme-svar-boks').innerHTML = '';
+  document.getElementById('flamme-svar-boks').style.display = 'none';
+
+  // Vis alternativene med én gang
+  setTimeout(function(){ visFlammeAlternativer(); }, 100);
+}
+
+function skjulFlammePanel() {
+  document.getElementById('lab').style.display = 'flex';
+  document.getElementById('flamme-panel').style.display = 'none';
+  if (flammeTimer) { cancelAnimationFrame(flammeTimer); flammeTimer = null; }
+}
+
+function byggFlammeAlternativer(o) {
+  // ikke i bruk lenger — visFlammeAlternativer() kalles direkte
+}
+
+function visFlammeAlternativer() {
+  var o = gjeldende;
+  if (!o || !o.alternativer) return;
+  var boks = document.getElementById('flamme-svar-boks');
+  boks.style.display = 'grid';
+  boks.innerHTML = o.alternativer.map(function(alt, i) {
+    return '<button class="flamme-alt-btn" onclick="sjekkFlamme('+i+')">'
+         + alt + '</button>';
+  }).join('');
+}
+
+function sjekkFlamme(valgtIdx) {
+  var o = gjeldende;
+  if (!o || harLøst) return;
+  forsøkT++;
+  document.getElementById('st-f').textContent = forsøkT;
+
+  var riktig = valgtIdx === o.riktigIdx;
+  var btns = document.querySelectorAll('.flamme-alt-btn');
+  btns.forEach(function(b, i) {
+    if (i === o.riktigIdx) b.classList.add('rett');
+    else if (i === valgtIdx) b.classList.add('feil-valg');
+    b.disabled = true;
+  });
+
+  var tb = document.getElementById('tb');
+  if (riktig) {
+    harLøst = true; treffT++;
+    tb.textContent = '✅ Riktig! ' + o.kjemiInfo;
+    tb.className = 'ok';
+    document.getElementById('treff-t').textContent = treffT;
+    document.getElementById('st-r').textContent = treffT;
+    document.getElementById('neste-btn').style.display = 'block';
+    animerSuksess();
+  } else {
+    var faktisk = '';
+    if (nivå === 'lett') {
+      faktisk = '❌ Feil. 💡 Hint: ' + o.hint;
+    } else {
+      faktisk = '❌ ' + o.feilTekst[valgtIdx] || '❌ Feil. Prøv igjen neste gang!';
+    }
+    tb.textContent = faktisk;
+    tb.className = 'feil';
+  }
 }
 </script>
 </body>
