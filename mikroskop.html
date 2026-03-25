@@ -134,7 +134,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 /* EM-modus indikatorer */
 .em-modus #mikro-canvas { filter: sepia(0.15) contrast(1.1); }
 .zoom-label { font-size:.7rem;color:var(--dim);font-family:var(--font-m);padding:5px 4px; }
-#modus-panel .zoombtn { font-size:.72rem; }
+#modus-panel .zoombtn {
+  font-size:.76rem; font-weight:600; padding:6px 14px;
+  background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.4);
+  border:1.5px solid rgba(255,255,255,0.15); border-radius:8px;
+  transition:all .18s; letter-spacing:.3px;
+}
+#modus-panel .zoombtn:hover {
+  background:rgba(255,255,255,0.12); color:var(--text);
+  border-color:rgba(255,255,255,0.3);
+}
+#modus-lys.aktiv {
+  background:rgba(96,165,250,0.22) !important; color:#93c5fd !important;
+  border-color:#60a5fa !important; box-shadow:0 0 10px rgba(96,165,250,0.25);
+}
+#modus-em.aktiv {
+  background:rgba(251,191,36,0.2) !important; color:#fcd34d !important;
+  border-color:#fbbf24 !important; box-shadow:0 0 10px rgba(251,191,36,0.22);
+}
 
 /* Fokus-indikator i zoom-panel */
 #fokus-status{
@@ -2025,8 +2042,7 @@ function nesteProve() {
   tilfeldigePunkter = lagTilfeldigePunkter(30);
 
   // Sett riktig modus og start-zoom basert på prøvens organismer
-  var trengerEM = gjeldende.org.some(function(o){ return ORG[o] && ORG[o].em; });
-  setModus(trengerEM ? 'elektron' : 'lys');
+  setModus('lys');  // Start alltid lys — eleven bytter selv
 
   document.getElementById('prøve-teller').textContent = 'Prøve ' + prøveNr + ' av ' + TOTAL;
   document.getElementById('prøve-navn').textContent = gjeldende.navn;
@@ -2057,8 +2073,7 @@ function nesteProve() {
   });
 
   // Tips
-  document.getElementById('tips-boks').textContent =
-    'Zoom inn for å se detaljer. Bruk 400× for å skille bakterietyper.';
+  document.getElementById('tips-boks').textContent = '🔬 Start på 40×. Ingenting synlig? Prøv elektronmikroskop (⚡).';
 }
 
 function sjekkSvar(valgt, btnEl) {
@@ -2078,7 +2093,14 @@ function sjekkSvar(valgt, btnEl) {
   if (riktig) {
     riktige++;
     document.getElementById('str').textContent = riktige;
-    visFB(true, '✅ Riktig! ' + visOrgInfo());
+    // Gi bonus-kommentar basert på om fokus var god
+    var oz2 = (gjeldende && gjeldende.org.length>0 && ORG[gjeldende.org[0]])
+      ? ORG[gjeldende.org[0]].optimal_zoom : 100;
+    var ratio2 = zoom / oz2;
+    var fokusKomm = (ratio2 > 0.4 && ratio2 < 2.5)
+      ? ' Godt jobbet med fokus!'
+      : ' Tips: prøv ' + oz2 + '× for skarpere bilde.';
+    visFB(true, '✅ Riktig! ' + visOrgInfo() + fokusKomm);
   } else {
     var msg = '❌ Feil. Preparatet inneholder: ' + gjeldende.riktig + '. ';
     if (nivå === 'lett') msg += visHint();
@@ -2157,18 +2179,18 @@ function setModus(modus) {
       zoom = 40;
     }
   }
-  // Start på riktig zoom for gjeldende preparat
-  if (gjeldende && gjeldende.org.length > 0) {
-    var org0 = ORG[gjeldende.org[0]];
-    if (org0 && org0.optimal_zoom) zoom = org0.optimal_zoom;
-  }
+  // Start alltid på laveste forstørring — eleven finner fokus selv
+  zoom = (modus === 'elektron') ? 2000 : 40;
   tilfeldigePunkter = lagTilfeldigePunkter(30);
   oppdaterZoomUI();
 }
 
 function oppdaterZoomUI() {
   document.querySelectorAll('.zoombtn').forEach(function(b){
-    if (parseInt(b.textContent) === zoom) b.classList.add('aktiv');
+    // Match zoom-knapper uavhengig av format (40×, 2k×, 10k×, 50k×)
+    var txt = b.textContent.trim().replace('×','');
+    var bZoom = txt.indexOf('k')>=0 ? parseFloat(txt)*1000 : parseInt(txt);
+    if (bZoom === zoom) b.classList.add('aktiv');
     else b.classList.remove('aktiv');
   });
   var oz = (gjeldende && gjeldende.org.length>0 && ORG[gjeldende.org[0]])
@@ -2183,10 +2205,17 @@ function oppdaterZoomUI() {
     fokus_status = ratio<0.4 ? '🔴 Zoom inn' : '🔴 Zoom ut';
     fokus_klasse='feil';
   }
-  document.getElementById('tips-boks').textContent =
-    fokus_status + ' — ' + (mikroskopmodus==='elektron'
-      ? (zoom>=50000?'50k× gir fineste EM-detalj':zoom>=10000?'10k× viser virus tydelig':'2k× for lavt for virus')
-      : (zoom>=400?'400× for enkeltceller/bakterier':zoom>=100?'100× for celletyper':zoom>=40?'40× for generelt bilde':''));
+  var tipsMsg;
+  if (mikroskopmodus === 'elektron') {
+    if (fokus_klasse === 'ok')   tipsMsg = fokus_status + ' — prøv å svare nå.';
+    else if (zoom < oz)          tipsMsg = fokus_status + ' — prøv høyere forstørring (10k× eller 50k×).';
+    else                         tipsMsg = fokus_status + ' — prøv lavere forstørring.';
+  } else {
+    if (fokus_klasse === 'ok')   tipsMsg = fokus_status + ' — du er på riktig forstørring.';
+    else if (zoom < oz)          tipsMsg = fokus_status + ' — zoom inn for å se mer detalj.';
+    else                         tipsMsg = fokus_status + ' — zoom ut, objektene er for store for dette forstørringsnivået.';
+  }
+  document.getElementById('tips-boks').textContent = tipsMsg;
   var fs_el = document.getElementById('fokus-status');
   if (fs_el) { fs_el.textContent = fokus_status; fs_el.className = fokus_klasse; }
 }
