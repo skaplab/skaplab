@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genetikklaben 🧬 · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080d;--bg2:#0a0d16;--bg3:#0d1020;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e0eaff;--dim:#5a6888;--dimmer:#252d44;
+  --grønn:#34d399;--blå:#60a5fa;--gul:#fbbf24;--rød:#f87171;--rosa:#f472b6;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+#topbar{height:46px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(6,8,13,.96);border-bottom:1px solid var(--border);
+  position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(8px);}
+.logo{font-family:var(--font-h);font-size:1.05rem;font-weight:800;color:var(--grønn);}
+.logo span{color:var(--text);opacity:.4;}
+.spacer{flex:1;}
+#opp-teller{font-size:.73rem;color:var(--dim);font-family:var(--font-m);}
+.tbtn{font-size:.72rem;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+.tbtn:hover{color:var(--text);}
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.iw{max-width:560px;width:92%;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.imerke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--grønn);
+  background:rgba(52,211,153,.09);border:1px solid rgba(52,211,153,.22);padding:4px 14px;border-radius:20px;}
+.itittel{font-family:var(--font-h);font-size:2rem;font-weight:800;line-height:1.15;}
+.itittel em{color:var(--grønn);font-style:normal;}
+.imelding{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;
+  padding:14px 18px;display:flex;gap:12px;text-align:left;max-width:480px;}
+.iav{font-size:2rem;flex-shrink:0;}
+.imt{font-size:.82rem;color:var(--dim);line-height:1.6;}
+.imn{display:block;font-size:.68rem;color:var(--grønn);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.inivåer{display:flex;gap:10px;width:100%;max-width:420px;}
+.inv{flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border2);background:rgba(255,255,255,.03);
+  cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.inv:hover,.inv.aktiv{border-color:var(--grønn);background:rgba(52,211,153,.07);}
+.inv .ne{font-size:1.4rem;}.inv .nt{font-family:var(--font-h);font-size:.86rem;font-weight:700;}
+.inv .nd{font-size:.69rem;color:var(--dim);text-align:center;line-height:1.4;}
+.startbtn{padding:12px 34px;background:var(--grønn);color:#000;border:none;border-radius:10px;
+  font-family:var(--font-h);font-size:.95rem;font-weight:800;cursor:pointer;}
+.startbtn:hover{filter:brightness(1.1);}
+#game{position:fixed;inset:0;top:46px;display:none;flex-direction:column;}
+#oppdrag{background:rgba(52,211,153,.05);border-bottom:1px solid rgba(52,211,153,.15);
+  padding:5px 18px;font-size:.74rem;color:#4a9970;display:flex;align-items:center;gap:8px;}
+#oppdrag b{color:var(--grønn);}
+#main{flex:1;display:flex;min-height:0;}
+#venstre{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:10px;display:flex;flex-direction:column;}
+.ptittel{font-size:.6rem;text-transform:uppercase;letter-spacing:1.8px;color:var(--dimmer);margin-bottom:3px;}
+#opp-navn{font-family:var(--font-h);font-size:.95rem;font-weight:700;}
+#opp-tekst{font-size:.79rem;color:var(--dim);line-height:1.65;margin-top:4px;}
+#spm-boks{font-size:.83rem;color:var(--text);line-height:1.6;padding:10px;
+  background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);border-radius:8px;}
+#alt-boks{display:flex;flex-direction:column;gap:6px;}
+.alt-btn{padding:9px 12px;border-radius:8px;border:1px solid var(--border2);background:rgba(255,255,255,.04);
+  color:var(--text);cursor:pointer;font-family:var(--font-m);font-size:.78rem;
+  line-height:1.4;text-align:left;transition:all .15s;}
+.alt-btn:hover:not(:disabled){background:rgba(255,255,255,.09);border-color:rgba(52,211,153,.4);}
+.alt-btn.rett{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.5);color:var(--grønn);}
+.alt-btn.feil-v{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--rød);}
+.alt-btn:disabled{opacity:.75;cursor:default;}
+#feedback{font-size:.78rem;padding:10px;border-radius:8px;line-height:1.55;display:none;}
+#feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--grønn);}
+#feedback.feil{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.25);color:var(--rød);}
+#nestebtn{padding:9px 14px;border-radius:8px;background:var(--grønn);color:#000;border:none;
+  cursor:pointer;font-family:var(--font-h);font-size:.84rem;font-weight:700;display:none;}
+#stats{display:flex;gap:14px;font-size:.72rem;color:var(--dim);}
+#stats b{color:var(--text);}
+/* Midtre */
+#cw{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg3);padding:20px;gap:20px;overflow-y:auto;}
+.foreldre-rad{display:flex;gap:16px;}
+.forelder-boks{flex:1;padding:12px 16px;border-radius:10px;text-align:center;min-width:110px;}
+.forelder-boks.mor{background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);}
+.forelder-boks.far{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);}
+.forelder-label{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:4px;}
+.forelder-genotype{font-family:var(--font-m);font-size:1.5rem;font-weight:700;}
+.forelder-boks.mor .forelder-genotype{color:var(--rosa);}
+.forelder-boks.far .forelder-genotype{color:var(--blå);}
+.forelder-fenotype{font-size:.72rem;color:var(--dim);margin-top:4px;line-height:1.4;}
+.punnett-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.punnett-tittel{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+.punnett-grid{display:grid;gap:3px;}
+.pcell{display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-weight:700;border-radius:6px;}
+.pcell.hdr{background:rgba(255,255,255,.05);color:var(--dim);}
+.pcell.hdr.mor{color:var(--rosa);}.pcell.hdr.far{color:var(--blå);}
+.pcell.dom{background:rgba(52,211,153,.18);border:1.5px solid rgba(52,211,153,.4);color:var(--grønn);}
+.pcell.car{background:rgba(251,191,36,.12);border:1.5px solid rgba(251,191,36,.3);color:var(--gul);}
+.pcell.rec{background:rgba(248,113,113,.15);border:1.5px solid rgba(248,113,113,.3);color:var(--rød);}
+.sann-boks{width:100%;max-width:340px;}
+.sann-tittel{font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;text-align:center;}
+.sann-rad{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.sann-lbl{font-family:var(--font-m);font-size:.76rem;width:55px;text-align:right;flex-shrink:0;}
+.sann-bar-w{flex:1;height:16px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+.sann-bar{height:100%;border-radius:4px;}
+.sann-pst{font-size:.7rem;color:var(--dim);width:34px;font-family:var(--font-m);}
+/* Høyre */
+#hoyre{width:210px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);
+  overflow-y:auto;padding:12px 14px;gap:8px;display:flex;flex-direction:column;}
+.info-b{font-size:.74rem;color:var(--dim);line-height:1.6;padding:7px 9px;
+  background:rgba(255,255,255,.03);border-radius:7px;border-left:2px solid var(--grønn);margin-bottom:2px;}
+.info-b b{color:var(--text);}
+#hint-boks{display:none;font-size:.75rem;color:var(--gul);line-height:1.55;
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:8px 10px;}
+#slutt{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.87);
+  backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.sluttboks{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;
+  padding:32px 42px;max-width:460px;width:90%;text-align:center;}
+.sluttboks h2{font-family:var(--font-h);font-size:1.5rem;margin:10px 0 8px;}
+.sluttboks p{font-size:.85rem;color:var(--dim);line-height:1.6;margin-bottom:14px;}
+.slutt-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div id="intro">
+  <div class="iw">
+    <div class="imerke">🧬 GENETIKKLABEN · SkapLab</div>
+    <h1 class="itittel">Forstå <em>arv</em><br>og genetikk</h1>
+    <div class="imelding">
+      <div class="iav">👩‍🔬</div>
+      <div class="imt">
+        <span class="imn">Dr. Larsen, genetiker · FHI</span>
+        «Hos oss analyserer vi arvemønstre. Du ser Punnett-firkanten og foreldrenes genotyper — din jobb er å finne fenotype, genotype eller sannsynlighet for avkommet.»
+      </div>
+    </div>
+    <div class="inivåer">
+      <div class="inv aktiv" onclick="velgNivå('lett',this)">
+        <div class="ne">🟢</div><div class="nt">Student</div>
+        <div class="nd">Dominant og recessiv. Enkel monohybrid.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('middels',this)">
+        <div class="ne">🟡</div><div class="nt">Forsker</div>
+        <div class="nd">Bærer-status, sannsynligheter, dominant sykdom.</div>
+      </div>
+      <div class="inv" onclick="velgNivå('hard',this)">
+        <div class="ne">🔴</div><div class="nt">Spesialist</div>
+        <div class="nd">Blodtyper, kjønnsbundet arv, dihybrid.</div>
+      </div>
+    </div>
+    <button class="startbtn" onclick="startSpill()">🧬 Start analyse</button>
+  </div>
+</div>
+
+<div id="topbar">
+  <div class="logo">Genetikk<span>laben</span></div>
+  <span id="opp-teller">Oppgave 1</span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<div id="game">
+  <div id="oppdrag"><span>🧬</span><span id="oppdrag-tekst"></span></div>
+  <div id="main">
+    <div id="venstre">
+      <div><div class="ptittel">Analyse</div>
+        <div id="opp-navn">–</div>
+        <div id="opp-tekst"></div>
+      </div>
+      <div id="spm-boks">–</div>
+      <div><div class="ptittel">Velg svar</div>
+        <div id="alt-boks"></div>
+      </div>
+      <div id="feedback"></div>
+      <button id="nestebtn" onclick="nesteOppgave()">Neste analyse ▶</button>
+      <button class="tbtn" onclick="visHint()" style="padding:7px;text-align:center;margin-top:2px;">💡 Vis hint</button>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="ptittel">Statistikk</div>
+      <div id="stats"><span>✅ <b id="str">0</b></span><span>🧬 <b id="stf">0</b> forsøk</span></div>
+    </div>
+
+    <div id="cw">
+      <div class="foreldre-rad" id="foreldre-rad"></div>
+      <div class="punnett-wrap">
+        <div class="punnett-tittel">Punnett-firkant</div>
+        <div class="punnett-grid" id="punnett-grid"></div>
+      </div>
+      <div class="sann-boks" id="sann-boks"></div>
+    </div>
+
+    <div id="hoyre">
+      <div><div class="ptittel">Begreper</div></div>
+      <div class="info-b"><b>Dominant (stor bokstav A):</b> Bare én kopi trengs for å vises i fenotypen.</div>
+      <div class="info-b"><b>Recessivt (liten bokstav a):</b> Vises bare ved to kopier (aa).</div>
+      <div class="info-b"><b>Bærer (Aa):</b> Ser dominant ut, men kan sende recessivt gen videre.</div>
+      <div class="info-b"><b>Homozygot:</b> To like alleler (AA eller aa).</div>
+      <div class="info-b"><b>Heterozygot:</b> To ulike alleler (Aa).</div>
+      <div class="info-b"><b>Genotype:</b> Hvilke alleler har organismen (AA, Aa, aa).</div>
+      <div class="info-b"><b>Fenotype:</b> Hva som vises utenpå (krøllet/rett, frisk/syk).</div>
+      <div id="hint-boks"></div>
+    </div>
+  </div>
+</div>
+
+<div id="slutt">
+  <div class="sluttboks">
+    <div style="font-size:3rem">🧬</div>
+    <h2 id="slutt-h">Analyse fullført!</h2>
+    <p id="slutt-p">Dr. Larsen sender rapporten videre.</p>
+    <div class="slutt-btns">
+      <button class="startbtn" onclick="startSpill()">🔄 Ny analyse</button>
+      <button class="tbtn" style="padding:10px 18px" onclick="window.location.href='spill_hub.html'">🏠 Hub</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+var OPPG_LETT = [
+  { mor:'AA', far:'aa', egenskap:'hårkrøll (A) vs. rett hår (a)',
+    dom:'Krøllete hår', rec:'Rett hår',
+    oppdrag:'Familie Hansen: mor er homozygot dominant, far er homozygot recessiv. Hva får barna?',
+    spm:'Hva er fenotypen til ALLE avkom?',
+    riktig:'Krøllete hår (alle)',
+    alts:['Krøllete hår (alle)','Rett hår (alle)','50% krøllet, 50% rett','25% krøllet'],
+    hint:'AA × aa gir alltid Aa. Har Aa ett dominant allel? Hva vises da?',
+    forkl:'AA × aa → alle avkom Aa. Aa er dominante → alle får krøllete hår.' },
+
+  { mor:'Aa', far:'aa', egenskap:'fregner (A) vs. ingen fregner (a)',
+    dom:'Fregner', rec:'Ingen fregner',
+    oppdrag:'Mor er bærer for fregner-genet. Far har ikke fregner. Hva er sjansen for fregner?',
+    spm:'Hva er sannsynligheten for at et barn FÅR fregner?',
+    riktig:'50%',
+    alts:['25%','50%','75%','100%'],
+    hint:'Aa × aa → Aa og aa, begge like sannsynlige. Hvilken har fregner?',
+    forkl:'Aa × aa → Aa (fregner) og aa (ingen fregner). 2 av 4 = 50%.' },
+
+  { mor:'aa', far:'aa', egenskap:'albinisme (aa = albinisme)',
+    dom:'Normal pigment', rec:'Albinisme',
+    oppdrag:'Begge foreldre har albinisme. Hva arver barna?',
+    spm:'Hva er sannsynligheten for albinisme?',
+    riktig:'100%',
+    alts:['0%','25%','50%','100%'],
+    hint:'aa × aa kan bare gi aa. Hva er fenotypen til aa?',
+    forkl:'aa × aa → alle aa. Ingen dominante alleler → alle får albinisme.' },
+
+  { mor:'Aa', far:'Aa', egenskap:'øreflipper (A=hengende, a=festet)',
+    dom:'Hengende øreflipper', rec:'Festede øreflipper',
+    oppdrag:'Begge foreldre har hengende øreflipper men er bærere.',
+    spm:'Hvilken andel får festede øreflipper (recessiv)?',
+    riktig:'25%',
+    alts:['0%','25%','50%','75%'],
+    hint:'Aa × Aa → AA, Aa, Aa, aa. Bare aa gir festede. Hvor mange er det?',
+    forkl:'Aa × Aa → AA (25%), Aa (50%), aa (25%). Bare aa (1 av 4) gir festede øreflipper.' },
+
+  { mor:'AA', far:'Aa', egenskap:'tungrulling (A=kan, a=kan ikke)',
+    dom:'Kan rulle tunga', rec:'Kan ikke rulle tunga',
+    oppdrag:'Mor er homozygot dominant. Far er bærer. Kan noen barn IKKE rulle tunga?',
+    spm:'Hva er genotypen til et barn som IKKE kan rulle tunga?',
+    riktig:'Ingen — alle kan rulle tunga',
+    alts:['aa','Aa','AA','Ingen — alle kan rulle tunga'],
+    hint:'AA-mor gir alltid A. Kan noen barn arve to a-alleler da?',
+    forkl:'AA × Aa → AA og Aa. Ingen barn får aa, så alle kan rulle tunga.' },
+];
+
+var OPPG_MIDDELS = [
+  { mor:'Aa', far:'Aa', egenskap:'cystisk fibrose (a=sykdom)',
+    dom:'Frisk', rec:'Cystisk fibrose',
+    oppdrag:'Begge foreldre er friske bærere av CF-genet. Hva er risikoen for sykt barn?',
+    spm:'Sannsynlighet for at barnet FÅR cystisk fibrose?',
+    riktig:'25%',
+    alts:['0%','25%','50%','75%'],
+    hint:'Aa × Aa → AA, Aa, Aa, aa. Bare aa gir sykdom.',
+    forkl:'Aa × Aa → AA (25% frisk), Aa (50% bærer), aa (25% syk).' },
+
+  { mor:'Aa', far:'Aa', egenskap:'cystisk fibrose (a=sykdom)',
+    dom:'Frisk', rec:'Cystisk fibrose',
+    oppdrag:'Samme foreldre. Hva er sjansen for å være frisk bærer?',
+    spm:'Sannsynlighet for å være frisk bærer (Aa)?',
+    riktig:'50%',
+    alts:['25%','50%','75%','100%'],
+    hint:'Punnett-firkanten gir AA, Aa, Aa, aa. Hvor mange Aa er det?',
+    forkl:'Aa × Aa → Aa forekommer 2 ganger av 4 = 50% bærer.' },
+
+  { mor:'AA', far:'AA', egenskap:'PKU (a=sykdom)',
+    dom:'Normal', rec:'PKU',
+    oppdrag:'Begge foreldre er homozygot dominante. Kan barna få PKU?',
+    spm:'Sannsynlighet for PKU?',
+    riktig:'0%',
+    alts:['0%','25%','50%','100%'],
+    hint:'AA-foreldre kan bare gi A. Hva kreves for PKU (recessiv sykdom)?',
+    forkl:'AA × AA → alle AA. PKU krever aa — umulig her. Risiko = 0%.' },
+
+  { mor:'Aa', far:'aa', egenskap:'Huntingtons (A=sykdom — dominant!)',
+    dom:'Huntingtons sykdom', rec:'Frisk',
+    oppdrag:'OBS: Her er sykdomsgenet DOMINANT. Mor har én kopi av sykdomsgenet.',
+    spm:'Sannsynlighet for Huntingtons hos barnet?',
+    riktig:'50%',
+    alts:['0%','25%','50%','100%'],
+    hint:'Huntington er dominant — Aa gir sykdom! Aa × aa = Aa og aa.',
+    forkl:'Aa × aa → Aa (50% syk) og aa (50% frisk). Dominant: Aa gir sykdom.' },
+
+  { mor:'Aa', far:'Aa', egenskap:'blomsterfarge (A=rød, a=hvit)',
+    dom:'Rød blomst', rec:'Hvit blomst',
+    oppdrag:'Planteforsøk: begge planter har røde blomster men er bærere.',
+    spm:'Hvilken genotype gir HVIT blomst?',
+    riktig:'aa',
+    alts:['AA','Aa','aa','Alle gir rød'],
+    hint:'Hvit blomst er recessiv fenotype. Hva kreves for recessiv fenotype?',
+    forkl:'aa er homozygot recessiv → ingen dominante alleler → hvit blomst.' },
+];
+
+var OPPG_HARD = [
+  { mor:'I_A I_B', far:'ii', egenskap:'ABO-blodtype (ko-dominant)',
+    dom:'Ko-dominant (A og B like sterke)', rec:'Type O (ii)',
+    oppdrag:'Mor har blodtype AB, far har blodtype O. Hva kan barna ha?',
+    spm:'Hvilke blodtyper kan barna ha?',
+    riktig:'A eller B (ikke AB, ikke O)',
+    alts:['Bare AB','A eller B (ikke AB, ikke O)','A, B, AB eller O','Bare O'],
+    hint:'I_A I_B × ii → I_A i og I_B i. I_A i = type A. I_B i = type B.',
+    forkl:'I_A I_B × ii → I_A i (type A) og I_B i (type B). AB krever begge; O krever ii.' },
+
+  { mor:'X_A X_a', far:'X_A Y', egenskap:'fargeblindhet (X-bundet, a=fargeblind)',
+    dom:'Normalt fargesyn', rec:'Fargeblind',
+    oppdrag:'Mor er bærer av fargeblindhet. Far ser normalt. Kan sønner bli fargeblinde?',
+    spm:'Sannsynlighet for at en SØNN er fargeblind?',
+    riktig:'50%',
+    alts:['0%','25%','50%','100%'],
+    hint:'Sønner arver X fra mor, Y fra far. Mor gir X_A eller X_a. X_a Y = fargeblind.',
+    forkl:'X_A X_a × X_A Y → sønner: X_A Y (normal) og X_a Y (fargeblind). 50% sjanse.' },
+
+  { mor:'X_A X_a', far:'X_a Y', egenskap:'fargeblindhet (X-bundet, a=fargeblind)',
+    dom:'Normalt fargesyn', rec:'Fargeblind',
+    oppdrag:'Mor er bærer. Far er fargeblind. Hva er risikoen for fargeblinde DØTRE?',
+    spm:'Sannsynlighet for at en DATTER er fargeblind?',
+    riktig:'50%',
+    alts:['0%','25%','50%','100%'],
+    hint:'Døtre arver X fra mor og X fra far. Far gir alltid X_a. Når gir det fargeblindhet?',
+    forkl:'Døtre: X_A X_a (bærer) og X_a X_a (fargeblind). 50% av døtrene fargeblinde.' },
+
+  { mor:'AaBb', far:'AaBb', egenskap:'A=gul(dom), a=grønn; B=rund(dom), b=rynket',
+    dom:'Gul og rund', rec:'Grønn og rynket',
+    oppdrag:'Mendels dihybrid-kryss. Begge doble heterozygote.',
+    spm:'Sannsynlighet for BEGGE recessive (grønn OG rynket)?',
+    riktig:'1/16 ≈ 6%',
+    alts:['1/16 ≈ 6%','1/4 = 25%','3/16 ≈ 19%','9/16 ≈ 56%'],
+    hint:'aabb krever P(aa) × P(bb) = 1/4 × 1/4. Hva er det?',
+    forkl:'AaBb × AaBb → 9:3:3:1. aabb (grønn+rynket) = 1 av 16 ≈ 6%.' },
+
+  { mor:'I_A i', far:'I_B i', egenskap:'ABO-blodtype',
+    dom:'Ko-dominant', rec:'Type O (ii)',
+    oppdrag:'Mor er blodtype A, far er blodtype B. Hvilke blodtyper er mulig?',
+    spm:'Hvilke blodtyper kan barna ha?',
+    riktig:'A, B, AB og O — alle fire',
+    alts:['Bare A og B','A, B og O (ikke AB)','A, B, AB og O — alle fire','Bare AB'],
+    hint:'I_A i × I_B i → fire kombinasjoner: I_A I_B, I_A i, I_B i, ii.',
+    forkl:'I_A i × I_B i → I_A I_B (AB), I_A i (A), I_B i (B), ii (O). Alle fire mulig!' },
+];
+
+// ── SPILLSTATE ─────────────────────────────────────────────────
+var nivå='lett', OPPGAVER=[], TOTAL=0, oppgNr=0, riktige=0, forsøk=0, harSvart=false;
+
+function velgNivå(n,el){
+  nivå=n;
+  document.querySelectorAll('.inv').forEach(function(e){e.classList.remove('aktiv');});
+  el.classList.add('aktiv');
+}
+
+function startSpill(){
+  OPPGAVER=(nivå==='lett'?OPPG_LETT:nivå==='middels'?OPPG_MIDDELS:OPPG_HARD).slice();
+  TOTAL=OPPGAVER.length; oppgNr=0; riktige=0; forsøk=0;
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('game').style.display='flex';
+  nesteOppgave();
+}
+
+function nesteOppgave(){
+  oppgNr++;
+  if(oppgNr>TOTAL){visSlutt();return;}
+  harSvart=false;
+  var o=OPPGAVER[oppgNr-1];
+  document.getElementById('opp-teller').textContent='Oppgave '+oppgNr+' av '+TOTAL;
+  document.getElementById('opp-navn').textContent='Kryss: '+o.mor+' × '+o.far;
+  document.getElementById('opp-tekst').textContent='Egenskap: '+o.egenskap;
+  document.getElementById('spm-boks').textContent=o.spm;
+  document.getElementById('nestebtn').style.display='none';
+  document.getElementById('hint-boks').style.display='none';
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('oppdrag-tekst').innerHTML='<b>Dr. Larsen:</b> '+o.oppdrag;
+
+  var ab=document.getElementById('alt-boks'); ab.innerHTML='';
+  var alts=o.alts.slice().sort(function(){return Math.random()-.5;});
+  alts.forEach(function(a){
+    var btn=document.createElement('button');
+    btn.className='alt-btn'; btn.textContent=a;
+    btn.onclick=function(){sjekkSvar(a,btn,o);};
+    ab.appendChild(btn);
+  });
+  tegnPunnett(o);
+  tegnSannsynlighet(o);
+}
+
+// ── PUNNETT ───────────────────────────────────────────────────
+function splittGT(gt){
+  gt=gt.trim();
+  if(gt.indexOf(' ')>=0) return gt.split(' ');
+  if(gt.length===4) return [gt.slice(0,2),gt.slice(2,4)];
+  return [gt[0], gt.length>1?gt[1]:gt[0]];
+}
+
+function gtKlasse(gt, o){
+  // Ser om genotypen er dominant, carrier eller recessiv
+  var al=splittGT(gt);
+  var nRec=al.filter(function(a){
+    return a.length===1 && a===a.toLowerCase() && a!==a.toUpperCase();
+  }).length;
+  if(nRec===2) return 'rec';
+  if(nRec===1) return 'car';
+  return 'dom';
+}
+
+function tegnPunnett(o){
+  var grid=document.getElementById('punnett-grid');
+  grid.innerHTML='';
+  var fr=document.getElementById('foreldre-rad');
+  fr.innerHTML='';
+
+  var mA=splittGT(o.mor), fA=splittGT(o.far);
+  var n=mA.length; // 2 for vanlige, evt. mer for dihybrid
+  // Sett grid-layout
+  grid.style.gridTemplateColumns='auto '+Array(n).fill('auto').join(' ');
+
+  // Foreldrene
+  ['mor','far'].forEach(function(s){
+    var gt=s==='mor'?o.mor:o.far;
+    var kls=gtKlasse(gt,o);
+    var fn2=kls==='rec'?o.rec:kls==='car'?'Bærer · '+o.dom:o.dom;
+    var boks=document.createElement('div');
+    boks.className='forelder-boks '+s;
+    boks.innerHTML='<div class="forelder-label">'+(s==='mor'?'Mor ♀':'Far ♂')+'</div>'
+      +'<div class="forelder-genotype">'+gt+'</div>'
+      +'<div class="forelder-fenotype">'+fn2+'</div>';
+    fr.appendChild(boks);
+  });
+
+  var cellSz=mA.length===2?68:50;
+  var fontSize=mA.length===2?'1.0rem':'0.75rem';
+
+  // Tom hjørne
+  lcell('','hdr',grid,cellSz,fontSize);
+  // Mor-header
+  mA.forEach(function(a){lcell(a,'hdr mor',grid,cellSz,fontSize);});
+  // Rader
+  fA.forEach(function(fa){
+    lcell(fa,'hdr far',grid,cellSz,fontSize);
+    mA.forEach(function(ma){
+      var comb=sorterGT(ma+fa);
+      var kls=gtKlasse(comb,o);
+      lcell(comb,'pcell '+kls,grid,cellSz,fontSize);
+    });
+  });
+}
+
+function lcell(t,cls,parent,sz,fs){
+  var d=document.createElement('div');
+  d.className='pcell '+cls;
+  d.style.width=sz+'px'; d.style.height=sz+'px'; d.style.fontSize=fs;
+  d.textContent=t;
+  parent.appendChild(d);
+}
+
+function sorterGT(gt){
+  if(gt.length!==2) return gt;
+  var a=gt[0],b=gt[1];
+  if(b===b.toUpperCase()&&b!==b.toLowerCase()&&!(a===a.toUpperCase()&&a!==a.toLowerCase()))
+    return b+a;
+  return gt;
+}
+
+function tegnSannsynlighet(o){
+  var boks=document.getElementById('sann-boks');
+  boks.innerHTML='';
+  var mA=splittGT(o.mor), fA=splittGT(o.far);
+  var tell={};
+  fA.forEach(function(fa){
+    mA.forEach(function(ma){
+      var gt=sorterGT(ma+fa);
+      tell[gt]=(tell[gt]||0)+1;
+    });
+  });
+  var total=mA.length*fA.length;
+  boks.innerHTML='<div class="sann-tittel">Genotype-fordeling</div>';
+  Object.keys(tell).sort().forEach(function(gt){
+    var n2=tell[gt];
+    var pst=Math.round((n2/total)*100);
+    var kls=gtKlasse(gt,o);
+    var farge=kls==='dom'?'#34d399':kls==='car'?'#fbbf24':'#f87171';
+    var rad=document.createElement('div');
+    rad.className='sann-rad';
+    rad.innerHTML='<span class="sann-lbl" style="color:'+farge+'">'+gt+'</span>'
+      +'<div class="sann-bar-w"><div class="sann-bar" style="width:'+pst+'%;background:'+farge+'55"></div></div>'
+      +'<span class="sann-pst">'+pst+'%</span>';
+    boks.appendChild(rad);
+  });
+}
+
+// ── SVAR ──────────────────────────────────────────────────────
+function sjekkSvar(valgt,btnEl,o){
+  if(harSvart) return;
+  harSvart=true; forsøk++;
+  document.getElementById('stf').textContent=forsøk;
+  var riktig=valgt===o.riktig;
+  document.querySelectorAll('.alt-btn').forEach(function(b){
+    b.disabled=true;
+    if(b.textContent===o.riktig) b.classList.add('rett');
+    else if(b===btnEl&&!riktig) b.classList.add('feil-v');
+  });
+  if(riktig){
+    riktige++; document.getElementById('str').textContent=riktige;
+    visFB(true,'✅ Riktig! '+o.forkl);
+  } else {
+    visFB(false,'❌ Feil. '+o.forkl+(nivå==='lett'?' 💡 '+o.hint:''));
+  }
+  document.getElementById('nestebtn').style.display='block';
+}
+
+function visHint(){
+  var o=OPPGAVER[oppgNr-1];
+  var hb=document.getElementById('hint-boks');
+  hb.textContent='💡 '+o.hint; hb.style.display='block';
+}
+
+function visFB(ok,t){
+  var fb=document.getElementById('feedback');
+  fb.textContent=t; fb.className=ok?'ok':'feil'; fb.style.display='block';
+}
+
+function visSlutt(){
+  var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;
+  document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Fremragende genetiker!':snitt>=50?'👍 Solid analyse!':'💪 Øv mer på Punnett!';
+  document.getElementById('slutt-p').textContent='Du fikk '+riktige+' av '+TOTAL+' riktig ('+snitt+'%).';
+  document.getElementById('slutt').style.display='flex';
+  try{
+    var d=JSON.parse(localStorage.getItem('skaplab_genetikk')||'{}');
+    if(!d.bestePst||snitt>d.bestePst){d.bestePst=snitt;d.besteScore=riktige;d.besteMaks=TOTAL;}
+    d.fullfort=snitt>=60; d.sisteSpilt=new Date().toLocaleDateString('nb-NO');
+    d.antallSpilt=(d.antallSpilt||0)+1;
+    localStorage.setItem('skaplab_genetikk',JSON.stringify(d));
+  }catch(e){}
+}
+</script>
+</body>
+</html>
