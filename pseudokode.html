@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pseudokode-byggeren 🤖 · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090f;--bg2:#0c0e1a;--bg3:#0f1120;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#dde8ff;--dim:#505c88;--dimmer:#222840;--oransje:#fb923c;--grønn:#34d399;--blå:#60a5fa;--gul:#fbbf24;--rød:#f87171;--lilla:#a78bfa;--font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+#topbar{height:46px;display:flex;align-items:center;gap:14px;padding:0 18px;background:rgba(8,9,15,.96);border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:20;backdrop-filter:blur(8px);}
+.logo{font-family:var(--font-h);font-size:1.05rem;font-weight:800;color:var(--oransje);}
+.logo span{color:var(--text);opacity:.4;}.spacer{flex:1;}
+#opp-teller{font-size:.73rem;color:var(--dim);font-family:var(--font-m);}
+.tbtn{font-size:.72rem;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--border);border-radius:6px;}
+.tbtn:hover{color:var(--text);}
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.iw{max-width:560px;width:92%;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.imerke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--oransje);background:rgba(251,146,60,.09);border:1px solid rgba(251,146,60,.22);padding:4px 14px;border-radius:20px;}
+.itittel{font-family:var(--font-h);font-size:2rem;font-weight:800;line-height:1.15;}
+.itittel em{color:var(--oransje);font-style:normal;}
+.imelding{background:rgba(255,255,255,.04);border:1px solid var(--border2);border-radius:12px;padding:14px 18px;display:flex;gap:12px;text-align:left;max-width:480px;}
+.iav{font-size:2rem;flex-shrink:0;}.imt{font-size:.82rem;color:var(--dim);line-height:1.6;}
+.imn{display:block;font-size:.68rem;color:var(--oransje);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.inivåer{display:flex;gap:10px;width:100%;max-width:420px;}
+.inv{flex:1;padding:12px 8px;border-radius:10px;border:2px solid var(--border2);background:rgba(255,255,255,.03);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.inv:hover,.inv.aktiv{border-color:var(--oransje);background:rgba(251,146,60,.07);}
+.inv .ne{font-size:1.4rem;}.inv .nt{font-family:var(--font-h);font-size:.86rem;font-weight:700;}
+.inv .nd{font-size:.69rem;color:var(--dim);text-align:center;line-height:1.4;}
+.startbtn{padding:12px 34px;background:var(--oransje);color:#000;border:none;border-radius:10px;font-family:var(--font-h);font-size:.95rem;font-weight:800;cursor:pointer;}
+.startbtn:hover{filter:brightness(1.1);}
+#game{position:fixed;inset:0;top:46px;display:none;flex-direction:column;}
+#oppdrag{background:rgba(251,146,60,.06);border-bottom:1px solid rgba(251,146,60,.15);padding:5px 18px;font-size:.74rem;color:#906040;display:flex;align-items:center;gap:8px;}
+#oppdrag b{color:var(--oransje);}
+#main{flex:1;display:flex;min-height:0;}
+#venstre{width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;padding:12px 14px;gap:10px;overflow-y:auto;}
+.ptittel{font-size:.6rem;text-transform:uppercase;letter-spacing:1.8px;color:var(--dimmer);margin-bottom:3px;}
+#opp-navn{font-family:var(--font-h);font-size:.95rem;font-weight:700;}
+#opp-tekst{font-size:.79rem;color:var(--dim);line-height:1.65;margin-top:4px;}
+#mål-boks{font-size:.79rem;color:var(--text);padding:9px 10px;line-height:1.6;background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:8px;}
+#mål-boks b{color:var(--oransje);}
+#robot-wrap{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;}
+#robot-canvas{display:block;}
+#robot-output{font-family:var(--font-m);font-size:.76rem;color:var(--grønn);padding:6px 10px;min-height:32px;border-top:1px solid var(--border);background:rgba(0,0,0,.2);line-height:1.6;white-space:pre-wrap;}
+#feedback{font-size:.78rem;padding:9px 10px;border-radius:8px;line-height:1.55;display:none;}
+#feedback.ok{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:var(--grønn);}
+#feedback.feil{background:rgba(248,113,113,.09);border:1px solid rgba(248,113,113,.25);color:var(--rød);}
+#nestebtn{padding:9px 14px;border-radius:8px;background:var(--oransje);color:#000;border:none;cursor:pointer;font-family:var(--font-h);font-size:.84rem;font-weight:700;display:none;}
+.kjoer-btn{padding:8px 14px;border-radius:8px;background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.3);color:var(--blå);cursor:pointer;font-family:var(--font-b);font-size:.8rem;font-weight:600;}
+.kjoer-btn:hover{background:rgba(96,165,250,.25);}
+#stats{display:flex;gap:14px;font-size:.72rem;color:var(--dim);}
+#stats b{color:var(--text);}
+#cw{flex:1;display:flex;gap:0;min-height:0;overflow:hidden;}
+#blokk-kasse{width:200px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg3);padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+.kasse-tittel{font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dimmer);margin-bottom:4px;}
+.blokk-btn{padding:9px 10px;border-radius:8px;cursor:pointer;font-family:var(--font-m);font-size:.78rem;line-height:1.4;border:1.5px solid;transition:all .15s;text-align:left;background:rgba(0,0,0,.2);}
+.blokk-btn:hover{filter:brightness(1.2);}
+.blokk-btn.SETT{border-color:rgba(96,165,250,.4);color:var(--blå);}
+.blokk-btn.PRINT{border-color:rgba(52,211,153,.4);color:var(--grønn);}
+.blokk-btn.HVIS{border-color:rgba(251,191,36,.4);color:var(--gul);}
+.blokk-btn.ELLERS{border-color:rgba(251,191,36,.3);color:#c8a030;}
+.blokk-btn.GJENTA{border-color:rgba(167,139,250,.4);color:var(--lilla);}
+.blokk-btn.brukt{opacity:.35;cursor:not-allowed;}
+#program-omr{flex:1;padding:14px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+.prog-tittel{font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dimmer);margin-bottom:4px;}
+#program-liste{flex:1;display:flex;flex-direction:column;gap:5px;min-height:100px;}
+.prog-linje{padding:9px 10px;border-radius:8px;font-family:var(--font-m);font-size:.8rem;display:flex;align-items:center;gap:8px;cursor:pointer;border:1.5px solid;}
+.prog-linje .fjern-btn{margin-left:auto;font-size:.65rem;color:rgba(255,255,255,.3);padding:2px 6px;border:1px solid rgba(255,255,255,.1);border-radius:4px;cursor:pointer;}
+.prog-linje .fjern-btn:hover{color:var(--rød);}
+.prog-linje.SETT{border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.07);color:var(--blå);}
+.prog-linje.PRINT{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.07);color:var(--grønn);}
+.prog-linje.HVIS{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.07);color:var(--gul);}
+.prog-linje.ELLERS{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05);color:#c8a030;}
+.prog-linje.GJENTA{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.07);color:var(--lilla);}
+.prog-linje.riktig-pos{border-color:rgba(52,211,153,.8)!important;background:rgba(52,211,153,.15)!important;}
+.prog-linje.feil-pos{border-color:rgba(248,113,113,.8)!important;background:rgba(248,113,113,.1)!important;}
+#tom-program{color:var(--dimmer);font-size:.8rem;font-style:italic;padding:10px 0;}
+#slutt{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.87);backdrop-filter:blur(6px);align-items:center;justify-content:center;}
+.sluttboks{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px 42px;max-width:460px;width:90%;text-align:center;}
+.sluttboks h2{font-family:var(--font-h);font-size:1.5rem;margin:10px 0 8px;}
+.sluttboks p{font-size:.85rem;color:var(--dim);line-height:1.6;margin-bottom:14px;}
+.slutt-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+</style></head><body>
+<div id="intro"><div class="iw">
+  <div class="imerke">🤖 PSEUDOKODE-BYGGEREN · SkapLab</div>
+  <h1 class="itittel">Program&shy;<em>mer</em><br>roboten</h1>
+  <div class="imelding"><div class="iav">🤖</div><div class="imt">
+    <span class="imn">ROBO-3000, din robot</span>
+    «Velg kodeblokker fra kassen og legg dem i riktig rekkefølge. Trykk ▶ Kjør for å se hva jeg gjør!»
+  </div></div>
+  <div class="inivåer">
+    <div class="inv aktiv" onclick="velgNivå('lett',this)"><div class="ne">🟢</div><div class="nt">Nybegynner</div><div class="nd">3–4 blokker. SETT og PRINT.</div></div>
+    <div class="inv" onclick="velgNivå('middels',this)"><div class="ne">🟡</div><div class="nt">Programmerer</div><div class="nd">5–6 blokker med HVIS/ELLERS.</div></div>
+    <div class="inv" onclick="velgNivå('hard',this)"><div class="ne">🔴</div><div class="nt">Utvikler</div><div class="nd">6–8 blokker med GJENTA-løkker.</div></div>
+  </div>
+  <button class="startbtn" onclick="startSpill()">🤖 Program roboten!</button>
+</div></div>
+<div id="topbar">
+  <div class="logo">Pseudo&shy;kode<span>-byggeren</span></div>
+  <span id="opp-teller">Oppgave 1</span><div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+<div id="game">
+  <div id="oppdrag"><span>🤖</span><span id="oppdrag-tekst"></span></div>
+  <div id="main">
+    <div id="venstre">
+      <div><div class="ptittel">Oppdrag</div><div id="opp-navn">–</div><div id="opp-tekst"></div></div>
+      <div id="mål-boks">–</div>
+      <div id="robot-wrap"><canvas id="robot-canvas" width="212" height="130"></canvas><div id="robot-output">– klar –</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="kjoer-btn" onclick="kjørProgram()">▶ Kjør</button>
+        <button class="tbtn" onclick="tømProgram()" style="padding:7px 12px;">🗑 Tøm</button>
+      </div>
+      <div id="feedback"></div>
+      <button id="nestebtn" onclick="nesteOppgave()">Neste oppdrag ▶</button>
+      <div style="height:1px;background:var(--border)"></div>
+      <div class="ptittel">Statistikk</div>
+      <div id="stats"><span>✅ <b id="str">0</b></span><span>🤖 <b id="stf">0</b> forsøk</span></div>
+    </div>
+    <div id="cw">
+      <div id="blokk-kasse"><div class="kasse-tittel">Kodeblokker</div><div id="blokk-liste"></div></div>
+      <div id="program-omr">
+        <div class="prog-tittel">Programmet ditt — klikk blokker i riktig rekkefølge</div>
+        <div id="program-liste"><div id="tom-program">Klikk blokker fra venstre for å bygge programmet</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="slutt"><div class="sluttboks">
+  <div style="font-size:3rem">🤖</div>
+  <h2 id="slutt-h">Alle oppdrag fullført!</h2>
+  <p id="slutt-p">ROBO-3000 er imponert.</p>
+  <div class="slutt-btns">
+    <button class="startbtn" onclick="startSpill()">🔄 Prøv igjen</button>
+    <button class="tbtn" style="padding:10px 18px" onclick="window.location.href='spill_hub.html'">🏠 Hub</button>
+  </div>
+</div></div>
+<script>
+// ── OPPGAVER ──────────────────────────────────────────────────────
+var OPPG_LETT = [
+  { navn:'Si hei', oppdrag:'Roboten skal hilse på gjesten.',
+    mål:'Sett navn til "Ada", skriv "Hei, " + navn, skriv "Velkommen!"',
+    forventet:'Hei, Ada!\nVelkommen!',
+    blokker:[
+      {id:'b1',type:'PRINT',tekst:'PRINT "Velkommen!"'},
+      {id:'b2',type:'SETT', tekst:'SETT navn = "Ada"'},
+      {id:'b3',type:'PRINT',tekst:'PRINT "Hei, " + navn'},
+    ],
+    løsning:['b2','b3','b1'],
+    hint:'Du må sette variabelen FØR du bruker den i PRINT.' },
+
+  { navn:'Regnestykke', oppdrag:'Beregn og vis summen av to tall.',
+    mål:'Sett a=5, b=3, beregn sum=a+b, skriv "Sum: " + sum',
+    forventet:'Sum: 8',
+    blokker:[
+      {id:'b1',type:'SETT', tekst:'SETT b = 3'},
+      {id:'b2',type:'PRINT',tekst:'PRINT "Sum: " + sum'},
+      {id:'b3',type:'SETT', tekst:'SETT a = 5'},
+      {id:'b4',type:'SETT', tekst:'SETT sum = a + b'},
+    ],
+    løsning:['b3','b1','b4','b2'],
+    hint:'sum kan ikke beregnes før a og b er satt. PRINT kommer sist.' },
+
+  { navn:'Tre beskjeder', oppdrag:'Gi tre beskjeder i riktig rekkefølge.',
+    mål:'Skriv "Klar", deretter "Peker", deretter "Skyt!"',
+    forventet:'Klar\nPeker\nSkyt!',
+    blokker:[
+      {id:'b1',type:'PRINT',tekst:'PRINT "Peker"'},
+      {id:'b2',type:'PRINT',tekst:'PRINT "Skyt!"'},
+      {id:'b3',type:'PRINT',tekst:'PRINT "Klar"'},
+    ],
+    løsning:['b3','b1','b2'],
+    hint:'Les oppdraget: Klar → Peker → Skyt. Hvilken PRINT er hvilken?' },
+
+  { navn:'Dobbel verdi', oppdrag:'Doble et tall og vis resultatet.',
+    mål:'Sett tall=7, beregn dobbelt=tall*2, skriv "Dobbelt: " + dobbelt',
+    forventet:'Dobbelt: 14',
+    blokker:[
+      {id:'b1',type:'PRINT',tekst:'PRINT "Dobbelt: " + dobbelt'},
+      {id:'b2',type:'SETT', tekst:'SETT tall = 7'},
+      {id:'b3',type:'SETT', tekst:'SETT dobbelt = tall * 2'},
+    ],
+    løsning:['b2','b3','b1'],
+    hint:'tall må settes før dobbelt beregnes. dobbelt må beregnes før det skrives ut.' },
+];
+
+var OPPG_MIDDELS = [
+  { navn:'Varm eller kald', oppdrag:'Sjekk temperaturen og gi beskjed.',
+    mål:'Sett temp=22. HVIS temp>20: skriv "Varmt". ELLERS: skriv "Kaldt".',
+    forventet:'Varmt',
+    blokker:[
+      {id:'b1',type:'ELLERS',tekst:'ELLERS:'},
+      {id:'b2',type:'PRINT', tekst:'  PRINT "Kaldt"'},
+      {id:'b3',type:'SETT',  tekst:'SETT temp = 22'},
+      {id:'b4',type:'HVIS',  tekst:'HVIS temp > 20:'},
+      {id:'b5',type:'PRINT', tekst:'  PRINT "Varmt"'},
+    ],
+    løsning:['b3','b4','b5','b1','b2'],
+    hint:'Sett variabelen først. Deretter HVIS → (hva da) → ELLERS → (hva da).' },
+
+  { navn:'Bestått?', oppdrag:'Gi beskjed om eleven har bestått.',
+    mål:'Sett poeng=75. HVIS poeng>=60: "Bestått!". ELLERS: "Ikke bestått".',
+    forventet:'Bestått!',
+    blokker:[
+      {id:'b1',type:'PRINT', tekst:'  PRINT "Ikke bestått"'},
+      {id:'b2',type:'HVIS',  tekst:'HVIS poeng >= 60:'},
+      {id:'b3',type:'SETT',  tekst:'SETT poeng = 75'},
+      {id:'b4',type:'ELLERS',tekst:'ELLERS:'},
+      {id:'b5',type:'PRINT', tekst:'  PRINT "Bestått!"'},
+    ],
+    løsning:['b3','b2','b5','b4','b1'],
+    hint:'SETT → HVIS → (riktig output) → ELLERS → (feil output).' },
+
+  { navn:'Aldersrabatt', oppdrag:'Gi rabatt til kunder over 60.',
+    mål:'Sett alder=65. HVIS alder>60: pris=80. ELLERS: pris=100. Skriv pris.',
+    forventet:'Pris: 80',
+    blokker:[
+      {id:'b1',type:'SETT',  tekst:'  SETT pris = 100'},
+      {id:'b2',type:'SETT',  tekst:'SETT alder = 65'},
+      {id:'b3',type:'PRINT', tekst:'PRINT "Pris: " + pris'},
+      {id:'b4',type:'SETT',  tekst:'  SETT pris = 80'},
+      {id:'b5',type:'ELLERS',tekst:'ELLERS:'},
+      {id:'b6',type:'HVIS',  tekst:'HVIS alder > 60:'},
+    ],
+    løsning:['b2','b6','b4','b5','b1','b3'],
+    hint:'PRINT kommer helt til slutt — etter at pris er satt via HVIS eller ELLERS.' },
+
+  { navn:'Positivt?', oppdrag:'Sjekk om et tall er positivt.',
+    mål:'Sett tall=-4, melding="negativt". HVIS tall>0: melding="positivt". Skriv melding.',
+    forventet:'negativt',
+    blokker:[
+      {id:'b1',type:'SETT',  tekst:'SETT melding = "negativt"'},
+      {id:'b2',type:'PRINT', tekst:'PRINT melding'},
+      {id:'b3',type:'SETT',  tekst:'  SETT melding = "positivt"'},
+      {id:'b4',type:'SETT',  tekst:'SETT tall = -4'},
+      {id:'b5',type:'HVIS',  tekst:'HVIS tall > 0:'},
+    ],
+    løsning:['b4','b1','b5','b3','b2'],
+    hint:'Sett "negativt" som standard TIDLIG. Overstyr bare HVIS tall > 0. PRINT sist.' },
+];
+
+var OPPG_HARD = [
+  { navn:'Tell til 3', oppdrag:'Tell fra 1 til 3 med løkke.',
+    mål:'Sett i=1. GJENTA MENS i<=3: skriv i, øk i med 1.',
+    forventet:'1\n2\n3',
+    blokker:[
+      {id:'b1',type:'GJENTA',tekst:'GJENTA MENS i <= 3:'},
+      {id:'b2',type:'SETT',  tekst:'SETT i = 1'},
+      {id:'b3',type:'SETT',  tekst:'  SETT i = i + 1'},
+      {id:'b4',type:'PRINT', tekst:'  PRINT i'},
+    ],
+    løsning:['b2','b1','b4','b3'],
+    hint:'Sett i=1 FØR løkken. Inne: PRINT FØR du øker i — ellers skrives feil tall.' },
+
+  { navn:'Summer til 5', oppdrag:'Summer tallene 1+2+3+4+5.',
+    mål:'Sett sum=0, i=1. GJENTA MENS i<=5: sum+=i, i+=1. Skriv sum.',
+    forventet:'Sum: 15',
+    blokker:[
+      {id:'b1',type:'SETT',  tekst:'SETT i = 1'},
+      {id:'b2',type:'PRINT', tekst:'PRINT "Sum: " + sum'},
+      {id:'b3',type:'SETT',  tekst:'  SETT i = i + 1'},
+      {id:'b4',type:'GJENTA',tekst:'GJENTA MENS i <= 5:'},
+      {id:'b5',type:'SETT',  tekst:'SETT sum = 0'},
+      {id:'b6',type:'SETT',  tekst:'  SETT sum = sum + i'},
+    ],
+    løsning:['b5','b1','b4','b6','b3','b2'],
+    hint:'Sett sum=0 OG i=1 FØR løkken. PRINT kommer ETTER løkken er ferdig.' },
+
+  { navn:'Størst', oppdrag:'Finn det største av to tall.',
+    mål:'Sett a=8, b=12. HVIS a>b: størst=a. ELLERS: størst=b. Skriv størst.',
+    forventet:'Størst: 12',
+    blokker:[
+      {id:'b1',type:'PRINT', tekst:'PRINT "Størst: " + størst'},
+      {id:'b2',type:'SETT',  tekst:'SETT a = 8'},
+      {id:'b3',type:'SETT',  tekst:'  SETT størst = a'},
+      {id:'b4',type:'HVIS',  tekst:'HVIS a > b:'},
+      {id:'b5',type:'ELLERS',tekst:'ELLERS:'},
+      {id:'b6',type:'SETT',  tekst:'SETT b = 12'},
+      {id:'b7',type:'SETT',  tekst:'  SETT størst = b'},
+    ],
+    løsning:['b2','b6','b4','b3','b5','b7','b1'],
+    hint:'Sett a og b FØRST. Deretter HVIS/ELLERS setter størst. PRINT sist.' },
+
+  { navn:'Nedtelling', oppdrag:'Tell ned fra 3 til 1 og si "Start!"',
+    mål:'Sett i=3. GJENTA MENS i>0: skriv i, reduser i. Skriv "Start!"',
+    forventet:'3\n2\n1\nStart!',
+    blokker:[
+      {id:'b1',type:'GJENTA',tekst:'GJENTA MENS i > 0:'},
+      {id:'b2',type:'PRINT', tekst:'PRINT "Start!"'},
+      {id:'b3',type:'SETT',  tekst:'  SETT i = i - 1'},
+      {id:'b4',type:'PRINT', tekst:'  PRINT i'},
+      {id:'b5',type:'SETT',  tekst:'SETT i = 3'},
+    ],
+    løsning:['b5','b1','b4','b3','b2'],
+    hint:'"Start!" kommer ETTER løkken. Inne: PRINT i FØR du minsker i.' },
+];
+
+var nivå='lett', OPPGAVER=[], TOTAL=0, oppgNr=0, riktige=0, forsøk=0;
+var gjeldende=null, bruktBlokker=[], programLinjer=[];
+
+function velgNivå(n,el){nivå=n;document.querySelectorAll('.inv').forEach(function(e){e.classList.remove('aktiv');});el.classList.add('aktiv');}
+function startSpill(){OPPGAVER=(nivå==='lett'?OPPG_LETT:nivå==='middels'?OPPG_MIDDELS:OPPG_HARD).slice();TOTAL=OPPGAVER.length;oppgNr=0;riktige=0;forsøk=0;document.getElementById('intro').style.display='none';document.getElementById('slutt').style.display='none';document.getElementById('game').style.display='flex';nesteOppgave();}
+
+function nesteOppgave(){oppgNr++;if(oppgNr>TOTAL){visSlutt();return;}gjeldende=OPPGAVER[oppgNr-1];bruktBlokker=[];programLinjer=[];document.getElementById('opp-teller').textContent='Oppgave '+oppgNr+' av '+TOTAL;document.getElementById('opp-navn').textContent=gjeldende.navn;document.getElementById('opp-tekst').textContent=gjeldende.oppdrag;document.getElementById('mål-boks').innerHTML='<b>Mål:</b> '+gjeldende.mål;document.getElementById('nestebtn').style.display='none';document.getElementById('feedback').style.display='none';document.getElementById('robot-output').textContent='– klar –';document.getElementById('oppdrag-tekst').innerHTML='<b>ROBO-3000:</b> '+gjeldende.oppdrag;byggKasse();oppdaterProgram();tegnRobot('idle');}
+
+function byggKasse(){var liste=document.getElementById('blokk-liste');liste.innerHTML='';var bl=gjeldende.blokker.slice().sort(function(){return Math.random()-.5;});bl.forEach(function(b){var btn=document.createElement('div');btn.className='blokk-btn '+b.type;btn.id='kb_'+b.id;btn.textContent=b.tekst;btn.onclick=function(){leggTilBlokk(b.id);};liste.appendChild(btn);});}
+
+function leggTilBlokk(bid){if(bruktBlokker.indexOf(bid)>=0) return;bruktBlokker.push(bid);programLinjer.push(bid);var kb=document.getElementById('kb_'+bid);if(kb) kb.classList.add('brukt');oppdaterProgram();}
+function fjernFraProgram(bid){var i=programLinjer.indexOf(bid);if(i<0) return;programLinjer.splice(i,1);var bi=bruktBlokker.indexOf(bid);if(bi>=0) bruktBlokker.splice(bi,1);var kb=document.getElementById('kb_'+bid);if(kb) kb.classList.remove('brukt');oppdaterProgram();}
+function tømProgram(){programLinjer=[];bruktBlokker=[];document.querySelectorAll('.blokk-btn').forEach(function(b){b.classList.remove('brukt');});document.getElementById('robot-output').textContent='– klar –';document.getElementById('feedback').style.display='none';oppdaterProgram();tegnRobot('idle');}
+
+function oppdaterProgram(){var liste=document.getElementById('program-liste');liste.innerHTML='';if(programLinjer.length===0){liste.innerHTML='<div id="tom-program">Klikk blokker fra venstre for å bygge programmet</div>';return;}programLinjer.forEach(function(bid){var b=gjeldende.blokker.find(function(x){return x.id===bid;});if(!b) return;var div=document.createElement('div');div.className='prog-linje '+b.type;div.innerHTML='<span>'+b.tekst+'</span><span class="fjern-btn" onclick="fjernFraProgram(\''+bid+'\')">✕</span>';liste.appendChild(div);});}
+
+function kjørProgram(){if(programLinjer.length===0){visFB(false,'⚠️ Programmet er tomt! Legg til blokker fra kassen.');return;}forsøk++;document.getElementById('stf').textContent=forsøk;var riktigRekke=JSON.stringify(programLinjer)===JSON.stringify(gjeldende.løsning);var output=simulerOutput(programLinjer,gjeldende);document.getElementById('robot-output').textContent=output||'(ingen output)';document.querySelectorAll('.prog-linje').forEach(function(div,i){div.classList.remove('riktig-pos','feil-pos');if(i<gjeldende.løsning.length&&programLinjer[i]===gjeldende.løsning[i]) div.classList.add('riktig-pos');else div.classList.add('feil-pos');});if(riktigRekke||output===gjeldende.forventet){riktige++;document.getElementById('str').textContent=riktige;tegnRobot('happy');visFB(true,'✅ Riktig! Output: '+gjeldende.forventet);document.getElementById('nestebtn').style.display='block';}else{tegnRobot('confused');visFB(false,'❌ Feil rekkefølge. Roboten sa: "'+output+'". Forventet: "'+gjeldende.forventet+'".'+(nivå==='lett'?' 💡 '+gjeldende.hint:''));}}
+
+function simulerOutput(ids,o){var vars={},out=[],bl=ids.map(function(id){return o.blokker.find(function(b){return b.id===id;});});var i=0,maks=200;while(i<bl.length&&maks-->0){var b=bl[i];if(!b){i++;continue;}var t=b.tekst.trim();if(t.startsWith('SETT ')){var e=t.slice(5),eq=e.indexOf('=');if(eq>=0) vars[e.slice(0,eq).trim()]=evalU(e.slice(eq+1).trim(),vars);i++;}else if(t.startsWith('PRINT ')){out.push(String(evalU(t.slice(6).trim(),vars)));i++;}else if(t.startsWith('HVIS ')){var k=t.slice(5).replace(':','').trim();if(!evalK(k,vars)){var j=i+1;while(j<bl.length&&!bl[j].tekst.trim().startsWith('ELLERS:')) j++;i=j+1;while(i<bl.length&&bl[i].tekst.startsWith('  ')) i++;}else i++;}else if(t.startsWith('ELLERS:')){i++;while(i<bl.length&&bl[i].tekst.startsWith('  ')) i++;}else if(t.startsWith('GJENTA MENS ')){var gk=t.slice(12).replace(':','').trim(),gs=i,ge=i+1;while(ge<bl.length&&bl[ge].tekst.startsWith('  ')) ge++;var lc=0;while(evalK(gk,vars)&&lc<20){lc++;for(var k2=gs+1;k2<ge;k2++){var lb=bl[k2],lt=lb.tekst.trim();if(lt.startsWith('SETT ')){var le=lt.slice(5),leq=le.indexOf('=');if(leq>=0) vars[le.slice(0,leq).trim()]=evalU(le.slice(leq+1).trim(),vars);}else if(lt.startsWith('PRINT ')) out.push(String(evalU(lt.slice(6).trim(),vars)));}}i=ge;}else i++;}return out.join('\n');}
+
+function evalU(s,v){s=s.trim();if(s.indexOf('"')>=0||s.indexOf("'")>=0){return s.split('+').map(function(d){d=d.trim();if((d.startsWith('"')&&d.endsWith('"'))||(d.startsWith("'")&&d.endsWith("'"))) return d.slice(1,-1);return String(evalN(d,v));}).join('');}return evalN(s,v);}
+function evalN(s,v){s=s.trim();if(!isNaN(s)) return Number(s);if(s.indexOf('*')>0){var p=s.split('*');return evalN(p[0],v)*evalN(p[1],v);}if(s.indexOf('+')>0){var p2=s.split('+');return evalN(p2[0],v)+evalN(p2[1],v);}if(s.length>1&&s.indexOf('-')>0){var p3=s.split('-');if(p3.length===2) return evalN(p3[0],v)-evalN(p3[1],v);}if(s in v) return v[s];return s;}
+function evalK(s,v){s=s.trim();var ops=[['>=',function(a,b){return a>=b;}],['<=',function(a,b){return a<=b;}],['>',function(a,b){return a>b;}],['<',function(a,b){return a<b;}],['==',function(a,b){return a===b;}]];for(var i=0;i<ops.length;i++){var op=ops[i][0],idx=s.indexOf(op);if(idx>=0){var vl=evalN(s.slice(0,idx).trim(),v),vr=evalN(s.slice(idx+op.length).trim(),v);return ops[i][1](vl,vr);}}return false;}
+
+var robotTimer=null,robotAnim=0,robotState='idle';
+function tegnRobot(st){robotState=st;var c=document.getElementById('robot-canvas');if(!c) return;var ctx=c.getContext('2d');if(robotTimer) clearInterval(robotTimer);robotAnim=0;robotTimer=setInterval(function(){robotAnim+=0.08;tegnRF(ctx,robotState,robotAnim);},40);tegnRF(ctx,st,0);}
+function tegnRF(ctx,st,t){var W=212,H=130;ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(15,17,32,0.8)';ctx.fillRect(0,0,W,H);var cx=W/2,cy=H*0.45,bob=st==='happy'?Math.sin(t*3)*4:Math.sin(t)*2;ctx.fillStyle='#1e2540';ctx.strokeStyle='#3a4a8a';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(cx-22,cy-10+bob,44,32,5);ctx.fill();ctx.stroke();ctx.fillStyle='#1a2038';ctx.strokeStyle='#4a5a9a';ctx.beginPath();ctx.roundRect(cx-18,cy-36+bob,36,28,4);ctx.fill();ctx.stroke();var ec=st==='happy'?'#34d399':st==='confused'?'#fbbf24':'#60a5fa';[-8,8].forEach(function(ox){ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx+ox,cy-24+bob,4,0,Math.PI*2);ctx.fill();});ctx.strokeStyle=ec;ctx.lineWidth=2;ctx.beginPath();if(st==='happy') ctx.arc(cx,cy-18+bob,7,0.1*Math.PI,0.9*Math.PI);else{ctx.moveTo(cx-6,cy-16+bob);ctx.lineTo(cx+6,cy-16+bob);}ctx.stroke();ctx.strokeStyle='#4a5a9a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-6,cy-36+bob);ctx.lineTo(cx-10,cy-44+bob);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+6,cy-36+bob);ctx.lineTo(cx+10,cy-44+bob);ctx.stroke();ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx-10,cy-44+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+10,cy-44+bob,3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#3a4a8a';ctx.lineWidth=3;var lb=st==='happy'?Math.sin(t*4)*5:0;ctx.beginPath();ctx.moveTo(cx-10,cy+22+bob);ctx.lineTo(cx-10,cy+36+bob+lb);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+10,cy+22+bob);ctx.lineTo(cx+10,cy+36+bob-lb);ctx.stroke();ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx,cy+10+bob,4,0,Math.PI*2);ctx.fill();}
+
+function visFB(ok,t){var fb=document.getElementById('feedback');fb.textContent=t;fb.className=ok?'ok':'feil';fb.style.display='block';}
+function visSlutt(){var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Mester-programmerer!':snitt>=50?'👍 Godt arbeid!':'💪 ROBO-3000 trenger mer trening!';document.getElementById('slutt-p').textContent='Du fikk '+riktige+' av '+TOTAL+' oppdrag riktig ('+snitt+'%).';document.getElementById('slutt').style.display='flex';if(robotTimer) clearInterval(robotTimer);try{var d=JSON.parse(localStorage.getItem('skaplab_pseudokode')||'{}');if(!d.bestePst||snitt>d.bestePst){d.bestePst=snitt;d.besteScore=riktige;d.besteMaks=TOTAL;}d.fullfort=snitt>=60;d.sisteSpilt=new Date().toLocaleDateString('nb-NO');d.antallSpilt=(d.antallSpilt||0)+1;localStorage.setItem('skaplab_pseudokode',JSON.stringify(d));}catch(e){}}
+window.addEventListener('load',function(){tegnRobot('idle');});
+
+</script>
+</body></html>
