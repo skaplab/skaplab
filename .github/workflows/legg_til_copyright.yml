@@ -1,73 +1,36 @@
-"""
-legg_til_copyright.py
----------------------
-Legger til copyright-linje i alle HTML-filer som ikke allerede har den.
-Fungerer på Windows, Mac og Linux.
+name: Legg til copyright
 
-KJøRING:
-  Windows:   python legg_til_copyright.py
-  Mac/Linux: python3 legg_til_copyright.py
-"""
+on:
+  workflow_dispatch:
 
-import os
-import glob
+jobs:
+  copyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-# ── INNSTILLINGER ─────────────────────────────────────────────────
-# Endre denne teksten hvis du vil ha annet navn/år:
-COPYRIGHT_TEKST = '© 2025 SkapLab · Tommy Lykke Nordahl · Alle rettigheter forbeholdt'
+      - name: Legg til copyright
+        run: |
+          python3 << 'PYEOF'
+          import os, glob
+          C = '(c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt'
+          TAG = '<p style="font-size:.72rem;opacity:.4;text-align:center;">' + C + '</p>'
+          for f in glob.glob('**/*.html', recursive=True):
+              txt = open(f, encoding='utf-8', errors='ignore').read()
+              if '2025 SkapLab' in txt:
+                  continue
+              if '</footer>' in txt:
+                  txt = txt.replace('</footer>', TAG + '\n</footer>', 1)
+              else:
+                  txt = txt.replace('</body>', '<!-- ' + C + ' -->\n</body>', 1)
+              open(f, 'w', encoding='utf-8').write(txt)
+              print('OK: ' + f)
+          PYEOF
 
-# HTML som settes inn i footer (eller rett før </body> om ingen footer):
-COPYRIGHT_HTML = f'\n    <p style="font-size:.72rem;opacity:.4;margin-top:6px;text-align:center;">{COPYRIGHT_TEKST}</p>'
-
-# ── FINN ALLE HTML-FILER ──────────────────────────────────────────
-# Skriptet ser i samme mappe som seg selv, og i undermapper.
-# Kjør skriptet fra rot-mappen av repositoryet ditt.
-
-script_mappe = os.path.dirname(os.path.abspath(__file__))
-html_filer = glob.glob(os.path.join(script_mappe, '**', '*.html'), recursive=True)
-
-print(f"Fant {len(html_filer)} HTML-filer")
-print(f"Legger til: {COPYRIGHT_TEKST}\n")
-
-endret = 0
-hoppet_over = 0
-feil = 0
-
-for sti in sorted(html_filer):
-    filnavn = os.path.basename(sti)
-    
-    try:
-        # Les filen
-        with open(sti, 'r', encoding='utf-8', errors='ignore') as f:
-            innhold = f.read()
-        
-        # Hopp over filer som allerede har copyright
-        if '© 2025' in innhold or 'copyright' in innhold.lower()[:500]:
-            hoppet_over += 1
-            continue
-        
-        # Legg inn i </footer> om den finnes, ellers rett før </body>
-        if '</footer>' in innhold:
-            ny_innhold = innhold.replace('</footer>', COPYRIGHT_HTML + '\n  </footer>', 1)
-        elif '</body>' in innhold:
-            ny_innhold = innhold.replace('</body>', f'\n<!-- {COPYRIGHT_TEKST} -->\n</body>', 1)
-        else:
-            # Ingen av delene — legg til på slutten
-            ny_innhold = innhold + f'\n<!-- {COPYRIGHT_TEKST} -->\n'
-        
-        # Skriv tilbake
-        with open(sti, 'w', encoding='utf-8') as f:
-            f.write(ny_innhold)
-        
-        print(f"  ✅ {filnavn}")
-        endret += 1
-        
-    except Exception as e:
-        print(f"  ❌ {filnavn}: {e}")
-        feil += 1
-
-print(f"\n{'─'*50}")
-print(f"Ferdig!")
-print(f"  Oppdatert:    {endret} filer")
-print(f"  Hoppet over:  {hoppet_over} filer (hadde copyright fra før)")
-print(f"  Feil:         {feil} filer")
+      - name: Commit
+        run: |
+          git config user.name "SkapLab Bot"
+          git config user.email "action@github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "Copyright lagt til"
+          git push
