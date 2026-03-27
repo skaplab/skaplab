@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Naturfagquiz · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --aksent:#34d399;
+  --bg:linear-gradient(160deg,#071510 0%,#0c2218 100%);
+  --kort-bg:rgba(255,255,255,0.06);
+  --kort-border:rgba(255,255,255,0.12);
+  --text:#f0f4ff;--dim:rgba(255,255,255,0.5);
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+  --font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+/* TOPBAR */
+#topbar{height:48px;display:flex;align-items:center;padding:0 20px;gap:12px;
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  background:rgba(0,0,0,0.25);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,0.08);}
+.logo{font-family:var(--font-h);font-size:.95rem;font-weight:800;letter-spacing:.5px;}
+.logo-aksent{color:var(--aksent);}
+#opp-teller-top{font-size:.7rem;color:var(--dim);font-family:var(--font-m);}
+.spacer{flex:1;}
+.tbtn{font-size:.7rem;color:var(--dim);text-decoration:none;
+  padding:5px 11px;border:1px solid rgba(255,255,255,0.15);border-radius:20px;
+  transition:all .15s;}
+.tbtn:hover{color:var(--text);border-color:rgba(255,255,255,0.35);}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:28px;text-align:center;}
+
+.i-merke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;
+  color:var(--aksent);background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.15);padding:5px 16px;border-radius:20px;}
+.i-ikon{font-size:3.5rem;margin:4px 0;}
+.i-tittel{font-family:var(--font-h);font-size:2.2rem;font-weight:900;line-height:1.1;}
+.i-tittel span{color:var(--aksent);}
+.i-sub{font-size:.92rem;color:var(--dim);max-width:420px;line-height:1.7;}
+
+.antall-rad{display:flex;gap:8px;align-items:center;margin-top:4px;}
+.antall-label{font-size:.8rem;color:var(--dim);}
+.n-btn{padding:7px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.2);
+  background:transparent;color:var(--text);cursor:pointer;
+  font-family:var(--font-h);font-size:.82rem;font-weight:700;transition:all .15s;}
+.n-btn:hover,.n-btn.ak{background:var(--aksent);border-color:var(--aksent);color:#fff;}
+
+.start-knapp{padding:14px 52px;border-radius:12px;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:1.1rem;font-weight:900;
+  background:var(--aksent);color:#fff;letter-spacing:.3px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);transition:all .18s;}
+.start-knapp:hover{filter:brightness(1.15);transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,.4);}
+
+/* SPILLSKJERM */
+#spill{position:fixed;inset:0;top:48px;display:none;flex-direction:column;}
+
+/* Progresjonsbjelke */
+#prog-wrap{height:4px;background:rgba(255,255,255,0.1);flex-shrink:0;}
+#prog-bar{height:100%;background:var(--aksent);transition:width .15s linear;}
+
+/* Timer og poeng */
+#meta-rad{display:flex;align-items:center;gap:14px;padding:10px 20px;
+  flex-shrink:0;background:rgba(0,0,0,0.15);}
+#tid-sirkel-wrap{position:relative;width:42px;height:42px;flex-shrink:0;}
+#tid-sirkel{transform:rotate(-90deg);}
+#tid-ring{transition:stroke-dashoffset .1s linear;}
+#tid-tall{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:.85rem;font-weight:500;}
+.meta-spacer{flex:1;}
+#poeng-boks{font-family:var(--font-h);font-size:1rem;font-weight:800;
+  background:rgba(255,255,255,0.1);padding:5px 14px;border-radius:20px;}
+
+/* Spørsmål */
+#spm-wrap{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:16px 24px 8px;overflow:hidden;}
+#spm-inner{max-width:720px;width:100%;}
+#spm-kat-linje{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+#spm-kat{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--aksent);font-weight:700;}
+#spm-tekst{font-family:var(--font-h);font-size:clamp(1.05rem,2.6vw,1.6rem);
+  font-weight:700;line-height:1.5;color:var(--text);}
+
+/* Svar — horisontal liste, ikke 2x2 grid ─────────────────────── */
+#svar-liste{display:flex;flex-direction:column;gap:8px;
+  padding:8px 20px 16px;flex-shrink:0;}
+.svar-kort{display:flex;align-items:center;gap:14px;
+  background:var(--kort-bg);border:1.5px solid var(--kort-border);
+  border-radius:10px;padding:12px 16px;cursor:pointer;
+  transition:all .15s;text-align:left;}
+.svar-kort:hover:not(:disabled){background:rgba(255,255,255,0.12);
+  border-color:rgba(255,255,255,0.3);transform:translateX(4px);}
+.svar-kort:disabled{cursor:default;}
+.svar-nummer{font-family:var(--font-m);font-size:.78rem;
+  min-width:24px;height:24px;border-radius:6px;
+  background:rgba(255,255,255,0.12);display:flex;align-items:center;
+  justify-content:center;color:var(--dim);font-weight:500;flex-shrink:0;}
+.svar-tekst{font-family:var(--font-h);font-size:clamp(.82rem,1.8vw,1rem);
+  font-weight:700;line-height:1.35;color:var(--text);}
+.svar-kort.rett{background:rgba(52,211,153,0.2);border-color:#34d399;}
+.svar-kort.rett .svar-nummer{background:#34d399;color:#000;}
+.svar-kort.feil{opacity:0.35;}
+.svar-kort.valgt-feil{background:rgba(248,113,113,0.15);border-color:#f87171;opacity:1;}
+.svar-kort.valgt-feil .svar-nummer{background:#f87171;color:#fff;}
+
+/* Feedback-stripe */
+#fb-stripe{height:0;overflow:hidden;transition:height .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-h);font-size:.88rem;font-weight:700;flex-shrink:0;}
+#fb-stripe.vis{height:38px;}
+#fb-stripe.ok{background:rgba(52,211,153,0.15);color:#34d399;}
+#fb-stripe.feil{background:rgba(248,113,113,0.12);color:#f87171;}
+
+/* Sluttskjerm */
+#slutt{display:none;position:fixed;inset:0;z-index:50;
+  background:var(--bg);flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;text-align:center;padding:24px;}
+.slutt-emoji{font-size:4rem;}
+.slutt-tittel{font-family:var(--font-h);font-size:2rem;font-weight:900;}
+.slutt-sub{font-size:.92rem;color:var(--dim);}
+#toppliste{max-width:360px;width:100%;margin:4px 0;}
+.tr{display:flex;align-items:center;gap:12px;padding:9px 13px;
+  background:rgba(255,255,255,.07);border-radius:9px;margin-bottom:5px;
+  border:1px solid rgba(255,255,255,.08);font-size:.86rem;}
+.tr-p{font-family:var(--font-h);font-weight:800;width:22px;color:var(--dim);}
+.tr-i{flex:1;color:var(--dim);font-size:.78rem;}
+.tr-s{font-family:var(--font-h);font-weight:800;color:var(--aksent);}
+.slutt-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.s-btn{padding:12px 28px;border-radius:10px;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:.9rem;font-weight:800;transition:all .15s;}
+.s-btn.hoved{background:var(--aksent);color:#fff;}
+.s-btn.sekundær{background:rgba(255,255,255,.1);color:var(--text);
+  border:1.5px solid rgba(255,255,255,.2);}
+.s-btn:hover{filter:brightness(1.12);}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo"><span class="logo-aksent">🔬 </span>Naturfagquiz</div>
+  <span id="opp-teller-top"></span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<div id="intro">
+  <div class="i-merke">🔬 Naturfag · SkapLab</div>
+  <div class="i-ikon">🔬</div>
+  <h1 class="i-tittel"><span>Naturf</span>agquiz</h1>
+  <p class="i-sub">Les beskrivelsen og velg riktig begrep eller vitenskapsperson. Jo raskere du svarer, jo mer poeng!</p>
+  <div class="antall-rad">
+    <span class="antall-label">Antall spørsmål:</span>
+    <button class="n-btn" onclick="velgN(10,this)">10</button>
+    <button class="n-btn ak" onclick="velgN(20,this)">20</button>
+    <button class="n-btn" onclick="velgN(30,this)">30</button>
+  </div>
+  <button class="start-knapp" onclick="startSpill()">Start quiz ▶</button>
+</div>
+
+<div id="spill">
+  <div id="prog-wrap"><div id="prog-bar" style="width:100%"></div></div>
+  <div id="meta-rad">
+    <div id="tid-sirkel-wrap">
+      <svg id="tid-sirkel" width="42" height="42" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+        <circle id="tid-ring" cx="21" cy="21" r="17" fill="none"
+          stroke="#34d399" stroke-width="3"
+          stroke-dasharray="107" stroke-dashoffset="0"
+          stroke-linecap="round"/>
+      </svg>
+      <div id="tid-tall">15</div>
+    </div>
+    <span id="spm-kat"></span>
+    <div class="meta-spacer"></div>
+    <div id="poeng-boks">⭐ 0</div>
+  </div>
+  <div id="spm-wrap">
+    <div id="spm-inner">
+      <div id="spm-tekst"></div>
+    </div>
+  </div>
+  <div id="fb-stripe"></div>
+  <div id="svar-liste">
+    <button class="svar-kort" onclick="svar(0)" id="sk0">
+      <span class="svar-nummer">A</span>
+      <span class="svar-tekst" id="a0"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(1)" id="sk1">
+      <span class="svar-nummer">B</span>
+      <span class="svar-tekst" id="a1"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(2)" id="sk2">
+      <span class="svar-nummer">C</span>
+      <span class="svar-tekst" id="a2"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(3)" id="sk3">
+      <span class="svar-nummer">D</span>
+      <span class="svar-tekst" id="a3"></span>
+    </button>
+  </div>
+</div>
+
+<div id="slutt">
+  <div class="slutt-emoji" id="slutt-emoji"></div>
+  <div class="slutt-tittel" id="slutt-tittel"></div>
+  <div class="slutt-sub" id="slutt-sub"></div>
+  <div id="toppliste"></div>
+  <div class="slutt-btns">
+    <button class="s-btn hoved" onclick="startSpill()">🔄 Spill igjen</button>
+    <button class="s-btn sekundær" onclick="location.href='spill_hub.html'">🏠 Hub</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+var DATA = [
+  {t:'Celle',d:'Den minste levende enheten i alle organismer. Består av cellemembran, cytoplasma og (i eukaryoter) cellekjerne.',kat:'Biologi'},
+  {t:'DNA',d:'Arvematerialet som inneholder instruksjonene for oppbygging og funksjon av alle levende organismer. Har en dobbel heliks-struktur.',kat:'Biologi'},
+  {t:'Cellemembran',d:'En tynn, fleksibel hud som omgir cellen og kontrollerer hva som slippes inn og ut. Består av et dobbelt lag fosfolipider.',kat:'Biologi'},
+  {t:'Fotosyntese',d:'Prosessen der planter og alger bruker sollys, CO₂ og vann til å lage sukker og oksygen.',kat:'Biologi'},
+  {t:'Respirasjon',d:'Prosessen der celler bryter ned sukker med oksygen for å frigjøre energi (ATP), CO₂ og vann.',kat:'Biologi'},
+  {t:'Evolusjon',d:'Endring i arvelige egenskaper i en populasjon over generasjoner, drevet av naturlig seleksjon, mutasjon og genetisk drift.',kat:'Biologi'},
+  {t:'Naturlig seleksjon',d:'Mekanisme der individer med egenskaper som gir bedre overlevelse og reproduksjon etterlater seg flere avkom.',kat:'Biologi'},
+  {t:'Gen',d:'Et DNA-segment som koder for et bestemt protein eller RNA og arves fra foreldre til avkom.',kat:'Biologi'},
+  {t:'Kromosom',d:'Struktur i cellekjernen som består av tett pakket DNA med tilhørende proteiner. Mennesker har 46 kromosomer.',kat:'Biologi'},
+  {t:'Mitose',d:'Celledeling der én celle deler seg i to identiske datterceller med samme antall kromosomer. Grunnlag for vekst og reparasjon.',kat:'Biologi'},
+  {t:'Meiose',d:'Spesialisert celledeling som produserer kjønnsceller (egg og sæd) med halvt antall kromosomer.',kat:'Biologi'},
+  {t:'Protein',d:'Store molekyler bygd av aminosyrer. Fungerer som enzymer, strukturmaterialer, hormoner og transportmolekyler.',kat:'Biologi'},
+  {t:'Enzym',d:'Et protein som fungerer som katalysator og øker hastigheten på kjemiske reaksjoner i cellen uten å forbrukes selv.',kat:'Biologi'},
+  {t:'Nervesystem',d:'Kroppens kommunikasjonssystem bestående av hjerne, ryggmarg og nervetråder som sender elektriske signaler.',kat:'Biologi'},
+  {t:'Hormon',d:'Kjemisk budbringer produsert av kjertler som frakter signaler via blodbanen til målceller i andre deler av kroppen.',kat:'Biologi'},
+  {t:'Homeostase',d:'Kroppens evne til å opprettholde stabile indre forhold (temperatur, pH, blodsukker) til tross for ytre endringer.',kat:'Biologi'},
+  {t:'Økosystem',d:'Alle levende organismer i et område pluss det ikke-levende miljøet de lever i, og samspillet mellom disse.',kat:'Biologi'},
+  {t:'Næringskjede',d:'Sekvens som viser hvem som spiser hvem i naturen – fra produsenter (planter) via forbrukere til nedbrytere.',kat:'Biologi'},
+  {t:'Symbiose',d:'Et langvarig samspill mellom to ulike arter. Kan være gjensidig nyttig (mutualisme), ensidig nyttig (kommensalisme) eller skadelig (parasittisme).',kat:'Biologi'},
+  {t:'Virus',d:'Et ikke-cellulært smittstoff som bare kan formere seg inne i levende celler. Består av arvestoff omgitt av et proteinkappe.',kat:'Biologi'},
+  {t:'Bakterie',d:'Encellede prokaryote organismer uten cellekjerne. Finnes overalt i naturen og spiller viktige roller i stoffkretsløp.',kat:'Biologi'},
+  {t:'Osmose',d:'Diffusjon av vann gjennom en semipermeabel membran fra et område med høy vannkonsentrasjon til lav.',kat:'Biologi'},
+  {t:'Diffusjon',d:'Nettobevegelse av partikler fra et område med høy konsentrasjon til lav – uten energiforbruk.',kat:'Biologi'},
+  {t:'ATP',d:'Cellens energivaluta. Frigjør energi ved å spaltes til ADP og fosfat, og kan gjenoppbygges under respirasjon.',kat:'Biologi'},
+  {t:'Klorofyll',d:'Det grønne fargestoffet i kloroplaster som absorberer lys (særlig rødt og blått) og driver fotosyntesen.',kat:'Biologi'},
+  {t:'Kloroplast',d:'Organell i planteceller der fotosyntesen foregår. Har eget DNA og doble membraner.',kat:'Biologi'},
+  {t:'Mitokondrie',d:'Organell kalt «cellens kraftverk» der ATP produseres gjennom cellulær respirasjon. Har eget DNA.',kat:'Biologi'},
+  {t:'Mutasjon',d:'En varig endring i DNA-sekvensen. Kan være skadelig, nøytral eller i sjeldne tilfeller gunstig.',kat:'Biologi'},
+  {t:'Adaptasjon',d:'En arvet egenskap som øker en organisms overlevelse og reproduksjon i sitt miljø over evolusjonær tid.',kat:'Biologi'},
+  {t:'Habitat',d:'Det spesifikke stedet eller miljøet der en organisme lever og finner mat, vann og ly.',kat:'Biologi'},
+  {t:'Biodiversitet',d:'Variasjonen av livsformer på Jorden – inkludert genetisk variasjon, artsrikdom og mangfold av økosystemer.',kat:'Biologi'},
+  {t:'Immunsystem',d:'Kroppens forsvarssystem mot patogener. Består av hvite blodceller, antistoffer og lymfesystemet.',kat:'Biologi'},
+  {t:'Antistoff',d:'Protein produsert av B-celler som binder seg til spesifikke antigener og merker dem for destruksjon.',kat:'Biologi'},
+  {t:'Arv',d:'Overføring av genetiske egenskaper fra foreldre til avkom via egg- og sædceller.',kat:'Biologi'},
+  {t:'Fenotype',d:'Det observerbare uttrykket av en organisms genotype – altså utseende, adferd og fysiologi.',kat:'Biologi'},
+  {t:'Genotype',d:'Den genetiske sammensetningen av en organisme – summen av alle alleler i genomet.',kat:'Biologi'},
+  {t:'Allel',d:'En av to eller flere varianter av et gen. Dominante alleler uttrykkes over recessive ved heterozygoti.',kat:'Biologi'},
+  {t:'Ribosom',d:'Cellens proteinfabrikk. Leser mRNA-instruksjoner og setter sammen aminosyrer til proteinkjeder.',kat:'Biologi'},
+  {t:'mRNA',d:'Et RNA-molekyl som kopierer instruksjoner fra DNA i kjernen og bringer dem til ribosomene for proteinsyntese.',kat:'Biologi'},
+  {t:'Stomata',d:'Mikroskopiske åpninger i bladoverflaten som regulerer gassutveksling – CO₂ inn, O₂ og vanndamp ut.',kat:'Biologi'},
+  {t:'Transpirasjon',d:'Fordampning av vann fra plantens overflate (særlig blader), som driver vanntransport fra røtter til blader.',kat:'Biologi'},
+  {t:'Hjertet',d:'Et muskulært organ som pumper blod gjennom kroppen. Hos mennesket har det fire kamre og slår 60–100 ganger per minutt.',kat:'Biologi'},
+  {t:'Blodplasma',d:'Den flytende delen av blodet (ca. 55 %) som transporterer næringsstoffer, hormoner og avfallsstoffer.',kat:'Biologi'},
+  {t:'Alveole',d:'Små luftsekker i lungene der gassutvekslingen mellom luft og blod skjer via diffusjon.',kat:'Biologi'},
+  {t:'Populasjon',d:'En gruppe individer av samme art som lever i samme område og kan formere seg med hverandre.',kat:'Biologi'},
+  {t:'Artsdannelse',d:'Prosessen der én art deler seg i to genetisk isolerte linjer som ikke lenger kan forplante seg med hverandre.',kat:'Biologi'},
+  {t:'Nedbryter',d:'Organisme (sopp eller bakterie) som bryter ned dødt organisk materiale og frigjør næringsstoffer tilbake til miljøet.',kat:'Biologi'},
+  {t:'Parasitt',d:'En organisme som lever på eller i en vert og tar næring fra den, vanligvis til skade for verten.',kat:'Biologi'},
+  {t:'Pollinering',d:'Overføring av pollen fra støvbærere til arr på en blomst, nødvendig for frøproduksjon og reproduksjon.',kat:'Biologi'},
+  {t:'Sopp',d:'Et eget rike av organismer – verken plante eller dyr – som bryter ned organisk materiale eksternt og absorberer næring. Cellevegg av kitin.',kat:'Biologi'},
+  {t:'Kraft',d:'En påvirkning som kan endre et legemes bevegelse eller form. Måles i Newton (N). F = m × a.',kat:'Fysikk'},
+  {t:'Energi',d:'Evnen til å utføre arbeid. Finnes i mange former: kinetisk, potensiell, termisk, kjemisk og elektromagnetisk. Måles i Joule.',kat:'Fysikk'},
+  {t:'Masse',d:'Mengden stoff i et legeme. Konstant uavhengig av tyngdekraft. Måles i kilogram (kg).',kat:'Fysikk'},
+  {t:'Tyngdekraft',d:'Tiltrekkingskraften mellom masser. På Jordens overflate gir den en akselerasjon på ca. 9,8 m/s².',kat:'Fysikk'},
+  {t:'Akselerasjon',d:'Endring i hastighet per tidsenhet. a = Δv / Δt. Måles i m/s².',kat:'Fysikk'},
+  {t:'Arbeid',d:'Produktet av kraft og forflytning i kraftens retning. W = F × d. Måles i Joule.',kat:'Fysikk'},
+  {t:'Effekt',d:'Arbeid utført per tidsenhet. P = W / t. Måles i Watt (W = J/s).',kat:'Fysikk'},
+  {t:'Friksjon',d:'Motstandskraft mellom to flater i kontakt som motstår bevegelse. Kan være statisk eller kinetisk.',kat:'Fysikk'},
+  {t:'Bølge',d:'En forstyrrelse som brer seg gjennom et medium eller rom og overfører energi uten å flytte materie.',kat:'Fysikk'},
+  {t:'Frekvens',d:'Antall svingninger per sekund. Måles i Hertz (Hz). f = 1/T der T er perioden.',kat:'Fysikk'},
+  {t:'Bølgelengde',d:'Avstanden mellom to bølgetopper (eller bunner). λ = v/f. Bestemmer fargen for lys og tonehøyde for lyd.',kat:'Fysikk'},
+  {t:'Elektromagnetisk stråling',d:'Bølger av elektriske og magnetiske felt som ikke trenger medium. Inkluderer radio, infrarødt, synlig lys, UV, røntgen og gamma.',kat:'Fysikk'},
+  {t:'Trykk',d:'Kraft per flateenhet. P = F / A. Måles i Pascal (Pa) eller bar.',kat:'Fysikk'},
+  {t:'Temperatur',d:'Mål på den gjennomsnittlige kinetiske energien til partiklene i et stoff. Måles i Celsius, Kelvin eller Fahrenheit.',kat:'Fysikk'},
+  {t:'Varme',d:'Energi som overføres mellom objekter på grunn av temperaturforskjell, alltid fra varmt til kaldt.',kat:'Fysikk'},
+  {t:'Elektrisk strøm',d:'Strøm av elektriske ladninger (vanligvis elektroner). I = Q/t. Måles i Ampere (A).',kat:'Fysikk'},
+  {t:'Spenning',d:'Elektrisk potensialforskjell mellom to punkter som driver strømmen. Måles i Volt (V).',kat:'Fysikk'},
+  {t:'Motstand',d:'Motstanden mot strømflyt i en leder. Måles i Ohm (Ω). Øker ved høyere temperatur for de fleste metaller.',kat:'Fysikk'},
+  {t:'Magnetfelt',d:'Kraftfelt skapt av magnetisk materiale eller bevegende elektriske ladninger. Visualisert med feltlinjer fra nord- til sydpol.',kat:'Fysikk'},
+  {t:'Atomet',d:'Den minste enheten av et grunnstoff som beholder grunnstoffets kjemiske egenskaper. Består av kjerne (protoner + nøytroner) og elektronskall.',kat:'Fysikk'},
+  {t:'Radioaktivitet',d:'Spontan stråling fra ustabile atomkjerner. Tre typer: alfa (α), beta (β) og gamma (γ) stråling.',kat:'Fysikk'},
+  {t:'Halverings\\xadtid',d:'Tid det tar for halvparten av atomkjernene i en radioaktiv prøve å henfalle. Konstant for hvert isotop.',kat:'Fysikk'},
+  {t:'Lyshastigheten',d:'Maksimal hastighet i universet: c ≈ 3 × 10⁸ m/s i vakuum. Symbol c.',kat:'Fysikk'},
+  {t:'Gravitasjonspotensial energi',d:'Energi et legeme har på grunn av sin høyde over en referanse. E_p = mgh.',kat:'Fysikk'},
+  {t:'Kinetisk energi',d:'Energi et legeme har på grunn av sin bevegelse. E_k = ½mv².',kat:'Fysikk'},
+  {t:'Lydhas\\xadtigheten',d:'Hastigheten lyd brer seg med, avhenger av medium. I luft ved 20°C: ca. 343 m/s.',kat:'Fysikk'},
+  {t:'Refleksjon',d:'Tilbakekasting av en bølge (lys, lyd) fra en overflate. Innfallsvinkel = refleksjonsvinkel.',kat:'Fysikk'},
+  {t:'Refraksjon',d:'Endring i en bølges retning når den passerer fra ett medium til et annet med ulik hastighet.',kat:'Fysikk'},
+  {t:'Absorpsjon',d:'Et medium tar opp energi fra stråling. Mørke overflater absorberer mer lys enn lyse.',kat:'Fysikk'},
+  {t:'Treghet',d:'En gjenstand motstår endring i sin bevegelsestilstand. Større masse = større treghet.',kat:'Fysikk'},
+  {t:'Moment',d:'En roterende kraft. τ = r × F. Produktet av kraftarm og kraft. Måles i Nm.',kat:'Fysikk'},
+  {t:'Sentripetalkraft',d:'Kraft rettet mot rotasjonssentrum som holder et legeme i sirkulær bane. F = mv²/r.',kat:'Fysikk'},
+  {t:'Impuls',d:'Produktet av masse og hastighet. p = mv. Bevegelsesmengde er bevart i et lukket system.',kat:'Fysikk'},
+  {t:'Termodynamikkens 1. lov',d:'Energi kan ikke skapes eller ødelegges, bare omdannes. ΔU = Q − W.',kat:'Fysikk'},
+  {t:'Entropi',d:'Mål på uorden i et system. Ifølge termodynamikkens 2. lov øker entropien alltid i et isolert system.',kat:'Fysikk'},
+  {t:'Kondensasjon',d:'Faseovergang fra gass til væske. Skjer når temperaturen synker under duggpunktet.',kat:'Fysikk'},
+  {t:'Fordampning',d:'Faseovergang fra væske til gass som skjer fra overflaten ved temperaturer under kokepunktet.',kat:'Fysikk'},
+  {t:'Smelting',d:'Faseovergang fra fast stoff til væske ved tilførsel av varme. Skjer ved stoffets smeltepunkt.',kat:'Fysikk'},
+  {t:'Koking',d:'Rask fordampning gjennom hele væskens volum når temperaturen når kokepunktet. Avhenger av trykk.',kat:'Fysikk'},
+  {t:'Elektron',d:'Negativt ladet subatomær partikkel som beveger seg i elektronskall rundt atomkjernen. Masse ca. 9,11 × 10⁻³¹ kg.',kat:'Fysikk'},
+  {t:'Proton',d:'Positivt ladet subatomær partikkel i atomkjernen. Antall protoner = atomnummer og bestemmer grunnstoffet.',kat:'Fysikk'},
+  {t:'Nøytron',d:'Elektrisk nøytral subatomær partikkel i atomkjernen. Isotoper av samme grunnstoff har ulikt antall nøytroner.',kat:'Fysikk'},
+  {t:'Fotoelektrisk effekt',d:'Elektroner slynges ut fra et metall når lys av tilstrekkelig høy frekvens treffer det. Forklart av Einstein i 1905.',kat:'Fysikk'},
+  {t:'Kvantefysikk',d:'Fysikkgren som beskriver partiklers oppførsel på atomnivå. Energi overføres i diskrete pakker kalt kvantar.',kat:'Fysikk'},
+  {t:'Spesiell relativitetsteori',d:'Einsteins teori (1905): lyshastigheten er konstant for alle observatører og masse og energi er ekvivalente: E = mc².',kat:'Fysikk'},
+  {t:'Magnetisme',d:'Kraft mellom magnetiske materialer og elektriske strømmer. Atomer med uparret elektron-spinn danner permanente magneter.',kat:'Fysikk'},
+  {t:'Supraledning',d:'Fenomen der visse materialer ved svært lave temperaturer leder elektrisk strøm med null motstand.',kat:'Fysikk'},
+  {t:'Ohms lov',d:'Sammenhengen U = R × I: spenningen er produktet av motstanden og strømmen.',kat:'Fysikk'},
+  {t:'Newtons første lov',d:'Et legeme i ro forblir i ro, og et i bevegelse fortsetter med konstant hastighet – med mindre en ytre kraft virker.',kat:'Fysikk'},
+  {t:'Newtons tredje lov',d:'For enhver kraft finnes en like stor og motsatt rettet reaksjonskraft (aksjon = reaksjon).',kat:'Fysikk'},
+  {t:'Atom',d:'Den minste enheten av et grunnstoff som beholder grunnstoffets egenskaper. Består av kjerne (protoner og nøytroner) og elektronskall.',kat:'Kjemi'},
+  {t:'Molekyl',d:'To eller flere atomer bundet sammen med kovalente bindinger. Kan bestå av ett grunnstoff eller flere.',kat:'Kjemi'},
+  {t:'Grunnstoff',d:'Rent stoff som kun inneholder atomer med samme atomnummer. Kan ikke brytes ned kjemisk.',kat:'Kjemi'},
+  {t:'Periodesystemet',d:'En tabell som organiserer alle grunnstoff etter stigende atomnummer og grupperer dem etter kjemiske egenskaper.',kat:'Kjemi'},
+  {t:'Kjemisk binding',d:'Kraft som holder atomer sammen i molekyler og krystaller. Typer: kovalent, ionisk, metallisk og van der Waals.',kat:'Kjemi'},
+  {t:'Kovalent binding',d:'Binding mellom atomer der de deler ett eller flere elektronpar. Vanlig i organiske molekyler.',kat:'Kjemi'},
+  {t:'Ionisk binding',d:'Elektrostatisk tiltrekning mellom positivt ladede kationer og negativt ladede anioner.',kat:'Kjemi'},
+  {t:'Syre',d:'Et stoff som avgir H⁺-ioner (protoner) i vann. pH < 7. Reagerer med baser i nøytraliseringsreaksjon.',kat:'Kjemi'},
+  {t:'Base',d:'Et stoff som tar opp H⁺-ioner eller avgir OH⁻-ioner i vann. pH > 7.',kat:'Kjemi'},
+  {t:'pH',d:'Logaritmisk skala fra 0–14 som måler surhetsgraden. pH 7 er nøytralt; < 7 er surt; > 7 er basisk.',kat:'Kjemi'},
+  {t:'Oksidasjon',d:'En reaksjon der et atom avgir elektroner. Inngår alltid i et redokssystem (oksidasjon + reduksjon).',kat:'Kjemi'},
+  {t:'Reduksjon',d:'En reaksjon der et atom tar opp elektroner. Alltid koblet til oksidasjon i redoksreaksjoner.',kat:'Kjemi'},
+  {t:'Katalysator',d:'Et stoff som øker reaksjonshastigheten uten selv å forbrukes. Senker aktiveringsenergi.',kat:'Kjemi'},
+  {t:'Løsning',d:'En homogen blanding der ett stoff (løsemiddel) løser opp et annet (løst stoff) på molekylnivå.',kat:'Kjemi'},
+  {t:'Konsentrasjon',d:'Mengden løst stoff per volum løsning. Ofte angitt i mol/L (M) eller g/L.',kat:'Kjemi'},
+  {t:'Mol',d:'SI-enhet for stoffmengde. 1 mol = 6,022 × 10²³ partikler (Avogadros tall). n = m/M.',kat:'Kjemi'},
+  {t:'Kjemisk reaksjon',d:'En prosess der atombindinger brytes og dannes slik at nye stoffer oppstår. Masse er alltid bevart.',kat:'Kjemi'},
+  {t:'Forbrenning',d:'En eksotermisk kjemisk reaksjon der et stoff reagerer raskt med oksygen og frigir varme og lys.',kat:'Kjemi'},
+  {t:'Felling',d:'Dannelse av et uløselig fast stoff fra en løsning ved blanding av to løsninger.',kat:'Kjemi'},
+  {t:'Elektrolyse',d:'Bruk av elektrisk strøm til å drive en ikke-spontan kjemisk reaksjon. Brukes i industrien til utvinning av metaller.',kat:'Kjemi'},
+  {t:'Isomer',d:'To molekyler med samme molekylformel men ulik atomarrangering og dermed ulike egenskaper.',kat:'Kjemi'},
+  {t:'Polymer',d:'Store molekyler bygd av mange gjentakende enheter (monomerer) koblet med kovalente bindinger.',kat:'Kjemi'},
+  {t:'Organisk kjemi',d:'Studiet av karbonholdige molekyler, inkludert hydrokarboner, alkoholer, syrer og biomolekyler.',kat:'Kjemi'},
+  {t:'Hydrokarbon',d:'Organisk molekyl som kun inneholder hydrogen og karbon. Basis for fossile brennstoff.',kat:'Kjemi'},
+  {t:'Isotop',d:'Varianter av et grunnstoff med samme antall protoner men ulikt antall nøytroner – og dermed ulik masse.',kat:'Kjemi'},
+  {t:'Reaksjonshastighet',d:'Hastigheten som et substrat forbrukes eller produkt dannes. Påvirkes av konsentrasjon, temperatur, katalysator og overflate.',kat:'Kjemi'},
+  {t:'Aktiveringsenergi',d:'Minimumsenergi som må tilføres for at en kjemisk reaksjon skal starte. Katalysatorer senker denne.',kat:'Kjemi'},
+  {t:'Eksotermisk',d:'En reaksjon som frigjør energi (varme) til omgivelsene. ΔH < 0.',kat:'Kjemi'},
+  {t:'Endotermisk',d:'En reaksjon som krever tilført energi fra omgivelsene. ΔH > 0.',kat:'Kjemi'},
+  {t:'Kjemisk likevekt',d:'Tilstand der den fremre og bakre reaksjonen skjer like raskt, slik at konsentrasjonene er konstante.',kat:'Kjemi'},
+  {t:'Destillasjon',d:'Separeringsmetode basert på ulike kokepunkter. Væsken varmes og dampen kondenseres separat.',kat:'Kjemi'},
+  {t:'Kromatografi',d:'Separeringsteknikk der komponenter beveger seg i ulik hastighet gjennom et medium, og skilles dermed.',kat:'Kjemi'},
+  {t:'Buffersystem',d:'Løsning som motstår pH-endringer ved tilsats av syre eller base, ved hjelp av et syre-base-par.',kat:'Kjemi'},
+  {t:'Kolloide',d:'En blanding der partikler (1–1000 nm) er jevnt fordelt i et medium – verken ren løsning eller suspensjon.',kat:'Kjemi'},
+  {t:'Oksidasjonstall',d:'Et tall som angir den hypotetiske ladningen til et atom i et stoff, brukt til å balansere redoksreaksjoner.',kat:'Kjemi'},
+  {t:'Kovalent nettverksstoff',d:'Fast stoff der atomer er bundet til hverandre i et gigantisk nettverk av kovalente bindinger. Svært harde.',kat:'Kjemi'},
+  {t:'Ionekrystall',d:'Fast stoff bygd av positive og negative ioner ordnet i et regelmessig gitter. Høyt smeltepunkt.',kat:'Kjemi'},
+  {t:'Sublimering',d:'Direkte faseovergang fra fast stoff til gass uten flytende fase.',kat:'Kjemi'},
+  {t:'Damptrykk',d:'Trykk som utøves av dampen i likevekt over en væske. Avhenger av temperatur.',kat:'Kjemi'},
+  {t:'Støkiometri',d:'Beregning av mengder reaktanter og produkter i en kjemisk reaksjon basert på balanseringen av likningen.',kat:'Kjemi'},
+  {t:'Amfoter',d:'Et stoff som kan opptre som både syre og base avhengig av motparten.',kat:'Kjemi'},
+  {t:'Radikal',d:'Atom eller molekyl med ett uparret elektron. Svært reaktivt og deltar i kjedereaksjoner.',kat:'Kjemi'},
+  {t:'Smeltepunkt',d:'Temperaturen ved hvilken et fast stoff smelter til væske under gitt trykk.',kat:'Kjemi'},
+  {t:'Elektronegativitet',d:'Et atoms evne til å tiltrekke seg elektroner i en kovalent binding. Angitt på Pauling-skalaen der fluor = 4,0.',kat:'Kjemi'},
+  {t:'Polaritet',d:'Ujevn fordeling av elektrisk ladning i et molekyl pga. forskjell i elektronegativitet. Polære molekyler løser seg i vann.',kat:'Kjemi'},
+  {t:'Oksidasjonsmiddel',d:'Et stoff som tar opp elektroner fra et annet stoff og selv reduseres. Øker oksidasjonstallet til motparten.',kat:'Kjemi'},
+  {t:'Reduksjonsmiddel',d:'Et stoff som avgir elektroner til et annet stoff og derved reduserer det, mens det selv oksideres.',kat:'Kjemi'},
+  {t:'Avogadros tall',d:'Antall partikler i 1 mol av et stoff: Nₐ = 6,022 × 10²³ mol⁻¹.',kat:'Kjemi'},
+  {t:'Le Chateliers prinsipp',d:'Når en likevekt forstyrres, forskyves den for å motvirke forstyrrelsen.',kat:'Kjemi'},
+  {t:'Transistor',d:'En halvlederkomponent som kan forsterke eller bytte elektriske signaler. Grunnleggende byggestein i all digital elektronikk.',kat:'Elektrisitet'},
+  {t:'Diode',d:'En halvlederkomponent som bare lar strøm flyte i én retning. Brukes til likeretting og signal-deteksjon.',kat:'Elektrisitet'},
+  {t:'Kondensator',d:'En komponent som lagrer elektrisk energi i et elektrisk felt mellom to ledere adskilt av et isolerende materiale.',kat:'Elektrisitet'},
+  {t:'Spole',d:'En komponent bygd av en lederspiral som lagrer energi i et magnetfelt når strøm flyter gjennom.',kat:'Elektrisitet'},
+  {t:'Integrert krets',d:'En mikroskopisk krets med mange transistorer, motstander og kondensatorer på en enkelt silisiumbrikke.',kat:'Elektrisitet'},
+  {t:'PCB',d:'Et kretskort av isolerende materiale med trykte kobberledere der elektroniske komponenter loddes fast.',kat:'Elektrisitet'},
+  {t:'Halvleder',d:'Et materiale med elektrisk ledningsevne mellom en leder og en isolator. Silisium er det vanligste.',kat:'Elektrisitet'},
+  {t:'Transformator',d:'En elektrisk maskin som overfører elektrisk energi mellom to kretser via elektromagnetisk induksjon og endrer spenning.',kat:'Elektrisitet'},
+  {t:'Vekselstrøm',d:'Elektrisk strøm som periodisk skifter retning. Strømnettet i Norge leverer 50 Hz AC.',kat:'Elektrisitet'},
+  {t:'Likestrøm',d:'Elektrisk strøm som flyter i én konstant retning. Batterier og solceller produserer DC.',kat:'Elektrisitet'},
+  {t:'Jordfeil\\xadbryter',d:'Sikkerhetskomponent som kobler fra strømmen umiddelbart ved jordfeil (lekkasjstrøm), for å forhindre elektrisk sjokk.',kat:'Elektrisitet'},
+  {t:'Operasjons\\xadforsterker',d:'En integrert krets som forsterker differansen mellom to inngangssignaler med svært høy forsterkning.',kat:'Elektrisitet'},
+  {t:'Oscillator',d:'En krets som produserer et periodisk signal (svingebevegelse) uten ekstern inngangssignal.',kat:'Elektrisitet'},
+  {t:'Pulsbredde\\xadmodulasjon',d:'Teknikk der et digitalt signal av/på brukes til å simulere analoge verdier ved å variere bredden på pulsene.',kat:'Elektrisitet'},
+  {t:'ADC',d:'Komponent som konverterer et analogt signal (kontinuerlig) til digitale tall (diskrete verdier).',kat:'Elektrisitet'},
+  {t:'DAC',d:'Komponent som konverterer digitale verdier til et analogt signal. Brukes i lydavspillingskjeder.',kat:'Elektrisitet'},
+  {t:'Logisk port',d:'En digital krets som utfører boolsk algebra. Grunntyper: AND, OR, NOT, NAND, NOR og XOR.',kat:'Elektrisitet'},
+  {t:'Flip-flop',d:'En digital krets med to stabile tilstander som kan lagre én bit informasjon. Grunnlag for registre og RAM.',kat:'Elektrisitet'},
+  {t:'Mikroprosessor',d:'En integrert krets som inneholder CPU-en (sentralprosessoren) til en datamaskin på en enkelt brikke.',kat:'Elektrisitet'},
+  {t:'Minne (RAM)',d:'Flyktig hurtigminne som datamaskinen bruker til å lagre data og programmer som kjøres for øyeblikket.',kat:'Elektrisitet'},
+  {t:'Sensor',d:'En komponent som måler fysiske størrelser (temperatur, lys, trykk) og konverterer dem til elektriske signaler.',kat:'Elektrisitet'},
+  {t:'Aktuator',d:'En komponent som konverterer et elektrisk signal til fysisk bevegelse eller handling.',kat:'Elektrisitet'},
+  {t:'Kortslutning',d:'En uønsket, lav-motstandsforbindelse mellom to punkter i en krets som gir svært høy strøm.',kat:'Elektrisitet'},
+  {t:'Frekvensrespons',d:'Beskrivelse av hvordan en krets eller et system reagerer på signaler av ulik frekvens.',kat:'Elektrisitet'},
+  {t:'Impedans',d:'Den totale motstanden mot vekselstrøm i en krets, inkludert motstand, kapasitiv og induktiv motstand. Symbol Z, enhet Ω.',kat:'Elektrisitet'},
+  {t:'Feedback',d:'Et signal fra utgang til inngang i et system. Negativ feedback stabiliserer; positiv feedback kan forårsake ustabilitet.',kat:'Elektrisitet'},
+  {t:'Jording',d:'Elektrisk forbindelse mellom en krets og Jord, for å eliminere uønsket spenning og øke sikkerhet.',kat:'Elektrisitet'},
+  {t:'Effektforbruk',d:'Elektrisk effekt en komponent eller krets forbruker. P = U × I = I²R = U²/R. Måles i Watt.',kat:'Elektrisitet'},
+  {t:'Solcelle',d:'En halvlederkomponent som konverterer sollys direkte til elektrisk energi via fotoelektrisk effekt.',kat:'Elektrisitet'},
+  {t:'Batteri',d:'En elektrokjemisk celle som omdanner kjemisk energi til elektrisk energi via redoksreaksjoner.',kat:'Elektrisitet'},
+  {t:'Protokoll',d:'Et sett regler for dataoverføring mellom elektroniske enheter. Eksempler: UART, I2C, SPI.',kat:'Elektrisitet'},
+  {t:'Mikro\\xadkontroller',d:'En enkelbrikke-datamaskin med CPU, minne og I/O-periferi integrert. Styrer elektroniske systemer.',kat:'Elektrisitet'},
+  {t:'GPIO',d:'Pins på en mikrokontroller eller mikroprosessor som kan programmeres som inngang eller utgang.',kat:'Elektrisitet'},
+  {t:'Breadboard',d:'Et prototyperingsbrett med hullsystem for å koble elektroniske komponenter uten lodding.',kat:'Elektrisitet'},
+  {t:'Lodding',d:'Permanente elektriske forbindelser ved å smelte en tin-bly- eller tin-kobber-legering mellom komponenter og PCB.',kat:'Elektrisitet'},
+  {t:'Multimeter',d:'Et måleinstrument som kan måle spenning, strøm og motstand i elektriske kretser.',kat:'Elektrisitet'},
+  {t:'Oscilloskop',d:'Et instrument som viser elektriske spenningssignalers form over tid på en skjerm.',kat:'Elektrisitet'},
+  {t:'EMC',d:'En enhets evne til å fungere tilfredsstillende i sitt elektromagnetiske miljø uten å forstyrre andre.',kat:'Elektrisitet'},
+  {t:'Strøm\\xadforsyning',d:'En enhet som leverer stabil elektrisk strøm og spenning til et elektronisk system fra et kraftnett.',kat:'Elektrisitet'},
+  {t:'Lavspenning',d:'Spenninger opp til 1 000 V AC eller 1 500 V DC i elektriske anlegg. Under dette er risikoen for lysbue lavere.',kat:'Elektrisitet'},
+  {t:'RF',d:'Elektromagnetisk stråling med frekvens 3 kHz – 300 GHz, brukt til trådløs kommunikasjon.',kat:'Elektrisitet'},
+  {t:'PWR LED',d:'En LED koblet til strømforsyningen for å indikere at enheten er slått på.',kat:'Elektrisitet'},
+  {t:'BMS',d:'Et elektronisk system som overvåker og beskytter et batteri mot overladning, dypdeladning og overtemperatur.',kat:'Elektrisitet'},
+  {t:'Inverterer',d:'En elektronisk krets som konverterer DC til AC. Brukes i solcelleanlegg og UPS-systemer.',kat:'Elektrisitet'},
+  {t:'Spenningsregulator',d:'En krets som holder utgangsspenningen stabil uavhengig av endringer i inngangsspenning eller belastning.',kat:'Elektrisitet'},
+  {t:'H-bro',d:'En elektronisk krets som lar en motor kjøre i begge retninger ved å snu polariteten på spenningen.',kat:'Elektrisitet'},
+  {t:'Watchdog-timer',d:'En nedtellingstimer i en mikrokontroller som nullstiller systemet hvis programmet ikke sender et heartbeat-signal innen fristen.',kat:'Elektrisitet'},
+  {t:'Logisk nivå',d:'Spenningsnivåene som representerer binære 0 og 1 i digitale kretser. Vanligst: 5 V (TTL) og 3,3 V (CMOS).',kat:'Elektrisitet'},
+  {t:'Pull-up motstand',d:'En motstand koblet mellom en inngangslinje og VCC for å sikre at linjen har en definert høy tilstand når ingen enhet driver den.',kat:'Elektrisitet'},
+  {t:'Biosfære',d:'Summen av alle levende organismer og deres miljøer på Jord, fra havdypene til den øvre atmosfæren.',kat:'Økologi'},
+  {t:'Biom',d:'Et stort geografisk område med en karakteristisk kombinasjon av klima, vegetasjon og dyreliv.',kat:'Økologi'},
+  {t:'Karbonsyklus',d:'Biogeokjemisk syklus der karbon sirkulerer mellom atmosfæren, biosfæren, hydrosfæren og litosfæren.',kat:'Økologi'},
+  {t:'Nitrogensyklus',d:'Kretsløpet der nitrogen omdannes mellom N₂ i atmosfæren, ammonium, nitrat og organisk nitrogen.',kat:'Økologi'},
+  {t:'Vannkrets\\xadløpet',d:'Kontinuerlig sirkulasjon av vann mellom atmosfæren, landoverflaten og havet via fordampning, nedbør og avrenning.',kat:'Økologi'},
+  {t:'Primær\\xadproduksjon',d:'Produksjon av organisk materiale fra uorganiske forbindelser via fotosyntese eller kjemosyntese.',kat:'Økologi'},
+  {t:'Trofisk nivå',d:'Trinn i næringskjeden, definert av antall ledd fra primærprodusenten. Producenter → herbivorer → karnivorer.',kat:'Økologi'},
+  {t:'Nærings\\xadnett',d:'Et komplekst nettverk av sammenvevde næringskjeder som viser energistrømmene i et økosystem.',kat:'Økologi'},
+  {t:'Nøkkelart',d:'En art med uforholdsmessig stor effekt på sitt økosystem i forhold til sin abundanse. Fjerning kan kollapse systemet.',kat:'Økologi'},
+  {t:'Klimaendring',d:'Langsiktig endring i globale eller regionale klimamønstre, primært forårsaket av menneskelig utslipp av drivhusgasser.',kat:'Økologi'},
+  {t:'Drivhuseffekt',d:'Prosess der atmosfæriske gasser (CO₂, CH₄, N₂O) absorberer og re-emitterer infrarød stråling og varmer opp Jorda.',kat:'Økologi'},
+  {t:'Ozonlaget',d:'Et lag i stratosfæren (15–35 km høyde) med høy ozonkonsentrasjon som absorberer det meste av UV-B- og UV-C-stråling.',kat:'Økologi'},
+  {t:'Biologisk mangfold',d:'Variasjonen av livsformer – gener, arter og økosystemer – på Jord eller i et gitt område.',kat:'Økologi'},
+  {t:'Invasiv art',d:'En art introdusert utenfor sitt naturlige habitat som fortrenger hjemlige arter og forstyrrer økosystemet.',kat:'Økologi'},
+  {t:'Bæreevne',d:'Maksimalt antall individer av én art et bestemt habitat kan støtte stabilt over tid.',kat:'Økologi'},
+  {t:'Konkurranseeksklusion',d:'Prinsippet om at to arter med identisk nisje ikke kan eksistere stabilt i samme habitat – den ene vil fortrenge den andre.',kat:'Økologi'},
+  {t:'Nisje',d:'En arts rolle og posisjon i et økosystem – hva den spiser, hvem som spiser den, og hvilke ressurser den bruker.',kat:'Økologi'},
+  {t:'Suksesjon',d:'Den gradvise endringen i et samfunn av organismer over tid frem mot en klimaksstand.',kat:'Økologi'},
+  {t:'Klimaks\\xadsamfunn',d:'Det stabile sluttpunktet for økologisk suksesjon der samfunnet er tilpasset klimaet og ikke lenger endres.',kat:'Økologi'},
+  {t:'Forstyrrelses\\xadregim',d:'Hyppighet og intensitet av forstyrrelser (brann, storm, oversvømmelse) i et område, som former biodiversiteten.',kat:'Økologi'},
+  {t:'Eutrofiering',d:'Overgjødsling av vann med næringsstoffer (fosfor, nitrogen) som medfører algeoppblomstring og oksygensvikt.',kat:'Økologi'},
+  {t:'Biomasse',d:'Den totale massen av levende organismer i et gitt område eller trofisk nivå. Måles i gram per m².',kat:'Økologi'},
+  {t:'Produktivitet',d:'Raten der energi bindes eller biomasse produseres i et økosystem. Skilles mellom brutto og netto primærproduksjon.',kat:'Økologi'},
+  {t:'Toksins\\xadopphopning',d:'Opphoping av giftstoffer i organismer fordi de lagres raskere enn de brytes ned.',kat:'Økologi'},
+  {t:'Biomagnifikasjon',d:'Økning av giftstoffkonsentrasjon opp gjennom næringskjeden fordi konsumenten spiser mange kontaminerte byttedyr.',kat:'Økologi'},
+  {t:'Saprofit',d:'Organisme som lever av og bryter ned dødt organisk materiale. Viktig i næringsstoffer-syklusen.',kat:'Økologi'},
+  {t:'Mutualis\\xadme',d:'En symbiose der begge parter har nytte av forholdet.',kat:'Økologi'},
+  {t:'Allelopati',d:'En plantes produksjon av kjemikalier som hemmer vekst av naboarter, en form for kjemisk konkurranse.',kat:'Økologi'},
+  {t:'Migrasjon',d:'Sesongmessig forflytning av dyr mellom ulike leveområder, vanligvis knyttet til mat, klima eller reproduksjon.',kat:'Økologi'},
+  {t:'Fragmentering',d:'Oppdeling av kontinuerlige habitater i isolerte biter av menneskelige inngrep (vei, landbruk, bebyggelse).',kat:'Økologi'},
+  {t:'Korridorer',d:'Sammenhengende vegetasjonsstriper som knytter fragmenterte habitater og muliggjør dyrs forflytning.',kat:'Økologi'},
+  {t:'Forsuringen av havet',d:'Reduksjon av havets pH forårsaket av absorpsjon av menneskeskapte CO₂-utslipp, som truer kalkskallende organismer.',kat:'Økologi'},
+  {t:'Nitrogenfiksering',d:'Omdanning av N₂-gass til ammonium (NH₄⁺) av spesialiserte bakterier, gjort tilgjengelig for planter.',kat:'Økologi'},
+  {t:'Detritus',d:'Dødt organisk materiale (løv, avføring, lik) som danner grunnlag for nedbryterfoodnettet.',kat:'Økologi'},
+  {t:'Tropeskog',d:'Det mest biodiversebiom på land, med høy nedbør (> 2000 mm/år), konstant varme og tett vegetasjon.',kat:'Økologi'},
+  {t:'Mangroveskog',d:'Kystøkosystem dominert av salttolende trær i tropiske og subtropiske tidevannssoner.',kat:'Økologi'},
+  {t:'Koralrev',d:'Undervanns-habitater bygd av levende korallpolypper og deres kalkskjelletter. Svært biodiverse.',kat:'Økologi'},
+  {t:'Pollinasjon',d:'Overføring av pollen fra støvbærer til arr, nødvendig for frøproduksjon. Utføres av vind, insekter, fugler og andre.',kat:'Økologi'},
+  {t:'Trofisk kaskade',d:'Indirekte effekter der endringer i én arts abundanse påvirker ikke-nærliggende trofiske nivåer gjennom næringskjeden.',kat:'Økologi'},
+  {t:'Endemisk art',d:'En art som bare finnes naturlig i ett avgrenset geografisk område.',kat:'Økologi'},
+  {t:'Havstrøm',d:'Kontinuerlig, rettet bevegelse av havvann drevet av vind, tetthetforskjeller og jordrotasjon. Regulerer klima globalt.',kat:'Økologi'},
+  {t:'Albedo',d:'Refleksjonsevnen til en overflate. Snø og is reflekterer 80–90 %; åpent hav reflekterer ca. 6 % av sollyset.',kat:'Økologi'},
+  {t:'Jordfruktbarhet',d:'Jordens evne til å forsyne planter med nødvendige næringsstoffer, vann og oksygen for vekst. Påvirkes av humusinnhold, pH og mikroliv.',kat:'Økologi'},
+  {t:'Populasjonsdynamikk',d:'Studiet av hvordan populasjonsstørrelser endrer seg over tid via fødsel, død, innvandring og utvandring.',kat:'Økologi'},
+  {t:'Terrestrisk',d:'Knyttet til eller levende på landjorden, i motsetning til akvatisk (vann) eller atmosfærisk miljø.',kat:'Økologi'},
+  {t:'Akvatisk',d:'Knyttet til eller levende i vann. Deles i marint (saltvann) og ferskvann (innsjøer, elver).',kat:'Økologi'},
+  {t:'Biopersistens',d:'En kjemisk forbindelses motstand mot nedbrytning i levende organismer, noe som bidrar til akkumulering i vev.',kat:'Økologi'},
+  {t:'Restitusjonstid',d:'Tid det tar for et økosystem å gjenopprette seg etter en forstyrrelse som brann, forurensning eller overbeiting.',kat:'Økologi'},
+  {t:'Forstyrrelse',d:'En hendelse som forstyrrer et økosystem, f.eks. brann, storm eller menneskelig inngrep, og skaper muligheter for ny kolonisering.',kat:'Økologi'},
+  {t:'Biogeografi',d:'Studiet av den geografiske fordelingen av arter og økosystemer i rom og tid.',kat:'Økologi'},
+  {t:'Algorithm',d:'En endelig sekvens av veldefinerte instruksjoner som løser et problem eller utfører en beregning.',kat:'Teknologi'},
+  {t:'3D-printing',d:'Fremstilling av tredimensjonale gjenstander ved å legge materiale lag for lag etter en digital modell.',kat:'Teknologi'},
+  {t:'Kunstig intelligens',d:'Datasystemer som kan utføre oppgaver som vanligvis krever menneskelig intelligens: gjenkjenning, beslutning, læring.',kat:'Teknologi'},
+  {t:'Maskinlæring',d:'En gren av AI der systemer lærer fra data og forbedrer sin ytelse uten eksplisitt programmering.',kat:'Teknologi'},
+  {t:'Robotikk',d:'Felt som kombinerer maskinteknologi, elektronikk og programmering for å designe og bygge roboter.',kat:'Teknologi'},
+  {t:'Internett of Things',d:'Nettverk av fysiske enheter med sensorer, programvare og nettverkstilkobling som samler og deler data.',kat:'Teknologi'},
+  {t:'Fornybar energi',d:'Energi fra kilder som naturlig fornyes på menneskelig tidsskala: sol, vind, vann, biomasse og geotermisk.',kat:'Teknologi'},
+  {t:'Biomedisin',d:'Anvendelse av ingeniørprinsipper og teknologi på biologi og medisin for å utvikle diagnostikk og behandling.',kat:'Teknologi'},
+  {t:'Nanoteknologi',d:'Manipulering av materie på atomar og molekylær skala (1–100 nm) for å skape nye materialer og enheter.',kat:'Teknologi'},
+  {t:'Kryptering',d:'Omdanning av lesbar data til ulesbar form ved hjelp av en algoritme og nøkkel for å beskytte informasjon.',kat:'Teknologi'},
+  {t:'Blokkjede',d:'En desentralisert, distribuert registre av transaksjoner som er kryptografisk koblet og nesten umulig å endre.',kat:'Teknologi'},
+  {t:'Skylagring',d:'Lagring av digitale data på fjerne servere som er tilgjengelige via internett, istedenfor lokal harddisk.',kat:'Teknologi'},
+  {t:'CAD',d:'Bruk av dataprogrammer til å lage, endre, analysere og optimere tekniske tegninger og 3D-modeller.',kat:'Teknologi'},
+  {t:'CNC',d:'En produksjonsmetode der maskinverktøy styres av en datamaskin etter en digital modell – presis og repeterbar.',kat:'Teknologi'},
+  {t:'Material\\xadvitenskap',d:'Tverrfaglig felt som studerer struktur, egenskaper, prosessering og ytelse av materialer.',kat:'Teknologi'},
+  {t:'Bærekraftig design',d:'Design som minimerer negativ miljøpåvirkning gjennom valg av materialer, energieffektivitet og levetid.',kat:'Teknologi'},
+  {t:'Prototype',d:'En tidlig modell av et produkt laget for å teste konsept, form, funksjoner og brukbarhet.',kat:'Teknologi'},
+  {t:'Ingeniørsyklusen',d:'Iterativ prosess: Identifiser problem → forskning → design → prototype → test → evaluer → forbedre.',kat:'Teknologi'},
+  {t:'Bærer\\xadfrekvens',d:'En fast frekvens som moduleres for å bære et informasjonssignal i trådløs kommunikasjon.',kat:'Teknologi'},
+  {t:'Hydraulikk',d:'Bruk av flytende væske under trykk til å overføre kraft og energi i maskiner og systemer.',kat:'Teknologi'},
+  {t:'Pneumatikk',d:'Bruk av trykkluft til å overføre kraft og bevegelse i maskiner og automatiseringssystemer.',kat:'Teknologi'},
+  {t:'Feedback\\xadkontroll',d:'System der utgangssignalet måles og sammenlignes med ønsket verdi for å minimere avvik (feil).',kat:'Teknologi'},
+  {t:'Sensorfusjon',d:'Kombinering av data fra flere sensorer for å oppnå mer nøyaktig og pålitelig informasjon enn fra én sensor alene.',kat:'Teknologi'},
+  {t:'Additive manufacturing',d:'Samlebetegnelse for fremstillingsprosesser der materiale tilføres lag for lag, inkludert 3D-printing.',kat:'Teknologi'},
+  {t:'Digital tvilling',d:'En virtuell modell av et fysisk objekt eller system som oppdateres i sanntid fra sensor-data.',kat:'Teknologi'},
+  {t:'LiDAR',d:'Fjernmålingsteknikk som bruker laserpulser til å lage 3D-kart av omgivelsene. Brukes i biler og kartlegging.',kat:'Teknologi'},
+  {t:'Augmented Reality',d:'Teknologi som legger digitale elementer oppå den fysiske verdenen i sanntid via kamera og skjerm.',kat:'Teknologi'},
+  {t:'Bioteknologi',d:'Bruk av levende organismer og biologiske systemer til å utvikle produkter og løse problemer.',kat:'Teknologi'},
+  {t:'CRISPR',d:'Et revolusjonerende genediterings-verktøy som kan klippe og endre DNA-sekvenser i levende celler med høy presisjon.',kat:'Teknologi'},
+  {t:'Kvantedatamaskin',d:'Datamaskin som utnytter kvantemek\\xadaniske fenomener (superposisjon, sammenfletting) for å løse visse problemer mye raskere.',kat:'Teknologi'},
+  {t:'Hydrogen\\xadøkonomi',d:'Energisystem der hydrogen produsert fra fornybar energi brukes som brensel og energibærer.',kat:'Teknologi'},
+  {t:'CO₂-fangst',d:'Teknologi som fanger CO₂ fra industrikilder og lagrer det geologisk for å redusere klimagassutslipp.',kat:'Teknologi'},
+  {t:'Smartgrid',d:'Et elektrisk nett som bruker digital kommunikasjon, sensorer og automatisering for å optimalisere strømproduksjon og -forbruk.',kat:'Teknologi'},
+  {t:'Integrert bærekraft',d:'En metode for å vurdere den samlede miljøpåvirkningen av et produkt fra råvare til avfall.',kat:'Teknologi'},
+  {t:'Sensorteknologi',d:'Utvikling og bruk av sensorer som konverterer fysiske fenomener til målbare elektriske signaler.',kat:'Teknologi'},
+  {t:'Trådløs kommunikasjon',d:'Overføring av data mellom enheter uten fysiske kabelforbindelser, via elektromagnetiske bølger.',kat:'Teknologi'},
+  {t:'Optisk fiber',d:'En tynn glasstråd som overfører data som lys ved hjelp av total indre refleksjon. Svært høy båndbredde.',kat:'Teknologi'},
+  {t:'Halvleder\\xadindustri',d:'Industri for produksjon av halvlederkomponenter (brikker). Krever ekstrem renhet og avansert litografi.',kat:'Teknologi'},
+  {t:'Nettsky',d:'Levering av IT-tjenester via internett (servere, lagring, databaser, programvare) på forespørsel uten lokal infrastruktur.',kat:'Teknologi'},
+  {t:'API',d:'Et sett regler og protokoller som lar to programvare-systemer kommunisere med hverandre.',kat:'Teknologi'},
+  {t:'Versjonskontroll',d:'System for å spore endringer i filer over tid slik at man kan gå tilbake til tidligere versjoner. Git er det dominerende systemet.',kat:'Teknologi'},
+  {t:'Universell utforming',d:'Design av produkter og miljøer slik at de kan brukes av flest mulig uten spesiell tilpasning.',kat:'Teknologi'},
+  {t:'Drone\\xadteknologi',d:'Ubemannede luftfartøy styrt av fjernkontroll eller autonom programmering, med et bredt spekter av bruksområder.',kat:'Teknologi'},
+  {t:'Åpen kildekode',d:'Programvare der kildekoden er offentlig tilgjengelig for alle å bruke, endre og distribuere fritt.',kat:'Teknologi'},
+  {t:'Prosesskontroll',d:'Automatisk styring av industrielle prosesser (temperatur, trykk, flow) for å holde dem innenfor ønskede grenser.',kat:'Teknologi'},
+  {t:'Droner',d:'Ubemannede luftfartøy styrt av fjernkontroll eller autonom programmering, med bredt spekter av bruksområder.',kat:'Teknologi'},
+  {t:'Charles Darwin',d:'Kjent for: Teorien om naturlig seleksjon og evolusjon',kat:'Vitenskapsperson'},
+  {t:'Rosalind Franklin',d:'Kjent for: Røntgenbilder av DNA som muliggjorde strukturoppdagelsen',kat:'Vitenskapsperson'},
+  {t:'Gregor Mendel',d:'Kjent for: Mendels arveregler og grunnlegging av genetikken',kat:'Vitenskapsperson'},
+  {t:'Isaac Newton',d:'Kjent for: Gravitasjonsloven og de tre bevegelseslovene',kat:'Vitenskapsperson'},
+  {t:'Marie Curie',d:'Kjent for: Oppdagelsen av polonium og radium; radioaktivitetsforskning',kat:'Vitenskapsperson'},
+  {t:'Albert Einstein',d:'Kjent for: Relativitetsteorien og E = mc²',kat:'Vitenskapsperson'},
+  {t:'Dmitri Mendeleev',d:'Kjent for: Det periodiske system med forutsigelse av nye grunnstoff',kat:'Vitenskapsperson'},
+  {t:'Antoine Lavoisier',d:'Kjent for: Massebevaring i kjemi og navngivning av oksygen',kat:'Vitenskapsperson'},
+  {t:'Linus Pauling',d:'Kjent for: Teori om kjemiske bindinger og elektronegativitetsskalaen',kat:'Vitenskapsperson'},
+  {t:'Alfred Wegener',d:'Kjent for: Teorien om kontinentaldrift og Pangaea',kat:'Vitenskapsperson'},
+  {t:'Mary Anning',d:'Kjent for: Banebrytende fossilfunn; ichtyosaurus, plesiosaurus',kat:'Vitenskapsperson'},
+  {t:'Charles Lyell',d:'Kjent for: Uniformitarisme-prinsippet i geologi',kat:'Vitenskapsperson'},
+  {t:'Nikola Tesla',d:'Kjent for: Vekselstrømsystemet (AC) og transformatoren',kat:'Vitenskapsperson'},
+  {t:'Ada Lovelace',d:'Kjent for: Første dataprogrammet; algoritme for Babbages maskin',kat:'Vitenskapsperson'},
+  {t:'William Shockley',d:'Kjent for: Medoppfinner av transistoren (1947)',kat:'Vitenskapsperson'},
+  {t:'Rachel Carson',d:'Kjent for: «Silent Spring» og oppstarten av den moderne miljøbevegelsen',kat:'Vitenskapsperson'},
+  {t:'Wangari Maathai',d:'Kjent for: Grønt Belte-bevegelsen; 51 millioner trær plantet',kat:'Vitenskapsperson'},
+  {t:'E.O. Wilson',d:'Kjent for: Biodiversitetsforskning og sosiobiologi',kat:'Vitenskapsperson'},
+  {t:'James Watt',d:'Kjent for: Forbedret dampmaskin som drev den industrielle revolusjon',kat:'Vitenskapsperson'},
+  {t:'Grace Hopper',d:'Kjent for: Kompilatoren og fremme av høynivåprogrammeringsspråk',kat:'Vitenskapsperson'},
+  {t:'Hedy Lamarr',d:'Kjent for: Frekvenshoppende signaler – grunnlag for WiFi og Bluetooth',kat:'Vitenskapsperson'}
+];
+var antall=20, spørsmål=[], spmNr=0, poeng=0;
+var tidGjenstår=15, MAX_TID=15, timerInt=null, harSvart=false, autoTim=null;
+var LS_NØKKEL='skaplab_naturfagquiz';
+
+function velgN(n,el){antall=n;document.querySelectorAll('.n-btn').forEach(function(b){b.classList.remove('ak');});el.classList.add('ak');}
+
+function startSpill(){
+  spørsmål=DATA.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(antall,DATA.length));
+  spmNr=0;poeng=0;
+  document.getElementById('poeng-boks').textContent='⭐ 0';
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('spill').style.display='flex';
+  visSpørsmål();
+}
+
+function visSpørsmål(){
+  if(spmNr>=spørsmål.length){visSlutt();return;}
+  harSvart=false;
+  var q=spørsmål[spmNr];
+  var alts=lagAlts(q);
+
+  document.getElementById('spm-tekst').textContent=q.d;
+  document.getElementById('spm-kat').textContent=q.kat;
+  document.getElementById('opp-teller-top').textContent=(spmNr+1)+' / '+spørsmål.length;
+
+  var prog=(spmNr/spørsmål.length)*100;
+  document.getElementById('prog-bar').style.width=prog+'%';
+
+  var fb=document.getElementById('fb-stripe');
+  fb.className='';fb.textContent='';
+
+  for(var i=0;i<4;i++){
+    var sk=document.getElementById('sk'+i);
+    sk.disabled=false;
+    sk.className='svar-kort';
+    document.getElementById('a'+i).textContent=alts[i].t;
+    sk.dataset.r=alts[i].riktig?'1':'0';
+  }
+  startTimer();
+}
+
+function lagAlts(q){
+  var samme=DATA.filter(function(k){return k.t!==q.t&&k.kat===q.kat;}).sort(function(){return Math.random()-.5;}).slice(0,3);
+  var gale=samme;
+  if(gale.length<3) gale=gale.concat(DATA.filter(function(k){return k.t!==q.t&&k.kat!==q.kat;}).sort(function(){return Math.random()-.5;}).slice(0,3-gale.length));
+  var res=gale.map(function(k){return {t:k.t,riktig:false};}); 
+  res.splice(Math.floor(Math.random()*4),0,{t:q.t,riktig:true});
+  return res;
+}
+
+function startTimer(){
+  tidGjenstår=MAX_TID;
+  if(timerInt) clearInterval(timerInt);
+  timerInt=setInterval(function(){
+    tidGjenstår=Math.max(0,tidGjenstår-0.1);
+    var pst=tidGjenstår/MAX_TID;
+    var omfang=107;
+    document.getElementById('tid-ring').style.strokeDashoffset=(omfang*(1-pst));
+    var farge=pst>.5?'#34d399':pst>.25?'#fbbf24':'#f87171';
+    document.getElementById('tid-ring').style.stroke=farge;
+    document.getElementById('tid-tall').textContent=Math.ceil(tidGjenstår);
+    if(tidGjenstår<=0){clearInterval(timerInt);if(!harSvart) tidUtløpt();}
+  },100);
+}
+
+function svar(idx){
+  if(harSvart) return;
+  harSvart=true;
+  clearInterval(timerInt);
+  if(autoTim) clearTimeout(autoTim);
+  var sk=document.getElementById('sk'+idx);
+  var riktig=sk.dataset.r==='1';
+  var bonus=Math.round((tidGjenstår/MAX_TID)*800);
+  var opptjent=riktig?200+bonus:0;
+  poeng+=opptjent;
+  document.getElementById('poeng-boks').textContent='⭐ '+poeng;
+  visResultat(riktig,opptjent,idx);
+}
+
+function tidUtløpt(){
+  harSvart=true;
+  merkSvar(-1);
+  visFbStripe(false,'⏱ Tiden er ute — '+spørsmål[spmNr].t);
+  autoTim=setTimeout(function(){spmNr++;visSpørsmål();},2200);
+}
+
+function visResultat(riktig,opptjent,idx){
+  merkSvar(idx);
+  var q=spørsmål[spmNr];
+  if(riktig){
+    visFbStripe(true,'✓ Riktig! +'+opptjent+' poeng');
+  } else {
+    visFbStripe(false,'✗ Feil — riktig svar: '+q.t);
+  }
+  autoTim=setTimeout(function(){spmNr++;visSpørsmål();},2200);
+}
+
+function merkSvar(valgtIdx){
+  for(var i=0;i<4;i++){
+    var sk=document.getElementById('sk'+i);
+    sk.disabled=true;
+    if(sk.dataset.r==='1'){sk.classList.add('rett');}
+    else if(i===valgtIdx){sk.classList.add('valgt-feil');}
+    else{sk.classList.add('feil');}
+  }
+}
+
+function visFbStripe(ok,tekst){
+  var fb=document.getElementById('fb-stripe');
+  fb.textContent=tekst;
+  fb.className='vis '+(ok?'ok':'feil');
+}
+
+function visSlutt(){
+  clearInterval(timerInt);
+  document.getElementById('spill').style.display='none';
+  document.getElementById('slutt').style.display='flex';
+  document.getElementById('prog-bar').style.width='100%';
+  var maks=spørsmål.length*1000;
+  var pst=maks>0?Math.round((poeng/maks)*100):0;
+  var e=pst>=80?'🏆':pst>=50?'🎉':'💪';
+  document.getElementById('slutt-emoji').textContent=e;
+  document.getElementById('slutt-tittel').textContent=pst>=80?'Strålende!':pst>=50?'Bra jobbet!':'Øv mer!';
+  document.getElementById('slutt-sub').textContent=poeng+' poeng · '+spørsmål.length+' spørsmål';
+  try{
+    var lagret=JSON.parse(localStorage.getItem(LS_NØKKEL)||'[]');
+    lagret.push({p:poeng,n:spørsmål.length,d:new Date().toLocaleDateString('nb-NO')});
+    lagret.sort(function(a,b){return b.p-a.p;}).splice(5);
+    localStorage.setItem(LS_NØKKEL,JSON.stringify(lagret));
+    var tl=document.getElementById('toppliste');
+    tl.innerHTML='<div style="font-size:.68rem;opacity:.4;margin-bottom:8px;">Beste resultater</div>';
+    lagret.forEach(function(r,i){
+      tl.innerHTML+='<div class="tr"><span class="tr-p">'+(i+1)+'.</span>'
+        +'<span class="tr-i">'+r.n+' spm · '+r.d+'</span>'
+        +'<span class="tr-s">'+r.p+' p</span></div>';
+    });
+  }catch(e){}
+}
+</script>
+<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+</body>
+</html>

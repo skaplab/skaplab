@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mattequiz · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --aksent:#818cf8;
+  --bg:linear-gradient(160deg,#0f0c29 0%,#1a1445 100%);
+  --kort-bg:rgba(255,255,255,0.06);
+  --kort-border:rgba(255,255,255,0.12);
+  --text:#f0f4ff;--dim:rgba(255,255,255,0.5);
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+  --font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);overflow:hidden;}
+
+/* TOPBAR */
+#topbar{height:48px;display:flex;align-items:center;padding:0 20px;gap:12px;
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  background:rgba(0,0,0,0.25);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,0.08);}
+.logo{font-family:var(--font-h);font-size:.95rem;font-weight:800;letter-spacing:.5px;}
+.logo-aksent{color:var(--aksent);}
+#opp-teller-top{font-size:.7rem;color:var(--dim);font-family:var(--font-m);}
+.spacer{flex:1;}
+.tbtn{font-size:.7rem;color:var(--dim);text-decoration:none;
+  padding:5px 11px;border:1px solid rgba(255,255,255,0.15);border-radius:20px;
+  transition:all .15s;}
+.tbtn:hover{color:var(--text);border-color:rgba(255,255,255,0.35);}
+
+/* INTRO */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:28px;text-align:center;}
+
+.i-merke{font-size:.62rem;letter-spacing:3px;text-transform:uppercase;
+  color:var(--aksent);background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.15);padding:5px 16px;border-radius:20px;}
+.i-ikon{font-size:3.5rem;margin:4px 0;}
+.i-tittel{font-family:var(--font-h);font-size:2.2rem;font-weight:900;line-height:1.1;}
+.i-tittel span{color:var(--aksent);}
+.i-sub{font-size:.92rem;color:var(--dim);max-width:420px;line-height:1.7;}
+
+.antall-rad{display:flex;gap:8px;align-items:center;margin-top:4px;}
+.antall-label{font-size:.8rem;color:var(--dim);}
+.n-btn{padding:7px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.2);
+  background:transparent;color:var(--text);cursor:pointer;
+  font-family:var(--font-h);font-size:.82rem;font-weight:700;transition:all .15s;}
+.n-btn:hover,.n-btn.ak{background:var(--aksent);border-color:var(--aksent);color:#fff;}
+
+.start-knapp{padding:14px 52px;border-radius:12px;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:1.1rem;font-weight:900;
+  background:var(--aksent);color:#fff;letter-spacing:.3px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);transition:all .18s;}
+.start-knapp:hover{filter:brightness(1.15);transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,.4);}
+
+/* SPILLSKJERM */
+#spill{position:fixed;inset:0;top:48px;display:none;flex-direction:column;}
+
+/* Progresjonsbjelke */
+#prog-wrap{height:4px;background:rgba(255,255,255,0.1);flex-shrink:0;}
+#prog-bar{height:100%;background:var(--aksent);transition:width .15s linear;}
+
+/* Timer og poeng */
+#meta-rad{display:flex;align-items:center;gap:14px;padding:10px 20px;
+  flex-shrink:0;background:rgba(0,0,0,0.15);}
+#tid-sirkel-wrap{position:relative;width:42px;height:42px;flex-shrink:0;}
+#tid-sirkel{transform:rotate(-90deg);}
+#tid-ring{transition:stroke-dashoffset .1s linear;}
+#tid-tall{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:.85rem;font-weight:500;}
+.meta-spacer{flex:1;}
+#poeng-boks{font-family:var(--font-h);font-size:1rem;font-weight:800;
+  background:rgba(255,255,255,0.1);padding:5px 14px;border-radius:20px;}
+
+/* Spørsmål */
+#spm-wrap{flex:1;display:flex;align-items:center;justify-content:center;
+  padding:16px 24px 8px;overflow:hidden;}
+#spm-inner{max-width:720px;width:100%;}
+#spm-kat-linje{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+#spm-kat{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--aksent);font-weight:700;}
+#spm-tekst{font-family:var(--font-h);font-size:clamp(1.05rem,2.6vw,1.6rem);
+  font-weight:700;line-height:1.5;color:var(--text);}
+
+/* Svar — horisontal liste, ikke 2x2 grid ─────────────────────── */
+#svar-liste{display:flex;flex-direction:column;gap:8px;
+  padding:8px 20px 16px;flex-shrink:0;}
+.svar-kort{display:flex;align-items:center;gap:14px;
+  background:var(--kort-bg);border:1.5px solid var(--kort-border);
+  border-radius:10px;padding:12px 16px;cursor:pointer;
+  transition:all .15s;text-align:left;}
+.svar-kort:hover:not(:disabled){background:rgba(255,255,255,0.12);
+  border-color:rgba(255,255,255,0.3);transform:translateX(4px);}
+.svar-kort:disabled{cursor:default;}
+.svar-nummer{font-family:var(--font-m);font-size:.78rem;
+  min-width:24px;height:24px;border-radius:6px;
+  background:rgba(255,255,255,0.12);display:flex;align-items:center;
+  justify-content:center;color:var(--dim);font-weight:500;flex-shrink:0;}
+.svar-tekst{font-family:var(--font-h);font-size:clamp(.82rem,1.8vw,1rem);
+  font-weight:700;line-height:1.35;color:var(--text);}
+.svar-kort.rett{background:rgba(52,211,153,0.2);border-color:#34d399;}
+.svar-kort.rett .svar-nummer{background:#34d399;color:#000;}
+.svar-kort.feil{opacity:0.35;}
+.svar-kort.valgt-feil{background:rgba(248,113,113,0.15);border-color:#f87171;opacity:1;}
+.svar-kort.valgt-feil .svar-nummer{background:#f87171;color:#fff;}
+
+/* Feedback-stripe */
+#fb-stripe{height:0;overflow:hidden;transition:height .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-h);font-size:.88rem;font-weight:700;flex-shrink:0;}
+#fb-stripe.vis{height:38px;}
+#fb-stripe.ok{background:rgba(52,211,153,0.15);color:#34d399;}
+#fb-stripe.feil{background:rgba(248,113,113,0.12);color:#f87171;}
+
+/* Sluttskjerm */
+#slutt{display:none;position:fixed;inset:0;z-index:50;
+  background:var(--bg);flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;text-align:center;padding:24px;}
+.slutt-emoji{font-size:4rem;}
+.slutt-tittel{font-family:var(--font-h);font-size:2rem;font-weight:900;}
+.slutt-sub{font-size:.92rem;color:var(--dim);}
+#toppliste{max-width:360px;width:100%;margin:4px 0;}
+.tr{display:flex;align-items:center;gap:12px;padding:9px 13px;
+  background:rgba(255,255,255,.07);border-radius:9px;margin-bottom:5px;
+  border:1px solid rgba(255,255,255,.08);font-size:.86rem;}
+.tr-p{font-family:var(--font-h);font-weight:800;width:22px;color:var(--dim);}
+.tr-i{flex:1;color:var(--dim);font-size:.78rem;}
+.tr-s{font-family:var(--font-h);font-weight:800;color:var(--aksent);}
+.slutt-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.s-btn{padding:12px 28px;border-radius:10px;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:.9rem;font-weight:800;transition:all .15s;}
+.s-btn.hoved{background:var(--aksent);color:#fff;}
+.s-btn.sekundær{background:rgba(255,255,255,.1);color:var(--text);
+  border:1.5px solid rgba(255,255,255,.2);}
+.s-btn:hover{filter:brightness(1.12);}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo"><span class="logo-aksent">📐 </span>Mattequiz</div>
+  <span id="opp-teller-top"></span>
+  <div class="spacer"></div>
+  <a href="spill_hub.html" class="tbtn">← Hub</a>
+</div>
+
+<div id="intro">
+  <div class="i-merke">📐 Matematikk · SkapLab</div>
+  <div class="i-ikon">📐</div>
+  <h1 class="i-tittel"><span>Matt</span>equiz</h1>
+  <p class="i-sub">Les beskrivelsen og velg riktig begrep eller matematiker. Jo raskere du svarer, jo mer poeng!</p>
+  <div class="antall-rad">
+    <span class="antall-label">Antall spørsmål:</span>
+    <button class="n-btn" onclick="velgN(10,this)">10</button>
+    <button class="n-btn ak" onclick="velgN(20,this)">20</button>
+    <button class="n-btn" onclick="velgN(30,this)">30</button>
+  </div>
+  <button class="start-knapp" onclick="startSpill()">Start quiz ▶</button>
+</div>
+
+<div id="spill">
+  <div id="prog-wrap"><div id="prog-bar" style="width:100%"></div></div>
+  <div id="meta-rad">
+    <div id="tid-sirkel-wrap">
+      <svg id="tid-sirkel" width="42" height="42" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+        <circle id="tid-ring" cx="21" cy="21" r="17" fill="none"
+          stroke="#818cf8" stroke-width="3"
+          stroke-dasharray="107" stroke-dashoffset="0"
+          stroke-linecap="round"/>
+      </svg>
+      <div id="tid-tall">15</div>
+    </div>
+    <span id="spm-kat"></span>
+    <div class="meta-spacer"></div>
+    <div id="poeng-boks">⭐ 0</div>
+  </div>
+  <div id="spm-wrap">
+    <div id="spm-inner">
+      <div id="spm-tekst"></div>
+    </div>
+  </div>
+  <div id="fb-stripe"></div>
+  <div id="svar-liste">
+    <button class="svar-kort" onclick="svar(0)" id="sk0">
+      <span class="svar-nummer">A</span>
+      <span class="svar-tekst" id="a0"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(1)" id="sk1">
+      <span class="svar-nummer">B</span>
+      <span class="svar-tekst" id="a1"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(2)" id="sk2">
+      <span class="svar-nummer">C</span>
+      <span class="svar-tekst" id="a2"></span>
+    </button>
+    <button class="svar-kort" onclick="svar(3)" id="sk3">
+      <span class="svar-nummer">D</span>
+      <span class="svar-tekst" id="a3"></span>
+    </button>
+  </div>
+</div>
+
+<div id="slutt">
+  <div class="slutt-emoji" id="slutt-emoji"></div>
+  <div class="slutt-tittel" id="slutt-tittel"></div>
+  <div class="slutt-sub" id="slutt-sub"></div>
+  <div id="toppliste"></div>
+  <div class="slutt-btns">
+    <button class="s-btn hoved" onclick="startSpill()">🔄 Spill igjen</button>
+    <button class="s-btn sekundær" onclick="location.href='spill_hub.html'">🏠 Hub</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+var DATA = [
+  {t:'Variabel',d:'Et symbol (ofte en bokstav) som representerer et ukjent eller varierende tall.',kat:'Algebra'},
+  {t:'Koeffisient',d:'Tallet som multipliseres med en variabel i et algebraisk uttrykk.',kat:'Algebra'},
+  {t:'Ledd',d:'Del av et algebraisk uttrykk adskilt med + eller −. Konstantledd, variabelledd osv.',kat:'Algebra'},
+  {t:'Forenkle uttrykk',d:'Samle like ledd (samme variabel og eksponent) for å skrive uttrykket kortere.',kat:'Algebra'},
+  {t:'Distribusjonslov',d:'Multiplikasjonsregelen: gang hvert ledd inne i parentesen med faktoren utenfor.',kat:'Algebra'},
+  {t:'Faktorisere',d:'Skrive et uttrykk som et produkt. Trekk ut felles faktor eller bruk kvadratsetningene.',kat:'Algebra'},
+  {t:'Første kvadratsetning',d:'Kvadratet av en sum er kvadratet av første ledd + dobbelt produkt + kvadratet av siste ledd.',kat:'Algebra'},
+  {t:'Andre kvadratsetning',d:'Kvadratet av en differanse.',kat:'Algebra'},
+  {t:'Konjugatsetningen',d:'Produktet av en sum og en differanse med samme ledd gir differansen av kvadrater.',kat:'Algebra'},
+  {t:'Likning',d:'Et utsagn om at to uttrykk er like. Løsningen er verdien(e) som gjør utsagnet sant.',kat:'Algebra'},
+  {t:'Løsning av likning',d:'Utfør samme operasjon på begge sider for å isolere variabelen.',kat:'Algebra'},
+  {t:'Andregradslikning',d:'Likning der den høyeste eksponenten er 2. Løses med abc-formelen, faktorisering eller fullstendig kvadrat.',kat:'Algebra'},
+  {t:'abc-formelen',d:'Generell formel for å løse ax²+bx+c=0. Fungerer alltid.',kat:'Algebra'},
+  {t:'Diskriminant',d:'D>0: to løsninger. D=0: én løsning. D<0: ingen reelle løsninger.',kat:'Algebra'},
+  {t:'Ulikhet',d:'Sier at ett uttrykk er større/mindre enn et annet. Snu tegnet ved × eller ÷ med negativt tall!',kat:'Algebra'},
+  {t:'Likningssystem',d:'To eller flere likninger med felles ukjente. Løses med innsetting eller addisjon.',kat:'Algebra'},
+  {t:'Innsettingsmetoden',d:'Løs én likning for én variabel, sett uttrykket inn i den andre likningen.',kat:'Algebra'},
+  {t:'Addisjonsmetoden',d:'Gjør koeffisientene for én variabel like store (motsat fortegn), adder likningene.',kat:'Algebra'},
+  {t:'Polynom',d:'Algebraisk uttrykk med ikke-negative heltallseksponenter. Grad = høyeste eksponent.',kat:'Algebra'},
+  {t:'Nullpunkt',d:'x-verdi der funksjonen er null (grafen krysser x-aksen).',kat:'Algebra'},
+  {t:'Funksjon',d:'En regel som knytter hver innverdi (x) til nøyaktig én utverdi (y).',kat:'Funksjoner'},
+  {t:'Lineær funksjon',d:'Funksjonstype som gir en rett linje. a=stigningstall, b=konstantledd.',kat:'Funksjoner'},
+  {t:'Stigningstall',d:'Angir bratthet og retning på linja. Positiv: stiger. Negativ: faller. Null: horisontal.',kat:'Funksjoner'},
+  {t:'Konstantledd',d:'b i y=ax+b. Forteller hvor linja skjærer y-aksen (der x=0).',kat:'Funksjoner'},
+  {t:'Skjæringspunkt x-akse',d:'Nullpunktet til en lineær funksjon. Sett y=0 og løs for x.',kat:'Funksjoner'},
+  {t:'Parallelle linjer',d:'Har samme stigningstall (a), men ulike b. Møtes aldri.',kat:'Funksjoner'},
+  {t:'Kvadratisk funksjon',d:'Funksjonen gir en parabel. a>0: åpner oppover (U). a<0: åpner nedover (∩).',kat:'Funksjoner'},
+  {t:'Toppunkt/bunnpunkt',d:'Ekstremalpunktet til parabelen. x-koordinat: −b/2a, y-koordinat settes inn.',kat:'Funksjoner'},
+  {t:'Symmetriakse',d:'Den vertikale linja som deler parabelen i to speilsymmetriske halvdeler.',kat:'Funksjoner'},
+  {t:'Definisjonsmengde',d:'Mengden av alle gyldige innverdier (x-verdier) til en funksjon.',kat:'Funksjoner'},
+  {t:'Verdimengde',d:'Mengden av alle mulige utverdier (y-verdier) en funksjon kan ta.',kat:'Funksjoner'},
+  {t:'Vekstfaktor',d:'Brukes ved prosentvekst. Vekst p % → multipliser med 1+p/100. Nedgang → 1−p/100.',kat:'Funksjoner'},
+  {t:'Eksponentialfunksjon',d:'Funksjonstype der variabelen er i eksponenten. Brukes til vekst og henfall.',kat:'Funksjoner'},
+  {t:'Skjæring mellom linjer',d:'Løs likningssystemet. Punktet der to linjer krysser hverandre.',kat:'Funksjoner'},
+  {t:'Funksjonsgraf',d:'Visuell fremstilling av en funksjon i et koordinatsystem. Hvert punkt er (x, f(x)).',kat:'Funksjoner'},
+  {t:'Areal rektangel',d:'Lengde ganger bredde.',kat:'Geometri'},
+  {t:'Areal trekant',d:'Grunnlinje ganger høyde delt på 2. Høyden er loddrett på grunnlinjen.',kat:'Geometri'},
+  {t:'Areal sirkel',d:'Pi ganger radius i kvadrat.',kat:'Geometri'},
+  {t:'Areal trapes',d:'Summen av de parallelle sidene ganger høyden, delt på 2.',kat:'Geometri'},
+  {t:'Volum rettkantet prisme',d:'Lengde × bredde × høyde.',kat:'Geometri'},
+  {t:'Volum sylinder',d:'Grunnflaten (sirkelareal) ganger høyden.',kat:'Geometri'},
+  {t:'Volum kjegle',d:'En tredjedel av sylinderen med samme grunnflate og høyde.',kat:'Geometri'},
+  {t:'Volum kule',d:'Husk: fire tredjedeler ganger pi ganger radius i tredje.',kat:'Geometri'},
+  {t:'Pythagoras',d:'I en rettvinklet trekant er summen av kvadratene av katetene lik kvadratet av hypotenusen.',kat:'Geometri'},
+  {t:'Sinus',d:'Motstående katet delt på hypotenusen i en rettvinklet trekant.',kat:'Geometri'},
+  {t:'Cosinus',d:'Hosliggende katet delt på hypotenusen.',kat:'Geometri'},
+  {t:'Tangens',d:'Motstående katet delt på hosliggende katet.',kat:'Geometri'},
+  {t:'Formlikhet',d:'To figurer er formlike når alle vinkler er like og sidene er proporsjonale (samme form, ulik størrelse).',kat:'Geometri'},
+  {t:'Kongruens',d:'To figurer er kongruente når de er helt like i form og størrelse.',kat:'Geometri'},
+  {t:'Avstand mellom to punkter',d:'Bruker Pythagoras i koordinatsystemet.',kat:'Geometri'},
+  {t:'Midtpunkt',d:'Gjennomsnittet av x-koordinatene og y-koordinatene.',kat:'Geometri'},
+  {t:'Speiling om x-aksen',d:'y-koordinaten bytter fortegn, x forblir uendret.',kat:'Geometri'},
+  {t:'Speiling om y-aksen',d:'x-koordinaten bytter fortegn, y forblir uendret.',kat:'Geometri'},
+  {t:'Omkretsformel sirkel',d:'Lengden av sirkelbuen. Pi ganger diameter, eller 2 pi ganger radius.',kat:'Geometri'},
+  {t:'Kvartilavstand (IQR)',d:'Spredningen i midtre 50 % av dataene. Mer robust enn variansbredde.',kat:'Geometri'},
+  {t:'Sannsynlighet',d:'Tall mellom 0 og 1 som angir hvor sannsynlig en hendelse er. 0=umulig, 1=sikker.',kat:'Sannsynlighet'},
+  {t:'Komplement',d:'Sannsynligheten for at hendelsen IKKE inntreffer.',kat:'Sannsynlighet'},
+  {t:'Multiplikasjonsregel (uavh.)',d:'For uavhengige hendelser: sannsynligheten for at begge inntreffer.',kat:'Sannsynlighet'},
+  {t:'Addisjonsregel',d:'Sannsynligheten for at A eller B inntreffer.',kat:'Sannsynlighet'},
+  {t:'Betinget sannsynlighet',d:'Sannsynligheten for A gitt at B allerede har inntruffet.',kat:'Sannsynlighet'},
+  {t:'Kombinatorikk',d:'Telle antall mulige utfall. Multiplikasjonsprinsippet: m · n · p · … muligheter.',kat:'Sannsynlighet'},
+  {t:'Permutasjon',d:'Antall måter å ordne r elementer fra n, der rekkefølgen teller.',kat:'Sannsynlighet'},
+  {t:'Gjennomsnitt',d:'Summen av alle verdiene delt på antallet. Sensitiv for ekstreme verdier.',kat:'Sannsynlighet'},
+  {t:'Median',d:'Midterste verdi etter sortering. Robust mot ekstreme verdier (uteliggere).',kat:'Sannsynlighet'},
+  {t:'Typetall (modus)',d:'Verdien som forekommer flest ganger i datasettet.',kat:'Sannsynlighet'},
+  {t:'Standardavvik',d:'Mål for spredning – gjennomsnittlig avstand fra gjennomsnittet. Lavt: data er samlet.',kat:'Sannsynlighet'},
+  {t:'Kvartilavstand (IQR)',d:'Spredningen i midtre 50 % av dataene. Q1=nedre kvartil, Q3=øvre kvartil.',kat:'Sannsynlighet'},
+  {t:'Boksplott',d:'Diagram som viser min, Q1, median, Q3 og maks. Kompakt oppsummering av datasett.',kat:'Sannsynlighet'},
+  {t:'Relativ frekvens',d:'Andelen av forsøk der en hendelse inntreffer. Nærmer seg P(A) ved mange forsøk.',kat:'Sannsynlighet'},
+  {t:'Sannsynlighetstre',d:'Diagram som viser alle mulige utfall og sannsynligheter i et sammensatt forsøk.',kat:'Sannsynlighet'},
+  {t:'Representativt utvalg',d:'Et utvalg som er representativt for hele populasjonen. Nødvendig for generaliserbare konklusjoner.',kat:'Sannsynlighet'},
+  {t:'Bias',d:'Systematisk skjevhet i utvalget som gir resultater som ikke representerer populasjonen.',kat:'Sannsynlighet'},
+  {t:'Histogram',d:'Søylediagram for kontinuerlig data i intervaller. Søylenes areal er proporsjonal med frekvensen.',kat:'Sannsynlighet'},
+  {t:'Rente',d:'Betaling for å låne penger, eller gevinst for å spare. Angis som prosent per år.',kat:'Økonomi'},
+  {t:'Enkel rente',d:'Renter beregnes kun på startkapitalen. Brukes sjelden i praksis.',kat:'Økonomi'},
+  {t:'Rentes rente',d:'Renter legges til kapitalen og gir renter neste periode. Eksponentiell vekst.',kat:'Økonomi'},
+  {t:'Vekstfaktor',d:'Brukes for å beregne ny verdi etter prosentendring. r er renten/prosentsatsen som desimal.',kat:'Økonomi'},
+  {t:'Bruttoinntekt',d:'Inntekt før skatt og andre fradrag er trukket fra.',kat:'Økonomi'},
+  {t:'Nettoinntekt',d:'Det du faktisk sitter igjen med etter skatt.',kat:'Økonomi'},
+  {t:'Moms (MVA)',d:'Merverdiavgift på 25 % legges til priser på de fleste varer og tjenester.',kat:'Økonomi'},
+  {t:'Budsjett',d:'Plan for inntekter og utgifter over en periode. Overskudd = inntekter > utgifter.',kat:'Økonomi'},
+  {t:'Valutakurs',d:'Forholdet mellom to valutaer. NOK → valuta: del på kursen. Valuta → NOK: gange med kursen.',kat:'Økonomi'},
+  {t:'Avdrag',d:'Betaling som reduserer lånets gjenstående beløp (i motsetning til renter som er kostnaden).',kat:'Økonomi'},
+  {t:'Annuitetslån',d:'Lån med lik total månedsbetaling (renter + avdrag) gjennom hele nedbetalingstiden.',kat:'Økonomi'},
+  {t:'Kroneverdi',d:'Kjøpekraften til pengene. Inflasjon reduserer kronens verdi over tid.',kat:'Økonomi'},
+  {t:'Saldosparing',d:'Sparing der renter legges til saldo, som deretter gir høyere renter neste periode.',kat:'Økonomi'},
+  {t:'Prosentpoeng',d:'Absolutt endring i prosenter. Forskjell på 3 % og 5 % er 2 prosentpoeng (ikke 2 %).',kat:'Økonomi'},
+  {t:'Nåverdi',d:'Hva en fremtidig sum er verdt i dag, diskontert med renten. Motsetningen av fremtidsverdi.',kat:'Økonomi'},
+  {t:'Euklid (ca. 300 f.Kr.)',d:'Gresk matematiker, far til geometrien. Skrev \\"Elementer\\" – et av tidenes mest innflytelsesrike matematikkverk med geometriske bevis.',kat:'Matematiker'},
+  {t:'Pythagoras (ca. 570–495 f.Kr.)',d:'Gresk matematiker og filosof. Kjent for Pythagoras\' setning om rettvinklede trekanter.',kat:'Matematiker'},
+  {t:'Archimedes (ca. 287–212 f.Kr.)',d:'Gresk matematiker og ingeniør. Beregnet pi, formulerte prinsippet for oppdrift og fant arealformler.',kat:'Matematiker'},
+  {t:'Al-Khwarizmi (ca. 780–850)',d:'Persisk matematiker, regnes som algebraens far. Ga navn til algoritmen (algoritme = latinisert Khwarizmi).',kat:'Matematiker'},
+  {t:'Leonardo Fibonacci (1170–1250)',d:'Italiensk matematiker som spredte det hindu-arabiske tallsystemet i Europa og oppdaget Fibonacci-tallrekken.',kat:'Matematiker'},
+  {t:'René Descartes (1596–1650)',d:'Fransk filosof og matematiker. Oppfant koordinatsystemet (kartesiske koordinater) og forbandt algebra og geometri.',kat:'Matematiker'},
+  {t:'Isaac Newton (1643–1727)',d:'Engelsk matematiker og fysiker. Co-oppfant differensialregning (kalkulus) og formulerte gravitasjonsloven.',kat:'Matematiker'},
+  {t:'Gottfried Wilhelm Leibniz (1646–1716)',d:'Tysk matematiker. Oppfant kalkulus uavhengig av Newton og introduserte notasjonen dy/dx og ∫.',kat:'Matematiker'},
+  {t:'Carl Friedrich Gauss (1777–1855)',d:'Tysk matematiker, \\"matematikkens prins\\". Bidro til tallteori, statistikk og normalfordelingen.',kat:'Matematiker'},
+  {t:'Leonhard Euler (1707–1783)',d:'Sveitsisk matematiker, historiens mest produktive. Innførte e, i, π, f(x)-notasjon og Eulers formel.',kat:'Matematiker'},
+  {t:'Emmy Noether (1882–1935)',d:'Tysk matematiker, kjent for banebrytende arbeid i abstrakt algebra og Noethers teorem i fysikk.',kat:'Matematiker'},
+  {t:'Alan Turing (1912–1954)',d:'Britisk matematiker og datamaskinpioner. Grunnla informatikken og knakk tyske koder under 2. verdenskrig.',kat:'Matematiker'},
+  {t:'Ada Lovelace (1815–1852)',d:'Britisk matematiker, regnes som verdens første programmerer. Skrev algoritmer for Babbages analytiske maskin.',kat:'Matematiker'},
+  {t:'Pierre de Fermat (1607–1665)',d:'Fransk matematiker. Kjent for Fermats lille teorem og Fermats siste teorem (bevist 1995 av Wiles).',kat:'Matematiker'},
+  {t:'Blaise Pascal (1623–1662)',d:'Fransk matematiker. Grunnla sannsynlighetsteori med Fermat og konstruerte en av de første kalkuleringmaskinene.',kat:'Matematiker'},
+  {t:'Bernhard Riemann (1826–1866)',d:'Tysk matematiker. Utviklet Riemann-geometrien (brukt i Einsteins relativitetsteori) og Riemann-hypotesen.',kat:'Matematiker'},
+  {t:'John Nash (1928–2015)',d:'Amerikansk matematiker. Vant Nobelprisen for spillteori (Nashs likevekt) og ble kjent gjennom filmen \\"A Beautiful Mind\\".',kat:'Matematiker'},
+  {t:'Sofya Kovalevskaya (1850–1891)',d:'Russisk matematiker, første kvinne med doktorgrad i matematikk. Bidro til differensialligninger og mekanikk.',kat:'Matematiker'},
+  {t:'Georg Cantor (1845–1918)',d:'Tysk matematiker som grunnla mengdeteorien og beviste at det finnes ulike \\"størrelser\\" av uendelighet.',kat:'Matematiker'},
+  {t:'Andrew Wiles (f. 1953)',d:'Britisk matematiker som i 1995 bevis Fermats siste teorem etter 358 år – et av historiens største matematiske gjennombrudd.',kat:'Matematiker'}
+];
+var antall=20, spørsmål=[], spmNr=0, poeng=0;
+var tidGjenstår=15, MAX_TID=15, timerInt=null, harSvart=false, autoTim=null;
+var LS_NØKKEL='skaplab_mattequiz';
+
+function velgN(n,el){antall=n;document.querySelectorAll('.n-btn').forEach(function(b){b.classList.remove('ak');});el.classList.add('ak');}
+
+function startSpill(){
+  spørsmål=DATA.slice().sort(function(){return Math.random()-.5;}).slice(0,Math.min(antall,DATA.length));
+  spmNr=0;poeng=0;
+  document.getElementById('poeng-boks').textContent='⭐ 0';
+  document.getElementById('intro').style.display='none';
+  document.getElementById('slutt').style.display='none';
+  document.getElementById('spill').style.display='flex';
+  visSpørsmål();
+}
+
+function visSpørsmål(){
+  if(spmNr>=spørsmål.length){visSlutt();return;}
+  harSvart=false;
+  var q=spørsmål[spmNr];
+  var alts=lagAlts(q);
+
+  document.getElementById('spm-tekst').textContent=q.d;
+  document.getElementById('spm-kat').textContent=q.kat;
+  document.getElementById('opp-teller-top').textContent=(spmNr+1)+' / '+spørsmål.length;
+
+  var prog=(spmNr/spørsmål.length)*100;
+  document.getElementById('prog-bar').style.width=prog+'%';
+
+  var fb=document.getElementById('fb-stripe');
+  fb.className='';fb.textContent='';
+
+  for(var i=0;i<4;i++){
+    var sk=document.getElementById('sk'+i);
+    sk.disabled=false;
+    sk.className='svar-kort';
+    document.getElementById('a'+i).textContent=alts[i].t;
+    sk.dataset.r=alts[i].riktig?'1':'0';
+  }
+  startTimer();
+}
+
+function lagAlts(q){
+  var samme=DATA.filter(function(k){return k.t!==q.t&&k.kat===q.kat;}).sort(function(){return Math.random()-.5;}).slice(0,3);
+  var gale=samme;
+  if(gale.length<3) gale=gale.concat(DATA.filter(function(k){return k.t!==q.t&&k.kat!==q.kat;}).sort(function(){return Math.random()-.5;}).slice(0,3-gale.length));
+  var res=gale.map(function(k){return {t:k.t,riktig:false};}); 
+  res.splice(Math.floor(Math.random()*4),0,{t:q.t,riktig:true});
+  return res;
+}
+
+function startTimer(){
+  tidGjenstår=MAX_TID;
+  if(timerInt) clearInterval(timerInt);
+  timerInt=setInterval(function(){
+    tidGjenstår=Math.max(0,tidGjenstår-0.1);
+    var pst=tidGjenstår/MAX_TID;
+    var omfang=107;
+    document.getElementById('tid-ring').style.strokeDashoffset=(omfang*(1-pst));
+    var farge=pst>.5?'#818cf8':pst>.25?'#fbbf24':'#f87171';
+    document.getElementById('tid-ring').style.stroke=farge;
+    document.getElementById('tid-tall').textContent=Math.ceil(tidGjenstår);
+    if(tidGjenstår<=0){clearInterval(timerInt);if(!harSvart) tidUtløpt();}
+  },100);
+}
+
+function svar(idx){
+  if(harSvart) return;
+  harSvart=true;
+  clearInterval(timerInt);
+  if(autoTim) clearTimeout(autoTim);
+  var sk=document.getElementById('sk'+idx);
+  var riktig=sk.dataset.r==='1';
+  var bonus=Math.round((tidGjenstår/MAX_TID)*800);
+  var opptjent=riktig?200+bonus:0;
+  poeng+=opptjent;
+  document.getElementById('poeng-boks').textContent='⭐ '+poeng;
+  visResultat(riktig,opptjent,idx);
+}
+
+function tidUtløpt(){
+  harSvart=true;
+  merkSvar(-1);
+  visFbStripe(false,'⏱ Tiden er ute — '+spørsmål[spmNr].t);
+  autoTim=setTimeout(function(){spmNr++;visSpørsmål();},2200);
+}
+
+function visResultat(riktig,opptjent,idx){
+  merkSvar(idx);
+  var q=spørsmål[spmNr];
+  if(riktig){
+    visFbStripe(true,'✓ Riktig! +'+opptjent+' poeng');
+  } else {
+    visFbStripe(false,'✗ Feil — riktig svar: '+q.t);
+  }
+  autoTim=setTimeout(function(){spmNr++;visSpørsmål();},2200);
+}
+
+function merkSvar(valgtIdx){
+  for(var i=0;i<4;i++){
+    var sk=document.getElementById('sk'+i);
+    sk.disabled=true;
+    if(sk.dataset.r==='1'){sk.classList.add('rett');}
+    else if(i===valgtIdx){sk.classList.add('valgt-feil');}
+    else{sk.classList.add('feil');}
+  }
+}
+
+function visFbStripe(ok,tekst){
+  var fb=document.getElementById('fb-stripe');
+  fb.textContent=tekst;
+  fb.className='vis '+(ok?'ok':'feil');
+}
+
+function visSlutt(){
+  clearInterval(timerInt);
+  document.getElementById('spill').style.display='none';
+  document.getElementById('slutt').style.display='flex';
+  document.getElementById('prog-bar').style.width='100%';
+  var maks=spørsmål.length*1000;
+  var pst=maks>0?Math.round((poeng/maks)*100):0;
+  var e=pst>=80?'🏆':pst>=50?'🎉':'💪';
+  document.getElementById('slutt-emoji').textContent=e;
+  document.getElementById('slutt-tittel').textContent=pst>=80?'Strålende!':pst>=50?'Bra jobbet!':'Øv mer!';
+  document.getElementById('slutt-sub').textContent=poeng+' poeng · '+spørsmål.length+' spørsmål';
+  try{
+    var lagret=JSON.parse(localStorage.getItem(LS_NØKKEL)||'[]');
+    lagret.push({p:poeng,n:spørsmål.length,d:new Date().toLocaleDateString('nb-NO')});
+    lagret.sort(function(a,b){return b.p-a.p;}).splice(5);
+    localStorage.setItem(LS_NØKKEL,JSON.stringify(lagret));
+    var tl=document.getElementById('toppliste');
+    tl.innerHTML='<div style="font-size:.68rem;opacity:.4;margin-bottom:8px;">Beste resultater</div>';
+    lagret.forEach(function(r,i){
+      tl.innerHTML+='<div class="tr"><span class="tr-p">'+(i+1)+'.</span>'
+        +'<span class="tr-i">'+r.n+' spm · '+r.d+'</span>'
+        +'<span class="tr-s">'+r.p+' p</span></div>';
+    });
+  }catch(e){}
+}
+</script>
+<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+</body>
+</html>
