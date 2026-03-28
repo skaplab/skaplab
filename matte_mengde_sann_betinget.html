@@ -143,6 +143,36 @@ nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-fil
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 var vanskel=1,OKT=10,akt=0,poeng=0,riktige=0,streak=0,maxStreak=0,tot=0,svart=false,fp=[],naa=null;
 
 
@@ -268,9 +298,10 @@ function visSlutt(){
   document.getElementById('slE').textContent=e;document.getElementById('slT').textContent=t;
   document.getElementById('slS').innerHTML='<strong>'+riktige+'</strong> av <strong>'+OKT+'</strong> riktige ('+pct+' %)<br>Poeng: <strong>'+poeng+'</strong> · Beste streak: <strong>'+maxStreak+' 🔥</strong>';
   document.getElementById('sluttOv').classList.add('vis');
+
+  window._skaplab_logg('matte_mengde_sann_betinget','MAT-STAT',pct,OKT,riktige,riktige,OKT);
 }
 oppdaterVUI();byggFP();oppdaterStats();
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

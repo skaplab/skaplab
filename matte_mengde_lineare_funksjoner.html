@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Mengdetrening: Lineære funksjoner</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f1a;--surface:#13152a;--card:#181b2e;
+  --border:rgba(139,92,246,.12);--text:#eef0ff;--dim:rgba(238,240,255,.38);
+  --accent:#a78bfa;--accent2:#38bdf8;--accent3:#34d399;--warn:#fbbf24;
+  --correct:#10b981;--wrong:#ef4444;
+  --font-d:'Lora',serif;--font-b:'DM Sans',sans-serif;
+}
+html{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(139,92,246,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.025) 1px,transparent 1px);
+  background-size:32px 32px;}
+
+nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;}
+.nav-lnk{font-size:.8rem;color:var(--dim);text-decoration:none}
+.nav-lnk:hover{color:var(--text)}
+.nav-sep{color:rgba(255,255,255,.12)}
+.nav-tittel{font-family:var(--font-d);font-size:.88rem;color:var(--accent2)}
+.nav-back{
+  margin-left:auto;padding:5px 12px;border-radius:8px;
+  background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);
+  color:var(--accent);font-size:.78rem;text-decoration:none;transition:all .18s;
+}
+.nav-back:hover{background:rgba(167,139,250,.18)}
+
+.wrapper{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:28px 20px 80px;}
+
+/* Stats-rad */
+.stats-rad{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;
+}
+.stat-boks{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:12px 14px;text-align:center;
+}
+.stat-tall{font-family:var(--font-d);font-size:1.6rem;font-weight:600;line-height:1;margin-bottom:3px}
+.stat-tall.score{color:var(--accent)}
+.stat-tall.riktig{color:var(--accent3)}
+.stat-tall.streak{color:var(--warn)}
+.stat-tall.tot{color:var(--accent2)}
+.stat-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+
+/* Fremdrift */
+.fremgang-wrap{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:20px}
+.fp{width:10px;height:10px;border-radius:3px;background:rgba(255,255,255,.07);transition:all .3s}
+.fp.riktig-fp{background:var(--correct)}
+.fp.feil-fp{background:var(--wrong)}
+.fp.aktiv-fp{background:var(--accent);animation:puls .8s ease-in-out infinite}
+@keyframes puls{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Vanskelighetsgrad */
+.vanskel-rad{
+  display:flex;gap:8px;margin-bottom:20px;
+}
+.vanskel-btn{
+  padding:7px 16px;border-radius:20px;font-size:.78rem;font-weight:600;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);
+  color:var(--dim);cursor:pointer;transition:all .18s;
+}
+.vanskel-btn.aktiv.enkel{border-color:var(--accent3);color:var(--accent3);background:rgba(52,211,153,.1)}
+.vanskel-btn.aktiv.middels{border-color:var(--warn);color:var(--warn);background:rgba(251,191,36,.08)}
+.vanskel-btn.aktiv.vanskelig{border-color:var(--wrong);color:var(--wrong);background:rgba(239,68,68,.08)}
+
+/* Oppgavekort */
+.oppgave-kort{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:28px 28px 24px;margin-bottom:16px;min-height:220px;
+  position:relative;overflow:hidden;transition:border-color .3s;
+}
+.oppgave-kort.riktig-kort{border-color:rgba(52,211,153,.35)}
+.oppgave-kort.feil-kort{border-color:rgba(239,68,68,.3)}
+.oppgave-kort::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(139,92,246,.04),transparent);
+  pointer-events:none;
+}
+
+.oppgave-nr{
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;
+}
+.oppgave-type-badge{
+  font-size:.62rem;padding:2px 8px;border-radius:8px;
+  background:rgba(139,92,246,.1);color:var(--accent);border:1px solid rgba(139,92,246,.15);
+}
+.sporsmal{
+  font-family:var(--font-d);font-size:1.12rem;line-height:1.65;
+  color:var(--text);margin-bottom:22px;
+}
+.sporsmal .tall{color:var(--warn);font-weight:600}
+
+/* Input */
+.svar-wrap{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.svar-prefix{font-family:var(--font-d);font-size:1.05rem;color:var(--dim);white-space:nowrap}
+.svar-input{
+  background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.14);
+  border-radius:10px;padding:10px 16px;
+  font-family:var(--font-b);font-size:1rem;color:var(--text);
+  width:160px;transition:border .2s;outline:none;
+}
+.svar-input:focus{border-color:var(--accent)}
+.svar-input.riktig{border-color:var(--correct);background:rgba(16,185,129,.08)}
+.svar-input.feil{border-color:var(--wrong);background:rgba(239,68,68,.07)}
+
+/* Flervalg */
+.flervalg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.fv-btn{
+  padding:12px 14px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:var(--dim);font-family:var(--font-b);font-size:.9rem;
+  cursor:pointer;text-align:left;transition:all .18s;
+}
+.fv-btn:hover:not(:disabled){border-color:rgba(139,92,246,.3);color:var(--text)}
+.fv-btn.valgt{border-color:var(--accent);background:rgba(139,92,246,.1);color:var(--accent)}
+.fv-btn.riktig-v{border-color:var(--correct)!important;background:rgba(16,185,129,.1)!important;color:#6ee7b7!important}
+.fv-btn.feil-v{border-color:var(--wrong)!important;background:rgba(239,68,68,.08)!important;color:#fca5a5!important}
+
+/* Knapper */
+.btn-rad{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sjekk-btn{
+  padding:11px 24px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(56,189,248,.15));
+  border:1px solid rgba(139,92,246,.3);color:var(--text);
+  font-family:var(--font-b);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.sjekk-btn:hover:not(:disabled){background:linear-gradient(135deg,rgba(139,92,246,.38),rgba(56,189,248,.22));transform:translateY(-1px)}
+.sjekk-btn:disabled{opacity:.35;cursor:default;transform:none}
+.neste-btn{
+  padding:11px 24px;border-radius:10px;
+  background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.25);
+  color:var(--accent3);font-family:var(--font-b);font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .2s;display:none;
+}
+.neste-btn.vis{display:flex;align-items:center;gap:6px}
+.neste-btn:hover{background:rgba(52,211,153,.22)}
+
+/* Feedback */
+.feedback{display:none;margin-top:14px}
+.feedback.vis{display:block;animation:fadeInn .25s}
+@keyframes fadeInn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.fb-boks{
+  padding:14px 18px;border-radius:12px;font-size:.88rem;line-height:1.65;
+}
+.fb-boks.riktig{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#6ee7b7}
+.fb-boks.feil{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);color:#fca5a5}
+.losningssteg{
+  margin-top:10px;padding:12px 14px;
+  background:rgba(255,255,255,.03);border-radius:8px;
+  font-size:.82rem;line-height:1.75;color:rgba(238,240,255,.65);
+}
+.losningssteg strong{color:var(--text)}
+
+/* Feedback-emoji */
+.fb-emoji{font-size:1.4rem;margin-right:6px}
+
+/* Start/Slutt */
+.start-overlay{
+  position:fixed;inset:0;z-index:900;
+  background:rgba(13,15,26,.97);backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;
+}
+.start-kort{
+  background:var(--card);border:1px solid rgba(139,92,246,.2);
+  border-radius:24px;padding:36px 40px;max-width:440px;width:90%;text-align:center;
+}
+.start-kort h1{font-family:var(--font-d);font-size:1.6rem;color:var(--accent);margin-bottom:8px}
+.start-kort p{font-size:.88rem;color:var(--dim);line-height:1.7;margin-bottom:24px}
+.start-knapp{
+  width:100%;padding:14px;border-radius:12px;
+  background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(56,189,248,.2));
+  border:1px solid rgba(139,92,246,.3);
+  color:var(--text);font-family:var(--font-b);font-size:1rem;font-weight:700;
+  cursor:pointer;transition:all .2s;letter-spacing:.02em;
+}
+.start-knapp:hover{background:linear-gradient(135deg,rgba(139,92,246,.45),rgba(56,189,248,.3));transform:translateY(-2px)}
+
+.slutt-overlay{position:fixed;inset:0;z-index:900;background:rgba(13,15,26,.97);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center}
+.slutt-overlay.vis{display:flex}
+.slutt-kort{background:var(--card);border:1px solid rgba(52,211,153,.2);border-radius:24px;padding:36px 40px;max-width:440px;width:90%;text-align:center;}
+.slutt-emoji{font-size:3rem;margin-bottom:12px}
+.slutt-tittel{font-family:var(--font-d);font-size:1.5rem;color:var(--accent3);margin-bottom:8px}
+.slutt-score{font-size:.88rem;color:var(--dim);line-height:1.8;margin-bottom:20px}
+.slutt-score strong{color:var(--text)}
+.slutt-knapper{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-igjen{padding:12px 22px;border-radius:10px;background:linear-gradient(135deg,rgba(139,92,246,.3),rgba(56,189,248,.2));border:1px solid rgba(139,92,246,.3);color:var(--text);font-family:var(--font-b);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-teori{padding:12px 22px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--dim);font-family:var(--font-b);font-size:.9rem;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block}
+.btn-teori:hover{border-color:rgba(139,92,246,.3);color:var(--text)}
+
+@media(max-width:560px){
+  .stats-rad{grid-template-columns:1fr 1fr}
+  .flervalg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- START -->
+<div class="start-overlay" id="start-overlay">
+  <div class="start-kort">
+    <div style="font-size:2.5rem;margin-bottom:14px">⚡</div>
+    <h1>Mengdetrening</h1>
+    <p>Lineære funksjoner – <em>y = ax + b</em><br>
+    Øv på å finne stigningstall, konstantledd, funksjonsverdier og lese grafer.
+    Du velger vanskelighetsgrad og kan se løsningssteg når du svarer feil.</p>
+
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+      <button class="vanskel-btn aktiv enkel" onclick="settVanskel(1,this)" id="v1">🟢 Enkel</button>
+      <button class="vanskel-btn" onclick="settVanskel(2,this)" id="v2">🟡 Middels</button>
+      <button class="vanskel-btn" onclick="settVanskel(3,this)" id="v3">🔴 Vanskelig</button>
+    </div>
+    <button class="start-knapp" onclick="startOkt()">Start økt →</button>
+  </div>
+</div>
+
+<!-- SLUTT -->
+<div class="slutt-overlay" id="slutt-overlay">
+  <div class="slutt-kort">
+    <div class="slutt-emoji" id="s-emoji">🏆</div>
+    <div class="slutt-tittel" id="s-tittel">Økt fullført!</div>
+    <div class="slutt-score" id="s-score"></div>
+    <div class="slutt-knapper">
+      <button class="btn-igjen" onclick="startOkt()">Ny økt</button>
+      <a class="btn-teori" href="matte_lineare_funksjoner.html">← Tilbake til teori</a>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <a href="matte_hub.html" class="nav-lnk">📐 Matematikk</a>
+  <span class="nav-sep">/</span>
+  <a href="matte_lineare_funksjoner.html" class="nav-lnk">Lineære funksjoner</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">⚡ Mengdetrening</span>
+  <a href="matte_lineare_funksjoner.html" class="nav-back">← Teori</a>
+</nav>
+
+<div class="wrapper">
+
+  <!-- VANSKELIGHETSGRAD -->
+  <div class="vanskel-rad" id="vanskel-rad">
+    <button class="vanskel-btn" id="vr1" onclick="byttVanskel(1)">🟢 Enkel</button>
+    <button class="vanskel-btn" id="vr2" onclick="byttVanskel(2)">🟡 Middels</button>
+    <button class="vanskel-btn" id="vr3" onclick="byttVanskel(3)">🔴 Vanskelig</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-rad">
+    <div class="stat-boks">
+      <div class="stat-tall score" id="st-poeng">0</div>
+      <div class="stat-label">Poeng</div>
+    </div>
+    <div class="stat-boks">
+      <div class="stat-tall riktig" id="st-riktig">0</div>
+      <div class="stat-label">Riktige</div>
+    </div>
+    <div class="stat-boks">
+      <div class="stat-tall streak" id="st-streak">0</div>
+      <div class="stat-label">Streak 🔥</div>
+    </div>
+    <div class="stat-boks">
+      <div class="stat-tall tot" id="st-tot">0/10</div>
+      <div class="stat-label">Oppgaver</div>
+    </div>
+  </div>
+
+  <!-- FREMDRIFT -->
+  <div class="fremgang-wrap" id="fremgang"></div>
+
+  <!-- OPPGAVEKORT -->
+  <div class="oppgave-kort" id="opp-kort">
+    <div class="oppgave-nr">
+      <span id="opp-nr">Oppgave 1 av 10</span>
+      <span class="oppgave-type-badge" id="opp-type">finn y</span>
+    </div>
+
+    <p class="sporsmal" id="sporsmal">Laster…</p>
+
+    <div id="svar-omr"></div>
+
+    <div class="btn-rad">
+      <button class="sjekk-btn" id="sjekk-btn" disabled>Sjekk svar</button>
+      <button class="neste-btn" id="neste-btn" onclick="nesteOppgave()">Neste →</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+</div>
+
+<script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  OPPGAVEGENERATOR
+// ═══════════════════════════════════════════════════════════
+
+var vanskel = 1;
+var OKT_LEN = 10;
+var aktivt = 0;
+var poeng = 0, riktige = 0, streakNaa = 0, maxStreak = 0, totalt = 0;
+var svartPaa = false;
+var fremdrift = [];
+
+// ─── Hjelpefunksjoner ────────────────────────────────────────────────────────
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function rndIkkeNull(min, max) { var v; do { v = rnd(min, max); } while (v === 0); return v; }
+function blande(arr) { return arr.slice().sort(function() { return Math.random() - .5; }); }
+
+// ─── Vanskelighetsparametere ─────────────────────────────────────────────────
+function params() {
+  if (vanskel === 1) return { aMin: 1, aMax: 5, bMin: 0, bMax: 10, xMin: 1, xMax: 10, desimal: false };
+  if (vanskel === 2) return { aMin: -5, aMax: 5, bMin: -10, bMax: 10, xMin: -5, xMax: 10, desimal: false };
+  return             { aMin: -8, aMax: 8, bMin: -15, bMax: 15, xMin: -10, xMax: 10, desimal: true };
+}
+
+// ─── Oppgavetyper ─────────────────────────────────────────────────────────────
+var TYPER = [
+  'finn_y',        // Gitt y=ax+b, finn y for x=?
+  'finn_x',        // Gitt y=ax+b og y-verdi, finn x
+  'finn_a',        // Gitt to punkter, finn stigningstall
+  'finn_b',        // Gitt a og ett punkt, finn b
+  'finn_uttrykk',  // Gitt to punkter, sett opp funksjonsuttrykket (flervalg)
+  'praktisk',      // Tekstoppgave med lineær sammenheng
+];
+
+function lagOppgave() {
+  var p = params();
+  var type;
+  if (vanskel === 1) type = TYPER[rnd(0, 1)];          // enkel: kun y og x
+  else if (vanskel === 2) type = TYPER[rnd(0, 3)];      // middels
+  else type = TYPER[rnd(0, 5)];                          // alt
+
+  var a = rndIkkeNull(p.aMin, p.aMax);
+  var b = rnd(p.bMin, p.bMax);
+  var x0 = rnd(p.xMin, p.xMax);
+  var y0 = a * x0 + b;
+
+  switch (type) {
+
+    case 'finn_y': {
+      var x = rnd(p.xMin, p.xMax);
+      var y = a * x + b;
+      return {
+        type: 'finn y', input: 'tall',
+        spm: 'Funksjonen er <strong>y = ' + vist(a) + 'x ' + visBSign(b) + '</strong>. Hva er <strong>y</strong> når x = ' + vist(x) + '?',
+        prefix: 'y =',
+        fasit: y,
+        steg: 'y = ' + vist(a) + ' · ' + vist(x) + ' + (' + vist(b) + ') = ' + vist(a*x) + ' + ' + vist(b) + ' = <strong>' + vist(y) + '</strong>'
+      };
+    }
+
+    case 'finn_x': {
+      var yGitt = a * rnd(p.xMin, p.xMax) + b;
+      var xSvar = (yGitt - b) / a;
+      if (!Number.isInteger(xSvar) && vanskel < 3) {
+        // Unngå desimal på lavt nivå - bruk enkel variant
+        return lagOppgave();
+      }
+      return {
+        type: 'finn x', input: 'tall',
+        spm: 'Funksjonen er <strong>y = ' + vist(a) + 'x ' + visBSign(b) + '</strong>. For hvilken x-verdi er <strong>y = ' + vist(yGitt) + '</strong>?',
+        prefix: 'x =',
+        fasit: xSvar,
+        steg: vist(yGitt) + ' = ' + vist(a) + 'x + (' + vist(b) + ')  →  ' + vist(a) + 'x = ' + vist(yGitt - b) + '  →  x = <strong>' + fmt(xSvar) + '</strong>'
+      };
+    }
+
+    case 'finn_a': {
+      var x1 = rnd(-5, 5), y1 = rnd(-10, 10);
+      var x2 = x1 + rnd(1, 5), y2 = y1 + rndIkkeNull(-8, 8) * 1;
+      var aFasit = (y2 - y1) / (x2 - x1);
+      if (!Number.isInteger(aFasit) && vanskel < 3) return lagOppgave();
+      return {
+        type: 'stigningstall', input: 'tall',
+        spm: 'En linje går gjennom punktene <strong>(' + x1 + ', ' + y1 + ')</strong> og <strong>(' + x2 + ', ' + y2 + ')</strong>. Hva er stigningstallet?',
+        prefix: 'a =',
+        fasit: aFasit,
+        steg: 'a = Δy/Δx = (' + vist(y2) + ' − ' + vist(y1) + ') / (' + vist(x2) + ' − ' + vist(x1) + ') = ' + vist(y2-y1) + '/' + vist(x2-x1) + ' = <strong>' + fmt(aFasit) + '</strong>'
+      };
+    }
+
+    case 'finn_b': {
+      var xp = rnd(1, 6), yp = a * xp + b;
+      return {
+        type: 'konstantledd', input: 'tall',
+        spm: 'En lineær funksjon har stigningstall <strong>a = ' + vist(a) + '</strong> og går gjennom punktet <strong>(' + xp + ', ' + vist(yp) + ')</strong>. Finn konstantleddet <strong>b</strong>.',
+        prefix: 'b =',
+        fasit: b,
+        steg: 'y = ax + b  →  ' + vist(yp) + ' = ' + vist(a) + ' · ' + xp + ' + b  →  b = ' + vist(yp) + ' − ' + vist(a*xp) + ' = <strong>' + vist(b) + '</strong>'
+      };
+    }
+
+    case 'finn_uttrykk': {
+      var xa = rnd(-3, 3), ya = rnd(-8, 8);
+      var xb2 = xa + rnd(1, 4), yb2 = ya + rndIkkeNull(-8, 8);
+      var aF = (yb2 - ya) / (xb2 - xa);
+      if (!Number.isInteger(aF)) return lagOppgave();
+      var bF = ya - aF * xa;
+      var fasitStr = 'y = ' + formatFunk(aF, bF);
+      // Lag 3 distraktorer
+      var d1 = 'y = ' + formatFunk(aF + 1, bF);
+      var d2 = 'y = ' + formatFunk(aF, bF - 2);
+      var d3 = 'y = ' + formatFunk(-aF, bF);
+      var valg = blande([fasitStr, d1, d2, d3]);
+      return {
+        type: 'funksjonsuttrykk', input: 'flervalg',
+        spm: 'Hvilken funksjon passer til linjen som går gjennom <strong>(' + xa + ', ' + vist(ya) + ')</strong> og <strong>(' + xb2 + ', ' + vist(yb2) + ')</strong>?',
+        valg: valg, fasit: fasitStr,
+        steg: 'a = (' + vist(yb2) + ' − ' + vist(ya) + ') / (' + xb2 + ' − ' + xa + ') = ' + (yb2-ya) + '/' + (xb2-xa) + ' = ' + vist(aF) +
+              '<br>b = ' + vist(ya) + ' − ' + vist(aF) + '·' + xa + ' = ' + vist(ya - aF*xa) +
+              '<br>Funksjonen: <strong>' + fasitStr + '</strong>'
+      };
+    }
+
+    case 'praktisk': {
+      var situasjoner = [
+        { pre: 'En strømleverandør tar ', enhet: 'øre per kWh', fast: 'kr i fastbeløp per måned', xVar: 'kWh forbruk', yVar: 'månedskostnad (kr)' },
+        { pre: 'En bilutleie koster ', enhet: 'kr per km', fast: 'kr per dag i grunnpris', xVar: 'antall km', yVar: 'total pris (kr)' },
+        { pre: 'En instruktør tjener ', enhet: 'kr per time', fast: 'kr i månedlig grunnlønn', xVar: 'arbeidstimer', yVar: 'månedsinntekt (kr)' },
+      ];
+      var sit = situasjoner[rnd(0, situasjoner.length - 1)];
+      var aP = rnd(2, 8) * (vanskel === 1 ? 5 : 1);
+      var bP = rnd(1, 5) * (vanskel === 1 ? 20 : 10);
+      var xP = rnd(5, 20);
+      var yP = aP * xP + bP;
+      return {
+        type: 'praktisk', input: 'tall',
+        spm: sit.pre + '<strong>' + aP + ' ' + sit.enhet + '</strong> og <strong>' + bP + ' ' + sit.fast + '</strong>. ' +
+             'Hva blir <strong>' + sit.yVar + '</strong> for ' + xP + ' ' + sit.xVar + '?',
+        prefix: 'Svar =',
+        fasit: yP,
+        steg: 'y = ' + aP + ' · ' + xP + ' + ' + bP + ' = ' + (aP*xP) + ' + ' + bP + ' = <strong>' + yP + '</strong>'
+      };
+    }
+
+    default: return lagOppgave();
+  }
+}
+
+// ─── Formateringshjelpere ────────────────────────────────────────────────────
+function vist(n) { return n < 0 ? '(' + n + ')' : String(n); }
+function fmt(n) { return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.',','); }
+function visBSign(b) { return b >= 0 ? '+ ' + b : '− ' + Math.abs(b); }
+function formatFunk(a, b) {
+  var s = '';
+  if (a === 1) s = 'x';
+  else if (a === -1) s = '−x';
+  else s = a + 'x';
+  if (b > 0) s += ' + ' + b;
+  else if (b < 0) s += ' − ' + Math.abs(b);
+  return s;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ØKTLOGIKK
+// ═══════════════════════════════════════════════════════════
+
+var naavarende = null;
+
+function startOkt() {
+  document.getElementById('start-overlay').style.display = 'none';
+  document.getElementById('slutt-overlay').classList.remove('vis');
+  aktivt = 0; poeng = 0; riktige = 0; streakNaa = 0; maxStreak = 0; totalt = 0;
+  fremdrift = [];
+  oppdaterVanskelUI();
+  oppdaterStats();
+  byggFremdrift();
+  nesteOppgave();
+}
+
+function nesteOppgave() {
+  if (aktivt >= OKT_LEN) { visSluttskjerm(); return; }
+  svartPaa = false;
+  naavarende = lagOppgave();
+  rendrerOppgave(naavarende);
+  oppdaterFremdriftUI();
+}
+
+function rendrerOppgave(opp) {
+  var kort = document.getElementById('opp-kort');
+  kort.className = 'oppgave-kort';
+
+  document.getElementById('opp-nr').textContent = 'Oppgave ' + (aktivt + 1) + ' av ' + OKT_LEN;
+  document.getElementById('opp-type').textContent = opp.type;
+  document.getElementById('sporsmal').innerHTML = opp.spm;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('neste-btn').className = 'neste-btn';
+
+  var svarOmr = document.getElementById('svar-omr');
+  svarOmr.innerHTML = '';
+
+  if (opp.input === 'tall') {
+    var wrap = document.createElement('div');
+    wrap.className = 'svar-wrap';
+    wrap.innerHTML = '<span class="svar-prefix">' + opp.prefix + '</span><input class="svar-input" id="svar-inp" type="text" placeholder="?" autocomplete="off">';
+    svarOmr.appendChild(wrap);
+    setTimeout(function() { var inp = document.getElementById('svar-inp'); if (inp) inp.focus(); }, 100);
+    document.getElementById('sjekk-btn').disabled = false;
+    document.getElementById('sjekk-btn').onclick = function() { sjekkTall(); };
+    // Enter-tast
+    setTimeout(function() {
+      var inp = document.getElementById('svar-inp');
+      if (inp) inp.onkeydown = function(e) { if (e.key === 'Enter' && !svartPaa) sjekkTall(); };
+    }, 100);
+  } else if (opp.input === 'flervalg') {
+    var grid = document.createElement('div');
+    grid.className = 'flervalg';
+    grid.id = 'fv-opp';
+    opp.valg.forEach(function(v) {
+      var btn = document.createElement('button');
+      btn.className = 'fv-btn';
+      btn.textContent = v;
+      btn.onclick = function() {
+        grid.querySelectorAll('.fv-btn').forEach(function(b) { b.classList.remove('valgt'); });
+        btn.classList.add('valgt');
+        document.getElementById('sjekk-btn').disabled = false;
+        document.getElementById('sjekk-btn').onclick = function() { sjekkFlervalg(); };
+      };
+      grid.appendChild(btn);
+    });
+    svarOmr.appendChild(grid);
+    document.getElementById('sjekk-btn').disabled = true;
+  }
+}
+
+function sjekkTall() {
+  if (svartPaa) return;
+  svartPaa = true;
+  var inp = document.getElementById('svar-inp');
+  var verdi = inp ? inp.value.trim().replace(',', '.') : '';
+  var tall = parseFloat(verdi);
+  var fasit = naavarende.fasit;
+  var riktig = !isNaN(tall) && Math.abs(tall - fasit) < 0.05;
+  visFeedback(riktig, fasit);
+  if (inp) inp.className = 'svar-input ' + (riktig ? 'riktig' : 'feil');
+  inp.disabled = true;
+}
+
+function sjekkFlervalg() {
+  if (svartPaa) return;
+  svartPaa = true;
+  var valgt = document.querySelector('#fv-opp .fv-btn.valgt');
+  if (!valgt) return;
+  var riktig = valgt.textContent === naavarende.fasit;
+  document.querySelectorAll('#fv-opp .fv-btn').forEach(function(b) {
+    b.disabled = true;
+    if (b.textContent === naavarende.fasit) b.classList.add('riktig-v');
+    else if (b.classList.contains('valgt')) b.classList.add('feil-v');
+  });
+  visFeedback(riktig, naavarende.fasit);
+}
+
+function visFeedback(riktig, fasit) {
+  document.getElementById('sjekk-btn').disabled = true;
+  var kort = document.getElementById('opp-kort');
+
+  if (riktig) {
+    riktige++;
+    streakNaa++;
+    if (streakNaa > maxStreak) maxStreak = streakNaa;
+    var bonus = Math.min(streakNaa - 1, 5) * 2;
+    poeng += 10 + bonus;
+    fremdrift.push('r');
+    kort.classList.add('riktig-kort');
+    var fb = document.getElementById('feedback');
+    fb.className = 'feedback vis';
+    fb.innerHTML = '<div class="fb-boks riktig"><span class="fb-emoji">✓</span> Riktig!' +
+      (streakNaa > 2 ? ' 🔥 ' + streakNaa + ' på rad!' : '') +
+      (bonus > 0 ? ' +' + bonus + ' bonuspoeng' : '') +
+      '<div class="losningssteg"><strong>Løsning:</strong> ' + naavarende.steg + '</div></div>';
+  } else {
+    streakNaa = 0;
+    fremdrift.push('f');
+    kort.classList.add('feil-kort');
+    var fb = document.getElementById('feedback');
+    fb.className = 'feedback vis';
+    fb.innerHTML = '<div class="fb-boks feil"><span class="fb-emoji">✗</span> Ikke riktig. Fasit: <strong>' + fasit + '</strong>' +
+      '<div class="losningssteg"><strong>Løsning:</strong> ' + naavarende.steg + '</div></div>';
+  }
+
+  totalt++;
+  aktivt++;
+  oppdaterStats();
+  oppdaterFremdriftUI();
+  document.getElementById('neste-btn').className = 'neste-btn vis';
+
+  // Auto-neste ved riktig svar etter 1,8 sek
+  if (riktig) {
+    setTimeout(function() { if (svartPaa) nesteOppgave(); }, 1800);
+  }
+}
+
+// ─── Stats og fremdrift ──────────────────────────────────────────────────────
+function oppdaterStats() {
+  document.getElementById('st-poeng').textContent = poeng;
+  document.getElementById('st-riktig').textContent = riktige;
+  document.getElementById('st-streak').textContent = streakNaa;
+  document.getElementById('st-tot').textContent = aktivt + '/' + OKT_LEN;
+}
+
+function byggFremdrift() {
+  var w = document.getElementById('fremgang');
+  w.innerHTML = '';
+  for (var i = 0; i < OKT_LEN; i++) {
+    var d = document.createElement('div');
+    d.className = 'fp';
+    d.id = 'fp-' + i;
+    w.appendChild(d);
+  }
+}
+
+function oppdaterFremdriftUI() {
+  for (var i = 0; i < OKT_LEN; i++) {
+    var el = document.getElementById('fp-' + i);
+    if (!el) continue;
+    var res = fremdrift[i];
+    if (res === 'r') el.className = 'fp riktig-fp';
+    else if (res === 'f') el.className = 'fp feil-fp';
+    else if (i === aktivt - 1 + (svartPaa ? 0 : 1)) el.className = 'fp aktiv-fp';
+    else el.className = 'fp';
+  }
+}
+
+// ─── Vanskelighetsgrad ───────────────────────────────────────────────────────
+function settVanskel(v, btn) {
+  vanskel = v;
+  document.querySelectorAll('.start-overlay .vanskel-btn').forEach(function(b) {
+    b.classList.remove('aktiv');
+  });
+  btn.classList.add('aktiv');
+}
+function byttVanskel(v) {
+  vanskel = v;
+  oppdaterVanskelUI();
+}
+function oppdaterVanskelUI() {
+  var klasser = { 1: 'enkel', 2: 'middels', 3: 'vanskelig' };
+  [1, 2, 3].forEach(function(v) {
+    var btn = document.getElementById('vr' + v);
+    btn.className = 'vanskel-btn' + (v === vanskel ? ' aktiv ' + klasser[v] : '');
+  });
+}
+
+// ─── Sluttskjerm ─────────────────────────────────────────────────────────────
+function visSluttskjerm() {
+  var pct = Math.round(riktige / OKT_LEN * 100);
+  var emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🌟' : pct >= 50 ? '👍' : '💪';
+  var tittel = pct >= 90 ? 'Utmerket!' : pct >= 70 ? 'Bra jobbet!' : pct >= 50 ? 'Godkjent!' : 'Øv mer!';
+  document.getElementById('s-emoji').textContent = emoji;
+  document.getElementById('s-tittel').textContent = tittel;
+  document.getElementById('s-score').innerHTML =
+    '<strong>' + riktige + '</strong> av <strong>' + OKT_LEN + '</strong> riktige (' + pct + ' %)<br>' +
+    'Poeng: <strong>' + poeng + '</strong> · Beste streak: <strong>' + maxStreak + ' 🔥</strong>';
+  document.getElementById('slutt-overlay').classList.add('vis');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+oppdaterVanskelUI();
+byggFremdrift();
+oppdaterStats();
+
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('matte_mengde_lineare_funksjoner', 'MAT-FUNK', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('matte_mengde_lineare_funksjoner', 'MAT-FUNK', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
+</script>
+</body>
+</html>

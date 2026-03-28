@@ -87,6 +87,34 @@ nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-fil
 </div>
 </div>
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 var KORT=[], vis=[], aktivt=0;
 function init(k){KORT=k;vis=k.map(function(_,i){return i;});oppdater();visKort();}
 function visKort(){
@@ -118,6 +146,13 @@ function filtrer(kat){
   document.querySelectorAll('.sort-btn').forEach(function(b){b.classList.toggle('ak',b.dataset.kat===kat);});
   visKort();
 }
+
+// Spor flashcard-besøk
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    window._skaplab_logg('flash_funksjoner', 'MAT-FUNK', 100, null, null);
+  }, 3000); // Etter 3 sek - eleven har sett noe
+});
 </script>
 <script>init([
   {begrep:'Funksjon',formel:'y = f(x)',forklaring:'En regel som knytter hver innverdi (x) til nøyaktig én utverdi (y).',eks:'f(x) = 2x+1: for x=3 gir f(3)=7',kategori:'Funksjoner'},
@@ -136,6 +171,5 @@ function filtrer(kat){
   {begrep:'Skjæring mellom linjer',formel:'',forklaring:'Løs likningssystemet. Punktet der to linjer krysser hverandre.',eks:'y=2x+1 og y=−x+7 → x=2, y=5',kategori:'Lineære'},
   {begrep:'Funksjonsgraf',formel:'',forklaring:'Visuell fremstilling av en funksjon i et koordinatsystem. Hvert punkt er (x, f(x)).',eks:'y=x²: parabelformet graf',kategori:'Funksjoner'},
 ]);</script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

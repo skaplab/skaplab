@@ -824,6 +824,7 @@ nav{position:sticky;top:0;z-index:500;background:rgba(6,10,14,.95);backdrop-filt
 <div class="hub-seksjon" data-kat="programmering">
 <div class="sep"><div class="sep-linje"><span class="sep-strek"></span><span class="sep-tekst">💻 Programmering</span><span class="sep-strek"></span></div></div>
 <div class="kortgrid">
+  
   <a href="matte_prog_løkker.html" class="fagkort" data-kat="programmering" data-km="KM18" data-trinn="t8 t9 t10" data-tag="digitale-verktøy" data-sok="løkker og betingelser i matte km18 programmering">
     <div class="fagkort-topp"><span class="fagkort-emoji">💻</span><span class="fagkort-badge">KM18</span></div>
     <div class="fagkort-tittel">Løkker og betingelser i matte</div>
@@ -1070,8 +1071,56 @@ nav{position:sticky;top:0;z-index:500;background:rgba(6,10,14,.95);backdrop-filt
 </div>
 
 </div>
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js">
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('matte_hub', 'NAT-BIO', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('matte_hub', 'NAT-BIO', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
+</script>
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 
   // Hent antall eksamenstrener-ganger fra localStorage
   (function() {
@@ -1283,6 +1332,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

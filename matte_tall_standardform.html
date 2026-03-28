@@ -155,6 +155,36 @@ code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padd
 </div>
 </div>
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 var N=0,akt=0,gjort=[];
 function init(n){N=n;gjort=new Array(n).fill(false);gjort[0]=true;oppdater();byggPrikker();}
 function byggPrikker(){var c=document.getElementById('prikker');c.innerHTML='';for(var i=0;i<N;i++){var p=document.createElement('span');p.className='prikk'+(i===akt?' aktiv':'')+(gjort[i]&&i!==akt?' gjort':'');(function(idx){p.onclick=function(){gaa(idx);};})(i);c.appendChild(p);}}
@@ -227,8 +257,25 @@ var vanskel=2,dynOppgave=null,dynValgt=null;function lagDynFlervalg(oppg){
         .replace('Ja, stigning oppover','Ja ↗').replace('Nei, stigning nedover','Nei ↘')
         .replace(', ',': ').substring(0,30);
     b.textContent=kortAlt; b.dataset.v=alt;b.onclick=function(){fvA.querySelectorAll('.fv-btn').forEach(function(x){x.classList.remove('valgt');});b.classList.add('valgt');dynValgt=b.dataset.v||alt;fvSj.disabled=false;};fvA.appendChild(b);});}var inS=document.getElementById('dyn-inp-spm');if(inS){var inT=document.getElementById('dyn-inp-type'),inF=document.getElementById('dyn-inp-felt'),inPr=document.getElementById('dyn-inp-prefix'),inEn=document.getElementById('dyn-inp-enhet'),inFb=document.getElementById('dyn-inp-fb'),inNy=document.getElementById('dyn-inp-ny');inT.textContent=dynOppgave.type||'Oppgave';inS.innerHTML=dynOppgave.spm;inPr.innerHTML=dynOppgave.prefix||'';inEn.textContent=dynOppgave.enhet||'';inF.value='';inF.className='svar-input';inF.disabled=false;inFb.className='feedback';inFb.innerHTML='';if(inNy)inNy.style.display='none';inF.onkeydown=function(e){if(e.key==='Enter')sjekkDynInp();};}}function sjekkDynFV(){if(!dynOppgave||dynValgt===null)return;var fasit=String(dynOppgave.fasit),ok=dynValgt===fasit;document.getElementById('dyn-fv-alts').querySelectorAll('.fv-btn').forEach(function(b){b.disabled=true;if((b.dataset.v||b.textContent)===fasit)b.classList.add('riktig-svar');else if(b.classList.contains('valgt')&&!ok)b.classList.add('feil-svar');});document.getElementById('dyn-fv-sjekk').disabled=true;var fb=document.getElementById('dyn-fv-fb');fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+(dynOppgave.steg||'')):('✗ Fasit: '+fasit+(dynOppgave.steg?'<br>'+dynOppgave.steg:''));var ny=document.getElementById('dyn-fv-ny');if(ny)ny.style.display='inline-block';}function sjekkDynInp(){if(!dynOppgave)return;var felt=document.getElementById('dyn-inp-felt');if(!felt)return;var v=felt.value.trim().replace(',','.');var fr=String(dynOppgave.fasit).replace(',','.');var ok=Math.abs(parseFloat(v)-parseFloat(fr))<0.06||v===fr||v.toLowerCase()===fr.toLowerCase();felt.disabled=true;felt.className='svar-input '+(ok?'riktig':'feil');var fb=document.getElementById('dyn-inp-fb');fb.className='feedback vis '+(ok?'riktig':'feil');fb.innerHTML=ok?('✓ Riktig! '+(dynOppgave.steg||'')):('✗ Fasit: '+dynOppgave.fasit+(dynOppgave.steg?'<br>'+dynOppgave.steg:''));var ny=document.getElementById('dyn-inp-ny');if(ny)ny.style.display='inline-block';}
+
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('matte_tall_standardform', 'MAT-ALG', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('matte_tall_standardform', 'MAT-ALG', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
 </script>
 <script>init(3); nyDynOppgave();</script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>
