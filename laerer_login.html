@@ -38,7 +38,7 @@ input:focus{border-color:#60a5fa;}
 </head>
 <body>
 <div class="boks">
-  <div class="logo">Skap<span>Lab</span></div>
+  <a href="index.html" class="logo" style="text-decoration:none;display:block;">Skap<span>Lab</span></a>
   <h2>Laererportal</h2>
   <p class="sub">Logg inn for a folge elevenes fremgang.</p>
   <div class="tabs">
@@ -299,6 +299,7 @@ input:focus{border-color:#60a5fa;}
 </script>
 <script>
 
+
 'use strict';
 if (SkapLab.erLaererInnlogget()) { location.href = 'laerer_dashboard.html'; }
 
@@ -380,31 +381,41 @@ async function registrer() {
   var token  = sesjon.access_token;
   var userId = sesjon.user && sesjon.user.id;
 
-  // Steg 4: Opprett skole og laererprofil
-  infoEl.textContent = 'Oppretter profil...';
+  // Steg 4: Finn eller opprett skole
+  infoEl.textContent = 'Kobler til skole...';
   try {
-    var skoleResp = await fetch(SkapLab.SUPABASE_URL + '/rest/v1/skoler', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SkapLab.SUPABASE_KEY,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({ navn: skole, kommune: kommune, kontakt_epost: epost })
-    }).then(function(r) { return r.json(); });
+    var skoleId = null;
 
-    var skoleId = Array.isArray(skoleResp) ? skoleResp[0] && skoleResp[0].id : skoleResp && skoleResp.id;
+    // Sjekk om skole med samme navn finnes fra for
+    var eksNavn = encodeURIComponent(skole);
+    var eksResp = await fetch(
+      SkapLab.SUPABASE_URL + '/rest/v1/skoler?navn=ilike.' + eksNavn + '&select=id,navn,kommune',
+      { headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY,
+                   'Authorization': 'Bearer ' + token } }
+    ).then(function(r) { return r.json(); });
+
+    if (Array.isArray(eksResp) && eksResp.length > 0) {
+      // Skole finnes - koble til eksisterende
+      skoleId = eksResp[0].id;
+      infoEl.textContent = 'Kobler til ' + eksResp[0].navn + '...';
+    } else {
+      // Skole finnes ikke - opprett ny
+      infoEl.textContent = 'Oppretter skole...';
+      var skoleResp = await fetch(SkapLab.SUPABASE_URL + '/rest/v1/skoler', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY,
+                   'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ navn: skole, kommune: kommune, kontakt_epost: epost })
+      }).then(function(r) { return r.json(); });
+      skoleId = Array.isArray(skoleResp) ? skoleResp[0] && skoleResp[0].id : skoleResp && skoleResp.id;
+    }
 
     if (skoleId && userId) {
+      infoEl.textContent = 'Oppretter lærerprofil...';
       await fetch(SkapLab.SUPABASE_URL + '/rest/v1/laerere', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SkapLab.SUPABASE_KEY,
-          'Authorization': 'Bearer ' + token,
-          'Prefer': 'return=representation'
-        },
+        headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY,
+                   'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation' },
         body: JSON.stringify({ id: userId, skole_id: skoleId, fullt_navn: navn, epost: epost })
       });
     }
@@ -421,6 +432,7 @@ document.addEventListener('keydown', function(e) {
     else registrer();
   }
 });
+
 
 </script>
 </body>

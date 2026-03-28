@@ -104,7 +104,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 <body>
 
 <div id="topbar">
-  <div class="logo">Skap<span>Lab</span></div>
+  <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
   <div class="admin-badge">⚡ Superadmin</div>
   <div class="spacer"></div>
   <span id="admin-navn"></span>
@@ -170,7 +170,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div id="modal-innhold"></div>
     <div class="modal-btns">
       <button class="avb" onclick="lukkModal()">Lukk</button>
+      <button class="lag" style="background:var(--lilla);color:#000;" onclick="visSammenslaa()">🔀 Slå sammen</button>
       <button class="lag rod" id="modal-deaktiver-btn" onclick="toggleAktiv()"></button>
+    </div>
+    <div id="sammensla-panel" style="display:none;margin-top:16px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:14px;">
+      <div style="font-size:.8rem;color:var(--lilla);margin-bottom:10px;font-weight:600;">Slå sammen med annen skole</div>
+      <select id="sammensla-valg" style="width:100%;padding:9px 12px;background:var(--bg);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-size:.84rem;margin-bottom:10px;"></select>
+      <div style="font-size:.75rem;color:var(--dim);margin-bottom:10px;">Alle lærere og elever fra denne skolen flyttes til den valgte skolen. Denne skolen slettes deretter.</div>
+      <button class="lag rod" onclick="bekreftSammenslaa()" style="width:100%;">Bekreft sammenslåing</button>
     </div>
     <div id="modal-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div>
   </div>
@@ -414,6 +421,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 </script>
 <script>
 
+
 'use strict';
 
 var SUPERADMIN_EPOST = 'tlnnorda@gmail.com';
@@ -627,6 +635,65 @@ async function oppdaterAktiv(skoleId,nyStatus){
 
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
 init();
+
+
+function visSammenslaa() {
+  var panel = document.getElementById('sammensla-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  var sel = document.getElementById('sammensla-valg');
+  sel.innerHTML = alleData
+    .filter(function(d) { return d.skole.id !== valgtSkoleId; })
+    .map(function(d) {
+      return '<option value="' + d.skole.id + '">' + d.skole.navn
+        + (d.skole.kommune ? ' (' + d.skole.kommune + ')' : '') + '</option>';
+    }).join('');
+}
+
+async function bekreftSammenslaa() {
+  var målId = document.getElementById('sammensla-valg').value;
+  if (!målId || !valgtSkoleId) return;
+  var kildeD = alleData.find(function(x) { return x.skole.id === valgtSkoleId; });
+  var målD   = alleData.find(function(x) { return x.skole.id === målId; });
+  if (!kildeD || !målD) return;
+
+  if (!confirm('Flytt alle lærere fra "' + kildeD.skole.navn + '" til "' + målD.skole.navn + '" og slett kilde-skolen?')) return;
+
+  var feilEl = document.getElementById('modal-feil');
+  feilEl.style.color = 'var(--bla)';
+  feilEl.textContent = 'Slår sammen...';
+
+  // 1. Flytt alle klasser til målskolen
+  var klasseIder = kildeD.klasser.map(function(k) { return k.id; });
+  for (var i = 0; i < klasseIder.length; i++) {
+    await fetch(SkapLab.SUPABASE_URL + '/rest/v1/klasser?id=eq.' + klasseIder[i], {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY,
+                 'Authorization': 'Bearer ' + token, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ skole_id: målId })
+    });
+  }
+
+  // 2. Flytt alle lærere til målskolen
+  var laererIder = kildeD.laerere.map(function(l) { return l.id; });
+  for (var j = 0; j < laererIder.length; j++) {
+    await fetch(SkapLab.SUPABASE_URL + '/rest/v1/laerere?id=eq.' + laererIder[j], {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY,
+                 'Authorization': 'Bearer ' + token, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ skole_id: målId })
+    });
+  }
+
+  // 3. Slett kilde-skolen
+  await fetch(SkapLab.SUPABASE_URL + '/rest/v1/skoler?id=eq.' + valgtSkoleId, {
+    method: 'DELETE',
+    headers: { 'apikey': SkapLab.SUPABASE_KEY, 'Authorization': 'Bearer ' + token }
+  });
+
+  feilEl.style.color = 'var(--gron)';
+  feilEl.textContent = 'Sammenslåing fullfort! Laster på nytt...';
+  setTimeout(function() { lukkModal(); init(); }, 1500);
+}
 
 </script>
 <!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
