@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elev-innlogging · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{min-height:100vh;background:linear-gradient(160deg,#07090f,#0d1225);
+  color:#e0e8ff;font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;}
+.boks{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:40px 44px;max-width:400px;width:92%;text-align:center;}
+.logo{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:#60a5fa;margin-bottom:6px;}
+.logo span{color:#fff;opacity:.45;}
+h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin:18px 0 8px;}
+p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px;}
+.kode-felt{display:flex;gap:8px;justify-content:center;margin-bottom:20px;}
+.kode-siffer{width:44px;height:56px;border-radius:10px;
+  background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);
+  color:#fff;font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;
+  text-align:center;outline:none;transition:border-color .15s;}
+.kode-siffer:focus{border-color:#60a5fa;}
+.logg-inn-btn{width:100%;padding:13px;background:#60a5fa;color:#000;
+  border:none;border-radius:10px;font-family:'Syne',sans-serif;
+  font-size:1rem;font-weight:800;cursor:pointer;transition:filter .15s;}
+.logg-inn-btn:hover{filter:brightness(1.1);}
+.logg-inn-btn:disabled{opacity:.5;cursor:not-allowed;}
+#feilmelding{color:#f87171;font-size:.82rem;margin-top:12px;min-height:20px;}
+#laster{display:none;font-size:.82rem;color:rgba(255,255,255,.4);margin-top:12px;}
+.divider{height:1px;background:rgba(255,255,255,.08);margin:24px 0;}
+.laerer-link{font-size:.78rem;color:rgba(255,255,255,.35);}
+.laerer-link a{color:#60a5fa;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="boks">
+  <div class="logo">Skap<span>Lab</span></div>
+  <h2>Logg inn</h2>
+  <p>Skriv inn den 6-sifrede koden du har fatt av laereren din.</p>
+  <div class="kode-felt">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s0">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s1">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s2">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s3">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s4">
+    <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s5">
+  </div>
+  <button class="logg-inn-btn" id="login-btn" onclick="loggInn()" disabled>Logg inn</button>
+  <div id="feilmelding"></div>
+  <div id="laster">Logger inn...</div>
+  <div class="divider"></div>
+  <div class="laerer-link">Er du laerer? <a href="laerer_login.html">Logg inn her</a></div>
+</div>
+<script>
+// skaplab_auth.js - SkapLab autentisering
+(function () {
+  'use strict';
+
+  // ── KONFIGURASJON ──────────────────────────────────────────────
+  var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+  var API = SUPABASE_URL + '/rest/v1';
+  var SESSION_NØKKEL = 'skaplab_elev';
+  var LAERER_NØKKEL  = 'skaplab_laerer';
+
+  // ── HJELPEFUNKSJONER ───────────────────────────────────────────
+  function hdr(token) {
+    var h = {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (token || SUPABASE_KEY)
+    };
+    return h;
+  }
+
+  function post(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'POST',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function get(sti, token) {
+    return fetch(API + sti, {
+      headers: hdr(token)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function patch(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'PATCH',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // Supabase Auth-endepunkt
+  function auth(sti, data) {
+    return fetch(SUPABASE_URL + '/auth/v1/' + sti, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // ── ELEV-INNLOGGING ────────────────────────────────────────────
+  async function elevLoggInn(kode) {
+    try {
+      var resp = await fetch(
+        API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
+        '&select=id,fullt_navn,klasse_id,klasser(navn,trinn,skoler(navn))',
+        { headers: hdr() }
+      );
+      var data = await resp.json();
+      if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
+      var elev = data[0];
+      sessionStorage.setItem(SESSION_NØKKEL, JSON.stringify(elev));
+      return { ok: true, elev: elev };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  function elevLoggUt() {
+    sessionStorage.removeItem(SESSION_NØKKEL);
+  }
+
+  function hentElev() {
+    try {
+      var data = sessionStorage.getItem(SESSION_NØKKEL);
+      return data ? JSON.parse(data) : null;
+    } catch (e) { return null; }
+  }
+
+  function erElevInnlogget() {
+    return hentElev() !== null;
+  }
+
+  // ── LÆRER-INNLOGGING (via Supabase Auth) ──────────────────────
+  async function laererLoggInn(epost, passord) {
+    try {
+      var resp = await auth('token?grant_type=password', {
+        email: epost, password: passord
+      });
+      if (resp.error) return { ok: false, feil: resp.error.message };
+      sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
+      return { ok: true, token: resp.access_token };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  async function laererLoggUt() {
+    var l = hentLaerer();
+    if (l) {
+      await fetch(SUPABASE_URL + '/auth/v1/logout', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + l.access_token }
+      });
+    }
+    sessionStorage.removeItem(LAERER_NØKKEL);
+  }
+
+  function hentLaerer() {
+    try {
+      var data = sessionStorage.getItem(LAERER_NØKKEL);
+      return data ? JSON.parse(data) : null;
+    } catch (e) { return null; }
+  }
+
+  function erLaererInnlogget() {
+    return hentLaerer() !== null;
+  }
+
+  // ── AKTIVITETSSPORING ─────────────────────────────────────────
+  /**
+   * Logg aktivitet for innlogget elev.
+   * @param {string} ressurs    - f.eks. 'mattequiz_Algebra'
+   * @param {string} kmKode     - f.eks. 'MAT-ALG'
+   * @param {number} scorePst   - 0–100
+   * @param {number} antall     - antall oppgaver totalt
+   * @param {number} riktige    - antall riktige svar
+   */
+  async function loggAktivitet(ressurs, kmKode, scorePst, antall, riktige) {
+    var elev = hentElev();
+    if (!elev) return;  // ikke logget inn, gjør ingenting
+
+    try {
+      await post('/aktivitet', {
+        elev_id:         elev.id,
+        ressurs:         ressurs,
+        km_kode:         kmKode,
+        score_pst:       Math.round(scorePst),
+        antall_oppgaver: antall || null,
+        riktige:         riktige || null
+      });
+    } catch (e) {
+      // Sporing feiler stille — ikke forstyrr spillopplevelsen
+    }
+  }
+
+  // ── NAVIGASJONSBJELKE ─────────────────────────────────────────
+  // Viser innlogget bruker øverst på siden om inkludert
+  function visInnloggetBruker() {
+    var elev = hentElev();
+    if (!elev) return;
+
+    var wrap = document.getElementById('skaplab-bruker-strip');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'skaplab-bruker-strip';
+      wrap.style.cssText =
+        'position:fixed;bottom:0;left:0;right:0;z-index:1000;' +
+        'background:rgba(10,14,28,0.95);border-top:1px solid rgba(255,255,255,0.1);' +
+        'padding:6px 16px;display:flex;align-items:center;gap:12px;' +
+        'font-family:DM Sans,sans-serif;font-size:.75rem;color:rgba(255,255,255,0.6);';
+      document.body.appendChild(wrap);
+    }
+
+    var skoleNavn = (elev.klasser && elev.klasser.skoler)
+      ? elev.klasser.skoler.navn : '';
+    var klasseNavn = elev.klasser ? elev.klasser.navn : '';
+
+    wrap.innerHTML =
+      '<span>👤 <strong style="color:#fff">' + (elev.fullt_navn || 'Elev') + '</strong>' +
+      (klasseNavn ? ' · ' + klasseNavn : '') +
+      (skoleNavn ? ' · ' + skoleNavn : '') + '</span>' +
+      '<span style="flex:1"></span>' +
+      '<a href="elev_portal.html" style="color:#60a5fa;text-decoration:none;">Min side</a>' +
+      '<button onclick="SkapLab.elevLoggUt();location.reload();" ' +
+      'style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);' +
+      'padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;">Logg ut</button>';
+  }
+
+  // Kjør automatisk ved sideinnlasting
+  document.addEventListener('DOMContentLoaded', visInnloggetBruker);
+
+  // ── EKSPORTER ─────────────────────────────────────────────────
+  window.SkapLab = {
+    // Elev
+    elevLoggInn:       elevLoggInn,
+    elevLoggUt:        elevLoggUt,
+    hentElev:          hentElev,
+    erElevInnlogget:   erElevInnlogget,
+    // Lærer
+    laererLoggInn:     laererLoggInn,
+    laererLoggUt:      laererLoggUt,
+    hentLaerer:        hentLaerer,
+    erLaererInnlogget: erLaererInnlogget,
+    // Sporing
+    loggAktivitet:     loggAktivitet,
+    // Internals (for dashboard)
+    _api:  API,
+    _hdr:  hdr,
+    _get:  get,
+    _post: post,
+    _patch: patch,
+    SUPABASE_URL: SUPABASE_URL,
+    SUPABASE_KEY: SUPABASE_KEY
+  };
+
+})();
+
+</script>
+<script>
+'use strict';
+if (SkapLab.erElevInnlogget()) location.href = 'elev_portal.html';
+var sifre = document.querySelectorAll('.kode-siffer');
+var btn = document.getElementById('login-btn');
+sifre.forEach(function(el,i){
+  el.addEventListener('input',function(){
+    this.value=this.value.replace(/[^0-9]/g,'').slice(-1);
+    if(this.value&&i<5) sifre[i+1].focus();
+    btn.disabled=hentKode().length<6;
+  });
+  el.addEventListener('keydown',function(e){
+    if(e.key==='Backspace'&&!this.value&&i>0){sifre[i-1].focus();sifre[i-1].value='';btn.disabled=true;}
+  });
+  el.addEventListener('paste',function(e){
+    e.preventDefault();
+    var t=(e.clipboardData||window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0,6);
+    for(var j=0;j<t.length&&j<6;j++) sifre[j].value=t[j];
+    if(t.length<6) sifre[t.length].focus(); else sifre[5].focus();
+    btn.disabled=hentKode().length<6;
+  });
+});
+function hentKode(){return Array.from(sifre).map(function(s){return s.value;}).join('');}
+async function loggInn(){
+  var kode=hentKode(); if(kode.length<6) return;
+  btn.disabled=true;
+  document.getElementById('feilmelding').textContent='';
+  document.getElementById('laster').style.display='block';
+  var res=await SkapLab.elevLoggInn(kode);
+  document.getElementById('laster').style.display='none';
+  if(res.ok){location.href='elev_portal.html';}
+  else{document.getElementById('feilmelding').textContent='Feil kode. Prøv igjen.';btn.disabled=false;}
+}
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!btn.disabled)loggInn();});
+sifre[0].focus();
+</script>
+</body>
+</html>
