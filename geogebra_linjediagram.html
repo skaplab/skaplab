@@ -5,7 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GeoGebra – Linjediagram · SkapLab</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://www.geogebra.org/apps/deployggb.js"></script>
+<script src="https://www.geogebra.org/apps/deployggb.js">
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('geogebra_linjediagram', 'MAT-GEO', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('geogebra_linjediagram', 'MAT-GEO', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
+</script>
 <style>:root{
   --bg:#06101e;--card:#131f35;--border:rgba(255,255,255,.08);
   --accent:#ffd700;--green:#4ade80;--red:#f87171;--dim:#7a90b0;
@@ -240,6 +258,36 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════
 // HJELPEFUNKSJONER FOR DYNAMISKE OPPGAVER
@@ -568,6 +616,9 @@ function getGGB() {
 var gjeldende = 0;
 var løste = [];
 var forsøk = 0;
+
+
+
 
 function lastOppgave(idx) {
   if (!løste.length) løste = new Array(OPPGAVER.length).fill(false);
@@ -924,6 +975,7 @@ window.addEventListener('DOMContentLoaded', startApp);
 
 
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+
+<!-- © 2025 SkapLab · Tommy Lykke Nordahl -->
 </body>
 </html>
