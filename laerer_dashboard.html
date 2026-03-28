@@ -322,6 +322,9 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
+
+
 'use strict';
 
 // Hjelpefunksjon for å hente epost fra Supabase Auth-objekt
@@ -360,7 +363,26 @@ document.addEventListener('DOMContentLoaded', function() {
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer();
 var token=laerer.access_token;
-var lid=(laerer.user&&laerer.user.id)||laerer.id||'';
+
+// Hent bruker-ID fra alle mulige steder i Auth-responsen
+function hentLid(sess) {
+  if (!sess) return '';
+  // Prøv user.id først
+  if (sess.user && sess.user.id) return sess.user.id;
+  // Prøv direkte id
+  if (sess.id) return sess.id;
+  // Decode JWT og hent sub
+  try {
+    var parts = sess.access_token.split('.');
+    if (parts.length === 3) {
+      var payload = JSON.parse(atob(parts[1]));
+      if (payload.sub) return payload.sub;
+    }
+  } catch(e) {}
+  return '';
+}
+
+var lid = hentLid(laerer);
 
 // Refresh token (støtter både JWT og nye sb_-tokens)
 async function hentGyldigToken(){
@@ -392,6 +414,7 @@ async function hentGyldigToken(){
   if(resp.access_token){
     sessionStorage.setItem('skaplab_laerer',JSON.stringify(resp));
     laerer=resp; token=resp.access_token;
+    lid=hentLid(resp);
     return resp.access_token;
   }
   sessionStorage.clear(); location.href='laerer_login.html'; return null;
@@ -523,32 +546,24 @@ function visNyKlasse(){
   document.getElementById('side-nyklasse').style.display='block';
   document.getElementById('side-nyklasse').innerHTML=
     '<div class="side-tittel">Opprett klasse</div>'
-    +'<div style="max-width:400px;">'
-    +'<div id="profil-mangler-advarsel" style="display:none;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:10px 12px;font-size:.8rem;color:#fbbf24;margin-bottom:14px;">'
-    +'Lærerprofil mangler i databasen. Fyll inn skole-info for å fullføre oppsett.</div>'
-    +'<div id="skole-felt" style="display:none;">'
-    +'<div class="fr"><label>Skole</label><input type="text" id="kl-skole" placeholder="Bjornholt ungdomsskole"></div>'
-    +'<div class="fr"><label>Kommune</label><input type="text" id="kl-kommune" placeholder="Oslo"></div>'
-    +'</div>'
-    +'<div class="fr"><label>Klassenavn</label><input type="text" id="kl-navn" placeholder="9A"></div>'
-    +'<div class="fr"><label>Trinn</label><select id="kl-trinn"><option value="8">8. trinn</option><option value="9">9. trinn</option><option value="10">10. trinn</option></select></div>'
-    +'<button id="kl-btn" style="margin-top:8px;padding:8px 20px;background:var(--bla);color:#000;border:none;border-radius:8px;font-family:var(--font-h);font-weight:700;cursor:pointer;">Opprett</button>'
+    +'<div style="max-width:380px;">'
+    +'<div class="fr"><label>Klassenavn</label>'
+    +'<input type="text" id="kl-navn" placeholder="9A"></div>'
+    +'<div class="fr"><label>Trinn</label>'
+    +'<select id="kl-trinn">'
+    +'<option value="8">8. trinn</option>'
+    +'<option value="9">9. trinn</option>'
+    +'<option value="10">10. trinn</option>'
+    +'</select></div>'
+    +'<button id="kl-btn" style="margin-top:12px;padding:9px 22px;'
+    +'background:var(--bla);color:#000;border:none;border-radius:8px;'
+    +'font-family:var(--font-h);font-weight:700;cursor:pointer;">Opprett</button>'
     +'<div id="kl-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div>'
     +'<div id="kl-info" style="color:var(--bla);font-size:.8rem;margin-top:8px;"></div>'
     +'</div>';
   document.getElementById('kl-btn').addEventListener('click', opprettKlasse);
-
-  // Sjekk om profil mangler og vis skole-felt i så fall
-  SkapLab._get('/laerere?id=eq.'+lid+'&select=skole_id', token).then(function(lR){
-    if(!lR||!lR[0]||!lR[0].skole_id){
-      document.getElementById('profil-mangler-advarsel').style.display='block';
-      document.getElementById('skole-felt').style.display='block';
-    }
-  }).catch(function(){
-    document.getElementById('profil-mangler-advarsel').style.display='block';
-    document.getElementById('skole-felt').style.display='block';
-  });
 }
+
 
 async function opprettKlasse(){
   var navn=document.getElementById('kl-navn').value.trim();
@@ -572,68 +587,13 @@ async function opprettKlasse(){
     if(lInfo&&lInfo[0]&&lInfo[0].skole_id){
       skoleId=lInfo[0].skole_id;
     } else {
-      // Laerer-profil mangler - opprett skole og profil med brukerens input
-      var skoleNavn=document.getElementById('kl-skole')
-        ? document.getElementById('kl-skole').value.trim() : '';
-      var skoleKommune=document.getElementById('kl-kommune')
-        ? document.getElementById('kl-kommune').value.trim() : '';
-      if(!skoleNavn){
-        feilEl.textContent='Fyll inn skolenavn for å fullføre oppsett.';
-        btn.disabled=false;btn.textContent='Opprett';
-        if(document.getElementById('skole-felt'))
-          document.getElementById('skole-felt').style.display='block';
-        if(document.getElementById('profil-mangler-advarsel'))
-          document.getElementById('profil-mangler-advarsel').style.display='block';
-        return;
-      }
-      document.getElementById('kl-info').textContent='Oppretter skoleprofil...';
-      var visNavn=hentNavn(laerer);
-      var epost=hentEpost(laerer);
-      console.log('TOKEN TYPE:', token&&token.substring(0,20));
-      console.log('LID:', lid);
-      console.log('EPOST:', epost);
-
-      // Opprett skole - med automatisk token-refresh ved 401/PGRST301
-      async function postSkole(tok){
-        return fetch(SkapLab.SUPABASE_URL+'/rest/v1/skoler',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
-            'Authorization':'Bearer '+tok,'Prefer':'return=representation'},
-          body:JSON.stringify({navn:skoleNavn,kommune:skoleKommune,kontakt_epost:epost})
-        }).then(function(r){return r.json();});
-      }
-      var skoleRaw=await postSkole(token);
-      // Om token utløpt: refresh og prøv én gang til
-      if(skoleRaw&&(skoleRaw.code==='PGRST301'||skoleRaw.code==='PGRST116'||skoleRaw.message==='JWT expired'||skoleRaw.hint==='JWT expired')){
-        document.getElementById('kl-info').textContent='Token utløpt - fornyer...';
-        var nyttToken=await hentGyldigToken();
-        if(!nyttToken) return;
-        token=nyttToken;
-        skoleRaw=await postSkole(token);
-      }
-      console.log('SKOLE RESPONS:', JSON.stringify(skoleRaw));
-      skoleId=Array.isArray(skoleRaw)?skoleRaw[0]&&skoleRaw[0].id:skoleRaw&&skoleRaw.id;
-      console.log('SKOLE ID:', skoleId);
-
-      if(!skoleId){
-        feilEl.textContent='Kunne ikke opprette skole. Feilkode: '+(skoleRaw&&(skoleRaw.code||skoleRaw.message)||JSON.stringify(skoleRaw));
-        btn.disabled=false;btn.textContent='Opprett';return;
-      }
-
-      // Opprett laererprofil
-      await fetch(SkapLab.SUPABASE_URL+'/rest/v1/laerere',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
-          'Authorization':'Bearer '+token,'Prefer':'return=representation'},
-        body:JSON.stringify({id:lid,skole_id:skoleId,fullt_navn:visNavn,epost:epost})
-      });
-      document.getElementById('kl-info').textContent='Profil opprettet!';
+      feilEl.textContent='Lærerprofil mangler. Logg ut og inn igjen.';
+      btn.disabled=false; btn.textContent='Opprett'; return;
     }
 
     if(!skoleId){feilEl.textContent='Feil: kunne ikke hente skole-ID.';btn.disabled=false;btn.textContent='Opprett';return;}
 
     // Opprett klasse
-    console.log('Oppretter klasse med skoleId:', skoleId, 'lid:', lid);
     var klasseRaw=await fetch(SkapLab.SUPABASE_URL+'/rest/v1/klasser',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
@@ -641,7 +601,6 @@ async function opprettKlasse(){
       body:JSON.stringify({navn:navn,trinn:parseInt(trinn),skole_id:skoleId})
     });
     var klasseJson=await klasseRaw.json().catch(function(){return null;});
-    console.log('KLASSE STATUS:', klasseRaw.status, 'JSON:', JSON.stringify(klasseJson));
     var nyKlasse=Array.isArray(klasseJson)?klasseJson[0]:klasseJson;
 
     // Godta 201 Created selv om body er tom
@@ -719,6 +678,9 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
+
+
 
 
 
