@@ -116,7 +116,8 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
       var data = await resp.json();
       if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
       var elev = data[0];
-      sessionStorage.setItem(SESSION_NØKKEL, JSON.stringify(elev));
+      // Bruk localStorage slik at sesjonen deles mellom faner
+      localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
       return { ok: true, elev: elev };
     } catch (e) {
       return { ok: false, feil: 'Tilkoblingsfeil' };
@@ -124,13 +125,21 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   }
 
   function elevLoggUt() {
+    localStorage.removeItem(SESSION_NØKKEL);
     sessionStorage.removeItem(SESSION_NØKKEL);
   }
 
   function hentElev() {
     try {
-      var data = sessionStorage.getItem(SESSION_NØKKEL);
-      return data ? JSON.parse(data) : null;
+      var data = localStorage.getItem(SESSION_NØKKEL);
+      if (!data) return null;
+      var elev = JSON.parse(data);
+      // Utløp etter 8 timer (skoledagen)
+      if (elev._lagret && Date.now() - elev._lagret > 8*60*60*1000) {
+        localStorage.removeItem(SESSION_NØKKEL);
+        return null;
+      }
+      return elev;
     } catch (e) { return null; }
   }
 
@@ -144,7 +153,9 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
       var resp = await auth('token?grant_type=password', {
         email: epost, password: passord
       });
+
       if (resp.error) return { ok: false, feil: resp.error.message };
+      if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
       sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
       return { ok: true, token: resp.access_token };
     } catch (e) {
@@ -168,8 +179,9 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
       var data = sessionStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
-      // Returner null om det er en feilrespons fra Supabase
-      if (parsed && (parsed.error_code || parsed.code === 'invalid_credentials' || !parsed.access_token)) {
+      // Returner null KUN om det er en tydelig feilrespons uten token
+      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
+        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
         return null;
       }
       return parsed;
@@ -273,6 +285,7 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   };
 
 })();
+
 </script>
 <script>
 'use strict';

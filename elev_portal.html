@@ -271,7 +271,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
       var data = await resp.json();
       if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
       var elev = data[0];
-      sessionStorage.setItem(SESSION_NØKKEL, JSON.stringify(elev));
+      // Bruk localStorage slik at sesjonen deles mellom faner
+      localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
       return { ok: true, elev: elev };
     } catch (e) {
       return { ok: false, feil: 'Tilkoblingsfeil' };
@@ -279,13 +280,21 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
   }
 
   function elevLoggUt() {
+    localStorage.removeItem(SESSION_NØKKEL);
     sessionStorage.removeItem(SESSION_NØKKEL);
   }
 
   function hentElev() {
     try {
-      var data = sessionStorage.getItem(SESSION_NØKKEL);
-      return data ? JSON.parse(data) : null;
+      var data = localStorage.getItem(SESSION_NØKKEL);
+      if (!data) return null;
+      var elev = JSON.parse(data);
+      // Utløp etter 8 timer (skoledagen)
+      if (elev._lagret && Date.now() - elev._lagret > 8*60*60*1000) {
+        localStorage.removeItem(SESSION_NØKKEL);
+        return null;
+      }
+      return elev;
     } catch (e) { return null; }
   }
 
@@ -431,6 +440,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
   };
 
 })();
+
 
 </script>
 <script>
