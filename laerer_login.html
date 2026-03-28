@@ -54,7 +54,7 @@ input:focus{border-color:#60a5fa;}
     <input type="password" id="li-passord" placeholder="Passord">
     <button class="btn" onclick="loggInn()">Logg inn</button>
     <div id="feil-inn"></div>
-    <div class="liten">Glemt passord? <a href="mailto:mattesnakk@gmail.com">Kontakt oss</a></div>
+    <div class="liten">Glemt passord? <a href="/cdn-cgi/l/email-protection#2c414d5858495f424d47476c4b414d4540024f4341">Kontakt oss</a></div>
   </div>
   <div id="skjema-registrer" class="skjema">
     <label>Fullt navn</label>
@@ -71,7 +71,7 @@ input:focus{border-color:#60a5fa;}
     <div id="feil-reg"></div>
   </div>
 </div>
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
@@ -315,29 +315,49 @@ async function registrer(){
   feil.textContent='';
   if(!navn||!epost||!passord||!skole){feil.textContent='Fyll inn alle felt.';return;}
   if(passord.length<8){feil.textContent='Passordet maa vaere minst 8 tegn.';return;}
+  feil.style.color='#60a5fa';feil.textContent='Oppretter konto...';
+
   var authResp=await fetch(SkapLab.SUPABASE_URL+'/auth/v1/signup',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY},
     body:JSON.stringify({email:epost,password:passord,data:{fullt_navn:navn}})
   }).then(function(r){return r.json();});
-  if(authResp.error){feil.textContent=authResp.error.message;return;}
+
+  if(authResp.error){
+    feil.style.color='#f87171';
+    feil.textContent=authResp.error.message;return;
+  }
+
+  // Lagre session
+  sessionStorage.setItem('skaplab_laerer',JSON.stringify(authResp));
   var token=authResp.access_token;
   var userId=authResp.user&&authResp.user.id;
+
+  // Prøv å opprette skole og laerer-profil — fortsett til dashboard uansett
+  feil.textContent='Oppretter profil...';
   try{
-    var skoleResp=await SkapLab._post('/skoler',{navn:skole,kommune:kommune,kontakt_epost:epost},token);
+    var skoleResp=await fetch(SkapLab.SUPABASE_URL+'/rest/v1/skoler',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+               'Authorization':'Bearer '+token,'Prefer':'return=representation'},
+      body:JSON.stringify({navn:skole,kommune:kommune,kontakt_epost:epost})
+    }).then(function(r){return r.json();});
     var skoleId=Array.isArray(skoleResp)?skoleResp[0].id:skoleResp.id;
-    await SkapLab._post('/laerere',{id:userId,skole_id:skoleId,fullt_navn:navn,epost:epost},token);
-    sessionStorage.setItem('skaplab_laerer',JSON.stringify(authResp));
-    location.href='laerer_dashboard.html';
-  }catch(e){feil.textContent='Teknisk feil. Prøv igjen.';}
+    if(skoleId){
+      await fetch(SkapLab.SUPABASE_URL+'/rest/v1/laerere',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+                 'Authorization':'Bearer '+token,'Prefer':'return=representation'},
+        body:JSON.stringify({id:userId,skole_id:skoleId,fullt_navn:navn,epost:epost})
+      });
+    }
+  }catch(e){
+    // Profilen maa opprettes manuelt, men login fungerer
+    console.warn('Profil-oppretting feilet:',e);
+  }
+  location.href='laerer_dashboard.html';
 }
 
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'){
-    var aktiv=document.querySelector('.skjema.vis');
-    if(aktiv&&aktiv.id==='skjema-innlogging') loggInn(); else registrer();
-  }
-});
-</script>
-</body>
-</html>
+    var ak
