@@ -316,6 +316,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
+
 'use strict';
 
 // Hjelpefunksjon for å hente epost fra Supabase Auth-objekt
@@ -355,6 +357,29 @@ if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Err
 var laerer=SkapLab.hentLaerer();
 var token=laerer.access_token;
 var lid=(laerer.user&&laerer.user.id)||laerer.id||'';
+
+// Refresh token om det er utløpt (varer 1 time)
+async function hentGyldigToken(){
+  var sess=SkapLab.hentLaerer();
+  if(!sess){sessionStorage.clear();location.href='laerer_login.html';return null;}
+  try{
+    var p=JSON.parse(atob(sess.access_token.split('.')[1]));
+    if((p.exp*1000)>Date.now()) return sess.access_token;
+  }catch(e){}
+  // Token utløpt - prøv refresh
+  if(!sess.refresh_token){sessionStorage.clear();location.href='laerer_login.html';return null;}
+  var resp=await fetch(SkapLab.SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY},
+    body:JSON.stringify({refresh_token:sess.refresh_token})
+  }).then(function(r){return r.json();});
+  if(resp.access_token){
+    sessionStorage.setItem('skaplab_laerer',JSON.stringify(resp));
+    laerer=resp; token=resp.access_token;
+    return resp.access_token;
+  }
+  sessionStorage.clear(); location.href='laerer_login.html'; return null;
+}
 var klasser=[], elever=[], aktivKlasse=null;
 var KM=[['MAT-ALG','Alg'],['MAT-FUNK','Fun'],['MAT-GEO','Geo'],['NAT-BIO','Bio'],['NAT-KJE','Kje'],['PRG-ALG','Prg']];
 
@@ -520,6 +545,10 @@ async function opprettKlasse(){
   feilEl.textContent='';
 
   try{
+    // Oppdater token om utløpt
+    token=await hentGyldigToken();
+    if(!token) return;
+
     // Hent eller opprett skole_id
     var skoleId=null;
     var lInfo=await SkapLab._get('/laerere?id=eq.'+lid+'&select=skole_id',token);
@@ -612,6 +641,8 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
+
 
 
 
