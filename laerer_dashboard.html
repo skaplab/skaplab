@@ -311,6 +311,9 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 </script>
 <script>
+
+
+
 'use strict';
 
 // Sett opp knapper via addEventListener (ikke inline onclick)
@@ -334,31 +337,35 @@ var klasser=[], elever=[], aktivKlasse=null;
 var KM=[['MAT-ALG','Alg'],['MAT-FUNK','Fun'],['MAT-GEO','Geo'],['NAT-BIO','Bio'],['NAT-KJE','Kje'],['PRG-ALG','Prg']];
 
 async function init(){
+  // Vis navn fra Auth-token uansett
+  var bruker=laerer.user;
+  var visNavn=(bruker&&bruker.user_metadata&&bruker.user_metadata.fullt_navn)||
+              (bruker&&bruker.email)||'Laerer';
+  document.getElementById('lnavn').textContent=visNavn;
+
+  // Hent laerer-navn fra DB (ikke kritisk om det feiler)
   try{
-    // Vis navn fra Supabase Auth om laerere-tabellen er tom
-    var bruker=laerer.user;
-    var visNavn=(bruker&&bruker.user_metadata&&bruker.user_metadata.fullt_navn)||
-               (bruker&&bruker.email)||'Laerer';
-    document.getElementById('lnavn').textContent=visNavn;
+    var lR=await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn',token);
+    if(lR&&lR[0]&&lR[0].fullt_navn) document.getElementById('lnavn').textContent=lR[0].fullt_navn;
+  }catch(e){}
 
-    // Prøv å hente fra laerere-tabellen, men fortsett uansett
-    try{
-      var lR=await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn',token);
-      if(lR&&lR[0]&&lR[0].fullt_navn) document.getElementById('lnavn').textContent=lR[0].fullt_navn;
-    }catch(e){}
-
+  // Hent klasser (ikke kritisk om det feiler - vis tom side)
+  try{
     var kR=await SkapLab._get('/klasser?order=navn',token);
     klasser=Array.isArray(kR)?kR:[];
+  }catch(e){ klasser=[]; }
+
+  // Hent elever (ikke kritisk)
+  try{
     var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn',token);
     elever=Array.isArray(eR)?eR:[];
-    byggSidebar();
-    if(klasser.length>0){aktivKlasse=klasser[0].id;visKlasse();}
-    else visNyKlasse();
-  }catch(e){
-    document.getElementById('laster-msg').textContent='Feil ved lasting: '+e.message;
-    return;
-  }
+  }catch(e){ elever=[]; }
+
+  // Vis alltid noe - aldri heng
+  byggSidebar();
   document.getElementById('laster-msg').style.display='none';
+  if(klasser.length>0){aktivKlasse=klasser[0].id;visKlasse();}
+  else visNyKlasse();
 }
 
 function byggSidebar(){
@@ -464,14 +471,45 @@ function visNyKlasse(){
 async function opprettKlasse(){
   var navn=document.getElementById('kl-navn').value.trim();
   var trinn=document.getElementById('kl-trinn').value;
-  if(!navn){document.getElementById('kl-feil').textContent='Skriv inn klassenavn.';return;}
-  var lInfo=await SkapLab._get('/laerere?id=eq.'+lid+'&select=skole_id',token);
-  var skoleId=lInfo&&lInfo[0]&&lInfo[0].skole_id;
-  var resp=await SkapLab._post('/klasser',{navn:navn,trinn:parseInt(trinn),skole_id:skoleId},token);
-  var ny=Array.isArray(resp)?resp[0]:resp;
-  if(ny&&ny.id){
-    await SkapLab._post('/laerer_klasse',{laerer_id:lid,klasse_id:ny.id},token);
-    klasser.push(ny);aktivKlasse=ny.id;byggSidebar();visKlasse();
+  var feilEl=document.getElementById('kl-feil');
+  if(!navn){feilEl.textContent='Skriv inn klassenavn.';return;}
+
+  var btn=document.getElementById('kl-btn');
+  btn.disabled=true; btn.textContent='Oppretter...';
+  feilEl.textContent='';
+
+  try{
+    // Hent eller opprett skole_id
+    var skoleId=null;
+    var lInfo=await SkapLab._get('/laerere?id=eq.'+lid+'&select=skole_id',token);
+    if(lInfo&&lInfo[0]&&lInfo[0].skole_id){
+      skoleId=lInfo[0].skole_id;
+    } else {
+      // Laerer-profil mangler - opprett skole og profil naa
+      var bruker=laerer.user;
+      var visNavn=(bruker&&bruker.user_metadata&&bruker.user_metadata.fullt_navn)||bruker.email||'Laerer';
+      var skoleResp=await SkapLab._post('/skoler',{navn:'Min skole',kommune:''},token);
+      skoleId=Array.isArray(skoleResp)?skoleResp[0].id:skoleResp.id;
+      if(skoleId){
+        await SkapLab._post('/laerere',{id:lid,skole_id:skoleId,fullt_navn:visNavn,epost:bruker.email},token);
+      }
+    }
+
+    if(!skoleId){feilEl.textContent='Feil: kunne ikke hente skole-ID.';btn.disabled=false;btn.textContent='Opprett';return;}
+
+    var resp=await SkapLab._post('/klasser',{navn:navn,trinn:parseInt(trinn),skole_id:skoleId},token);
+    var ny=Array.isArray(resp)?resp[0]:resp;
+
+    if(ny&&ny.id){
+      await SkapLab._post('/laerer_klasse',{laerer_id:lid,klasse_id:ny.id},token);
+      klasser.push(ny);aktivKlasse=ny.id;byggSidebar();visKlasse();
+    } else {
+      feilEl.textContent='Feil ved oppretting: '+(ny&&ny.message?ny.message:'ukjent feil');
+      btn.disabled=false; btn.textContent='Opprett';
+    }
+  } catch(e){
+    feilEl.textContent='Teknisk feil: '+e.message;
+    btn.disabled=false; btn.textContent='Opprett';
   }
 }
 
@@ -501,5 +539,8 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
+
+
 </script>
 </body></html>
