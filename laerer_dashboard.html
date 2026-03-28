@@ -64,7 +64,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div class="logo">Skap<span>Lab</span></div>
   <div class="spacer"></div>
   <span id="lnavn" style="font-size:.82rem;color:var(--dim);"></span>
-  <button class="tbtn" onclick="window.open('skaplab.html')">Til SkapLab</button>
+  <button class="tbtn" onclick="window.open('index.html')">Til SkapLab</button>
   <button class="tbtn" onclick="loggUt()">Logg ut</button>
 </div>
 <div id="layout">
@@ -311,8 +311,20 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 </script>
 <script>
-
 'use strict';
+
+// Sett opp knapper via addEventListener (ikke inline onclick)
+document.addEventListener('DOMContentLoaded', function() {
+  // Modal-knapper koblet via JS for ekstra sikkerhet
+  var avbBtn = document.querySelector('.avb');
+  var lagBtn = document.querySelector('.lag');
+  if (avbBtn) avbBtn.addEventListener('click', lukkModal);
+  if (lagBtn) lagBtn.addEventListener('click', opprettElev);
+
+  // Start dashboardet
+  init();
+});
+
 
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer();
@@ -375,7 +387,7 @@ async function visKlasse(){
     +'<div class="stat"><div class="stat-t">'+vrd.length+'</div><div class="stat-l">Vurderinger</div></div>'
     +'</div>'
     +'<div class="sek-hdr"><div class="sek-tittel">Elever</div>'
-    +'<button class="ny-btn" onclick="apneModal()">+ Ny elev</button></div>'
+    +'<button class="ny-btn" id="ny-elev-btn">+ Ny elev</button></div>'
     +'<table><thead><tr><th>Elev</th><th>Kode</th>'
     +KM.map(function(k){return '<th>'+k[1]+'</th>';}).join('')
     +'<th></th></tr></thead>'
@@ -432,6 +444,9 @@ async function visKlasse(){
 
     tbody.appendChild(tr);
   });
+  // Legg til eventlistener på knappen etter at DOM er bygget
+  var nyBtn = document.getElementById('ny-elev-btn');
+  if (nyBtn) nyBtn.addEventListener('click', apneModal);
 }
 
 function visNyKlasse(){
@@ -441,8 +456,9 @@ function visNyKlasse(){
     +'<div style="max-width:360px;">'
     +'<div class="fr"><label>Klassenavn</label><input type="text" id="kl-navn" placeholder="9A"></div>'
     +'<div class="fr"><label>Trinn</label><select id="kl-trinn"><option value="8">8. trinn</option><option value="9">9. trinn</option><option value="10">10. trinn</option></select></div>'
-    +'<button class="lag" onclick="opprettKlasse()" style="margin-top:8px;">Opprett</button>'
+    +'<button id="kl-btn" style="margin-top:8px;padding:8px 20px;background:var(--bla);color:#000;border:none;border-radius:8px;font-family:var(--font-h);font-weight:700;cursor:pointer;">Opprett</button>'
     +'<div id="kl-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div></div>';
+  document.getElementById('kl-btn').addEventListener('click', opprettKlasse);
 }
 
 async function opprettKlasse(){
@@ -485,7 +501,5 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
-init();
-
 </script>
 </body></html>
