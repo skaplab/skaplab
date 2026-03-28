@@ -343,6 +343,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
 'use strict';
 
 // Hent bruker-ID fra Supabase auth-objekt (støtter ulike formater)
@@ -688,24 +689,43 @@ function apneModal(){
 }
 function lukkModal(){document.getElementById('modal').classList.remove('vis');}
 
+var _oppretterElev = false;  // Guard mot dobbeltklikk
+
 async function opprettElev(){
+  if (_oppretterElev) return;  // Stopp om kall allerede pågår
+  _oppretterElev = true;
+
   var navn=document.getElementById('ny-navn').value.trim();
   var klasseId=document.getElementById('ny-klasse-sel').value;
   var feil=document.getElementById('modal-feil');
-  if(!navn){feil.textContent='Skriv inn navn.';return;}
+  var lagreBtn=document.querySelector('.lag');
+
+  if(!navn){feil.textContent='Skriv inn navn.';_oppretterElev=false;return;}
+
+  // Deaktiver knappen umiddelbart
+  if(lagreBtn){lagreBtn.disabled=true;lagreBtn.textContent='Legger til...';}
+  feil.textContent='';
+
   var kode=String(Math.floor(100000+Math.random()*900000));
   var resp=await SkapLab._post('/elever',{fullt_navn:navn,klasse_id:klasseId,innloggingskode:kode},token);
   var ny=Array.isArray(resp)?resp[0]:resp;
+
   if(ny&&ny.id){
-    elever.push(ny);lukkModal();
+    elever.push(ny);
+    lukkModal();
     document.getElementById('ny-navn').value='';
     alert(navn+' er lagt til.\n\nInnloggingskode: '+kode+'\n\nDel denne med eleven.');
-    visKlasse();
-  }else{feil.textContent='Feil. Prøv igjen.';}
+    await visKlasse();
+  }else{
+    feil.textContent='Feil. Prøv igjen.';
+    if(lagreBtn){lagreBtn.disabled=false;lagreBtn.textContent='Legg til';}
+  }
+  _oppretterElev=false;
 }
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
 
 
 
