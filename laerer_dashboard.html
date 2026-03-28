@@ -321,6 +321,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
 'use strict';
 
 // Hjelpefunksjon for å hente epost fra Supabase Auth-objekt
@@ -588,6 +589,9 @@ async function opprettKlasse(){
       document.getElementById('kl-info').textContent='Oppretter skoleprofil...';
       var visNavn=hentNavn(laerer);
       var epost=hentEpost(laerer);
+      console.log('TOKEN TYPE:', token&&token.substring(0,20));
+      console.log('LID:', lid);
+      console.log('EPOST:', epost);
 
       // Opprett skole - med automatisk token-refresh ved 401/PGRST301
       async function postSkole(tok){
@@ -607,7 +611,9 @@ async function opprettKlasse(){
         token=nyttToken;
         skoleRaw=await postSkole(token);
       }
+      console.log('SKOLE RESPONS:', JSON.stringify(skoleRaw));
       skoleId=Array.isArray(skoleRaw)?skoleRaw[0]&&skoleRaw[0].id:skoleRaw&&skoleRaw.id;
+      console.log('SKOLE ID:', skoleId);
 
       if(!skoleId){
         feilEl.textContent='Kunne ikke opprette skole. Feilkode: '+(skoleRaw&&(skoleRaw.code||skoleRaw.message)||JSON.stringify(skoleRaw));
@@ -627,6 +633,7 @@ async function opprettKlasse(){
     if(!skoleId){feilEl.textContent='Feil: kunne ikke hente skole-ID.';btn.disabled=false;btn.textContent='Opprett';return;}
 
     // Opprett klasse
+    console.log('Oppretter klasse med skoleId:', skoleId, 'lid:', lid);
     var klasseRaw=await fetch(SkapLab.SUPABASE_URL+'/rest/v1/klasser',{
       method:'POST',
       headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
@@ -634,6 +641,7 @@ async function opprettKlasse(){
       body:JSON.stringify({navn:navn,trinn:parseInt(trinn),skole_id:skoleId})
     });
     var klasseJson=await klasseRaw.json().catch(function(){return null;});
+    console.log('KLASSE STATUS:', klasseRaw.status, 'JSON:', JSON.stringify(klasseJson));
     var nyKlasse=Array.isArray(klasseJson)?klasseJson[0]:klasseJson;
 
     // Godta 201 Created selv om body er tom
@@ -711,6 +719,7 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
 
 
 
