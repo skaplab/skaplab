@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laererinnlogging · SkapLab</title>
+<title>Laererinnlogging - SkapLab</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -18,8 +18,7 @@ h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin:18px 0 
 .sub{font-size:.85rem;color:rgba(255,255,255,.45);margin-bottom:24px;}
 label{display:block;font-size:.78rem;color:rgba(255,255,255,.5);
   text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:14px;}
-input[type=email],input[type=password],input[type=text]{
-  width:100%;padding:12px 14px;background:rgba(255,255,255,.07);
+input{width:100%;padding:12px 14px;background:rgba(255,255,255,.07);
   border:1.5px solid rgba(255,255,255,.12);border-radius:9px;
   color:#fff;font-size:.92rem;outline:none;transition:border-color .15s;}
 input:focus{border-color:#60a5fa;}
@@ -35,15 +34,13 @@ input:focus{border-color:#60a5fa;}
 .tab.ak{color:#60a5fa;border-bottom-color:#60a5fa;font-weight:600;}
 .skjema{display:none;}
 .skjema.vis{display:block;}
-.liten{font-size:.75rem;color:rgba(255,255,255,.3);margin-top:12px;text-align:center;}
-.liten a{color:#60a5fa;text-decoration:none;}
 </style>
 </head>
 <body>
 <div class="boks">
   <div class="logo">Skap<span>Lab</span></div>
   <h2>Laererportal</h2>
-  <p class="sub">Logg inn for a følge elevenes fremgang.</p>
+  <p class="sub">Logg inn for a folge elevenes fremgang.</p>
   <div class="tabs">
     <div class="tab ak" id="tab-inn" onclick="byttTab('inn')">Logg inn</div>
     <div class="tab" id="tab-reg" onclick="byttTab('reg')">Ny bruker</div>
@@ -55,7 +52,6 @@ input:focus{border-color:#60a5fa;}
     <input type="password" id="li-passord" placeholder="Passord">
     <button class="btn" id="btn-inn" onclick="loggInn()">Logg inn</button>
     <div class="feil" id="feil-inn"></div>
-    <div class="liten"><a href="mailto:mattesnakk@gmail.com">Glemt passord? Kontakt oss</a></div>
   </div>
   <div id="skjema-reg" class="skjema">
     <label>Fullt navn</label>
@@ -297,12 +293,8 @@ input:focus{border-color:#60a5fa;}
 
 </script>
 <script>
-
 'use strict';
-
-if (SkapLab.erLaererInnlogget()) {
-  location.href = 'laerer_dashboard.html';
-}
+if (SkapLab.erLaererInnlogget()) { location.href = 'laerer_dashboard.html'; }
 
 function byttTab(id) {
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('ak'); });
@@ -312,16 +304,14 @@ function byttTab(id) {
 }
 
 async function loggInn() {
-  var epost   = document.getElementById('li-epost').value.trim();
+  var epost = document.getElementById('li-epost').value.trim();
   var passord = document.getElementById('li-passord').value;
-  var feilEl  = document.getElementById('feil-inn');
+  var feilEl = document.getElementById('feil-inn');
   feilEl.textContent = '';
   if (!epost || !passord) { feilEl.textContent = 'Fyll inn e-post og passord.'; return; }
-
   var btn = document.getElementById('btn-inn');
   btn.disabled = true;
   btn.textContent = 'Logger inn...';
-
   var res = await SkapLab.laererLoggInn(epost, passord);
   if (res.ok) {
     location.href = 'laerer_dashboard.html';
@@ -333,84 +323,41 @@ async function loggInn() {
 }
 
 async function registrer() {
-  var navn    = document.getElementById('reg-navn').value.trim();
-  var epost   = document.getElementById('reg-epost').value.trim();
+  var navn = document.getElementById('reg-navn').value.trim();
+  var epost = document.getElementById('reg-epost').value.trim();
   var passord = document.getElementById('reg-passord').value;
-  var skole   = document.getElementById('reg-skole').value.trim();
+  var skole = document.getElementById('reg-skole').value.trim();
   var kommune = document.getElementById('reg-kommune').value.trim();
-  var feilEl  = document.getElementById('feil-reg');
-  var infoEl  = document.getElementById('info-reg');
+  var feilEl = document.getElementById('feil-reg');
+  var infoEl = document.getElementById('info-reg');
   feilEl.textContent = '';
   infoEl.textContent = '';
-
-  if (!navn || !epost || !passord || !skole) {
-    feilEl.textContent = 'Fyll inn alle felt.'; return;
-  }
-  if (passord.length < 8) {
-    feilEl.textContent = 'Passordet må være minst 8 tegn.'; return;
-  }
-
+  if (!navn || !epost || !passord || !skole) { feilEl.textContent = 'Fyll inn alle felt.'; return; }
+  if (passord.length < 8) { feilEl.textContent = 'Passordet ma vare minst 8 tegn.'; return; }
   var btn = document.getElementById('btn-reg');
   btn.disabled = true;
   infoEl.textContent = 'Oppretter konto...';
-
   var authResp = await fetch(SkapLab.SUPABASE_URL + '/auth/v1/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SkapLab.SUPABASE_KEY },
     body: JSON.stringify({ email: epost, password: passord, data: { fullt_navn: navn } })
   }).then(function(r) { return r.json(); });
-
   if (!authResp.access_token) {
     feilEl.textContent = authResp.msg || authResp.message || 'Registrering feilet.';
     btn.disabled = false;
     infoEl.textContent = '';
     return;
   }
-
   sessionStorage.setItem('skaplab_laerer', JSON.stringify(authResp));
-  var token  = authResp.access_token;
-  var userId = authResp.user && authResp.user.id;
-
-  infoEl.textContent = 'Oppretter profil...';
-  try {
-    var skoleResp = await fetch(SkapLab.SUPABASE_URL + '/rest/v1/skoler', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SkapLab.SUPABASE_KEY,
-        'Authorization': 'Bearer ' + token,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({ navn: skole, kommune: kommune, kontakt_epost: epost })
-    }).then(function(r) { return r.json(); });
-
-    var skoleId = Array.isArray(skoleResp) ? skoleResp[0] && skoleResp[0].id : skoleResp.id;
-    if (skoleId) {
-      await fetch(SkapLab.SUPABASE_URL + '/rest/v1/laerere', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SkapLab.SUPABASE_KEY,
-          'Authorization': 'Bearer ' + token,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({ id: userId, skole_id: skoleId, fullt_navn: navn, epost: epost })
-      });
-    }
-  } catch(e) {
-    console.warn('Profil-oppretting feilet:', e);
-  }
   location.href = 'laerer_dashboard.html';
 }
 
 document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter') return;
-  var aktiv = document.querySelector('.skjema.vis');
-  if (!aktiv) return;
-  if (aktiv.id === 'skjema-inn') loggInn();
-  else registrer();
+  if (e.key === 'Enter') {
+    if (document.getElementById('skjema-inn').classList.contains('vis')) loggInn();
+    else registrer();
+  }
 });
-
 </script>
 </body>
 </html>
