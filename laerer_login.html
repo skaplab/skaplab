@@ -57,7 +57,7 @@ input:focus{border-color:#60a5fa;}
     <input type="password" id="li-passord" placeholder="Passord">
     <button class="btn" id="btn-inn" onclick="loggInn()">Logg inn</button>
     <div class="feil" id="feil-inn"></div>
-    <div class="liten"><a href="mailto:mattesnakk@gmail.com">Glemt passord? Kontakt oss</a></div>
+    <div class="liten"><a href="/cdn-cgi/l/email-protection#cea3afbabaabbda0afa5a58ea9a3afa7a2e0ada1a3">Glemt passord? Kontakt oss</a></div>
   </div>
 
   <div id="skjema-reg" class="skjema">
@@ -76,8 +76,7 @@ input:focus{border-color:#60a5fa;}
     <div class="info" id="info-reg"></div>
   </div>
 </div>
-<script>
-// skaplab_auth.js - SkapLab autentisering
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>// skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
 
@@ -190,12 +189,23 @@ input:focus{border-color:#60a5fa;}
   function hentLaerer() {
     try {
       var data = sessionStorage.getItem(LAERER_NØKKEL);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      var parsed = JSON.parse(data);
+      // Returner null om det er en feilrespons fra Supabase
+      if (parsed && (parsed.error_code || parsed.code === 'invalid_credentials' || !parsed.access_token)) {
+        return null;
+      }
+      return parsed;
     } catch (e) { return null; }
   }
 
   function erLaererInnlogget() {
-    return hentLaerer() !== null;
+    var sess = hentLaerer();
+    // Sjekk at sesjonen er gyldig - ikke bare en feilmelding
+    return sess !== null && 
+           sess.access_token !== undefined && 
+           sess.access_token !== null &&
+           !sess.error_code;  // Fang opp Supabase-feilresponser
   }
 
   // ── AKTIVITETSSPORING ─────────────────────────────────────────
@@ -286,7 +296,6 @@ input:focus{border-color:#60a5fa;}
   };
 
 })();
-
 </script>
 <script>
 
@@ -397,12 +406,4 @@ async function registrer() {
 
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter') return;
-  var aktiv = document.querySelector('.skjema.vis');
-  if (!aktiv) return;
-  if (aktiv.id === 'skjema-inn') loggInn();
-  else registrer();
-});
-
-</script>
-</body>
-</html>
+  var aktiv = docu

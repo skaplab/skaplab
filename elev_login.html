@@ -53,8 +53,7 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   <div class="divider"></div>
   <div class="laerer-link">Er du laerer? <a href="laerer_login.html">Logg inn her</a></div>
 </div>
-<script>
-// skaplab_auth.js - SkapLab autentisering
+<script>// skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
 
@@ -167,12 +166,23 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   function hentLaerer() {
     try {
       var data = sessionStorage.getItem(LAERER_NØKKEL);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      var parsed = JSON.parse(data);
+      // Returner null om det er en feilrespons fra Supabase
+      if (parsed && (parsed.error_code || parsed.code === 'invalid_credentials' || !parsed.access_token)) {
+        return null;
+      }
+      return parsed;
     } catch (e) { return null; }
   }
 
   function erLaererInnlogget() {
-    return hentLaerer() !== null;
+    var sess = hentLaerer();
+    // Sjekk at sesjonen er gyldig - ikke bare en feilmelding
+    return sess !== null && 
+           sess.access_token !== undefined && 
+           sess.access_token !== null &&
+           !sess.error_code;  // Fang opp Supabase-feilresponser
   }
 
   // ── AKTIVITETSSPORING ─────────────────────────────────────────
@@ -263,7 +273,6 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   };
 
 })();
-
 </script>
 <script>
 'use strict';
