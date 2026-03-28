@@ -320,6 +320,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
 'use strict';
 
 // Hjelpefunksjon for å hente epost fra Supabase Auth-objekt
@@ -625,16 +626,55 @@ async function opprettKlasse(){
 
     if(!skoleId){feilEl.textContent='Feil: kunne ikke hente skole-ID.';btn.disabled=false;btn.textContent='Opprett';return;}
 
-    var resp=await SkapLab._post('/klasser',{navn:navn,trinn:parseInt(trinn),skole_id:skoleId},token);
-    var ny=Array.isArray(resp)?resp[0]:resp;
+    // Opprett klasse
+    var klasseRaw=await fetch(SkapLab.SUPABASE_URL+'/rest/v1/klasser',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+        'Authorization':'Bearer '+token,'Prefer':'return=representation'},
+      body:JSON.stringify({navn:navn,trinn:parseInt(trinn),skole_id:skoleId})
+    });
+    var klasseJson=await klasseRaw.json().catch(function(){return null;});
+    var nyKlasse=Array.isArray(klasseJson)?klasseJson[0]:klasseJson;
 
-    if(ny&&ny.id){
-      await SkapLab._post('/laerer_klasse',{laerer_id:lid,klasse_id:ny.id},token);
-      klasser.push(ny);aktivKlasse=ny.id;byggSidebar();visKlasse();
-    } else {
-      feilEl.textContent='Feil ved oppretting: '+(ny&&ny.message?ny.message:'ukjent feil');
-      btn.disabled=false; btn.textContent='Opprett';
+    // Godta 201 Created selv om body er tom
+    if(!klasseRaw.ok && !(klasseRaw.status===201||klasseRaw.status===200)){
+      feilEl.textContent='Feil ved oppretting av klasse ('+klasseRaw.status+'): '
+        +(nyKlasse&&nyKlasse.message?nyKlasse.message:'ukjent feil');
+      btn.disabled=false; btn.textContent='Opprett'; return;
     }
+
+    var klasseId=nyKlasse&&nyKlasse.id;
+
+    // Om vi ikke fikk ID i respons, hent siste klasse fra DB
+    if(!klasseId){
+      var siste=await SkapLab._get(
+        '/klasser?navn=eq.'+encodeURIComponent(navn)+'&skole_id=eq.'+skoleId+'&order=opprettet.desc&limit=1',
+        token);
+      klasseId=siste&&siste[0]&&siste[0].id;
+    }
+
+    if(!klasseId){
+      feilEl.textContent='Klasse ble opprettet men ID ikke funnet. Last siden på nytt.';
+      btn.disabled=false; btn.textContent='Opprett'; return;
+    }
+
+    // Knytt lærer til klassen
+    await fetch(SkapLab.SUPABASE_URL+'/rest/v1/laerer_klasse',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+        'Authorization':'Bearer '+token},
+      body:JSON.stringify({laerer_id:lid,klasse_id:klasseId})
+    });
+
+    // Last alle data på nytt fra DB (ikke stol på lokal state)
+    document.getElementById('kl-info').textContent='Laster klasse...';
+    var kR=await SkapLab._get('/klasser?order=navn',token);
+    klasser=Array.isArray(kR)?kR:[];
+    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn',token);
+    elever=Array.isArray(eR)?eR:[];
+    aktivKlasse=klasseId;
+    byggSidebar();
+    await visKlasse();
   } catch(e){
     if(e.message&&e.message.includes('PGRST301')){
       feilEl.textContent='Sesjonen er utløpt. Logg ut og inn igjen.';
@@ -671,6 +711,7 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
 
 
 
