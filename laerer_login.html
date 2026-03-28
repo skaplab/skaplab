@@ -43,13 +43,11 @@ input:focus{border-color:#60a5fa;}
 <div class="boks">
   <div class="logo">Skap<span>Lab</span></div>
   <h2>Laererportal</h2>
-  <p class="sub">Logg inn for a se klassen din og folge elevenes fremgang.</p>
-
+  <p class="sub">Logg inn for a følge elevenes fremgang.</p>
   <div class="tabs">
     <div class="tab ak" id="tab-inn" onclick="byttTab('inn')">Logg inn</div>
     <div class="tab" id="tab-reg" onclick="byttTab('reg')">Ny bruker</div>
   </div>
-
   <div id="skjema-inn" class="skjema vis">
     <label>E-post</label>
     <input type="email" id="li-epost" placeholder="din@epost.no">
@@ -57,9 +55,8 @@ input:focus{border-color:#60a5fa;}
     <input type="password" id="li-passord" placeholder="Passord">
     <button class="btn" id="btn-inn" onclick="loggInn()">Logg inn</button>
     <div class="feil" id="feil-inn"></div>
-    <div class="liten"><a href="/cdn-cgi/l/email-protection#cea3afbabaabbda0afa5a58ea9a3afa7a2e0ada1a3">Glemt passord? Kontakt oss</a></div>
+    <div class="liten"><a href="mailto:mattesnakk@gmail.com">Glemt passord? Kontakt oss</a></div>
   </div>
-
   <div id="skjema-reg" class="skjema">
     <label>Fullt navn</label>
     <input type="text" id="reg-navn" placeholder="Ola Nordmann">
@@ -76,7 +73,8 @@ input:focus{border-color:#60a5fa;}
     <div class="info" id="info-reg"></div>
   </div>
 </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>// skaplab_auth.js - SkapLab autentisering
+<script>
+// skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
 
@@ -296,12 +294,12 @@ input:focus{border-color:#60a5fa;}
   };
 
 })();
+
 </script>
 <script>
 
 'use strict';
 
-// Videresend om allerede innlogget
 if (SkapLab.erLaererInnlogget()) {
   location.href = 'laerer_dashboard.html';
 }
@@ -320,16 +318,17 @@ async function loggInn() {
   feilEl.textContent = '';
   if (!epost || !passord) { feilEl.textContent = 'Fyll inn e-post og passord.'; return; }
 
-  document.getElementById('btn-inn').disabled = true;
-  document.getElementById('btn-inn').textContent = 'Logger inn...';
+  var btn = document.getElementById('btn-inn');
+  btn.disabled = true;
+  btn.textContent = 'Logger inn...';
 
   var res = await SkapLab.laererLoggInn(epost, passord);
   if (res.ok) {
     location.href = 'laerer_dashboard.html';
   } else {
-    feilEl.textContent = 'Feil e-post eller passord.';
-    document.getElementById('btn-inn').disabled = false;
-    document.getElementById('btn-inn').textContent = 'Logg inn';
+    feilEl.textContent = res.feil || 'Feil e-post eller passord.';
+    btn.disabled = false;
+    btn.textContent = 'Logg inn';
   }
 }
 
@@ -348,10 +347,11 @@ async function registrer() {
     feilEl.textContent = 'Fyll inn alle felt.'; return;
   }
   if (passord.length < 8) {
-    feilEl.textContent = 'Passordet ma vare minst 8 tegn.'; return;
+    feilEl.textContent = 'Passordet må være minst 8 tegn.'; return;
   }
 
-  document.getElementById('btn-reg').disabled = true;
+  var btn = document.getElementById('btn-reg');
+  btn.disabled = true;
   infoEl.textContent = 'Oppretter konto...';
 
   var authResp = await fetch(SkapLab.SUPABASE_URL + '/auth/v1/signup', {
@@ -360,9 +360,9 @@ async function registrer() {
     body: JSON.stringify({ email: epost, password: passord, data: { fullt_navn: navn } })
   }).then(function(r) { return r.json(); });
 
-  if (authResp.error) {
-    feilEl.textContent = authResp.error.message;
-    document.getElementById('btn-reg').disabled = false;
+  if (!authResp.access_token) {
+    feilEl.textContent = authResp.msg || authResp.message || 'Registrering feilet.';
+    btn.disabled = false;
     infoEl.textContent = '';
     return;
   }
@@ -384,7 +384,7 @@ async function registrer() {
       body: JSON.stringify({ navn: skole, kommune: kommune, kontakt_epost: epost })
     }).then(function(r) { return r.json(); });
 
-    var skoleId = Array.isArray(skoleResp) ? skoleResp[0].id : skoleResp.id;
+    var skoleId = Array.isArray(skoleResp) ? skoleResp[0] && skoleResp[0].id : skoleResp.id;
     if (skoleId) {
       await fetch(SkapLab.SUPABASE_URL + '/rest/v1/laerere', {
         method: 'POST',
@@ -400,10 +400,17 @@ async function registrer() {
   } catch(e) {
     console.warn('Profil-oppretting feilet:', e);
   }
-
   location.href = 'laerer_dashboard.html';
 }
 
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Enter') return;
-  var aktiv = docu
+  var aktiv = document.querySelector('.skjema.vis');
+  if (!aktiv) return;
+  if (aktiv.id === 'skjema-inn') loggInn();
+  else registrer();
+});
+
+</script>
+</body>
+</html>
