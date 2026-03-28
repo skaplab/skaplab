@@ -347,6 +347,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
 'use strict';
 
 // Hent bruker-ID fra Supabase auth-objekt (støtter ulike formater)
@@ -530,14 +531,26 @@ async function visKlasse(){
     var ev=vrd.filter(function(v){return v.elev_id===elev.id;});
     var tr=document.createElement('tr');
 
-    // Navn-celle med klikk via data-attributt
+    // Navn-celle med klikk og lyspære
     var tdNavn=document.createElement('td');
+    var navnWrap=document.createElement('div');
+    navnWrap.style.cssText='display:flex;align-items:center;gap:6px;';
     var span=document.createElement('span');
     span.className='enavn';
     span.textContent=elev.fullt_navn;
     span.dataset.id=elev.id;
     span.onclick=function(){apneElev(this.dataset.id);};
-    tdNavn.appendChild(span);
+    navnWrap.appendChild(span);
+    if(elev.trenger_hjelp){
+      var lysBadge=document.createElement('span');
+      lysBadge.title=elev.hjelp_emne?'Trenger hjelp med: '+elev.hjelp_emne:'Trenger hjelp';
+      lysBadge.style.cssText='font-size:.85rem;cursor:pointer;opacity:.9;';
+      lysBadge.textContent='💡';
+      lysBadge.dataset.id=elev.id;
+      lysBadge.onclick=function(e){e.stopPropagation();apneElev(this.dataset.id);};
+      navnWrap.appendChild(lysBadge);
+    }
+    tdNavn.appendChild(navnWrap);
     tr.appendChild(tdNavn);
 
     // Kode-celle
@@ -847,6 +860,7 @@ async function bekreftTildel(){
     feilEl.textContent='Feil ved tildeling. Prøv igjen.';
   }
 }
+
 
 </script>
 </body></html>
