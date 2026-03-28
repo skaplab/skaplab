@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superadmin · SkapLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0b0d18;--bg3:#0e1120;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e0e8ff;--dim:rgba(255,255,255,.45);
+  --bla:#60a5fa;--gron:#34d399;--gul:#fbbf24;--rod:#f87171;--lilla:#a78bfa;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);}
+
+#topbar{height:52px;display:flex;align-items:center;padding:0 20px;gap:14px;
+  background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;}
+.logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--lilla);}
+.logo span{opacity:.4;}
+.admin-badge{font-size:.65rem;background:rgba(167,139,250,.15);color:var(--lilla);
+  border:1px solid rgba(167,139,250,.3);padding:2px 9px;border-radius:10px;
+  text-transform:uppercase;letter-spacing:1.5px;}
+.spacer{flex:1;}
+#admin-navn{font-size:.82rem;color:var(--dim);}
+.tbtn{padding:6px 14px;border-radius:8px;font-size:.78rem;cursor:pointer;
+  border:1px solid var(--border2);background:transparent;color:var(--dim);}
+.tbtn:hover{color:var(--text);}
+
+/* STATS-BANNER */
+#stats-banner{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;padding:24px 24px 0;max-width:1200px;margin:0 auto;}
+.stat-kort{background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:16px 18px;}
+.stat-t{font-family:var(--font-h);font-size:1.8rem;font-weight:900;}
+.stat-l{font-size:.75rem;color:var(--dim);margin-top:4px;}
+.stat-kort.bla .stat-t{color:var(--bla);}
+.stat-kort.gron .stat-t{color:var(--gron);}
+.stat-kort.gul .stat-t{color:var(--gul);}
+.stat-kort.lilla .stat-t{color:var(--lilla);}
+
+/* INNHOLD */
+#innhold{max-width:1200px;margin:0 auto;padding:24px;}
+
+/* SØKEBAR */
+.soke-rad{display:flex;gap:12px;margin-bottom:20px;align-items:center;}
+.soke-input{flex:1;padding:10px 14px;background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:9px;color:var(--text);font-size:.9rem;outline:none;}
+.soke-input:focus{border-color:var(--bla);}
+.filter-btn{padding:8px 16px;border-radius:9px;border:1.5px solid var(--border2);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:.82rem;transition:all .15s;}
+.filter-btn.ak{background:rgba(96,165,250,.15);border-color:var(--bla);color:var(--bla);}
+
+/* SKOLE-TABELL */
+table{width:100%;border-collapse:collapse;}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);
+  padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:.86rem;vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.skole-navn{font-weight:600;color:var(--text);}
+.skole-id{font-family:var(--font-m);font-size:.68rem;color:var(--dimmer,rgba(255,255,255,.2));}
+.aktiv-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+  border-radius:8px;font-size:.74rem;font-weight:600;}
+.aktiv-chip.ja{background:rgba(52,211,153,.12);color:var(--gron);}
+.aktiv-chip.nei{background:rgba(248,113,113,.12);color:var(--rod);}
+.handlinger{display:flex;gap:6px;}
+.h-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--border2);
+  background:transparent;color:var(--dim);cursor:pointer;font-size:.74rem;transition:all .15s;}
+.h-btn:hover{color:var(--text);border-color:rgba(255,255,255,.3);}
+.h-btn.rod{border-color:rgba(248,113,113,.3);color:var(--rod);}
+.h-btn.gron{border-color:rgba(52,211,153,.3);color:var(--gron);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;}
+.modal-bg.vis{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;
+  padding:28px 32px;max-width:520px;width:92%;max-height:85vh;overflow-y:auto;}
+.modal h3{font-family:var(--font-h);font-size:1.1rem;margin-bottom:16px;}
+.modal-seksjon{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--dim);margin:16px 0 8px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+.modal-rad{display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;font-size:.86rem;border-bottom:1px solid rgba(255,255,255,.04);}
+.modal-rad:last-child{border:none;}
+.modal-label{color:var(--dim);font-size:.8rem;}
+.modal-val{font-family:var(--font-m);font-size:.8rem;}
+.modal-btns{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.avb{padding:8px 16px;background:transparent;border:1px solid var(--border2);
+  color:var(--dim);border-radius:8px;cursor:pointer;}
+.lag{padding:8px 20px;background:var(--bla);color:#000;border:none;
+  border-radius:8px;font-family:var(--font-h);font-weight:700;cursor:pointer;}
+.lag.rod{background:var(--rod);}
+.lag.gron{background:var(--gron);}
+
+#laster{padding:60px;text-align:center;color:var(--dim);}
+.tom{padding:40px;text-align:center;color:var(--dim);font-size:.88rem;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">Skap<span>Lab</span></div>
+  <div class="admin-badge">⚡ Superadmin</div>
+  <div class="spacer"></div>
+  <span id="admin-navn"></span>
+  <button class="tbtn" onclick="loggUt()">Logg ut</button>
+</div>
+
+<div id="stats-banner">
+  <div class="stat-kort bla">
+    <div class="stat-t" id="stat-skoler">–</div>
+    <div class="stat-l">Skoler registrert</div>
+  </div>
+  <div class="stat-kort gron">
+    <div class="stat-t" id="stat-aktive">–</div>
+    <div class="stat-l">Aktive skoler</div>
+  </div>
+  <div class="stat-kort gul">
+    <div class="stat-t" id="stat-laerere">–</div>
+    <div class="stat-l">Lærere totalt</div>
+  </div>
+  <div class="stat-kort lilla">
+    <div class="stat-t" id="stat-elever">–</div>
+    <div class="stat-l">Elever totalt</div>
+  </div>
+  <div class="stat-kort bla">
+    <div class="stat-t" id="stat-aktivitet">–</div>
+    <div class="stat-l">Aktiviteter logget</div>
+  </div>
+</div>
+
+<div id="innhold">
+  <div id="laster">Laster systemdata...</div>
+
+  <div id="hoved" style="display:none;">
+    <div class="soke-rad">
+      <input class="soke-input" id="soke" placeholder="Søk etter skole, kommune eller lærer..."
+        oninput="filtrer()">
+      <button class="filter-btn ak" id="f-alle" onclick="settFilter('alle',this)">Alle</button>
+      <button class="filter-btn" id="f-aktive" onclick="settFilter('aktive',this)">Aktive</button>
+      <button class="filter-btn" id="f-inaktive" onclick="settFilter('inaktive',this)">Inaktive</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Skole</th>
+          <th>Kommune</th>
+          <th>Lærere</th>
+          <th>Elever</th>
+          <th>Sist aktiv</th>
+          <th>Status</th>
+          <th>Handlinger</th>
+        </tr>
+      </thead>
+      <tbody id="skole-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL: Skole-detaljer -->
+<div class="modal-bg" id="modal-skole">
+  <div class="modal">
+    <h3 id="modal-tittel">Skole</h3>
+    <div id="modal-innhold"></div>
+    <div class="modal-btns">
+      <button class="avb" onclick="lukkModal()">Lukk</button>
+      <button class="lag rod" id="modal-deaktiver-btn" onclick="toggleAktiv()"></button>
+    </div>
+    <div id="modal-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div>
+  </div>
+</div>
+
+<script>
+// skaplab_auth.js - SkapLab autentisering
+(function () {
+  'use strict';
+
+  // ── KONFIGURASJON ──────────────────────────────────────────────
+  var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+  var API = SUPABASE_URL + '/rest/v1';
+  var SESSION_NØKKEL = 'skaplab_elev';
+  var LAERER_NØKKEL  = 'skaplab_laerer';
+
+  // ── HJELPEFUNKSJONER ───────────────────────────────────────────
+  function hdr(token) {
+    var h = {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (token || SUPABASE_KEY)
+    };
+    return h;
+  }
+
+  function post(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'POST',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function get(sti, token) {
+    return fetch(API + sti, {
+      headers: hdr(token)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function patch(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'PATCH',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // Supabase Auth-endepunkt
+  function auth(sti, data) {
+    return fetch(SUPABASE_URL + '/auth/v1/' + sti, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // ── ELEV-INNLOGGING ────────────────────────────────────────────
+  async function elevLoggInn(kode) {
+    try {
+      var resp = await fetch(
+        API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
+        '&select=id,fullt_navn,klasse_id,klasser(navn,trinn,skoler(navn))',
+        { headers: hdr() }
+      );
+      var data = await resp.json();
+      if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
+      var elev = data[0];
+      // Bruk localStorage slik at sesjonen deles mellom faner
+      localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
+      return { ok: true, elev: elev };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  function elevLoggUt() {
+    localStorage.removeItem(SESSION_NØKKEL);
+    sessionStorage.removeItem(SESSION_NØKKEL);
+  }
+
+  function hentElev() {
+    try {
+      var data = localStorage.getItem(SESSION_NØKKEL);
+      if (!data) return null;
+      var elev = JSON.parse(data);
+      // Utløp etter 8 timer (skoledagen)
+      if (elev._lagret && Date.now() - elev._lagret > 8*60*60*1000) {
+        localStorage.removeItem(SESSION_NØKKEL);
+        return null;
+      }
+      return elev;
+    } catch (e) { return null; }
+  }
+
+  function erElevInnlogget() {
+    return hentElev() !== null;
+  }
+
+  // ── LÆRER-INNLOGGING (via Supabase Auth) ──────────────────────
+  async function laererLoggInn(epost, passord) {
+    try {
+      var resp = await auth('token?grant_type=password', {
+        email: epost, password: passord
+      });
+
+      if (resp.error) return { ok: false, feil: resp.error.message };
+      if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
+      sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
+      return { ok: true, token: resp.access_token };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  async function laererLoggUt() {
+    var l = hentLaerer();
+    if (l) {
+      await fetch(SUPABASE_URL + '/auth/v1/logout', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + l.access_token }
+      });
+    }
+    sessionStorage.removeItem(LAERER_NØKKEL);
+  }
+
+  function hentLaerer() {
+    try {
+      var data = sessionStorage.getItem(LAERER_NØKKEL);
+      if (!data) return null;
+      var parsed = JSON.parse(data);
+      // Returner null KUN om det er en tydelig feilrespons uten token
+      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
+        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
+        return null;
+      }
+      return parsed;
+    } catch (e) { return null; }
+  }
+
+  function erLaererInnlogget() {
+    var sess = hentLaerer();
+    // Sjekk at sesjonen er gyldig - ikke bare en feilmelding
+    return sess !== null && 
+           sess.access_token !== undefined && 
+           sess.access_token !== null &&
+           !sess.error_code;  // Fang opp Supabase-feilresponser
+  }
+
+  // ── AKTIVITETSSPORING ─────────────────────────────────────────
+  /**
+   * Logg aktivitet for innlogget elev.
+   * @param {string} ressurs    - f.eks. 'mattequiz_Algebra'
+   * @param {string} kmKode     - f.eks. 'MAT-ALG'
+   * @param {number} scorePst   - 0–100
+   * @param {number} antall     - antall oppgaver totalt
+   * @param {number} riktige    - antall riktige svar
+   */
+  async function loggAktivitet(ressurs, kmKode, scorePst, antall, riktige) {
+    var elev = hentElev();
+    if (!elev) return;  // ikke logget inn, gjør ingenting
+
+    try {
+      await post('/aktivitet', {
+        elev_id:         elev.id,
+        ressurs:         ressurs,
+        km_kode:         kmKode,
+        score_pst:       Math.round(scorePst),
+        antall_oppgaver: antall || null,
+        riktige:         riktige || null
+      });
+    } catch (e) {
+      // Sporing feiler stille — ikke forstyrr spillopplevelsen
+    }
+  }
+
+  // ── NAVIGASJONSBJELKE ─────────────────────────────────────────
+  // Viser innlogget bruker øverst på siden om inkludert
+  function visInnloggetBruker() {
+    var elev = hentElev();
+    if (!elev) return;
+
+    var wrap = document.getElementById('skaplab-bruker-strip');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'skaplab-bruker-strip';
+      wrap.style.cssText =
+        'position:fixed;bottom:0;left:0;right:0;z-index:1000;' +
+        'background:rgba(10,14,28,0.95);border-top:1px solid rgba(255,255,255,0.1);' +
+        'padding:6px 16px;display:flex;align-items:center;gap:12px;' +
+        'font-family:DM Sans,sans-serif;font-size:.75rem;color:rgba(255,255,255,0.6);';
+      document.body.appendChild(wrap);
+    }
+
+    var skoleNavn = (elev.klasser && elev.klasser.skoler)
+      ? elev.klasser.skoler.navn : '';
+    var klasseNavn = elev.klasser ? elev.klasser.navn : '';
+
+    wrap.innerHTML =
+      '<span>👤 <strong style="color:#fff">' + (elev.fullt_navn || 'Elev') + '</strong>' +
+      (klasseNavn ? ' · ' + klasseNavn : '') +
+      (skoleNavn ? ' · ' + skoleNavn : '') + '</span>' +
+      '<span style="flex:1"></span>' +
+      '<a href="elev_portal.html" style="color:#60a5fa;text-decoration:none;">Min side</a>' +
+      '<button onclick="SkapLab.elevLoggUt();location.reload();" ' +
+      'style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);' +
+      'padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;">Logg ut</button>';
+  }
+
+  // Kjør automatisk ved sideinnlasting
+  document.addEventListener('DOMContentLoaded', visInnloggetBruker);
+
+  // ── EKSPORTER ─────────────────────────────────────────────────
+  window.SkapLab = {
+    // Elev
+    elevLoggInn:       elevLoggInn,
+    elevLoggUt:        elevLoggUt,
+    hentElev:          hentElev,
+    erElevInnlogget:   erElevInnlogget,
+    // Lærer
+    laererLoggInn:     laererLoggInn,
+    laererLoggUt:      laererLoggUt,
+    hentLaerer:        hentLaerer,
+    erLaererInnlogget: erLaererInnlogget,
+    // Sporing
+    loggAktivitet:     loggAktivitet,
+    // Internals (for dashboard)
+    _api:  API,
+    _hdr:  hdr,
+    _get:  get,
+    _post: post,
+    _patch: patch,
+    SUPABASE_URL: SUPABASE_URL,
+    SUPABASE_KEY: SUPABASE_KEY
+  };
+
+})();
+
+
+</script>
+<script>
+
+'use strict';
+
+var SUPERADMIN_EPOST = 'tlnnorda@gmail.com';
+
+if (!SkapLab.erLaererInnlogget()) { location.href = 'laerer_login.html'; throw new Error(); }
+var laerer = SkapLab.hentLaerer();
+var token  = laerer.access_token;
+var brukerEpost = (laerer.user && laerer.user.email) || '';
+
+if (brukerEpost && brukerEpost !== SUPERADMIN_EPOST) {
+  document.body.innerHTML = '<div style="padding:60px;text-align:center;">'
+    + '<h2 style="color:#f87171;">Ingen tilgang</h2>'
+    + '<p style="color:rgba(255,255,255,.4);margin-top:12px;">Kun for superadministrator.</p>'
+    + '<a href="laerer_dashboard.html" style="color:#60a5fa;display:block;margin-top:20px;">Tilbake</a>'
+    + '</div>';
+  throw new Error('Ingen tilgang');
+}
+
+document.getElementById('admin-navn').textContent = brukerEpost;
+
+var alleData = [];
+var aktivFilter = 'alle';
+var valgtSkoleId = null;
+
+async function init() {
+  var sR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/skoler?select=id,navn,kommune,fylke,kontakt_epost,aktiv,opprettet&order=opprettet.desc',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return[];});
+  var skoler = Array.isArray(sR)?sR:[];
+
+  var lR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/laerere?select=id,fullt_navn,epost,skole_id',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return[];});
+  var laerere = Array.isArray(lR)?lR:[];
+
+  var kR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/klasser?select=id,navn,skole_id',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return[];});
+  var klasser = Array.isArray(kR)?kR:[];
+
+  var eR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/elever?select=id,klasse_id,aktiv',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return[];});
+  var elever = Array.isArray(eR)?eR:[];
+
+  var aR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/aktivitet?select=id,elev_id,tidspunkt&order=tidspunkt.desc&limit=2000',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return[];});
+  var aktivitet = Array.isArray(aR)?aR:[];
+
+  alleData = skoler.map(function(s) {
+    var sl = laerere.filter(function(l){return l.skole_id===s.id;});
+    var sk = klasser.filter(function(k){return k.skole_id===s.id;});
+    var kIder = sk.map(function(k){return k.id;});
+    var se = elever.filter(function(e){return kIder.indexOf(e.klasse_id)>=0;});
+    var eIder = se.map(function(e){return e.id;});
+    var sa = aktivitet.filter(function(a){return eIder.indexOf(a.elev_id)>=0;});
+    var sist = sa.length>0?new Date(sa[0].tidspunkt).toLocaleDateString('nb-NO'):'–';
+    return {skole:s,laerere:sl,klasser:sk,elever:se,antAkt:sa.length,sistAkt:sist};
+  });
+
+  document.getElementById('stat-skoler').textContent   = skoler.length;
+  document.getElementById('stat-aktive').textContent   = skoler.filter(function(s){return s.aktiv;}).length;
+  document.getElementById('stat-laerere').textContent  = laerere.length;
+  document.getElementById('stat-elever').textContent   = elever.filter(function(e){return e.aktiv;}).length;
+  document.getElementById('stat-aktivitet').textContent= aktivitet.length;
+
+  document.getElementById('laster').style.display='none';
+  document.getElementById('hoved').style.display='block';
+  byggTabell(alleData);
+}
+
+function byggTabell(data) {
+  var tbody=document.getElementById('skole-tbody');
+  tbody.innerHTML='';
+  if(!data.length){
+    var tr=document.createElement('tr');
+    var td=document.createElement('td');
+    td.colSpan=7;td.style.textAlign='center';td.style.padding='40px';
+    td.style.color='var(--dim)';td.textContent='Ingen skoler funnet.';
+    tr.appendChild(td);tbody.appendChild(tr);return;
+  }
+  data.forEach(function(d){
+    var s=d.skole;
+    var tr=document.createElement('tr');
+
+    // Navn
+    var tdNavn=document.createElement('td');
+    tdNavn.innerHTML='<div style="font-weight:600;">'+s.navn+'</div>'
+      +'<div style="font-family:var(--font-m);font-size:.68rem;color:rgba(255,255,255,.2);">'+s.id.slice(0,8)+'…</div>';
+    tr.appendChild(tdNavn);
+
+    // Kommune
+    var tdKom=document.createElement('td');tdKom.textContent=s.kommune||'–';tr.appendChild(tdKom);
+    // Lærere
+    var tdL=document.createElement('td');tdL.textContent=d.laerere.length;tr.appendChild(tdL);
+    // Elever
+    var tdE=document.createElement('td');tdE.textContent=d.elever.length;tr.appendChild(tdE);
+    // Sist aktiv
+    var tdS=document.createElement('td');tdS.textContent=d.sistAkt;tr.appendChild(tdS);
+    // Status
+    var tdSt=document.createElement('td');
+    var chip=document.createElement('span');
+    chip.className='aktiv-chip '+(s.aktiv?'ja':'nei');
+    chip.textContent=s.aktiv?'● Aktiv':'○ Inaktiv';
+    tdSt.appendChild(chip);tr.appendChild(tdSt);
+    // Handlinger
+    var tdH=document.createElement('td');
+    var div=document.createElement('div');div.className='handlinger';
+    var btn1=document.createElement('button');btn1.className='h-btn';
+    btn1.textContent='Detaljer';
+    btn1.onclick=(function(id){return function(){apneDetalj(id);};})(s.id);
+    div.appendChild(btn1);
+    var btn2=document.createElement('button');
+    btn2.className='h-btn '+(s.aktiv?'rod':'gron');
+    btn2.textContent=s.aktiv?'Deaktiver':'Aktiver';
+    btn2.onclick=(function(id,aktiv,b){return function(){raskToggle(id,aktiv,b);};})(s.id,s.aktiv,btn2);
+    div.appendChild(btn2);
+    tdH.appendChild(div);tr.appendChild(tdH);
+    tbody.appendChild(tr);
+  });
+}
+
+function settFilter(f,el){
+  aktivFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('ak');});
+  el.classList.add('ak');filtrer();
+}
+
+function filtrer(){
+  var sok=document.getElementById('soke').value.toLowerCase();
+  var res=alleData.filter(function(d){
+    var s=d.skole;
+    if(aktivFilter==='aktive'&&!s.aktiv) return false;
+    if(aktivFilter==='inaktive'&&s.aktiv) return false;
+    if(!sok) return true;
+    return (s.navn||'').toLowerCase().includes(sok)
+      ||(s.kommune||'').toLowerCase().includes(sok)
+      ||d.laerere.some(function(l){return(l.epost||'').toLowerCase().includes(sok);});
+  });
+  byggTabell(res);
+}
+
+function apneDetalj(skoleId){
+  valgtSkoleId=skoleId;
+  var d=alleData.find(function(x){return x.skole.id===skoleId;});
+  if(!d) return;
+  var s=d.skole;
+  document.getElementById('modal-tittel').textContent=s.navn;
+  var db=document.getElementById('modal-deaktiver-btn');
+  db.textContent=s.aktiv?'Deaktiver skole':'Aktiver skole';
+  db.className='lag '+(s.aktiv?'rod':'gron');
+  var html='<div class="modal-seksjon">Skoleinformasjon</div>'
+    +rad('Navn',s.navn)+rad('Kommune',s.kommune||'–')+rad('Kontakt',s.kontakt_epost||'–')
+    +rad('Registrert',new Date(s.opprettet).toLocaleDateString('nb-NO'))
+    +rad('Status',s.aktiv?'Aktiv':'Inaktiv')
+    +'<div class="modal-seksjon">Brukere</div>'
+    +rad('Laerere',d.laerere.length+' stk')
+    +rad('Klasser',d.klasser.length+' stk')
+    +rad('Elever',d.elever.length+' aktive')
+    +rad('Aktiviteter',d.antAkt+' oppforinger')
+    +rad('Sist aktiv',d.sistAkt)
+    +'<div class="modal-seksjon">Laerere</div>'
+    +(d.laerere.length===0?'<div style="color:var(--dim);font-size:.82rem;padding:8px 0;">Ingen laerere.</div>'
+      :d.laerere.map(function(l){
+        return '<div class="modal-rad"><span>'+(l.fullt_navn||'–')+'</span>'
+          +'<span style="color:var(--dim);font-size:.78rem;">'+(l.epost||'')+'</span></div>';
+      }).join(''))
+    +'<div class="modal-seksjon">Klasser</div>'
+    +(d.klasser.length===0?'<div style="color:var(--dim);font-size:.82rem;padding:8px 0;">Ingen klasser.</div>'
+      :d.klasser.map(function(k){
+        var ant=d.elever.filter(function(e){return e.klasse_id===k.id;}).length;
+        return '<div class="modal-rad"><span>'+k.navn+'</span>'
+          +'<span style="color:var(--dim);font-size:.78rem;">'+ant+' elever</span></div>';
+      }).join(''));
+  document.getElementById('modal-innhold').innerHTML=html;
+  document.getElementById('modal-feil').textContent='';
+  document.getElementById('modal-skole').classList.add('vis');
+}
+
+function rad(l,v){
+  return '<div class="modal-rad"><span class="modal-label">'+l+'</span>'
+    +'<span class="modal-val">'+v+'</span></div>';
+}
+
+function lukkModal(){document.getElementById('modal-skole').classList.remove('vis');valgtSkoleId=null;}
+
+async function toggleAktiv(){
+  if(!valgtSkoleId) return;
+  var d=alleData.find(function(x){return x.skole.id===valgtSkoleId;});
+  if(!d) return;
+  await oppdaterAktiv(valgtSkoleId,!d.skole.aktiv);
+  lukkModal();
+}
+
+async function raskToggle(skoleId,erAktiv,el){
+  el.disabled=true;
+  await oppdaterAktiv(skoleId,!erAktiv);
+}
+
+async function oppdaterAktiv(skoleId,nyStatus){
+  var resp=await fetch(SkapLab.SUPABASE_URL+'/rest/v1/skoler?id=eq.'+skoleId,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+             'Authorization':'Bearer '+token,'Prefer':'return=minimal'},
+    body:JSON.stringify({aktiv:nyStatus})
+  });
+  if(resp.ok){
+    var d=alleData.find(function(x){return x.skole.id===skoleId;});
+    if(d) d.skole.aktiv=nyStatus;
+    filtrer();
+    document.getElementById('stat-aktive').textContent=
+      alleData.filter(function(d){return d.skole.aktiv;}).length;
+  }
+}
+
+function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+init();
+
+</script>
+<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+</body>
+</html>
