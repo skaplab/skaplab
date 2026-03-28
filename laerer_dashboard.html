@@ -189,7 +189,11 @@ tr:hover td{background:rgba(255,255,255,.02);}
       var resp = await auth('token?grant_type=password', {
         email: epost, password: passord
       });
+      console.log('LOGIN RESP KEYS:', JSON.stringify(Object.keys(resp||{})));
+      console.log('HAS access_token:', !!resp.access_token);
+      console.log('HAS error:', !!resp.error);
       if (resp.error) return { ok: false, feil: resp.error.message };
+      if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
       sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
       return { ok: true, token: resp.access_token };
     } catch (e) {
@@ -213,8 +217,9 @@ tr:hover td{background:rgba(255,255,255,.02);}
       var data = sessionStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
-      // Returner null om det er en feilrespons fra Supabase
-      if (parsed && (parsed.error_code || parsed.code === 'invalid_credentials' || !parsed.access_token)) {
+      // Returner null KUN om det er en tydelig feilrespons uten token
+      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
+        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
         return null;
       }
       return parsed;
@@ -318,6 +323,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   };
 
 })();
+
 </script>
 <script>
 
