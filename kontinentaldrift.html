@@ -614,6 +614,36 @@ nav{position:sticky;top:0;z-index:200;background:rgba(5,8,16,.97);backdrop-filte
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 const N=document.querySelectorAll('.k-slide').length;let cur=0;
 const slides=document.getElementById('k-slides'),dotsEl=document.getElementById('k-dots');
 for(let i=0;i<N;i++){const d=document.createElement('button');d.className='k-dot'+(i===0?' on':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);}
@@ -622,7 +652,30 @@ function kGo(d){goTo(Math.max(0,Math.min(N-1,cur+d)));}
 let tx=0;document.getElementById('karusell').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 document.getElementById('karusell').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)kGo(dx<0?1:-1);},{passive:true});
 goTo(0);
+
+// Spor fullføring ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    var scrolled = window.scrollY + window.innerHeight;
+    var total = document.body.scrollHeight;
+    if (scrolled >= total - 100) {
+      _sporet = true;
+      window._skaplab_logg('kontinentaldrift', 'NAT-FYS', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  // Også etter 60 sek om de leser uten å scrolle
+  setTimeout(function() {
+    if (!_sporet) {
+      _sporet = true;
+      window._skaplab_logg('kontinentaldrift', 'NAT-FYS', 80, 1, 1, 1, 1);
+    }
+  }, 60000);
+})();
+
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

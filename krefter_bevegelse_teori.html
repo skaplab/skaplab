@@ -488,6 +488,36 @@ nav{position:sticky;top:0;z-index:200;background:rgba(8,10,16,.97);backdrop-filt
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 // ═══ KARUSELL ═══
 const N = document.querySelectorAll('.k-slide').length;
 let cur = 0;
@@ -578,7 +608,24 @@ function nullstillKin() {
   document.getElementById('kin-ff').value = '';
   document.getElementById('kin-res').textContent = 'Fyll inn to felt (s, t eller v)';
 }
+
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('krefter_bevegelse_teori', 'NAT-FYS', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('krefter_bevegelse_teori', 'NAT-FYS', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

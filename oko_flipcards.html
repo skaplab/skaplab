@@ -174,9 +174,36 @@ footer a { color: var(--col); text-decoration: none; }
 <div class="kort-grid" id="kortGrid">
   <div class="ingen" id="ingenTreff"><p>Ingen begreper matcher søket.</p></div>
 </div>
-<footer><a href="naturfag.html">Alle fagbegreper</a> &nbsp;·&nbsp; <a href="oko_flipcards2.html">Del 2 →</a> &nbsp;·&nbsp; SkapLab – gratis for alle skoler<p style="font-size:.72rem;opacity:.4;text-align:center;">(c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt</p>
-</footer>
+<footer><a href="naturfag.html">Alle fagbegreper</a> &nbsp;·&nbsp; <a href="oko_flipcards2.html">Del 2 →</a> &nbsp;·&nbsp; SkapLab – gratis for alle skoler</footer>
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 const KAT_NAVN = {
   'okosystem': '🌍 Økosystem',
   'klima': '☀️ Klima',
@@ -303,6 +330,13 @@ function blandKort() {
 }
 byggKort();
 
+
+// Spor flashcard-besøk
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    window._skaplab_logg('flipcard_oko', 'NAT-OKO', 100, null, null);
+  }, 3000); // Etter 3 sek - eleven har sett noe
+});
 </script>
 </body>
 </html>

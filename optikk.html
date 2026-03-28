@@ -594,6 +594,36 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,8,16,.97);backdrop-filte
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 // ═══ KARUSELL ═══
 const N=document.querySelectorAll('.k-slide').length;let cur=0;
 const slides=document.getElementById('k-slides'),dotsEl=document.getElementById('k-dots');
@@ -877,6 +907,24 @@ function tegnPil(ctx, x1, y1, x2, y2, farge) {
 
 
 
+
+// Spor fullfoering ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('optikk', 'NAT-BIO', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() {
+    if (!_sporet) { _sporet=true; window._skaplab_logg('optikk', 'NAT-BIO', 80, 1, 1, 1, 1); }
+  }, 60000);
+})();
+
 </script>
   <!-- SNELLS LOV SIMULATOR -->
   <div class="sep"><div class="sep-l"></div><div class="sep-t">Snells lov – lysbrytningssimulator</div><div class="sep-r"></div></div>
@@ -927,6 +975,5 @@ function tegnPil(ctx, x1, y1, x2, y2, farge) {
   </div>
 
 
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

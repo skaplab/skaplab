@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Periodesystemet</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04080f;
+  --surface:#090d18;
+  --card:#0d1220;
+  --border:rgba(255,255,255,.06);
+  --text:#dde4f0;
+  --dim:#4a5568;
+  --bright:#f0f4ff;
+
+  /* Kategorifargekoder */
+  --c-alkali:#ff6b6b;
+  --c-alkaliearth:#ff9f43;
+  --c-transition:#feca57;
+  --c-postrans:#a8e063;
+  --c-metalloid:#54a0ff;
+  --c-nonmetal:#5f27cd;
+  --c-halogen:#00d2d3;
+  --c-nobelgas:#ff6348;
+  --c-lanthanide:#c8a8e9;
+  --c-actinide:#f8a5c2;
+
+  --font-d:'Syne',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+}
+
+html{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-d);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* Scanline overlay */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.03) 2px,
+    rgba(0,0,0,.03) 4px
+  );
+  pointer-events:none;z-index:9999;
+}
+
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(4,8,15,.96);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;gap:10px;
+}
+.nav-lnk{font-family:var(--font-d);font-size:.8rem;font-weight:600;color:var(--dim);text-decoration:none;letter-spacing:.04em}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.85rem;font-weight:700;color:#54a0ff;letter-spacing:.04em}
+
+/* ── SCOREBAR ── */
+.scorebar{
+  display:flex;align-items:center;justify-content:center;gap:32px;
+  padding:14px 24px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.score-item{text-align:center}
+.score-val{
+  font-family:var(--font-m);font-size:1.6rem;font-weight:700;line-height:1;
+  color:var(--bright);
+}
+.score-val.streak{color:#feca57}
+.score-val.poeng{color:#a8e063}
+.score-val.feil{color:#ff6b6b}
+.score-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+
+/* Streak-animasjon */
+@keyframes streak-pop{
+  0%{transform:scale(1)}30%{transform:scale(1.4)}60%{transform:scale(.9)}100%{transform:scale(1)}
+}
+.streak-pop{animation:streak-pop .4s ease-out}
+
+/* ── SPØRSMÅLS-PANEL ── */
+.sporsmal-wrap{
+  display:flex;justify-content:center;
+  padding:20px 16px 12px;
+}
+.sporsmal-boks{
+  background:var(--card);
+  border:1px solid rgba(84,160,255,.25);
+  border-radius:16px;
+  padding:20px 28px;
+  max-width:700px;width:100%;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 0 40px rgba(84,160,255,.06);
+}
+.sporsmal-boks::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--hint-farge,#54a0ff),transparent);
+}
+.sporsmal-kategori{
+  font-family:var(--font-m);font-size:.65rem;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--hint-farge,#54a0ff);margin-bottom:8px;
+}
+.sporsmal-tekst{
+  font-family:var(--font-d);font-size:1.25rem;font-weight:700;
+  color:var(--bright);line-height:1.4;
+}
+.sporsmal-hint{
+  margin-top:10px;font-size:.8rem;color:var(--dim);
+  font-family:var(--font-m);letter-spacing:.02em;
+}
+
+/* Feedback-overlay */
+.feedback{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:500;
+  font-family:var(--font-d);font-size:2.5rem;font-weight:800;
+  pointer-events:none;opacity:0;
+  text-shadow:0 0 40px currentColor;
+}
+@keyframes fb-anim{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}
+  30%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}
+  70%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-60%) scale(1)}
+}
+.feedback.show{animation:fb-anim .9s ease-out forwards}
+.feedback.riktig{color:#a8e063}
+.feedback.feil{color:#ff6b6b}
+
+/* ── PERIODESYSTEM ── */
+.ps-wrap{
+  padding:8px 8px 24px;
+  overflow-x:auto;
+}
+.ps-grid{
+  display:grid;
+  grid-template-columns:repeat(18,1fr);
+  gap:3px;
+  min-width:900px;
+  max-width:1200px;
+  margin:0 auto;
+}
+
+/* Element-kort */
+.el{
+  aspect-ratio:1;
+  border-radius:6px;
+  border:1px solid transparent;
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;
+  transition:transform .12s,box-shadow .12s,border-color .15s;
+  padding:2px;
+  user-select:none;
+}
+.el:hover{
+  transform:scale(1.08);
+  z-index:10;
+  box-shadow:0 0 18px rgba(255,255,255,.12);
+}
+.el.aktiv-maal{
+  border-color:rgba(255,255,255,.5)!important;
+  box-shadow:0 0 20px rgba(255,255,255,.2),inset 0 0 10px rgba(255,255,255,.04);
+  animation:puls-maal 1.2s ease-in-out infinite;
+}
+@keyframes puls-maal{
+  0%,100%{box-shadow:0 0 16px rgba(255,255,255,.15)}
+  50%{box-shadow:0 0 28px rgba(255,255,255,.3)}
+}
+.el.riktig-flash{
+  animation:riktig-flash .5s ease-out;
+}
+@keyframes riktig-flash{
+  0%{transform:scale(1.2);box-shadow:0 0 30px #a8e063}
+  100%{transform:scale(1);box-shadow:none}
+}
+.el.feil-flash{
+  animation:feil-flash .4s ease-out;
+}
+@keyframes feil-flash{
+  0%,50%{transform:translateX(-4px);box-shadow:0 0 20px #ff6b6b}
+  25%,75%{transform:translateX(4px)}
+  100%{transform:translateX(0)}
+}
+.el.blokkert{
+  opacity:.35;cursor:default;pointer-events:none;
+}
+.el .anum{
+  font-family:var(--font-m);font-size:.5rem;font-weight:700;
+  color:rgba(255,255,255,.5);line-height:1;
+  position:absolute;top:3px;left:4px;
+}
+.el .sym{
+  font-family:var(--font-d);font-size:1rem;font-weight:800;
+  color:rgba(255,255,255,.95);line-height:1;margin-top:2px;
+}
+.el .navn-kort{
+  font-family:var(--font-m);font-size:.38rem;
+  color:rgba(255,255,255,.5);margin-top:1px;line-height:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:90%;text-align:center;
+}
+.el .masse-kort{
+  font-family:var(--font-m);font-size:.35rem;
+  color:rgba(255,255,255,.35);line-height:1;
+}
+
+/* Kategoribakgrunner */
+.k-alkali      {background:linear-gradient(135deg,rgba(255,107,107,.22),rgba(255,107,107,.1));border-color:rgba(255,107,107,.2)}
+.k-alkaliearth {background:linear-gradient(135deg,rgba(255,159,67,.22),rgba(255,159,67,.1));border-color:rgba(255,159,67,.2)}
+.k-transition  {background:linear-gradient(135deg,rgba(254,202,87,.18),rgba(254,202,87,.08));border-color:rgba(254,202,87,.18)}
+.k-postrans    {background:linear-gradient(135deg,rgba(168,224,99,.2),rgba(168,224,99,.09));border-color:rgba(168,224,99,.18)}
+.k-metalloid   {background:linear-gradient(135deg,rgba(84,160,255,.2),rgba(84,160,255,.09));border-color:rgba(84,160,255,.18)}
+.k-nonmetal    {background:linear-gradient(135deg,rgba(95,39,205,.28),rgba(95,39,205,.14));border-color:rgba(95,39,205,.22)}
+.k-halogen     {background:linear-gradient(135deg,rgba(0,210,211,.2),rgba(0,210,211,.09));border-color:rgba(0,210,211,.18)}
+.k-nobelgas    {background:linear-gradient(135deg,rgba(255,99,72,.22),rgba(255,99,72,.1));border-color:rgba(255,99,72,.2)}
+.k-lanthanide  {background:linear-gradient(135deg,rgba(200,168,233,.2),rgba(200,168,233,.09));border-color:rgba(200,168,233,.18)}
+.k-actinide    {background:linear-gradient(135deg,rgba(248,165,194,.2),rgba(248,165,194,.09));border-color:rgba(248,165,194,.18)}
+.k-tom         {background:transparent;border-color:transparent;pointer-events:none;cursor:default}
+
+/* Lanthanideserie-rad-etiketter */
+.serie-etikett{
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:.5rem;font-weight:700;
+  letter-spacing:.06em;color:var(--dim);
+  border-radius:6px;border:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+}
+
+/* ── FORKLARING KATEGORIER ── */
+.forklaring{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  padding:8px 16px 16px;max-width:1200px;margin:0 auto;
+}
+.fk{
+  display:flex;align-items:center;gap:5px;
+  font-size:.65rem;font-family:var(--font-m);letter-spacing:.04em;
+  color:var(--dim);
+}
+.fk-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── TOOLTIP ── */
+.tt{
+  position:fixed;z-index:200;
+  background:#0d1220;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:12px 16px;
+  pointer-events:none;
+  opacity:0;transition:opacity .15s;
+  min-width:180px;
+}
+.tt.vis{opacity:1}
+.tt-sym{font-family:var(--font-d);font-size:1.8rem;font-weight:800;color:var(--bright);line-height:1}
+.tt-navn{font-size:.8rem;font-weight:600;color:var(--text);margin-top:2px}
+.tt-rader{margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.tt-r{font-family:var(--font-m);font-size:.65rem}
+.tt-lbl{color:var(--dim)}
+.tt-val{color:var(--bright);font-weight:700}
+
+/* ── NESTE SPORSMAL KNAPP ── */
+.neste-btn{
+  display:block;margin:0 auto 20px;
+  font-family:var(--font-d);font-size:.82rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  padding:10px 28px;border-radius:10px;
+  border:1px solid rgba(84,160,255,.35);
+  background:rgba(84,160,255,.08);color:#54a0ff;
+  cursor:pointer;transition:all .2s;display:none;
+}
+.neste-btn:hover{background:rgba(84,160,255,.18);border-color:rgba(84,160,255,.6)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Periodesystemet – Quiz</span>
+</nav>
+
+<!-- SCOREBAR -->
+<div class="scorebar">
+  <div class="score-item">
+    <div class="score-val poeng" id="sPoeng">0</div>
+    <div class="score-lbl">Poeng</div>
+  </div>
+  <div class="score-item">
+    <div class="score-val streak" id="sStreak">🔥 0</div>
+    <div class="score-lbl">Streak</div>
+  </div>
+  <div class="score-item">
+    <div class="score-val feil" id="sFeil">0</div>
+    <div class="score-lbl">Feil</div>
+  </div>
+  <div class="score-item">
+    <div class="score-val" id="sTotal" style="color:#c4b5fd">0</div>
+    <div class="score-lbl">Besvart</div>
+  </div>
+</div>
+
+<!-- SPØRSMÅL -->
+<div class="sporsmal-wrap">
+  <div class="sporsmal-boks" id="sporsmal-boks">
+    <div class="sporsmal-kategori" id="sp-kategori">Klar</div>
+    <div class="sporsmal-tekst" id="sp-tekst">Trykk på et grunnstoff for å starte quizen!</div>
+    <div class="sporsmal-hint" id="sp-hint"></div>
+  </div>
+</div>
+
+<button class="neste-btn" id="neste-btn" onclick="nesteSporsmal()">Neste spørsmål →</button>
+
+<!-- PERIODESYSTEM -->
+<div class="ps-wrap">
+  <div class="ps-grid" id="ps-grid"></div>
+</div>
+
+<!-- Kategoriforklaring -->
+<div class="forklaring">
+  <div class="fk"><div class="fk-dot" style="background:var(--c-alkali)"></div>Alkalimetall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-alkaliearth)"></div>Jordalkalimetall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-transition)"></div>Overgangsmetall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-postrans)"></div>Ettovergangsmetall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-metalloid)"></div>Halvmetall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-nonmetal)"></div>Ikke-metall</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-halogen)"></div>Halogen</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-nobelgas)"></div>Edelgass</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-lanthanide)"></div>Lanthanide</div>
+  <div class="fk"><div class="fk-dot" style="background:var(--c-actinide)"></div>Aktinide</div>
+</div>
+
+<!-- FEEDBACK -->
+<div class="feedback" id="feedback"></div>
+
+<!-- TOOLTIP -->
+<div class="tt" id="tt"></div>
+
+<script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════
+//  GRUNNSTOFFDATA
+//  z, sym, navn, masse, gruppe, periode, kategori, skall, valens, okstall
+// ══════════════════════════════════════════════
+const EL = [
+  {z:1, sym:'H', navn:'Hydrogen', masse:1.008, gr:1, per:1, kat:'nonmetal', skall:1, valens:1, oks:[1,-1], col:1, row:1},
+  {z:2, sym:'He', navn:'Helium', masse:4.003, gr:18, per:1, kat:'nobelgas', skall:1, valens:2, oks:[0], col:18, row:1},
+  {z:3, sym:'Li', navn:'Litium', masse:6.941, gr:1, per:2, kat:'alkali', skall:2, valens:1, oks:[1], col:1, row:2},
+  {z:4, sym:'Be', navn:'Beryllium', masse:9.012, gr:2, per:2, kat:'alkaliearth', skall:2, valens:2, oks:[2], col:2, row:2},
+  {z:5, sym:'B', navn:'Bor', masse:10.811, gr:13, per:2, kat:'metalloid', skall:2, valens:3, oks:[3], col:13, row:2},
+  {z:6, sym:'C', navn:'Karbon', masse:12.011, gr:14, per:2, kat:'nonmetal', skall:2, valens:4, oks:[4,2,-4], col:14, row:2},
+  {z:7, sym:'N', navn:'Nitrogen', masse:14.007, gr:15, per:2, kat:'nonmetal', skall:2, valens:5, oks:[-3,3,5], col:15, row:2},
+  {z:8, sym:'O', navn:'Oksygen', masse:15.999, gr:16, per:2, kat:'nonmetal', skall:2, valens:6, oks:[-2], col:16, row:2},
+  {z:9, sym:'F', navn:'Fluor', masse:18.998, gr:17, per:2, kat:'halogen', skall:2, valens:7, oks:[-1], col:17, row:2},
+  {z:10, sym:'Ne', navn:'Neon', masse:20.180, gr:18, per:2, kat:'nobelgas', skall:2, valens:8, oks:[0], col:18, row:2},
+  {z:11, sym:'Na', navn:'Natrium', masse:22.990, gr:1, per:3, kat:'alkali', skall:3, valens:1, oks:[1], col:1, row:3},
+  {z:12, sym:'Mg', navn:'Magnesium', masse:24.305, gr:2, per:3, kat:'alkaliearth', skall:3, valens:2, oks:[2], col:2, row:3},
+  {z:13, sym:'Al', navn:'Aluminium', masse:26.982, gr:13, per:3, kat:'postrans', skall:3, valens:3, oks:[3], col:13, row:3},
+  {z:14, sym:'Si', navn:'Silisium', masse:28.086, gr:14, per:3, kat:'metalloid', skall:3, valens:4, oks:[4,-4], col:14, row:3},
+  {z:15, sym:'P', navn:'Fosfor', masse:30.974, gr:15, per:3, kat:'nonmetal', skall:3, valens:5, oks:[-3,3,5], col:15, row:3},
+  {z:16, sym:'S', navn:'Svovel', masse:32.065, gr:16, per:3, kat:'nonmetal', skall:3, valens:6, oks:[-2,4,6], col:16, row:3},
+  {z:17, sym:'Cl', navn:'Klor', masse:35.453, gr:17, per:3, kat:'halogen', skall:3, valens:7, oks:[-1,1,5,7], col:17, row:3},
+  {z:18, sym:'Ar', navn:'Argon', masse:39.948, gr:18, per:3, kat:'nobelgas', skall:3, valens:8, oks:[0], col:18, row:3},
+  {z:19, sym:'K', navn:'Kalium', masse:39.098, gr:1, per:4, kat:'alkali', skall:4, valens:1, oks:[1], col:1, row:4},
+  {z:20, sym:'Ca', navn:'Kalsium', masse:40.078, gr:2, per:4, kat:'alkaliearth', skall:4, valens:2, oks:[2], col:2, row:4},
+  {z:21, sym:'Sc', navn:'Scandium', masse:44.956, gr:3, per:4, kat:'transition', skall:4, valens:3, oks:[3], col:3, row:4},
+  {z:22, sym:'Ti', navn:'Titan', masse:47.867, gr:4, per:4, kat:'transition', skall:4, valens:4, oks:[2,3,4], col:4, row:4},
+  {z:23, sym:'V', navn:'Vanadium', masse:50.942, gr:5, per:4, kat:'transition', skall:4, valens:5, oks:[2,3,4,5], col:5, row:4},
+  {z:24, sym:'Cr', navn:'Krom', masse:51.996, gr:6, per:4, kat:'transition', skall:4, valens:6, oks:[2,3,6], col:6, row:4},
+  {z:25, sym:'Mn', navn:'Mangan', masse:54.938, gr:7, per:4, kat:'transition', skall:4, valens:7, oks:[2,4,7], col:7, row:4},
+  {z:26, sym:'Fe', navn:'Jern', masse:55.845, gr:8, per:4, kat:'transition', skall:4, valens:8, oks:[2,3], col:8, row:4},
+  {z:27, sym:'Co', navn:'Kobolt', masse:58.933, gr:9, per:4, kat:'transition', skall:4, valens:9, oks:[2,3], col:9, row:4},
+  {z:28, sym:'Ni', navn:'Nikkel', masse:58.693, gr:10, per:4, kat:'transition', skall:4, valens:10, oks:[2], col:10, row:4},
+  {z:29, sym:'Cu', navn:'Kobber', masse:63.546, gr:11, per:4, kat:'transition', skall:4, valens:11, oks:[1,2], col:11, row:4},
+  {z:30, sym:'Zn', navn:'Sink', masse:65.38, gr:12, per:4, kat:'transition', skall:4, valens:12, oks:[2], col:12, row:4},
+  {z:31, sym:'Ga', navn:'Gallium', masse:69.723, gr:13, per:4, kat:'postrans', skall:4, valens:3, oks:[3], col:13, row:4},
+  {z:32, sym:'Ge', navn:'Germanium', masse:72.630, gr:14, per:4, kat:'metalloid', skall:4, valens:4, oks:[2,4], col:14, row:4},
+  {z:33, sym:'As', navn:'Arsen', masse:74.922, gr:15, per:4, kat:'metalloid', skall:4, valens:5, oks:[-3,3,5], col:15, row:4},
+  {z:34, sym:'Se', navn:'Selen', masse:78.971, gr:16, per:4, kat:'nonmetal', skall:4, valens:6, oks:[-2,4,6], col:16, row:4},
+  {z:35, sym:'Br', navn:'Brom', masse:79.904, gr:17, per:4, kat:'halogen', skall:4, valens:7, oks:[-1,1,5], col:17, row:4},
+  {z:36, sym:'Kr', navn:'Krypton', masse:83.798, gr:18, per:4, kat:'nobelgas', skall:4, valens:8, oks:[0], col:18, row:4},
+  {z:37, sym:'Rb', navn:'Rubidium', masse:85.468, gr:1, per:5, kat:'alkali', skall:5, valens:1, oks:[1], col:1, row:5},
+  {z:38, sym:'Sr', navn:'Strontium', masse:87.62, gr:2, per:5, kat:'alkaliearth', skall:5, valens:2, oks:[2], col:2, row:5},
+  {z:39, sym:'Y', navn:'Yttrium', masse:88.906, gr:3, per:5, kat:'transition', skall:5, valens:3, oks:[3], col:3, row:5},
+  {z:40, sym:'Zr', navn:'Zirkonium', masse:91.224, gr:4, per:5, kat:'transition', skall:5, valens:4, oks:[4], col:4, row:5},
+  {z:41, sym:'Nb', navn:'Niob', masse:92.906, gr:5, per:5, kat:'transition', skall:5, valens:5, oks:[3,5], col:5, row:5},
+  {z:42, sym:'Mo', navn:'Molybden', masse:95.96, gr:6, per:5, kat:'transition', skall:5, valens:6, oks:[2,4,6], col:6, row:5},
+  {z:43, sym:'Tc', navn:'Technetium', masse:98, gr:7, per:5, kat:'transition', skall:5, valens:7, oks:[4,7], col:7, row:5},
+  {z:44, sym:'Ru', navn:'Ruthenium', masse:101.07, gr:8, per:5, kat:'transition', skall:5, valens:8, oks:[2,3,4,8], col:8, row:5},
+  {z:45, sym:'Rh', navn:'Rhodium', masse:102.906, gr:9, per:5, kat:'transition', skall:5, valens:9, oks:[3], col:9, row:5},
+  {z:46, sym:'Pd', navn:'Palladium', masse:106.42, gr:10, per:5, kat:'transition', skall:5, valens:10, oks:[2,4], col:10, row:5},
+  {z:47, sym:'Ag', navn:'Sølv', masse:107.868, gr:11, per:5, kat:'transition', skall:5, valens:11, oks:[1], col:11, row:5},
+  {z:48, sym:'Cd', navn:'Kadmium', masse:112.411, gr:12, per:5, kat:'transition', skall:5, valens:12, oks:[2], col:12, row:5},
+  {z:49, sym:'In', navn:'Indium', masse:114.818, gr:13, per:5, kat:'postrans', skall:5, valens:3, oks:[3], col:13, row:5},
+  {z:50, sym:'Sn', navn:'Tinn', masse:118.710, gr:14, per:5, kat:'postrans', skall:5, valens:4, oks:[2,4], col:14, row:5},
+  {z:51, sym:'Sb', navn:'Antimon', masse:121.760, gr:15, per:5, kat:'metalloid', skall:5, valens:5, oks:[-3,3,5], col:15, row:5},
+  {z:52, sym:'Te', navn:'Tellur', masse:127.60, gr:16, per:5, kat:'metalloid', skall:5, valens:6, oks:[-2,4,6], col:16, row:5},
+  {z:53, sym:'I', navn:'Jod', masse:126.904, gr:17, per:5, kat:'halogen', skall:5, valens:7, oks:[-1,1,5,7], col:17, row:5},
+  {z:54, sym:'Xe', navn:'Xenon', masse:131.293, gr:18, per:5, kat:'nobelgas', skall:5, valens:8, oks:[0], col:18, row:5},
+  {z:55, sym:'Cs', navn:'Cesium', masse:132.905, gr:1, per:6, kat:'alkali', skall:6, valens:1, oks:[1], col:1, row:6},
+  {z:56, sym:'Ba', navn:'Barium', masse:137.327, gr:2, per:6, kat:'alkaliearth', skall:6, valens:2, oks:[2], col:2, row:6},
+  // Lanthanider rad 6 col 3 = placessholder, selve lant. på rad 9
+  {z:57, sym:'La', navn:'Lantan', masse:138.905, gr:3, per:6, kat:'lanthanide', skall:6, valens:3, oks:[3], col:4, row:9},
+  {z:58, sym:'Ce', navn:'Cerium', masse:140.116, gr:4, per:6, kat:'lanthanide', skall:6, valens:4, oks:[3,4], col:5, row:9},
+  {z:59, sym:'Pr', navn:'Praseodym', masse:140.908, gr:5, per:6, kat:'lanthanide', skall:6, valens:5, oks:[3], col:6, row:9},
+  {z:60, sym:'Nd', navn:'Neodym', masse:144.242, gr:6, per:6, kat:'lanthanide', skall:6, valens:6, oks:[3], col:7, row:9},
+  {z:61, sym:'Pm', navn:'Prometium', masse:145, gr:7, per:6, kat:'lanthanide', skall:6, valens:7, oks:[3], col:8, row:9},
+  {z:62, sym:'Sm', navn:'Samarium', masse:150.36, gr:8, per:6, kat:'lanthanide', skall:6, valens:8, oks:[2,3], col:9, row:9},
+  {z:63, sym:'Eu', navn:'Europium', masse:151.964, gr:9, per:6, kat:'lanthanide', skall:6, valens:9, oks:[2,3], col:10, row:9},
+  {z:64, sym:'Gd', navn:'Gadolinium', masse:157.25, gr:10, per:6, kat:'lanthanide', skall:6, valens:10, oks:[3], col:11, row:9},
+  {z:65, sym:'Tb', navn:'Terbium', masse:158.925, gr:11, per:6, kat:'lanthanide', skall:6, valens:11, oks:[3,4], col:12, row:9},
+  {z:66, sym:'Dy', navn:'Dysprosium', masse:162.500, gr:12, per:6, kat:'lanthanide', skall:6, valens:12, oks:[3], col:13, row:9},
+  {z:67, sym:'Ho', navn:'Holmium', masse:164.930, gr:13, per:6, kat:'lanthanide', skall:6, valens:13, oks:[3], col:14, row:9},
+  {z:68, sym:'Er', navn:'Erbium', masse:167.259, gr:14, per:6, kat:'lanthanide', skall:6, valens:14, oks:[3], col:15, row:9},
+  {z:69, sym:'Tm', navn:'Thulium', masse:168.934, gr:15, per:6, kat:'lanthanide', skall:6, valens:15, oks:[2,3], col:16, row:9},
+  {z:70, sym:'Yb', navn:'Ytterbium', masse:173.054, gr:16, per:6, kat:'lanthanide', skall:6, valens:16, oks:[2,3], col:17, row:9},
+  {z:71, sym:'Lu', navn:'Lutetium', masse:174.967, gr:17, per:6, kat:'lanthanide', skall:6, valens:17, oks:[3], col:18, row:9},
+  {z:72, sym:'Hf', navn:'Hafnium', masse:178.49, gr:4, per:6, kat:'transition', skall:6, valens:4, oks:[4], col:4, row:6},
+  {z:73, sym:'Ta', navn:'Tantal', masse:180.948, gr:5, per:6, kat:'transition', skall:6, valens:5, oks:[5], col:5, row:6},
+  {z:74, sym:'W', navn:'Wolfram', masse:183.84, gr:6, per:6, kat:'transition', skall:6, valens:6, oks:[2,4,6], col:6, row:6},
+  {z:75, sym:'Re', navn:'Rhenium', masse:186.207, gr:7, per:6, kat:'transition', skall:6, valens:7, oks:[4,7], col:7, row:6},
+  {z:76, sym:'Os', navn:'Osmium', masse:190.23, gr:8, per:6, kat:'transition', skall:6, valens:8, oks:[2,3,4,8], col:8, row:6},
+  {z:77, sym:'Ir', navn:'Iridium', masse:192.217, gr:9, per:6, kat:'transition', skall:6, valens:9, oks:[3,4], col:9, row:6},
+  {z:78, sym:'Pt', navn:'Platina', masse:195.084, gr:10, per:6, kat:'transition', skall:6, valens:10, oks:[2,4], col:10, row:6},
+  {z:79, sym:'Au', navn:'Gull', masse:196.967, gr:11, per:6, kat:'transition', skall:6, valens:11, oks:[1,3], col:11, row:6},
+  {z:80, sym:'Hg', navn:'Kvikksølv', masse:200.592, gr:12, per:6, kat:'transition', skall:6, valens:12, oks:[1,2], col:12, row:6},
+  {z:81, sym:'Tl', navn:'Thallium', masse:204.383, gr:13, per:6, kat:'postrans', skall:6, valens:3, oks:[1,3], col:13, row:6},
+  {z:82, sym:'Pb', navn:'Bly', masse:207.2, gr:14, per:6, kat:'postrans', skall:6, valens:4, oks:[2,4], col:14, row:6},
+  {z:83, sym:'Bi', navn:'Vismut', masse:208.980, gr:15, per:6, kat:'postrans', skall:6, valens:5, oks:[3,5], col:15, row:6},
+  {z:84, sym:'Po', navn:'Polonium', masse:209, gr:16, per:6, kat:'metalloid', skall:6, valens:6, oks:[2,4], col:16, row:6},
+  {z:85, sym:'At', navn:'Astat', masse:210, gr:17, per:6, kat:'halogen', skall:6, valens:7, oks:[-1,1], col:17, row:6},
+  {z:86, sym:'Rn', navn:'Radon', masse:222, gr:18, per:6, kat:'nobelgas', skall:6, valens:8, oks:[0], col:18, row:6},
+  {z:87, sym:'Fr', navn:'Francium', masse:223, gr:1, per:7, kat:'alkali', skall:7, valens:1, oks:[1], col:1, row:7},
+  {z:88, sym:'Ra', navn:'Radium', masse:226, gr:2, per:7, kat:'alkaliearth', skall:7, valens:2, oks:[2], col:2, row:7},
+  // Aktinider
+  {z:89, sym:'Ac', navn:'Aktinium', masse:227, gr:3, per:7, kat:'actinide', skall:7, valens:3, oks:[3], col:4, row:10},
+  {z:90, sym:'Th', navn:'Thorium', masse:232.038, gr:4, per:7, kat:'actinide', skall:7, valens:4, oks:[4], col:5, row:10},
+  {z:91, sym:'Pa', navn:'Protaktinium', masse:231.036, gr:5, per:7, kat:'actinide', skall:7, valens:5, oks:[4,5], col:6, row:10},
+  {z:92, sym:'U', navn:'Uran', masse:238.029, gr:6, per:7, kat:'actinide', skall:7, valens:6, oks:[3,4,5,6], col:7, row:10},
+  {z:93, sym:'Np', navn:'Neptunium', masse:237, gr:7, per:7, kat:'actinide', skall:7, valens:7, oks:[3,4,5,6], col:8, row:10},
+  {z:94, sym:'Pu', navn:'Plutonium', masse:244, gr:8, per:7, kat:'actinide', skall:7, valens:8, oks:[3,4,5,6], col:9, row:10},
+  {z:95, sym:'Am', navn:'Americium', masse:243, gr:9, per:7, kat:'actinide', skall:7, valens:9, oks:[3,4,5,6], col:10, row:10},
+  {z:96, sym:'Cm', navn:'Curium', masse:247, gr:10, per:7, kat:'actinide', skall:7, valens:10, oks:[3], col:11, row:10},
+  {z:97, sym:'Bk', navn:'Berkelium', masse:247, gr:11, per:7, kat:'actinide', skall:7, valens:11, oks:[3,4], col:12, row:10},
+  {z:98, sym:'Cf', navn:'Californium', masse:251, gr:12, per:7, kat:'actinide', skall:7, valens:12, oks:[3], col:13, row:10},
+  {z:99, sym:'Es', navn:'Einsteinium', masse:252, gr:13, per:7, kat:'actinide', skall:7, valens:13, oks:[3], col:14, row:10},
+  {z:100, sym:'Fm', navn:'Fermium', masse:257, gr:14, per:7, kat:'actinide', skall:7, valens:14, oks:[3], col:15, row:10},
+  {z:101, sym:'Md', navn:'Mendelevium', masse:258, gr:15, per:7, kat:'actinide', skall:7, valens:15, oks:[2,3], col:16, row:10},
+  {z:102, sym:'No', navn:'Nobelium', masse:259, gr:16, per:7, kat:'actinide', skall:7, valens:16, oks:[2,3], col:17, row:10},
+  {z:103, sym:'Lr', navn:'Lawrencium', masse:262, gr:17, per:7, kat:'actinide', skall:7, valens:17, oks:[3], col:18, row:10},
+  {z:104, sym:'Rf', navn:'Rutherfordium', masse:267, gr:4, per:7, kat:'transition', skall:7, valens:4, oks:[4], col:4, row:7},
+  {z:105, sym:'Db', navn:'Dubnium', masse:268, gr:5, per:7, kat:'transition', skall:7, valens:5, oks:[5], col:5, row:7},
+  {z:106, sym:'Sg', navn:'Seaborgium', masse:271, gr:6, per:7, kat:'transition', skall:7, valens:6, oks:[6], col:6, row:7},
+  {z:107, sym:'Bh', navn:'Bohrium', masse:270, gr:7, per:7, kat:'transition', skall:7, valens:7, oks:[7], col:7, row:7},
+  {z:108, sym:'Hs', navn:'Hassium', masse:277, gr:8, per:7, kat:'transition', skall:7, valens:8, oks:[8], col:8, row:7},
+  {z:109, sym:'Mt', navn:'Meitnerium', masse:276, gr:9, per:7, kat:'transition', skall:7, valens:9, oks:[3,6,9], col:9, row:7},
+  {z:110, sym:'Ds', navn:'Darmstadtium', masse:281, gr:10, per:7, kat:'transition', skall:7, valens:10, oks:[], col:10, row:7},
+  {z:111, sym:'Rg', navn:'Röntgenium', masse:282, gr:11, per:7, kat:'transition', skall:7, valens:11, oks:[], col:11, row:7},
+  {z:112, sym:'Cn', navn:'Copernicium', masse:285, gr:12, per:7, kat:'transition', skall:7, valens:12, oks:[], col:12, row:7},
+  {z:113, sym:'Nh', navn:'Nihonium', masse:286, gr:13, per:7, kat:'postrans', skall:7, valens:3, oks:[], col:13, row:7},
+  {z:114, sym:'Fl', navn:'Flerovium', masse:289, gr:14, per:7, kat:'postrans', skall:7, valens:4, oks:[], col:14, row:7},
+  {z:115, sym:'Mc', navn:'Moscovium', masse:290, gr:15, per:7, kat:'postrans', skall:7, valens:5, oks:[], col:15, row:7},
+  {z:116, sym:'Lv', navn:'Livermorium', masse:293, gr:16, per:7, kat:'postrans', skall:7, valens:6, oks:[], col:16, row:7},
+  {z:117, sym:'Ts', navn:'Tennessine', masse:294, gr:17, per:7, kat:'halogen', skall:7, valens:7, oks:[], col:17, row:7},
+  {z:118, sym:'Og', navn:'Oganesson', masse:294, gr:18, per:7, kat:'nobelgas', skall:7, valens:8, oks:[], col:18, row:7},
+];
+
+const KATFARGE = {
+  alkali:'k-alkali', alkaliearth:'k-alkaliearth', transition:'k-transition',
+  postrans:'k-postrans', metalloid:'k-metalloid', nonmetal:'k-nonmetal',
+  halogen:'k-halogen', nobelgas:'k-nobelgas', lanthanide:'k-lanthanide', actinide:'k-actinide'
+};
+const KATNAVN = {
+  alkali:'Alkalimetall', alkaliearth:'Jordalkalimetall', transition:'Overgangsmetall',
+  postrans:'Ettovergangsmetall', metalloid:'Halvmetall', nonmetal:'Ikke-metall',
+  halogen:'Halogen', nobelgas:'Edelgass', lanthanide:'Lanthanide', actinide:'Aktinide'
+};
+const KATFARGECSS = {
+  alkali:'var(--c-alkali)', alkaliearth:'var(--c-alkaliearth)', transition:'var(--c-transition)',
+  postrans:'var(--c-postrans)', metalloid:'var(--c-metalloid)', nonmetal:'var(--c-nonmetal)',
+  halogen:'var(--c-halogen)', nobelgas:'var(--c-nobelgas)', lanthanide:'var(--c-lanthanide)', actinide:'var(--c-actinide)'
+};
+
+// ══ BYGG GRID ══
+function byggGrid(){
+  const grid = document.getElementById('ps-grid');
+  // 10 rader × 18 kolonner
+  const celle = Array.from({length:10}, ()=>Array(18).fill(null));
+
+  EL.forEach(e=>{
+    if(e.row>=1 && e.row<=10 && e.col>=1 && e.col<=18){
+      celle[e.row-1][e.col-1] = e;
+    }
+  });
+
+  // Tom-celler spesialhåndtering
+  // Rad 1: kol 2-17 tomme
+  // Rad 2-3: kol 3-12 tomme
+  // Rad 6 kol 3: lanthanide-plass, rad 7 kol 3: actinide-plass
+  // Rad 8: separator (tom), rad 9: lanthanider, rad 10: aktinider
+
+  for(let r=0;r<10;r++){
+    for(let c=0;c<18;c++){
+      const el = celle[r][c];
+      const div = document.createElement('div');
+
+      if(r===7){
+        // Separator-rad: tomme
+        div.className='el k-tom';
+        grid.appendChild(div);
+        continue;
+      }
+
+      // Etikett-celler
+      if(r===8 && c===0){
+        div.className='el serie-etikett k-tom';div.style.fontSize='.42rem';div.style.color='var(--c-lanthanide)';
+        div.textContent='57–71';grid.appendChild(div);continue;
+      }
+      if(r===8 && c===1){
+        div.className='el serie-etikett k-tom';div.style.fontSize='.38rem';div.style.color='var(--c-lanthanide)';
+        div.textContent='Lant.';grid.appendChild(div);continue;
+      }
+      if(r===8 && c===2){
+        div.className='el k-tom';grid.appendChild(div);continue;
+      }
+      if(r===9 && c===0){
+        div.className='el serie-etikett k-tom';div.style.fontSize='.42rem';div.style.color='var(--c-actinide)';
+        div.textContent='89–103';grid.appendChild(div);continue;
+      }
+      if(r===9 && c===1){
+        div.className='el serie-etikett k-tom';div.style.fontSize='.38rem';div.style.color='var(--c-actinide)';
+        div.textContent='Akti.';grid.appendChild(div);continue;
+      }
+      if(r===9 && c===2){
+        div.className='el k-tom';grid.appendChild(div);continue;
+      }
+
+      // Lanthanide/actinide-rad placeholder (rad 5=idx, kol 2=idx)
+      if((r===5||r===6) && c===2){
+        div.className='el k-tom';
+        const ser = r===5 ? 'La–Lu' : 'Ac–Lr';
+        div.style.fontSize='.4rem';div.style.color='var(--dim)';div.style.display='flex';div.style.alignItems='center';div.style.justifyContent='center';
+        // gjøres tom
+        grid.appendChild(div);continue;
+      }
+
+      if(!el){
+        div.className='el k-tom';
+        grid.appendChild(div);
+        continue;
+      }
+
+      div.className=`el ${KATFARGE[el.kat]||'k-tom'}`;
+      div.dataset.z=el.z;
+      div.innerHTML=`
+        <span class="anum">${el.z}</span>
+        <span class="sym">${el.sym}</span>
+        <span class="navn-kort">${el.navn}</span>
+        <span class="masse-kort">${Number.isInteger(el.masse)?el.masse:el.masse.toFixed(1)}</span>
+      `;
+      div.addEventListener('click',()=>klikk(el));
+      div.addEventListener('mouseenter',e=>visTooltip(el,e));
+      div.addEventListener('mousemove',e=>flyttTooltip(e));
+      div.addEventListener('mouseleave',skjulTooltip);
+      grid.appendChild(div);
+    }
+  }
+}
+
+// ══ TOOLTIP ══
+const tt = document.getElementById('tt');
+function visTooltip(el,e){
+  tt.innerHTML=`
+    <div class="tt-sym" style="color:${KATFARGECSS[el.kat]||'white'}">${el.sym}</div>
+    <div class="tt-navn">${el.navn}</div>
+    <div class="tt-rader">
+      <div class="tt-r"><span class="tt-lbl">Atomnr: </span><span class="tt-val">${el.z}</span></div>
+      <div class="tt-r"><span class="tt-lbl">Masse: </span><span class="tt-val">${el.masse}</span></div>
+      <div class="tt-r"><span class="tt-lbl">Periode: </span><span class="tt-val">${el.per}</span></div>
+      <div class="tt-r"><span class="tt-lbl">Gruppe: </span><span class="tt-val">${el.gr}</span></div>
+      <div class="tt-r"><span class="tt-lbl">Skall: </span><span class="tt-val">${el.skall}</span></div>
+      <div class="tt-r"><span class="tt-lbl">Kategori: </span><span class="tt-val">${KATNAVN[el.kat]||el.kat}</span></div>
+    </div>
+  `;
+  tt.classList.add('vis');
+  flyttTooltip(e);
+}
+function flyttTooltip(e){
+  let x=e.clientX+14,y=e.clientY-10;
+  if(x+200>window.innerWidth)x=e.clientX-210;
+  if(y+160>window.innerHeight)y=e.clientY-160;
+  tt.style.left=x+'px';tt.style.top=y+'px';
+}
+function skjulTooltip(){tt.classList.remove('vis')}
+
+// ══ SPØRSMÅLSGENERATOR ══
+let maalsZ = null;
+let sporsmalAktivt = false;
+let poeng=0,streak=0,feil=0,totalt=0;
+let brukteSpm = [];
+
+// Spørsmålsgeneratorer - returnerer {tekst, kategori, hintFarge}
+const GENERATORS = [
+  // Protoner
+  e=>({tekst:`Jeg har ${e.z} protoner i kjernen.`, kat:'Atomkjerne', farge:'#54a0ff'}),
+  e=>({tekst:`Mitt atomnummer er ${e.z}.`, kat:'Atomnummer', farge:'#54a0ff'}),
+  // Elektronskall
+  e=>({tekst:`Jeg har ${e.skall} elektronskall.`, kat:'Elektronskall', farge:'#feca57'}),
+  e=>({tekst:`Jeg befinner meg i periode ${e.per} i periodesystemet.`, kat:'Periode', farge:'#feca57'}),
+  // Valenselektroner
+  e=>{
+    const v = e.kat==='transition'?null:e.valens>8?null:e.valens;
+    if(!v||e.kat==='transition')return null;
+    const veNavn=['null','ett','to','tre','fire','fem','seks','syv','åtte'];
+    return {tekst:`Jeg har ${veNavn[v]||v} valenselektroner.`, kat:'Valenselektroner', farge:'#a8e063'};
+  },
+  // Elektronskall + valenselektroner
+  e=>{
+    if(e.kat==='transition')return null;
+    const v=e.valens>8?null:e.valens;
+    if(!v)return null;
+    const veNavn=['null','ett','to','tre','fire','fem','seks','syv','åtte'];
+    return {tekst:`Jeg har ${e.skall} elektronskall og ${veNavn[v]||v} valenselektroner.`, kat:'Elektronstruktur', farge:'#a8e063'};
+  },
+  // Kategori + periode
+  e=>{
+    const k=KATNAVN[e.kat];
+    if(!k)return null;
+    return {tekst:`Jeg er et ${k.toLowerCase()} i periode ${e.per}.`, kat:'Gruppe & periode', farge:'#ff9f43'};
+  },
+  // Kjemiske egenskaper
+  e=>{
+    const facts={
+      1:'Jeg er det letteste og mest tallrike grunnstoffet i universet. Jeg danner vann med oksygen.',
+      2:'Jeg er den nest letteste edelgassen og brukes i ballonger som ikke er brennbare.',
+      6:'Jeg er grunnlaget for alt liv. Alle organiske molekyler inneholder meg.',
+      7:'Jeg utgjør 78% av atmosfæren og er viktig i proteiner og DNA.',
+      8:'Jeg trengs for forbrenning og celleånding. Jeg utgjør 21% av luften.',
+      11:'Jeg er et mykt sølvhvitt alkalimetall som reagerer voldsomt med vann.',
+      17:'Jeg er en gul-grønn giftig gass og brukes til å desinfisere drikkevann.',
+      26:'Jeg er det vanligste overgangsmetallet og brukes til å lage stål.',
+      47:'Jeg er et edelt, skinnende metall som er best til å lede elektrisitet.',
+      79:'Jeg er et edelt gult metall og har vært brukt som valuta i tusenvis av år.',
+      80:'Jeg er det eneste metallet som er flytende ved romtemperatur.',
+    };
+    if(facts[e.z])return{tekst:facts[e.z],kat:'Kjemiske egenskaper',farge:'#00d2d3'};
+    return null;
+  },
+  // Reaksjon med vann/andre stoffer
+  e=>{
+    const reaksjoner={
+      1:'2 av meg + 1 oksygen → vann (H₂O).',
+      8:'2 hydrogen + 1 av meg → vann (H₂O).',
+      11:'Meg + vann → natronlut + hydrogengass. Jeg er et alkalimetall.',
+      19:'Jeg reagerer enda kraftigere med vann enn natrium og sender gnister.',
+      17:'Meg + natrium → bordsalt (NaCl).',
+      2:'Jeg er en edelgass – jeg reagerer ikke med noe som helst under normale forhold.',
+      10:'Jeg er en edelgass – kjemisk fullstendig inert. Jeg reagerer ikke.',
+      18:'Jeg er en edelgass brukt i sveiselys og neonlamper – uten kjemiske reaksjoner.',
+    };
+    if(reaksjoner[e.z])return{tekst:reaksjoner[e.z],kat:'Kjemisk reaktivitet',farge:'#ff6b6b'};
+    return null;
+  },
+  // Oksidationstall
+  e=>{
+    if(!e.oks||e.oks.length===0)return null;
+    if(e.oks[0]===0)return{tekst:`Jeg er en edelgass med oksidationstall 0 – jeg reagerer ikke.`,kat:'Oksidationstall',farge:'#ff6348'};
+    const o=e.oks.join(' eller +').replace('-','-');
+    return{tekst:`Mitt vanligste oksidationstall er ${e.oks[0]>0?'+':''}${e.oks[0]}.`,kat:'Oksidationstall',farge:'#c8a8e9'};
+  },
+  // Atomvekt
+  e=>({tekst:`Min relative atommasse er omtrent ${Math.round(e.masse)}.`,kat:'Atommasse',farge:'#f8a5c2'}),
+  // Gruppe (kolonne)
+  e=>{
+    if(e.kat==='lanthanide'||e.kat==='actinide')return null;
+    return{tekst:`Jeg er i gruppe ${e.gr} i periodesystemet.`,kat:'Gruppe',farge:'#fb923c'};
+  },
+  // Kategoribeskrivelse
+  e=>{
+    const ktxt={
+      alkali:`Jeg er et alkalimetall – mykt, sølvfarget og reaktivt. Jeg har én valenselektron.`,
+      alkaliearth:`Jeg er et jordalkalimetall med to valenselektroner og oksidationstall +2.`,
+      transition:`Jeg er et overgangsmetall – typisk hardt, skinnende og leder godt elektrisitet.`,
+      postrans:`Jeg er et ettovergangsmetall, plassert etter overgangsmetallene i periodesystemet.`,
+      metalloid:`Jeg er et halvmetall – med egenskaper mellom metaller og ikke-metaller.`,
+      nonmetal:`Jeg er et ikke-metall – dårlig leder av varme og elektrisitet.`,
+      halogen:`Jeg er et halogen – en svært reaktiv ikke-metall i gruppe 17.`,
+      nobelgas:`Jeg er en edelgass – fullstendig inertt og reagerer nesten ikke med andre stoffer.`,
+      lanthanide:`Jeg er en lanthanide – et sjeldent jordmetall brukt i magneter og lasere.`,
+      actinide:`Jeg er en aktinide – et radioaktivt grunnstoff.`,
+    };
+    const t=ktxt[e.kat];if(!t)return null;
+    return{tekst:t,kat:`Kategori: ${KATNAVN[e.kat]||e.kat}`,farge:KATFARGECSS[e.kat]||'#54a0ff'};
+  },
+  // Aggregattilstand
+  e=>{
+    const aggregat={
+      80:'Jeg er det eneste metallet som er flytende ved romtemperatur (25°C).',
+      35:'Jeg er det eneste ikke-metallet som er flytende ved romtemperatur.',
+      1:'Jeg er en gass ved romtemperatur og det letteste av alle grunnstoffer.',
+      2:'Jeg er en fargeløs, luktfri edelgass ved romtemperatur.',
+      8:'Jeg er en fargeløs gass vi puster inn – livsnødvendig for celleåndingen.',
+    };
+    if(aggregat[e.z])return{tekst:aggregat[e.z],kat:'Aggregattilstand',farge:'#54a0ff'};
+    return null;
+  },
+];
+
+// ══ QUIZ-LOGIKK ══
+function velgMaal(){
+  // Prioriter H–Rn (z 1–86) for mer kjent innhold
+  const pool = EL.filter(e=>e.z<=86);
+  // Finn tilfeldig element
+  let kandidat;
+  let forsok=0;
+  do{
+    kandidat = pool[Math.floor(Math.random()*pool.length)];
+    forsok++;
+  } while(brukteSpm.includes(kandidat.z) && forsok<50);
+
+  brukteSpm.push(kandidat.z);
+  if(brukteSpm.length>30) brukteSpm.shift();
+  return kandidat;
+}
+
+function genererSporsmal(el){
+  // Bland generatorene, prøv inntil vi finner ett som ikke returnerer null
+  const shuffled = [...GENERATORS].sort(()=>Math.random()-.5);
+  for(const gen of shuffled){
+    const res = gen(el);
+    if(res) return res;
+  }
+  // fallback
+  return {tekst:`Mitt atomnummer er ${el.z}.`, kat:'Atomnummer', farge:'#54a0ff'};
+}
+
+function nesteSporsmal(){
+  // Nullstill blokkering
+  document.querySelectorAll('.el.blokkert').forEach(d=>d.classList.remove('blokkert'));
+  document.getElementById('neste-btn').style.display='none';
+  sporsmalAktivt=true;
+
+  const maal = velgMaal();
+  maalsZ = maal.z;
+  const spm = genererSporsmal(maal);
+
+  // Oppdater spørsmål-panel
+  document.getElementById('sp-kategori').textContent = '⚗️ ' + spm.kat;
+  document.getElementById('sp-tekst').textContent = spm.tekst;
+  document.getElementById('sp-hint').textContent = 'Klikk på riktig grunnstoff i periodesystemet';
+  document.getElementById('sporsmal-boks').style.setProperty('--hint-farge', spm.farge);
+
+  // Marker mål-element visuelt? Nei, for at det skal være en quiz.
+  // Men marker IKKE – eleven skal finne det selv.
+}
+
+function klikk(el){
+  if(!sporsmalAktivt){
+    // Ikke startet ennå: start quiz
+    nesteSporsmal();
+    return;
+  }
+
+  const div = document.querySelector(`.el[data-z="${el.z}"]`);
+  totalt++;
+  document.getElementById('sTotal').textContent=totalt;
+
+  if(el.z===maalsZ){
+    // RIKTIG!
+    poeng+=10+Math.max(0,streak*2);
+    streak++;
+    document.getElementById('sPoeng').textContent=poeng;
+    document.getElementById('sStreak').textContent='🔥 '+streak;
+    const sv=document.getElementById('sStreak');
+    sv.classList.remove('streak-pop');void sv.offsetWidth;sv.classList.add('streak-pop');
+
+    if(div){div.classList.add('riktig-flash');setTimeout(()=>div.classList.remove('riktig-flash'),600);}
+    visFeedback(streak>=3?`🔥 ${streak}x STREAK!`:'✓ Riktig!', 'riktig');
+    sporsmalAktivt=false;
+    document.getElementById('neste-btn').style.display='block';
+    document.getElementById('sp-hint').textContent='✓ '+el.navn+' ('+el.sym+', z='+el.z+') – Trykk "Neste spørsmål"';
+
+  } else {
+    // FEIL
+    feil++;streak=0;
+    document.getElementById('sFeil').textContent=feil;
+    document.getElementById('sStreak').textContent='🔥 0';
+
+    if(div){div.classList.add('feil-flash');setTimeout(()=>div.classList.remove('feil-flash'),500);}
+    // Blokkér dette elementet (kan ikke klikkes igjen samme runde)
+    if(div){div.classList.add('blokkert');}
+    visFeedback('✗ Feil – prøv igjen','feil');
+    document.getElementById('sp-hint').textContent='Det er ikke '+el.navn+' – prøv igjen!';
+  }
+}
+
+function visFeedback(tekst, type){
+  const fb=document.getElementById('feedback');
+  fb.textContent=tekst;fb.className='feedback '+type;
+  void fb.offsetWidth;fb.classList.add('show');
+  setTimeout(()=>fb.classList.remove('show'),900);
+}
+
+// ══ INIT ══
+byggGrid();
+// Viser velkomsttekst til bruker klikker
+
+// Spor fullføring ved scroll til bunn
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    var scrolled = window.scrollY + window.innerHeight;
+    var total = document.body.scrollHeight;
+    if (scrolled >= total - 100) {
+      _sporet = true;
+      window._skaplab_logg('periodesystem', 'NAT-KJE', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  // Også etter 60 sek om de leser uten å scrolle
+  setTimeout(function() {
+    if (!_sporet) {
+      _sporet = true;
+      window._skaplab_logg('periodesystem', 'NAT-KJE', 80, 1, 1, 1, 1);
+    }
+  }, 60000);
+})();
+
+</script>
+</body>
+</html>
