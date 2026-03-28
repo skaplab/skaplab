@@ -75,12 +75,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div id="klasse-liste"></div>
     <div class="side-sek">Verktoy</div>
     <a class="side-link" onclick="visNyKlasse()">+ Ny klasse</a>
+    <a class="side-link" onclick="visTildel()">📋 Tildel oppgave</a>
     <a class="side-link" onclick="loggUt()">Logg ut</a>
   </div>
   <div id="innhold">
     <div id="laster-msg">Laster...</div>
     <div id="side-klasse" style="display:none"></div>
     <div id="side-nyklasse" style="display:none"></div>
+  <div id="side-tildel" style="display:none"></div>
   </div>
 </div>
 <div class="modal-bg" id="modal">
@@ -326,6 +328,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 </script>
 <script>
+
 
 
 
@@ -742,6 +745,102 @@ function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
 
 
 
+
+
+async function visTildel(){
+  document.querySelectorAll('[id^=side-]').forEach(function(e){e.style.display='none';});
+  document.getElementById('side-tildel').style.display='block';
+  
+  // Hent alle oppgaver
+  var oppgResp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/oppgaver?order=fag,tittel&select=id,tittel,type,ressurs,url,km_kode,fag',
+    {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).catch(function(){return [];});
+  var oppgaver = Array.isArray(oppgResp) ? oppgResp : [];
+
+  var fagGrupper = {};
+  oppgaver.forEach(function(o){
+    if(!fagGrupper[o.fag]) fagGrupper[o.fag]=[];
+    fagGrupper[o.fag].push(o);
+  });
+
+  var elevListe = elever.filter(function(e){return e.klasse_id===aktivKlasse;});
+  var klasse = klasser.find(function(k){return k.id===aktivKlasse;});
+
+  var s = document.getElementById('side-tildel');
+  s.innerHTML = '<div class="side-tittel">Tildel oppgave</div>'
+    +'<div style="max-width:600px;">'
+    +'<div class="fr"><label>Til hvem</label>'
+    +'<select id="til-hvem"><option value="klasse">Hele klassen ('+(klasse?klasse.navn:'')+')</option>'
+    +elevListe.map(function(e){return '<option value="'+e.id+'">'+e.fullt_navn+'</option>';}).join('')
+    +'</select></div>'
+    +'<div class="fr"><label>Frist (valgfritt)</label>'
+    +'<input type="date" id="til-frist"></div>'
+    +'<div class="fr"><label>Velg oppgave</label></div>'
+    +'<div id="oppg-fag-grid" style="display:flex;flex-direction:column;gap:16px;">';
+  
+  Object.keys(fagGrupper).forEach(function(fag){
+    var feil_ikon = fag==='Matematikk'?'📐':fag==='Naturfag'?'🔬':'💻';
+    s.innerHTML += '<div><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;">'+feil_ikon+' '+fag+'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+      +fagGrupper[fag].map(function(o){
+        var typeIkon=o.type==='spill'?'🎮':o.type==='flashcard'?'🃏':'📖';
+        return '<button class="oppg-pill" data-id="'+o.id+'" onclick="velgOppgave(this)" '
+          +'style="padding:7px 13px;border-radius:8px;border:1.5px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-size:.8rem;transition:all .15s;">'
+          +typeIkon+' '+o.tittel+'</button>';
+      }).join('')
+      +'</div></div>';
+  });
+
+  s.innerHTML += '</div>'
+    +'<div id="valgt-oppg" style="margin-top:16px;font-size:.82rem;color:var(--bla);min-height:20px;"></div>'
+    +'<button class="ny-btn" id="tildel-btn" onclick="bekreftTildel()" style="margin-top:12px;" disabled>Tildel oppgave</button>'
+    +'<div id="tildel-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div>'
+    +'</div>';
+}
+
+var _valgtOppgaveId = null;
+function velgOppgave(el){
+  document.querySelectorAll('.oppg-pill').forEach(function(b){
+    b.style.background='transparent';b.style.borderColor='var(--border2)';b.style.color='var(--text)';
+  });
+  el.style.background='rgba(96,165,250,.15)';
+  el.style.borderColor='var(--bla)';
+  el.style.color='var(--bla)';
+  _valgtOppgaveId = el.dataset.id;
+  document.getElementById('valgt-oppg').textContent='Valgt: '+el.textContent;
+  document.getElementById('tildel-btn').disabled=false;
+}
+
+async function bekreftTildel(){
+  if(!_valgtOppgaveId) return;
+  var tilHvem = document.getElementById('til-hvem').value;
+  var frist = document.getElementById('til-frist').value || null;
+  var feilEl = document.getElementById('tildel-feil');
+  feilEl.textContent='';
+
+  var data = {oppgave_id: _valgtOppgaveId, laerer_id: lid};
+  if(tilHvem === 'klasse'){
+    data.klasse_id = aktivKlasse;
+  } else {
+    data.elev_id = tilHvem;
+  }
+  if(frist) data.frist = frist;
+
+  var resp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/tildeling',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,
+      'Authorization':'Bearer '+token,'Prefer':'return=minimal'},
+    body:JSON.stringify(data)
+  });
+
+  if(resp.ok){
+    feilEl.style.color='var(--gron)';
+    feilEl.textContent='Oppgave tildelt!';
+    setTimeout(function(){feilEl.textContent='';},3000);
+  } else {
+    feilEl.style.color='var(--rod)';
+    feilEl.textContent='Feil ved tildeling. Prøv igjen.';
+  }
+}
 
 </script>
 </body></html>

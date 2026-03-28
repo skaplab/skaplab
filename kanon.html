@@ -246,6 +246,34 @@ canvas{display:block;width:100%;height:100%;}
 
 <script>
 
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+
 // ══ SKAPLAB LAGRING ══
 const SL={
   _k:(s,f)=>`skaplab_${s}_${f}`,
@@ -851,6 +879,8 @@ function visSluttskjerm() {
   document.getElementById('slutt-tekst').innerHTML =
     `${TOTAL_OPPGAVER} oppgaver fullført!<br>Treff: <b>${treffTeller}</b> · Skudd: <b>${tot}</b> · Nøyaktighet: <b>${noy}%</b>`;
   document.getElementById('slutt').classList.add('vis');
+
+  window._skaplab_logg('kanon','MAT-FUNK',noy,tot,treffTeller);
 }
 
 // ══════════════════════════════════════════════
@@ -869,6 +899,5 @@ window.addEventListener('resize', () => {
   tegnHele(null);
 });
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
 </html>

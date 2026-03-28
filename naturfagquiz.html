@@ -219,6 +219,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 'use strict';
 var DATA = [
   {t:'Celle',d:'Den minste levende enheten i alle organismer. Består av cellemembran, cytoplasma og (i eukaryoter) cellekjerne.',kat:'Biologi'},
@@ -675,6 +703,26 @@ function visSlutt(){
         +'<span class="tr-s">'+r.p+' p</span></div>';
     });
   }catch(e){}
+
+  // Spor per kategori
+  (function() {
+    try {
+      var katAntall = {};
+      spørsmål.forEach(function(q) {
+        var kat = q.kat || 'Ukjent';
+        if (!katAntall[kat]) katAntall[kat] = 0;
+        katAntall[kat]++;
+      });
+      var kmMap = {'Biologi':'NAT-BIO','Kjemi':'NAT-KJE','Fysikk':'NAT-FYS',
+                  'Elektrisitet':'NAT-ELE','Okologi':'NAT-OKO','Teknologi':'NAT-ELE',
+                  'Vitenskapsperson':'NAT-BIO'};
+      window._skaplab_logg('naturfagquiz', 'NAT-BIO', pst, spørsmål.length, null);
+      Object.keys(katAntall).forEach(function(kat) {
+        var km = kmMap[kat] || 'NAT-BIO';
+        window._skaplab_logg('naturfagquiz_' + kat, km, pst, katAntall[kat], null);
+      });
+    } catch(e) {}
+  })();
 }
 </script>
 <!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->

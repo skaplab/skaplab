@@ -197,7 +197,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 'use strict';
+
+// ── FREMGANGSLAGRING (SkapLab) ───────────────────────────────────
+function lagreScore(nøkkel, score, maks) {
+  try {
+    var data = JSON.parse(localStorage.getItem('skaplab_' + nøkkel) || '{}');
+    var pst = maks > 0 ? Math.round((score/maks)*100) : 0;
+    if (!data.bestePst || pst > data.bestePst) {
+      data.bestePst = pst; data.besteScore = score; data.besteMaks = maks;
+    }
+    data.fullfort = pst >= 60;
+    data.sisteSpilt = new Date().toLocaleDateString('nb-NO');
+    data.antallSpilt = (data.antallSpilt||0) + 1;
+    localStorage.setItem('skaplab_' + nøkkel, JSON.stringify(data));
+  } catch(e) {}
+}
+
 // ══════════════════════════════════════════════════════════════════
 // ALGORITMEDETEKTIVEN · Visuell algoritmegjenkenning · SkapLab
 // ══════════════════════════════════════════════════════════════════
@@ -665,13 +709,17 @@ function visFB(ok,tekst) {
 }
 
 function visSlutt() {
+  lagreScore('algoritmedetektiven', riktige, TOTAL);
   if(animTimer) clearInterval(animTimer);
   var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;
   document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Skarpskodd detektiv!':snitt>=50?'👍 Godt arbeid!':'💪 Øv mer på mønstrene!';
   document.getElementById('slutt-p').textContent='Du identifiserte '+riktige+' av '+TOTAL+' algoritmer riktig ('+snitt+'%).';
   document.getElementById('slutt').style.display='flex';
+
+  window._skaplab_logg('algoritmedetektiven','PRG-ALG',snitt,TOTAL,riktige);
 }
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+
+<!-- © 2025 SkapLab · Tommy Lykke Nordahl -->
 </body>
 </html>

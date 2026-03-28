@@ -136,6 +136,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   </div>
 </div></div>
 <script>
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(sessionStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
 // ── OPPGAVER ──────────────────────────────────────────────────────
 var OPPG_LETT = [
   { navn:'Si hei', oppdrag:'Roboten skal hilse på gjesten med navn og en velkomstmelding.',
@@ -312,9 +340,12 @@ function tegnRobot(st){robotState=st;var c=document.getElementById('robot-canvas
 function tegnRF(ctx,st,t){var W=212,H=130;ctx.clearRect(0,0,W,H);ctx.fillStyle='rgba(15,17,32,0.8)';ctx.fillRect(0,0,W,H);var cx=W/2,cy=H*0.45,bob=st==='happy'?Math.sin(t*3)*4:Math.sin(t)*2;ctx.fillStyle='#1e2540';ctx.strokeStyle='#3a4a8a';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(cx-22,cy-10+bob,44,32,5);ctx.fill();ctx.stroke();ctx.fillStyle='#1a2038';ctx.strokeStyle='#4a5a9a';ctx.beginPath();ctx.roundRect(cx-18,cy-36+bob,36,28,4);ctx.fill();ctx.stroke();var ec=st==='happy'?'#34d399':st==='confused'?'#fbbf24':'#60a5fa';[-8,8].forEach(function(ox){ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx+ox,cy-24+bob,4,0,Math.PI*2);ctx.fill();});ctx.strokeStyle=ec;ctx.lineWidth=2;ctx.beginPath();if(st==='happy') ctx.arc(cx,cy-18+bob,7,0.1*Math.PI,0.9*Math.PI);else{ctx.moveTo(cx-6,cy-16+bob);ctx.lineTo(cx+6,cy-16+bob);}ctx.stroke();ctx.strokeStyle='#4a5a9a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx-6,cy-36+bob);ctx.lineTo(cx-10,cy-44+bob);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+6,cy-36+bob);ctx.lineTo(cx+10,cy-44+bob);ctx.stroke();ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx-10,cy-44+bob,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+10,cy-44+bob,3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#3a4a8a';ctx.lineWidth=3;var lb=st==='happy'?Math.sin(t*4)*5:0;ctx.beginPath();ctx.moveTo(cx-10,cy+22+bob);ctx.lineTo(cx-10,cy+36+bob+lb);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+10,cy+22+bob);ctx.lineTo(cx+10,cy+36+bob-lb);ctx.stroke();ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx,cy+10+bob,4,0,Math.PI*2);ctx.fill();}
 
 function visFB(ok,t){var fb=document.getElementById('feedback');fb.textContent=t;fb.className=ok?'ok':'feil';fb.style.display='block';}
-function visSlutt(){var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Mester-programmerer!':snitt>=50?'👍 Godt arbeid!':'💪 ROBO-3000 trenger mer trening!';document.getElementById('slutt-p').textContent='Du fikk '+riktige+' av '+TOTAL+' oppdrag riktig ('+snitt+'%).';document.getElementById('slutt').style.display='flex';if(robotTimer) clearInterval(robotTimer);try{var d=JSON.parse(localStorage.getItem('skaplab_pseudokode')||'{}');if(!d.bestePst||snitt>d.bestePst){d.bestePst=snitt;d.besteScore=riktige;d.besteMaks=TOTAL;}d.fullfort=snitt>=60;d.sisteSpilt=new Date().toLocaleDateString('nb-NO');d.antallSpilt=(d.antallSpilt||0)+1;localStorage.setItem('skaplab_pseudokode',JSON.stringify(d));}catch(e){}}
+function visSlutt(){var snitt=TOTAL>0?Math.round((riktige/TOTAL)*100):0;document.getElementById('slutt-h').textContent=snitt>=80?'🏆 Mester-programmerer!':snitt>=50?'👍 Godt arbeid!':'💪 ROBO-3000 trenger mer trening!';document.getElementById('slutt-p').textContent='Du fikk '+riktige+' av '+TOTAL+' oppdrag riktig ('+snitt+'%).';document.getElementById('slutt').style.display='flex';if(robotTimer) clearInterval(robotTimer);try{var d=JSON.parse(localStorage.getItem('skaplab_pseudokode')||'{}');if(!d.bestePst||snitt>d.bestePst){d.bestePst=snitt;d.besteScore=riktige;d.besteMaks=TOTAL;}d.fullfort=snitt>=60;d.sisteSpilt=new Date().toLocaleDateString('nb-NO');d.antallSpilt=(d.antallSpilt||0)+1;localStorage.setItem('skaplab_pseudokode',JSON.stringify(d));}catch(e){}
+  window._skaplab_logg('pseudokode','PRG-ALG',snitt,TOTAL,riktige);
+}
 window.addEventListener('load',function(){tegnRobot('idle');});
 
 </script>
-<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+
+<!-- © 2025 SkapLab · Tommy Lykke Nordahl -->
 </body></html>
