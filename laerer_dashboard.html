@@ -314,7 +314,28 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
 'use strict';
+
+// Hjelpefunksjon for å hente epost fra Supabase Auth-objekt
+function hentEpost(sess) {
+  if (!sess) return '';
+  // Prøv ulike steder eposten kan ligge
+  if (sess.user && sess.user.email) return sess.user.email;
+  if (sess.email) return sess.email;
+  if (sess.user && sess.user.user_metadata && sess.user.user_metadata.email) 
+    return sess.user.user_metadata.email;
+  return '';
+}
+
+function hentNavn(sess) {
+  if (!sess) return 'Laerer';
+  if (sess.user && sess.user.user_metadata && sess.user.user_metadata.fullt_navn)
+    return sess.user.user_metadata.fullt_navn;
+  if (sess.user && sess.user.email) return sess.user.email;
+  if (sess.email) return sess.email;
+  return 'Laerer';
+}
 
 // Sett opp knapper via addEventListener (ikke inline onclick)
 document.addEventListener('DOMContentLoaded', function() {
@@ -332,15 +353,14 @@ document.addEventListener('DOMContentLoaded', function() {
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer();
 var token=laerer.access_token;
-var lid=laerer.user&&laerer.user.id;
+var lid=(laerer.user&&laerer.user.id)||laerer.id||'';
 var klasser=[], elever=[], aktivKlasse=null;
 var KM=[['MAT-ALG','Alg'],['MAT-FUNK','Fun'],['MAT-GEO','Geo'],['NAT-BIO','Bio'],['NAT-KJE','Kje'],['PRG-ALG','Prg']];
 
 async function init(){
   // Vis navn fra Auth-token uansett
   var bruker=laerer.user;
-  var visNavn=(bruker&&bruker.user_metadata&&bruker.user_metadata.fullt_navn)||
-              (bruker&&bruker.email)||'Laerer';
+  var visNavn=hentNavn(laerer);
   document.getElementById('lnavn').textContent=visNavn;
 
   // Hent laerer-navn fra DB (ikke kritisk om det feiler)
@@ -486,12 +506,11 @@ async function opprettKlasse(){
       skoleId=lInfo[0].skole_id;
     } else {
       // Laerer-profil mangler - opprett skole og profil naa
-      var bruker=laerer.user;
-      var visNavn=(bruker&&bruker.user_metadata&&bruker.user_metadata.fullt_navn)||bruker.email||'Laerer';
+      var visNavn=hentNavn(laerer);
       var skoleResp=await SkapLab._post('/skoler',{navn:'Min skole',kommune:''},token);
       skoleId=Array.isArray(skoleResp)?skoleResp[0].id:skoleResp.id;
       if(skoleId){
-        await SkapLab._post('/laerere',{id:lid,skole_id:skoleId,fullt_navn:visNavn,epost:bruker.email},token);
+        await SkapLab._post('/laerere',{id:lid,skole_id:skoleId,fullt_navn:visNavn,epost:hentEpost(laerer)},token);
       }
     }
 
@@ -539,6 +558,7 @@ async function opprettElev(){
 
 function apneElev(id){sessionStorage.setItem('skaplab_valgt_elev',id);location.href='elev_detalj.html';}
 function loggUt(){sessionStorage.clear();location.href='laerer_login.html';}
+
 
 
 
