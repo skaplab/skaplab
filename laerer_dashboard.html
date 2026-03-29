@@ -348,6 +348,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
 
 
+
+
 'use strict';
 
 // Hent bruker-ID fra Supabase auth-objekt (støtter ulike formater)
@@ -481,7 +483,7 @@ async function init(){
 
   // Hent elever (ikke kritisk)
   try{
-    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn',token);
+    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne',token);
     elever=Array.isArray(eR)?eR:[];
   }catch(e){ elever=[]; }
 
@@ -504,6 +506,11 @@ function byggSidebar(){
 }
 
 async function visKlasse(){
+  // Hent alltid fersk elevdata for å vise oppdatert lyspære-status
+  try {
+    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne',token);
+    if(Array.isArray(eR)) elever=eR;
+  } catch(e){}
   document.querySelectorAll('[id^=side-]').forEach(function(e){e.style.display='none';});
   document.getElementById('side-klasse').style.display='block';
   var e2=elever.filter(function(e){return e.klasse_id===aktivKlasse;});
@@ -688,7 +695,7 @@ async function opprettKlasse(){
     document.getElementById('kl-info').textContent='Laster klasse...';
     var kR=await SkapLab._get('/klasser?order=navn',token);
     klasser=Array.isArray(kR)?kR:[];
-    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn',token);
+    var eR=await SkapLab._get('/elever?aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne',token);
     elever=Array.isArray(eR)?eR:[];
     aktivKlasse=klasseId;
     byggSidebar();
@@ -860,6 +867,8 @@ async function bekreftTildel(){
     feilEl.textContent='Feil ved tildeling. Prøv igjen.';
   }
 }
+
+
 
 
 </script>
