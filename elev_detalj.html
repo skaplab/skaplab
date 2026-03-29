@@ -369,8 +369,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
 
 
+
+
+
+
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
-var laerer=SkapLab.hentLaerer(),token=laerer.access_token,lid=laerer.user&&laerer.user.id;
+var laerer=SkapLab.hentLaerer(),token=laerer.access_token,lid=(laerer.user&&laerer.user.id)||laerer.id||'';
 var elevId=sessionStorage.getItem('skaplab_valgt_elev');
 if(!elevId) location.href='laerer_dashboard.html';
 
@@ -445,7 +449,7 @@ window.trengerHjelp=false; var trengerHjelp=window.trengerHjelp;
 window.hjelpEmne=""; var hjelpEmne=window.hjelpEmne;
 
 async function init(){
-  console.log('INIT START, elevId='+elevId+', lid='+lid+', token='+(token?'OK':'MANGLER'));
+  console.log('INIT START, elevId='+elevId+', lid='+lid+', token='+(token?'OK':'MANGLER')+', laerer='+JSON.stringify(Object.keys(laerer||{})));
   try {
     console.log('Steg 1: henter elev...');
     var eR=await SkapLab._get(
@@ -845,21 +849,42 @@ function velg(el){
 }
 
 async function lagreAlt(){
-  document.getElementById('lst').textContent='Lagrer...';
-  // Samle alle km-koder fra både vurd og merkander
-  var alleKoder = new Set([...Object.keys(vurd), ...Object.keys(merkander)]);
-  var P = Array.from(alleKoder).map(function(km){
-    var data = {elev_id:elevId, km_kode:km, laerer_id:lid, dato:new Date().toISOString()};
-    if (vurd[km]) data.nivaa = vurd[km];
-    if (merkander[km]) data.merknad = merkander[km];
-    return fetch(SkapLab._api+'/vurderinger',{method:'POST',
-      headers:Object.assign(SkapLab._hdr(token),{'Prefer':'resolution=merge-duplicates'}),
-      body:JSON.stringify(data)
+  var lst = document.getElementById('lst');
+  if (lst) lst.textContent='Lagrer...';
+  console.log('lagreAlt: elevId='+elevId+', lid='+lid+', vurd='+JSON.stringify(vurd));
+  var alleKoder = Object.keys(vurd).concat(
+    Object.keys(merkander).filter(function(k){return !vurd[k];})
+  );
+  if (alleKoder.length === 0) {
+    if (lst) lst.textContent='Ingen endringer';
+    setTimeout(function(){if(lst)lst.textContent='';},2000);
+    return;
+  }
+  try {
+    var P = alleKoder.map(function(km){
+      var data = {elev_id:elevId, km_kode:km, laerer_id:lid};
+      if (vurd[km]) data.nivaa = vurd[km];
+      if (merkander[km]) data.merknad = merkander[km];
+      console.log('Lagrer:', JSON.stringify(data));
+      return fetch(SkapLab.SUPABASE_URL+'/rest/v1/vurderinger',{
+        method:'POST',
+        headers:{'Content-Type':'application/json',
+                 'apikey':SkapLab.SUPABASE_KEY,
+                 'Authorization':'Bearer '+token,
+                 'Prefer':'resolution=merge-duplicates'},
+        body:JSON.stringify(data)
+      }).then(function(r){
+        console.log('Svar for '+km+': '+r.status);
+        return r;
+      });
     });
-  });
-  await Promise.all(P);
-  document.getElementById('lst').textContent='Lagret!';
-  setTimeout(function(){document.getElementById('lst').textContent='';},3000);
+    await Promise.all(P);
+    if (lst) lst.textContent='✓ Lagret!';
+    setTimeout(function(){if(lst)lst.textContent='';},3000);
+  } catch(e) {
+    console.error('lagreAlt feilet:', e);
+    if (lst) lst.textContent='Feil ved lagring';
+  }
 }
 
 // Lesbelige navn og type for alle ressurser
@@ -1037,6 +1062,10 @@ async function slettLyspare() {
   if(badge) badge.style.display='none';
   trengerHjelp = window.trengerHjelp = false;
 }
+
+
+
+
 
 
 
