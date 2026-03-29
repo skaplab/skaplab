@@ -320,6 +320,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
 
 
+
 'use strict';
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer(),token=laerer.access_token,lid=laerer.user&&laerer.user.id;
@@ -334,10 +335,12 @@ var KMF={
 var akt=[],vurd={},kmSc={};
 
 async function init(){
+  console.log('INIT START, elevId='+elevId+', lid='+lid+', token='+(token?'OK':'MANGLER'));
   try {
-    // 1. Elev-info inkl. lyspære
+    console.log('Steg 1: henter elev...');
     var eR=await SkapLab._get(
       '/elever?id=eq.'+elevId+'&select=fullt_navn,innloggingskode,trenger_hjelp,hjelp_emne,klasser(navn)',token);
+    console.log('Steg 1 OK, elev:', eR&&eR[0]?eR[0].fullt_navn:'IKKE FUNNET');
     var elev=eR&&eR[0];
     if(!elev){location.href='laerer_dashboard.html';return;}
 
@@ -347,8 +350,9 @@ async function init(){
     trengerHjelp = !!(elev.trenger_hjelp);
     hjelpEmne    = elev.hjelp_emne||'';
 
-    // 2. Aktivitet
+    console.log('Steg 2: henter aktivitet...');
     var aR=await SkapLab._get('/aktivitet?elev_id=eq.'+elevId+'&order=tidspunkt.desc&limit=100',token);
+    console.log('Steg 2 OK, aktiviteter:', Array.isArray(aR)?aR.length:'FEIL');
     akt=Array.isArray(aR)?aR:[];
     akt.forEach(function(a){
       if(!a.km_kode||a.score_pst===null) return;
@@ -356,23 +360,28 @@ async function init(){
       kmSc[a.km_kode].sum+=a.score_pst; kmSc[a.km_kode].ant++;
     });
 
-    // 3. Lærers vurderinger
+    console.log('Steg 3: henter vurderinger...');
     var vR=await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid,token);
+    console.log('Steg 3 OK, vurderinger:', Array.isArray(vR)?vR.length:'FEIL');
     if(Array.isArray(vR)) vR.forEach(function(v){vurd[v.km_kode]=v.nivaa;});
 
-    // 4. Elevens egenvurdering (kan feile om tabellen ikke finnes ennå)
+    console.log('Steg 4: henter egenvurdering...');
     try {
       var egR=await SkapLab._get('/elev_egenvurdering?elev_id=eq.'+elevId,token);
+      console.log('Steg 4 OK');
       if(Array.isArray(egR)) egR.forEach(function(e){egenvurd[e.km_kode]=e.nivaa;});
-    } catch(egFeil){ console.warn('egenvurdering ikke tilgjengelig ennå'); }
+    } catch(egFeil){ console.warn('Steg 4 feilet (OK):', egFeil.message); }
 
-    // 5. Bygg siden
+    console.log('Steg 5: lastMerkander...');
     await lastMerkander();
+    console.log('Steg 5 OK');
+
+    console.log('Steg 6: bygger side...');
     byggKM();
     byggAkt();
     await byggTildelt();
+    console.log('Steg 6 OK');
 
-    // 6. Vis lyspære om eleven trenger hjelp
     if(trengerHjelp){
       var b=document.getElementById('lys-badge');
       if(b){ b.style.display='inline-flex';
@@ -381,12 +390,11 @@ async function init(){
 
     document.getElementById('laster').style.display='none';
     document.getElementById('ei').style.display='block';
+    console.log('INIT FERDIG');
 
   } catch(err) {
-    console.error('init feilet:', err);
-    // Vis side selv om noe feilet - ikke heng på laster
-    document.getElementById('laster').style.display='none';
-    document.getElementById('ei').style.display='block';
+    console.error('INIT FEILET på:', err.message, err.stack);
+    document.getElementById('laster').innerHTML='<div style="color:#f87171;padding:20px;">Feil: '+err.message+'<br><button onclick="location.reload()" style="margin-top:10px;padding:8px 16px;background:transparent;border:1px solid #f87171;color:#f87171;border-radius:8px;cursor:pointer;">Prøv igjen</button></div>';
   }
 }
 
@@ -688,6 +696,7 @@ async function slettLyspare() {
   if(badge) badge.style.display='none';
   trengerHjelp=false;
 }
+
 
 
 
