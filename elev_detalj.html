@@ -59,6 +59,33 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
     .km-fritekst:focus{border-color:var(--bla);}
     .km-fritekst::placeholder{color:var(--dim);}
 
+
+    /* Fag-faner */
+    .fag-faner{display:flex;gap:4px;margin-bottom:16px;background:rgba(255,255,255,.04);border-radius:10px;padding:3px;}
+    .fag-fane{flex:1;padding:8px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-family:var(--font-h);font-weight:700;color:var(--dim);background:transparent;transition:all .15s;}
+    .fag-fane:hover{color:var(--text);}
+    .fag-fane.ak.mat-fane{background:rgba(139,92,246,.2);color:#c4b5fd;}
+    .fag-fane.ak.nat-fane{background:rgba(52,211,153,.15);color:var(--gron);}
+    .fag-fane.ak.prg-fane{background:rgba(96,165,250,.15);color:var(--bla);}
+    /* Trinn-velger */
+    .trinn-velger{display:flex;gap:6px;margin-bottom:14px;}
+    .trinn-btn{padding:6px 16px;border-radius:8px;border:1.5px solid var(--border2);background:transparent;color:var(--dim);cursor:pointer;font-size:.8rem;font-family:var(--font-h);font-weight:700;transition:all .15s;}
+    .trinn-btn:hover{color:var(--text);}
+    .trinn-btn.ak{background:rgba(251,191,36,.15);color:var(--gul);border-color:rgba(251,191,36,.4);}
+    /* KM-rad ny stil */
+    .km-rad{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px;}
+    .km-rad-hdr{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+    .km-info{flex:1;display:flex;flex-direction:column;gap:4px;}
+    .km-kode-chip{font-size:.65rem;font-family:monospace;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:5px;color:var(--dim);width:fit-content;}
+    .km-tekst{font-size:.86rem;line-height:1.5;color:var(--text);}
+    .egenv-pill-liten{font-size:.7rem;padding:2px 8px;border-radius:6px;border:1px solid;flex-shrink:0;align-self:flex-start;}
+    .km-seksjon{margin-bottom:16px;}
+    .km-kat-tittel{font-size:.68rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+    .km-tips{font-size:.8rem;color:rgba(251,191,36,.8);background:rgba(251,191,36,.08);padding:7px 10px;border-radius:7px;line-height:1.5;}
+    .km-fritekst{width:100%;padding:8px 10px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-family:var(--font-b);font-size:.8rem;resize:vertical;min-height:44px;transition:border-color .2s;outline:none;}
+    .km-fritekst:focus{border-color:var(--bla);}
+    .km-fritekst::placeholder{color:var(--dim);}
+
 </style></head><body>
 <div id="topbar">
   <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
@@ -79,7 +106,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
       <div class="tab" onclick="visTab('a',this)">Aktivitetslogg</div>
       <div class="tab" onclick="visTab('t',this)">Tildelte oppgaver</div>
     </div>
-    <div id="tab-v"><div id="km-grid"></div>
+    <div id="tab-v"><div id="vurdering-innhold"></div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:12px;">
         <button class="lag-btn" onclick="lagreAlt()">Lagre vurderinger</button>
         <button class="rapp-btn" onclick="apneRapport('matte')" style="background:rgba(139,92,246,.15);color:#a78bfa;border-color:rgba(139,92,246,.3);">📐 Matte-rapport</button>
@@ -316,16 +343,140 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
 </script>
 <script>
+
+
+
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer(),token=laerer.access_token,lid=laerer.user&&laerer.user.id;
 var elevId=sessionStorage.getItem('skaplab_valgt_elev');
 if(!elevId) location.href='laerer_dashboard.html';
 
-var KMF={
-  'Matematikk':[['MAT-ALG','Algebra og tallforstaaelse'],['MAT-FUNK','Funksjoner'],['MAT-GEO','Geometri'],['MAT-STAT','Statistikk og sannsynlighet'],['MAT-OKO','Okonomi og prosent']],
-  'Naturfag':[['NAT-BIO','Biologi - kropp og helse'],['NAT-KJE','Kjemi - stoffer og reaksjoner'],['NAT-FYS','Fysikk - kraft og bevegelse'],['NAT-ELE','Elektrisitet og teknologi'],['NAT-GEN','Genetikk og arv'],['NAT-OKO','Okologi og miljo']],
-  'Programmering':[['PRG-ALG','Algoritmer og pseudokode'],['PRG-DEBUG','Lese og feilsoke kode']]
+var KMF = {
+  mat: {
+    '8': [
+      ['MAT8-1','tall','utforske og beskrive strukturer og mønster i tall'],
+      ['MAT8-2','tall','utforske og forstå regneregler for potenser med hele eksponenter og bruke dette i beregninger'],
+      ['MAT8-3','algebra','lage og løse likninger knyttet til praktiske situasjoner'],
+      ['MAT8-4','algebra','utforske og beskrive egenskaper ved proporsjonale størrelser og bruke dette i beregninger'],
+      ['MAT8-5','funksjoner','lage og tolke grafer til praktiske situasjoner, og oversette mellom ulike representasjoner'],
+      ['MAT8-6','geometri','utforske og beskrive egenskaper ved og minimumsdefinisjoner av to- og tredimensjonale figurer'],
+      ['MAT8-7','geometri','bruke formlikhet og Pythagoras setning til beregninger og i praktiske situasjoner'],
+      ['MAT8-8','statistikk','planlegge og gjennomføre datainnsamling og presentere og analysere data med og uten digitale verktøy'],
+      ['MAT8-9','statistikk','utforske datasett ved å beregne sentralmål og mål for spredning med og uten digitale verktøy og bruke dette for å sammenligne grupper'],
+      ['MAT8-10','sannsynlighet','utforske og beskrive kombinatorikk og sannsynlighet i spill og hverdagslige sammenhenger'],
+      ['MAT8-11','økonomi','utforske og bruke strategier for hoderegning, overslagsregning og skriftlig regning, og vurdere rimeligheten av svar'],
+    ],
+    '9': [
+      ['MAT9-1','algebra','omforme og forenkle algebraiske uttrykk og bruke kvadratsetningene'],
+      ['MAT9-2','algebra','lage og løse likningssystemer med to ukjente'],
+      ['MAT9-3','algebra','representere og tolke andregradsfunksjoner på ulike måter og bruke dem i modellering'],
+      ['MAT9-4','geometri','bruke trigonometri i beregninger med rettvinklede trekanter'],
+      ['MAT9-5','geometri','utforske og beskrive rotasjonssymmetri og egenskaper ved tredimensjonale figurer, og beregne overflate og volum'],
+      ['MAT9-6','geometri','resonnere og argumentere om geometriske forhold og skrive enkle geometriske bevis'],
+      ['MAT9-7','statistikk','utforske, analysere og presentere reelle datasett, inkludert å vurdere kildene og bruke digitale verktøy'],
+      ['MAT9-8','statistikk','lage og tolke boks-plott og beregne og tolke gjennomsnitt, median, typetall og kvartiler'],
+      ['MAT9-9','sannsynlighet','beregne sannsynlighet i sammensatte situasjoner, med og uten kombinatorikk'],
+      ['MAT9-10','økonomi','bruke matematikk til å beskrive og bearbeide informasjon fra tabeller og diagram som en kan støte på i hverdagslivet'],
+      ['MAT9-11','resonnering','bruke matematikk til å løse praktiske problemer knyttet til økonomi, statistikk og geometri'],
+    ],
+    '10': [
+      ['MAT10-1','tall','utforske potenser med rasjonale eksponenter og regler for logaritmer, og bruke det i beregninger'],
+      ['MAT10-2','algebra','omforme og forenkle algebraiske uttrykk, løse likninger, ulikheter og likningssystemer og bruke dette i praktiske situasjoner'],
+      ['MAT10-3','algebra','utforske funksjoner ved å lage tabeller og tegne grafer og bruke dette til å modellere og løse praktiske problemer'],
+      ['MAT10-4','algebra','representere og tolke eksponentialfunksjoner i ulike situasjoner og analysere grafene'],
+      ['MAT10-5','geometri','bruke trigonometri til å beregne sider og vinkler i ikke-rettvinklede trekanter'],
+      ['MAT10-6','geometri','utforske og argumentere for resultater og løsningsmetoder i geometri, og bruke koordinatberegninger'],
+      ['MAT10-7','statistikk','beregne og tolke sammenhengen mellom to størrelser ved hjelp av regresjon med digitale verktøy'],
+      ['MAT10-8','statistikk','utforske og diskutere muligheter for og begrensninger ved bruk av digitale verktøy i databehandling'],
+      ['MAT10-9','sannsynlighet','representere sannsynligheter ved hjelp av Venn-diagram, tabeller og trediagram og beregne sannsynligheter med disse'],
+      ['MAT10-10','økonomi','utforske og bruke matematikk til å analysere situasjoner knyttet til personlig økonomi'],
+      ['MAT10-11','resonnering','lage, begrunne og presentere matematiske argument og enkle bevis'],
+      ['MAT10-12','resonnering','bruke matematikk til å modellere og analysere situasjoner fra dagligliv, arbeidsliv og samfunn'],
+    ],
+  },
+  nat: [
+    ['NAT-1','naturvitenskap','planlegge og gjennomføre forsøk og feltarbeid og presentere funn'],
+    ['NAT-2','naturvitenskap','utforske og diskutere naturvitenskapelige problemstillinger'],
+    ['NAT-3','biologi','beskrive oppbygningen av dyre- og planteceller, forklare celledeling og sammenligne med kroppscellen'],
+    ['NAT-4','biologi','gjøre rede for hvordan hormoner, nervesystemet og sanseorganer sørger for kommunikasjon i kroppen'],
+    ['NAT-5','biologi','gjøre rede for grunnleggende prinsipper for arv og variasjon og diskutere biologisk mangfold'],
+    ['NAT-6','biologi','utforske og beskrive samspillet mellom organismer og miljøet'],
+    ['NAT-7','kjemi','bruke det periodiske systemet til å forklare egenskaper ved grunnstoffer og kjemiske forbindelser'],
+    ['NAT-8','kjemi','forklare og gjennomføre forsøk som illustrerer kjemiske reaksjoner og symbolisere dem med enkle formler'],
+    ['NAT-9','kjemi','gjøre rede for karbonkretsløpet og forklare hvordan det er knyttet til energi'],
+    ['NAT-10','fysikk','gjøre rede for Newtons tre lover og bruke dem i forklaring av bevegelse i hverdagssituasjoner'],
+    ['NAT-11','fysikk','forklare størrelsene spenning, strøm og effekt og gjennomføre forsøk med enkle elektriske kretser'],
+    ['NAT-12','fysikk','forklare hva stjerner, planeter og andre himmellegemer er, og beskrive romforskning'],
+    ['NAT-13','teknologi','utforske og lage teknologiske systemer som inneholder elektronikk'],
+    ['NAT-14','teknologi','bruke og programmere mikrokontroller for å utvikle et produkt'],
+  ],
+  prg: [
+    ['PRG-1','algoritmer','planlegge og lage løsninger som bruker variabler, uttrykk og løkker'],
+    ['PRG-2','algoritmer','bruke ulike algoritmer og datastrukturer til å løse problemer'],
+    ['PRG-3','kode','lese, skrive, feilsøke og dokumentere kode'],
+    ['PRG-4','kode','analysere og presentere løsninger og diskutere feil og forbedringer'],
+    ['PRG-5','algoritmisk','dekomponere problemer og bruke algoritmisk tenkning'],
+    ['PRG-6','algoritmisk','vurdere og diskutere etiske problemstillinger og personvern'],
+  ],
 };
+
+var TIPS = {
+  'MAT8-1':  {hoy:'Utforsk tallmønstre i mer avanserte tallrekker.',middels:'Øv på å beskrive mønstre med egne ord.',lav:'Start med enkle tallrekker i mengdetrening.'},
+  'MAT8-2':  {hoy:'Prøv oppgaver med negative eksponenter.',middels:'Øv på potensregler med mengdetrening.',lav:'Start med grunnleggende potenser i teorikortene.'},
+  'MAT8-3':  {hoy:'Løs likningssystemer og prøv eksamenstrener.',middels:'Øv på likninger i mengdetrening.',lav:'Start med enkle likninger i algebraleksjonen.'},
+  'MAT8-4':  {hoy:'Utforsk invers proporsjonalitet.',middels:'Øv på prosentregning i mengdetrening.',lav:'Start med prosent- og verholdsleksjoner.'},
+  'MAT8-5':  {hoy:'Prøv ikke-lineære funksjoner i GeoGebra.',middels:'Øv på lineære funksjoner i mengdetrening.',lav:'Start med funksjonskortene og leksjonen om lineære funksjoner.'},
+  'MAT8-6':  {hoy:'Utforsk tredimensjonale figurer og snitt.',middels:'Øv på geometrioppgaver i mengdetrening.',lav:'Start med geometrikortene.'},
+  'MAT8-7':  {hoy:'Prøv Pythagoras i koordinatgeometri.',middels:'Øv på Pythagoras i mengdetrening.',lav:'Gå gjennom Pythagoras-leksjonen.'},
+  'MAT8-8':  {hoy:'Analyser egne datasett med GeoGebra.',middels:'Øv på diagrammer i mengdetrening.',lav:'Start med statistikkleksjonen.'},
+  'MAT8-9':  {hoy:'Beregn standardavvik og sammenlign fordelinger.',middels:'Øv på sentralmål i mengdetrening.',lav:'Start med statistikk-kortene.'},
+  'MAT8-10': {hoy:'Beregn sannsynlighet med trediagram.',middels:'Øv på sannsynlighetsoppgaver i mengdetrening.',lav:'Start med sannsynlighetskortene.'},
+  'MAT8-11': {hoy:'Prøv eksamenstrener for helthetlig øving.',middels:'Øv på blandede beregninger.',lav:'Gå gjennom økonomi- og talleksjoner.'},
+  'MAT9-1':  {hoy:'Faktoriser komplekse uttrykk.',middels:'Øv på algebraiske uttrykk i mengdetrening.',lav:'Start med algebraleksjonen.'},
+  'MAT9-2':  {hoy:'Løs likningssystemer grafisk og algebraisk.',middels:'Øv på likningssystemer i mengdetrening.',lav:'Gå gjennom leksjonen om likningssystemer.'},
+  'MAT9-3':  {hoy:'Analyser parabelens egenskaper med GeoGebra.',middels:'Øv på kvadratiske funksjoner i mengdetrening.',lav:'Start med funksjonskortene.'},
+  'MAT9-4':  {hoy:'Bruk trigonometri i praktiske måleopgaver.',middels:'Øv på trigonometri i mengdetrening.',lav:'Gå gjennom trigometri-leksjonen.'},
+  'MAT9-5':  {hoy:'Beregn overflate og volum av sammensatte figurer.',middels:'Øv på volum i mengdetrening.',lav:'Start med geometrikortene.'},
+  'MAT9-6':  {hoy:'Skriv fullstendige geometriske bevis.',middels:'Øv på argumentasjon i geometri.',lav:'Gå gjennom geometrileksjonen.'},
+  'MAT9-7':  {hoy:'Analyser reelle datasett fra nyheter.',middels:'Øv på statistikk i mengdetrening.',lav:'Start med statistikkleksjonen.'},
+  'MAT9-8':  {hoy:'Tolke og sammenligne boksplott.',middels:'Øv på sentralmål og spredning.',lav:'Gå gjennom statistikkleksjonen.'},
+  'MAT9-9':  {hoy:'Beregn betinget sannsynlighet.',middels:'Øv på sammensatt sannsynlighet.',lav:'Start med sannsynlighetskortene.'},
+  'MAT9-10': {hoy:'Analyser sammensatte tabeller og infografikk.',middels:'Øv på prosentregning og tolkning.',lav:'Start med økonomi-leksjonen.'},
+  'MAT9-11': {hoy:'Prøv eksamenstrener for kombinerte oppgaver.',middels:'Løs oppgaver som kombinerer fag.',lav:'Fokuser på ett fagområde om gangen.'},
+  'MAT10-1': {hoy:'Utforsk logaritmens egenskaper algebraisk.',middels:'Øv på potenser med rasjonale eksponenter.',lav:'Start med potens-leksjonen.'},
+  'MAT10-2': {hoy:'Prøv komplekse ligningssystemer i eksamenstrener.',middels:'Øv på likninger og ulikheter i mengdetrening.',lav:'Start med algebraleksjonen.'},
+  'MAT10-3': {hoy:'Modeller reelle situasjoner med funksjoner.',middels:'Øv på funksjoner i mengdetrening.',lav:'Start med funksjonskortene.'},
+  'MAT10-4': {hoy:'Analyser eksponentiell vekst og halvering.',middels:'Øv på eksponentialfunksjoner.',lav:'Gå gjennom funksjonsleksjonen.'},
+  'MAT10-5': {hoy:'Bruk sinus- og cosinussetningen i praksis.',middels:'Øv på trigonometri i mengdetrening.',lav:'Start med trigonometri-leksjonen.'},
+  'MAT10-6': {hoy:'Prøv koordinatgeometri i eksamenstrener.',middels:'Øv på geometribevis.',lav:'Gå gjennom geometrileksjonen.'},
+  'MAT10-7': {hoy:'Bruk regresjon på egne datasett.',middels:'Øv på statistiske metoder.',lav:'Start med statistikkleksjonen.'},
+  'MAT10-8': {hoy:'Vurder kritisk datasett fra nettkilder.',middels:'Øv på tolkning av statistikk.',lav:'Gå gjennom statistikkleksjonen.'},
+  'MAT10-9': {hoy:'Beregn betinget sannsynlighet med Venn-diagram.',middels:'Øv på sannsynlighetsberegning.',lav:'Start med sannsynlighetskortene.'},
+  'MAT10-10':{hoy:'Analyser låne- og sparekalkyler.',middels:'Øv på renter og økonomi.',lav:'Start med økonomi-leksjonen.'},
+  'MAT10-11':{hoy:'Prøv eksamenstrener for bevisskrivning.',middels:'Øv på å begrunne løsninger skriftlig.',lav:'Fokuser på resonnering i algebraleksjonen.'},
+  'MAT10-12':{hoy:'Prøv tverrfaglige modelleringsoppgaver.',middels:'Løs praktiske matematikkoppgaver.',lav:'Start med eksamenstrener på enkelt nivå.'},
+  'NAT-1':   {hoy:'Design egne forsøk og presenter metodisk.',middels:'Gå gjennom forsøksmetodikk.',lav:'Start med naturfag-quiz.'},
+  'NAT-2':   {hoy:'Diskuter etikk i naturvitenskapelig forskning.',middels:'Øv på naturvitenskapelig metode.',lav:'Start med naturfagquiz.'},
+  'NAT-3':   {hoy:'Utforsk celledeling og kreft.',middels:'Gå gjennom cellebiologi-leksjonen.',lav:'Start med bio-flipcardene.'},
+  'NAT-4':   {hoy:'Koble nervesystem og hormoner i praksis.',middels:'Gå gjennom nervesystem-leksjonen.',lav:'Start med bio-flipcardene.'},
+  'NAT-5':   {hoy:'Analyser arvemønstre med Punnett-firkant.',middels:'Gå gjennom genetikklaben.',lav:'Start med genetikkoppgavene.'},
+  'NAT-6':   {hoy:'Analyser et lokalt okosystem.',middels:'Gå gjennom oko-flipcardene.',lav:'Start med okologi-kortene.'},
+  'NAT-7':   {hoy:'Bruk periodesystemet til å forutsi egenskaper.',middels:'Gå gjennom periodesystem-leksjonen.',lav:'Start med kjemi-flipcardene.'},
+  'NAT-8':   {hoy:'Balanser og analyser kjemiske reaksjoner.',middels:'Gå gjennom kjemilaben.',lav:'Start med kjemi-flipcardene.'},
+  'NAT-9':   {hoy:'Analyser karbonkretslopet og klimaendringer.',middels:'Gå gjennom energi-leksjonen.',lav:'Start med kjemi-flipcardene.'},
+  'NAT-10':  {hoy:'Løs problemoppgaver med Newtons lover.',middels:'Gå gjennom kraft-og-bevegelse-spillet.',lav:'Start med fysikk-flipcardene.'},
+  'NAT-11':  {hoy:'Design og bygg elektriske kretser.',middels:'Gå gjennom strømlaben.',lav:'Start med elektrisitet-flipcardene.'},
+  'NAT-12':  {hoy:'Utforsk solsystemet i astronomi-leksjonen.',middels:'Gå gjennom astronomi-leksjonen.',lav:'Start med fysikk-flipcardene.'},
+  'NAT-13':  {hoy:'Bygg avanserte elektronikksystemer.',middels:'Prøv strømlaben på avansert nivå.',lav:'Start med elektrisitet-kortene.'},
+  'NAT-14':  {hoy:'Programmer mikrokontroller til et eget prosjekt.',middels:'Prøv labyrintkoden.',lav:'Start med programmering-intro-leksjonen.'},
+  'PRG-1':   {hoy:'Lag programmer med nøstede løkker og funksjoner.',middels:'Øv med pseudokode-byggeren.',lav:'Start med programmering-intro-leksjonen.'},
+  'PRG-2':   {hoy:'Implementer sorteringsalgoritmer.',middels:'Prøv algoritmedetektiven.',lav:'Start med pseudokode-byggeren.'},
+  'PRG-3':   {hoy:'Feilsok komplekse programmer systematisk.',middels:'Gå gjennom debug-rommet.',lav:'Start med debug-rommet på enkelt niva.'},
+  'PRG-4':   {hoy:'Analyser og optimaliser egne programmer.',middels:'Prøv debug-rommet på mellomste niva.',lav:'Start med pseudokode-byggeren.'},
+  'PRG-5':   {hoy:'Dekomponer komplekse problemer selvstendig.',middels:'Prøv algoritmedetektiven.',lav:'Start med pseudokode-byggeren.'},
+  'PRG-6':   {hoy:'Diskuter personvern og kunstig intelligens.',middels:'Utforsk etiske problemstillinger i koding.',lav:'Start med programmering-intro-leksjonen.'},
+};
+
 var akt=[],vurd={},kmSc={},merkander={},egenvurd={};
 window.trengerHjelp=false; var trengerHjelp=window.trengerHjelp;
 window.hjelpEmne=""; var hjelpEmne=window.hjelpEmne;
@@ -468,39 +619,202 @@ async function byggTildelt(){
 
 function snittTilVeil(s){if(s===null) return null;if(s>=70) return 'hoy';if(s>=45) return 'middels';return 'lav';}
 
-function byggKM(){
-  var g=document.getElementById('km-grid');g.innerHTML='';
-  Object.keys(KMF).forEach(function(fag){
-    var sek=document.createElement('div');sek.style.marginBottom='18px';
-    sek.innerHTML='<div class="fag-hdr">'+fag+'</div>';
-    KMF[fag].forEach(function(km){
-      var sc=kmSc[km[0]];
-      var snitt=sc?Math.round(sc.sum/sc.ant):null;
-      var ant=sc?sc.ant:0;
-      var veil=snittTilVeil(snitt);
-      var valgt=vurd[km[0]]||'';
-      var sKls=snitt===null?'sc-u':snitt>=70?'sc-h':snitt>=45?'sc-m':'sc-l';
-      var rad=document.createElement('div');rad.className='km-rad';
-      rad.innerHTML='<div><div class="km-tit">'+km[1]+'</div>'
-        +'<div class="km-akt">'+(ant>0?ant+' okt'+(ant>1?'er':''):'Ingen aktivitet')+'</div></div>'
-        +'<div class="km-sc '+sKls+'">'+(snitt!==null?snitt+'%':'—')
-        +(veil?'<div style="font-size:.66rem;color:var(--dim);">veil: '+veil+'</div>':'')+'</div>'
-        +'<div class="vv" id="vv-'+km[0]+'">'
-        +['hoy','middels','lav','ikke_gjort'].map(function(n){
-          var l=n==='hoy'?'Hoy':n==='middels'?'Middels':n==='lav'?'Lav':'Ikke gjort';
-          return '<button class="nb '+n+(valgt===n?' ak':'')+'" data-km="'+km[0]+'" data-n="'+n+'" onclick="velg(this)">'+l+'</button>';
-        }).join('')+'</div>'
-        +(egenvurd[km[0]]?'<div class="egenv-pill-laerer">👤 Elev: '+(egenvurd[km[0]]==='hoy'?'Høy':egenvurd[km[0]]==='middels'?'Middels':egenvurd[km[0]]==='lav'?'Lav':'Vet ikke')+'</div>':'')
-        +'<textarea class="km-fritekst" data-km="'+km[0]+'" placeholder="Fritekst (lagres automatisk)..." onchange="lagreMerknad(this)">'+(merkander[km[0]]||'')+'</textarea>';
-      sek.appendChild(rad);
+function byggKM() {
+  var g = document.getElementById('vurdering-innhold');
+  if (!g) return;
+  g.innerHTML = '';
+
+  // FAG-FANER
+  var fagFaner = document.createElement('div');
+  fagFaner.className = 'fag-faner';
+  fagFaner.innerHTML =
+    '<button class="fag-fane ak mat-fane" onclick="visFagFane(\'mat\',this)">📐 Matematikk</button>' +
+    '<button class="fag-fane nat-fane" onclick="visFagFane(\'nat\',this)">🔬 Naturfag</button>' +
+    '<button class="fag-fane prg-fane" onclick="visFagFane(\'prg\',this)">💻 Programmering</button>';
+  g.appendChild(fagFaner);
+
+  // ── MATEMATIKK ─────────────────────────────────────────────────
+  var matDiv = document.createElement('div');
+  matDiv.id = 'fag-mat';
+
+  // Trinn-velger
+  var trinnVelger = document.createElement('div');
+  trinnVelger.className = 'trinn-velger';
+  trinnVelger.innerHTML =
+    '<button class="trinn-btn ak" onclick="visTrinn(\'8\',this)">8. trinn</button>' +
+    '<button class="trinn-btn" onclick="visTrinn(\'9\',this)">9. trinn</button>' +
+    '<button class="trinn-btn" onclick="visTrinn(\'10\',this)">10. trinn</button>';
+  matDiv.appendChild(trinnVelger);
+
+  ['8','9','10'].forEach(function(trinn) {
+    var trinnDiv = document.createElement('div');
+    trinnDiv.id = 'trinn-' + trinn;
+    trinnDiv.style.display = trinn === '8' ? 'block' : 'none';
+
+    var kategoriSett = {};
+    KMF.mat[trinn].forEach(function(km) {
+      if (!kategoriSett[km[1]]) kategoriSett[km[1]] = [];
+      kategoriSett[km[1]].push(km);
     });
-    g.appendChild(sek);
+
+    Object.keys(kategoriSett).forEach(function(kat) {
+      var sek = document.createElement('div');
+      sek.className = 'km-seksjon';
+      var katTittel = document.createElement('div');
+      katTittel.className = 'km-kat-tittel';
+      katTittel.textContent = kat.charAt(0).toUpperCase() + kat.slice(1);
+      sek.appendChild(katTittel);
+
+      kategoriSett[kat].forEach(function(km) {
+        sek.appendChild(lagKMRad(km));
+      });
+      trinnDiv.appendChild(sek);
+    });
+    matDiv.appendChild(trinnDiv);
+  });
+  g.appendChild(matDiv);
+
+  // ── NATURFAG ───────────────────────────────────────────────────
+  var natDiv = document.createElement('div');
+  natDiv.id = 'fag-nat';
+  natDiv.style.display = 'none';
+
+  var natKat = {};
+  KMF.nat.forEach(function(km) {
+    if (!natKat[km[1]]) natKat[km[1]] = [];
+    natKat[km[1]].push(km);
+  });
+  Object.keys(natKat).forEach(function(kat) {
+    var sek = document.createElement('div');
+    sek.className = 'km-seksjon';
+    var katTittel = document.createElement('div');
+    katTittel.className = 'km-kat-tittel';
+    katTittel.textContent = kat.charAt(0).toUpperCase() + kat.slice(1);
+    sek.appendChild(katTittel);
+    natKat[kat].forEach(function(km) { sek.appendChild(lagKMRad(km)); });
+    natDiv.appendChild(sek);
+  });
+  g.appendChild(natDiv);
+
+  // ── PROGRAMMERING ──────────────────────────────────────────────
+  var prgDiv = document.createElement('div');
+  prgDiv.id = 'fag-prg';
+  prgDiv.style.display = 'none';
+
+  var prgKat = {};
+  KMF.prg.forEach(function(km) {
+    if (!prgKat[km[1]]) prgKat[km[1]] = [];
+    prgKat[km[1]].push(km);
+  });
+  Object.keys(prgKat).forEach(function(kat) {
+    var sek = document.createElement('div');
+    sek.className = 'km-seksjon';
+    var katTittel = document.createElement('div');
+    katTittel.className = 'km-kat-tittel';
+    katTittel.textContent = kat.charAt(0).toUpperCase() + kat.slice(1);
+    sek.appendChild(katTittel);
+    prgKat[kat].forEach(function(km) { sek.appendChild(lagKMRad(km)); });
+    prgDiv.appendChild(sek);
+  });
+  g.appendChild(prgDiv);
+}
+
+function lagKMRad(km) {
+  var kmKode = km[0];
+  var valgt = vurd[kmKode] || '';
+  var egV   = egenvurd[kmKode] || '';
+  var merk  = merkander[kmKode] || '';
+  var tips  = TIPS[kmKode] || {};
+  var tipsText = valgt && tips[valgt] ? tips[valgt] : '';
+
+  var egLabel = egV==='hoy'?'Høy':egV==='middels'?'Middels':egV==='lav'?'Lav':egV==='vet_ikke'?'Vet ikke':'';
+  var egFarge = egV==='hoy'?'var(--gron)':egV==='middels'?'var(--gul)':egV==='lav'?'var(--rod)':'var(--dim)';
+
+  var rad = document.createElement('div');
+  rad.className = 'km-rad';
+  rad.id = 'kmrad-' + kmKode;
+
+  // KM-tekst + egenvurdering
+  var hdr = document.createElement('div');
+  hdr.className = 'km-rad-hdr';
+  hdr.innerHTML =
+    '<div class="km-info">' +
+      '<span class="km-kode-chip">' + kmKode + '</span>' +
+      '<span class="km-tekst">Eleven skal kunne ' + km[2] + '</span>' +
+    '</div>' +
+    (egLabel ? '<span class="egenv-pill-liten" style="color:'+egFarge+';border-color:'+egFarge+'">👤 ' + egLabel + '</span>' : '');
+  rad.appendChild(hdr);
+
+  // Vurderingsknapper
+  var valgDiv = document.createElement('div');
+  valgDiv.className = 'km-valg';
+  ['ikke_gjort','lav','middels','hoy'].forEach(function(n) {
+    var label = n==='ikke_gjort'?'Ikke gjort':n==='hoy'?'Høy':n.charAt(0).toUpperCase()+n.slice(1);
+    var btn = document.createElement('button');
+    btn.className = 'nb ' + n + (valgt===n?' ak':'');
+    btn.textContent = label;
+    btn.dataset.km = kmKode;
+    btn.dataset.n  = n;
+    btn.onclick = function() { velg(this); };
+    valgDiv.appendChild(btn);
+  });
+  rad.appendChild(valgDiv);
+
+  // Tips-tekst
+  if (tipsText) {
+    var tipsEl = document.createElement('div');
+    tipsEl.className = 'km-tips';
+    tipsEl.id = 'tips-' + kmKode;
+    tipsEl.textContent = '💡 ' + tipsText;
+    rad.appendChild(tipsEl);
+  }
+
+  // Fritekst
+  var ta = document.createElement('textarea');
+  ta.className = 'km-fritekst';
+  ta.dataset.km = kmKode;
+  ta.placeholder = 'Fritekst til eleven om dette kompetansemålet...';
+  ta.value = merk;
+  ta.onchange = function() { lagreMerknad(this); };
+  rad.appendChild(ta);
+
+  return rad;
+}
+
+function visFagFane(fag, el) {
+  document.querySelectorAll('.fag-fane').forEach(function(b){b.classList.remove('ak');});
+  el.classList.add('ak');
+  ['fag-mat','fag-nat','fag-prg'].forEach(function(id) {
+    var d = document.getElementById(id);
+    if (d) d.style.display = id==='fag-'+fag ? 'block' : 'none';
+  });
+}
+
+function visTrinn(trinn, el) {
+  document.querySelectorAll('.trinn-btn').forEach(function(b){b.classList.remove('ak');});
+  el.classList.add('ak');
+  ['8','9','10'].forEach(function(t) {
+    var d = document.getElementById('trinn-'+t);
+    if (d) d.style.display = t===trinn ? 'block' : 'none';
   });
 }
 
 function velg(el){
   var km=el.dataset.km,n=el.dataset.n;
   vurd[km]=n;
+  // Oppdater tips
+  var tipsEl=document.getElementById('tips-'+km);
+  if(tipsEl){
+    var t=TIPS[km]&&TIPS[km][n]?TIPS[km][n]:'';
+    tipsEl.textContent = t ? '💡 '+t : '';
+    tipsEl.style.display = t ? 'block' : 'none';
+  } else if(TIPS[km]&&TIPS[km][n]) {
+    var newTips=document.createElement('div');
+    newTips.className='km-tips';newTips.id='tips-'+km;
+    newTips.textContent='💡 '+TIPS[km][n];
+    var rad=document.getElementById('kmrad-'+km);
+    if(rad){var ta=rad.querySelector('textarea');if(ta)rad.insertBefore(newTips,ta);}
+  }
   document.querySelectorAll('#vv-'+km+' .nb').forEach(function(b){b.classList.toggle('ak',b.dataset.n===n);});
 }
 
@@ -692,6 +1006,9 @@ async function slettLyspare() {
   if(badge) badge.style.display='none';
   trengerHjelp = window.trengerHjelp = false;
 }
+
+
+
 
 
 
