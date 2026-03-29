@@ -45,9 +45,25 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 .kb{width:34px;height:34px;border-radius:7px;border:1.5px solid var(--border);background:transparent;color:var(--dim);font-family:var(--font-h);font-size:.9rem;font-weight:800;cursor:pointer;}
 .kb.ak{background:var(--bla);border-color:var(--bla);color:#000;}
 .kar-stor{font-family:var(--font-h);font-size:2.6rem;font-weight:900;color:var(--bla);min-width:50px;text-align:center;}
+
+    .tbtn{padding:5px 10px;background:transparent;border:1px solid var(--border);
+      color:var(--dim);border-radius:7px;cursor:pointer;font-size:.75rem;}
+    .tbtn:hover{border-color:var(--bla);color:var(--bla);}
+
 </style>
+
+    /* KM-velger */
+    .kk-velger{display:flex;align-items:flex-start;gap:10px;}
+    .kk-check{width:18px;height:18px;margin-top:3px;flex-shrink:0;cursor:pointer;accent-color:var(--bla);}
+    .kk.skjult{opacity:.3;border-left-color:rgba(255,255,255,.1)!important;}
+    .kk.skjult .kk-tekst,.kk.skjult .kk-nivaa{text-decoration:line-through;color:var(--dim)!important;}
+    .km-teller{font-size:.75rem;color:var(--dim);margin-left:8px;}
+
 <style media="print">
-@page{size:A4;margin:18mm 16mm;}
+    .kk-check{display:none!important;}
+    .kk.skjult{display:none!important;}
+
+    @page{size:A4;margin:18mm 16mm;}
 body{background:#fff!important;color:#111!important;font-size:10pt;}
 #vt{display:none!important;}
 #rapport{max-width:100%;margin:0;padding:0;}
@@ -71,6 +87,10 @@ body{background:#fff!important;color:#111!important;font-size:10pt;}
   <h1 style="font-family:var(--font-h);font-size:.95rem;font-weight:800;color:var(--bla);">💻 Programmering – Rapport</h1>
   <div class="spacer"></div>
   <label class="vl"><input type="checkbox" id="vis-tall" checked>Karakter</label>
+  <label class="vl"><input type="checkbox" id="vis-tips" checked>Tips</label>
+  <button class="tbtn" onclick="velgAlle(true)">☑ Alle</button>
+  <button class="tbtn" onclick="velgAlle(false)">☐ Ingen</button>
+  <span class="km-teller" id="km-teller"></span>
   <button class="pdf-btn" onclick="skrivUt()">Lagre PDF</button>
 </div>
 <div id="rapport">
@@ -316,6 +336,8 @@ body{background:#fff!important;color:#111!important;font-size:10pt;}
 
 
 
+
+
 'use strict';
 if (!SkapLab.erLaererInnlogget()) { location.href='laerer_login.html'; throw new Error(); }
 var laerer=SkapLab.hentLaerer(), token=laerer.access_token;
@@ -383,14 +405,17 @@ function byggRapport(elev) {
       var nvLabel=n==='hoy'?'Høy kompetanse':n==='middels'?'Middels kompetanse':n==='lav'?'Lav kompetanse':'Ikke vurdert';
       var tips=TIPS[km[0]]&&TIPS[km[0]][n]?TIPS[km[0]][n]:'';
       var merk=merkander[km[0]]||'';
-      html+='<div class="kk '+n+'">'
+      html+='<div class="kk '+n+(n!=="ikke_gjort"?"":" skjult")+" id=\"kk-"+km[0]+"\">"
+        +'<div class="kk-velger">'
+        +'<input type="checkbox" class="kk-check" '+(n!=="ikke_gjort"?"checked":"")+' onchange="toggleKM(this)" data-kode="'+km[0]+'" title="Ta med i utskrift">'
+        +'<div style="flex:1">'
         +'<div class="kk-hdr"><span class="kk-kode">'+km[0]+'</span>'
         +'<span class="kk-tekst">Eleven skal kunne '+km[2]+'</span>'
-        +'<span class="kk-nivaa" style="color:'+(n==='hoy'?'var(--gron)':n==='middels'?'var(--gul)':n==='lav'?'var(--rod)':'var(--dim)')+'">'+ikon+' '+nvLabel+'</span>'
+        +'<span class="kk-nivaa" style="color:'+(n==='hoy'?'var(--gron)':n==='middels'?'var(--gul)':n==='lav'?'var(--rod)':'var(--dim)')+'">'  +ikon+' '+nvLabel+'</span>'
         +'</div>'
-        +(tips?'<div class="kk-tips">Anbefalt: '+tips+'</div>':'')
+        +(tips?'<div class="kk-tips kk-tips-vis">Anbefalt: '+tips+'</div>':'')
         +(merk?'<div class="kk-fritekst-label">Laerers tilbakemelding</div><div class="kk-fritekst">'+merk+'</div>':'')
-        +'</div>';
+        +'</div></div></div>';
     });
   });
 
@@ -408,12 +433,47 @@ async function lagreKar(){
     headers:Object.assign(SkapLab._hdr(token),{'Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify({elev_id:elevId,laerer_id:lid,fag:'Programmering',tallkarakter:tallkar})});
 }
+
+function toggleKM(kode, vis) {
+  var el = document.getElementById('kk-'+kode);
+  if (!el) return;
+  if (vis) el.classList.remove('skjult');
+  else     el.classList.add('skjult');
+  oppdaterTeller();
+}
+
+function velgAlle(vis) {
+  document.querySelectorAll('.kk-check').forEach(function(cb) {
+    cb.checked = vis;
+    var kode = cb.closest('.kk') && cb.closest('.kk').id.replace('kk-','');
+    if (kode) toggleKM(kode, vis);
+  });
+}
+
+function oppdaterTeller() {
+  var alle  = document.querySelectorAll('.kk').length;
+  var synlig = document.querySelectorAll('.kk:not(.skjult)').length;
+  var el = document.getElementById('km-teller');
+  if (el) el.textContent = synlig + '/' + alle + ' KM';
+}
+
+// Tips-toggle
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'vis-tips') {
+    document.querySelectorAll('.kk-tips').forEach(function(t) {
+      t.style.display = e.target.checked ? '' : 'none';
+    });
+  }
+});
+
 function skrivUt(){
   if(!document.getElementById('vis-tall').checked){var kb=document.getElementById('kb');if(kb)kb.style.display='none';}
   window.print();
   var kb=document.getElementById('kb');if(kb)kb.style.display='';
 }
 init();
+
+
 
 
 
