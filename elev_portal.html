@@ -765,6 +765,9 @@ init();
 <script>
 
 
+
+
+
 'use strict';
 if (!SkapLab.erElevInnlogget()) { location.href = 'elev_login.html'; throw new Error(); }
 var elev = SkapLab.hentElev();
@@ -862,6 +865,24 @@ async function init() {
 
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display  = 'block';
+
+  // ── PERSONALISERT VELKOMSTTEKST ──────────────────────────────────
+  (function() {
+    var sub = document.getElementById('velk-sub');
+    if (!sub) return;
+    var n = aktivitet.length;
+    if (n === 0) {
+      sub.textContent = 'Velkommen! Velg et fag og start din første økt. 🚀';
+    } else if (n < 5) {
+      sub.textContent = 'Bra start! Du har fullført '+n+' aktiviteter. Fortsett!';
+    } else {
+      var allScorer = aktivitet.filter(function(a){return a.score_pst!==null;}).map(function(a){return a.score_pst;});
+      var snitt = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length) : 0;
+      sub.textContent = snitt>=80 ? 'Imponerende! Snitt '+snitt+'% 🏆' :
+                        snitt>=60 ? 'Bra jobbet! Snitt '+snitt+'% — fortsett å øve 💪' :
+                        'Du er på vei! Snitt '+snitt+'% — øv mer for å nå målet 📈';
+    }
+  })();
 }
 
 /* ── KARUSELL ────────────────────────────────────────────────── */
@@ -899,17 +920,17 @@ function byggKarusell() {
     kar.appendChild(k);
   });
 
-  var allRes = Object.values(RESSURSER).reduce(function(acc,v){return acc.concat(v);}, []);
-  var ikkeGjort = allRes.find(function(r){return !_aktMap[r.r];});
-  if (ikkeGjort) {
+  // ── SMART ANBEFALINGSMOTOR ──────────────────────────────────────
+  var anbefalinger = genererAnbefalinger();
+  anbefalinger.slice(0, 2).forEach(function(a) {
     var k = document.createElement('div');
     k.className = 'karusell-kort anbefalt';
-    k.innerHTML = '<div class="kar-type">✨ Anbefalt neste</div>'
-      +'<div class="kar-tittel">'+ikkeGjort.t+'</div>'
-      +'<div class="kar-meta">Du har ikke prøvt dette ennå</div>'
-      +'<a href="'+ikkeGjort.u+'" class="kar-btn gron">Start nå →</a>';
+    k.innerHTML = '<div class="kar-type">'+a.ikon+' '+a.type+'</div>'
+      +'<div class="kar-tittel">'+a.tittel+'</div>'
+      +'<div class="kar-meta">'+a.grunn+'</div>'
+      +'<a href="'+a.url+'" class="kar-btn gron">'+a.knappTekst+' →</a>';
     kar.appendChild(k);
-  }
+  });
 
   if (kar.children.length === 0)
     kar.innerHTML = '<div class="tom" style="min-width:260px;">Ingen aktivitet ennå — velg et fag og start!</div>';
@@ -1078,68 +1099,141 @@ function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 init();
 
 
-</script>
 
-<script>
-// Flytende lyspære — lages og appended direkte til document.body
-// slik at position:fixed alltid fungerer uavhengig av DOM-nesting
-(function() {
-  var fab = document.createElement('div');
-  fab.id = 'lyspare-fab-wrap';
-  fab.style.cssText = [
-    'position:fixed',
-    'bottom:28px',
-    'right:28px',
-    'z-index:9999',
-    'pointer-events:auto'
-  ].join(';');
+/* ── ANBEFALINGSMOTOR ────────────────────────────────────────────── */
+function genererAnbefalinger() {
+  var anb = [];
 
-  fab.innerHTML =
-    '<div id="lyspare-tooltip" style="'
-    + 'position:absolute;bottom:70px;right:0;'
-    + 'background:rgba(20,22,35,.97);border:1px solid rgba(251,191,36,.4);'
-    + 'color:#fbbf24;font-size:.75rem;padding:8px 14px;border-radius:10px;'
-    + 'width:190px;text-align:center;line-height:1.5;display:none;'
-    + 'pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
-    + 'Trykk for å fortelle læreren at du trenger hjelp'   + '</div>'
-    + '<button id="lyspare-fab" style="'
-    + 'width:60px;height:60px;border-radius:50%;cursor:pointer;font-size:1.8rem;'
-    + 'background:rgba(251,191,36,.12);border:2px solid rgba(251,191,36,.3);'
-    + 'box-shadow:0 4px 20px rgba(0,0,0,.3);transition:all .2s;"'
-    + ' title="Trenger du hjelp?">💡</button>'
-    + '<div id="lyspare-fab-label" style="'
-    + 'font-size:.68rem;color:rgba(255,255,255,.4);font-family:DM Sans,sans-serif;'
-    + 'text-align:center;">Trenger hjelp?</div>';
-
-  document.body.appendChild(fab);
-
-  // Klikk
-  document.getElementById('lyspare-fab').addEventListener('click', function() {
-    if (typeof toggleLyspare === 'function') toggleLyspare();
-  });
-
-  // Tooltip på hover
-  var btn = document.getElementById('lyspare-fab');
-  var tip = document.getElementById('lyspare-tooltip');
-  btn.addEventListener('mouseenter', function() {
-    if (typeof lyspareAktiv !== 'undefined' && !lyspareAktiv) tip.style.display = 'block';
-  });
-  btn.addEventListener('mouseleave', function() { tip.style.display = 'none'; });
-
-  // Oppdater utseende
-  window.oppdaterLyspareFloater = function() {
-    var b = document.getElementById('lyspare-fab');
-    var l = document.getElementById('lyspare-fab-label');
-    var aktiv = (typeof lyspareAktiv !== 'undefined') && lyspareAktiv;
-    if (!b) return;
-    b.style.background    = aktiv ? 'rgba(251,191,36,.3)'  : 'rgba(251,191,36,.12)';
-    b.style.borderColor   = aktiv ? '#fbbf24'               : 'rgba(251,191,36,.3)';
-    b.style.boxShadow     = aktiv ? '0 4px 20px rgba(251,191,36,.3),0 0 0 4px rgba(251,191,36,.1)' : '0 4px 20px rgba(0,0,0,.3)';
-    if (l) { l.textContent = aktiv ? 'Læreren er varslet ✓' : 'Trenger hjelp?'; l.style.color = aktiv ? '#fbbf24' : 'rgba(255,255,255,.4)'; }
-    var global = document.getElementById('global-lyspare');
-    if (global) global.classList.toggle('aktiv', aktiv);
+  // KM-dekning: finn KM med lav score eller ingen aktivitet
+  var KM_RESSURS = {
+    'MAT8-1': ['matte_mengde_tall_potenser','matte_tall_potenser'],
+    'MAT8-2': ['matte_mengde_hoderegning'],
+    'MAT8-3': ['matte_mengde_tall_primtall','matte_mengde_brøk_regning'],
+    'MAT8-4': ['matte_mengde_algebra_uttrykk','matte_mengde_algebra_parenteser'],
+    'MAT8-5': ['matte_mengde_monstre'],
+    'MAT8-6': ['matte_mengde_mål_enheter'],
+    'MAT8-7': ['matte_mengde_regneuttrykk'],
+    'MAT8-8': ['matte_mengde_likninger_linja','matte_mengde_likninger_ulikheter'],
+    'MAT8-9': ['grafer'],
+    'MAT8-10':['matte_mengde_funk_lineær','matte_mengde_funk_lineær_graf'],
+    'MAT8-11':['algoritmedetektiven','pseudokode'],
+    'MAT9-1': ['matte_mengde_geometriske_monstre'],
+    'MAT9-2': ['matte_mengde_geo_formlikskap'],
+    'MAT9-3': ['matte_mengde_geo_pythagoras','matte_mengde_geo_trigonometri'],
+    'MAT9-4': ['matte_mengde_geo_koordinater','geometri'],
+    'MAT9-5': ['matte_mengde_geo_areal','matte_mengde_geo_volum'],
+    'MAT9-6': ['matte_mengde_stat_diagrammer','statistikk'],
+    'MAT9-7': ['matte_mengde_stat_sentralmål','matte_mengde_stat_boksplott'],
+    'MAT9-8': ['matte_mengde_statistikk_argument'],
+    'MAT9-9': ['matte_mengde_sann_grunnleggende','sannsynlighet'],
+    'MAT9-10':['matte_mengde_prog_simulering'],
+    'MAT10-1':['matte_mengde_algebra_polynomer'],
+    'MAT10-3':['matte_mengde_liknsystem_innsetting'],
+    'MAT10-5':['matte_mengde_prosent_vekst'],
+    'MAT10-8':['eksamenstrener'],
+    'NAT-1':  ['naturfagquiz','forsok'],
+    'NAT-8':  ['kjemi','kjemiske_reaksjoner'],
+    'NAT-9':  ['periodesystem','atom'],
+    'NAT-14': ['celle','mikroskop'],
+    'PRG-1':  ['prg_mengde_datamaskiner'],
+    'PRG-3':  ['pseudokode','labyrint_kode'],
+    'PRG-6':  ['debugrommet'],
   };
-})();
+
+  var TITTEL = {
+    'matte_mengde_tall_potenser':'Potenser', 'matte_mengde_hoderegning':'Hoderegning',
+    'matte_mengde_brøk_regning':'Brøkregning', 'matte_mengde_algebra_uttrykk':'Algebraiske uttrykk',
+    'matte_mengde_monstre':'Mønstre', 'matte_mengde_regneuttrykk':'Regneuttrykk',
+    'matte_mengde_likninger_linja':'Lineære likninger', 'grafer':'Grafer og funksjoner',
+    'matte_mengde_funk_lineær':'Lineære funksjoner', 'algoritmedetektiven':'Algoritmedetektiven',
+    'pseudokode':'Pseudokode-byggeren', 'matte_mengde_geometriske_monstre':'Geometriske mønstre',
+    'matte_mengde_geo_pythagoras':'Pythagoras', 'matte_mengde_stat_diagrammer':'Statistikk',
+    'matte_mengde_statistikk_argument':'Statistikk som argument',
+    'matte_mengde_sann_grunnleggende':'Sannsynlighet', 'eksamenstrener':'Eksamenstrener',
+    'naturfagquiz':'Naturfagquiz', 'forsok':'Forsøkslære', 'kjemi':'Kjemilaben',
+    'kjemiske_reaksjoner':'Kjemiske reaksjoner', 'periodesystem':'Periodesystemet',
+    'atom':'Atomteori', 'celle':'Cellens anatomi', 'mikroskop':'Mikroskoplaben',
+    'prg_mengde_datamaskiner':'Datamaskiner og kode', 'labyrint_kode':'Labyrintkoden',
+    'debugrommet':'Debug-rommet', 'statistikk':'Statistikk',
+    'matte_mengde_geo_areal':'Areal', 'sannsynlighet':'Sannsynlighet',
+    'matte_mengde_algebra_polynomer':'Polynomer',
+    'matte_mengde_liknsystem_innsetting':'Likningssystemer',
+  };
+
+  // 1. Finn KM med lav score (< 50%) eller ikke prøvd
+  var svakeKM = [];
+  Object.keys(KM_RESSURS).forEach(function(km) {
+    var ressurser = KM_RESSURS[km];
+    var scorer = [];
+    ressurser.forEach(function(r) {
+      if (_aktMap[r] && _aktMap[r].snitt !== null) scorer.push(_aktMap[r].snitt);
+    });
+    var snitt = scorer.length ? scorer.reduce(function(a,b){return a+b;},0)/scorer.length : null;
+    var ikkePrøvd = ressurser.every(function(r) { return !_aktMap[r]; });
+    svakeKM.push({ km: km, snitt: snitt, ikkePrøvd: ikkePrøvd, ressurser: ressurser });
+  });
+
+  // Sorter: lavest score først, ikke-prøvde sist
+  svakeKM.sort(function(a, b) {
+    if (a.snitt === null && b.snitt === null) return 0;
+    if (a.snitt === null) return 1;
+    if (b.snitt === null) return -1;
+    return a.snitt - b.snitt;
+  });
+
+  // 2. Anbefal basert på score
+  var sett = new Set();
+  svakeKM.forEach(function(item) {
+    if (anb.length >= 3) return;
+    var res = item.ressurser[0];
+    if (sett.has(res)) return;
+    sett.add(res);
+    var tittel = TITTEL[res] || res.replace(/_/g,' ');
+    if (item.snitt !== null && item.snitt < 50) {
+      anb.push({
+        ikon: '📈', type: 'Øv mer',
+        tittel: tittel,
+        grunn: 'Score: '+Math.round(item.snitt)+'% — du er på vei!',
+        url: res+'.html',
+        knappTekst: 'Øv igjen'
+      });
+    } else if (item.ikkePrøvd) {
+      anb.push({
+        ikon: '✨', type: 'Nytt emne',
+        tittel: tittel,
+        grunn: 'Du har ikke prøvd dette ennå',
+        url: res+'.html',
+        knappTekst: 'Start nå'
+      });
+    }
+  });
+
+  // 3. Fallback: repetisjons-anbefaling (noe med god score som bør vedlikeholdes)
+  if (anb.length < 2) {
+    var allRes2 = Object.values(RESSURSER).reduce(function(a,v){return a.concat(v);}, []);
+    var kanRepetere = allRes2.filter(function(r) {
+      var a = _aktMap[r.r];
+      return a && a.snitt !== null && a.snitt >= 70;
+    });
+    if (kanRepetere.length) {
+      var rep = kanRepetere[Math.floor(Math.random()*Math.min(kanRepetere.length, 5))];
+      anb.push({
+        ikon: '🔁', type: 'Repetisjon',
+        tittel: rep.t,
+        grunn: 'Hold kunnskapen ved like',
+        url: rep.u,
+        knappTekst: 'Repeter'
+      });
+    }
+  }
+
+  return anb;
+}
+
+
+
 </script>
+
+
 </body>
 </html>
