@@ -342,6 +342,7 @@ body{background:#fff!important;color:#111!important;font-size:10pt;}
 <script>
 
 
+
 'use strict';
 if (!SkapLab.erLaererInnlogget()) { location.href='laerer_login.html'; throw new Error(); }
 var laerer=SkapLab.hentLaerer(), token=laerer.access_token;
@@ -430,13 +431,14 @@ async function init() {
   var elev = eR && eR[0];
   if (!elev) return;
 
-  // Hent vurderinger
-  var vR = await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid, token);
-  if (Array.isArray(vR)) vR.forEach(function(v) { vurd[v.km_kode]=v.nivaa; });
-
-  // Hent fritekst (merknader)
-  var mR = await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,merknad', token);
-  if (Array.isArray(mR)) mR.forEach(function(v) { if(v.merknad) merkander[v.km_kode]=v.merknad; });
+  // Hent vurderinger inkl. fritekst i ett kall
+  var vR = await SkapLab._get(
+    '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,nivaa,merknad',
+    token);
+  if (Array.isArray(vR)) vR.forEach(function(v) {
+    if (v.nivaa)   vurd[v.km_kode]     = v.nivaa;
+    if (v.merknad) merkander[v.km_kode] = v.merknad;
+  });
 
   // Hent karakter
   var kR = await SkapLab._get('/karakterer?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&fag=eq.Matematikk', token);
@@ -540,6 +542,7 @@ function skrivUt() {
 }
 
 init();
+
 
 
 </script>
