@@ -318,6 +318,8 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
 
 
+
+
 'use strict';
 if(!SkapLab.erLaererInnlogget()){location.href='laerer_login.html';throw new Error('Ikke innlogget');}
 var laerer=SkapLab.hentLaerer(),token=laerer.access_token,lid=laerer.user&&laerer.user.id;
@@ -332,26 +334,60 @@ var KMF={
 var akt=[],vurd={},kmSc={};
 
 async function init(){
-  var eR=await SkapLab._get('/elever?id=eq.'+elevId+'&select=fullt_navn,innloggingskode,klasser(navn)',token);
-  var elev=eR&&eR[0];
-  if(!elev){location.href='laerer_dashboard.html';return;}
-  document.getElementById('en').textContent=elev.fullt_navn;
-  document.getElementById('ek').textContent=elev.klasser?elev.klasser.navn:'';
-  document.getElementById('ekode').textContent='Kode: '+elev.innloggingskode;
-  var aR=await SkapLab._get('/aktivitet?elev_id=eq.'+elevId+'&order=tidspunkt.desc&limit=100',token);
-  akt=Array.isArray(aR)?aR:[];
-  akt.forEach(function(a){
-    if(!a.km_kode||a.score_pst===null) return;
-    if(!kmSc[a.km_kode]) kmSc[a.km_kode]={sum:0,ant:0};
-    kmSc[a.km_kode].sum+=a.score_pst;kmSc[a.km_kode].ant++;
-  });
-  var vR=await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid,token);
-  if(Array.isArray(vR)) vR.forEach(function(v){vurd[v.km_kode]=v.nivaa;});
-  await lastMerkander();byggKM();byggAkt();await byggTildelt();
-  // Vis lyspære
-  if(trengerHjelp){var b=document.getElementById('lys-badge');if(b){b.style.display='inline-flex';b.title='Trenger hjelp'+(hjelpEmne?' med: '+hjelpEmne:'');}}
-  document.getElementById('laster').style.display='none';
-  document.getElementById('ei').style.display='block';
+  try {
+    // 1. Elev-info inkl. lyspære
+    var eR=await SkapLab._get(
+      '/elever?id=eq.'+elevId+'&select=fullt_navn,innloggingskode,trenger_hjelp,hjelp_emne,klasser(navn)',token);
+    var elev=eR&&eR[0];
+    if(!elev){location.href='laerer_dashboard.html';return;}
+
+    document.getElementById('en').textContent=elev.fullt_navn;
+    document.getElementById('ek').textContent=elev.klasser?elev.klasser.navn:'';
+    document.getElementById('ekode').textContent='Kode: '+elev.innloggingskode;
+    trengerHjelp = !!(elev.trenger_hjelp);
+    hjelpEmne    = elev.hjelp_emne||'';
+
+    // 2. Aktivitet
+    var aR=await SkapLab._get('/aktivitet?elev_id=eq.'+elevId+'&order=tidspunkt.desc&limit=100',token);
+    akt=Array.isArray(aR)?aR:[];
+    akt.forEach(function(a){
+      if(!a.km_kode||a.score_pst===null) return;
+      if(!kmSc[a.km_kode]) kmSc[a.km_kode]={sum:0,ant:0};
+      kmSc[a.km_kode].sum+=a.score_pst; kmSc[a.km_kode].ant++;
+    });
+
+    // 3. Lærers vurderinger
+    var vR=await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid,token);
+    if(Array.isArray(vR)) vR.forEach(function(v){vurd[v.km_kode]=v.nivaa;});
+
+    // 4. Elevens egenvurdering (kan feile om tabellen ikke finnes ennå)
+    try {
+      var egR=await SkapLab._get('/elev_egenvurdering?elev_id=eq.'+elevId,token);
+      if(Array.isArray(egR)) egR.forEach(function(e){egenvurd[e.km_kode]=e.nivaa;});
+    } catch(egFeil){ console.warn('egenvurdering ikke tilgjengelig ennå'); }
+
+    // 5. Bygg siden
+    await lastMerkander();
+    byggKM();
+    byggAkt();
+    await byggTildelt();
+
+    // 6. Vis lyspære om eleven trenger hjelp
+    if(trengerHjelp){
+      var b=document.getElementById('lys-badge');
+      if(b){ b.style.display='inline-flex';
+             b.title='Trenger hjelp'+(hjelpEmne?' med: '+hjelpEmne:''); }
+    }
+
+    document.getElementById('laster').style.display='none';
+    document.getElementById('ei').style.display='block';
+
+  } catch(err) {
+    console.error('init feilet:', err);
+    // Vis side selv om noe feilet - ikke heng på laster
+    document.getElementById('laster').style.display='none';
+    document.getElementById('ei').style.display='block';
+  }
 }
 
 async function byggTildelt(){
@@ -635,8 +671,10 @@ async function lagreMerknad(el) {
 }
 
 async function lastMerkander() {
-  var resp=await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,merknad',token);
-  if(Array.isArray(resp)) resp.forEach(function(v){if(v.merknad) merkander[v.km_kode]=v.merknad;});
+  try {
+    var resp=await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,merknad',token);
+    if(Array.isArray(resp)) resp.forEach(function(v){if(v.merknad) merkander[v.km_kode]=v.merknad;});
+  } catch(e) { console.warn('merknad ikke tilgjengelig:', e.message); }
 }
 
 async function slettLyspare() {
@@ -650,6 +688,8 @@ async function slettLyspare() {
   if(badge) badge.style.display='none';
   trengerHjelp=false;
 }
+
+
 
 
 </script>

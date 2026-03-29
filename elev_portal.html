@@ -1080,66 +1080,66 @@ init();
 
 </script>
 
-<!-- Flytende lyspære-knapp -->
-<div id="lyspare-floater" style="
-  position:fixed;bottom:28px;right:28px;z-index:100;
-  display:flex;flex-direction:column;align-items:center;gap:6px;">
-  <div id="lyspare-tooltip" style="
-    background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.4);
-    color:#fbbf24;font-size:.75rem;padding:6px 12px;border-radius:8px;
-    max-width:180px;text-align:center;line-height:1.4;
-    display:none;font-family:'DM Sans',sans-serif;">
-    Trykk for å fortelle læreren at du trenger hjelp
-  </div>
-  <button id="lyspare-fab" onclick="toggleLyspare()" style="
-    width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;
-    font-size:1.8rem;transition:all .2s;
-    background:rgba(251,191,36,.15);border:2px solid rgba(251,191,36,.3);
-    box-shadow:0 4px 20px rgba(0,0,0,.3);"
-    title="Trenger du hjelp? Fortell læreren din">💡</button>
-  <div id="lyspare-label" style="
-    font-size:.68rem;color:rgba(255,255,255,.4);
-    font-family:'DM Sans',sans-serif;text-align:center;">
-    Trenger hjelp?
-  </div>
-</div>
-
 <script>
-// Oppdater lyspære-floater basert på status
-function oppdaterLyspareFloater() {
-  var fab = document.getElementById('lyspare-fab');
-  var label = document.getElementById('lyspare-label');
-  if (!fab) return;
-  if (lyspareAktiv) {
-    fab.style.background = 'rgba(251,191,36,.3)';
-    fab.style.borderColor = '#fbbf24';
-    fab.style.boxShadow = '0 4px 20px rgba(251,191,36,.3), 0 0 0 4px rgba(251,191,36,.1)';
-    fab.textContent = '💡';
-    if (label) label.textContent = 'Læreren er varslet ✓';
-    if (label) label.style.color = '#fbbf24';
-  } else {
-    fab.style.background = 'rgba(251,191,36,.1)';
-    fab.style.borderColor = 'rgba(251,191,36,.25)';
-    fab.style.boxShadow = '0 4px 20px rgba(0,0,0,.3)';
-    fab.textContent = '💡';
-    if (label) label.textContent = 'Trenger hjelp?';
-    if (label) label.style.color = 'rgba(255,255,255,.4)';
-  }
-  // Oppdater også global-lyspare i velkomst
-  var global = document.getElementById('global-lyspare');
-  if (global) global.classList.toggle('aktiv', lyspareAktiv);
-}
+// Flytende lyspære — lages og appended direkte til document.body
+// slik at position:fixed alltid fungerer uavhengig av DOM-nesting
+(function() {
+  var fab = document.createElement('div');
+  fab.id = 'lyspare-fab-wrap';
+  fab.style.cssText = [
+    'position:fixed',
+    'bottom:28px',
+    'right:28px',
+    'z-index:9999',
+    'pointer-events:auto'
+  ].join(';');
 
-// Vis tooltip ved hover
-document.getElementById('lyspare-fab').addEventListener('mouseenter', function() {
-  if (!lyspareAktiv) {
-    document.getElementById('lyspare-tooltip').style.display = 'block';
-  }
-});
-document.getElementById('lyspare-fab').addEventListener('mouseleave', function() {
-  document.getElementById('lyspare-tooltip').style.display = 'none';
-});
+  fab.innerHTML =
+    '<div id="lyspare-tooltip" style="'
+    + 'position:absolute;bottom:70px;right:0;'
+    + 'background:rgba(20,22,35,.97);border:1px solid rgba(251,191,36,.4);'
+    + 'color:#fbbf24;font-size:.75rem;padding:8px 14px;border-radius:10px;'
+    + 'width:190px;text-align:center;line-height:1.5;display:none;'
+    + 'pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.5);">'
+    + 'Trykk for å fortelle læreren at du trenger hjelp'   + '</div>'
+    + '<button id="lyspare-fab" style="'
+    + 'width:60px;height:60px;border-radius:50%;cursor:pointer;font-size:1.8rem;'
+    + 'background:rgba(251,191,36,.12);border:2px solid rgba(251,191,36,.3);'
+    + 'box-shadow:0 4px 20px rgba(0,0,0,.3);transition:all .2s;"'
+    + ' title="Trenger du hjelp?">💡</button>'
+    + '<div id="lyspare-fab-label" style="'
+    + 'font-size:.68rem;color:rgba(255,255,255,.4);font-family:DM Sans,sans-serif;'
+    + 'text-align:center;">Trenger hjelp?</div>';
+
+  document.body.appendChild(fab);
+
+  // Klikk
+  document.getElementById('lyspare-fab').addEventListener('click', function() {
+    if (typeof toggleLyspare === 'function') toggleLyspare();
+  });
+
+  // Tooltip på hover
+  var btn = document.getElementById('lyspare-fab');
+  var tip = document.getElementById('lyspare-tooltip');
+  btn.addEventListener('mouseenter', function() {
+    if (typeof lyspareAktiv !== 'undefined' && !lyspareAktiv) tip.style.display = 'block';
+  });
+  btn.addEventListener('mouseleave', function() { tip.style.display = 'none'; });
+
+  // Oppdater utseende
+  window.oppdaterLyspareFloater = function() {
+    var b = document.getElementById('lyspare-fab');
+    var l = document.getElementById('lyspare-fab-label');
+    var aktiv = (typeof lyspareAktiv !== 'undefined') && lyspareAktiv;
+    if (!b) return;
+    b.style.background    = aktiv ? 'rgba(251,191,36,.3)'  : 'rgba(251,191,36,.12)';
+    b.style.borderColor   = aktiv ? '#fbbf24'               : 'rgba(251,191,36,.3)';
+    b.style.boxShadow     = aktiv ? '0 4px 20px rgba(251,191,36,.3),0 0 0 4px rgba(251,191,36,.1)' : '0 4px 20px rgba(0,0,0,.3)';
+    if (l) { l.textContent = aktiv ? 'Læreren er varslet ✓' : 'Trenger hjelp?'; l.style.color = aktiv ? '#fbbf24' : 'rgba(255,255,255,.4)'; }
+    var global = document.getElementById('global-lyspare');
+    if (global) global.classList.toggle('aktiv', aktiv);
+  };
+})();
 </script>
-
 </body>
 </html>
