@@ -343,6 +343,7 @@ body{background:#fff!important;color:#111!important;font-size:10pt;}
 
 
 
+
 'use strict';
 if (!SkapLab.erLaererInnlogget()) { location.href='laerer_login.html'; throw new Error(); }
 var laerer=SkapLab.hentLaerer(), token=laerer.access_token;
@@ -431,14 +432,28 @@ async function init() {
   var elev = eR && eR[0];
   if (!elev) return;
 
-  // Hent vurderinger inkl. fritekst i ett kall
-  var vR = await SkapLab._get(
-    '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,nivaa,merknad',
-    token);
-  if (Array.isArray(vR)) vR.forEach(function(v) {
-    if (v.nivaa)   vurd[v.km_kode]     = v.nivaa;
-    if (v.merknad) merkander[v.km_kode] = v.merknad;
-  });
+  // Les vurderinger fra sessionStorage (satt av elev_detalj) + Supabase
+  try {
+    var cached = JSON.parse(sessionStorage.getItem('skaplab_rapport_vurd') || 'null');
+    var cachedMerk = JSON.parse(sessionStorage.getItem('skaplab_rapport_merk') || 'null');
+    if (cachedMerk && typeof cachedMerk === 'object') Object.assign(merkander, cachedMerk);
+    if (cached && typeof cached === 'object') {
+      Object.assign(vurd, cached);
+      console.log('Vurderinger fra cache:', Object.keys(vurd).length);
+    }
+  } catch(e) {}
+
+  // Hent fra Supabase (oppdaterer med lagrede verdier)
+  try {
+    var vR = await SkapLab._get(
+      '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&select=km_kode,nivaa,merknad',
+      token);
+    console.log('Vurderinger fra Supabase:', Array.isArray(vR) ? vR.length : 'feil', vR);
+    if (Array.isArray(vR)) vR.forEach(function(v) {
+      if (v.nivaa)   vurd[v.km_kode]     = v.nivaa;
+      if (v.merknad) merkander[v.km_kode] = v.merknad;
+    });
+  } catch(e) { console.warn('Supabase-henting feilet:', e); }
 
   // Hent karakter
   var kR = await SkapLab._get('/karakterer?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&fag=eq.Matematikk', token);
@@ -542,6 +557,7 @@ function skrivUt() {
 }
 
 init();
+
 
 
 
