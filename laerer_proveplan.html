@@ -103,7 +103,7 @@ input.innst-dato::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:poi
 /* ── PRINT ──────────────────────────────────────────────────────── */
 </style>
 <style media="print">
-.print-statisk{display:none;}
+.print-statisk{display:block;}
 @page{size:A4 landscape;margin:10mm 12mm;}
 nav.topnav,#laerer-nav,#laster,.innstillinger,.skriv-ut-btn,.print-skjul{display:none!important;}
 body,html{background:#fff!important;color:#111!important;}
@@ -195,9 +195,8 @@ body,html{background:#fff!important;color:#111!important;}
       <span id="hdr-fag" style="display:none"></span>
     </div>
     <div class="ph-felt">
-      <span class="ph-label">Prøvedato</span>
-      <input type="date" class="ph-input" id="sel-dato-global" oninput="oppdaterHeader()">
-      <span id="hdr-dato" style="display:none"></span>
+      <span class="ph-label">Utskriftsdato</span>
+      <div class="ph-verdi" id="utskrift-dato"></div>
     </div>
   </div>
 
@@ -619,15 +618,16 @@ function oppdaterHeader() {
   var fag    = document.getElementById('sel-fag');
   var trinn  = document.getElementById('sel-trinn');
 
-  var klasseNavn = klasse && klasse.value ? (klasser.find(function(k){return k.id===klasse.value;})||{}).navn||'' : '';
+  var klasseNavn = klasse && klasse.value
+    ? ((klasser.find(function(k){return k.id===klasse.value;})||{}).navn||'') : '';
   var fagTekst   = {mat:'Matematikk',nat:'Naturfag',prg:'Programmering'}[fag&&fag.value] || '';
   var trinnTekst = fag&&fag.value==='mat'&&trinn&&trinn.value ? trinn.value+'. trinn' : '';
+  var fagFull    = [fagTekst, trinnTekst].filter(Boolean).join(' ');
 
-  // Oppdater input-boksene i header automatisk fra velgere
   var klasseInput = document.getElementById('hdr-klasse-input');
   var fagInput    = document.getElementById('hdr-fag-input');
-  if (klasseInput && klasseNavn) klasseInput.value = klasseNavn;
-  if (fagInput && fagTekst)     fagInput.value     = [fagTekst, trinnTekst].filter(Boolean).join(' ');
+  if (klasseInput) klasseInput.value = klasseNavn || klasseInput.value;
+  if (fagInput)    fagInput.value    = fagFull    || fagInput.value;
 }
 
 
@@ -637,8 +637,8 @@ async function sendProvevarsel() {
   var klasseEl = document.getElementById('sel-klasse');
   var klasseId = klasseEl ? klasseEl.value : '';
   if (!klasseId) { visMelding('Velg klasse for å sende varsel.'); return; }
-  var datoEl = document.getElementById('sel-dato-global');
-  var dato = datoEl ? datoEl.value : '';
+  // Finn første prøvedato fra radene
+  var dato = proveRader.map(function(r){return r.dato;}).filter(Boolean)[0] || '';
   var fagEl = document.getElementById('sel-fag');
   var trinnEl = document.getElementById('sel-trinn');
   var fagTekst = {mat:'Matematikk',nat:'Naturfag',prg:'Programmering'}[fagEl?fagEl.value:''] || 'Prøve';
@@ -658,6 +658,7 @@ async function sendProvevarsel() {
       url:     'laerer_proveplan.html',
       fag:     fagEl?fagEl.value:'mat'
     }, token);
+    if (Array.isArray(oppgR)) oppgR = oppgR[0];
     if (!oppgR || !oppgR.id) throw new Error('Kunne ikke opprette oppgave');
     // Tildel til klassen
     await SkapLab._post('/tildeling', {
@@ -704,17 +705,7 @@ function skrivUt() {
     inp.style.display = 'none';
     erstatninger.push({orig: inp, repl: span});
   });
-  // Datofeltet
-  var datoInp = document.getElementById('sel-dato-global');
-  if (datoInp && datoInp.value) {
-    var d = new Date(datoInp.value);
-    var datoDiv = document.createElement('div');
-    datoDiv.className = 'ph-verdi print-statisk';
-    datoDiv.textContent = d.toLocaleDateString('nb-NO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    datoInp.parentNode.insertBefore(datoDiv, datoInp);
-    datoInp.style.display = 'none';
-    erstatninger.push({orig: datoInp, repl: datoDiv});
-  }
+  // Utskriftsdato oppdateres allerede av window.load
   setTimeout(function() {
     window.print();
     // Gjenopprett etter print
@@ -728,6 +719,13 @@ function skrivUt() {
 }
 
 // Init
+// Sett utskriftsdato automatisk
+(function() {
+  var el = document.getElementById('utskrift-dato');
+  if (el) el.textContent = new Date().toLocaleDateString('nb-NO',{
+    weekday:'long', day:'numeric', month:'long', year:'numeric'
+  });
+})();
 init();
 
 </script>
