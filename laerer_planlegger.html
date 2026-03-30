@@ -159,6 +159,11 @@ nav{height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;
 .plan-res-dato { font-size:.65rem; color:var(--gul); font-family:var(--font-m); margin-left:2px; }
 .plan-res-fjern { background:none; border:none; color:var(--rod); cursor:pointer; font-size:.75rem; padding:0 3px; }
 
+
+.res-type-ikon { font-size:1.1rem; flex-shrink:0; }
+.res-type-label { font-size:.62rem; font-family:var(--font-h); font-weight:700; 
+  color:var(--bla); background:rgba(96,165,250,.1); padding:1px 5px; border-radius:4px; }
+
 </style>
 </head>
 <body>
@@ -577,6 +582,23 @@ function velgKM(km) {
 }
 
 // ── RESSURSVISNING ────────────────────────────────────────────────
+function resIkon(r) {
+  if (r.indexOf('mengde') >= 0) return '🏋️';
+  if (r.indexOf('quiz') >= 0) return '🧪';
+  if (r.indexOf('flipcard') >= 0 || r.indexOf('flash') >= 0) return '🃏';
+  if (r.indexOf('spill') >= 0 || r.indexOf('battleship') >= 0 || r.indexOf('kanon') >= 0) return '🎮';
+  if (r.indexOf('lab') >= 0 || r.indexOf('lab') >= 0) return '🔬';
+  return '📖';
+}
+function resType(r) {
+  if (r.indexOf('mengde') >= 0) return 'Mengdetrening';
+  if (r.indexOf('quiz') >= 0) return 'Quiz';
+  if (r.indexOf('flipcard') >= 0 || r.indexOf('flash') >= 0) return 'Teorikort';
+  if (r.indexOf('spill') >= 0 || r.indexOf('battleship') >= 0 || r.indexOf('kanon') >= 0) return 'Spill';
+  if (r.indexOf('lab') >= 0) return 'Lab';
+  return 'Leksjon';
+}
+
 function visRessurser(km) {
   var el = document.getElementById('res-liste');
   var tomEl = document.getElementById('res-tom');
@@ -589,15 +611,28 @@ function visRessurser(km) {
   if (tomEl) tomEl.style.display = 'none';
   el.innerHTML = '';
   var iDag = new Date().toISOString().slice(0,10);
-  RES_PER_KM[km].forEach(function(res) {
+
+  // Grupper: mengdetrening øverst, deretter resten
+  var sortert = RES_PER_KM[km].slice().sort(function(a,b){
+    var aM = a.r.indexOf('mengde')>=0;
+    var bM = b.r.indexOf('mengde')>=0;
+    if (aM && !bM) return -1;
+    if (!aM && bM) return 1;
+    return 0;
+  });
+
+  sortert.forEach(function(res) {
+    var ikon = resIkon(res.r);
+    var type = resType(res.r);
     var div = document.createElement('div');
     div.className = 'res-item';
-    var datoId = 'dato-' + res.r;
+    var datoId = 'dato-' + res.r.replace(/[^\w]/g,'-');
     div.innerHTML =
       '<div class="res-item-hoved">'
+        +'<span class="res-type-ikon">'+ikon+'</span>'
         +'<div class="res-info">'
           +'<div class="res-tittel">'+res.t+'</div>'
-          +'<div class="res-fil">'+res.fil+'</div>'
+          +'<div class="res-fil"><span class="res-type-label">'+type+'</span> · '+res.fil+'</div>'
         +'</div>'
         +'<a href="'+res.fil+'" target="_blank" class="res-apne-btn">Åpne →</a>'
       +'</div>'
