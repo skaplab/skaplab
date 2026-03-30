@@ -88,6 +88,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .rp-tom { font-size:.82rem; color:var(--dim); padding:12px 0; }
 .rp-mer { font-size:.72rem; color:var(--dim); padding:6px 0; text-align:right; }
 
+
+.varsel-rad{display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);
+  border-radius:8px;margin-bottom:5px;}
+.varsel-ikon{font-size:1rem;flex-shrink:0;}
+.varsel-tittel{font-size:.8rem;font-weight:600;}
+.varsel-dato{font-size:.72rem;color:var(--dim);}
+
 </style></head><body>
 <div id="topbar">
   <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
@@ -557,6 +565,8 @@ async function visKlasse(){
     +'<div class="stat"><div class="stat-t">'+e2.length+'</div><div class="stat-l">Elever</div></div>'
     +'<div class="stat"><div class="stat-t">'+vrd.length+'</div><div class="stat-l">Vurderinger</div></div>'
     +'</div>'
+    +'<div class="sek-hdr"><div class="sek-tittel">📝 Kommende prøver</div></div>'
+    +'<div id="prove-varsler" style="margin-bottom:12px;"><div style="font-size:.78rem;color:var(--dim);">Laster…</div></div>'
     +'<div class="sek-hdr" style="margin-top:4px;"><div class="sek-tittel">📺 Neste ressurser fra planlegger</div>'
     +'<a href="laerer_planlegger.html" class="ny-btn" style="font-size:.72rem;">Åpne planlegger →</a></div>'
     +'<div id="ressurspanel" style="margin-bottom:16px;"></div>'
@@ -637,6 +647,7 @@ async function visKlasse(){
   var nyBtn = document.getElementById('ny-elev-btn');
   if (nyBtn) nyBtn.addEventListener('click', apneModal);
   byggRessurspanel();
+  visProveVarsler(aktivKlasse);
 }
 
 function visNyKlasse(){
@@ -919,59 +930,92 @@ function byggRessurspanel() {
   var el = document.getElementById('ressurspanel');
   if (!el) return;
 
+  // Bruk klasse-spesifikk nøkkel (v2 + klasseId)
+  var planKey = 'skaplab_plan_v2_' + (aktivKlasse || 'default');
   var plan = {};
-  try { plan = JSON.parse(localStorage.getItem('skaplab_plan_v1') || '{}'); } catch(e) {}
+  try { plan = JSON.parse(localStorage.getItem(planKey) || '{}'); } catch(e) {}
 
-  // Finn ressurser for inneværende og neste uke
-  var ukeNr = Math.ceil(((new Date() - new Date(new Date().getFullYear(),0,1))/86400000 + new Date(new Date().getFullYear(),0,1).getDay()+1)/7);
+  var ukeNr = Math.ceil(((new Date()-new Date(new Date().getFullYear(),0,1))/86400000
+    + new Date(new Date().getFullYear(),0,1).getDay()+1)/7);
+
+  // Ny struktur: plan[uke][dag] = array av ressurser
   var alleRessurser = [];
-
   [ukeNr, ukeNr+1].forEach(function(u) {
     if (!plan[u]) return;
-    Object.values(plan[u]).forEach(function(kmInfo) {
-      if (!kmInfo.ressurser) return;
-      kmInfo.ressurser.forEach(function(res) {
+    Object.keys(plan[u]).forEach(function(dag) {
+      var dagRes = plan[u][dag];
+      if (!Array.isArray(dagRes)) return;
+      dagRes.forEach(function(res) {
         alleRessurser.push({
-          fil: res.fil, t: res.t, dato: res.dato || '',
-          km: kmInfo.tekst || '', uke: u
+          fil: res.fil, t: res.t, dag: dag, uke: u, km: res.km || ''
         });
       });
     });
   });
 
-  // Sorter: etter dato, deretter uke
-  alleRessurser.sort(function(a,b){
-    if (a.dato && b.dato) return a.dato.localeCompare(b.dato);
-    if (a.dato) return -1; if (b.dato) return 1;
-    return a.uke - b.uke;
+  // Sorter etter uke, deretter dag-rekkefølge
+  var DAGER = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag'];
+  alleRessurser.sort(function(a,b) {
+    if (a.uke !== b.uke) return a.uke - b.uke;
+    return DAGER.indexOf(a.dag) - DAGER.indexOf(b.dag);
   });
 
   if (!alleRessurser.length) {
-    el.innerHTML = '<div class="rp-tom">Ingen ressurser planlagt. <a href="laerer_planlegger.html" style="color:var(--bla);">Åpne planleggeren →</a></div>';
+    el.innerHTML = '<div class="rp-tom">Ingen ressurser planlagt for denne klassen. '
+      + '<a href="laerer_planlegger.html" style="color:var(--bla);">Åpne planleggeren →</a></div>';
     return;
   }
 
   var html = '<div class="rp-grid">';
-  alleRessurser.slice(0,5).forEach(function(res, idx) {
-    var datoVis = '';
-    if (res.dato) {
-      var d = new Date(res.dato);
-      datoVis = d.toLocaleDateString('nb-NO',{weekday:'short',day:'numeric',month:'short'});
-    } else {
-      datoVis = 'Uke ' + (res.uke===ukeNr?'denne':'neste');
-    }
+  alleRessurser.slice(0,6).forEach(function(res, i) {
+    var dagLabel = res.dag === 'Mandag' || res.dag === 'Tirsdag' || res.dag === 'Onsdag'
+      || res.dag === 'Torsdag' || res.dag === 'Fredag'
+      ? res.dag + (res.uke===ukeNr ? '' : ' neste uke') : 'Uke '+(res.uke===ukeNr?'denne':'neste');
     html += '<a href="'+res.fil+'" class="rp-kort" target="_blank">'
-      +'<div class="rp-nr">'+(idx+1)+'</div>'
+      +'<div class="rp-nr">'+(i+1)+'</div>'
       +'<div class="rp-innhold">'
         +'<div class="rp-tittel">'+res.t+'</div>'
-        +'<div class="rp-meta">'+datoVis+'</div>'
+        +'<div class="rp-meta">'+dagLabel+(res.km?' · <code style="font-size:.6rem">'+res.km+'</code>':'')+'</div>'
       +'</div>'
       +'<div class="rp-pil">→</div>'
       +'</a>';
   });
   html += '</div>';
-  if (alleRessurser.length > 5) html += '<div class="rp-mer">+' + (alleRessurser.length-5) + ' til i planleggeren</div>';
+  if (alleRessurser.length > 6)
+    html += '<div class="rp-mer">+' + (alleRessurser.length-6) + ' til — <a href="laerer_planlegger.html" style="color:var(--bla)">se alle</a></div>';
   el.innerHTML = html;
+}
+
+// ── HENT OG VIS PRØVEVARSLER ──────────────────────────────────────
+async function visProveVarsler(klasseId) {
+  var el = document.getElementById('prove-varsler');
+  if (!el) return;
+  var laerer2 = SkapLab.hentLaerer();
+  var tok2 = laerer2 ? laerer2.access_token : null;
+  if (!tok2) return;
+  try {
+    var tR = await SkapLab._get(
+      '/tildeling?klasse_id=eq.'+klasseId+'&select=oppgave_id,frist,oppgaver(tittel,type)&order=frist.asc&limit=5',
+      tok2
+    );
+    if (!Array.isArray(tR) || !tR.length) {
+      el.innerHTML = '<div style="font-size:.78rem;color:var(--dim);padding:6px 0;">Ingen kommende prøver registrert.</div>';
+      return;
+    }
+    var varsler = tR.filter(function(t){ return t.oppgaver && t.oppgaver.type==='provevarsel'; });
+    if (!varsler.length) {
+      el.innerHTML = '<div style="font-size:.78rem;color:var(--dim);padding:6px 0;">Ingen kommende prøver registrert.</div>';
+      return;
+    }
+    el.innerHTML = varsler.map(function(v) {
+      var frist = v.frist ? new Date(v.frist).toLocaleDateString('nb-NO',{weekday:'short',day:'numeric',month:'short'}) : '—';
+      return '<div class="varsel-rad">'
+        +'<span class="varsel-ikon">📝</span>'
+        +'<div class="varsel-info"><div class="varsel-tittel">'+(v.oppgaver?v.oppgaver.tittel:'Prøve')+'</div>'
+        +'<div class="varsel-dato">'+frist+'</div></div>'
+        +'</div>';
+    }).join('');
+  } catch(e) {}
 }
 </script>
 </body></html>

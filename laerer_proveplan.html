@@ -103,6 +103,7 @@ input.innst-dato::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:poi
 /* ── PRINT ──────────────────────────────────────────────────────── */
 </style>
 <style media="print">
+.print-statisk{display:none;}
 @page{size:A4 landscape;margin:10mm 12mm;}
 nav.topnav,#laerer-nav,#laster,.innstillinger,.skriv-ut-btn,.print-skjul{display:none!important;}
 body,html{background:#fff!important;color:#111!important;}
@@ -126,6 +127,10 @@ body,html{background:#fff!important;color:#111!important;}
   <a href="index.html" class="nav-logo">SkapLab</a>
   <div class="spacer"></div>
   <button class="skriv-ut-btn" onclick="skrivUt()">🖨️ Skriv ut / lagre PDF</button>
+  <button class="skriv-ut-btn" onclick="sendProvevarsel()" 
+    style="background:rgba(52,211,153,.2);color:var(--gron);border:1px solid rgba(52,211,153,.35);">
+    📢 Send prøvevarsel til klasse
+  </button>
 </nav>
 <div id="page">
 <div id="laerer-nav"><div class="ln-logo">Skap<span>Lab</span></div><div class="ln-sek">Oversikt</div><a class="ln-link" href="laerer_dashboard.html">👥 Klassen min</a><div class="ln-sek">Verktøy</div><a class="ln-link" href="laerer_planlegger.html">📅 Planlegger</a><a class="ln-link ln-link" href="laerer_malark.html">📋 Målark</a><a class="ln-link" ln-ak" href="laerer_proveplan.html">📝 Prøveplan</a><div class="ln-sek">Rapporter</div><a class="ln-link" href="rapport_matte.html">📐 Matte</a><a class="ln-link" href="rapport_naturfag.html">🔬 Naturfag</a><a class="ln-link" href="rapport_programmering.html">💻 Programmering</a></div>
@@ -625,6 +630,48 @@ function oppdaterHeader() {
   if (fagInput && fagTekst)     fagInput.value     = [fagTekst, trinnTekst].filter(Boolean).join(' ');
 }
 
+
+// ── SEND PRØVEVARSEL ─────────────────────────────────────────────
+async function sendProvevarsel() {
+  if (!proveRader.length) { visMelding('Legg til kompetansemål først.'); return; }
+  var klasseEl = document.getElementById('sel-klasse');
+  var klasseId = klasseEl ? klasseEl.value : '';
+  if (!klasseId) { visMelding('Velg klasse for å sende varsel.'); return; }
+  var datoEl = document.getElementById('sel-dato-global');
+  var dato = datoEl ? datoEl.value : '';
+  var fagEl = document.getElementById('sel-fag');
+  var trinnEl = document.getElementById('sel-trinn');
+  var fagTekst = {mat:'Matematikk',nat:'Naturfag',prg:'Programmering'}[fagEl?fagEl.value:''] || 'Prøve';
+  var trinnTekst = fagEl&&fagEl.value==='mat'&&trinnEl&&trinnEl.value ? trinnEl.value+'. trinn' : '';
+  var tittel = fagTekst + (trinnTekst?' '+trinnTekst:'') + ' – Prøve';
+  var kmKoder = proveRader.map(function(r){return r.km;}).join(', ');
+  var laerer = SkapLab.hentLaerer();
+  var token = laerer ? laerer.access_token : null;
+  var lid = laerer ? ((laerer.user&&laerer.user.id)||laerer.id||'') : '';
+  if (!token) { visMelding('Ikke innlogget.'); return; }
+  try {
+    // Opprett oppgave (prøvevarsel)
+    var oppgR = await SkapLab._post('/oppgaver', {
+      tittel:  tittel + (kmKoder?' ('+kmKoder+')':''),
+      type:    'provevarsel',
+      ressurs: 'provevarsel',
+      url:     'laerer_proveplan.html',
+      fag:     fagEl?fagEl.value:'mat'
+    }, token);
+    if (!oppgR || !oppgR.id) throw new Error('Kunne ikke opprette oppgave');
+    // Tildel til klassen
+    await SkapLab._post('/tildeling', {
+      oppgave_id: oppgR.id,
+      laerer_id:  lid,
+      klasse_id:  klasseId,
+      frist:      dato || null
+    }, token);
+    visMelding('✓ Prøvevarsel sendt til klassen!');
+  } catch(e) {
+    visMelding('Feil ved sending: ' + (e.message||e));
+  }
+}
+
 function visMelding(txt) {
   var el = document.getElementById('melding');
   if (!el) return;
@@ -635,7 +682,49 @@ function visMelding(txt) {
 
 function skrivUt() {
   oppdaterHeader();
-  window.print();
+  // Konverter textarea og input til print-vennlige elementer
+  var erstatninger = [];
+  document.querySelectorAll('.fritekst-felt, .tips-felt').forEach(function(ta) {
+    var div = document.createElement('div');
+    div.className = ta.className + ' print-statisk';
+    div.textContent = ta.value || '';
+    div.style.cssText = 'white-space:pre-wrap;min-height:40px;';
+    ta.parentNode.insertBefore(div, ta);
+    ta.style.display = 'none';
+    erstatninger.push({orig: ta, repl: div});
+  });
+  // Konverter header-input til synlig tekst
+  ['hdr-klasse-input','hdr-fag-input'].forEach(function(id) {
+    var inp = document.getElementById(id);
+    if (!inp) return;
+    var span = document.createElement('div');
+    span.className = 'ph-verdi print-statisk';
+    span.textContent = inp.value || '—';
+    inp.parentNode.insertBefore(span, inp);
+    inp.style.display = 'none';
+    erstatninger.push({orig: inp, repl: span});
+  });
+  // Datofeltet
+  var datoInp = document.getElementById('sel-dato-global');
+  if (datoInp && datoInp.value) {
+    var d = new Date(datoInp.value);
+    var datoDiv = document.createElement('div');
+    datoDiv.className = 'ph-verdi print-statisk';
+    datoDiv.textContent = d.toLocaleDateString('nb-NO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    datoInp.parentNode.insertBefore(datoDiv, datoInp);
+    datoInp.style.display = 'none';
+    erstatninger.push({orig: datoInp, repl: datoDiv});
+  }
+  setTimeout(function() {
+    window.print();
+    // Gjenopprett etter print
+    setTimeout(function() {
+      erstatninger.forEach(function(e) {
+        e.orig.style.display = '';
+        if (e.repl.parentNode) e.repl.parentNode.removeChild(e.repl);
+      });
+    }, 500);
+  }, 100);
 }
 
 // Init
