@@ -108,7 +108,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <div class="admin-badge">⚡ Superadmin</div>
   <div class="spacer"></div>
   <span id="admin-navn"></span>
-  <button class="tbtn" onclick="loggUt()">Logg ut</button>
+  <button class="nav-knapp" onclick="visBrukere()" style="background:rgba(248,113,113,.15);color:var(--rod);border-color:rgba(248,113,113,.3);">👥 Brukere</button> <button class="tbtn" onclick="loggUt()">Logg ut</button>
 </div>
 
 <div id="stats-banner">
@@ -695,6 +695,76 @@ async function bekreftSammenslaa() {
   setTimeout(function() { lukkModal(); init(); }, 1500);
 }
 
+
+// ── BRUKER-ADMINISTRASJON ────────────────────────────────────────────────
+async function visBrukere() {
+  document.getElementById('hoved').style.display = 'none';
+  var bu = document.getElementById('bruker-panel');
+  if (!bu) return;
+  bu.style.display = 'block';
+  bu.innerHTML = '<div style="color:var(--dim);padding:20px;">Laster lærere…</div>';
+  
+  try {
+    var lR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/laerere?select=id,fullt_navn,epost,er_admin,opprettet&order=opprettet.desc',
+      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}})
+      .then(function(r){return r.json();}).catch(function(){return[];});
+    
+    if (!Array.isArray(lR) || !lR.length) {
+      bu.innerHTML = '<div style="color:var(--dim);padding:20px;">Ingen lærere funnet. Kontroller at superadmin-SQL er kjørt og at RLS tillater å se alle lærere.</div>';
+      return;
+    }
+    
+    var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">'
+      + '<h2 style="font-family:var(--font-h);font-size:1.1rem;">👥 Lærerbrukere ('+lR.length+')</h2>'
+      + '<button onclick="document.getElementById(\'bruker-panel\').style.display=\'none\';document.getElementById(\'hoved\').style.display=\'block\';" '
+      + 'style="padding:5px 12px;background:transparent;border:1px solid var(--border2);color:var(--dim);border-radius:6px;cursor:pointer;">← Tilbake</button>'
+      + '</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:.82rem;">'
+      + '<thead><tr style="background:rgba(255,255,255,.05);">'
+      + '<th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--font-h);font-size:.7rem;color:var(--dim);">Navn</th>'
+      + '<th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--font-h);font-size:.7rem;color:var(--dim);">E-post</th>'
+      + '<th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--font-h);font-size:.7rem;color:var(--dim);">Opprettet</th>'
+      + '<th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-family:var(--font-h);font-size:.7rem;color:var(--dim);">Handling</th>'
+      + '</tr></thead><tbody>';
+    
+    lR.forEach(function(l) {
+      var dato = l.opprettet ? new Date(l.opprettet).toLocaleDateString('nb-NO') : '–';
+      html += '<tr style="border-bottom:1px solid var(--border);">'
+        + '<td style="padding:9px 12px;font-weight:600;">' + (l.fullt_navn||'–') 
+          + (l.er_admin ? ' <span style="font-size:.6rem;background:rgba(248,113,113,.15);color:var(--rod);padding:1px 6px;border-radius:3px;font-family:var(--font-h);">ADMIN</span>' : '')
+          + '</td>'
+        + '<td style="padding:9px 12px;color:var(--dim);">' + (l.epost||l.id) + '</td>'
+        + '<td style="padding:9px 12px;color:var(--dim);">' + dato + '</td>'
+        + '<td style="padding:9px 12px;">'
+          + (token ? '<button onclick="slettLaerer(\''+l.id+'\',\''+((l.epost||l.fullt_navn)||'bruker')+'\')" '
+            + 'style="padding:4px 10px;background:transparent;border:1px solid rgba(248,113,113,.3);'
+            + 'color:var(--rod);border-radius:6px;cursor:pointer;font-size:.75rem;">🗑 Slett</button>' : '–')
+          + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table>';
+    bu.innerHTML = html;
+  } catch(e) {
+    bu.innerHTML = '<div style="color:var(--rod);padding:20px;">Feil: '+e.message+'</div>';
+  }
+}
+
+async function slettLaerer(id, epost) {
+  if (!confirm('SLETT lærerbruker «'+epost+'» permanent?\nDette sletter brukerens klasser, elever og all data.')) return;
+  try {
+    var res = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/rpc/slett_bruker', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token},
+      body: JSON.stringify({p_bruker_id: id})
+    }).then(function(r){return r.json();}).catch(function(e){return {error:e.message};});
+    
+    if (res === 'OK' || res === '"OK"') {
+      visBrukere(); // oppdater listen
+    } else {
+      alert('Feil: ' + JSON.stringify(res) + '\n\nKontroller at SQL-funksjonen slett_bruker er kjørt og at er_admin=true for deg.');
+    }
+  } catch(e) { alert('Feil: '+e.message); }
+}
 </script>
 <!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 </body>
