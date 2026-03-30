@@ -522,23 +522,22 @@ var klasser=[], elever=[], aktivKlasse=null;
 var KM=[['MAT-ALG','Alg'],['MAT-FUNK','Fun'],['MAT-GEO','Geo'],['NAT-BIO','Bio'],['NAT-KJE','Kje'],['PRG-ALG','Prg']];
 
 async function init(){
-  // Vis navn fra Auth-token uansett
-  var bruker=laerer.user;
   var visNavn=hentNavn(laerer);
   document.getElementById('lnavn').textContent=visNavn;
-    // Vis admin-knapp for superadmin
-    var epost=hentEpost(laerer);
-    if(epost==='tlnnorda@gmail.com'){
-      var ab=document.getElementById('admin-btn');
-      if(ab){ab.style.display='block';}
-      var as=document.getElementById('side-admin-sek');
-      if(as){as.style.display='block';}
-    }
 
-  // Hent laerer-navn fra DB (ikke kritisk om det feiler)
+  // Hent laerer-info fra DB (inkl. er_admin)
   try{
-    var lR=await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn',token);
-    if(lR&&lR[0]&&lR[0].fullt_navn) document.getElementById('lnavn').textContent=lR[0].fullt_navn;
+    var lR=await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn,er_admin',token);
+    if(lR&&lR[0]){
+      if(lR[0].fullt_navn) document.getElementById('lnavn').textContent=lR[0].fullt_navn;
+      // Vis admin-seksjon om er_admin=true
+      if(lR[0].er_admin===true){
+        var ab=document.getElementById('admin-btn');
+        if(ab) ab.style.display='block';
+        var as=document.getElementById('side-admin-sek');
+        if(as) as.style.display='block';
+      }
+    }
   }catch(e){}
 
   // Hent klasser (ikke kritisk om det feiler - vis tom side)
@@ -1065,27 +1064,40 @@ async function visAdmin() {
   var s = document.getElementById('side-admin');
   s.style.display = 'block';
   s.innerHTML = '<div class="side-tittel" style="color:var(--rod);">⚙️ Superadmin</div>'
-    + '<div class="side-sub">Administrer alle brukere</div>'
-    + '<div id="admin-brukere"><div style="color:var(--dim);font-size:.8rem;padding:10px 0;">Laster brukere…</div></div>';
+    + '<div class="side-sub">Administrer brukere</div>'
+    + '<div id="admin-brukere"><div style="color:var(--dim);font-size:.8rem;padding:10px 0;">Laster…</div></div>';
   try {
+    // Prøv å hente alle lærere via RPC (krever superadmin-policy i DB)
     var lR = await SkapLab._get('/laerere?select=id,fullt_navn,epost,er_admin,opprettet&order=opprettet.desc', token);
+    var el = document.getElementById('admin-brukere');
     if (!Array.isArray(lR) || !lR.length) {
-      document.getElementById('admin-brukere').innerHTML = '<div style="color:var(--dim);font-size:.8rem;padding:10px 0;">Ingen brukere funnet.</div>';
+      el.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:8px 0;">'
+        + 'Ingen brukere funnet. Kontroller at superadmin-policy er satt i Supabase.</div>'
+        + '<div style="margin-top:8px;">' + visEgenBruker() + '</div>';
       return;
     }
-    var html = lR.map(function(l) {
+    el.innerHTML = lR.map(function(l) {
+      var erDeg = l.id === lid;
       return '<div class="admin-bruker-rad">'
         + '<div class="admin-bruker-info">'
-          + '<div class="admin-bruker-navn">'+(l.fullt_navn||'—')+(l.er_admin?' <span style="color:var(--rod);font-size:.65rem;">ADMIN</span>':'')+'</div>'
-          + '<div class="admin-bruker-epost">'+l.epost+'</div>'
+          + '<div class="admin-bruker-navn">'+(l.fullt_navn||l.epost||'—')
+            +(l.er_admin?' <span style="color:var(--rod);font-size:.6rem;background:rgba(248,113,113,.15);padding:1px 5px;border-radius:3px;">ADMIN</span>':'')
+            +(erDeg?' <span style="color:var(--dim);font-size:.6rem;">(deg)</span>':'')+'</div>'
+          + '<div class="admin-bruker-epost" style="font-size:.7rem;color:var(--dim);">'+(l.epost||l.id)+'</div>'
         + '</div>'
-        + '<button class="admin-slett-btn" onclick="slettBruker(\''+l.id+'\',\''+l.epost+'\')">🗑 Slett</button>'
+        + (!erDeg ? '<button class="admin-slett-btn" onclick="slettBruker(\''+l.id+'\',\''+((l.epost||l.fullt_navn)||'bruker')+'\')">🗑 Slett</button>' : '')
         + '</div>';
     }).join('');
-    document.getElementById('admin-brukere').innerHTML = html;
   } catch(e) {
-    document.getElementById('admin-brukere').innerHTML = '<div style="color:var(--rod);font-size:.8rem;">Feil: '+e.message+'</div>';
+    document.getElementById('admin-brukere').innerHTML = '<div style="color:var(--rod);font-size:.78rem;padding:8px 0;">Feil: '+e.message+'<br>Kontroller at superadmin-policy er satt i SQL.</div>';
   }
+}
+
+function visEgenBruker() {
+  return '<div class="admin-bruker-rad"><div class="admin-bruker-info">'
+    + '<div class="admin-bruker-navn">'+hentNavn(laerer)+'</div>'
+    + '<div class="admin-bruker-epost">'+hentEpost(laerer)+'</div>'
+    + '</div></div>';
 }
 
 async function slettBruker(id, epost) {

@@ -871,6 +871,22 @@ async function init() {
     {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
   if (Array.isArray(egResp)) egResp.forEach(function(e){ egenvurdering[e.km_kode] = e.nivaa; });
 
+  // Hent fersk elev-data for å få trenger_hjelp (localStorage kan være gammelt)
+  try {
+    var elevResp = await fetch(
+      SUPABASE_URL+'/rest/v1/elever?id=eq.'+elev.id+'&select=trenger_hjelp,hjelp_emne',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    ).then(function(r){return r.json();});
+    if (Array.isArray(elevResp) && elevResp[0]) {
+      elev.trenger_hjelp = elevResp[0].trenger_hjelp;
+      elev.hjelp_emne    = elevResp[0].hjelp_emne;
+      // Oppdater localStorage
+      var stored = JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
+      stored.trenger_hjelp = elev.trenger_hjelp;
+      stored.hjelp_emne    = elev.hjelp_emne;
+      localStorage.setItem('skaplab_elev', JSON.stringify(stored));
+    }
+  } catch(e) {}
   lyspareAktiv = !!(elev.trenger_hjelp);
   if (lyspareAktiv) document.getElementById('global-lyspare').classList.add('aktiv');
 
