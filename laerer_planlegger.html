@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Planlegger</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090f;--bg2:#0b0d18;--bg3:#0e1120;--border:rgba(255,255,255,.08);
+  --border2:rgba(255,255,255,.14);--text:#e0e8ff;--dim:rgba(255,255,255,.42);
+  --bla:#60a5fa;--gron:#34d399;--gul:#fbbf24;--rod:#f87171;--lilla:#a78bfa;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);}
+
+/* NAV */
+nav{height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;
+  background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:30;}
+.nav-logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--bla);text-decoration:none;}
+.nav-sep{color:var(--dim);}
+.nav-akt{font-size:.82rem;color:var(--dim);}
+.spacer{flex:1;}
+.nav-lnk{font-size:.8rem;color:var(--dim);text-decoration:none;}
+.nav-lnk:hover{color:var(--text);}
+.eks-btn{padding:6px 14px;background:var(--bla);color:#000;border:none;
+  border-radius:8px;font-family:var(--font-h);font-size:.78rem;font-weight:800;cursor:pointer;}
+
+/* UKE-NAVIGATOR */
+#uke-nav{display:flex;gap:6px;padding:14px 20px;overflow-x:auto;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  scrollbar-width:thin;}
+.uke-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border2);
+  background:transparent;color:var(--dim);font-family:var(--font-h);font-size:.78rem;
+  font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.uke-btn:hover{color:var(--text);}
+.uke-btn.ak{background:rgba(96,165,250,.15);color:var(--bla);border-color:rgba(96,165,250,.4);}
+.uke-btn.har-plan::after{content:'●';font-size:.5rem;color:var(--gron);
+  vertical-align:super;margin-left:3px;}
+
+/* LAYOUT */
+#app{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 52px - 53px);overflow:hidden;}
+
+/* VENSTRE: KM-VELGER */
+#km-panel{background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;}
+.km-panel-hdr{padding:14px 16px;border-bottom:1px solid var(--border);}
+.km-panel-tittel{font-family:var(--font-h);font-size:.9rem;font-weight:800;color:var(--bla);margin-bottom:10px;}
+.fag-rad{display:flex;gap:4px;margin-bottom:8px;}
+.fag-btn{flex:1;padding:6px 4px;border-radius:7px;border:1.5px solid var(--border2);
+  background:transparent;color:var(--dim);font-size:.75rem;font-family:var(--font-h);
+  font-weight:700;cursor:pointer;transition:all .15s;}
+.fag-btn.ak.mat{background:rgba(139,92,246,.2);color:#c4b5fd;border-color:rgba(139,92,246,.4);}
+.fag-btn.ak.nat{background:rgba(52,211,153,.15);color:var(--gron);border-color:rgba(52,211,153,.4);}
+.fag-btn.ak.prg{background:rgba(96,165,250,.15);color:var(--bla);border-color:rgba(96,165,250,.4);}
+#trinn-wrap{display:flex;gap:4px;}
+.trinn-btn2{padding:4px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:transparent;color:var(--dim);font-size:.72rem;font-family:var(--font-h);
+  font-weight:700;cursor:pointer;}
+.trinn-btn2.ak{background:rgba(251,191,36,.15);color:var(--gul);border-color:rgba(251,191,36,.4);}
+#km-liste{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;}
+.km-item{padding:10px 12px;border-radius:9px;border:1px solid var(--border);
+  margin-bottom:6px;cursor:pointer;transition:all .15s;}
+.km-item:hover{border-color:var(--border2);background:rgba(255,255,255,.03);}
+.km-item.valgt{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.3);}
+.km-item.planlagt{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.05);}
+.km-item-topp{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.km-kode{font-size:.65rem;font-family:var(--font-m);background:rgba(255,255,255,.07);
+  padding:2px 7px;border-radius:5px;}
+.res-badge{font-size:.62rem;background:rgba(96,165,250,.15);color:var(--bla);
+  padding:1px 6px;border-radius:4px;margin-left:auto;}
+.planlagt-badge{font-size:.62rem;color:var(--gron);margin-left:2px;}
+.km-item-tekst{font-size:.78rem;color:var(--dim);line-height:1.4;}
+.km-item:hover .km-item-tekst, .km-item.valgt .km-item-tekst{color:var(--text);}
+
+/* MIDT: RESSURSER + PLANKNAPP */
+#res-panel{background:var(--bg3);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;width:280px;}
+.res-panel-hdr{padding:14px 16px;border-bottom:1px solid var(--border);}
+.res-panel-tittel{font-family:var(--font-h);font-size:.85rem;font-weight:800;margin-bottom:4px;}
+.res-panel-sub{font-size:.72rem;color:var(--dim);}
+#plan-knapp-wrap{padding:10px 14px;border-bottom:1px solid var(--border);}
+.plan-btn{width:100%;padding:9px;border-radius:9px;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:.8rem;font-weight:800;transition:all .15s;}
+.plan-btn.legg-til{background:rgba(52,211,153,.2);color:var(--gron);}
+.plan-btn.legg-til:hover{background:rgba(52,211,153,.3);}
+.plan-btn.fjern{background:rgba(248,113,113,.15);color:var(--rod);}
+#res-liste{flex:1;overflow-y:auto;padding:8px;scrollbar-width:thin;}
+.res-item{display:flex;flex-direction:column;gap:4px;padding:10px 12px;
+  border-radius:9px;border:1px solid var(--border);margin-bottom:6px;
+  text-decoration:none;color:var(--text);transition:all .15s;}
+.res-item:hover{border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.05);}
+.res-tittel{font-size:.83rem;font-weight:600;line-height:1.3;}
+.res-fil{font-size:.65rem;font-family:var(--font-m);color:var(--dim);}
+.res-pil{font-size:.7rem;color:var(--bla);}
+.res-tom{padding:20px;text-align:center;color:var(--dim);font-size:.82rem;}
+
+/* HØYRE: PLAN-TABELLEN */
+#plan-panel{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.plan-tabs{display:flex;gap:4px;padding:12px 16px 0;background:var(--bg2);
+  border-bottom:1px solid var(--border);}
+.tab-btn{padding:8px 16px;border-radius:9px 9px 0 0;border:none;cursor:pointer;
+  font-family:var(--font-h);font-size:.8rem;font-weight:700;color:var(--dim);
+  background:transparent;transition:all .15s;}
+.tab-btn.ak{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-bottom:none;}
+#tab-plan, #tab-periode{flex:1;overflow-y:auto;padding:16px;}
+.plan-tom{text-align:center;padding:60px 20px;color:var(--dim);font-size:.88rem;line-height:1.8;}
+.plan-overskrift{font-family:var(--font-h);font-size:1rem;font-weight:800;
+  margin-bottom:14px;color:var(--bla);}
+.plan-kort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.plan-kort{background:var(--bg2);border:1px solid var(--border);border-radius:11px;
+  padding:14px;display:flex;flex-direction:column;gap:8px;}
+.plan-km-kode{font-size:.65rem;font-family:var(--font-m);background:rgba(255,255,255,.07);
+  padding:2px 8px;border-radius:5px;width:fit-content;color:var(--bla);}
+.plan-km-tekst{font-size:.82rem;line-height:1.45;flex:1;}
+.plan-notat{font-size:.75rem;color:var(--gul);padding:5px 8px;
+  background:rgba(251,191,36,.08);border-radius:6px;}
+.plan-res-liste{display:flex;flex-direction:column;gap:4px;}
+.plan-res-link{font-size:.72rem;color:var(--bla);text-decoration:none;
+  padding:3px 7px;background:rgba(96,165,250,.08);border-radius:5px;}
+.plan-res-link:hover{background:rgba(96,165,250,.15);}
+.plan-kort-bunn{display:flex;gap:6px;margin-top:4px;}
+.plan-mini-btn{flex:1;padding:5px;border:1px solid var(--border2);border-radius:7px;
+  background:transparent;color:var(--dim);font-size:.72rem;cursor:pointer;}
+.plan-mini-btn:hover{color:var(--text);}
+.plan-mini-btn.fjern-btn{flex:0 0 32px;color:var(--rod);}
+
+/* PERIODEVISNING */
+.periode-tabell{width:100%;border-collapse:collapse;font-size:.78rem;}
+.periode-tabell th{padding:6px 10px;background:var(--bg2);border:1px solid var(--border);
+  font-family:var(--font-h);font-size:.72rem;white-space:nowrap;}
+.periode-tabell td{padding:5px 10px;border:1px solid var(--border);vertical-align:top;}
+.periode-tabell tr:hover td{background:rgba(255,255,255,.02);}
+
+@media (max-width: 900px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height:auto; }
+  #km-panel { max-height: 320px; border-right:none; border-bottom:1px solid var(--border); }
+  #res-panel { display:none; }
+}
+@media print {
+  nav, #uke-nav, #km-panel, #res-panel, .plan-tabs, .tab-btn, .plan-mini-btn { display:none!important; }
+  body { background:#fff; color:#111; }
+  .periode-tabell th { background:#eee; color:#111; border-color:#ccc; }
+  .periode-tabell td { border-color:#ccc; }
+  #tab-plan { display:none!important; }
+  #tab-periode { display:block!important; }
+}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo">SkapLab</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-akt">📋 Planlegger</span>
+  <div class="spacer"></div>
+  <a href="laerer_dashboard.html" class="nav-lnk">← Dashboard</a>
+  <button class="eks-btn" onclick="eksporterPDF()">🖨️ Skriv ut periodeplan</button>
+</nav>
+
+<div id="uke-nav"></div>
+
+<div id="app">
+  <!-- VENSTRE: KM-LISTE -->
+  <div id="km-panel">
+    <div class="km-panel-hdr">
+      <div class="km-panel-tittel">Kompetansemål</div>
+      <div class="fag-rad">
+        <button class="fag-btn mat ak" id="fag-mat" onclick="byttFag('mat')">📐 Matte</button>
+        <button class="fag-btn nat" id="fag-nat" onclick="byttFag('nat')">🔬 Naturfag</button>
+        <button class="fag-btn prg" id="fag-prg" onclick="byttFag('prg')">💻 Prog</button>
+      </div>
+      <div id="trinn-wrap">
+        <button class="trinn-btn2 ak" id="trinn-8" onclick="byttTrinn('8')">8. trinn</button>
+        <button class="trinn-btn2" id="trinn-9" onclick="byttTrinn('9')">9. trinn</button>
+        <button class="trinn-btn2" id="trinn-10" onclick="byttTrinn('10')">10. trinn</button>
+      </div>
+    </div>
+    <div id="km-liste"></div>
+  </div>
+
+  <!-- MIDT: RESSURSER -->
+  <div id="res-panel">
+    <div class="res-panel-hdr">
+      <div class="res-panel-tittel">SkapLab-ressurser</div>
+      <div class="res-panel-sub">Velg et kompetansemål for å se ressurser</div>
+    </div>
+    <div id="plan-knapp-wrap"></div>
+    <div id="res-liste">
+      <div class="res-tom" id="res-tom" style="display:none;">Ingen ressurser tagget til dette KM ennå.</div>
+    </div>
+  </div>
+
+  <!-- HØYRE: PLAN -->
+  <div id="plan-panel">
+    <div class="plan-tabs">
+      <button class="tab-btn ak" data-tab="tab-plan" onclick="visTab('tab-plan')">📅 Ukeplan</button>
+      <button class="tab-btn" data-tab="tab-periode" onclick="visTab('tab-periode')">📊 Periodeplan</button>
+    </div>
+    <div id="tab-plan"></div>
+    <div id="tab-periode" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+// skaplab_auth.js - SkapLab autentisering
+(function () {
+  'use strict';
+
+  // ── KONFIGURASJON ──────────────────────────────────────────────
+  var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+  var API = SUPABASE_URL + '/rest/v1';
+  var SESSION_NØKKEL = 'skaplab_elev';
+  var LAERER_NØKKEL  = 'skaplab_laerer';
+
+  // ── HJELPEFUNKSJONER ───────────────────────────────────────────
+  function hdr(token) {
+    var h = {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + (token || SUPABASE_KEY)
+    };
+    return h;
+  }
+
+  function post(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'POST',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function get(sti, token) {
+    return fetch(API + sti, {
+      headers: hdr(token)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function patch(sti, data, token) {
+    return fetch(API + sti, {
+      method: 'PATCH',
+      headers: Object.assign(hdr(token), { 'Prefer': 'return=representation' }),
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // Supabase Auth-endepunkt
+  function auth(sti, data) {
+    return fetch(SUPABASE_URL + '/auth/v1/' + sti, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json(); });
+  }
+
+  // ── ELEV-INNLOGGING ────────────────────────────────────────────
+  async function elevLoggInn(kode) {
+    try {
+      var resp = await fetch(
+        API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
+        '&select=id,fullt_navn,klasse_id,klasser(navn,trinn,skoler(navn))',
+        { headers: hdr() }
+      );
+      var data = await resp.json();
+      if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
+      var elev = data[0];
+      // Bruk localStorage slik at sesjonen deles mellom faner
+      localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
+      return { ok: true, elev: elev };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  function elevLoggUt() {
+    localStorage.removeItem(SESSION_NØKKEL);
+    sessionStorage.removeItem(SESSION_NØKKEL);
+  }
+
+  function hentElev() {
+    try {
+      var data = localStorage.getItem(SESSION_NØKKEL);
+      if (!data) return null;
+      var elev = JSON.parse(data);
+      // Utløp etter 8 timer (skoledagen)
+      if (elev._lagret && Date.now() - elev._lagret > 8*60*60*1000) {
+        localStorage.removeItem(SESSION_NØKKEL);
+        return null;
+      }
+      return elev;
+    } catch (e) { return null; }
+  }
+
+  function erElevInnlogget() {
+    return hentElev() !== null;
+  }
+
+  // ── LÆRER-INNLOGGING (via Supabase Auth) ──────────────────────
+  async function laererLoggInn(epost, passord) {
+    try {
+      var resp = await auth('token?grant_type=password', {
+        email: epost, password: passord
+      });
+
+      if (resp.error) return { ok: false, feil: resp.error.message };
+      if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
+      sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
+      return { ok: true, token: resp.access_token };
+    } catch (e) {
+      return { ok: false, feil: 'Tilkoblingsfeil' };
+    }
+  }
+
+  async function laererLoggUt() {
+    var l = hentLaerer();
+    if (l) {
+      await fetch(SUPABASE_URL + '/auth/v1/logout', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + l.access_token }
+      });
+    }
+    sessionStorage.removeItem(LAERER_NØKKEL);
+  }
+
+  function hentLaerer() {
+    try {
+      var data = sessionStorage.getItem(LAERER_NØKKEL);
+      if (!data) return null;
+      var parsed = JSON.parse(data);
+      // Returner null KUN om det er en tydelig feilrespons uten token
+      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
+        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
+        return null;
+      }
+      return parsed;
+    } catch (e) { return null; }
+  }
+
+  function erLaererInnlogget() {
+    var sess = hentLaerer();
+    // Sjekk at sesjonen er gyldig - ikke bare en feilmelding
+    return sess !== null && 
+           sess.access_token !== undefined && 
+           sess.access_token !== null &&
+           !sess.error_code;  // Fang opp Supabase-feilresponser
+  }
+
+  // ── AKTIVITETSSPORING ─────────────────────────────────────────
+  /**
+   * Logg aktivitet for innlogget elev.
+   * @param {string} ressurs    - f.eks. 'mattequiz_Algebra'
+   * @param {string} kmKode     - f.eks. 'MAT-ALG'
+   * @param {number} scorePst   - 0–100
+   * @param {number} antall     - antall oppgaver totalt
+   * @param {number} riktige    - antall riktige svar
+   */
+  async function loggAktivitet(ressurs, kmKode, scorePst, antall, riktige) {
+    var elev = hentElev();
+    if (!elev) return;  // ikke logget inn, gjør ingenting
+
+    try {
+      await post('/aktivitet', {
+        elev_id:         elev.id,
+        ressurs:         ressurs,
+        km_kode:         kmKode,
+        score_pst:       Math.round(scorePst),
+        antall_oppgaver: antall || null,
+        riktige:         riktige || null
+      });
+    } catch (e) {
+      // Sporing feiler stille — ikke forstyrr spillopplevelsen
+    }
+  }
+
+  // ── NAVIGASJONSBJELKE ─────────────────────────────────────────
+  // Viser innlogget bruker øverst på siden om inkludert
+  function visInnloggetBruker() {
+    var elev = hentElev();
+    if (!elev) return;
+
+    var wrap = document.getElementById('skaplab-bruker-strip');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'skaplab-bruker-strip';
+      wrap.style.cssText =
+        'position:fixed;bottom:0;left:0;right:0;z-index:1000;' +
+        'background:rgba(10,14,28,0.95);border-top:1px solid rgba(255,255,255,0.1);' +
+        'padding:6px 16px;display:flex;align-items:center;gap:12px;' +
+        'font-family:DM Sans,sans-serif;font-size:.75rem;color:rgba(255,255,255,0.6);';
+      document.body.appendChild(wrap);
+    }
+
+    var skoleNavn = (elev.klasser && elev.klasser.skoler)
+      ? elev.klasser.skoler.navn : '';
+    var klasseNavn = elev.klasser ? elev.klasser.navn : '';
+
+    wrap.innerHTML =
+      '<span>👤 <strong style="color:#fff">' + (elev.fullt_navn || 'Elev') + '</strong>' +
+      (klasseNavn ? ' · ' + klasseNavn : '') +
+      (skoleNavn ? ' · ' + skoleNavn : '') + '</span>' +
+      '<span style="flex:1"></span>' +
+      '<a href="elev_portal.html" style="color:#60a5fa;text-decoration:none;">Min side</a>' +
+      '<button onclick="SkapLab.elevLoggUt();location.reload();" ' +
+      'style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);' +
+      'padding:3px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;">Logg ut</button>';
+  }
+
+  // Kjør automatisk ved sideinnlasting
+  document.addEventListener('DOMContentLoaded', visInnloggetBruker);
+
+  // ── EKSPORTER ─────────────────────────────────────────────────
+  window.SkapLab = {
+    // Elev
+    elevLoggInn:       elevLoggInn,
+    elevLoggUt:        elevLoggUt,
+    hentElev:          hentElev,
+    erElevInnlogget:   erElevInnlogget,
+    // Lærer
+    laererLoggInn:     laererLoggInn,
+    laererLoggUt:      laererLoggUt,
+    hentLaerer:        hentLaerer,
+    erLaererInnlogget: erLaererInnlogget,
+    // Sporing
+    loggAktivitet:     loggAktivitet,
+    // Internals (for dashboard)
+    _api:  API,
+    _hdr:  hdr,
+    _get:  get,
+    _post: post,
+    _patch: patch,
+    SUPABASE_URL: SUPABASE_URL,
+    SUPABASE_KEY: SUPABASE_KEY
+  };
+
+})();
+
+</script>
+<script>
+
+var KM_DATA = {
+  mat8:  [["MAT8-1","bruke potenser og kvadratrøtter i utforsking og problemløsing og argumentere for framgangsmåter og resultater"],["MAT8-2","utvikle og kommunisere strategier for hoderegning i utregninger"],["MAT8-3","utforske og beskrive primtallsfaktorisering og bruke det i brøkregning"],["MAT8-4","utforske algebraiske regneregler"],["MAT8-5","beskrive og generalisere mønstre med egne ord og algebraisk"],["MAT8-6","lage og løse problemer som omhandler sammensatte måleenheter"],["MAT8-7","lage og forklare regneuttrykk med tall, variabler og konstanter knyttet til praktiske situasjoner"],["MAT8-8","lage, løse og forklare ligninger knyttet til praktiske situasjoner"],["MAT8-9","utforske, forklare og sammenligne funksjoner knyttet til praktiske situasjoner"],["MAT8-10","representere funksjoner på ulike måter og vise sammenhenger mellom representasjonene"],["MAT8-11","utforske hvordan algoritmer kan skapes, testes og forbedres ved hjelp av programmering"]],
+  mat9:  [["MAT9-1","beskrive, forklare og presentere strukturer og utviklinger i geometriske mønstre og i tallmønstre"],["MAT9-2","utforske egenskapene ved ulike polygoner og forklare begrepene formlikhet og kongruens"],["MAT9-3","utforske, beskrive og argumentere for sammenhenger mellom sidelengdene i trekanter"],["MAT9-4","utforske og argumentere for hvordan det å endre forutsetninger i geometriske problemstillinger påvirker løsninger"],["MAT9-5","utforske og argumentere for formler for areal og volum av tredimensjonale figurer"],["MAT9-6","tolke og kritisk vurdere statistiske framstillinger fra mediene og lokalsamfunnet"],["MAT9-7","finne og diskutere sentralmål og spredningsmål i reelle datasett"],["MAT9-8","utforske og argumentere for hvordan framstillinger av tall og data kan brukes for å fremme ulike synspunkter"],["MAT9-9","beregne og vurdere sannsynlighet i statistikk og spill"],["MAT9-10","simulere utfall i tilfeldige forsøk og beregne sannsynligheten for at noe skal inntreffe, ved å bruke programmering"]],
+  mat10: [["MAT10-1","utforske og generalisere multiplikasjon av polynomer algebraisk og geometrisk"],["MAT10-2","utforske og sammenligne egenskaper ved ulike funksjoner ved å bruke digitale verktøy"],["MAT10-3","lage, løse og forklare ligningssett knyttet til praktiske situasjoner"],["MAT10-4","regne ut stigningstallet til en lineær funksjon og bruke det til å forklare begrepene endring per enhet og gjennomsnittsfart"],["MAT10-5","utforske sammenhengen mellom konstant prosentvis endring, vekstfaktor og eksponentialfunksjoner"],["MAT10-6","hente ut og tolke relevant informasjon fra tekster om kjøp og salg og ulike typer lån og bruke det til å formulere og løse problemer"],["MAT10-7","planlegge, utføre og presentere et utforskende arbeid knyttet til personlig økonomi"],["MAT10-8","bruke funksjoner i modellering og argumentere for framgangsmåter og resultater"],["MAT10-9","modellere situasjoner knyttet til reelle datasett, presentere resultatene og argumentere for at modellene er gyldige"],["MAT10-10","utforske matematiske egenskaper og sammenhenger ved å bruke programmering"]],
+  nat:   [["NAT-1","stille spørsmål og lage hypoteser om naturfaglige fenomener, identifisere avhengige og uavhengige variabler og samle data for å finne svar"],["NAT-2","analysere og bruke innsamlede data til å lage forklaringer, drøfte forklaringene i lys av relevant teori og vurdere kvaliteten på egne og andres utforskinger"],["NAT-3","bruke og lage modeller for å forutsi eller beskrive naturfaglige prosesser og systemer og gjøre rede for modellenes styrker og begrensninger"],["NAT-4","delta i risikovurderinger knyttet til forsøk og følge sikkerhetstiltakene"],["NAT-5","gi eksempler på dagsaktuell forskning og drøfte hvordan ny kunnskap genereres gjennom samarbeid og kritisk tilnærming til eksisterende kunnskap"],["NAT-6","utforske, forstå og lage teknologiske systemer som består av en sender og en mottaker"],["NAT-7","bruke programmering til å utforske naturfaglige fenomener"],["NAT-8","utforske kjemiske reaksjoner, forklare massebevaring og gjøre rede for betydninger av noen forbrenningsreaksjoner"],["NAT-9","bruke atommodeller og periodesystemet til å gjøre rede for egenskaper til grunnstoffer og kjemiske forbindelser"],["NAT-10","beskrive drivhuseffekten og gjøre rede for faktorer som kan forårsake globale klimaendringer"],["NAT-11","gjøre rede for energibevaring og energikvalitet og utforske ulike måter å omdanne, transportere og lagre energi på"],["NAT-12","drøfte hvordan energiproduksjon og energibruk kan påvirke miljøet lokalt og globalt"],["NAT-13","beskrive hvordan forskere har kommet fram til evolusjonsteorien og bruke denne til å forklare utvikling av biologisk mangfold"],["NAT-14","sammenligne celler hos ulike organismer og beskrive sammenhenger mellom oppbygning og funksjon"],["NAT-15","utforske sammenhenger mellom abiotiske og biotiske faktorer i et økosystem og diskutere hvordan energi og materie omdannes i kretsløp"],["NAT-16","gi eksempler på og drøfte aktuelle dilemmaer knyttet til utnyttelse av naturressurser og tap av biologisk mangfold"],["NAT-17","gi eksempler på samers tradisjonelle kunnskap om naturen og diskutere hvordan denne kunnskapen kan bidra til bærekraftig forvaltning av naturen"],["NAT-18","gjøre rede for hvordan fotosyntese og celleånding gir energi til alt levende gjennom karbonkretsløpet"],["NAT-19","bruke platetektonikkteorien til å forklare jordas utvikling over tid og gi eksempler på observasjoner som støtter teorien"],["NAT-20","drøfte spørsmål knyttet til seksuell og reproduktiv helse"],["NAT-21","sammenligne nervesystemet og hormonsystemet og beskrive hvordan rusmidler, legemidler, miljøgifter og doping påvirker signalsystemene"],["NAT-22","beskrive kroppens immunforsvar og hvordan vaksiner virker, og gjøre rede for hva vaksiner betyr for folkehelsen"]],
+  prg:   [["PRG-1","gjøre rede for hvordan datamaskiner og dataprogram fungerer, og forklare egne og andres koder"],["PRG-2","bruke flere programmeringsspråk, deriblant minst ett som er tekstbasert"],["PRG-3","bruke grunnleggende prinsipper i programmering, slik som variabler, løkker, vilkår og funksjoner, og reflektere over bruken av disse"],["PRG-4","analysere problemer, gjøre dem om til delproblemer og gjøre rede for hvordan noen av delproblemene kan løses med programmering"],["PRG-5","planlegge og skape et digitalt produkt og vurdere dette med tanke på brukervennlighet"],["PRG-6","utvikle og feilsøke dataprogram som løser definerte problemer, inkludert kontrollering eller simulering av fysiske objekter"]],
+};
+
+var RES_PER_KM = {"MAT8-11": [{"r": "algoritmedetektiven", "fil": "algoritmedetektiven.html", "t": "Algoritmedetektiven 🕵️ · SkapLab"}, {"r": "matte_mengde_prog_løkker", "fil": "matte_mengde_prog_løkker.html", "t": "Mengdetrening: Løkker og betingelser i m"}, {"r": "matte_prog_lokker", "fil": "matte_prog_løkker.html", "t": "Løkker og betingelser i matte"}], "MAT9-4": [{"r": "battleships", "fil": "battleships.html", "t": "Battleships – SkapLab"}, {"r": "geogebra_geometri", "fil": "geogebra_geometri.html", "t": "GeoGebra – Geometri · SkapLab"}, {"r": "leksjon_geometri", "fil": "geometri.html", "t": "SkapLab Geometri"}, {"r": "matte_geo_koordinater", "fil": "matte_geo_koordinater.html", "t": "Koordinatsystem og vektorer"}], "MAT9-6": [{"r": "diagram_trener", "fil": "diagram_trener.html", "t": "Diagramtrener · SkapLab"}, {"r": "matte_mengde_stat_diagrammer", "fil": "matte_mengde_stat_diagrammer.html", "t": "Mengdetrening: Statistiske diagrammer"}, {"r": "matte_stat_diagrammer", "fil": "matte_stat_diagrammer.html", "t": "Statistiske diagrammer"}, {"r": "leksjon_statistikk", "fil": "statistikk.html", "t": "Statistikk"}], "MAT10-8": [{"r": "eksamenstrener", "fil": "eksamenstrener.html", "t": "Eksamenstrener · Matematikk 10. klasse"}], "MAT9-2": [{"r": "geo_flipcards", "fil": "geo_flipcards.html", "t": "Geologi Flashcards del 1"}, {"r": "geo_flipcards2", "fil": "geo_flipcards2.html", "t": "Geologi Flashcards del 2"}, {"r": "flash_geometri", "fil": "matte_flash_geometri.html", "t": "Flashcards: Geometri"}, {"r": "matte_geo_formlikskap", "fil": "matte_geo_formlikskap.html", "t": "Formlikhet og kongruens"}], "MAT8-10": [{"r": "geogebra_funksjoner", "fil": "geogebra_funksjoner.html", "t": "GeoGebra – Funksjoner · SkapLab"}, {"r": "kanon", "fil": "kanon.html", "t": "Kanonkule – SkapLab"}, {"r": "linje", "fil": "linje.html", "t": "Romferge – SkapLab"}, {"r": "flash_funksjoner", "fil": "matte_flash_funksjoner.html", "t": "Flashcards: Funksjoner"}], "MAT8-9": [{"r": "geogebra_linjediagram", "fil": "geogebra_linjediagram.html", "t": "GeoGebra – Linjediagram · SkapLab"}, {"r": "grafer", "fil": "grafer.html", "t": "Grafer & Diagrammer"}], "MAT8-4": [{"r": "matte", "fil": "matte.html", "t": "SkapLab Matte – Mengdetrening"}, {"r": "leksjon_alg_paren", "fil": "matte_algebra_parenteser.html", "t": "Parenteser og faktorisering"}, {"r": "leksjon_alg_uttrykk", "fil": "matte_algebra_uttrykk.html", "t": "Algebraiske uttrykk"}, {"r": "flash_algebra", "fil": "matte_flash_algebra.html", "t": "Flashcards: Algebra og likninger"}], "MAT10-1": [{"r": "leksjon_alg_poly", "fil": "matte_algebra_polynomer.html", "t": "Polynomer og konjugatsetningen"}, {"r": "matte_mengde_algebra_polynomer", "fil": "matte_mengde_algebra_polynomer.html", "t": "Mengdetrening: Polynomer og konjugatsetn"}], "MAT8-3": [{"r": "matte_brok_regning", "fil": "matte_brøk_regning.html", "t": "Brøkregning"}, {"r": "matte_mengde_brøk_regning", "fil": "matte_mengde_brøk_regning.html", "t": "Mengdetrening: Brøkregning"}, {"r": "matte_mengde_promille_desimal", "fil": "matte_mengde_promille_desimal.html", "t": "Mengdetrening: Promille og desimaltall"}, {"r": "matte_mengde_tall_primtall", "fil": "matte_mengde_tall_primtall.html", "t": "Mengdetrening: Primtall og faktorisering"}], "MAT9-7": [{"r": "flash_sannsynlighet", "fil": "matte_flash_sannsynlighet.html", "t": "Flashcards: Sannsynlighet og statistikk"}, {"r": "matte_mengde_stat_boksplott", "fil": "matte_mengde_stat_boksplott.html", "t": "Mengdetrening: Boksplott og spredningsmå"}, {"r": "matte_mengde_stat_sentralmål", "fil": "matte_mengde_stat_sentralmål.html", "t": "Mengdetrening: Gjennomsnitt, median og t"}, {"r": "matte_mengde_stat_tolkning", "fil": "matte_mengde_stat_tolkning.html", "t": "Mengdetrening: Tolke og kritisere statis"}], "MAT10-6": [{"r": "flash_okonomi", "fil": "matte_flash_økonomi.html", "t": "Flashcards: Økonomi"}, {"r": "matte_mengde_øk_budsjett", "fil": "matte_mengde_øk_budsjett.html", "t": "Mengdetrening: Budsjett og hverdagsøkono"}, {"r": "matte_mengde_øk_renter", "fil": "matte_mengde_øk_renter.html", "t": "Mengdetrening: Renter og lån"}, {"r": "matte_ok_budsjett", "fil": "matte_øk_budsjett.html", "t": "Budsjett og hverdagsøkonomi"}], "MAT10-2": [{"r": "matte_funk_kvadratisk", "fil": "matte_funk_kvadratisk.html", "t": "Kvadratiske funksjoner"}, {"r": "matte_funk_kvadratisk_topp", "fil": "matte_funk_kvadratisk_topp.html", "t": "Topp-/bunnpunkt og nullpunkter"}, {"r": "matte_mengde_funk_kvadratisk", "fil": "matte_mengde_funk_kvadratisk.html", "t": "Mengdetrening: Kvadratiske funksjoner"}, {"r": "matte_mengde_funk_kvadratisk_topp", "fil": "matte_mengde_funk_kvadratisk_topp.html", "t": "Mengdetrening: Topp-/bunnpunkt og nullpu"}], "MAT9-5": [{"r": "matte_geo_areal", "fil": "matte_geo_areal.html", "t": "Areal av plane figurer"}, {"r": "matte_geo_sammensatt", "fil": "matte_geo_sammensatt.html", "t": "Sammensatte figurer"}, {"r": "matte_geo_volum", "fil": "matte_geo_volum.html", "t": "Volum og overflate"}, {"r": "matte_mengde_geo_areal", "fil": "matte_mengde_geo_areal.html", "t": "Mengdetrening: Areal av plane figurer"}], "MAT9-3": [{"r": "matte_geo_pythagoras", "fil": "matte_geo_pythagoras.html", "t": "Pythagoras' setning"}, {"r": "matte_geo_trigonometri", "fil": "matte_geo_trigonometri.html", "t": "Trigonometri (sin, cos, tan)"}, {"r": "matte_mengde_geo_pythagoras", "fil": "matte_mengde_geo_pythagoras.html", "t": "Mengdetrening: Pythagoras' setning"}, {"r": "matte_mengde_geo_trigonometri", "fil": "matte_mengde_geo_trigonometri.html", "t": "Mengdetrening: Trigonometri (sin, cos, t"}], "MAT8-8": [{"r": "matte_labyrint", "fil": "matte_labyrint.html", "t": "Matematikklabyrinten 🚪"}, {"r": "matte_likninger_linja", "fil": "matte_likninger_linja.html", "t": "Lineære likninger"}, {"r": "matte_likninger_ulikheter", "fil": "matte_likninger_ulikheter.html", "t": "Ulikheter"}, {"r": "matte_mengde_likninger_linja", "fil": "matte_mengde_likninger_linja.html", "t": "Mengdetrening: Lineære likninger"}], "MAT10-3": [{"r": "matte_likninger_andregr", "fil": "matte_likninger_andregr.html", "t": "Andregradslikninger"}, {"r": "matte_liknsystem_addisjon", "fil": "matte_liknsystem_addisjon.html", "t": "Addisjonsmetoden"}, {"r": "matte_liknsystem_innsetting", "fil": "matte_liknsystem_innsetting.html", "t": "Innsettingsmetoden"}, {"r": "matte_mengde_likninger_andregr", "fil": "matte_mengde_likninger_andregr.html", "t": "Mengdetrening: Andregradslikninger"}], "MAT9-1": [{"r": "matte_mengde_geometriske_monstre", "fil": "matte_mengde_geometriske_monstre.html", "t": "Mengdetrening: Geometriske og tallmønstr"}], "MAT8-2": [{"r": "matte_mengde_hoderegning", "fil": "matte_mengde_hoderegning.html", "t": "Mengdetrening: Hoderegning og regnestrat"}], "MAT10-4": [{"r": "matte_mengde_lineare_funksjoner", "fil": "matte_mengde_lineare_funksjoner.html", "t": "Mengdetrening: Lineære funksjoner"}], "MAT8-5": [{"r": "matte_mengde_monstre", "fil": "matte_mengde_monstre.html", "t": "matte_mengde_monstre"}], "MAT8-6": [{"r": "matte_mengde_mål_enheter", "fil": "matte_mengde_mål_enheter.html", "t": "Mengdetrening: Måleenheter og omregning"}, {"r": "matte_mengde_mål_målefeil", "fil": "matte_mengde_mål_målefeil.html", "t": "Mengdetrening: Nøyaktighet og målefeil"}, {"r": "matte_maal_enheter", "fil": "matte_mål_enheter.html", "t": "Måleenheter og omregning"}, {"r": "matte_maal_maalefeil", "fil": "matte_mål_målefeil.html", "t": "Nøyaktighet og målefeil"}], "MAT9-9": [{"r": "matte_mengde_prob_strategier", "fil": "matte_mengde_prob_strategier.html", "t": "Mengdetrening: Problemløsningsstrategier"}, {"r": "matte_mengde_sann_betinget", "fil": "matte_mengde_sann_betinget.html", "t": "Mengdetrening: Betinget sannsynlighet"}, {"r": "matte_mengde_sann_grunnleggende", "fil": "matte_mengde_sann_grunnleggende.html", "t": "Mengdetrening: Grunnleggende sannsynligh"}, {"r": "matte_mengde_sann_kombinatorikk", "fil": "matte_mengde_sann_kombinatorikk.html", "t": "Mengdetrening: Kombinatorikk"}], "MAT9-10": [{"r": "matte_mengde_prog_simulering", "fil": "matte_mengde_prog_simulering.html", "t": "Mengdetrening: Programmert simulering"}, {"r": "matte_mengde_sann_simulering", "fil": "matte_mengde_sann_simulering.html", "t": "Mengdetrening: Simulering og frekvenstol"}, {"r": "matte_prog_simulering", "fil": "matte_prog_simulering.html", "t": "Programmert simulering"}, {"r": "matte_sann_simulering", "fil": "matte_sann_simulering.html", "t": "Simulering og frekvenstolkning"}], "MAT10-10": [{"r": "matte_mengde_programmering_matte", "fil": "matte_mengde_programmering_matte.html", "t": "Mengdetrening: Programmering og matemati"}], "MAT10-5": [{"r": "matte_mengde_prosent_beregning", "fil": "matte_mengde_prosent_beregning.html", "t": "Mengdetrening: Prosent og prosentregning"}, {"r": "matte_mengde_prosent_vekst", "fil": "matte_mengde_prosent_vekst.html", "t": "Mengdetrening: Prosentvekst og -nedgang"}, {"r": "matte_prosent_beregning", "fil": "matte_prosent_beregning.html", "t": "Prosent og prosentregning"}, {"r": "matte_prosent_vekst", "fil": "matte_prosent_vekst.html", "t": "Prosentvekst og -nedgang"}], "MAT8-7": [{"r": "matte_mengde_regneuttrykk", "fil": "matte_mengde_regneuttrykk.html", "t": "Mengdetrening: Regneuttrykk med variable"}], "MAT10-9": [{"r": "matte_mengde_res_bevis", "fil": "matte_mengde_res_bevis.html", "t": "Mengdetrening: Matematisk argumentasjon"}, {"r": "matte_res_bevis", "fil": "matte_res_bevis.html", "t": "Matematisk argumentasjon"}], "MAT9-8": [{"r": "matte_mengde_statistikk_argument", "fil": "matte_mengde_statistikk_argument.html", "t": "Mengdetrening: Statistikk og kritisk vur"}], "MAT8-1": [{"r": "matte_mengde_tall_kvadratrøtter", "fil": "matte_mengde_tall_kvadratrøtter.html", "t": "Mengdetrening: Kvadratrøtter og irrasjon"}, {"r": "matte_mengde_tall_potenser", "fil": "matte_mengde_tall_potenser.html", "t": "Mengdetrening: Potenser og potensregler"}, {"r": "matte_mengde_tall_standardform", "fil": "matte_mengde_tall_standardform.html", "t": "Mengdetrening: Standardform"}, {"r": "matte_tall_kvadratrotter", "fil": "matte_tall_kvadratrøtter.html", "t": "Kvadratrøtter og irrasjonale tall"}], "MAT10-7": [{"r": "matte_mengde_øk_skatt", "fil": "matte_mengde_øk_skatt.html", "t": "Mengdetrening: Skatt og inntekt"}, {"r": "matte_mengde_øk_valuta", "fil": "matte_mengde_øk_valuta.html", "t": "Mengdetrening: Valuta og omregning"}, {"r": "matte_ok_skatt", "fil": "matte_øk_skatt.html", "t": "Skatt og inntekt"}, {"r": "matte_ok_valuta", "fil": "matte_øk_valuta.html", "t": "Valuta og omregning"}], "NAT-14": [{"r": "animasjoner", "fil": "animasjoner.html", "t": "Naturfag-animasjoner"}, {"r": "flipcard_bio", "fil": "bio_flipcards.html", "t": "Biologi Flashcards"}, {"r": "flipcard_bio2", "fil": "bio_flipcards2.html", "t": "Biologi Flashcards del 2"}, {"r": "celle", "fil": "celle.html", "t": "Cellens anatomi (organeller)"}], "NAT-19": [{"r": "astronomi", "fil": "astronomi.html", "t": "Astronomi"}, {"r": "kontinentaldrift", "fil": "kontinentaldrift.html", "t": "Kontinentaldrift og platetektonikk"}, {"r": "pangea", "fil": "pangea.html", "t": "Pangea-puslespill"}], "NAT-9": [{"r": "atom", "fil": "atom.html", "t": "Atomets oppbygning"}, {"r": "atomteori", "fil": "atomteori.html", "t": "Atomteori"}, {"r": "flipcard_kje", "fil": "kje_flipcards.html", "t": "Kjemi Flashcards del 1"}, {"r": "periodesystem", "fil": "periodesystem.html", "t": "Periodesystemet"}], "NAT-11": [{"r": "bolger_lyd", "fil": "bolger_lyd.html", "t": "Bølger og lyd"}, {"r": "energi_varme", "fil": "energi_varme.html", "t": "Energi og varme"}, {"r": "flipcard_fys", "fil": "fys_flipcards.html", "t": "Fysikk Flashcards del 1"}, {"r": "fys_flipcards2", "fil": "fys_flipcards2.html", "t": "Fysikk Flashcards del 2"}], "NAT-5": [{"r": "dagsaktuell_forskning", "fil": "dagsaktuell_forskning.html", "t": "Dagsaktuell forskning"}, {"r": "genetikk", "fil": "genetikk.html", "t": "Genetikklaben 🧬 · SkapLab"}, {"r": "genetikk_spill", "fil": "genetikk_spill.html", "t": "Genetikklaben 🧬 · SkapLab"}, {"r": "vitenskapspersoner", "fil": "vitenskapspersoner.html", "t": "Vitenskapspersoner Flashcards"}], "NAT-13": [{"r": "dinosaurer", "fil": "dinosaurer.html", "t": "Dinosaurer"}, {"r": "evolusjon", "fil": "evolusjon.html", "t": "Evolusjon"}], "NAT-6": [{"r": "flipcard_ele", "fil": "ele_flipcards.html", "t": "Elektronikk Flashcards del 1"}, {"r": "ele_flipcards2", "fil": "ele_flipcards2.html", "t": "Elektronikk Flashcards del 2"}, {"r": "elektrisitetsteori", "fil": "elektrisitetsteori.html", "t": "Elektrisitetsteori"}, {"r": "elektriske_kretser", "fil": "elektriske_kretser.html", "t": "Elektriske kretser"}], "NAT-8": [{"r": "elektrokjemi", "fil": "elektrokjemi.html", "t": "Elektrokjemi"}, {"r": "kje_flipcards2", "fil": "kje_flipcards2.html", "t": "Kjemi Flashcards del 2"}, {"r": "kjemi", "fil": "kjemi.html", "t": "Kjemilaben – SkapLab"}, {"r": "kjemiske_bindinger", "fil": "kjemiske_bindinger.html", "t": "Kjemiske bindinger"}], "NAT-12": [{"r": "energi_miljo", "fil": "energi_miljo.html", "t": "Energi og miljøpåvirkning"}, {"r": "energiproduksjon", "fil": "energiproduksjon.html", "t": "Energiproduksjon"}], "NAT-2": [{"r": "excel_trener", "fil": "excel_trener.html", "t": "Excel-trener · SkapLab"}], "NAT-1": [{"r": "forsok", "fil": "forsok.html", "t": "Forsøk"}, {"r": "naturfag", "fil": "naturfag.html", "t": "Naturfagbegreper"}, {"r": "naturfagquiz", "fil": "naturfagquiz.html", "t": "Naturfagquiz · SkapLab"}, {"r": "spilltest", "fil": "spilltest.html", "t": "Spilltest"}], "NAT-18": [{"r": "fotosyntese", "fil": "fotosyntese.html", "t": "Fotosyntese og celleånding"}], "NAT-10": [{"r": "fysikk", "fil": "fysikk.html", "t": "Kraft og bevegelse 🚀 · SkapLab"}, {"r": "klima", "fil": "klima.html", "t": "Klima og drivhuseffekten"}, {"r": "krefter_bevegelse", "fil": "krefter_bevegelse.html", "t": "Krefter og bevegelse"}, {"r": "krefter_bevegelse_teori", "fil": "krefter_bevegelse_teori.html", "t": "Krefter og bevegelse"}], "NAT-15": [{"r": "havet", "fil": "havet.html", "t": "Havet"}, {"r": "flipcard_oko", "fil": "oko_flipcards.html", "t": "Økologi Flashcards del 1"}, {"r": "oko_flipcards2", "fil": "oko_flipcards2.html", "t": "Økologi Flashcards del 2"}, {"r": "okologi", "fil": "okologi.html", "t": "Økologi"}], "NAT-21": [{"r": "hjernen", "fil": "hjernen.html", "t": "Hjernen"}, {"r": "hjertet", "fil": "hjertet.html", "t": "Hjertet"}, {"r": "hormonsystemet", "fil": "hormonsystemet.html", "t": "Hormonsystemet"}, {"r": "nervesystemet", "fil": "nervesystemet.html", "t": "Nervesystemet"}], "NAT-22": [{"r": "immunforsvar", "fil": "immunforsvar.html", "t": "Immunforsvar og vaksiner"}], "NAT-4": [{"r": "labsikkerhet", "fil": "labsikkerhet.html", "t": "Labsikkerhet og forsøksdesign"}], "NAT-3": [{"r": "molekylmodeller", "fil": "molekylmodeller.html", "t": "Molekylmodeller"}], "NAT-16": [{"r": "naturkatastrofer", "fil": "naturkatastrofer.html", "t": "Naturkatastrofer"}], "NAT-7": [{"r": "programmering_naturfag", "fil": "programmering_naturfag.html", "t": "Programmering i naturfag"}], "NAT-17": [{"r": "samisk_natur", "fil": "samisk_natur.html", "t": "Samisk naturkunnskap"}], "NAT-20": [{"r": "seksualundervisning", "fil": "seksualundervisning.html", "t": "Seksualundervisning"}], "PRG-6": [{"r": "debugrommet", "fil": "debugrommet.html", "t": "Debug-rommet 🐛 · SkapLab"}], "PRG-1": [{"r": "prg_mengde_datamaskiner", "fil": "prg_mengde_datamaskiner.html", "t": "Datamaskiner og programmer"}], "PRG-4": [{"r": "prg_mengde_dekomponering", "fil": "prg_mengde_dekomponering.html", "t": "Dekomponering og problemløsing"}], "PRG-2": [{"r": "prg_mengde_tekstbasert", "fil": "prg_mengde_tekstbasert.html", "t": "Tekstbasert programmering"}], "PRG-3": [{"r": "programmering", "fil": "programmering.html", "t": "Programmering – SkapLab"}, {"r": "pseudokode", "fil": "pseudokode.html", "t": "Pseudokode-byggeren 🤖 · SkapLab"}], "PRG-5": [{"r": "skaperverksted", "fil": "skaperverksted.html", "t": "Skaperverksted"}]};
+
+var laerer = SkapLab.hentLaerer();
+var token  = laerer ? laerer.access_token : null;
+var lid    = laerer ? ((laerer.user && laerer.user.id) || laerer.id || '') : null;
+if (!laerer) { location.href = 'laerer_login.html'; }
+
+// ── LOKALT DATALAG ────────────────────────────────────────────────
+var PLAN_KEY = 'skaplab_plan_v1';
+
+function lastPlan() {
+  try { return JSON.parse(localStorage.getItem(PLAN_KEY) || '{}'); } catch(e) { return {}; }
+}
+function lagrePlan(plan) {
+  localStorage.setItem(PLAN_KEY, JSON.stringify(plan));
+}
+
+// ── STATE ─────────────────────────────────────────────────────────
+var plan = lastPlan();
+var aktivUke  = parseInt(new URLSearchParams(location.search).get('uke') || getUkeNr());
+var aktivFag  = 'mat';
+var aktivTrinn = '8';
+var valgtKM   = null;
+
+function getUkeNr() {
+  var d = new Date(), jan1 = new Date(d.getFullYear(),0,1);
+  return Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+}
+
+// ── UI-BYGGING ────────────────────────────────────────────────────
+function byggUI() {
+  byggUkeNavigasjon();
+  byggFagvelger();
+  byggPlanTabell();
+  visKMliste();
+}
+
+function byggUkeNavigasjon() {
+  var el = document.getElementById('uke-nav');
+  if (!el) return;
+  var html = '';
+  for (var u = Math.max(1, aktivUke-3); u <= Math.min(53, aktivUke+8); u++) {
+    var harInnhold = plan[u] && Object.keys(plan[u]).length > 0;
+    html += '<button class="uke-btn' + (u===aktivUke?' ak':'') + (harInnhold?' har-plan':'') + '" onclick="byttUke('+u+')">Uke '+u+'</button>';
+  }
+  el.innerHTML = html;
+}
+
+function byttUke(u) {
+  aktivUke = u;
+  byggUI();
+}
+
+function byggFagvelger() {
+  ['mat','nat','prg'].forEach(function(fag) {
+    var btn = document.getElementById('fag-'+fag);
+    if (btn) btn.classList.toggle('ak', fag===aktivFag);
+  });
+  var trinnWrap = document.getElementById('trinn-wrap');
+  if (trinnWrap) trinnWrap.style.display = aktivFag==='mat' ? 'flex' : 'none';
+}
+
+function byttFag(fag) {
+  aktivFag = fag;
+  valgtKM = null;
+  byggFagvelger();
+  visKMliste();
+  visRessurser(null);
+}
+
+function byttTrinn(t) {
+  aktivTrinn = t;
+  [8,9,10].forEach(function(n) {
+    var b = document.getElementById('trinn-'+n);
+    if (b) b.classList.toggle('ak', String(n)===t);
+  });
+  visKMliste();
+}
+
+// ── KM-LISTE ──────────────────────────────────────────────────────
+function visKMliste() {
+  var el = document.getElementById('km-liste');
+  if (!el) return;
+  var liste = getAktivKMListe();
+  var ukePlan = plan[aktivUke] || {};
+  el.innerHTML = '';
+  liste.forEach(function(km) {
+    var er_planlagt = ukePlan[km[0]];
+    var har_res = RES_PER_KM[km[0]] && RES_PER_KM[km[0]].length > 0;
+    var div = document.createElement('div');
+    div.className = 'km-item' + (er_planlagt?' planlagt':'') + (km[0]===valgtKM?' valgt':'');
+    div.innerHTML =
+      '<div class="km-item-topp">'
+      +'<span class="km-kode">'+km[0]+'</span>'
+      +(har_res?'<span class="res-badge">'+RES_PER_KM[km[0]].length+'</span>':'')
+      +(er_planlagt?'<span class="planlagt-badge">✓ Uke '+aktivUke+'</span>':'')
+      +'</div>'
+      +'<div class="km-item-tekst">'+km[1]+'</div>';
+    div.onclick = function() { velgKM(km[0]); };
+    el.appendChild(div);
+  });
+}
+
+function getAktivKMListe() {
+  if (aktivFag === 'nat') return KM_DATA.nat;
+  if (aktivFag === 'prg') return KM_DATA.prg;
+  return KM_DATA['mat'+aktivTrinn] || [];
+}
+
+function velgKM(km) {
+  valgtKM = km;
+  visKMliste();
+  visRessurser(km);
+  visPlanKnapp(km);
+}
+
+// ── RESSURSVISNING ────────────────────────────────────────────────
+function visRessurser(km) {
+  var el = document.getElementById('res-liste');
+  var tomEl = document.getElementById('res-tom');
+  if (!el) return;
+  if (!km || !RES_PER_KM[km] || !RES_PER_KM[km].length) {
+    el.innerHTML = '';
+    if (tomEl) tomEl.style.display = km ? 'block' : 'none';
+    return;
+  }
+  if (tomEl) tomEl.style.display = 'none';
+  el.innerHTML = '';
+  RES_PER_KM[km].forEach(function(res) {
+    var div = document.createElement('a');
+    div.href = res.fil;
+    div.target = '_blank';
+    div.className = 'res-item';
+    div.innerHTML =
+      '<div class="res-tittel">'+res.t+'</div>'
+      +'<div class="res-fil">'+res.fil+'</div>'
+      +'<div class="res-pil">Åpne →</div>';
+    el.appendChild(div);
+  });
+}
+
+function visPlanKnapp(km) {
+  var el = document.getElementById('plan-knapp-wrap');
+  if (!el || !km) return;
+  var ukePlan = plan[aktivUke] || {};
+  var erPlanlagt = !!ukePlan[km];
+  el.innerHTML = erPlanlagt
+    ? '<button class="plan-btn fjern" onclick="fjernFraPlan(\''+km+'\')">✗ Fjern fra uke '+aktivUke+'</button>'
+    : '<button class="plan-btn legg-til" onclick="leggTilPlan(\''+km+'\')">+ Legg til i uke '+aktivUke+'</button>';
+}
+
+// ── PLAN-TABELLEN ─────────────────────────────────────────────────
+function byggPlanTabell() {
+  var el = document.getElementById('plan-tabell');
+  if (!el) return;
+  var ukePlan = plan[aktivUke] || {};
+  var koder = Object.keys(ukePlan);
+  if (!koder.length) {
+    el.innerHTML = '<div class="plan-tom">Ingen emner planlagt for uke '+aktivUke+'.<br>Velg kompetansemål til venstre og trykk "+ Legg til".</div>';
+    return;
+  }
+  var html = '<div class="plan-overskrift">Uke '+aktivUke+'</div><div class="plan-kort-grid">';
+  koder.forEach(function(km) {
+    var info = ukePlan[km];
+    var res = RES_PER_KM[km] || [];
+    html += '<div class="plan-kort">'
+      +'<div class="plan-km-kode">'+km+'</div>'
+      +'<div class="plan-km-tekst">'+info.tekst+'</div>'
+      +(info.notat?'<div class="plan-notat">📝 '+info.notat+'</div>':'')
+      +'<div class="plan-res-liste">'
+      + res.slice(0,2).map(function(r){return '<a href="'+r.fil+'" target="_blank" class="plan-res-link">'+r.t+'</a>';}).join('')
+      +'</div>'
+      +'<div class="plan-kort-bunn">'
+      +'<button class="plan-mini-btn" onclick="redigerNotat(\''+km+'\')">📝 Notat</button>'
+      +'<button class="plan-mini-btn fjern-btn" onclick="fjernFraPlan(\''+km+'\')">✗</button>'
+      +'</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── PLAN-HANDLINGER ───────────────────────────────────────────────
+function leggTilPlan(km) {
+  if (!plan[aktivUke]) plan[aktivUke] = {};
+  var liste = getAktivKMListe();
+  var kmInfo = liste.find(function(k) { return k[0]===km; });
+  plan[aktivUke][km] = { tekst: kmInfo ? kmInfo[1] : km, fag: aktivFag, trinn: aktivTrinn, notat: '' };
+  lagrePlan(plan);
+  byggUI();
+}
+
+function fjernFraPlan(km) {
+  if (plan[aktivUke]) { delete plan[aktivUke][km]; lagrePlan(plan); }
+  byggUI();
+}
+
+function redigerNotat(km) {
+  var naavarende = plan[aktivUke] && plan[aktivUke][km] ? plan[aktivUke][km].notat || '' : '';
+  var nytt = prompt('Notat for ' + km + ':', naavarende);
+  if (nytt !== null && plan[aktivUke] && plan[aktivUke][km]) {
+    plan[aktivUke][km].notat = nytt;
+    lagrePlan(plan);
+    byggPlanTabell();
+  }
+}
+
+// ── PERIODEVISNING ─────────────────────────────────────────────────
+function visPeriode() {
+  var el = document.getElementById('periode-innhold');
+  if (!el) return;
+  var html = '<table class="periode-tabell"><thead><tr><th>KM</th><th>Kompetansemål</th>';
+  // Vis neste 12 uker
+  var uker = [];
+  for (var u = aktivUke; u <= Math.min(activUke+11, 53); u++) uker.push(u);
+  uker.forEach(function(u) { html += '<th>Uke '+u+'</th>'; });
+  html += '</tr></thead><tbody>';
+
+  // Finn alle planlagte KM
+  var alleKM = {};
+  uker.forEach(function(u) {
+    if (plan[u]) Object.keys(plan[u]).forEach(function(km) { alleKM[km] = plan[u][km]; });
+  });
+
+  Object.keys(alleKM).sort().forEach(function(km) {
+    html += '<tr><td><code>'+km+'</code></td><td>'+alleKM[km].tekst+'</td>';
+    uker.forEach(function(u) {
+      html += '<td style="text-align:center">' + (plan[u] && plan[u][km] ? '●' : '') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ── EKSPORT ───────────────────────────────────────────────────────
+function eksporterPDF() {
+  document.getElementById('periode-seksjon').style.display = 'block';
+  visPeriode();
+  setTimeout(function() { window.print(); }, 300);
+}
+
+function visTab(tab) {
+  ['tab-plan','tab-periode'].forEach(function(t) {
+    var el = document.getElementById(t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.toggle('ak', b.dataset.tab===tab);
+  });
+  if (tab==='tab-periode') visPeriode();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.addEventListener('load', function() {
+  byggUI();
+  visTab('tab-plan');
+});
+
+</script>
+<script>
+
+// Innlogget-stripe for elever
+(function() {
+  try {
+    var elev = JSON.parse(localStorage.getItem('skaplab_elev') || 'null');
+    if (!elev || !elev.id) return;
+    var stripe = document.createElement('div');
+    stripe.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+      +'background:rgba(7,9,15,.96);border-top:1px solid rgba(255,255,255,.08);'
+      +'padding:7px 18px;display:flex;align-items:center;gap:12px;'
+      +'font-family:DM Sans,sans-serif;font-size:.76rem;color:rgba(255,255,255,.55);'
+      +'backdrop-filter:blur(8px);';
+    var navn = elev.fullt_navn ? elev.fullt_navn.split(' ')[0] : 'Elev';
+    stripe.innerHTML =
+      '<span>👤 <strong style="color:#e0e8ff;">' + navn + '</strong></span>'
+      +'<span style="flex:1"></span>'
+      +'<a href="elev_portal.html" style="color:#60a5fa;text-decoration:none;'
+      +'padding:4px 12px;border:1px solid rgba(96,165,250,.3);border-radius:7px;">'
+      +'← Min side</a>'
+      +'<button onclick="localStorage.removeItem(\'skaplab_elev\');sessionStorage.removeItem(\'skaplab_elev\');location.reload();" '
+      +'style="background:none;border:1px solid rgba(255,255,255,.15);'
+      +'color:rgba(255,255,255,.4);padding:4px 10px;border-radius:7px;'
+      +'cursor:pointer;font-size:.72rem;">Logg ut</button>';
+    document.body.appendChild(stripe);
+    document.body.style.paddingBottom = '46px';
+  } catch(e) {}
+})();
+
+</script>
+</body>
+</html>
