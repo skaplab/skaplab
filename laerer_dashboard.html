@@ -96,6 +96,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .varsel-tittel{font-size:.8rem;font-weight:600;}
 .varsel-dato{font-size:.72rem;color:var(--dim);}
 
+
+.admin-bruker-rad{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.admin-bruker-info{flex:1;min-width:0;}
+.admin-bruker-navn{font-size:.82rem;font-weight:600;}
+.admin-bruker-epost{font-size:.72rem;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.admin-slett-btn{padding:4px 9px;background:transparent;border:1px solid rgba(248,113,113,.3);color:var(--rod);border-radius:6px;cursor:pointer;font-size:.72rem;white-space:nowrap;flex-shrink:0;}
+.admin-slett-btn:hover{background:rgba(248,113,113,.1);}
+
 </style></head><body>
 <div id="topbar">
   <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
@@ -110,7 +118,11 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <a class="side-link ak" onclick="visKlasse()">Klassen min</a>
     <div class="side-sek">Klasser</div>
     <div id="klasse-liste"></div>
-    <div class="side-sek">Verktøy</div>
+    <div id="side-admin-sek" style="display:none">
+    <div class="side-sek">Superadmin</div>
+    <a class="side-link" id="admin-btn" onclick="visAdmin()" style="display:none;color:var(--rod);">⚙️ Administrasjon</a>
+  </div>
+  <div class="side-sek">Verktøy</div>
     <a class="side-link" onclick="visNyKlasse()">+ Ny klasse</a>
     <a class="side-link" onclick="visTildel()">📋 Tildel oppgave</a>
     <a class="side-link" href="laerer_planlegger.html">📅 Planlegger</a>
@@ -123,6 +135,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div id="side-klasse" style="display:none"></div>
     <div id="side-nyklasse" style="display:none"></div>
   <div id="side-tildel" style="display:none"></div>
+  <div id="side-admin" style="display:none"></div>
   </div>
 </div>
 <div class="modal-bg" id="modal">
@@ -140,7 +153,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div id="modal-feil" style="color:var(--rod);font-size:.8rem;margin-top:8px;"></div>
   </div>
 </div>
-<script>// skaplab_auth.js - SkapLab autentisering
+<script>
+// skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
 
@@ -197,13 +211,14 @@ tr:hover td{background:rgba(255,255,255,.02);}
     try {
       var resp = await fetch(
         API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
-        '&select=id,fullt_navn,klasse_id,klasser(navn,trinn,skoler(navn))',
+        '&select=id,fullt_navn,klasse_id,trenger_hjelp,hjelp_emne,klasser(navn,trinn,skoler(navn))',
         { headers: hdr() }
       );
       var data = await resp.json();
       if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
       var elev = data[0];
-      sessionStorage.setItem(SESSION_NØKKEL, JSON.stringify(elev));
+      // Bruk localStorage slik at sesjonen deles mellom faner
+      localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
       return { ok: true, elev: elev };
     } catch (e) {
       return { ok: false, feil: 'Tilkoblingsfeil' };
@@ -211,13 +226,21 @@ tr:hover td{background:rgba(255,255,255,.02);}
   }
 
   function elevLoggUt() {
+    localStorage.removeItem(SESSION_NØKKEL);
     sessionStorage.removeItem(SESSION_NØKKEL);
   }
 
   function hentElev() {
     try {
-      var data = sessionStorage.getItem(SESSION_NØKKEL);
-      return data ? JSON.parse(data) : null;
+      var data = localStorage.getItem(SESSION_NØKKEL);
+      if (!data) return null;
+      var elev = JSON.parse(data);
+      // Utløp etter 8 timer (skoledagen)
+      if (elev._lagret && Date.now() - elev._lagret > 8*60*60*1000) {
+        localStorage.removeItem(SESSION_NØKKEL);
+        return null;
+      }
+      return elev;
     } catch (e) { return null; }
   }
 
@@ -231,9 +254,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       var resp = await auth('token?grant_type=password', {
         email: epost, password: passord
       });
-      console.log('LOGIN RESP KEYS:', JSON.stringify(Object.keys(resp||{})));
-      console.log('HAS access_token:', !!resp.access_token);
-      console.log('HAS error:', !!resp.error);
+
       if (resp.error) return { ok: false, feil: resp.error.message };
       if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
       sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
@@ -358,6 +379,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
     _api:  API,
     _hdr:  hdr,
     _get:  get,
+    _delete: function(sti,tok){return fetch(API+sti,{method:'DELETE',headers:hdr(tok)}).then(function(r){return r.ok;});},
+    _rpc: function(fn,params,tok){return fetch(API+'/rpc/'+fn,{method:'POST',headers:Object.assign(hdr(tok),{'Content-Type':'application/json'}),body:JSON.stringify(params)}).then(function(r){return r.json();});},
     _post: post,
     _patch: patch,
     SUPABASE_URL: SUPABASE_URL,
@@ -507,7 +530,9 @@ async function init(){
     var epost=hentEpost(laerer);
     if(epost==='tlnnorda@gmail.com'){
       var ab=document.getElementById('admin-btn');
-      if(ab) ab.style.display='block';
+      if(ab){ab.style.display='block';}
+      var as=document.getElementById('side-admin-sek');
+      if(as){as.style.display='block';}
     }
 
   // Hent laerer-navn fra DB (ikke kritisk om det feiler)
@@ -1032,6 +1057,48 @@ async function visProveVarsler(klasseId) {
         +'</div>';
     }).join('');
   } catch(e) {}
+}
+
+// ── SUPERADMIN ───────────────────────────────────────────────────────────
+async function visAdmin() {
+  document.querySelectorAll('[id^=side-]').forEach(function(e){e.style.display='none';});
+  var s = document.getElementById('side-admin');
+  s.style.display = 'block';
+  s.innerHTML = '<div class="side-tittel" style="color:var(--rod);">⚙️ Superadmin</div>'
+    + '<div class="side-sub">Administrer alle brukere</div>'
+    + '<div id="admin-brukere"><div style="color:var(--dim);font-size:.8rem;padding:10px 0;">Laster brukere…</div></div>';
+  try {
+    var lR = await SkapLab._get('/laerere?select=id,fullt_navn,epost,er_admin,opprettet&order=opprettet.desc', token);
+    if (!Array.isArray(lR) || !lR.length) {
+      document.getElementById('admin-brukere').innerHTML = '<div style="color:var(--dim);font-size:.8rem;padding:10px 0;">Ingen brukere funnet.</div>';
+      return;
+    }
+    var html = lR.map(function(l) {
+      return '<div class="admin-bruker-rad">'
+        + '<div class="admin-bruker-info">'
+          + '<div class="admin-bruker-navn">'+(l.fullt_navn||'—')+(l.er_admin?' <span style="color:var(--rod);font-size:.65rem;">ADMIN</span>':'')+'</div>'
+          + '<div class="admin-bruker-epost">'+l.epost+'</div>'
+        + '</div>'
+        + '<button class="admin-slett-btn" onclick="slettBruker(\''+l.id+'\',\''+l.epost+'\')">🗑 Slett</button>'
+        + '</div>';
+    }).join('');
+    document.getElementById('admin-brukere').innerHTML = html;
+  } catch(e) {
+    document.getElementById('admin-brukere').innerHTML = '<div style="color:var(--rod);font-size:.8rem;">Feil: '+e.message+'</div>';
+  }
+}
+
+async function slettBruker(id, epost) {
+  if (id === lid) { alert('Du kan ikke slette deg selv.'); return; }
+  if (!confirm('SLETT bruker «'+epost+'» permanent?\nDette sletter alle klasser, elever og data tilknyttet brukeren.')) return;
+  try {
+    var res = await SkapLab._rpc('slett_bruker', {p_bruker_id: id}, token);
+    if (res === 'OK' || res === 'ok') {
+      visAdmin(); // Oppdater listen
+    } else {
+      alert('Ikke tillatt eller databasefeil: '+JSON.stringify(res));
+    }
+  } catch(e) { alert('Feil: '+e.message); }
 }
 
 // ── SLETTING ─────────────────────────────────────────────────────────────
