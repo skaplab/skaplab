@@ -68,6 +68,18 @@ nav{height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;
 .prove-pdf-btn{margin-top:16px;padding:8px 18px;background:var(--bla);color:#000;border:none;
   border-radius:8px;font-family:var(--font-h);font-size:.8rem;font-weight:800;cursor:pointer;}
 
+
+.km-notat-felt { display:block; width:100%; margin-top:5px; padding:4px 8px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:.75rem; font-family:var(--font-b); outline:none; }
+.km-notat-felt:focus { border-color:rgba(96,165,250,.4); background:rgba(96,165,250,.04); }
+.prove-hdr { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.prove-dato-wrap { display:flex; align-items:center; gap:8px; }
+.prove-dato-label { font-size:.78rem; color:var(--dim); }
+.prove-dato-input { padding:5px 10px; background:rgba(255,255,255,.06); border:1px solid var(--border2); border-radius:7px; color:var(--text); font-size:.78rem; font-family:var(--font-b); }
+.prove-dato-input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
+.prove-dato-vis { font-family:var(--font-h); font-size:.95rem; font-weight:800; color:var(--bla); padding:10px 0 4px; border-bottom:2px solid var(--border2); margin-bottom:14px; }
+.prove-rad-innhold { flex:1; }
+.prove-notat { font-size:.75rem; color:var(--gul); margin-top:3px; font-style:italic; }
+
 @media (max-width:600px){
   .col-akt,.col-prove{display:none;}
   .ma-tabell{font-size:.74rem;}
@@ -462,7 +474,9 @@ function byggMalark() {
       if (ikkeGjort) tr.className = 'ikke-vurdert';
       tr.innerHTML =
         '<td><code class="km-kod">'+km[0]+'</code></td>'
-        +'<td class="km-txt">'+km[1]+'</td>'
+        +'<td class="km-txt">'+km[1]
+          +'<input type="text" class="km-notat-felt" placeholder="Fritekst…" data-km="'+km[0]+'" value="" oninput="oppdaterNotat(this)">'
+          +'</td>'
         +'<td class="col-akt" style="text-align:center">'
           +(akt!==undefined ? '<span style="color:'+(akt>=70?'#34d399':akt>=45?'#fbbf24':'#f87171')+'">'+akt+'%</span>' : '–')+'</td>'
         +'<td class="col-elev" style="text-align:center;color:'+egFarge+'">'+egLabel+'</td>'
@@ -470,10 +484,14 @@ function byggMalark() {
           +'<span class="niv-chip" style="background:'+nivaaFarge+'20;color:'+nivaaFarge+';border-color:'+nivaaFarge+'40">'+nivaaLabel+'</span>'
           +'</td>'
         +'<td class="col-prove" style="text-align:center">'
-          +'<input type="checkbox" class="prove-cb" data-km="'+km[0]+'" '+(proveValgte.has(km[0])?'checked':'')
-          +' onchange="toggleProve(\''+km[0]+'\')">'
+          +'<input type="checkbox" class="prove-cb" data-km="'+km[0]+'" '
+          +(proveValgte.has(km[0])?'checked ':'')
+          +'onchange="toggleProve(this.dataset.km)">'
           +'</td>';
       tbody.appendChild(tr);
+      // Sett notatverdi etter DOM-insert
+      var felt = tr.querySelector('.km-notat-felt');
+      if (felt && merkander[km[0]]) felt.value = merkander[km[0]];
     });
     tabell.appendChild(tbody);
     seksjonEl.appendChild(tabell);
@@ -484,7 +502,15 @@ function byggMalark() {
   oppdaterProveListe();
 }
 
-function toggleProve(km) {
+function oppdaterNotat(input) {
+  var km = input.dataset.km;
+  merkander[km] = input.value;
+  // Oppdater prøveliste hvis dette KM er valgt
+  if (proveValgte.has(km)) oppdaterProveListe();
+}
+
+function toggleProve(kmOrEl) {
+  var km = typeof kmOrEl === 'string' ? kmOrEl : kmOrEl.dataset.km;
   if (proveValgte.has(km)) proveValgte.delete(km);
   else proveValgte.add(km);
   oppdaterProveListe();
@@ -497,12 +523,23 @@ function oppdaterProveListe() {
     el.innerHTML = '<div class="prove-tom">Huk av kompetansemål i tabellen for å planlegge prøve.</div>';
     return;
   }
-  var html = '<div class="prove-tittel">Prøveplan: '+proveValgte.size+' KM</div>';
+  var html = '<div class="prove-hdr">'
+    +'<div class="prove-tittel">Prøveplan: '+proveValgte.size+' KM valgt</div>'
+    +'<div class="prove-dato-wrap">'
+      +'<label class="prove-dato-label">Prøvedato:</label>'
+      +'<input type="date" id="prove-dato-global" class="prove-dato-input" value="'
+        + new Date(Date.now()+7*86400000).toISOString().slice(0,10) + '">'
+    +'</div>'
+    +'</div>';
   proveValgte.forEach(function(km) {
     var info = ALLE_KM.find(function(k){return k[0]===km;});
+    var notat = merkander[km] || '';
     html += '<div class="prove-rad">'
       +'<code class="km-kod">'+km+'</code>'
-      +' <span class="prove-km-tekst">'+(info?info[1]:km)+'</span>'
+      +'<div class="prove-rad-innhold">'
+        +'<span class="prove-km-tekst">'+(info?info[1]:km)+'</span>'
+        +(notat?'<div class="prove-notat">'+notat+'</div>':'')
+      +'</div>'
       +'</div>';
   });
   html += '<button class="prove-pdf-btn" onclick="skrivUtProve()">🖨️ Skriv ut prøveplan</button>';
@@ -517,6 +554,20 @@ function visTab(tab) {
 }
 
 function skrivUtProve() {
+  var dato = document.getElementById('prove-dato-global');
+  var datoStr = dato ? dato.value : '';
+  if (datoStr) {
+    var el = document.getElementById('prove-dato-vis');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'prove-dato-vis';
+      el.className = 'prove-dato-vis';
+      var prove = document.getElementById('tab-prove');
+      if (prove) prove.insertBefore(el, prove.firstChild);
+    }
+    var d = new Date(datoStr);
+    el.textContent = 'Prøvedato: '+d.toLocaleDateString('nb-NO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  }
   document.getElementById('tab-malark').style.display='none';
   document.getElementById('tab-prove').style.display='block';
   setTimeout(function(){window.print();},200);

@@ -145,6 +145,20 @@ nav{height:52px;display:flex;align-items:center;padding:0 20px;gap:12px;
   #tab-plan { display:none!important; }
   #tab-periode { display:block!important; }
 }
+
+.res-item { padding:10px 12px; border-radius:9px; border:1px solid var(--border); margin-bottom:8px; background:var(--bg); }
+.res-item-hoved { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.res-info { flex:1; }
+.res-apne-btn { font-size:.7rem; color:var(--bla); text-decoration:none; white-space:nowrap; padding:3px 8px; border:1px solid rgba(96,165,250,.3); border-radius:6px; }
+.res-tildel-rad { display:flex; gap:6px; align-items:center; }
+.res-dato-input { flex:1; padding:5px 8px; background:rgba(255,255,255,.06); border:1px solid var(--border2); border-radius:7px; color:var(--text); font-size:.75rem; font-family:var(--font-b); }
+.res-dato-input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
+.res-pluss-btn { padding:5px 10px; background:rgba(52,211,153,.15); color:var(--gron); border:1px solid rgba(52,211,153,.3); border-radius:7px; font-size:.75rem; font-family:var(--font-h); font-weight:700; cursor:pointer; white-space:nowrap; }
+.res-pluss-btn:hover { background:rgba(52,211,153,.25); }
+.plan-res-rad { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
+.plan-res-dato { font-size:.65rem; color:var(--gul); font-family:var(--font-m); margin-left:2px; }
+.plan-res-fjern { background:none; border:none; color:var(--rod); cursor:pointer; font-size:.75rem; padding:0 3px; }
+
 </style>
 </head>
 <body>
@@ -574,17 +588,49 @@ function visRessurser(km) {
   }
   if (tomEl) tomEl.style.display = 'none';
   el.innerHTML = '';
+  var iDag = new Date().toISOString().slice(0,10);
   RES_PER_KM[km].forEach(function(res) {
-    var div = document.createElement('a');
-    div.href = res.fil;
-    div.target = '_blank';
+    var div = document.createElement('div');
     div.className = 'res-item';
+    var datoId = 'dato-' + res.r;
     div.innerHTML =
-      '<div class="res-tittel">'+res.t+'</div>'
-      +'<div class="res-fil">'+res.fil+'</div>'
-      +'<div class="res-pil">Åpne →</div>';
+      '<div class="res-item-hoved">'
+        +'<div class="res-info">'
+          +'<div class="res-tittel">'+res.t+'</div>'
+          +'<div class="res-fil">'+res.fil+'</div>'
+        +'</div>'
+        +'<a href="'+res.fil+'" target="_blank" class="res-apne-btn">Åpne →</a>'
+      +'</div>'
+      +'<div class="res-tildel-rad">'
+        +'<input type="date" class="res-dato-input" id="'+datoId+'" value="'+iDag+'">'
+        +'<button class="res-pluss-btn" data-km="'+km+'" data-r="'+res.r+'" data-t="'+res.t+'" data-fil="'+res.fil+'" data-dato-id="'+datoId+'">+ Legg til plan</button>'
+      +'</div>';
+    div.querySelector('.res-pluss-btn').addEventListener('click', function(e) {
+      var btn = e.currentTarget;
+      leggTilRessurs(btn.dataset.km, {r:btn.dataset.r, t:btn.dataset.t, fil:btn.dataset.fil}, btn.dataset.datoId, btn);
+    });
     el.appendChild(div);
   });
+}
+
+function leggTilRessurs(km, res, datoId, btn) {
+  var dato = document.getElementById(datoId);
+  var valgtDato = dato ? dato.value : '';
+  if (!plan[aktivUke]) plan[aktivUke] = {};
+  if (!plan[aktivUke][km]) {
+    var liste = getAktivKMListe();
+    var kmInfo = liste.find(function(k) { return k[0]===km; });
+    plan[aktivUke][km] = { tekst: kmInfo ? kmInfo[1] : km, fag: aktivFag, trinn: aktivTrinn, notat: '', ressurser: [] };
+  }
+  if (!plan[aktivUke][km].ressurser) plan[aktivUke][km].ressurser = [];
+  // Unngå duplikat
+  var finnes = plan[aktivUke][km].ressurser.find(function(r){ return r.r===res.r; });
+  if (!finnes) plan[aktivUke][km].ressurser.push({ r: res.r, t: res.t, fil: res.fil, dato: valgtDato });
+  lagrePlan(plan);
+  byggPlanTabell();
+  // Gi visuell bekreftelse
+  btn = btn || document.querySelector('[data-r="'+res.r+'"]');
+  if (btn) { btn.textContent = '✓ Lagt til'; btn.style.color='var(--gron)'; setTimeout(function(){ btn.textContent='+ Legg til plan'; btn.style.color=''; }, 1500); }
 }
 
 function visPlanKnapp(km) {
@@ -616,7 +662,15 @@ function byggPlanTabell() {
       +'<div class="plan-km-tekst">'+info.tekst+'</div>'
       +(info.notat?'<div class="plan-notat">📝 '+info.notat+'</div>':'')
       +'<div class="plan-res-liste">'
-      + res.slice(0,2).map(function(r){return '<a href="'+r.fil+'" target="_blank" class="plan-res-link">'+r.t+'</a>';}).join('')
+      +(info.ressurser && info.ressurser.length
+        ? info.ressurser.map(function(r){
+            return '<div class="plan-res-rad">'
+              +'<a href="'+r.fil+'" target="_blank" class="plan-res-link">'+r.t+'</a>'
+              +(r.dato ? '<span class="plan-res-dato">'+r.dato+'</span>' : '')
+              +'<button class="plan-res-fjern" onclick="fjernRessurs(event,\''+km+'\',\''+r.r+'\')" title="Fjern">×</button>'
+              +'</div>';
+          }).join('')
+        : '<span class="plan-res-tom">Ingen ressurser lagt til</span>')
       +'</div>'
       +'<div class="plan-kort-bunn">'
       +'<button class="plan-mini-btn" onclick="redigerNotat(\''+km+'\')">📝 Notat</button>'
@@ -642,6 +696,15 @@ function fjernFraPlan(km) {
   byggUI();
 }
 
+function fjernRessurs(e, km, resId) {
+  if(e){e.preventDefault(); e.stopPropagation();}
+  if (plan[aktivUke] && plan[aktivUke][km] && plan[aktivUke][km].ressurser) {
+    plan[aktivUke][km].ressurser = plan[aktivUke][km].ressurser.filter(function(r){ return r.r!==resId; });
+    lagrePlan(plan);
+    byggPlanTabell();
+  }
+}
+
 function redigerNotat(km) {
   var naavarende = plan[aktivUke] && plan[aktivUke][km] ? plan[aktivUke][km].notat || '' : '';
   var nytt = prompt('Notat for ' + km + ':', naavarende);
@@ -659,7 +722,7 @@ function visPeriode() {
   var html = '<table class="periode-tabell"><thead><tr><th>KM</th><th>Kompetansemål</th>';
   // Vis neste 12 uker
   var uker = [];
-  for (var u = aktivUke; u <= Math.min(activUke+11, 53); u++) uker.push(u);
+  for (var u = aktivUke; u <= Math.min(aktivUke+11, 53); u++) uker.push(u);
   uker.forEach(function(u) { html += '<th>Uke '+u+'</th>'; });
   html += '</tr></thead><tbody>';
 
