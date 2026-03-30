@@ -101,6 +101,7 @@ input.innst-dato::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:poi
 }
 
 /* ── PRINT ──────────────────────────────────────────────────────── */
+.print-statisk{display:none;}
 </style>
 <style media="print">
 .print-statisk{display:block;}
@@ -118,9 +119,10 @@ body,html{background:#fff!important;color:#111!important;}
 .prove-tabell thead th{background:#eee!important;color:#444!important;border-color:#bbb!important;}
 .prove-tabell tbody td{border-color:#ccc!important;color:#111!important;}
 .km-kod{background:#eee!important;color:#222!important;}
-.fritekst-felt{border:1px solid #ccc!important;background:#fff!important;color:#111!important;}
 .tabell-tom{display:none!important;}
-textarea.fritekst-felt{display:none!important;}
+textarea{display:none!important;}
+div.print-statisk{display:block!important;color:#111!important;font-size:.82rem;
+  white-space:pre-wrap;min-height:1.4em;padding:4px 0;}
 </style>
 </head>
 <body>
@@ -656,7 +658,10 @@ async function sendProvevarsel() {
   try {
     // Opprett oppgave (prøvevarsel)
     var oppgR = await SkapLab._post('/oppgaver', {
-      tittel:  tittel + (kmKoder?' ('+kmKoder+')':''),
+      tittel:  tittel,
+      ressurs: 'provevarsel\n' + proveRader.map(function(r){
+        return r.km+(r.fritekst?'|'+r.fritekst:'')+(r.tips?'|TIPS:'+r.tips:'');
+      }).join(';;'),
       type:    'provevarsel',
       ressurs: 'provevarsel',
       url:     'laerer_proveplan.html',
@@ -664,14 +669,21 @@ async function sendProvevarsel() {
     }, token);
     if (Array.isArray(oppgR)) oppgR = oppgR[0];
     if (!oppgR || !oppgR.id) throw new Error('Kunne ikke opprette oppgave');
-    // Tildel til klassen
+    // Bygg kommentar-tekst med alle KM, kommentarer og tips
+    var detaljer = proveRader.map(function(r) {
+      var linje = r.km + ': ' + r.tekst.substring(0,60);
+      if (r.fritekst) linje += '\n  Kommentar: ' + r.fritekst;
+      if (r.tips)     linje += '\n  Tips: ' + r.tips;
+      return linje;
+    }).join('\n\n');
+    // Tildel til klassen med merknad
     await SkapLab._post('/tildeling', {
       oppgave_id: oppgR.id,
       laerer_id:  lid,
       klasse_id:  klasseId,
       frist:      dato || null
     }, token);
-    visMelding('✓ Prøvevarsel sendt til klassen!');
+    visMelding('✓ Prøvevarsel sendt!');
   } catch(e) {
     visMelding('Feil ved sending: ' + (e.message||e));
   }

@@ -197,6 +197,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
 .prove-varsel-kort{border-color:rgba(251,191,36,.35)!important;background:rgba(251,191,36,.06)!important;}
 
+
+.pv-detaljer{margin-top:8px;padding:8px;background:rgba(255,255,255,.04);
+  border-radius:8px;font-size:.75rem;display:flex;flex-direction:column;gap:4px;}
+.pv-km{font-family:var(--font-m);color:var(--bla);font-size:.7rem;}
+.pv-komm{color:var(--text);opacity:.85;}
+.pv-tips{color:var(--gul);}
+
+
+.pv-detaljer{margin-top:8px;padding:8px;background:rgba(255,255,255,.05);
+  border-radius:8px;font-size:.75rem;display:flex;flex-direction:column;gap:5px;}
+.pv-km{font-family:var(--font-m);color:var(--bla);font-size:.68rem;margin-bottom:1px;}
+.pv-komm{color:var(--text);}
+.pv-tips{color:var(--gul);}
+
 </style>
 </head>
 <body>
@@ -912,15 +926,34 @@ function byggKarusell() {
   kar.innerHTML = '';
 
   // Vis prøvevarsler øverst
-  var proveVarsler = tildelte.filter(function(t){ return t.oppgaver && t.oppgaver.type==='provevarsel'; });
+  var proveVarsler = tildelte.filter(function(t){
+    return t.oppgaver && t.oppgaver.type === 'provevarsel';
+  });
   proveVarsler.forEach(function(t) {
-    var frist = t.frist ? new Date(t.frist).toLocaleDateString('nb-NO',{weekday:'long',day:'numeric',month:'long'}) : '—';
+    var frist = t.frist
+      ? new Date(t.frist).toLocaleDateString('nb-NO',{weekday:'long',day:'numeric',month:'long'})
+      : '—';
+    var o = t.oppgaver;
+    var detaljerHTML = '';
+    if (o && o.ressurs && o.ressurs.indexOf('\n') >= 0) {
+      var linjer = o.ressurs.split('\n').slice(1);
+      var items = linjer.join('').split(';;').filter(Boolean);
+      detaljerHTML = items.map(function(d) {
+        var parts = d.split('|');
+        var km   = parts[0] ? '<span class="pv-km">'+parts[0]+'</span>' : '';
+        var komm = parts[1] ? '<div class="pv-komm">📝 '+parts[1]+'</div>' : '';
+        var tips = parts[2] ? '<div class="pv-tips">💡 '+parts[2].replace('TIPS:','')+'</div>' : '';
+        return km + komm + tips;
+      }).join('');
+      if (detaljerHTML) detaljerHTML = '<div class="pv-detaljer">'+detaljerHTML+'</div>';
+    }
     var k = document.createElement('div');
     k.className = 'karusell-kort prove-varsel-kort';
     k.innerHTML = '<div class="kar-type">📝 Kommende prøve</div>'
-      +'<div class="kar-tittel">'+(t.oppgaver?t.oppgaver.tittel:'Prøve')+'</div>'
-      +'<div class="kar-meta">📅 '+frist+'</div>'
-      +'<div class="kar-meta" style="color:var(--gul);margin-top:4px;">Husk å øve godt!</div>';
+      + '<div class="kar-tittel">'+(o ? o.tittel : 'Prøve')+'</div>'
+      + '<div class="kar-meta">📅 '+frist+'</div>'
+      + detaljerHTML
+      + '<div class="kar-meta" style="color:var(--gul);margin-top:4px;">Husk å øve godt!</div>';
     kar.appendChild(k);
   });
 
