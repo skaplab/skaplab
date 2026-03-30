@@ -5,285 +5,1497 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SkapLab – Naturfag-hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
-:root{--bg:#07090f;--bg2:#0b0d18;--bg3:#0e1120;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);--text:#e0e8ff;--dim:rgba(255,255,255,.42);--bla:#60a5fa;--gron:#34d399;--gul:#fbbf24;--rod:#f87171;--lilla:#a78bfa;--font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;}
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);}
 
-/* NAV */
-nav{height:54px;display:flex;align-items:center;padding:0 20px;gap:12px;background:rgba(7,9,15,.96);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;}
-.nav-logo{font-family:var(--font-h);font-size:1.1rem;font-weight:800;color:var(--bla);text-decoration:none;}
-.nav-sep{color:var(--dim);}
-.nav-side{font-size:.82rem;color:var(--dim);}
-.spacer{flex:1;}
-.nav-lnk{font-size:.8rem;color:var(--dim);text-decoration:none;}
-.nav-lnk:hover{color:var(--text);}
-
-/* HOVED-LAYOUT */
-#layout{display:flex;min-height:calc(100vh - 54px);}
-
-/* VENSTRE KM-PANEL */
-#km-panel{width:300px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:54px;height:calc(100vh - 54px);overflow:hidden;}
-.km-panel-hdr{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.km-panel-tittel{font-family:var(--font-h);font-size:.88rem;font-weight:800;margin-bottom:10px;}
-
-/* SØKEFELT */
-.sok-rad{display:flex;gap:6px;margin-bottom:8px;}
-#sok-input{flex:1;padding:7px 10px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-b);font-size:.82rem;outline:none;}
-#sok-input:focus{border-color:rgba(96,165,250,.5);}
-.sok-clr{padding:7px 10px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--dim);cursor:pointer;font-size:.8rem;}
-
-/* MODUS-KNAPPER */
-.modus-rad{display:flex;gap:4px;}
-.modus-btn{flex:1;padding:5px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--dim);font-family:var(--font-h);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;}
-.modus-btn.aktiv{background:rgba(96,165,250,.12);color:var(--bla);border-color:rgba(96,165,250,.3);}
-
-/* FILTER-PANEL */
-#panel-filter{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;}
-.filter-sek-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:8px 6px 4px;}
-.fbtn{width:100%;text-align:left;padding:7px 10px;border-radius:8px;border:none;background:transparent;color:var(--dim);font-size:.8rem;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:7px;}
-.fbtn:hover{background:rgba(255,255,255,.04);color:var(--text);}
-.fbtn.aktiv{background:rgba(52,211,153,.1);color:var(--gron);}
-
-/* BOK-PANEL */
-#panel-bok{flex:1;overflow-y:auto;padding:12px;scrollbar-width:thin;display:none;}
-.bok-panel-hdr{font-family:var(--font-h);font-size:.82rem;font-weight:800;color:var(--lilla);margin-bottom:8px;}
-.km-bok-liste-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.15);border-radius:8px;margin-bottom:5px;font-size:.78rem;}
-#bok-status{font-size:.72rem;color:var(--dim);margin:8px 0;}
-.last-ned-btn{width:100%;padding:9px;background:var(--lilla);color:#000;border:none;border-radius:8px;font-family:var(--font-h);font-size:.8rem;font-weight:800;cursor:pointer;margin-top:8px;}
-.last-ned-btn:hover{opacity:.9;}
-
-/* INNHOLD */
-#innhold{flex:1;padding:20px;overflow-y:auto;}
-
-/* GRUPPE-SEKSJONER */
-.km-gruppe{margin-bottom:32px;}
-.km-gruppe-tittel{font-family:var(--font-h);font-size:1rem;font-weight:800;padding:8px 14px;border-left:4px solid var(--gron);border-radius:0 8px 8px 0;background:rgba(52,211,153,.06);margin-bottom:14px;}
-.fagkort-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
-
-/* FAGKORT */
-.fagkort{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);cursor:pointer;transition:all .15s;}
-.fagkort:hover{border-color:var(--border2);background:rgba(255,255,255,.03);transform:translateY(-1px);}
-.fagkort-topp{display:flex;align-items:center;justify-content:space-between;}
-.fagkort-badge{font-family:var(--font-m);font-size:.68rem;background:rgba(52,211,153,.12);color:var(--gron);padding:2px 8px;border-radius:5px;}
-.bok-btn{padding:3px 9px;border-radius:6px;border:1px solid rgba(167,139,250,.3);background:transparent;color:var(--lilla);font-size:.7rem;font-family:var(--font-h);font-weight:700;cursor:pointer;transition:all .12s;}
-.bok-btn:hover{background:rgba(167,139,250,.12);}
-.bok-btn.i-bok{background:rgba(167,139,250,.2);color:#c4b5fd;}
-.fagkort-tittel{font-size:.85rem;font-weight:600;line-height:1.45;color:var(--text);}
-.fagkort-ressurser{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px;}
-.fagkort-btn{padding:4px 10px;border-radius:7px;border:1px solid var(--border2);background:rgba(255,255,255,.03);color:var(--dim);font-size:.72rem;font-family:var(--font-b);cursor:pointer;transition:all .12s;white-space:nowrap;}
-.fagkort-btn:hover{border-color:rgba(96,165,250,.4);color:var(--bla);background:rgba(96,165,250,.06);}
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1420;--border:rgba(125,211,252,.08);
+  --text:#e8f4ff;--dim:rgba(232,244,255,.35);
+  --accent:#60c8ff;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(96,200,255,.04) 0%,transparent 65%),
+  radial-gradient(ellipse 35% 40% at 0% 60%,rgba(160,96,248,.03) 0%,transparent 55%),
+  radial-gradient(ellipse 40% 35% at 100% 80%,rgba(52,211,153,.025) 0%,transparent 55%);}
+nav{position:sticky;top:0;z-index:500;background:rgba(6,10,14,.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;}
+.nav-logo{font-family:var(--font-d);font-size:.95rem;color:var(--accent);text-decoration:none;font-style:italic}
+.nav-sep{color:rgba(255,255,255,.12)}.nav-akt{font-size:.82rem;color:var(--dim)}
+.hub-layout{display:grid;grid-template-columns:1fr 276px;gap:0;align-items:start;max-width:1360px;margin:0 auto;padding:0 16px}
+.hub-hoveddel{min-width:0;padding-right:16px}
+.hero{text-align:center;padding:28px 0 20px}
+.hero-emoji{font-size:2.4rem;display:block;margin-bottom:8px}
+.hero h1{font-family:var(--font-d);font-size:1.85rem;font-weight:300;letter-spacing:-.01em;margin-bottom:6px}
+.hero h1 span{color:var(--accent);font-style:italic}
+.hero-sub{font-size:.88rem;color:var(--dim);max-width:500px;margin:0 auto;line-height:1.8}
+.stats-stripe{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;background:var(--card)}
+.stat-celle{flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--border)}
+.stat-celle:last-child{border-right:none}
+.stat-tall{font-family:var(--font-d);font-size:1.3rem;font-weight:600;color:var(--accent)}
+.stat-lab{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:2px}
+.stat-bar-wrap{height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:6px;overflow:hidden}
+.stat-bar-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .4s}
+.hub-sok-wrap{margin:0 0 12px;position:relative}
+.hub-sok{width:100%;padding:11px 16px 11px 40px;border-radius:12px;
+  border:1px solid rgba(125,211,252,.2);background:rgba(10,20,40,.6);
+  color:var(--text);font-family:var(--font-b);font-size:.88rem;outline:none;transition:border .2s;}
+.hub-sok:focus{border-color:rgba(125,211,252,.5)}
+.hub-sok-ikon{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none}
+.trinn-rad{display:flex;gap:6px;margin-bottom:10px}
+.trinn-btn{padding:4px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.1);
+  background:transparent;color:var(--dim);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .18s;}
+.trinn-btn:hover{color:var(--text);border-color:rgba(125,211,252,.4)}
+.trinn-btn.aktiv{border-color:rgba(56,189,248,.4);color:var(--accent);background:rgba(56,189,248,.08)}
+.hub-filter-rad{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.hub-filter-btn{padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,.1);
+  background:transparent;color:rgba(255,255,255,.45);font-size:.8rem;cursor:pointer;transition:all .18s}
+.hub-filter-btn:hover{color:var(--text);border-color:rgba(125,211,252,.4)}
+.hub-filter-btn.aktiv{border-color:var(--accent);color:var(--accent);background:rgba(96,200,255,.07)}
+.sep{margin:18px 0 10px}
+.sep-linje{display:flex;align-items:center;gap:12px}
+.sep-strek{flex:1;height:1px;background:var(--border)}
+.sep-tekst{font-family:var(--font-d);font-size:.85rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.kortgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+.fagkort{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:18px 16px 12px;display:flex;flex-direction:column;gap:7px;
+  text-decoration:none;color:var(--text);transition:all .2s;position:relative;overflow:hidden}
+.fagkort:hover{transform:translateY(-3px);border-color:rgba(125,211,252,.35);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.fagkort.skjult{display:none}
+.fagkort-topp{display:flex;align-items:center;gap:8px}
+.fagkort-emoji{font-size:1.4rem;line-height:1;margin-right:2px}
+.fagkort-badge{font-size:.6rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 8px;border-radius:100px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.35)}
+.fagkort-tittel{font-family:var(--font-d);font-size:1rem;font-weight:600;line-height:1.2;color:var(--accent)}
+.fagkort-desc{font-size:.76rem;line-height:1.55;color:rgba(232,244,255,.42);flex:1}
+.fagkort-km-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.km-badge{font-size:.62rem;font-weight:600;padding:2px 7px;border-radius:6px;
+  background:rgba(96,200,255,.07);color:rgba(96,200,255,.55);border:1px solid rgba(96,200,255,.12)}
+.fagkort-meta{display:flex;gap:5px;flex-wrap:wrap}
+.fagkort-pdf-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 9px;
+  border-radius:6px;border:1px solid rgba(125,211,252,.18);background:transparent;
+  color:rgba(125,211,252,.55);font-size:.68rem;cursor:pointer;transition:all .18s;text-decoration:none;}
+.fagkort-pdf-btn:hover{background:rgba(125,211,252,.1);border-color:rgba(125,211,252,.45);color:rgba(125,211,252,.9)}
+.fagkort-bok-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 9px;
+  border-radius:6px;border:1px solid rgba(160,96,248,.18);background:transparent;
+  color:rgba(160,96,248,.55);font-size:.68rem;cursor:pointer;transition:all .18s;}
+.fagkort-bok-btn:hover{background:rgba(160,96,248,.1);border-color:rgba(160,96,248,.45);color:rgba(160,96,248,.9)}
+.fagkort-bok-btn.i-bok{background:rgba(160,96,248,.12);border-color:rgba(160,96,248,.4);color:rgba(160,96,248,.9)}
+.fagkort-pdf-area{display:flex;gap:5px;flex-wrap:wrap}
+.fagkort-pil{font-size:.7rem;color:var(--accent);margin-top:auto}
+.fagkort-progress{height:2px;background:rgba(255,255,255,.04);border-radius:1px;margin-top:3px}
+.fagkort-progress-bar{height:100%;background:var(--accent);border-radius:1px;width:0;transition:width .3s}
+.hub-seksjon.hub-sek-skjult{display:none}
+.km-panel{position:sticky;top:52px;height:calc(100vh - 52px);
+  background:rgba(6,10,20,.97);border-left:1px solid rgba(125,211,252,.1);
+  overflow-y:auto;padding:16px 14px;}
+.km-panel-tittel{font-family:var(--font-d);font-size:.92rem;font-style:italic;color:rgba(125,211,252,.8);margin-bottom:4px}
+.km-panel-sub{font-size:.7rem;color:rgba(255,255,255,.28);margin-bottom:10px;line-height:1.55}
+.km-panel-knapper{display:flex;gap:5px;margin:10px 0 4px;flex-wrap:wrap}
+.km-panel-btn{padding:4px 10px;border-radius:6px;border:1px solid rgba(125,211,252,.2);
+  background:transparent;color:rgba(125,211,252,.6);font-size:.72rem;cursor:pointer;transition:all .18s;font-family:var(--font-b);}
+.km-panel-btn:hover{background:rgba(125,211,252,.07);color:rgba(125,211,252,.9)}
+.km-panel-btn.aktiv{background:rgba(125,211,252,.1);color:var(--accent);border-color:rgba(125,211,252,.4)}
+.km-checkbox-label{display:flex;align-items:flex-start;gap:7px;padding:4px 4px;font-size:.75rem;
+  color:var(--dim);cursor:pointer;border-radius:5px;transition:background .15s;line-height:1.4}
+.km-checkbox-label:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.km-checkbox-label input{accent-color:var(--accent);cursor:pointer;margin-top:2px;flex-shrink:0}
+.km-seksjon-hdr{font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.2);margin:10px 0 4px 4px}
+#km-resultat-teller{font-size:.72rem;color:var(--accent);margin-top:6px;padding:4px 0}
+.km-nullstill-btn{margin-top:8px;padding:5px 12px;width:100%;border-radius:6px;border:1px solid rgba(255,255,255,.1);
+  background:transparent;color:var(--dim);font-size:.72rem;cursor:pointer;transition:all .18s;font-family:var(--font-b);}
+.km-nullstill-btn:hover{border-color:rgba(125,211,252,.3);color:var(--accent)}
+.km-bok-liste-item{display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.76rem;}
+.fjern-bok-btn{background:none;border:none;color:rgba(255,100,100,.45);cursor:pointer;padding:2px 6px;font-size:.8rem}
+.fjern-bok-btn:hover{color:rgba(255,100,100,.8)}
+.bok-samle-btn{width:100%;margin-top:12px;padding:8px 12px;border-radius:8px;
+  background:rgba(160,96,248,.12);border:1px solid rgba(160,96,248,.25);
+  color:rgba(160,96,248,.8);font-family:var(--font-b);font-size:.78rem;cursor:pointer;transition:all .18s;}
+.bok-samle-btn:hover{background:rgba(160,96,248,.2)}
+.bok-status{font-size:.72rem;color:var(--dim);margin-top:8px;line-height:1.55;display:none}
 @media(max-width:900px){
-  #km-panel{width:240px;}
-  .fagkort-grid{grid-template-columns:1fr 1fr;}
+  .hub-layout{grid-template-columns:1fr}
+  .hub-hoveddel{padding-right:0}
+  .km-panel{display:none}
+  .kortgrid{grid-template-columns:repeat(2,1fr)}
 }
-@media(max-width:650px){
-  #layout{flex-direction:column;}
-  #km-panel{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border);}
-  .fagkort-grid{grid-template-columns:1fr;}
+@media(max-width:540px){.kortgrid{grid-template-columns:1fr}}
+
+.km-pdf-lenke {
+  display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;
+  background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.18);
+  border-radius:6px;color:rgba(147,219,255,.85);font-size:.77rem;
+  text-decoration:none;transition:background .15s;
 }
+.km-pdf-lenke:hover { background:rgba(14,165,233,.16); }
+
+/* EKSAMENSTRENER BANNER */
+.eks-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg, rgba(232,184,75,.12) 0%, rgba(91,133,217,.10) 100%);
+  border:1px solid rgba(232,184,75,.3);
+  border-radius:14px;padding:16px 20px;margin:16px 0;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.eks-banner::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg, rgba(232,184,75,.04), transparent);
+  pointer-events:none;
+}
+.eks-banner:hover{border-color:rgba(232,184,75,.6);transform:translateY(-1px);
+  box-shadow:0 4px 20px rgba(232,184,75,.12);}
+.eks-banner-venstre{display:flex;align-items:center;gap:14px;}
+.eks-banner-ikon{font-size:1.8rem;line-height:1;}
+.eks-banner-tittel{font-size:1rem;font-weight:700;color:#ffd700;font-family:var(--font-d);}
+.eks-banner-sub{font-size:.76rem;color:var(--dim);margin-top:2px;}
+.eks-banner-hoyre{display:flex;align-items:center;gap:16px;}
+.eks-banner-stat{text-align:center;}
+.eks-banner-tall{font-size:1.4rem;font-weight:700;color:#ffd700;font-family:var(--font-d);line-height:1;}
+.eks-banner-lab{font-size:.68rem;color:var(--dim);margin-top:2px;}
+.eks-banner-pil{font-size:1.2rem;color:rgba(255,215,0,.5);}
+
+.excel-banner{
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,rgba(91,201,142,.10),rgba(91,133,217,.08));
+  border:1px solid rgba(91,201,142,.25);border-radius:14px;
+  padding:14px 20px;margin:8px 0 16px;cursor:pointer;transition:all .2s;
+}
+.excel-banner:hover{border-color:rgba(91,201,142,.5);transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(91,201,142,.1);}
+.excel-banner-venstre{display:flex;align-items:center;gap:12px;}
+.excel-banner-tittel{font-size:.95rem;font-weight:700;color:#5bc98e;font-family:var(--font-d);}
+.excel-banner-sub{font-size:.74rem;color:var(--dim);margin-top:2px;}
+
+    /* Progresjonskart */
+    .prog-kart {
+      background: rgba(96,200,255,.05);
+      border: 1.5px solid rgba(96,200,255,.15);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+    }
+    .prog-kart-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
+    .prog-kart-tittel { font-family:var(--font-d); font-size:1.1rem; font-weight:700; color:var(--accent); }
+    .prog-kart-sub { font-size:.78rem; color:var(--dim); }
+    .prog-kat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+    .prog-kat {
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px;
+      padding:12px;
+      display:flex; flex-direction:column; gap:5px;
+    }
+    .prog-kat-ikon { font-size:1.4rem; }
+    .prog-kat-navn { font-size:.78rem; font-weight:600; color:var(--text); }
+    .prog-kat-bar { height:5px; background:rgba(255,255,255,.1); border-radius:3px; overflow:hidden; }
+    .prog-kat-fill { height:100%; border-radius:3px; background:var(--accent); width:0; transition:width .6s ease; }
+    .prog-kat-pst { font-size:.72rem; color:var(--dim); font-family:monospace; }
+
+    /* Eksamenstrener fremhevet */
+    .eks-fremhevet {
+      display:flex; align-items:center; justify-content:space-between;
+      background:linear-gradient(135deg,rgba(255,200,50,.12),rgba(255,200,50,.05));
+      border:2px solid rgba(255,200,50,.35);
+      border-radius:16px; padding:20px 24px;
+      cursor:pointer; transition:transform .15s, box-shadow .15s;
+      margin-bottom:24px; gap:16px; flex-wrap:wrap;
+    }
+    .eks-fremhevet:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,200,50,.15); }
+    .eks-f-badge {
+      display:inline-block; font-size:.72rem; padding:3px 12px;
+      background:rgba(255,200,50,.2); color:#ffd700;
+      border-radius:20px; margin-bottom:8px;
+    }
+    .eks-f-tittel { font-family:var(--font-d); font-size:1.4rem; font-weight:700; color:#ffd700; }
+    .eks-f-sub { font-size:.8rem; color:var(--dim); margin-top:4px; }
+    .eks-f-hoyre { display:flex; align-items:center; gap:20px; }
+    .eks-f-stat { text-align:center; }
+    .eks-f-tall { font-family:var(--font-d); font-size:2rem; font-weight:700; color:#ffd700; }
+    .eks-f-lab { font-size:.7rem; color:var(--dim); }
+    .eks-f-pil { font-size:1.8rem; color:#ffd700; opacity:.6; }
+
+
+@media (max-width: 900px) {
+  .hub-layout { grid-template-columns: 1fr; }
+  .km-panel { position: static; height: auto; max-height: 300px; overflow-y: auto; }
+  .kortgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .kortgrid { grid-template-columns: 1fr; }
+  .fagkort { padding: 14px 12px; }
+  .fagkort-pdf-area { flex-wrap: wrap; gap: 4px; }
+  .hero h1 { font-size: 1.6rem; }
+  nav { padding: 0 12px; }
+}
+
+
+.hub-seksjon { margin-bottom: 32px; }
+.hub-sek-hdr { font-family: var(--font-h); font-size: 1.05rem; font-weight: 800;
+  padding: 8px 14px; border-left: 4px solid var(--gron); border-radius: 0 8px 8px 0;
+  background: rgba(52,211,153,.06); margin-bottom: 14px; color: var(--text); }
+.hub-sek-skjult { display: none !important; }
+.hub-sok-input { width: 100%; padding: 8px 10px; background: var(--card2);
+  border: 1.5px solid var(--border); border-radius: 8px; color: var(--text);
+  font-family: var(--font-b); font-size: .82rem; outline: none; margin-top: 4px; }
+.hub-sok-input:focus { border-color: rgba(96,165,250,.5); }
+.hub-filter-gruppe { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+
 </style>
 </head>
 <body>
 <nav>
   <a href="index.html" class="nav-logo">SkapLab</a>
   <span class="nav-sep">/</span>
-  <span class="nav-side">🔬 Naturfag</span>
-  <div class="spacer"></div>
-  <a href="matte_hub.html" class="nav-lnk">📐 Matematikk</a>
+  <span class="nav-akt">🔬 Naturfag 8–10</span>
 </nav>
-
-<div id="layout">
-  <!-- VENSTRE: KM-PANEL -->
-  <div id="km-panel">
-    <div class="km-panel-hdr">
-      <div class="km-panel-tittel">🔍 Søk og filtrer</div>
-      <div class="sok-rad">
-        <input id="sok-input" type="text" placeholder="Søk etter emne, KM…" oninput="sokFagkort()">
-        <button class="sok-clr" onclick="document.getElementById('sok-input').value='';sokFagkort()">✕</button>
-      </div>
-      <div class="modus-rad">
-        <button class="modus-btn aktiv" id="btn-filter-modus" onclick="byttKMModus('filter')">📚 Emner</button>
-        <button class="modus-btn" id="btn-bok-modus" onclick="byttKMModus('bok')">📖 Bokbygger<span id="bok-teller"></span></button>
-      </div>
-    </div>
-
-    <!-- FILTER-PANEL -->
-    <div id="panel-filter">
-      <div class="filter-sek-lbl">Vis emnegruppe</div>
-      <button class="fbtn aktiv" onclick="filtrer('alle',this)">🔬 Alle emner</button>
-      <button class="fbtn" onclick="filtrer('utforsking',this)">🔬 Utforsking og forskning</button>
-      <button class="fbtn" onclick="filtrer('teknologi',this)">⚡ Teknologi og elektrisitet</button>
-      <button class="fbtn" onclick="filtrer('kjemi',this)">⚗️ Kjemi og materialer</button>
-      <button class="fbtn" onclick="filtrer('klima',this)">🌍 Klima, miljø og energi</button>
-      <button class="fbtn" onclick="filtrer('biologi',this)">🧬 Biologi og naturmangfold</button>
-      <button class="fbtn" onclick="filtrer('geofag',this)">🌋 Geofag og univers</button>
-      <button class="fbtn" onclick="filtrer('kropp',this)">🫀 Kropp og helse</button>
-    </div>
-
-    <!-- BOK-PANEL -->
-    <div id="panel-bok">
-      <div class="bok-panel-hdr">📖 Bokbygger</div>
-      <div style="font-size:.75rem;color:var(--dim);margin-bottom:10px;">Klikk <strong style="color:var(--lilla)">+ Bok</strong> på fagkort for å samle PDF-er.</div>
-      <div id="km-bok-liste"></div>
-      <div id="bok-status"></div>
-      <button class="last-ned-btn" onclick="lastNedBok()">⬇️ Last ned valgte PDF-er</button>
-    </div>
+<div class="hub-layout">
+<div class="km-panel">
+  <div class="km-panel-hdr">
+    <div class="km-panel-tittel">🔍 Filtrer emner</div>
   </div>
-
-  <!-- HØYRE: INNHOLD -->
-  <div id="innhold">
-<section class="km-gruppe" id="gruppe-utforsking"><div class="km-gruppe-tittel">🔬 Utforsking og forskning</div><div class="fagkort-grid"><a href="forsok.html" class="fagkort" data-km="NAT-1" data-kat="utforsking" data-sok="nat-1 stille spørsmål og lage hypoteser om naturfaglige  forsøk naturfagbegreper naturfagquiz spilltest" onclick="navigerTil('forsok.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-1</span><button class="bok-btn" onclick="toggleBok('forsok',this,event)">+ Bok</button></div><div class="fagkort-tittel">stille spørsmål og lage hypoteser om naturfaglige fenomener, identifisere avhengige og u…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="naturfagquiz.html" onclick="navigerTil('naturfagquiz.html',event)">🧪 Quiz</button><button class="fagkort-btn" data-href="forsok.html" onclick="navigerTil('forsok.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="naturfag.html" onclick="navigerTil('naturfag.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="spilltest.html" onclick="navigerTil('spilltest.html',event)">📖 Leksjon</button></div></a><a href="excel_trener.html" class="fagkort" data-km="NAT-2" data-kat="utforsking" data-sok="nat-2 analysere og bruke innsamlede data til å lage fork excel-trener" onclick="navigerTil('excel_trener.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-2</span><button class="bok-btn" onclick="toggleBok('excel_trener',this,event)">+ Bok</button></div><div class="fagkort-tittel">analysere og bruke innsamlede data til å lage forklaringer, drøfte forklaringene i lys a…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="excel_trener.html" onclick="navigerTil('excel_trener.html',event)">📖 Leksjon</button></div></a><a href="molekylmodeller.html" class="fagkort" data-km="NAT-3" data-kat="utforsking" data-sok="nat-3 bruke og lage modeller for å forutsi eller beskriv molekylmodeller" onclick="navigerTil('molekylmodeller.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-3</span><button class="bok-btn" onclick="toggleBok('molekylmodeller',this,event)">+ Bok</button></div><div class="fagkort-tittel">bruke og lage modeller for å forutsi eller beskrive naturfaglige prosesser og systemer o…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="molekylmodeller.html" onclick="navigerTil('molekylmodeller.html',event)">📖 Leksjon</button></div></a><a href="labsikkerhet.html" class="fagkort" data-km="NAT-4" data-kat="utforsking" data-sok="nat-4 delta i risikovurderinger knyttet til forsøk og fø labsikkerhet og fors" onclick="navigerTil('labsikkerhet.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-4</span><button class="bok-btn" onclick="toggleBok('labsikkerhet',this,event)">+ Bok</button></div><div class="fagkort-tittel">delta i risikovurderinger knyttet til forsøk og følge sikkerhetstiltakene</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="labsikkerhet.html" onclick="navigerTil('labsikkerhet.html',event)">📖 Leksjon</button></div></a><a href="dagsaktuell_forskning.html" class="fagkort" data-km="NAT-5" data-kat="utforsking" data-sok="nat-5 gi eksempler på dagsaktuell forskning og drøfte hv dagsaktuell forsknin genetikklaben 🧬 genetikklaben 🧬 vitenskapspersoner f" onclick="navigerTil('dagsaktuell_forskning.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-5</span><button class="bok-btn" onclick="toggleBok('dagsaktuell_forskning',this,event)">+ Bok</button></div><div class="fagkort-tittel">gi eksempler på dagsaktuell forskning og drøfte hvordan ny kunnskap genereres gjennom sa…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="dagsaktuell_forskning.html" onclick="navigerTil('dagsaktuell_forskning.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="genetikk.html" onclick="navigerTil('genetikk.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="genetikk_spill.html" onclick="navigerTil('genetikk_spill.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="vitenskapspersoner.html" onclick="navigerTil('vitenskapspersoner.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-teknologi"><div class="km-gruppe-tittel">⚡ Teknologi og elektrisitet</div><div class="fagkort-grid"><a href="ele_flipcards.html" class="fagkort" data-km="NAT-6" data-kat="teknologi" data-sok="nat-6 utforske, forstå og lage teknologiske systemer som elektronikk flashcar elektronikk flashcar elektrisitetsteori elektriske kretser" onclick="navigerTil('ele_flipcards.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-6</span><button class="bok-btn" onclick="toggleBok('ele_flipcards',this,event)">+ Bok</button></div><div class="fagkort-tittel">utforske, forstå og lage teknologiske systemer som består av en sender og en mottaker</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="ele_flipcards.html" onclick="navigerTil('ele_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="ele_flipcards2.html" onclick="navigerTil('ele_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="tek_flipcards.html" onclick="navigerTil('tek_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="tek_flipcards2.html" onclick="navigerTil('tek_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="elektrisitetsteori.html" onclick="navigerTil('elektrisitetsteori.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="elektriske_kretser.html" onclick="navigerTil('elektriske_kretser.html',event)">📖 Leksjon</button></div></a><a href="programmering_naturfag.html" class="fagkort" data-km="NAT-7" data-kat="teknologi" data-sok="nat-7 bruke programmering til å utforske naturfaglige fe programmering i natu" onclick="navigerTil('programmering_naturfag.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-7</span><button class="bok-btn" onclick="toggleBok('programmering_naturfag',this,event)">+ Bok</button></div><div class="fagkort-tittel">bruke programmering til å utforske naturfaglige fenomener</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="programmering_naturfag.html" onclick="navigerTil('programmering_naturfag.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-kjemi"><div class="km-gruppe-tittel">⚗️ Kjemi og materialer</div><div class="fagkort-grid"><a href="elektrokjemi.html" class="fagkort" data-km="NAT-8" data-kat="kjemi" data-sok="nat-8 utforske kjemiske reaksjoner, forklare massebevari elektrokjemi kjemi flashcards del kjemilaben – skaplab kjemiske bindinger" onclick="navigerTil('elektrokjemi.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-8</span><button class="bok-btn" onclick="toggleBok('elektrokjemi',this,event)">+ Bok</button></div><div class="fagkort-tittel">utforske kjemiske reaksjoner, forklare massebevaring og gjøre rede for betydninger av no…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="kje_flipcards2.html" onclick="navigerTil('kje_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="elektrokjemi.html" onclick="navigerTil('elektrokjemi.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="kjemi.html" onclick="navigerTil('kjemi.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="kjemiske_bindinger.html" onclick="navigerTil('kjemiske_bindinger.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="kjemiske_reaksjoner.html" onclick="navigerTil('kjemiske_reaksjoner.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="organisk_kjemi.html" onclick="navigerTil('organisk_kjemi.html',event)">📖 Leksjon</button></div></a><a href="atom.html" class="fagkort" data-km="NAT-9" data-kat="kjemi" data-sok="nat-9 bruke atommodeller og periodesystemet til å gjøre  atomets oppbygning atomteori kjemi flashcards del periodesystemet" onclick="navigerTil('atom.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-9</span><button class="bok-btn" onclick="toggleBok('atom',this,event)">+ Bok</button></div><div class="fagkort-tittel">bruke atommodeller og periodesystemet til å gjøre rede for egenskaper til grunnstoffer o…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="kje_flipcards.html" onclick="navigerTil('kje_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="atom.html" onclick="navigerTil('atom.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="atomteori.html" onclick="navigerTil('atomteori.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="periodesystem.html" onclick="navigerTil('periodesystem.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-klima"><div class="km-gruppe-tittel">🌍 Klima, miljø og energi</div><div class="fagkort-grid"><a href="fysikk.html" class="fagkort" data-km="NAT-10" data-kat="klima" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede for faktore kraft og bevegelse 🚀 klima og drivhuseffe krefter og bevegelse krefter og bevegels" onclick="navigerTil('fysikk.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-10</span><button class="bok-btn" onclick="toggleBok('fysikk',this,event)">+ Bok</button></div><div class="fagkort-tittel">beskrive drivhuseffekten og gjøre rede for faktorer som kan forårsake globale klimaendri…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="fysikk.html" onclick="navigerTil('fysikk.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="klima.html" onclick="navigerTil('klima.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="krefter_bevegelse.html" onclick="navigerTil('krefter_bevegelse.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="krefter_bevegelse_teori.html" onclick="navigerTil('krefter_bevegelse_teori.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="vaer_atmosfaere.html" onclick="navigerTil('vaer_atmosfaere.html',event)">📖 Leksjon</button></div></a><a href="bolger_lyd.html" class="fagkort" data-km="NAT-11" data-kat="klima" data-sok="nat-11 gjøre rede for energibevaring og energikvalitet og bølger og lyd energi og varme fysikk flashcards de fysikk flashcards de" onclick="navigerTil('bolger_lyd.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-11</span><button class="bok-btn" onclick="toggleBok('bolger_lyd',this,event)">+ Bok</button></div><div class="fagkort-tittel">gjøre rede for energibevaring og energikvalitet og utforske ulike måter å omdanne, trans…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="fys_flipcards.html" onclick="navigerTil('fys_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="fys_flipcards2.html" onclick="navigerTil('fys_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="bolger_lyd.html" onclick="navigerTil('bolger_lyd.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="energi_varme.html" onclick="navigerTil('energi_varme.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="optikk.html" onclick="navigerTil('optikk.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="varme_termodynamikk_teori.html" onclick="navigerTil('varme_termodynamikk_teori.html',event)">📖 Leksjon</button></div></a><a href="energi_miljo.html" class="fagkort" data-km="NAT-12" data-kat="klima" data-sok="nat-12 drøfte hvordan energiproduksjon og energibruk kan  energi og miljøpåvir energiproduksjon" onclick="navigerTil('energi_miljo.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-12</span><button class="bok-btn" onclick="toggleBok('energi_miljo',this,event)">+ Bok</button></div><div class="fagkort-tittel">drøfte hvordan energiproduksjon og energibruk kan påvirke miljøet lokalt og globalt</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="energi_miljo.html" onclick="navigerTil('energi_miljo.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="energiproduksjon.html" onclick="navigerTil('energiproduksjon.html',event)">📖 Leksjon</button></div></a><a href="naturkatastrofer.html" class="fagkort" data-km="NAT-16" data-kat="klima" data-sok="nat-16 gi eksempler på og drøfte aktuelle dilemmaer knytt naturkatastrofer" onclick="navigerTil('naturkatastrofer.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-16</span><button class="bok-btn" onclick="toggleBok('naturkatastrofer',this,event)">+ Bok</button></div><div class="fagkort-tittel">gi eksempler på og drøfte aktuelle dilemmaer knyttet til utnyttelse av naturressurser og…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="naturkatastrofer.html" onclick="navigerTil('naturkatastrofer.html',event)">📖 Leksjon</button></div></a><a href="samisk_natur.html" class="fagkort" data-km="NAT-17" data-kat="klima" data-sok="nat-17 gi eksempler på samers tradisjonelle kunnskap om n samisk naturkunnskap" onclick="navigerTil('samisk_natur.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-17</span><button class="bok-btn" onclick="toggleBok('samisk_natur',this,event)">+ Bok</button></div><div class="fagkort-tittel">gi eksempler på samers tradisjonelle kunnskap om naturen og diskutere hvordan denne kunn…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="samisk_natur.html" onclick="navigerTil('samisk_natur.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-biologi"><div class="km-gruppe-tittel">🧬 Biologi og naturmangfold</div><div class="fagkort-grid"><a href="dinosaurer.html" class="fagkort" data-km="NAT-13" data-kat="biologi" data-sok="nat-13 beskrive hvordan forskere har kommet fram til evol dinosaurer evolusjon" onclick="navigerTil('dinosaurer.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-13</span><button class="bok-btn" onclick="toggleBok('dinosaurer',this,event)">+ Bok</button></div><div class="fagkort-tittel">beskrive hvordan forskere har kommet fram til evolusjonsteorien og bruke denne til å for…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="dinosaurer.html" onclick="navigerTil('dinosaurer.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="evolusjon.html" onclick="navigerTil('evolusjon.html',event)">📖 Leksjon</button></div></a><a href="animasjoner.html" class="fagkort" data-km="NAT-14" data-kat="biologi" data-sok="nat-14 sammenligne celler hos ulike organismer og beskriv naturfag-animasjoner biologi flashcards biologi flashcards d cellens anatomi (org" onclick="navigerTil('animasjoner.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-14</span><button class="bok-btn" onclick="toggleBok('animasjoner',this,event)">+ Bok</button></div><div class="fagkort-tittel">sammenligne celler hos ulike organismer og beskrive sammenhenger mellom oppbygning og fu…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="bio_flipcards.html" onclick="navigerTil('bio_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="bio_flipcards2.html" onclick="navigerTil('bio_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="animasjoner.html" onclick="navigerTil('animasjoner.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="celle.html" onclick="navigerTil('celle.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="cellebiologi.html" onclick="navigerTil('cellebiologi.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="fordoyelsen.html" onclick="navigerTil('fordoyelsen.html',event)">📖 Leksjon</button></div></a><a href="havet.html" class="fagkort" data-km="NAT-15" data-kat="biologi" data-sok="nat-15 utforske sammenhenger mellom abiotiske og biotiske havet økologi flashcards d økologi flashcards d økologi" onclick="navigerTil('havet.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-15</span><button class="bok-btn" onclick="toggleBok('havet',this,event)">+ Bok</button></div><div class="fagkort-tittel">utforske sammenhenger mellom abiotiske og biotiske faktorer i et økosystem og diskutere …</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="oko_flipcards.html" onclick="navigerTil('oko_flipcards.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="oko_flipcards2.html" onclick="navigerTil('oko_flipcards2.html',event)">🃏 Begrepskort</button><button class="fagkort-btn" data-href="havet.html" onclick="navigerTil('havet.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="okologi.html" onclick="navigerTil('okologi.html',event)">📖 Leksjon</button></div></a><a href="fotosyntese.html" class="fagkort" data-km="NAT-18" data-kat="biologi" data-sok="nat-18 gjøre rede for hvordan fotosyntese og celleånding  fotosyntese og celle" onclick="navigerTil('fotosyntese.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-18</span><button class="bok-btn" onclick="toggleBok('fotosyntese',this,event)">+ Bok</button></div><div class="fagkort-tittel">gjøre rede for hvordan fotosyntese og celleånding gir energi til alt levende gjennom kar…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="fotosyntese.html" onclick="navigerTil('fotosyntese.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-geofag"><div class="km-gruppe-tittel">🌋 Geofag og univers</div><div class="fagkort-grid"><a href="astronomi.html" class="fagkort" data-km="NAT-19" data-kat="geofag" data-sok="nat-19 bruke platetektonikkteorien til å forklare jordas  astronomi kontinentaldrift og  pangea-puslespill" onclick="navigerTil('astronomi.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-19</span><button class="bok-btn" onclick="toggleBok('astronomi',this,event)">+ Bok</button></div><div class="fagkort-tittel">bruke platetektonikkteorien til å forklare jordas utvikling over tid og gi eksempler på …</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="astronomi.html" onclick="navigerTil('astronomi.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="kontinentaldrift.html" onclick="navigerTil('kontinentaldrift.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="pangea.html" onclick="navigerTil('pangea.html',event)">📖 Leksjon</button></div></a></div></section><section class="km-gruppe" id="gruppe-kropp"><div class="km-gruppe-tittel">🫀 Kropp og helse</div><div class="fagkort-grid"><a href="seksualundervisning.html" class="fagkort" data-km="NAT-20" data-kat="kropp" data-sok="nat-20 drøfte spørsmål knyttet til seksuell og reprodukti seksualundervisning" onclick="navigerTil('seksualundervisning.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-20</span><button class="bok-btn" onclick="toggleBok('seksualundervisning',this,event)">+ Bok</button></div><div class="fagkort-tittel">drøfte spørsmål knyttet til seksuell og reproduktiv helse</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="seksualundervisning.html" onclick="navigerTil('seksualundervisning.html',event)">📖 Leksjon</button></div></a><a href="hjernen.html" class="fagkort" data-km="NAT-21" data-kat="kropp" data-sok="nat-21 sammenligne nervesystemet og hormonsystemet og bes hjernen hjertet hormonsystemet nervesystemet" onclick="navigerTil('hjernen.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-21</span><button class="bok-btn" onclick="toggleBok('hjernen',this,event)">+ Bok</button></div><div class="fagkort-tittel">sammenligne nervesystemet og hormonsystemet og beskrive hvordan rusmidler, legemidler, m…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="hjernen.html" onclick="navigerTil('hjernen.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="hjertet.html" onclick="navigerTil('hjertet.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="hormonsystemet.html" onclick="navigerTil('hormonsystemet.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="nervesystemet.html" onclick="navigerTil('nervesystemet.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="oyet.html" onclick="navigerTil('oyet.html',event)">📖 Leksjon</button><button class="fagkort-btn" data-href="rusmidler.html" onclick="navigerTil('rusmidler.html',event)">📖 Leksjon</button></div></a><a href="immunforsvar.html" class="fagkort" data-km="NAT-22" data-kat="kropp" data-sok="nat-22 beskrive kroppens immunforsvar og hvordan vaksiner immunforsvar og vaks" onclick="navigerTil('immunforsvar.html',event)"><div class="fagkort-topp"><span class="fagkort-badge">NAT-22</span><button class="bok-btn" onclick="toggleBok('immunforsvar',this,event)">+ Bok</button></div><div class="fagkort-tittel">beskrive kroppens immunforsvar og hvordan vaksiner virker, og gjøre rede for hva vaksine…</div><div class="fagkort-ressurser"><button class="fagkort-btn" data-href="immunforsvar.html" onclick="navigerTil('immunforsvar.html',event)">📖 Leksjon</button></div></a></div></section>
+  <div class="km-modus-rad">
+    <button class="km-modus-btn aktiv" id="km-modus-filter" onclick="byttKMModus('filter')">📚 Emner</button>
+    <button class="km-modus-btn" id="km-modus-bok" onclick="byttKMModus('bok')">📖 Bokbygger<span id="bok-teller"></span></button>
   </div>
+  <div id="km-filter-panel">
+    <div class="km-sek-lbl">Vis emnegruppe</div>
+    <div class="hub-filter-gruppe">
+      <button class="hub-filter-btn aktiv" data-kat="alle" onclick="hubFilter('alle',this)">🔬 Alle emner</button>
+      <button class="hub-filter-btn" data-kat="utforsking" onclick="hubFilter('utforsking',this)">🔬 Utforsking</button>
+      <button class="hub-filter-btn" data-kat="teknologi" onclick="hubFilter('teknologi',this)">⚡ Teknologi</button>
+      <button class="hub-filter-btn" data-kat="kjemi" onclick="hubFilter('kjemi',this)">⚗️ Kjemi</button>
+      <button class="hub-filter-btn" data-kat="klima" onclick="hubFilter('klima',this)">🌍 Klima</button>
+      <button class="hub-filter-btn" data-kat="biologi" onclick="hubFilter('biologi',this)">🧬 Biologi</button>
+      <button class="hub-filter-btn" data-kat="geofag" onclick="hubFilter('geofag',this)">🌋 Geofag</button>
+      <button class="hub-filter-btn" data-kat="kropp" onclick="hubFilter('kropp',this)">🫀 Kropp</button>
+    </div>
+    <div class="km-sek-lbl" style="margin-top:12px;">Søk</div>
+    <input class="hub-sok-input" type="text" placeholder="Søk etter emne…" id="hub-sok-felt"
+      oninput="hubSok(this.value)">
+  </div>
+  <div id="km-bok-panel" style="display:none">
+    <div class="km-bok-hdr">📖 Bokbygger</div>
+    <div class="km-bok-desc">Klikk <strong style="color:rgba(160,96,248,.7)">+ Bok</strong> på kortene for å samle PDF-er.</div>
+    <div id="km-bok-liste"></div>
+    <div id="bok-status" style="display:none;font-size:.76rem;margin-top:8px;"></div>
+    <button class="km-bok-samle-btn" id="bok-samle-btn" onclick="samlePDFer()">⬇️ Last ned som PDF-kompendium</button>
+  </div>
+</div>
+<div class="hub-hoveddel">
+  <div class="hero">
+    <span class="hero-emoji">🔬</span>
+    <h1>Naturfag på <span>SkapLab</span></h1>
+    <p class="hero-sub">Interaktive leksjoner, begrepskort og quizer – alle kompetansemål i LK20 for 8.–10. trinn.</p>
+  </div>
+<div class="hub-seksjon" id="gruppe-utforsking">
+  <div class="hub-sek-hdr">🔬 Utforsking og forskning</div>
+  <div class="fagkort-grid">
+<a href="naturfagquiz.html" class="fagkort" data-kat="utforsking" data-km="NAT-1" data-sok="nat-1 stille spørsmål og lage hypoteser om nat naturfagquiz">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🧪</span><span class="fagkort-badge">NAT-1</span></div>
+  <div class="fagkort-tittel">Naturfagquiz</div>
+  <div class="fagkort-desc">stille spørsmål og lage hypoteser om naturfaglige fenomener,</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('naturfagquiz.html',event)" style="color:rgba(251,191,36,.7);border-color:rgba(251,191,36,.2)">🧪 Quiz</button>
+    
+    <button class="fagkort-bok-btn" id="bok-naturfagquiz" onclick="toggleBok('naturfagquiz.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="forsok.html" class="fagkort" data-kat="utforsking" data-km="NAT-1" data-sok="nat-1 stille spørsmål og lage hypoteser om nat forsøk">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-1</span></div>
+  <div class="fagkort-tittel">Forsøk</div>
+  <div class="fagkort-desc">stille spørsmål og lage hypoteser om naturfaglige fenomener,</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('forsok.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('forsok.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-forsok" onclick="toggleBok('forsok.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="naturfag.html" class="fagkort" data-kat="utforsking" data-km="NAT-1" data-sok="nat-1 stille spørsmål og lage hypoteser om nat naturfagbegreper">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-1</span></div>
+  <div class="fagkort-tittel">Naturfagbegreper</div>
+  <div class="fagkort-desc">stille spørsmål og lage hypoteser om naturfaglige fenomener,</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('naturfag.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('naturfag.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-naturfag" onclick="toggleBok('naturfag.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="spilltest.html" class="fagkort" data-kat="utforsking" data-km="NAT-1" data-sok="nat-1 stille spørsmål og lage hypoteser om nat spilltest">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-1</span></div>
+  <div class="fagkort-tittel">Spilltest</div>
+  <div class="fagkort-desc">stille spørsmål og lage hypoteser om naturfaglige fenomener,</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('spilltest.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('spilltest.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-spilltest" onclick="toggleBok('spilltest.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="excel_trener.html" class="fagkort" data-kat="utforsking" data-km="NAT-2" data-sok="nat-2 analysere og bruke innsamlede data til å excel-trener">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-2</span></div>
+  <div class="fagkort-tittel">Excel-trener</div>
+  <div class="fagkort-desc">analysere og bruke innsamlede data til å lage forklaringer, </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('excel_trener.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('excel_trener.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-excel-trener" onclick="toggleBok('excel_trener.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="molekylmodeller.html" class="fagkort" data-kat="utforsking" data-km="NAT-3" data-sok="nat-3 bruke og lage modeller for å forutsi ell molekylmodeller">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-3</span></div>
+  <div class="fagkort-tittel">Molekylmodeller</div>
+  <div class="fagkort-desc">bruke og lage modeller for å forutsi eller beskrive naturfag</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('molekylmodeller.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('molekylmodeller.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-molekylmodeller" onclick="toggleBok('molekylmodeller.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="labsikkerhet.html" class="fagkort" data-kat="utforsking" data-km="NAT-4" data-sok="nat-4 delta i risikovurderinger knyttet til fo labsikkerhet og forsøksdesign">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-4</span></div>
+  <div class="fagkort-tittel">Labsikkerhet og forsøksdesign</div>
+  <div class="fagkort-desc">delta i risikovurderinger knyttet til forsøk og følge sikker</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('labsikkerhet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('labsikkerhet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-labsikkerhet" onclick="toggleBok('labsikkerhet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="dagsaktuell_forskning.html" class="fagkort" data-kat="utforsking" data-km="NAT-5" data-sok="nat-5 gi eksempler på dagsaktuell forskning og dagsaktuell forskning">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-5</span></div>
+  <div class="fagkort-tittel">Dagsaktuell forskning</div>
+  <div class="fagkort-desc">gi eksempler på dagsaktuell forskning og drøfte hvordan ny k</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('dagsaktuell_forskning.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('dagsaktuell_forskning.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-dagsaktuell-forskning" onclick="toggleBok('dagsaktuell_forskning.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="genetikk.html" class="fagkort" data-kat="utforsking" data-km="NAT-5" data-sok="nat-5 gi eksempler på dagsaktuell forskning og genetikklaben 🧬">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-5</span></div>
+  <div class="fagkort-tittel">Genetikklaben 🧬</div>
+  <div class="fagkort-desc">gi eksempler på dagsaktuell forskning og drøfte hvordan ny k</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('genetikk.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('genetikk.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-genetikk" onclick="toggleBok('genetikk.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="genetikk_spill.html" class="fagkort" data-kat="utforsking" data-km="NAT-5" data-sok="nat-5 gi eksempler på dagsaktuell forskning og genetikklaben 🧬">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-5</span></div>
+  <div class="fagkort-tittel">Genetikklaben 🧬</div>
+  <div class="fagkort-desc">gi eksempler på dagsaktuell forskning og drøfte hvordan ny k</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('genetikk_spill.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('genetikk_spill.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-genetikk-spill" onclick="toggleBok('genetikk_spill.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="vitenskapspersoner.html" class="fagkort" data-kat="utforsking" data-km="NAT-5" data-sok="nat-5 gi eksempler på dagsaktuell forskning og vitenskapspersoner flashcards">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-5</span></div>
+  <div class="fagkort-tittel">Vitenskapspersoner Flashcards</div>
+  <div class="fagkort-desc">gi eksempler på dagsaktuell forskning og drøfte hvordan ny k</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('vitenskapspersoner.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('vitenskapspersoner.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-vitenskapspersoner" onclick="toggleBok('vitenskapspersoner.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-teknologi">
+  <div class="hub-sek-hdr">⚡ Teknologi og elektrisitet</div>
+  <div class="fagkort-grid">
+<a href="ele_flipcards.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy elektronikk flashcards del 1">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Elektronikk Flashcards del 1</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('ele_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('ele_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-ele-flipcards" onclick="toggleBok('ele_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="ele_flipcards2.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy elektronikk flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Elektronikk Flashcards del 2</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('ele_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('ele_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-ele-flipcards2" onclick="toggleBok('ele_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="tek_flipcards.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy teknologi flashcards del 1">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Teknologi Flashcards del 1</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('tek_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('tek_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-tek-flipcards" onclick="toggleBok('tek_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="tek_flipcards2.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy teknologi flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Teknologi Flashcards del 2</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('tek_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('tek_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-tek-flipcards2" onclick="toggleBok('tek_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="elektrisitetsteori.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy elektrisitetsteori">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Elektrisitetsteori</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('elektrisitetsteori.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('elektrisitetsteori.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-elektrisitetsteori" onclick="toggleBok('elektrisitetsteori.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="elektriske_kretser.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy elektriske kretser">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Elektriske kretser</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('elektriske_kretser.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('elektriske_kretser.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-elektriske-kretser" onclick="toggleBok('elektriske_kretser.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kommunikasjonsteknologi.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy kommunikasjonsteknologi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Kommunikasjonsteknologi</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kommunikasjonsteknologi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kommunikasjonsteknologi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kommunikasjonsteknologi" onclick="toggleBok('kommunikasjonsteknologi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="krets_spill.html" class="fagkort" data-kat="teknologi" data-km="NAT-6" data-sok="nat-6 utforske, forstå og lage teknologiske sy strømlaben ⚡">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-6</span></div>
+  <div class="fagkort-tittel">Strømlaben ⚡</div>
+  <div class="fagkort-desc">utforske, forstå og lage teknologiske systemer som består av</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('krets_spill.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('krets_spill.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-krets-spill" onclick="toggleBok('krets_spill.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="programmering_naturfag.html" class="fagkort" data-kat="teknologi" data-km="NAT-7" data-sok="nat-7 bruke programmering til å utforske natur programmering i naturfag">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-7</span></div>
+  <div class="fagkort-tittel">Programmering i naturfag</div>
+  <div class="fagkort-desc">bruke programmering til å utforske naturfaglige fenomener</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('programmering_naturfag.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('programmering_naturfag.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-programmering-naturfag" onclick="toggleBok('programmering_naturfag.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-kjemi">
+  <div class="hub-sek-hdr">⚗️ Kjemi og materialer</div>
+  <div class="fagkort-grid">
+<a href="kje_flipcards2.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m kjemi flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Kjemi Flashcards del 2</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kje_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kje_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kje-flipcards2" onclick="toggleBok('kje_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="elektrokjemi.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m elektrokjemi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Elektrokjemi</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('elektrokjemi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('elektrokjemi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-elektrokjemi" onclick="toggleBok('elektrokjemi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kjemi.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m kjemilaben – skaplab">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Kjemilaben – SkapLab</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kjemi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kjemi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kjemi" onclick="toggleBok('kjemi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kjemiske_bindinger.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m kjemiske bindinger">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Kjemiske bindinger</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kjemiske_bindinger.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kjemiske_bindinger.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kjemiske-bindinger" onclick="toggleBok('kjemiske_bindinger.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kjemiske_reaksjoner.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m kjemiske reaksjoner">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Kjemiske reaksjoner</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kjemiske_reaksjoner.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kjemiske_reaksjoner.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kjemiske-reaksjoner" onclick="toggleBok('kjemiske_reaksjoner.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="organisk_kjemi.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m organisk kjemi: molekylbyggese">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Organisk kjemi: Molekylbyggesett</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('organisk_kjemi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('organisk_kjemi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-organisk-kjemi" onclick="toggleBok('organisk_kjemi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="organisk_kjemi_karusell.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m organisk kjemi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Organisk kjemi</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('organisk_kjemi_karusell.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('organisk_kjemi_karusell.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-organisk-kjemi-karusell" onclick="toggleBok('organisk_kjemi_karusell.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="syr_base_ph.html" class="fagkort" data-kat="kjemi" data-km="NAT-8" data-sok="nat-8 utforske kjemiske reaksjoner, forklare m syre, base og ph">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-8</span></div>
+  <div class="fagkort-tittel">Syre, base og pH</div>
+  <div class="fagkort-desc">utforske kjemiske reaksjoner, forklare massebevaring og gjør</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('syr_base_ph.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('syr_base_ph.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-syr-base-ph" onclick="toggleBok('syr_base_ph.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kje_flipcards.html" class="fagkort" data-kat="kjemi" data-km="NAT-9" data-sok="nat-9 bruke atommodeller og periodesystemet ti kjemi flashcards del 1">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-9</span></div>
+  <div class="fagkort-tittel">Kjemi Flashcards del 1</div>
+  <div class="fagkort-desc">bruke atommodeller og periodesystemet til å gjøre rede for e</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kje_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kje_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kje-flipcards" onclick="toggleBok('kje_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="atom.html" class="fagkort" data-kat="kjemi" data-km="NAT-9" data-sok="nat-9 bruke atommodeller og periodesystemet ti atomets oppbygning">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-9</span></div>
+  <div class="fagkort-tittel">Atomets oppbygning</div>
+  <div class="fagkort-desc">bruke atommodeller og periodesystemet til å gjøre rede for e</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('atom.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('atom.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-atom" onclick="toggleBok('atom.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="atomteori.html" class="fagkort" data-kat="kjemi" data-km="NAT-9" data-sok="nat-9 bruke atommodeller og periodesystemet ti atomteori">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-9</span></div>
+  <div class="fagkort-tittel">Atomteori</div>
+  <div class="fagkort-desc">bruke atommodeller og periodesystemet til å gjøre rede for e</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('atomteori.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('atomteori.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-atomteori" onclick="toggleBok('atomteori.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="periodesystem.html" class="fagkort" data-kat="kjemi" data-km="NAT-9" data-sok="nat-9 bruke atommodeller og periodesystemet ti periodesystemet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-9</span></div>
+  <div class="fagkort-tittel">Periodesystemet</div>
+  <div class="fagkort-desc">bruke atommodeller og periodesystemet til å gjøre rede for e</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('periodesystem.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('periodesystem.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-periodesystem" onclick="toggleBok('periodesystem.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-klima">
+  <div class="hub-sek-hdr">🌍 Klima, miljø og energi</div>
+  <div class="fagkort-grid">
+<a href="fysikk.html" class="fagkort" data-kat="klima" data-km="NAT-10" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede f kraft og bevegelse 🚀">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-10</span></div>
+  <div class="fagkort-tittel">Kraft og bevegelse 🚀</div>
+  <div class="fagkort-desc">beskrive drivhuseffekten og gjøre rede for faktorer som kan </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('fysikk.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('fysikk.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-fysikk" onclick="toggleBok('fysikk.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="klima.html" class="fagkort" data-kat="klima" data-km="NAT-10" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede f klima og drivhuseffekten">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-10</span></div>
+  <div class="fagkort-tittel">Klima og drivhuseffekten</div>
+  <div class="fagkort-desc">beskrive drivhuseffekten og gjøre rede for faktorer som kan </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('klima.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('klima.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-klima" onclick="toggleBok('klima.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="krefter_bevegelse.html" class="fagkort" data-kat="klima" data-km="NAT-10" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede f krefter og bevegelse">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-10</span></div>
+  <div class="fagkort-tittel">Krefter og bevegelse</div>
+  <div class="fagkort-desc">beskrive drivhuseffekten og gjøre rede for faktorer som kan </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('krefter_bevegelse.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('krefter_bevegelse.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-krefter-bevegelse" onclick="toggleBok('krefter_bevegelse.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="krefter_bevegelse_teori.html" class="fagkort" data-kat="klima" data-km="NAT-10" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede f krefter og bevegelse">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-10</span></div>
+  <div class="fagkort-tittel">Krefter og bevegelse</div>
+  <div class="fagkort-desc">beskrive drivhuseffekten og gjøre rede for faktorer som kan </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('krefter_bevegelse_teori.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('krefter_bevegelse_teori.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-krefter-bevegelse-teori" onclick="toggleBok('krefter_bevegelse_teori.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="vaer_atmosfaere.html" class="fagkort" data-kat="klima" data-km="NAT-10" data-sok="nat-10 beskrive drivhuseffekten og gjøre rede f vær og atmosfære">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-10</span></div>
+  <div class="fagkort-tittel">Vær og atmosfære</div>
+  <div class="fagkort-desc">beskrive drivhuseffekten og gjøre rede for faktorer som kan </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('vaer_atmosfaere.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('vaer_atmosfaere.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-vaer-atmosfaere" onclick="toggleBok('vaer_atmosfaere.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="fys_flipcards.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik fysikk flashcards del 1">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Fysikk Flashcards del 1</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('fys_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('fys_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-fys-flipcards" onclick="toggleBok('fys_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="fys_flipcards2.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik fysikk flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Fysikk Flashcards del 2</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('fys_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('fys_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-fys-flipcards2" onclick="toggleBok('fys_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="bolger_lyd.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik bølger og lyd">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Bølger og lyd</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('bolger_lyd.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('bolger_lyd.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-bolger-lyd" onclick="toggleBok('bolger_lyd.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="energi_varme.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik energi og varme">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Energi og varme</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('energi_varme.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('energi_varme.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-energi-varme" onclick="toggleBok('energi_varme.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="optikk.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik optikk: lys og syn">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Optikk: Lys og syn</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('optikk.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('optikk.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-optikk" onclick="toggleBok('optikk.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="varme_termodynamikk_teori.html" class="fagkort" data-kat="klima" data-km="NAT-11" data-sok="nat-11 gjøre rede for energibevaring og energik varme og termodynamikk">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-11</span></div>
+  <div class="fagkort-tittel">Varme og termodynamikk</div>
+  <div class="fagkort-desc">gjøre rede for energibevaring og energikvalitet og utforske </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('varme_termodynamikk_teori.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('varme_termodynamikk_teori.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-varme-termodynamikk-teori" onclick="toggleBok('varme_termodynamikk_teori.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="energi_miljo.html" class="fagkort" data-kat="klima" data-km="NAT-12" data-sok="nat-12 drøfte hvordan energiproduksjon og energ energi og miljøpåvirkning">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-12</span></div>
+  <div class="fagkort-tittel">Energi og miljøpåvirkning</div>
+  <div class="fagkort-desc">drøfte hvordan energiproduksjon og energibruk kan påvirke mi</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('energi_miljo.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('energi_miljo.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-energi-miljo" onclick="toggleBok('energi_miljo.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="energiproduksjon.html" class="fagkort" data-kat="klima" data-km="NAT-12" data-sok="nat-12 drøfte hvordan energiproduksjon og energ energiproduksjon">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-12</span></div>
+  <div class="fagkort-tittel">Energiproduksjon</div>
+  <div class="fagkort-desc">drøfte hvordan energiproduksjon og energibruk kan påvirke mi</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('energiproduksjon.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('energiproduksjon.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-energiproduksjon" onclick="toggleBok('energiproduksjon.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="naturkatastrofer.html" class="fagkort" data-kat="klima" data-km="NAT-16" data-sok="nat-16 gi eksempler på og drøfte aktuelle dilem naturkatastrofer">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-16</span></div>
+  <div class="fagkort-tittel">Naturkatastrofer</div>
+  <div class="fagkort-desc">gi eksempler på og drøfte aktuelle dilemmaer knyttet til utn</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('naturkatastrofer.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('naturkatastrofer.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-naturkatastrofer" onclick="toggleBok('naturkatastrofer.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="samisk_natur.html" class="fagkort" data-kat="klima" data-km="NAT-17" data-sok="nat-17 gi eksempler på samers tradisjonelle kun samisk naturkunnskap">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-17</span></div>
+  <div class="fagkort-tittel">Samisk naturkunnskap</div>
+  <div class="fagkort-desc">gi eksempler på samers tradisjonelle kunnskap om naturen og </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('samisk_natur.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('samisk_natur.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-samisk-natur" onclick="toggleBok('samisk_natur.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-biologi">
+  <div class="hub-sek-hdr">🧬 Biologi og naturmangfold</div>
+  <div class="fagkort-grid">
+<a href="dinosaurer.html" class="fagkort" data-kat="biologi" data-km="NAT-13" data-sok="nat-13 beskrive hvordan forskere har kommet fra dinosaurer">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-13</span></div>
+  <div class="fagkort-tittel">Dinosaurer</div>
+  <div class="fagkort-desc">beskrive hvordan forskere har kommet fram til evolusjonsteor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('dinosaurer.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('dinosaurer.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-dinosaurer" onclick="toggleBok('dinosaurer.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="evolusjon.html" class="fagkort" data-kat="biologi" data-km="NAT-13" data-sok="nat-13 beskrive hvordan forskere har kommet fra evolusjon">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-13</span></div>
+  <div class="fagkort-tittel">Evolusjon</div>
+  <div class="fagkort-desc">beskrive hvordan forskere har kommet fram til evolusjonsteor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('evolusjon.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('evolusjon.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-evolusjon" onclick="toggleBok('evolusjon.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="bio_flipcards.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  biologi flashcards">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Biologi Flashcards</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('bio_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('bio_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-bio-flipcards" onclick="toggleBok('bio_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="bio_flipcards2.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  biologi flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Biologi Flashcards del 2</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('bio_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('bio_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-bio-flipcards2" onclick="toggleBok('bio_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="animasjoner.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  naturfag-animasjoner">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Naturfag-animasjoner</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('animasjoner.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('animasjoner.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-animasjoner" onclick="toggleBok('animasjoner.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="celle.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  cellens anatomi (organeller)">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Cellens anatomi (organeller)</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('celle.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('celle.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-celle" onclick="toggleBok('celle.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="cellebiologi.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  cellebiologi (prokaryot, mitos">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Cellebiologi (prokaryot, mitose, DNA)</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('cellebiologi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('cellebiologi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-cellebiologi" onclick="toggleBok('cellebiologi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="fordoyelsen.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  fordøyelsessystemet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Fordøyelsessystemet</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('fordoyelsen.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('fordoyelsen.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-fordoyelsen" onclick="toggleBok('fordoyelsen.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kropp_animasjoner.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  kroppen i bevegelse">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Kroppen i bevegelse</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kropp_animasjoner.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kropp_animasjoner.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kropp-animasjoner" onclick="toggleBok('kropp_animasjoner.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kroppens_organer.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  kroppens organer">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Kroppens organer</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kroppens_organer.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kroppens_organer.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kroppens-organer" onclick="toggleBok('kroppens_organer.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="lungene.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  lungene og åndedrett">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Lungene og åndedrett</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('lungene.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('lungene.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-lungene" onclick="toggleBok('lungene.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="mikrobiologi.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  mikrobiologi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Mikrobiologi</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('mikrobiologi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('mikrobiologi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-mikrobiologi" onclick="toggleBok('mikrobiologi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="mikroskop.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  mikroskoplaben 🔬">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Mikroskoplaben 🔬</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('mikroskop.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('mikroskop.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-mikroskop" onclick="toggleBok('mikroskop.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="nyrene.html" class="fagkort" data-kat="biologi" data-km="NAT-14" data-sok="nat-14 sammenligne celler hos ulike organismer  nyrene">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-14</span></div>
+  <div class="fagkort-tittel">Nyrene</div>
+  <div class="fagkort-desc">sammenligne celler hos ulike organismer og beskrive sammenhe</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('nyrene.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('nyrene.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-nyrene" onclick="toggleBok('nyrene.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="oko_flipcards.html" class="fagkort" data-kat="biologi" data-km="NAT-15" data-sok="nat-15 utforske sammenhenger mellom abiotiske o økologi flashcards del 1">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-15</span></div>
+  <div class="fagkort-tittel">Økologi Flashcards del 1</div>
+  <div class="fagkort-desc">utforske sammenhenger mellom abiotiske og biotiske faktorer </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('oko_flipcards.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('oko_flipcards.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-oko-flipcards" onclick="toggleBok('oko_flipcards.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="oko_flipcards2.html" class="fagkort" data-kat="biologi" data-km="NAT-15" data-sok="nat-15 utforske sammenhenger mellom abiotiske o økologi flashcards del 2">
+  <div class="fagkort-topp"><span class="fagkort-emoji">🃏</span><span class="fagkort-badge">NAT-15</span></div>
+  <div class="fagkort-tittel">Økologi Flashcards del 2</div>
+  <div class="fagkort-desc">utforske sammenhenger mellom abiotiske og biotiske faktorer </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('oko_flipcards2.html',event)" style="color:rgba(167,139,250,.7);border-color:rgba(167,139,250,.2)">🃏 Kort</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('oko_flipcards2.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-oko-flipcards2" onclick="toggleBok('oko_flipcards2.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="havet.html" class="fagkort" data-kat="biologi" data-km="NAT-15" data-sok="nat-15 utforske sammenhenger mellom abiotiske o havet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-15</span></div>
+  <div class="fagkort-tittel">Havet</div>
+  <div class="fagkort-desc">utforske sammenhenger mellom abiotiske og biotiske faktorer </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('havet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('havet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-havet" onclick="toggleBok('havet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="okologi.html" class="fagkort" data-kat="biologi" data-km="NAT-15" data-sok="nat-15 utforske sammenhenger mellom abiotiske o økologi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-15</span></div>
+  <div class="fagkort-tittel">Økologi</div>
+  <div class="fagkort-desc">utforske sammenhenger mellom abiotiske og biotiske faktorer </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('okologi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('okologi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-okologi" onclick="toggleBok('okologi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="fotosyntese.html" class="fagkort" data-kat="biologi" data-km="NAT-18" data-sok="nat-18 gjøre rede for hvordan fotosyntese og ce fotosyntese og celleånding">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-18</span></div>
+  <div class="fagkort-tittel">Fotosyntese og celleånding</div>
+  <div class="fagkort-desc">gjøre rede for hvordan fotosyntese og celleånding gir energi</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('fotosyntese.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('fotosyntese.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-fotosyntese" onclick="toggleBok('fotosyntese.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-geofag">
+  <div class="hub-sek-hdr">🌋 Geofag og univers</div>
+  <div class="fagkort-grid">
+<a href="astronomi.html" class="fagkort" data-kat="geofag" data-km="NAT-19" data-sok="nat-19 bruke platetektonikkteorien til å forkla astronomi">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-19</span></div>
+  <div class="fagkort-tittel">Astronomi</div>
+  <div class="fagkort-desc">bruke platetektonikkteorien til å forklare jordas utvikling </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('astronomi.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('astronomi.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-astronomi" onclick="toggleBok('astronomi.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="kontinentaldrift.html" class="fagkort" data-kat="geofag" data-km="NAT-19" data-sok="nat-19 bruke platetektonikkteorien til å forkla kontinentaldrift og platetekto">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-19</span></div>
+  <div class="fagkort-tittel">Kontinentaldrift og platetektonikk</div>
+  <div class="fagkort-desc">bruke platetektonikkteorien til å forklare jordas utvikling </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('kontinentaldrift.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('kontinentaldrift.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-kontinentaldrift" onclick="toggleBok('kontinentaldrift.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="pangea.html" class="fagkort" data-kat="geofag" data-km="NAT-19" data-sok="nat-19 bruke platetektonikkteorien til å forkla pangea-puslespill">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-19</span></div>
+  <div class="fagkort-tittel">Pangea-puslespill</div>
+  <div class="fagkort-desc">bruke platetektonikkteorien til å forklare jordas utvikling </div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('pangea.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('pangea.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-pangea" onclick="toggleBok('pangea.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+<div class="hub-seksjon" id="gruppe-kropp">
+  <div class="hub-sek-hdr">🫀 Kropp og helse</div>
+  <div class="fagkort-grid">
+<a href="seksualundervisning.html" class="fagkort" data-kat="kropp" data-km="NAT-20" data-sok="nat-20 drøfte spørsmål knyttet til seksuell og  seksualundervisning">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-20</span></div>
+  <div class="fagkort-tittel">Seksualundervisning</div>
+  <div class="fagkort-desc">drøfte spørsmål knyttet til seksuell og reproduktiv helse</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('seksualundervisning.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('seksualundervisning.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-seksualundervisning" onclick="toggleBok('seksualundervisning.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="hjernen.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste hjernen">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Hjernen</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('hjernen.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('hjernen.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-hjernen" onclick="toggleBok('hjernen.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="hjertet.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste hjertet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Hjertet</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('hjertet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('hjertet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-hjertet" onclick="toggleBok('hjertet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="hormonsystemet.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste hormonsystemet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Hormonsystemet</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('hormonsystemet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('hormonsystemet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-hormonsystemet" onclick="toggleBok('hormonsystemet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="nervesystemet.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste nervesystemet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Nervesystemet</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('nervesystemet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('nervesystemet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-nervesystemet" onclick="toggleBok('nervesystemet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="oyet.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste øyet">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Øyet</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('oyet.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('oyet.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-oyet" onclick="toggleBok('oyet.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="rusmidler.html" class="fagkort" data-kat="kropp" data-km="NAT-21" data-sok="nat-21 sammenligne nervesystemet og hormonsyste rusmidler og signalsystemene">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-21</span></div>
+  <div class="fagkort-tittel">Rusmidler og signalsystemene</div>
+  <div class="fagkort-desc">sammenligne nervesystemet og hormonsystemet og beskrive hvor</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('rusmidler.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('rusmidler.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-rusmidler" onclick="toggleBok('rusmidler.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+<a href="immunforsvar.html" class="fagkort" data-kat="kropp" data-km="NAT-22" data-sok="nat-22 beskrive kroppens immunforsvar og hvorda immunforsvar og vaksiner">
+  <div class="fagkort-topp"><span class="fagkort-emoji">📐</span><span class="fagkort-badge">NAT-22</span></div>
+  <div class="fagkort-tittel">Immunforsvar og vaksiner</div>
+  <div class="fagkort-desc">beskrive kroppens immunforsvar og hvordan vaksiner virker, o</div>
+  <div class="fagkort-pdf-area">
+    <button class="fagkort-pdf-btn" onclick="navigerTil('immunforsvar.html',event)" style="color:rgba(96,165,250,.7);border-color:rgba(96,165,250,.2)">📖 Åpne</button>
+    <button class="fagkort-pdf-btn" onclick="apnePDF('immunforsvar.html',event)">📄 PDF</button>
+    <button class="fagkort-bok-btn" id="bok-immunforsvar" onclick="toggleBok('immunforsvar.html',this,event)">+ Bok</button>
+  </div>
+  <div class="fagkort-pil">Åpne →</div>
+  <div class="fagkort-progress"><div class="fagkort-progress-bar"></div></div>
+</a>
+  </div>
+</div>
+
+</div>
 </div>
 <script>
 
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+
+  // Hent antall eksamenstrener-ganger fra localStorage
+  (function() {
+    try {
+      var fp = JSON.parse(localStorage.getItem('eksamenstrener_v1') || '{}');
+      var el = document.getElementById('eks-ganger');
+      if (el) el.textContent = fp.antallGanger || 0;
+    } catch(e) {}
+  })();
+function navigerTil(href, event) {
+  event.preventDefault(); event.stopPropagation();
+  window.open(href, '_self');
+}
+
+// ── FREMDRIFT ────────────────────────────────────────────────────────────────
+function oppdaterFremdrift() {
+  var besokt = JSON.parse(localStorage.getItem('nat_besokt') || '[]');
+  var alle = document.querySelectorAll('.fagkort').length;
+  document.getElementById('stat-antall').textContent = besokt.length;
+  document.getElementById('stat-fill').style.width = (besokt.length / alle * 100) + '%';
+  document.querySelectorAll('.fagkort').forEach(function(k) {
+    var bar = k.querySelector('.fagkort-progress-bar');
+    if (bar && besokt.includes(k.getAttribute('href'))) bar.style.width = '100%';
+  });
+}
+document.querySelectorAll('.fagkort').forEach(function(k) {
+  k.addEventListener('click', function() {
+    var href = k.getAttribute('href');
+    if (!href || href.startsWith('#')) return;
+    var besokt = JSON.parse(localStorage.getItem('nat_besokt') || '[]');
+    if (!besokt.includes(href)) { besokt.push(href); localStorage.setItem('nat_besokt', JSON.stringify(besokt)); }
+  });
+});
+function nullstillFremdrift() {
+  localStorage.removeItem('nat_besokt');
+  document.querySelectorAll('.fagkort-progress-bar').forEach(function(b) { b.style.width = '0'; });
+  oppdaterFremdrift();
+}
+
+// ── FILTER OG SØK ────────────────────────────────────────────────────────────
+var aktivKat = 'alle', aktivSok = '', aktivKM = new Set(), aktivTrinn = 'alle';
+
+function oppdaterVisning() {
+  var sokNed = aktivSok.toLowerCase().trim();
+  document.querySelectorAll('.fagkort').forEach(function(k) {
+    var kat = k.getAttribute('data-kat') || '';
+    var sokTekst = (k.getAttribute('data-sok') || '').toLowerCase();
+    var kortKM = (k.getAttribute('data-km') || '').split(' ').filter(Boolean);
+    var trinn = k.getAttribute('data-trinn') || '';
+    var tag = k.getAttribute('data-tag') || '';
+    var katMatch = aktivKat === 'alle' || kat === aktivKat || (aktivKat === 'digitale-verktøy' && tag.includes('digitale-verktøy'));
+    var sokMatch = sokNed === '' || sokTekst.includes(sokNed);
+    var kmMatch = aktivKM.size === 0 || [...aktivKM].some(function(km) { return kortKM.includes(km); });
+    var trinnMatch = aktivTrinn === 'alle' || trinn.includes(aktivTrinn);
+    k.classList.toggle('skjult', !(katMatch && sokMatch && kmMatch && trinnMatch));
+  });
+  document.querySelectorAll('.hub-seksjon').forEach(function(s) {
+    s.classList.toggle('hub-sek-skjult', s.querySelectorAll('.fagkort:not(.skjult)').length === 0);
+  });
+}
+function hubFilter(kat, knapp) {
+  aktivKat = kat;
+  document.querySelectorAll('.hub-filter-btn').forEach(function(b) { b.classList.remove('aktiv'); });
+  if (knapp) knapp.classList.add('aktiv');
+  oppdaterVisning();
+}
+function hubSok(v) {
+  aktivSok = v;
+  if (v.trim()) { aktivKat = 'alle'; document.querySelectorAll('.hub-filter-btn').forEach(function(b) { b.classList.remove('aktiv'); }); }
+  oppdaterVisning();
+}
+function filtrerTrinn(trinn, btn) {
+  aktivTrinn = trinn;
+  document.querySelectorAll('.trinn-btn').forEach(function(b) { b.classList.remove('aktiv'); });
+  if (btn) btn.classList.add('aktiv');
+  oppdaterVisning();
+}
+function oppdaterKMFilter() {
+  aktivKM = new Set();
+  document.querySelectorAll('.km-cb:checked').forEach(function(cb) { aktivKM.add(cb.value); });
+  oppdaterVisning();
+  var synlige = document.querySelectorAll('.fagkort:not(.skjult)').length;
+  var teller = document.getElementById('km-resultat-teller');
+  teller.textContent = aktivKM.size > 0 ? synlige + ' kort matcher' : '';
+}
+function nullstillKMFilter() {
+  aktivKM = new Set();
+  document.querySelectorAll('.km-cb').forEach(function(cb) { cb.checked = false; });
+  document.getElementById('km-resultat-teller').textContent = '';
+  oppdaterVisning();
+}
+function byttKMModus(modus) {
+  document.getElementById('km-modus-filter').classList.toggle('aktiv', modus === 'filter');
+  document.getElementById('km-modus-bok').classList.toggle('aktiv', modus === 'bok');
+  document.getElementById('km-filter-panel').style.display = modus === 'filter' ? '' : 'none';
+  document.getElementById('km-bok-panel').style.display = modus === 'bok' ? '' : 'none';
+  if (modus === 'bok') oppdaterBokListe();
+}
+
+// ── PDF OG BOKBYGGER ─────────────────────────────────────────────────────────
 var bokValgte = new Set();
 
-function navigerTil(href, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  window.location.href = href;
+function apnePDF(href, event) {
+  event.preventDefault(); event.stopPropagation();
+  var nokkel = href.replace('.html', '').replace(/.*\//, '');
+  var filnavn = 'skaplab_' + nokkel + '.pdf';
+  var a = document.createElement('a');
+  a.href = filnavn; a.download = filnavn; a.target = '_blank';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() { document.body.removeChild(a); }, 500);
 }
-
-function filtrer(kat, el) {
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('aktiv'));
-  if (el) el.classList.add('aktiv');
-  document.querySelectorAll('.km-gruppe').forEach(g => {
-    g.style.display = (kat==='alle' || g.id==='gruppe-'+kat) ? '' : 'none';
-  });
-  document.getElementById('sok-input').value = '';
-}
-
-function sokFagkort() {
-  var v = document.getElementById('sok-input').value.toLowerCase().trim();
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('aktiv'));
-  if (!v) {
-    document.querySelectorAll('.km-gruppe').forEach(g => g.style.display = '');
-    document.querySelector('.fbtn') && document.querySelector('.fbtn').classList.add('aktiv');
-    return;
-  }
-  document.querySelectorAll('.km-gruppe').forEach(function(gruppe) {
-    var harTreff = false;
-    gruppe.querySelectorAll('.fagkort').forEach(function(k) {
-      var treff = k.dataset.sok && k.dataset.sok.toLowerCase().includes(v);
-      k.style.display = treff ? '' : 'none';
-      if (treff) harTreff = true;
-    });
-    // Skjul tomme seksjoner
-    gruppe.style.display = harTreff ? '' : 'none';
-  });
-}
-
-function toggleBok(nokkel, btn, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  var liste = JSON.parse(localStorage.getItem('skaplab_leseliste_nat') || '[]');
-  var finnes = liste.indexOf(nokkel) >= 0;
-  if (finnes) {
-    liste = liste.filter(function(n){ return n !== nokkel; });
-    btn.textContent = '+ Bok';
-    btn.classList.remove('i-bok');
+function toggleBok(href, knapp, event) {
+  event.preventDefault(); event.stopPropagation();
+  var nokkel = href.replace('.html', '').replace(/.*\//, '');
+  if (bokValgte.has(nokkel)) {
+    bokValgte.delete(nokkel);
+    knapp.classList.remove('i-bok'); knapp.textContent = '+ Bok';
   } else {
-    liste.push(nokkel);
-    btn.textContent = '✓ Bok';
-    btn.classList.add('i-bok');
-    if (liste.length === 1) byttKMModus('bok');
+    bokValgte.add(nokkel);
+    knapp.classList.add('i-bok'); knapp.textContent = '&#10003; Bok';
+    if (bokValgte.size === 1) byttKMModus('bok');
   }
-  localStorage.setItem('skaplab_leseliste_nat', JSON.stringify(liste));
   oppdaterBokListe();
   var teller = document.getElementById('bok-teller');
-  if (teller) teller.textContent = liste.length ? ' (' + liste.length + ')' : '';
+  if (teller) teller.textContent = bokValgte.size > 0 ? ' (' + bokValgte.size + ')' : '';
 }
-
 function oppdaterBokListe() {
-  var liste = JSON.parse(localStorage.getItem('skaplab_leseliste_nat') || '[]');
-  var el = document.getElementById('km-bok-liste');
-  if (!el) return;
-  if (!liste.length) {
-    el.innerHTML = '<div style="color:rgba(255,255,255,.28);font-size:.76rem;padding:8px 0">Ingen emner valgt.<br>Klikk <strong style="color:rgba(160,96,248,.7)">+ Bok</strong> på kortene.</div>';
+  var liste = document.getElementById('km-bok-liste');
+  if (!liste) return;
+  if (bokValgte.size === 0) {
+    liste.innerHTML = '<div style="color:rgba(255,255,255,.28);font-size:.76rem;padding:8px 0">Ingen emner valgt ennaa.<br>Klikk <strong style="color:rgba(160,96,248,.7)">+ Bok</strong> paa kortene til venstre.</div>';
     return;
   }
-  el.innerHTML = liste.map(function(nokkel) {
-    var kort = document.querySelector('.fagkort[href="'+nokkel+'.html"]');
-    var tittel = kort && kort.querySelector('.fagkort-tittel') ? kort.querySelector('.fagkort-tittel').textContent : nokkel;
-    return '<div class="km-bok-liste-item">'
-      + '<span>'+tittel+'</span>'
-      + '<button onclick="fjernFraBok(\''+nokkel+'\')" style="background:none;border:none;color:rgba(248,113,113,.7);cursor:pointer;font-size:.8rem;">✕</button>'
+  var html = '';
+  bokValgte.forEach(function(nokkel) {
+    var kort = document.querySelector('.fagkort[href="' + nokkel + '.html"]');
+    var tittel = (kort && kort.querySelector('.fagkort-tittel')) ? kort.querySelector('.fagkort-tittel').textContent : nokkel;
+    html += '<div class="km-bok-liste-item">'
+      + '<span style="color:rgba(255,255,255,.7)">' + tittel + '</span>'
+      + '<button class="fjern-bok-btn" data-nokkel="' + nokkel + '">x</button>'
       + '</div>';
-  }).join('');
+  });
+  liste.innerHTML = html;
+  liste.querySelectorAll('.fjern-bok-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() { fjernFraBok(btn.getAttribute('data-nokkel')); });
+  });
 }
-
 function fjernFraBok(nokkel) {
-  var liste = JSON.parse(localStorage.getItem('skaplab_leseliste_nat') || '[]');
-  liste = liste.filter(function(n){ return n !== nokkel; });
-  localStorage.setItem('skaplab_leseliste_nat', JSON.stringify(liste));
-  // Oppdater bok-knapp
-  var btn = document.querySelector('.bok-btn.i-bok[onclick*="'+nokkel+'"]');
-  if (btn) { btn.textContent = '+ Bok'; btn.classList.remove('i-bok'); }
+  bokValgte.delete(nokkel);
+  var id = 'bok-' + nokkel.replace(/_/g, '-');
+  var knapp = document.getElementById(id);
+  if (knapp) { knapp.classList.remove('i-bok'); knapp.textContent = '+ Bok'; }
   oppdaterBokListe();
   var teller = document.getElementById('bok-teller');
-  if (teller) teller.textContent = liste.length ? ' (' + liste.length + ')' : '';
+  if (teller) teller.textContent = bokValgte.size > 0 ? ' (' + bokValgte.size + ')' : '';
 }
 
-function lastNedBok() {
-  var liste = JSON.parse(localStorage.getItem('skaplab_leseliste_nat') || '[]');
-  if (!liste.length) { alert('Ingen emner valgt i bokbyggeren.'); return; }
+function samlePDFer() {
+  if (bokValgte.size === 0) { alert('Legg til emner med + Bok-knappen.'); return; }
   var status = document.getElementById('bok-status');
-  if (status) status.textContent = 'Henter ' + liste.length + ' PDF-er...';
-  var promises = liste.map(function(nokkel) {
-    return fetch('skaplab_' + nokkel + '.pdf')
-      .then(function(r) {
-        if (!r.ok) throw new Error(nokkel + ' ikke funnet');
-        return r.arrayBuffer();
-      })
-      .then(function(buf) { return {nokkel: nokkel, buf: buf}; })
-      .catch(function(e) { return {nokkel: nokkel, feil: e.message}; });
-  });
-  Promise.all(promises).then(function(resultater) {
-    var funnet = resultater.filter(function(r){ return !r.feil; });
-    var mangler = resultater.filter(function(r){ return r.feil; });
-    if (status) status.textContent = funnet.length + ' PDF funnet' + (mangler.length ? ', ' + mangler.length + ' ikke tilgjengelig' : '') + '.';
-    funnet.forEach(function(r) {
-      var blob = new Blob([r.buf], {type:'application/pdf'});
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'skaplab_' + r.nokkel + '.pdf';
-      a.click();
-    });
-  });
-}
-
-function byttKMModus(modus) {
-  var panelFilter = document.getElementById('panel-filter');
-  var panelBok    = document.getElementById('panel-bok');
-  var btnFilter   = document.getElementById('btn-filter-modus');
-  var btnBok      = document.getElementById('btn-bok-modus');
-  if (modus === 'bok') {
-    if (panelFilter) panelFilter.style.display = 'none';
-    if (panelBok)    panelBok.style.display    = '';
-    if (btnFilter)   btnFilter.classList.remove('aktiv');
-    if (btnBok)      btnBok.classList.add('aktiv');
-  } else {
-    if (panelFilter) panelFilter.style.display = '';
-    if (panelBok)    panelBok.style.display    = 'none';
-    if (btnFilter)   btnFilter.classList.add('aktiv');
-    if (btnBok)      btnBok.classList.remove('aktiv');
+  var knapp = document.getElementById('bok-samle-btn');
+  status.style.display = 'block'; status.textContent = 'Laster PDF-bibliotek...';
+  knapp.disabled = true; knapp.style.opacity = '0.5';
+  function ventPaaPdfLib(forsok) {
+    if (typeof PDFLib !== 'undefined') { startSamling(); }
+    else if (forsok < 20) { setTimeout(function() { ventPaaPdfLib(forsok + 1); }, 200); }
+    else { status.textContent = 'Feil: PDF-bibliotek lastet ikke.'; knapp.disabled = false; knapp.style.opacity = '1'; }
   }
-}
-
-// Init: gjenopprett bok-liste
-window.addEventListener('load', function() {
-  oppdaterBokListe();
-  var liste = JSON.parse(localStorage.getItem('skaplab_leseliste_nat') || '[]');
-  if (liste.length) {
-    var teller = document.getElementById('bok-teller');
-    if (teller) teller.textContent = ' (' + liste.length + ')';
-    liste.forEach(function(nokkel) {
-      var btn = document.querySelector('.bok-btn[onclick*="toggleBok(\''+nokkel+'\'"]');
-      if (btn) { btn.textContent = '✓ Bok'; btn.classList.add('i-bok'); }
+  ventPaaPdfLib(0);
+  function startSamling() {
+    var nokkler = [...bokValgte];
+    status.textContent = 'Henter ' + nokkler.length + ' PDF-er...';
+    var promises = nokkler.map(function(nokkel) {
+      return fetch('skaplab_' + nokkel + '.pdf')
+        .then(function(r) { if (!r.ok) throw new Error(nokkel + ' ikke funnet'); return r.arrayBuffer(); })
+        .then(function(buf) { return { nokkel: nokkel, buf: buf }; })
+        .catch(function(e) { return { nokkel: nokkel, feil: e.message }; });
+    });
+    Promise.all(promises).then(function(res) {
+      var ok = res.filter(function(r) { return !r.feil; });
+      if (ok.length === 0) { status.innerHTML = '<span style="color:rgba(255,100,100,.8)">Ingen PDF-er funnet.</span>'; knapp.disabled = false; knapp.style.opacity = '1'; return; }
+      PDFLib.PDFDocument.create().then(function(samlet) {
+        var kjede = Promise.resolve();
+        ok.forEach(function(item) {
+          kjede = kjede.then(function() {
+            return PDFLib.PDFDocument.load(item.buf)
+              .then(function(kd) { return samlet.copyPages(kd, kd.getPageIndices()); })
+              .then(function(sider) { sider.forEach(function(s) { samlet.addPage(s); }); });
+          });
+        });
+        return kjede.then(function() { return samlet.save(); });
+      }).then(function(bytes) {
+        var blob = new Blob([bytes], { type: 'application/pdf' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a'); a.href = url; a.download = 'nat_kompendium.pdf';
+        document.body.appendChild(a); a.click();
+        setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        status.innerHTML = '<span style="color:rgba(80,220,128,.9)">&#10003; Lastet ned (' + ok.length + ' emner)</span>';
+        knapp.disabled = false; knapp.style.opacity = '1';
+      });
     });
   }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  oppdaterFremdrift();
+  oppdaterVisning();
 });
+
 
 </script>
 <script>
