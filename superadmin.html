@@ -477,7 +477,8 @@ function byttTab(tab) {
   });
   var filterKnapper = document.getElementById('filter-knapper');
   if (filterKnapper) filterKnapper.style.display = tab==='skoler' ? 'flex' : 'none';
-  if (tab==='soppel') byggSoppelTabell();
+  if (tab==='soppel') { byggSoppelTabell(); }
+  filtrer();
   filtrer();
 }
 
@@ -573,19 +574,20 @@ function settFilter(f, btn) {
 function filtrer() {
   var sok = ($('sok-felt').value||'').toLowerCase().trim();
   if (aktivTab==='skoler') {
-    var rader = $('skole-tbody').querySelectorAll('tr');
-    rader.forEach(function(tr) {
-      var tekst = tr.textContent.toLowerCase();
-      var aktiv = tr.dataset.aktiv;
-      var sokOk = !sok || tekst.includes(sok);
-      var filtOk = aktivFilter==='alle' || (aktivFilter==='aktiv'&&aktiv==='true') || (aktivFilter==='inaktiv'&&aktiv==='false');
+    $('skole-tbody').querySelectorAll('tr').forEach(function(tr) {
+      var sokOk = !sok || tr.textContent.toLowerCase().includes(sok);
+      var filtOk = aktivFilter==='alle'
+        || (aktivFilter==='aktiv'   && tr.dataset.aktiv==='true')
+        || (aktivFilter==='inaktiv' && tr.dataset.aktiv==='false');
       tr.style.display = sokOk && filtOk ? '' : 'none';
     });
-  } else {
-    var raderL = $('laerer-tbody').querySelectorAll('tr');
-    raderL.forEach(function(tr) {
-      var tekst = tr.textContent.toLowerCase();
-      tr.style.display = !sok || tekst.includes(sok) ? '' : 'none';
+  } else if (aktivTab==='laerere') {
+    $('laerer-tbody').querySelectorAll('tr').forEach(function(tr) {
+      tr.style.display = !sok || tr.textContent.toLowerCase().includes(sok) ? '' : 'none';
+    });
+  } else if (aktivTab==='soppel') {
+    $('soppel-tbody').querySelectorAll('tr').forEach(function(tr) {
+      tr.style.display = !sok || tr.textContent.toLowerCase().includes(sok) ? '' : 'none';
     });
   }
 }
@@ -593,7 +595,7 @@ function filtrer() {
 function byggSkoleTabell() {
   var tbody = $('skole-tbody');
   tbody.innerHTML = '';
-  alleData.forEach(function(d) {
+  alleData.filter(function(d){return d.skole.aktiv;}).forEach(function(d) {
     var s = d.skole;
     var tr = document.createElement('tr');
     tr.dataset.aktiv = s.aktiv;
@@ -662,6 +664,9 @@ async function slettSkole(btn) {
     if (d) d.skole.aktiv = false;
     byggSkoleTabell();
     byggSoppelTabell();
+    // Oppdater aktiv-teller
+    var aktiveAnt = alleData.filter(function(d){return d.skole.aktiv;}).length;
+    $('s-aktive').textContent = aktiveAnt;
   } catch(e) { alert('Feil: '+e.message); }
 }
 
