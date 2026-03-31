@@ -118,9 +118,24 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 /* ── ELEV-RAD ── */
 .elev-navn-wrap{display:flex;align-items:center;gap:6px;}
-.lyspare-badge{font-size:.75rem;cursor:pointer;
-  background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.25);
-  color:var(--gul);border-radius:5px;padding:1px 6px;}
+.lyspare-badge{
+  font-size:.78rem;
+  background:rgba(251,191,36,.15);
+  border:1.5px solid rgba(251,191,36,.5);
+  color:var(--gul);
+  border-radius:6px;
+  padding:2px 8px;
+  font-family:var(--font-h);
+  font-weight:700;
+  animation:lyspare-puls 1.8s ease-in-out infinite;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+}
+@keyframes lyspare-puls{
+  0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.4);}
+  50%{box-shadow:0 0 0 5px rgba(251,191,36,.0);}
+}
 .chip{font-size:.7rem;padding:2px 7px;border-radius:5px;font-family:var(--font-h);font-weight:700;}
 .chip-h{background:rgba(52,211,153,.15);color:var(--gron);}
 .chip-m{background:rgba(251,191,36,.15);color:var(--gul);}
@@ -917,6 +932,9 @@ async function init() {
     byttKlasse(klasser[0].id);
   }
 
+  // Poll lyspærer hvert 30 sekund
+  setInterval(pollLysparer, 30000);
+
   // Init planlegger uke
   $('plan-uke').value = getUke();
   planByttFag();
@@ -1153,6 +1171,35 @@ async function slettElev(id, navn) {
     fyllElevDropdowns();
     byggSidebar();
   } catch(e) { alert('Feil: '+e.message); }
+}
+
+// ── LYSPÆRE POLLING ───────────────────────────────────────────────────────
+async function pollLysparer() {
+  if (!aktivKlasse) return;
+  try {
+    var kEleverIds = elever
+      .filter(function(e){return e.klasse_id===aktivKlasse;})
+      .map(function(e){return e.id;});
+    if (!kEleverIds.length) return;
+
+    var eR = await SkapLab._get(
+      '/elever?id=in.('+kEleverIds.join(',')+')&select=id,trenger_hjelp,hjelp_emne',
+      token
+    );
+    if (!Array.isArray(eR)) return;
+
+    var oppdatert = false;
+    eR.forEach(function(ny) {
+      var gammel = elever.find(function(e){return e.id===ny.id;});
+      if (gammel && (gammel.trenger_hjelp !== ny.trenger_hjelp || gammel.hjelp_emne !== ny.hjelp_emne)) {
+        gammel.trenger_hjelp = ny.trenger_hjelp;
+        gammel.hjelp_emne    = ny.hjelp_emne;
+        oppdatert = true;
+      }
+    });
+
+    if (oppdatert) lastEleverForKlasse(aktivKlasse);
+  } catch(e) {}
 }
 
 function loggUt() {
