@@ -1156,8 +1156,21 @@ async function slettElev(id, navn) {
 }
 
 function loggUt() {
-  SkapLab.laererLoggUt();
-  location.href = 'laerer_login.html';
+  // Fjern sesjon synkront FØRST, så er siden "innlogget ut" uansett hva som skjer
+  try { sessionStorage.removeItem('skaplab_laerer'); } catch(e) {}
+  try { localStorage.removeItem('skaplab_laerer'); } catch(e) {}
+  // Send logout til Supabase i bakgrunnen (ikke-blokkerende)
+  try {
+    var tok = laerer ? laerer.access_token : null;
+    if (tok) {
+      fetch(SkapLab.SUPABASE_URL+'/auth/v1/logout', {
+        method:'POST',
+        headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+tok}
+      }).catch(function(){});
+    }
+  } catch(e) {}
+  // Naviger til login
+  location.replace('laerer_login.html');
 }
 
 // ── FYLL DROPDOWNS ────────────────────────────────────────────────────
