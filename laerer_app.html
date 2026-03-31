@@ -464,6 +464,90 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
     </div>
   </div>
 
+
+  <!-- ── F. ELEVDETALJER ── -->
+  <div class="side" id="side-elev">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <button class="btn btn-sek btn-sm" onclick="visside('klasser')">← Tilbake</button>
+      <div class="side-tittel" id="elev-detalj-navn" style="margin:0;"></div>
+    </div>
+    <div class="side-sub" id="elev-detalj-sub"></div>
+
+    <!-- STATISTIKK-STRIPE -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+      <div class="sek" style="text-align:center;padding:12px 8px;">
+        <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:900;color:var(--lilla);" id="ed-spill-ant">—</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-top:3px;">Spill gjennomført</div>
+      </div>
+      <div class="sek" style="text-align:center;padding:12px 8px;">
+        <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:900;color:var(--bla);" id="ed-leksjon-ant">—</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-top:3px;">Leksjoner besøkt</div>
+      </div>
+      <div class="sek" style="text-align:center;padding:12px 8px;">
+        <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:900;color:var(--gron);" id="ed-mengde-ant">—</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-top:3px;">Mengdetrening</div>
+      </div>
+      <div class="sek" style="text-align:center;padding:12px 8px;">
+        <div style="font-family:var(--font-h);font-size:1.6rem;font-weight:900;color:var(--gul);" id="ed-snittscore">—</div>
+        <div style="font-size:.72rem;color:var(--dim);margin-top:3px;">Snitt score</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div style="display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+      <button class="btn btn-prim btn-sm" id="ed-tab-vurd" onclick="edByttTab('vurd')">📊 Vurdering</button>
+      <button class="btn btn-sek btn-sm" id="ed-tab-logg" onclick="edByttTab('logg')">📋 Aktivitetslogg</button>
+      <button class="btn btn-sek btn-sm" id="ed-tab-opp" onclick="edByttTab('opp')">📌 Tildelte oppgaver</button>
+    </div>
+
+    <!-- TAB: VURDERING -->
+    <div id="ed-panel-vurd">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <div class="felt" style="flex:0 0 auto;margin:0;">
+          <select id="ed-fag" onchange="edVisFag()" style="width:180px;">
+            <option value="mat8">📐 Matematikk 8</option>
+            <option value="mat9">📐 Matematikk 9</option>
+            <option value="mat10">📐 Matematikk 10</option>
+            <option value="nat">🔬 Naturfag</option>
+            <option value="prg">💻 Programmering</option>
+          </select>
+        </div>
+        <button class="btn btn-sek btn-sm" onclick="edSkrivUtVurdering()">🖨️ Skriv ut</button>
+      </div>
+      <div id="ed-vurd-innhold"></div>
+    </div>
+
+    <!-- TAB: AKTIVITETSLOGG -->
+    <div id="ed-panel-logg" style="display:none;">
+      <div class="sek">
+        <div class="sek-tittel">📋 Aktivitetslogg</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ressurs</th>
+              <th>KM</th>
+              <th>Score</th>
+              <th>Tid</th>
+            </tr>
+          </thead>
+          <tbody id="ed-logg-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: TILDELTE OPPGAVER -->
+    <div id="ed-panel-opp" style="display:none;">
+      <div class="sek">
+        <div class="sek-tittel">📌 Tildelte oppgaver</div>
+        <div id="ed-opp-liste"></div>
+      </div>
+      <div class="sek" style="margin-top:12px;">
+        <div class="sek-tittel">📝 Kommende prøver</div>
+        <div id="ed-prove-liste"></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1565,6 +1649,256 @@ ppByttFag();
 tildelByttFag();
 init();
 
+
+
+
+// ── F. ELEVDETALJER ───────────────────────────────────────────────────
+var edAktivElev = null, edAktivitet = [], edVurderinger = {}, edEgenvurd = {}, edOppgaver = [];
+
+async function visElev(elevId) {
+  var elev = elever.find(function(e){return e.id===elevId;});
+  if (!elev) return;
+  edAktivElev = elev;
+  visside('elev');
+
+  var k = klasser.find(function(x){return x.id===elev.klasse_id;});
+  $('elev-detalj-navn').textContent = elev.fullt_navn;
+  $('elev-detalj-sub').textContent = (k?k.navn:'') + (elev.trenger_hjelp?' · 💡 Trenger hjelp':'');
+
+  // Nullstill
+  ['ed-spill-ant','ed-leksjon-ant','ed-mengde-ant','ed-snittscore'].forEach(function(id){$(id).textContent='…';});
+
+  // Hent aktivitet
+  try {
+    var aR = await SkapLab._get('/aktivitet?elev_id=eq.'+elevId+'&order=tidspunkt.desc&limit=500', token);
+    edAktivitet = Array.isArray(aR) ? aR : [];
+  } catch(e) { edAktivitet = []; }
+
+  // Statistikk
+  var spill   = edAktivitet.filter(function(a){return a.ressurs&&(a.ressurs.indexOf('spill')>=0||a.ressurs.indexOf('lab')>=0);}).length;
+  var leksjon = edAktivitet.filter(function(a){return a.ressurs&&a.ressurs.indexOf('mengde')<0&&a.ressurs.indexOf('spill')<0;}).length;
+  var mengde  = edAktivitet.filter(function(a){return a.ressurs&&a.ressurs.indexOf('mengde')>=0;}).length;
+  var scores  = edAktivitet.filter(function(a){return a.score_pst!=null;}).map(function(a){return a.score_pst;});
+  var snitt   = scores.length ? Math.round(scores.reduce(function(s,x){return s+x;},0)/scores.length) : null;
+
+  $('ed-spill-ant').textContent   = spill;
+  $('ed-leksjon-ant').textContent = leksjon;
+  $('ed-mengde-ant').textContent  = mengde;
+  $('ed-snittscore').textContent  = snitt!=null ? snitt+'%' : '—';
+
+  // Hent vurderinger fra lærer
+  try {
+    var vR = await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid, token);
+    edVurderinger = {};
+    if (Array.isArray(vR)) vR.forEach(function(v){edVurderinger[v.km_kode]={nivaa:v.nivaa,merknad:v.merknad||''};});
+  } catch(e) { edVurderinger = {}; }
+
+  // Hent egenvurdering
+  try {
+    var egR = await SkapLab._get('/elev_egenvurdering?elev_id=eq.'+elevId, token);
+    edEgenvurd = {};
+    if (Array.isArray(egR)) egR.forEach(function(e){edEgenvurd[e.km_kode]=e.nivaa;});
+  } catch(e) { edEgenvurd = {}; }
+
+  // Hent tildelte oppgaver
+  try {
+    var oR = await SkapLab._get('/tildeling?or=(elev_id.eq.'+elevId+',klasse_id.eq.'+(elev.klasse_id||'x')+')&select=id,frist,oppgaver(tittel,type,ressurs,url,fag)', token);
+    edOppgaver = Array.isArray(oR) ? oR : [];
+  } catch(e) { edOppgaver = []; }
+
+  edByttTab('vurd');
+}
+
+function edByttTab(tab) {
+  ['vurd','logg','opp'].forEach(function(t){
+    var panel = $('ed-panel-'+t);
+    var btn   = $('ed-tab-'+t);
+    if (panel) panel.style.display = t===tab ? '' : 'none';
+    if (btn) {
+      btn.className = 'btn btn-sm ' + (t===tab ? 'btn-prim' : 'btn-sek');
+    }
+  });
+  if (tab==='vurd') edVisFag();
+  if (tab==='logg') edVisLogg();
+  if (tab==='opp')  edVisOppgaver();
+}
+
+function edVisFag() {
+  var fag = $('ed-fag') ? $('ed-fag').value : 'mat8';
+  var kmListe = getKMListe(fag);
+  var el = $('ed-vurd-innhold');
+  if (!el) return;
+
+  // Aktivitet per KM
+  var aktPerKM = {};
+  edAktivitet.forEach(function(a) {
+    if (!a.km_kode) return;
+    if (!aktPerKM[a.km_kode]) aktPerKM[a.km_kode] = {leksjon:0,mengde:0,scores:[]};
+    if (a.ressurs&&a.ressurs.indexOf('mengde')>=0) aktPerKM[a.km_kode].mengde++;
+    else aktPerKM[a.km_kode].leksjon++;
+    if (a.score_pst!=null) aktPerKM[a.km_kode].scores.push(a.score_pst);
+  });
+
+  el.innerHTML = '';
+  var table = document.createElement('table');
+  table.innerHTML = '<thead><tr>'
+    +'<th style="width:70px;">KM</th>'
+    +'<th>Kompetansemål</th>'
+    +'<th style="width:80px;text-align:center;">Leksjoner</th>'
+    +'<th style="width:80px;text-align:center;">Mengde %</th>'
+    +'<th style="width:80px;text-align:center;">Egenvurd.</th>'
+    +'<th style="width:130px;">Lærers vurdering</th>'
+    +'<th>Fritekst</th>'
+    +'</tr></thead>';
+  var tbody = document.createElement('tbody');
+
+  kmListe.forEach(function(km) {
+    var akt   = aktPerKM[km[0]] || {leksjon:0,mengde:0,scores:[]};
+    var vurd  = edVurderinger[km[0]] || {nivaa:'',merknad:''};
+    var egvrd = edEgenvurd[km[0]] || '';
+    var snitt = akt.scores.length ? Math.round(akt.scores.reduce(function(s,x){return s+x;},0)/akt.scores.length)+'%' : '—';
+
+    var tr = document.createElement('tr');
+    var nivCls = vurd.nivaa==='hoy'?'chip-h':vurd.nivaa==='middels'?'chip-m':vurd.nivaa==='lav'?'chip-l':'chip-u';
+    var nivTxt = {hoy:'Høy',middels:'Middels',lav:'Lav','':'Ikke vurdert'}[vurd.nivaa]||'Ikke vurdert';
+
+    tr.innerHTML = '<td><code class="km-kod">'+km[0]+'</code></td>'
+      +'<td style="font-size:.8rem;line-height:1.4;">'+km[1]+'</td>'
+      +'<td style="text-align:center;font-size:.82rem;color:'+(akt.leksjon>0?'var(--bla)':'var(--dim)')+';">'+akt.leksjon+'</td>'
+      +'<td style="text-align:center;font-size:.82rem;color:'+(akt.scores.length>0?'var(--gron)':'var(--dim)')+';">'+snitt+'</td>'
+      +'<td style="text-align:center;"><span class="chip '+nivCls+'" style="font-size:.65rem;">'+egvrd+'</span></td>'
+      +'<td>'
+        +'<div class="niv-sel">'
+        +'<button class="niv-btn'+(vurd.nivaa==='hoy'?' h':'')+'" data-km="'+km[0]+'" data-niv="hoy" onclick="edSettNiv(this)">H</button>'
+        +'<button class="niv-btn'+(vurd.nivaa==='middels'?' m':'')+'" data-km="'+km[0]+'" data-niv="middels" onclick="edSettNiv(this)">M</button>'
+        +'<button class="niv-btn'+(vurd.nivaa==='lav'?' l':'')+'" data-km="'+km[0]+'" data-niv="lav" onclick="edSettNiv(this)">L</button>'
+        +'<button class="niv-btn'+(vurd.nivaa===''?' aktiv':'')+'" data-km="'+km[0]+'" data-niv="" onclick="edSettNiv(this)" style="font-size:.6rem;">—</button>'
+        +'</div></td>'
+      +'<td><input type="text" value="'+vurd.merknad.replace(/"/g,"&quot;")+'" placeholder="Skriv notat…" data-km="'+km[0]+'"'
+        +' onchange="edLagreMerknad(this.dataset.km,this.value)" style="font-size:.78rem;padding:4px 6px;"></td>';
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  el.appendChild(table);
+}
+
+async function edSettNiv(btn) {
+  var km  = btn.dataset.km;
+  var niv = btn.dataset.niv;
+  if (!edAktivElev) return;
+  var elevId = edAktivElev.id;
+  edVurderinger[km] = edVurderinger[km] || {nivaa:'',merknad:''};
+  edVurderinger[km].nivaa = niv;
+  btn.closest('.niv-sel').querySelectorAll('.niv-btn').forEach(function(b){b.classList.remove('h','m','l','aktiv');});
+  if (niv==='hoy')     btn.classList.add('h');
+  else if (niv==='middels') btn.classList.add('m');
+  else if (niv==='lav') btn.classList.add('l');
+  else btn.classList.add('aktiv');
+  try {
+    await SkapLab._post('/vurderinger',{elev_id:elevId,laerer_id:lid,km_kode:km,nivaa:niv||null},token);
+  } catch(e) {
+    SkapLab._patch('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&km_kode=eq.'+km,{nivaa:niv||null},token).catch(function(){});
+  }
+}
+
+function edLagreMerknad(km, tekst) {
+  if (!edAktivElev) return;
+  edVurderinger[km] = edVurderinger[km] || {nivaa:'',merknad:''};
+  edVurderinger[km].merknad = tekst;
+  SkapLab._patch('/vurderinger?elev_id=eq.'+edAktivElev.id+'&laerer_id=eq.'+lid+'&km_kode=eq.'+km,{merknad:tekst},token).catch(function(){});
+}
+
+function edVisLogg() {
+  var tbody = $('ed-logg-tbody');
+  if (!tbody) return;
+  if (!edAktivitet.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--dim);">Ingen aktivitet registrert.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  edAktivitet.slice(0,100).forEach(function(a) {
+    var tr = document.createElement('tr');
+    var score = a.score_pst!=null ? '<span style="color:'+(a.score_pst>=70?'var(--gron)':a.score_pst>=40?'var(--gul)':'var(--rod)')+'">'+a.score_pst+'%</span>' : '—';
+    tr.innerHTML = '<td style="font-size:.8rem;">'+(a.ressurs||'—')+'</td>'
+      +'<td><code class="km-kod">'+(a.km_kode||'—')+'</code></td>'
+      +'<td style="text-align:center;">'+score+'</td>'
+      +'<td style="font-size:.75rem;color:var(--dim);">'+datoVis(a.tidspunkt)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function edVisOppgaver() {
+  var oppEl   = $('ed-opp-liste');
+  var proveEl = $('ed-prove-liste');
+  if (!oppEl) return;
+
+  var vanlige = edOppgaver.filter(function(o){return !o.oppgaver||o.oppgaver.type!=='provevarsel';});
+  var prover  = edOppgaver.filter(function(o){return o.oppgaver&&o.oppgaver.type==='provevarsel';});
+
+  if (!vanlige.length) {
+    oppEl.innerHTML = '<div style="color:var(--dim);font-size:.82rem;">Ingen tildelte oppgaver.</div>';
+  } else {
+    oppEl.innerHTML = vanlige.map(function(o){
+      var t = o.oppgaver ? o.oppgaver.tittel : '—';
+      var url = o.oppgaver ? o.oppgaver.url : '#';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">'
+        +'<a href="'+url+'" target="_blank" style="font-size:.82rem;color:var(--bla);text-decoration:none;flex:1;">'+t+'</a>'
+        +'<span style="font-size:.75rem;color:var(--dim);">'+datoVis(o.frist)+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  if (!prover.length) {
+    proveEl.innerHTML = '<div style="color:var(--dim);font-size:.82rem;">Ingen prøver planlagt.</div>';
+  } else {
+    proveEl.innerHTML = prover.map(function(o){
+      var res = o.oppgaver ? (o.oppgaver.ressurs||'') : '';
+      var linjer = res.split('\n').slice(1).join('\n');
+      return '<div style="padding:8px;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.15);border-radius:8px;margin-bottom:6px;">'
+        +'<div style="font-size:.8rem;font-weight:600;color:var(--rod);margin-bottom:4px;">📝 Prøve — '+datoVis(o.frist)+'</div>'
+        +'<div style="font-size:.78rem;color:var(--dim);">'+(o.oppgaver?o.oppgaver.tittel:'')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+}
+
+function edSkrivUtVurdering() {
+  var fag = $('ed-fag') ? $('ed-fag').value : 'mat8';
+  var fagNavn = {mat8:'Matematikk 8',mat9:'Matematikk 9',mat10:'Matematikk 10',nat:'Naturfag',prg:'Programmering'}[fag];
+  var elev = edAktivElev;
+  var k = elev ? klasser.find(function(x){return x.id===elev.klasse_id;}) : null;
+  var kmListe = getKMListe(fag);
+  var aktPerKM = {};
+  edAktivitet.forEach(function(a){
+    if(!a.km_kode)return;
+    if(!aktPerKM[a.km_kode])aktPerKM[a.km_kode]={leksjon:0,mengde:0,scores:[]};
+    if(a.ressurs&&a.ressurs.indexOf('mengde')>=0)aktPerKM[a.km_kode].mengde++;
+    else aktPerKM[a.km_kode].leksjon++;
+    if(a.score_pst!=null)aktPerKM[a.km_kode].scores.push(a.score_pst);
+  });
+  var rows = kmListe.map(function(km){
+    var akt=aktPerKM[km[0]]||{leksjon:0,mengde:0,scores:[]};
+    var vurd=edVurderinger[km[0]]||{nivaa:'',merknad:''};
+    var snitt=akt.scores.length?Math.round(akt.scores.reduce(function(s,x){return s+x;},0)/akt.scores.length)+'%':'—';
+    var farge=vurd.nivaa==='hoy'?'#22c55e':vurd.nivaa==='middels'?'#eab308':vurd.nivaa==='lav'?'#ef4444':'#888';
+    var nivTxt={hoy:'Høy',middels:'Middels',lav:'Lav','':'Ikke vurdert'}[vurd.nivaa]||'Ikke vurdert';
+    return '<tr><td>'+km[0]+'</td><td>'+km[1]+'</td><td style="text-align:center">'+akt.leksjon+'</td>'
+      +'<td style="text-align:center">'+snitt+'</td>'
+      +'<td style="text-align:center;color:'+farge+';font-weight:bold;">'+nivTxt+'</td>'
+      +'<td>'+vurd.merknad+'</td></tr>';
+  }).join('');
+  var win=window.open('','_blank');
+  win.document.write('<html><head><meta charset="UTF-8"><title>Vurdering</title><style>'
+    +'body{font-family:sans-serif;padding:20px;font-size:11px;}'
+    +'h1{font-size:16px;}h2{font-size:12px;color:#555;margin-bottom:10px;}'
+    +'table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:5px 7px;vertical-align:top;}'
+    +'th{background:#eee;}</style></head><body>'
+    +'<h1>'+(elev?elev.fullt_navn:'')+'</h1>'
+    +'<h2>'+(k?k.navn:'')+' · '+fagNavn+' · '+(new Date().toLocaleDateString('nb-NO'))+'</h2>'
+    +'<table><thead><tr><th>KM</th><th>Kompetansemål</th><th>Leks.</th><th>Mengde</th><th>Vurdering</th><th>Notat</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></body></html>');
+  win.document.close(); win.print();
+}
+
+
 </script>
-</body>
-</html>
