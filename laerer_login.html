@@ -66,8 +66,26 @@ select option{background:#0b0d18;}
       <input type="text" id="reg-navn" placeholder="Fornavn Etternavn" autocomplete="name"></div>
     <div class="felt"><label>E-post</label>
       <input type="email" id="reg-epost" placeholder="laerer@skole.no" autocomplete="username"></div>
-    <div class="felt"><label>Skole</label>
-      <select id="reg-skole"><option value="">Laster skoler…</option></select></div>
+    <div class="felt">
+      <label>Skole</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="reg-skole" style="flex:1;"><option value="">Laster skoler…</option></select>
+        <button type="button" onclick="toggleNySkole()" style="padding:9px 12px;border-radius:9px;border:1px dashed rgba(52,211,153,.4);background:transparent;color:var(--gron);font-size:.82rem;font-family:var(--font-h);font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;" id="ny-skole-toggle-btn">+ Ny</button>
+      </div>
+    </div>
+    <div id="ny-skole-panel" style="display:none;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-family:var(--font-h);font-size:.75rem;font-weight:800;color:var(--gron);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px;">Ny skole</div>
+      <div class="felt"><label>Skolenavn</label>
+        <input type="text" id="ny-skole-navn" placeholder="f.eks. Gressvik ungdomsskole"></div>
+      <div style="display:flex;gap:8px;">
+        <div class="felt" style="flex:1;margin-bottom:0;"><label>Kommune</label>
+          <input type="text" id="ny-skole-kommune" placeholder="f.eks. Fredrikstad"></div>
+        <div class="felt" style="flex:1;margin-bottom:0;"><label>Fylke</label>
+          <input type="text" id="ny-skole-fylke" placeholder="f.eks. Østfold"></div>
+      </div>
+      <button type="button" onclick="opprettSkole()" style="width:100%;padding:9px;background:var(--gron);color:#000;border:none;border-radius:8px;font-family:var(--font-h);font-size:.82rem;font-weight:800;cursor:pointer;margin-top:10px;" id="ny-skole-btn">Opprett skole</button>
+      <div id="ny-skole-melding" style="font-size:.78rem;margin-top:6px;min-height:16px;"></div>
+    </div>
     <div class="felt"><label>Passord</label>
       <input type="password" id="reg-passord" placeholder="Minst 8 tegn" autocomplete="new-password"></div>
     <div class="felt"><label>Bekreft passord</label>
@@ -414,6 +432,67 @@ async function registrer() {
     meldEl.textContent = 'Feil: ' + e.message;
     btn.disabled = false; btn.textContent = 'Opprett konto';
   }
+}
+
+
+function toggleNySkole() {
+  var panel = document.getElementById('ny-skole-panel');
+  var btn   = document.getElementById('ny-skole-toggle-btn');
+  var vis   = panel.style.display === 'none';
+  panel.style.display = vis ? '' : 'none';
+  btn.textContent = vis ? '✕ Lukk' : '+ Ny';
+  if (vis) document.getElementById('ny-skole-navn').focus();
+}
+
+async function opprettSkole() {
+  var navn    = document.getElementById('ny-skole-navn').value.trim();
+  var kommune = document.getElementById('ny-skole-kommune').value.trim();
+  var fylke   = document.getElementById('ny-skole-fylke').value.trim();
+  var btn     = document.getElementById('ny-skole-btn');
+  var meld    = document.getElementById('ny-skole-melding');
+
+  if (!navn) { meld.style.color = 'var(--rod)'; meld.textContent = 'Skriv inn skolenavn.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Oppretter…'; meld.textContent = '';
+
+  try {
+    var r = await fetch(SBASE_URL + '/rest/v1/skoler', {
+      method: 'POST',
+      headers: {
+        'apikey': SBASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ navn: navn, kommune: kommune || null, fylke: fylke || null, aktiv: true })
+    });
+    var data = await r.json();
+    if (!r.ok) throw new Error((Array.isArray(data) ? data[0] : data).message || JSON.stringify(data).substring(0,80));
+    var ny = Array.isArray(data) ? data[0] : data;
+    if (!ny || !ny.id) throw new Error('Ingen ID i respons');
+
+    // Legg til i dropdown og velg den
+    var sel = document.getElementById('reg-skole');
+    var opt = document.createElement('option');
+    opt.value = ny.id;
+    opt.textContent = ny.navn;
+    sel.appendChild(opt);
+    sel.value = ny.id;
+
+    // Skjul skjema og tilbakestill
+    meld.style.color = 'var(--gron)'; meld.textContent = '✅ Skolen er opprettet!';
+    setTimeout(function() {
+      toggleNySkole();
+      document.getElementById('ny-skole-navn').value = '';
+      document.getElementById('ny-skole-kommune').value = '';
+      document.getElementById('ny-skole-fylke').value = '';
+      meld.textContent = '';
+    }, 1200);
+
+  } catch(e) {
+    meld.style.color = 'var(--rod)';
+    meld.textContent = 'Feil: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Opprett skole';
 }
 
 // Init
