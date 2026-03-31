@@ -501,7 +501,12 @@ function byggLaererTabell() {
 async function toggleAktiv(btn, settAktiv) {
   var id = btn.dataset.id;
   try {
-    await SkapLab._patch('/skoler?id=eq.'+id, {aktiv: settAktiv}, token);
+    var resp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/skoler?id=eq.'+id, {
+      method: 'PATCH',
+      headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, SkapLab._hdr(token)),
+      body: JSON.stringify({aktiv: settAktiv})
+    });
+    if (!resp.ok) throw new Error('Status '+resp.status+' (mangler UPDATE-policy for skoler?)');
     var d = alleData.find(function(x){return x.skole.id===id;});
     if (d) d.skole.aktiv = settAktiv;
     byggSkoleTabell();

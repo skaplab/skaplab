@@ -844,7 +844,7 @@ var lid    = laerer ? ((laerer.user&&laerer.user.id)||laerer.id||'') : '';
 
 if (!laerer) { location.href = 'laerer_login.html'; }
 
-var klasser = [], elever = [], aktivKlasse = null;
+var klasser = [], elever = [], aktivKlasse = null, skoleId = null;
 var planData = {};   // plan[klasseId][uke][dag] = [{...}]
 var proveRader = []; // prøveplan-rader
 var maVurderinger = {}, maNotat = {};
@@ -891,8 +891,8 @@ function lagrePlanTilLS(klasseId, data) {
 async function init() {
   // Vis lærerens navn
   try {
-    var lR = await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn', token);
-    if (lR && lR[0]) $('nav-bruker').textContent = lR[0].fullt_navn;
+    var lR = await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn,skole_id', token);
+    if (lR && lR[0]) { $('nav-bruker').textContent = lR[0].fullt_navn; skoleId = lR[0].skole_id || null; }
   } catch(e) {}
 
   // Hent klasser
@@ -990,6 +990,8 @@ async function lastEleverForKlasse(klasseId) {
   tbody.innerHTML = '';
   kElever.forEach(function(e) {
     var tr = document.createElement('tr');
+    tr.style.cursor='pointer';
+    tr.addEventListener('click', (function(eid){return function(ev){if(ev.target.tagName!=='BUTTON')visElev(eid);};})(e.id));
     var sistPalogget = sist[e.id] ? new Date(sist[e.id]).toLocaleDateString('nb-NO',{day:'numeric',month:'short',year:'numeric'}) : '—';
     tr.innerHTML = '<td><div class="elev-navn-wrap">'
       + e.fullt_navn
@@ -1075,7 +1077,7 @@ async function opprettKlasse() {
   if (!navn) { feilEl.textContent = 'Skriv inn klassenavn.'; return; }
   feilEl.textContent = '';
   try {
-    var res = await SkapLab._post('/klasser', {navn:navn, trinn:parseInt(trinn), laerer_id:lid}, token);
+    var res = await SkapLab._post('/klasser', {navn:navn, trinn:parseInt(trinn), laerer_id:lid, skole_id:skoleId}, token);
     if (Array.isArray(res)) res = res[0];
     if (res && res.id) {
       klasser.push(res);
