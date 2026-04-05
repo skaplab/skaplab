@@ -237,6 +237,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 }
 
 /* ── FERDIGHETSKART ── */
+.fk-sticky{position:sticky;top:0;z-index:10;background:var(--bg);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:14px;}
 .fk-gruppe{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
 .fk-gruppe-hdr{font-family:var(--font-h);font-size:.85rem;font-weight:800;
   border-left:3px solid var(--lilla);padding-left:10px;margin-bottom:10px;color:var(--text);}
@@ -596,7 +597,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <div class="side" id="side-ferdighetskart">
     <div class="side-tittel">🗺️ Ferdighetskart</div>
     <div class="side-sub">Vurder elevens ferdighetsnivå per delferdighet. Scores beregnes automatisk per kompetansemål.</div>
-    <div class="sek">
+    <div class="sek fk-sticky">
       <div class="rad">
         <div class="felt">
           <label class="felt-lbl">Klasse</label>
@@ -629,6 +630,11 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <div class="sek" id="fk-snitt-sek" style="margin-top:12px;">
         <div class="sek-tittel">📊 Samlet score per gruppe</div>
         <div id="fk-snitt-liste"></div>
+        <div id="fk-totalsnitt" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--font-h);font-size:.85rem;font-weight:800;">Totalsnitt:</span>
+          <span id="fk-totalsnitt-tall" style="font-family:var(--font-m);font-size:1.3rem;font-weight:900;"></span>
+          <span id="fk-totalsnitt-niv" class="chip" style="font-size:.75rem;"></span>
+        </div>
       </div>
     </div>
     <div id="fk-tom" style="color:var(--dim);font-size:.85rem;padding:20px 0;">Velg klasse og elev for å starte.</div>
@@ -1877,11 +1883,19 @@ function edByttTab(tab) {
   if (tab==='opp')  edVisOppgaver();
 }
 
-function edVisFag() {
+function edVisFag(elevId, egenvurd) {
   var fag = $('ed-fag') ? $('ed-fag').value : 'mat8';
   var kmListe = getKMListe(fag);
   var el = $('ed-vurd-innhold');
   if (!el) return;
+
+  // Knapp til målark
+  var fagNavn = {mat8:'Matematikk 8',mat9:'Matematikk 9',mat10:'Matematikk 10',nat:'Naturfag',prg:'Programmering'}[fag];
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;'
+    +'padding:10px 14px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:9px;">'
+    +'<span style="font-size:.83rem;color:var(--dim);">Vurderinger redigeres i Målark.</span>'
+    +'<button class="btn btn-sek btn-sm" onclick="apneMalarkForElev()">'
+    +'📋 Åpne i Målark →</button></div>';
 
   // Aktivitet per KM
   var aktPerKM = {};
@@ -1893,7 +1907,6 @@ function edVisFag() {
     if (a.score_pst!=null) aktPerKM[a.km_kode].scores.push(a.score_pst);
   });
 
-  el.innerHTML = '';
   var table = document.createElement('table');
   table.innerHTML = '<thead><tr>'
     +'<th style="width:70px;">KM</th>'
@@ -1901,66 +1914,56 @@ function edVisFag() {
     +'<th style="width:80px;text-align:center;">Leksjoner</th>'
     +'<th style="width:80px;text-align:center;">Mengde %</th>'
     +'<th style="width:80px;text-align:center;">Egenvurd.</th>'
-    +'<th style="width:130px;">Lærers vurdering</th>'
-    +'<th>Fritekst</th>'
+    +'<th style="width:100px;">Lærers vurd.</th>'
     +'</tr></thead>';
   var tbody = document.createElement('tbody');
 
   kmListe.forEach(function(km) {
-    var akt   = aktPerKM[km[0]] || {leksjon:0,mengde:0,scores:[]};
-    var vurd  = edVurderinger[km[0]] || {nivaa:'',merknad:''};
-    var egvrd = edEgenvurd[km[0]] || '';
-    var snitt = akt.scores.length ? Math.round(akt.scores.reduce(function(s,x){return s+x;},0)/akt.scores.length)+'%' : '—';
+    var akt  = aktPerKM[km[0]] || {leksjon:0,mengde:0,scores:[]};
+    var vurd = edVurderinger[km[0]] || {nivaa:'',merknad:''};
+    var egvrd = (egenvurd||{})[km[0]] || '';
+    var snitt = akt.scores.length
+      ? Math.round(akt.scores.reduce(function(s,x){return s+x;},0)/akt.scores.length)+'%' : '—';
+
+    // Vis vurdering som chip (lese-modus)
+    var nivCls = vurd.nivaa==='hoy'?'chip-h':vurd.nivaa==='middels'?'chip-m':vurd.nivaa==='lav'?'chip-l':'chip-u';
+    var nivTxt = {hoy:'Høy',middels:'Mid',lav:'Lav','':'—'}[vurd.nivaa]||'—';
 
     var tr = document.createElement('tr');
-    var nivCls = vurd.nivaa==='hoy'?'chip-h':vurd.nivaa==='middels'?'chip-m':vurd.nivaa==='lav'?'chip-l':'chip-u';
-    var nivTxt = {hoy:'Høy',middels:'Middels',lav:'Lav','':'Ikke vurdert'}[vurd.nivaa]||'Ikke vurdert';
-
     tr.innerHTML = '<td><code class="km-kod">'+km[0]+'</code></td>'
       +'<td style="font-size:.8rem;line-height:1.4;">'+km[1]+'</td>'
       +'<td style="text-align:center;font-size:.82rem;color:'+(akt.leksjon>0?'var(--bla)':'var(--dim)')+';">'+akt.leksjon+'</td>'
       +'<td style="text-align:center;font-size:.82rem;color:'+(akt.scores.length>0?'var(--gron)':'var(--dim)')+';">'+snitt+'</td>'
-      +'<td style="text-align:center;"><span class="chip '+nivCls+'" style="font-size:.65rem;">'+egvrd+'</span></td>'
-      +'<td>'
-        +'<div class="niv-sel">'
-        +'<button class="niv-btn'+(vurd.nivaa==='hoy'?' h':'')+'" data-km="'+km[0]+'" data-niv="hoy" onclick="edSettNiv(this)">H</button>'
-        +'<button class="niv-btn'+(vurd.nivaa==='middels'?' m':'')+'" data-km="'+km[0]+'" data-niv="middels" onclick="edSettNiv(this)">M</button>'
-        +'<button class="niv-btn'+(vurd.nivaa==='lav'?' l':'')+'" data-km="'+km[0]+'" data-niv="lav" onclick="edSettNiv(this)">L</button>'
-        +'<button class="niv-btn'+(vurd.nivaa===''?' aktiv':'')+'" data-km="'+km[0]+'" data-niv="" onclick="edSettNiv(this)" style="font-size:.6rem;">—</button>'
-        +'</div></td>'
-      +'<td><input type="text" value="'+vurd.merknad.replace(/"/g,"&quot;")+'" placeholder="Skriv notat…" data-km="'+km[0]+'"'
-        +' onchange="edLagreMerknad(this.dataset.km,this.value)" style="font-size:.78rem;padding:4px 6px;"></td>';
+      +'<td style="text-align:center;"><span class="chip '+(egvrd?'chip-m':'chip-u')+'" style="font-size:.65rem;">'+(egvrd||'—')+'</span></td>'
+      +'<td><span class="chip '+nivCls+'" style="font-size:.7rem;">'+nivTxt+'</span></td>';
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
   el.appendChild(table);
 }
 
-async function edSettNiv(btn) {
-  var km  = btn.dataset.km;
-  var niv = btn.dataset.niv;
+function apneMalarkForElev() {
+  // Sett verdier i målark og naviger dit
+  var maKlasseSel = $('ma-klasse');
+  var maElevSel   = $('ma-elev');
+  var maFagSel    = $('ma-fag');
   if (!edAktivElev) return;
-  var elevId = edAktivElev.id;
-  edVurderinger[km] = edVurderinger[km] || {nivaa:'',merknad:''};
-  edVurderinger[km].nivaa = niv;
-  btn.closest('.niv-sel').querySelectorAll('.niv-btn').forEach(function(b){b.classList.remove('h','m','l','aktiv');});
-  if (niv==='hoy')     btn.classList.add('h');
-  else if (niv==='middels') btn.classList.add('m');
-  else if (niv==='lav') btn.classList.add('l');
-  else btn.classList.add('aktiv');
-  try {
-    await SkapLab._post('/vurderinger',{elev_id:elevId,laerer_id:lid,km_kode:km,nivaa:niv||null},token);
-  } catch(e) {
-    SkapLab._patch('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&km_kode=eq.'+km,{nivaa:niv||null},token).catch(function(){});
-  }
+
+  // Sett riktig klasse
+  if (maKlasseSel) maKlasseSel.value = edAktivElev.klasse_id;
+  maLastElever();
+
+  // Sett riktig elev etter at listen er fylt
+  setTimeout(function() {
+    if (maElevSel) { maElevSel.value = edAktivElev.id; maLastData(); }
+    if (maFagSel && $('ed-fag')) maFagSel.value = $('ed-fag').value;
+    visside('malark');
+  }, 150);
 }
 
-function edLagreMerknad(km, tekst) {
-  if (!edAktivElev) return;
-  edVurderinger[km] = edVurderinger[km] || {nivaa:'',merknad:''};
-  edVurderinger[km].merknad = tekst;
-  SkapLab._patch('/vurderinger?elev_id=eq.'+edAktivElev.id+'&laerer_id=eq.'+lid+'&km_kode=eq.'+km,{merknad:tekst},token).catch(function(){});
-}
+// async function edSettNiv fjernet — bruk Målark
+
+// function edLagreMerknad fjernet — bruk Målark
 
 function edVisLogg() {
   var tbody = $('ed-logg-tbody');
@@ -2094,6 +2097,10 @@ async function fkLastElever() {
 async function fkLastData() {
   var elevId = $('fk-elev').value;
   if (!elevId) { $('fk-innhold').style.display='none'; $('fk-tom').style.display=''; return; }
+  // Auto-lagre forrige elev stille
+  if (fkAktivElev && Object.keys(fkData).length) {
+    await fkLagreAlle(true);
+  }
   fkAktivElev = elever.find(function(e){return e.id===elevId;});
   fkData = {};
   // Hent fra DB (bruker vurderinger-tabellen med km_kode prefixet med "fk_")
@@ -2191,10 +2198,30 @@ function fkOppdaterSnitt(fag) {
     if (gammelSpan) gammelSpan.remove();
     hdr.innerHTML += '<span style="font-size:.7rem;color:'+farge+';">'+snitt+'%</span>';
   });
+
+  // Totalsnitt
+  var alleScores = [];
+  grupper.forEach(function(g){
+    g.ferdigheter.forEach(function(f){if(fkData[f]!=null)alleScores.push(fkData[f]);});
+  });
+  var totalEl = $('fk-totalsnitt');
+  var totalTall = $('fk-totalsnitt-tall');
+  var totalNiv = $('fk-totalsnitt-niv');
+  if (alleScores.length && totalEl && totalTall && totalNiv) {
+    var tot = Math.round(alleScores.reduce(function(a,b){return a+b;},0)/alleScores.length);
+    var farge = tot>=80?'var(--gron)':tot>=40?'var(--gul)':'var(--rod)';
+    var niv = tot>=80?'Høy':tot>=40?'Middels':'Lav';
+    var chip = tot>=80?'chip-h':tot>=40?'chip-m':'chip-l';
+    totalEl.style.display = 'flex';
+    totalTall.textContent = tot+'%';
+    totalTall.style.color = farge;
+    totalNiv.textContent = niv;
+    totalNiv.className = 'chip '+chip;
+  }
 }
 
-async function fkLagreAlle() {
-  if (!fkAktivElev) { alert('Velg elev først.'); return; }
+async function fkLagreAlle(stille) {
+  if (!fkAktivElev) { if (!stille) alert('Velg elev først.'); return; }
   var elevId = fkAktivElev.id;
   var poster = Object.keys(fkData).map(function(ferdighet) {
     return {
@@ -2204,20 +2231,28 @@ async function fkLagreAlle() {
       nivaa: String(fkData[ferdighet])
     };
   });
-  if (!poster.length) { alert('Ingen scores å lagre.'); return; }
-  var lagret = 0;
-  for (var i=0; i<poster.length; i++) {
-    try {
-      await SkapLab._post('/vurderinger', poster[i], token).catch(function() {
-        return SkapLab._patch(
-          '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&km_kode=eq.'+encodeURIComponent(poster[i].km_kode),
-          {nivaa: poster[i].nivaa}, token
-        );
-      });
-      lagret++;
-    } catch(e) {}
-  }
-  alert('✅ '+lagret+' av '+poster.length+' scores lagret.');
+  if (!poster.length) { if (!stille) alert('Ingen scores å lagre.'); return; }
+
+  // Upsert: slett gamle og sett inn nye
+  try {
+    var km_liste = poster.map(function(p){return p.km_kode;}).join(',');
+    // Slett eksisterende for disse km_kode-ene
+    await fetch(SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elevId
+      +'&laerer_id=eq.'+lid+'&km_kode=in.('+km_liste+')', {
+      method: 'DELETE',
+      headers: Object.assign({'Prefer':'return=minimal'}, SkapLab._hdr(token))
+    });
+    // Sett inn alle på nytt
+    var resp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/vurderinger', {
+      method: 'POST',
+      headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, SkapLab._hdr(token)),
+      body: JSON.stringify(poster)
+    });
+    if (!stille) {
+      if (resp.ok) alert('✅ '+poster.length+' scores lagret.');
+      else { var err = await resp.json().catch(function(){return {};}); alert('Feil: '+JSON.stringify(err).substring(0,80)); }
+    }
+  } catch(e) { if (!stille) alert('Feil: '+e.message); }
 }
 
 function fkSkrivUt() {
@@ -2228,27 +2263,58 @@ function fkSkrivUt() {
   var grupper = fkHentGrupper(fag);
 
   var rader = '';
+  var snittRader = '';
+  var allScores = [];
+
   grupper.forEach(function(gruppe) {
-    rader += '<tr style="background:#f0f0f0;"><td colspan="3"><strong>'+gruppe.gruppe+'</strong></td></tr>';
+    rader += '<tr style="background:#e8e8e8;"><td colspan="3" style="padding:5px 8px;font-weight:800;font-size:11px;">'+gruppe.gruppe+'</td></tr>';
+    var gruppeScores = [];
     gruppe.ferdigheter.forEach(function(f) {
       var s = fkData[f];
-      var farge = s==null?'#888':s>=80?'#16a34a':s>=40?'#ca8a04':'#dc2626';
-      rader += '<tr><td style="padding:4px 8px;">'+f+'</td>'
+      var farge = s==null?'#999':s>=80?'#16a34a':s>=40?'#ca8a04':'#dc2626';
+      rader += '<tr><td style="padding:3px 8px 3px 16px;">'+f+'</td>'
         +'<td style="text-align:center;color:'+farge+';font-weight:bold;">'+(s!=null?s+'%':'—')+'</td>'
-        +'<td style="color:'+farge+';">'+(s==null?'Ikke vurdert':s>=80?'Høy':s>=40?'Middels':'Lav')+'</td></tr>';
+        +'<td style="color:'+farge+';">'+(s==null?'—':s>=80?'Høy':s>=40?'Middels':'Lav')+'</td></tr>';
+      if (s!=null) { gruppeScores.push(s); allScores.push(s); }
     });
+    if (gruppeScores.length) {
+      var gs = Math.round(gruppeScores.reduce(function(a,b){return a+b;},0)/gruppeScores.length);
+      var gfarge = gs>=80?'#16a34a':gs>=40?'#ca8a04':'#dc2626';
+      var gniv = gs>=80?'Høy':gs>=40?'Middels':'Lav';
+      snittRader += '<tr><td style="padding:4px 8px;">'+gruppe.gruppe+'</td>'
+        +'<td style="text-align:center;font-weight:bold;color:'+gfarge+';">'+gs+'%</td>'
+        +'<td style="color:'+gfarge+';">'+gniv+'</td></tr>';
+    }
   });
 
+  var totalSnitt = allScores.length
+    ? Math.round(allScores.reduce(function(a,b){return a+b;},0)/allScores.length) : null;
+  var totalFarge = totalSnitt==null?'#999':totalSnitt>=80?'#16a34a':totalSnitt>=40?'#ca8a04':'#dc2626';
+  var totalNiv = totalSnitt==null?'—':totalSnitt>=80?'Høy':totalSnitt>=40?'Middels':'Lav';
+
   var win = window.open('','_blank');
-  win.document.write('<html><head><meta charset="UTF-8"><title>Ferdighetskart</title><style>'
-    +'body{font-family:sans-serif;padding:20px;font-size:11px;}'
-    +'h1{font-size:15px;}h2{font-size:12px;color:#555;margin-bottom:8px;}'
-    +'table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:4px 8px;}'
-    +'th{background:#eee;}</style></head><body>'
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Ferdighetskart</title><style>'
+    +'@page{size:A4;margin:15mm}body{font-family:sans-serif;font-size:10px;color:#111;}'
+    +'h1{font-size:15px;margin-bottom:2px;}h2{font-size:11px;color:#555;margin-bottom:10px;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:14px;}'
+    +'th,td{border:1px solid #ccc;padding:3px 7px;}'
+    +'th{background:#eee;font-size:10px;text-align:left;}'
+    +'.total{background:#f5f5f5;font-weight:800;font-size:11px;}'
+    +'</style></head><body>'
     +'<h1>🗺️ Ferdighetskart – '+(elev?elev.fullt_navn:'')+'</h1>'
     +'<h2>'+(k?k.navn:'')+' · '+fagNavn+' · '+new Date().toLocaleDateString('nb-NO')+'</h2>'
-    +'<table><thead><tr><th>Ferdighet</th><th>Score</th><th>Nivå</th></tr></thead>'
-    +'<tbody>'+rader+'</tbody></table></body></html>');
+
+    +'<table><thead><tr><th>Ferdighet</th><th style="width:60px;">Score</th><th style="width:70px;">Nivå</th></tr></thead>'
+    +'<tbody>'+rader+'</tbody></table>'
+
+    +'<table><thead><tr><th colspan="3">Samlet score per gruppe</th></tr>'
+    +'<tr><th>Gruppe</th><th style="width:60px;">Snitt</th><th style="width:70px;">Nivå</th></tr></thead>'
+    +'<tbody>'+snittRader
+    +'<tr class="total"><td>Totalsnitt – '+fagNavn+'</td>'
+    +'<td style="text-align:center;color:'+totalFarge+';">'+(totalSnitt!=null?totalSnitt+'%':'—')+'</td>'
+    +'<td style="color:'+totalFarge+';">'+totalNiv+'</td></tr>'
+    +'</tbody></table>'
+    +'</body></html>');
   win.document.close(); win.print();
 }
 
