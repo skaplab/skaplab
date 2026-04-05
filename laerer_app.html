@@ -630,10 +630,29 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <div class="sek" id="fk-snitt-sek" style="margin-top:12px;">
         <div class="sek-tittel">📊 Samlet score per gruppe</div>
         <div id="fk-snitt-liste"></div>
-        <div id="fk-totalsnitt" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-          <span style="font-family:var(--font-h);font-size:.85rem;font-weight:800;">Totalsnitt:</span>
-          <span id="fk-totalsnitt-tall" style="font-family:var(--font-m);font-size:1.3rem;font-weight:900;"></span>
-          <span id="fk-totalsnitt-niv" class="chip" style="font-size:.75rem;"></span>
+        <!-- Totalsnitt elev + klasse -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+          <div id="fk-boks-elev" style="background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);border-radius:10px;padding:14px 16px;display:none;">
+            <div style="font-size:.68rem;color:var(--dim);font-family:var(--font-h);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Totalsnitt — denne eleven</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <span id="fk-totalsnitt-tall" style="font-family:var(--font-m);font-size:2rem;font-weight:900;line-height:1;"></span>
+              <span id="fk-totalsnitt-niv" class="chip" style="font-size:.75rem;"></span>
+            </div>
+            <div id="fk-elev-bar-wrap" style="margin-top:8px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;">
+              <div id="fk-elev-bar" style="height:100%;border-radius:3px;transition:width .4s;"></div>
+            </div>
+          </div>
+          <div id="fk-boks-klasse" style="background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2);border-radius:10px;padding:14px 16px;display:none;">
+            <div style="font-size:.68rem;color:var(--dim);font-family:var(--font-h);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">Klassegjennomsnitt</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <span id="fk-klassesnitt-tall" style="font-family:var(--font-m);font-size:2rem;font-weight:900;line-height:1;color:var(--gron);"></span>
+              <span id="fk-klassesnitt-niv" class="chip" style="font-size:.75rem;"></span>
+            </div>
+            <div id="fk-klasse-bar-wrap" style="margin-top:8px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;">
+              <div id="fk-klasse-bar" style="height:100%;border-radius:3px;background:var(--gron);transition:width .4s;"></div>
+            </div>
+            <div id="fk-klassesnitt-detalj" style="font-size:.72rem;color:var(--dim);margin-top:5px;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2193,25 +2212,75 @@ function fkOppdaterSnitt(fag) {
     hdr.innerHTML += '<span style="font-size:.7rem;color:'+farge+';">'+snitt+'%</span>';
   });
 
-  // Totalsnitt
+  // Totalsnitt denne eleven
   var alleScores = [];
   grupper.forEach(function(g){
     g.ferdigheter.forEach(function(f){if(fkData[f]!=null)alleScores.push(fkData[f]);});
   });
-  var totalEl = $('fk-totalsnitt');
+  var boksElev = $('fk-boks-elev');
   var totalTall = $('fk-totalsnitt-tall');
-  var totalNiv = $('fk-totalsnitt-niv');
-  if (alleScores.length && totalEl && totalTall && totalNiv) {
+  var totalNiv  = $('fk-totalsnitt-niv');
+  var elevBar   = $('fk-elev-bar');
+  if (alleScores.length && boksElev) {
     var tot = Math.round(alleScores.reduce(function(a,b){return a+b;},0)/alleScores.length);
     var farge = tot>=80?'var(--gron)':tot>=40?'var(--gul)':'var(--rod)';
-    var niv = tot>=80?'Høy':tot>=40?'Middels':'Lav';
-    var chip = tot>=80?'chip-h':tot>=40?'chip-m':'chip-l';
-    totalEl.style.display = 'flex';
-    totalTall.textContent = tot+'%';
-    totalTall.style.color = farge;
-    totalNiv.textContent = niv;
-    totalNiv.className = 'chip '+chip;
+    var niv   = tot>=80?'Høy':tot>=40?'Middels':'Lav';
+    var chip  = tot>=80?'chip-h':tot>=40?'chip-m':'chip-l';
+    boksElev.style.display = '';
+    if (totalTall){ totalTall.textContent = tot+'%'; totalTall.style.color = farge; }
+    if (totalNiv) { totalNiv.textContent = niv; totalNiv.className = 'chip '+chip; }
+    if (elevBar)  { elevBar.style.width = tot+'%'; elevBar.style.background = farge; }
   }
+
+  // Klassesnitt (asynkron, hent fra DB)
+  fkOppdaterKlassesnitt(fag);
+}
+
+async function fkOppdaterKlassesnitt(fag) {
+  var klasseId = $('fk-klasse') ? $('fk-klasse').value : '';
+  var boksKl   = $('fk-boks-klasse');
+  if (!klasseId || !boksKl) return;
+
+  var grupper = fkHentGrupper(fag);
+  var kElever = elever.filter(function(e){return e.klasse_id===klasseId;});
+  if (!kElever.length) return;
+
+  try {
+    var ids = kElever.map(function(e){return e.id;}).join(',');
+    var rader = await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/ferdighetsvurdering?elev_id=in.('+ids+')&laerer_id=eq.'+lid,
+      {headers: SkapLab._hdr(token)}
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+
+    if (!Array.isArray(rader) || !rader.length) return;
+
+    // Beregn snitt per elev
+    var elevSnitter = {};
+    kElever.forEach(function(e){
+      var elevRader = rader.filter(function(r){return r.elev_id===e.id;});
+      if (!elevRader.length) return;
+      var s = elevRader.map(function(r){return r.score_pst;}).filter(function(s){return s!=null;});
+      if (s.length) elevSnitter[e.id] = Math.round(s.reduce(function(a,b){return a+b;},0)/s.length);
+    });
+
+    var snittVerdier = Object.values(elevSnitter);
+    if (!snittVerdier.length) return;
+
+    var klasseSnitt = Math.round(snittVerdier.reduce(function(a,b){return a+b;},0)/snittVerdier.length);
+    var farge = klasseSnitt>=80?'var(--gron)':klasseSnitt>=40?'var(--gul)':'var(--rod)';
+    var niv   = klasseSnitt>=80?'Høy':klasseSnitt>=40?'Middels':'Lav';
+    var chip  = klasseSnitt>=80?'chip-h':klasseSnitt>=40?'chip-m':'chip-l';
+
+    boksKl.style.display = '';
+    var kTall = $('fk-klassesnitt-tall');
+    var kNiv  = $('fk-klassesnitt-niv');
+    var kBar  = $('fk-klasse-bar');
+    var kDet  = $('fk-klassesnitt-detalj');
+    if (kTall){ kTall.textContent = klasseSnitt+'%'; kTall.style.color = farge; }
+    if (kNiv) { kNiv.textContent = niv; kNiv.className = 'chip '+chip; }
+    if (kBar) { kBar.style.width = klasseSnitt+'%'; kBar.style.background = farge; }
+    if (kDet) { kDet.textContent = snittVerdier.length+' av '+kElever.length+' elever har data'; }
+  } catch(e) {}
 }
 
 async function fkLagreAlle(stille) {
@@ -2307,6 +2376,24 @@ function fkSkrivUt() {
     +'<td style="text-align:center;color:'+totalFarge+';">'+(totalSnitt!=null?totalSnitt+'%':'—')+'</td>'
     +'<td style="color:'+totalFarge+';">'+totalNiv+'</td></tr>'
     +'</tbody></table>'
+
+    // Klassesnitt
+    +(function(){
+      var kTall = $('fk-klassesnitt-tall');
+      var kNiv  = $('fk-klassesnitt-niv');
+      var kDet  = $('fk-klassesnitt-detalj');
+      if (!kTall || !kTall.textContent) return '';
+      var kS = kTall.textContent;
+      var kN = kNiv ? kNiv.textContent : '';
+      var kF = parseInt(kS)>=80?'#16a34a':parseInt(kS)>=40?'#ca8a04':'#dc2626';
+      var kD = kDet ? kDet.textContent : '';
+      return '<table><thead><tr><th colspan="3">Klassesnitt – '+fagNavn+'</th></tr>'
+        +'<tr><th></th><th style="width:60px;">Snitt</th><th style="width:70px;">Nivå</th></tr></thead>'
+        +'<tbody><tr class="total"><td>'+k.navn+' ('+kD+')</td>'
+        +'<td style="text-align:center;font-weight:bold;color:'+kF+';">'+kS+'</td>'
+        +'<td style="color:'+kF+';">'+kN+'</td></tr></tbody></table>';
+    })()
+
     +'</body></html>');
   win.document.close(); win.print();
 }
