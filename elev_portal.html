@@ -740,10 +740,27 @@ async function init() {
     tildelte.forEach(function(t) {
       if (!t.oppgaver) return;
       var o = t.oppgaver;
+
+      // Frist-logikk
+      var no = new Date();
+      var fristDato = t.frist ? new Date(t.frist) : null;
+      var dagerEtter = fristDato ? Math.floor((no - fristDato) / 86400000) : -999;
+
+      // Prøvevarsler håndteres separat
+      if (o.type === 'provevarsel') return;
+
+      // Skjul oppgaver mer enn 3 dager etter frist
+      if (fristDato && dagerEtter > 3) return;
+
       var akt = _aktMap[o.ressurs];
       var kort = document.createElement('a');
       kort.href = o.url;
       kort.className = 'oppg-kort';
+
+      // Rød tekst om frist er passert (men innen 3 dager)
+      var fristPassert = fristDato && dagerEtter >= 0;
+      var fristFarge = fristPassert ? '#f87171' : 'var(--gul)';
+
       var fremgangHtml = '';
       if (akt) {
         var pst = akt.snitt !== null ? akt.snitt : 0;
@@ -751,16 +768,14 @@ async function init() {
         var tekst = akt.fullfort && akt.totalt ?
           akt.fullfort+'/'+akt.totalt+' oppgaver' :
           (akt.okter+' økt'+(akt.okter>1?'er':''));
-        fremgangHtml = '<div class="oppg-fremgang">'
-          +'<div class="fremgang-bar"><div class="fremgang-fill" style="width:'+pst+'%;background:'+farge+'"></div></div>'
-          +'<span class="fremgang-tekst">'+tekst+'</span></div>';
+        fremgangHtml = '<div class="oppg-fremgang"><div class="oppg-bar"><div class="oppg-bar-fill" style="width:'+pst+'%;background:'+farge+'"></div></div><span style="color:'+farge+'">'+pst+'%</span></div>';
       }
-      var typeIkon = o.type==='spill'?'🎮':o.type==='teorikort'?'🃏':o.type==='mengde'?'✏️':'📖';
-      kort.innerHTML =
-        '<div class="oppg-type-rad">'+typeIkon+' '+o.type+(o.fag?' · '+o.fag:'')+'</div>'+
-        '<div class="oppg-tittel">'+o.tittel+'</div>'+
-        fremgangHtml+
-        (t.frist?'<div class="oppg-frist">⏰ Frist: '+t.frist+'</div>':'');
+      kort.innerHTML = '<div class="oppg-type">📋 Tildelt oppgave</div>'
+        +'<div class="oppg-tittel">'+(o.tittel||o.ressurs||'Oppgave')+'</div>'
+        +fremgangHtml
+        +(t.frist?'<div class="oppg-frist" style="color:'+fristFarge+'">'+
+          (fristPassert?'⚠️':'⏰')+' Frist: '+new Date(t.frist).toLocaleDateString('nb-NO')
+          +(fristPassert?' (utløpt)':'')+'</div>':'');
       grid.appendChild(kort);
     });
   }

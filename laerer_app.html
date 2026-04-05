@@ -235,6 +235,33 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   #sidebar{display:none;}
   .rad{flex-direction:column;}
 }
+
+/* ── FERDIGHETSKART ── */
+.fk-gruppe{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.fk-gruppe-hdr{font-family:var(--font-h);font-size:.85rem;font-weight:800;
+  border-left:3px solid var(--lilla);padding-left:10px;margin-bottom:10px;color:var(--text);}
+.fk-rad{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--border);}
+.fk-rad:last-child{border-bottom:none;}
+.fk-ferdighet{font-size:.82rem;}
+.fk-score-knapper{display:flex;gap:3px;}
+.fk-btn{padding:3px 8px;border-radius:5px;border:1px solid var(--border2);
+  background:none;font-size:.72rem;font-family:var(--font-h);font-weight:700;
+  cursor:pointer;color:var(--dim);transition:all .12s;min-width:36px;text-align:center;}
+.fk-btn:hover{background:rgba(255,255,255,.07);}
+.fk-btn.aktiv-0{background:rgba(248,113,113,.2);color:var(--rod);border-color:rgba(248,113,113,.4);}
+.fk-btn.aktiv-25{background:rgba(251,191,36,.15);color:var(--gul);border-color:rgba(251,191,36,.4);}
+.fk-btn.aktiv-50{background:rgba(251,191,36,.25);color:var(--gul);border-color:rgba(251,191,36,.5);}
+.fk-btn.aktiv-75{background:rgba(52,211,153,.15);color:var(--gron);border-color:rgba(52,211,153,.4);}
+.fk-btn.aktiv-100{background:rgba(52,211,153,.3);color:var(--gron);border-color:rgba(52,211,153,.6);}
+.fk-snitt-rad{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.fk-snitt-rad:last-child{border-bottom:none;}
+.fk-snitt-navn{flex:1;font-size:.82rem;}
+.fk-snitt-bar-wrap{width:120px;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;}
+.fk-snitt-bar{height:100%;border-radius:4px;transition:width .3s;}
+.fk-snitt-pst{font-family:var(--font-m);font-size:.75rem;width:40px;text-align:right;}
+.fk-chip{font-size:.65rem;padding:1px 6px;border-radius:4px;font-family:var(--font-h);font-weight:700;}
+
 </style>
 </head>
 <body>
@@ -257,6 +284,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
   <div class="sek-lbl" style="margin-top:12px;">Verktøy</div>
   <button class="nav-link" onclick="visside('tildel')"><span class="ikon">📋</span>Tildel oppgave</button>
+  <button class="nav-link" onclick="visside('ferdighetskart')"><span class="ikon">🗺️</span>Ferdighetskart</button>
   <button class="nav-link" onclick="visside('planlegger')"><span class="ikon">📅</span>Planlegger</button>
   <button class="nav-link" onclick="visside('malark')"><span class="ikon">📋</span>Målark</button>
   <button class="nav-link" onclick="visside('proveplan')"><span class="ikon">📝</span>Prøveplan</button>
@@ -561,6 +589,63 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
         <div id="ed-prove-liste"></div>
       </div>
     </div>
+  </div>
+
+
+  <!-- ── FERDIGHETSKART ── -->
+  <div class="side" id="side-ferdighetskart">
+    <div class="side-tittel">🗺️ Ferdighetskart</div>
+    <div class="side-sub">Vurder elevens ferdighetsnivå per delferdighet. Scores beregnes automatisk per kompetansemål.</div>
+    <div class="sek">
+      <div class="rad">
+        <div class="felt">
+          <label class="felt-lbl">Klasse</label>
+          <select id="fk-klasse" onchange="fkLastElever()" style="width:160px;"></select>
+        </div>
+        <div class="felt">
+          <label class="felt-lbl">Elev</label>
+          <select id="fk-elev" onchange="fkLastData()" disabled style="width:180px;">
+            <option>— Velg elev —</option>
+          </select>
+        </div>
+        <div class="felt">
+          <label class="felt-lbl">Fag</label>
+          <select id="fk-fag" onchange="fkVisFag()" style="width:180px;">
+            <option value="mat8">📐 Matematikk 8</option>
+            <option value="mat9">📐 Matematikk 9</option>
+            <option value="mat10">📐 Matematikk 10</option>
+            <option value="nat">🔬 Naturfag</option>
+            <option value="prg">💻 Programmering</option>
+          </select>
+        </div>
+        <div style="align-self:flex-end;display:flex;gap:6px;">
+          <button class="btn btn-prim btn-sm" onclick="fkLagreAlle()">💾 Lagre alt</button>
+          <button class="btn btn-sek btn-sm" onclick="fkSkrivUt()">🖨️ Skriv ut</button>
+        </div>
+      </div>
+    </div>
+    <div id="fk-innhold" style="display:none;">
+      <div id="fk-grupper"></div>
+      <div class="sek" id="fk-snitt-sek" style="margin-top:12px;">
+        <div class="sek-tittel">📊 Samlet score per gruppe</div>
+        <div id="fk-snitt-liste"></div>
+      </div>
+    </div>
+    <div id="fk-tom" style="color:var(--dim);font-size:.85rem;padding:20px 0;">Velg klasse og elev for å starte.</div>
+  </div>
+
+
+  <!-- ── OPPGAVE-ARKIV ── -->
+  <div class="side" id="side-arkiv">
+    <div class="side-tittel">📦 Oppgavearkiv</div>
+    <div class="side-sub">Oppgaver der fristen er passert med mer enn 3 dager. Klikk for å se hvem som har gjennomført.</div>
+    <div class="sek">
+      <div class="felt" style="max-width:200px;">
+        <label class="felt-lbl">Klasse</label>
+        <select id="ark-klasse" onchange="lastArkiv()"></select>
+      </div>
+    </div>
+    <div id="arkiv-innhold"></div>
   </div>
 
 </div><!-- /main -->
@@ -934,6 +1019,13 @@ async function init() {
 
   // Poll lyspærer hvert 30 sekund
   setInterval(pollLysparer, 30000);
+
+  // Init ferdighetskart
+  fkFyllKlasseDropdown();
+
+  // Init arkiv-dropdown
+  var arkSel = $('ark-klasse');
+  if (arkSel) arkSel.innerHTML = klasser.map(function(k){return '<option value="'+k.id+'">'+k.navn+'</option>';}).join('');
 
   // Init planlegger uke
   $('plan-uke').value = getUke();
@@ -1962,5 +2054,292 @@ function edSkrivUtVurdering() {
   win.document.close(); win.print();
 }
 
+
+
+
+var FERDIGHETSDATA = {"mat": {"8": [{"gruppe": "Tall og tallregning", "ferdigheter": ["Hoderegning", "Faktorisering", "Brøkregning", "Prosentregning", "Brøk, prosent, desimaltall", "Potenser", "Røtter", "Regnerekkefølgen", "Standardform"]}, {"gruppe": "Algebra 8.trinn", "ferdigheter": ["Begreper", "Algebraiske uttrykk", "Addisjon og subtraksjon", "Multiplikasjon og divisjon", "Pluss foran parentes", "Minus foran parentes", "Gange inn i parentes", "Gange sammen parenteser", "Faktorisering", "Algebraiske mønster"]}, {"gruppe": "Likninger", "ferdigheter": ["Enkle likninger", "Variabel på begge sider", "Multiplikasjon", "Likninger med én brøk", "Likninger med flere brøker", "Sette prøve på svaret", "Rasjonale likninger", "Ulikheter", "Tekstoppgaver", "Lage egne likninger"]}, {"gruppe": "Funksjoner 8.trinn", "ferdigheter": ["Koordinatsystemet", "Koordinater", "Grafer", "Verditabeller", "Funksjonsuttrykk", "Nullpunkt", "Lese diagrammer", "Skjæringspunkt", "Funksjoner fra dagliglivet", "Lage egne funksjoner"]}, {"gruppe": "Plangeometri", "ferdigheter": ["Geometriske mønster", "Trekanter", "Kvadrater og rektangler", "Parallellogram og rombe", "Trapes", "Sirkel", "Sammensatte figurer", "Omgjøring av måleenhet", "Tekstoppgaver", "Lage egne oppgaver"]}], "9": [{"gruppe": "Trekanter", "ferdigheter": ["Egenskaper til trekanter", "Pytagoras læresetning", "Finne ukjent katet", "Pytagoras likebeint", "30-60-90", "Formlikhet", "Kongruens", "Bevise Pytagoras", "Tekstoppgaver", "Lage egne oppgaver"]}, {"gruppe": "Romgeometri", "ferdigheter": ["Firkantede prismer", "Trekantede prismer", "Sylinder", "Pyramide", "Kjegle", "Kule", "Omgjøring av formler", "Massetetthet", "Tekstoppgaver", "Lage egne oppgaver"]}, {"gruppe": "Statistikk", "ferdigheter": ["Sentralmål", "Spredningsmål", "Frekvenstabeller", "Relativ frekvens", "Lage diagrammer", "Tolke diagrammer", "Begrunne valg av sentralmål", "Kritisk vurdering", "Tekstoppgaver", "Lage egne oppgaver"]}, {"gruppe": "Sannsynlighet", "ferdigheter": ["Begreper", "Kombinasjoner", "Fakultet", "Ordnet utvalg m/tilbakelegging", "Ordnet utvalg u/tilbakelegging", "Uordnet utvalg", "Sannsynlighet med ett trekk", "Flere trekk", "Sannsynlighet flere hendelser", "Lage egne oppgaver"]}], "10": [{"gruppe": "Algebra 10.trinn", "ferdigheter": ["Polynomer", "Polynomer geometrisk", "1. kvadratsetning", "2.kvadratsetning", "Konjugatsetningen", "Faktorisering", "Rasjonale uttrykk", "Bevise kvadratsetningene", "Generalisering", "Tekstoppgaver"]}, {"gruppe": "Funksjoner 10.trinn", "ferdigheter": ["Lineære funksjoner", "Omvendt proporsjonal", "Andregradsfunksjoner", "Polynomfunksjoner", "Rasjonale funksjoner", "Eksponentialfunksjoner", "Regresjon", "Nullpunkter", "Tekstoppgaver", "Lage egne oppgaver"]}, {"gruppe": "Likningssett", "ferdigheter": ["Prøve/feile", "Innsettingsmetoden", "Addisjonsmetoden", "Grafisk løsning", "Sette prøve på svaret", "Tegne likningssett", "Forklare likningssett", "Likningssett med tre ukjente", "Tekstoppgaver", "Lage egne likningssett"]}, {"gruppe": "Økonomi", "ferdigheter": ["Begreper", "Vekstfaktor", "Prosentvis vekst", "Kjøp, salg og MVA", "Budsjett og regnskap", "Lån og sparing", "Lønn og skatt", "Valuta", "Tekstoppgaver", "Lage egne oppgaver"]}, {"gruppe": "Geogebra funksjoner", "ferdigheter": ["Tegne grafer (start og slutt)", "Finne ekstremalpunkt", "Finne tangenten til en kurve", "Finne stigningstall", "Finne skjæringspunkt", "Finne nullpunkt", "Bruke regneark", "Finne beste tilpasset linje", "Lage lister med punkt", "Regresjon"]}, {"gruppe": "Geogebra geometri og CAS", "ferdigheter": ["Tegne parallelle linjer og normaler", "Tegne 2D-figurer", "Tegne og brette ut 3D-figurer", "Finne areal og volum", "Finne størrelsen på vinkler", "Regne ut algebraiske uttrykk", "Faktorisere algebraiske uttrykk", "Sett inn verdi for variabel", "Løs likninger", "Løs likningssett"]}, {"gruppe": "Excel", "ferdigheter": ["Celleanvisning og formatering", "Lage formler", "Låse celler", "Lage dynamiske fomler", "Autosummering", "Finne sentralmål", "Lage diagrammer", "Endre talltype", "Vise fomler", "Skjule/fryse rekker og kolonner"]}, {"gruppe": "Programmering", "ferdigheter": ["Lage og tolke pseudokode", "Lage og tolke flytskjema", "Lage algoritmer", "Programmere enkle algoritmer", "Bruke variabler i programmering", "Anvende vilkår, løkker og funksjoner", "Lage og bruke lister", "Simulere tilfeldighet", "Utforske geometriske figurer", "Tolke koder"]}]}, "nat": [{"gruppe": "Utforsking og forskning", "ferdigheter": ["Stille spørsmål og hypoteser", "Planlegge forsøk", "Gjennomføre forsøk", "Tolke resultater", "Presentere funn", "Kildekritikk", "Vitenskapelig metode", "Labsikkerhet", "Bruke digitale verktøy", "Fagbegreper"]}, {"gruppe": "Teknologi og elektrisitet", "ferdigheter": ["Elektrisk krets", "Spenning og strøm", "Motstand", "Parallell/serie", "Kommunikasjonsteknologi", "Digitale signaler", "Sensorer", "Elektronikk", "Programmering i naturfag", "Teknologiutvikling"]}, {"gruppe": "Kjemi", "ferdigheter": ["Atommodellen", "Periodesystemet", "Kjemiske bindinger", "Molekylmodeller", "Kjemiske reaksjoner", "Syre og base", "pH", "Elektrokjemi", "Organisk kjemi", "Polymerer"]}, {"gruppe": "Biologi og naturmangfold", "ferdigheter": ["Cellebiologi", "Fotosyntese", "Celleånding", "Genetikk", "Evolusjon", "Naturmangfold", "Økologi", "Mikrobiologi", "Kroppen", "Hormonsystemet"]}, {"gruppe": "Kropp og helse", "ferdigheter": ["Nervesystemet", "Hjertet", "Lungene", "Nyrene", "Fordøyelsen", "Immunforsvaret", "Hormoner", "Øyet", "Hjernen", "Rusmidler"]}, {"gruppe": "Klima og miljø", "ferdigheter": ["Drivhuseffekten", "Klimaendringer", "Energikilder", "Fornybar energi", "Karbonkretsløpet", "Havforsuring", "Naturkatastrofer", "Geologi", "Bærekraft", "Miljøpåvirkning"]}], "prg": [{"gruppe": "Programmering", "ferdigheter": ["Pseudokode", "Flytskjema", "Algoritmer", "Variabler", "Betingelser (if/else)", "Løkker", "Funksjoner", "Lister/arrays", "Feilsøking", "Prosjekt"]}]};
+
+// ── FERDIGHETSKART ────────────────────────────────────────────────────────
+var fkData = {};        // {ferdighet: score 0-100}
+var fkAktivElev = null;
+
+function fkFagNokkel(fag) {
+  if (fag==='mat8') return ['mat','8'];
+  if (fag==='mat9') return ['mat','9'];
+  if (fag==='mat10') return ['mat','10'];
+  if (fag==='nat') return ['nat', null];
+  if (fag==='prg') return ['prg', null];
+  return [fag, null];
+}
+
+function fkHentGrupper(fag) {
+  var [f, t] = fkFagNokkel(fag);
+  var fd = FERDIGHETSDATA[f];
+  if (!fd) return [];
+  if (t) return fd[t] || [];
+  return fd;
+}
+
+async function fkLastElever() {
+  var klasseId = $('fk-klasse') ? $('fk-klasse').value : '';
+  var sel = $('fk-elev');
+  var kElever = elever.filter(function(e){return e.klasse_id===klasseId;});
+  sel.innerHTML = '<option value="">— Velg elev —</option>'
+    + kElever.map(function(e){return '<option value="'+e.id+'">'+e.fullt_navn+'</option>';}).join('');
+  sel.disabled = !kElever.length;
+  $('fk-innhold').style.display = 'none';
+  $('fk-tom').style.display = '';
+}
+
+async function fkLastData() {
+  var elevId = $('fk-elev').value;
+  if (!elevId) { $('fk-innhold').style.display='none'; $('fk-tom').style.display=''; return; }
+  fkAktivElev = elever.find(function(e){return e.id===elevId;});
+  fkData = {};
+  // Hent fra DB (bruker vurderinger-tabellen med km_kode prefixet med "fk_")
+  try {
+    var vR = await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&km_kode=like.fk_%', token);
+    if (Array.isArray(vR)) vR.forEach(function(v){
+      // km_kode format: "fk_<ferdighet>"
+      var key = v.km_kode.replace(/^fk_/, '');
+      fkData[key] = v.nivaa != null ? parseFloat(v.nivaa) : null;
+    });
+  } catch(e) {}
+  $('fk-tom').style.display = 'none';
+  $('fk-innhold').style.display = '';
+  fkVisFag();
+}
+
+function fkVisFag() {
+  var fag = $('fk-fag').value;
+  var grupper = fkHentGrupper(fag);
+  var el = $('fk-grupper');
+  if (!el) return;
+  el.innerHTML = '';
+
+  grupper.forEach(function(gruppe) {
+    var div = document.createElement('div');
+    div.className = 'fk-gruppe';
+    var scores = gruppe.ferdigheter.map(function(f){return fkData[f]!=null ? fkData[f] : null;});
+    var harData = scores.filter(function(s){return s!=null;});
+    var snitt = harData.length ? Math.round(harData.reduce(function(a,b){return a+b;},0)/harData.length) : null;
+
+    div.innerHTML = '<div class="fk-gruppe-hdr">'+gruppe.gruppe
+      + (snitt!=null ? ' <span style="font-size:.7rem;color:'+(snitt>=80?'var(--gron)':snitt>=40?'var(--gul)':'var(--rod)')+';">'+snitt+'%</span>' : '')
+      +'</div>';
+
+    gruppe.ferdigheter.forEach(function(ferdighet) {
+      var score = fkData[ferdighet] != null ? fkData[ferdighet] : -1;
+      var rad = document.createElement('div');
+      rad.className = 'fk-rad';
+      rad.innerHTML = '<div class="fk-ferdighet">'+ferdighet+'</div>'
+        +'<div class="fk-score-knapper">'
+        +[0,25,50,75,100].map(function(v){
+          var aktiv = score===v ? ' aktiv-'+v : '';
+          return '<button class="fk-btn'+aktiv+'" data-ferdighet="'+ferdighet+'" data-score="'+v+'" onclick="fkSettScore(this)">'+v+'%</button>';
+        }).join('')
+        +'</div>';
+      div.appendChild(rad);
+    });
+    el.appendChild(div);
+  });
+  fkOppdaterSnitt(fag);
+}
+
+function fkSettScore(btn) {
+  var ferdighet = btn.dataset.ferdighet;
+  var score = parseInt(btn.dataset.score);
+  fkData[ferdighet] = score;
+  // Oppdater knapp-visning
+  var rad = btn.closest('.fk-rad');
+  rad.querySelectorAll('.fk-btn').forEach(function(b){
+    b.className = 'fk-btn' + (parseInt(b.dataset.score)===score ? ' aktiv-'+score : '');
+  });
+  fkOppdaterSnitt($('fk-fag').value);
+}
+
+function fkOppdaterSnitt(fag) {
+  var grupper = fkHentGrupper(fag);
+  var el = $('fk-snitt-liste');
+  if (!el) return;
+  el.innerHTML = '';
+  grupper.forEach(function(gruppe) {
+    var scores = gruppe.ferdigheter.map(function(f){return fkData[f]!=null?fkData[f]:null;});
+    var harData = scores.filter(function(s){return s!=null;});
+    if (!harData.length) return;
+    var snitt = Math.round(harData.reduce(function(a,b){return a+b;},0)/harData.length);
+    var farge = snitt>=80?'var(--gron)':snitt>=40?'var(--gul)':'var(--rod)';
+    var chip = snitt>=80?'chip-h':snitt>=40?'chip-m':'chip-l';
+    var nivTxt = snitt>=80?'Høy':snitt>=40?'Middels':'Lav';
+    el.innerHTML += '<div class="fk-snitt-rad">'
+      +'<div class="fk-snitt-navn">'+gruppe.gruppe+'</div>'
+      +'<div class="fk-snitt-bar-wrap"><div class="fk-snitt-bar" style="width:'+snitt+'%;background:'+farge+'"></div></div>'
+      +'<div class="fk-snitt-pst" style="color:'+farge+'">'+snitt+'%</div>'
+      +'<span class="fk-chip '+chip+'">'+nivTxt+'</span>'
+      +'</div>';
+  });
+  // Oppdater gruppe-headers i grid
+  document.querySelectorAll('.fk-gruppe-hdr').forEach(function(hdr, i) {
+    var gruppe = grupper[i];
+    if (!gruppe) return;
+    var scores = gruppe.ferdigheter.map(function(f){return fkData[f]!=null?fkData[f]:null;});
+    var harData = scores.filter(function(s){return s!=null;});
+    if (!harData.length) return;
+    var snitt = Math.round(harData.reduce(function(a,b){return a+b;},0)/harData.length);
+    var farge = snitt>=80?'var(--gron)':snitt>=40?'var(--gul)':'var(--rod)';
+    var gammelSpan = hdr.querySelector('span');
+    if (gammelSpan) gammelSpan.remove();
+    hdr.innerHTML += '<span style="font-size:.7rem;color:'+farge+';">'+snitt+'%</span>';
+  });
+}
+
+async function fkLagreAlle() {
+  if (!fkAktivElev) { alert('Velg elev først.'); return; }
+  var elevId = fkAktivElev.id;
+  var poster = Object.keys(fkData).map(function(ferdighet) {
+    return {
+      elev_id: elevId,
+      laerer_id: lid,
+      km_kode: 'fk_' + ferdighet,
+      nivaa: String(fkData[ferdighet])
+    };
+  });
+  if (!poster.length) { alert('Ingen scores å lagre.'); return; }
+  var lagret = 0;
+  for (var i=0; i<poster.length; i++) {
+    try {
+      await SkapLab._post('/vurderinger', poster[i], token).catch(function() {
+        return SkapLab._patch(
+          '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&km_kode=eq.'+encodeURIComponent(poster[i].km_kode),
+          {nivaa: poster[i].nivaa}, token
+        );
+      });
+      lagret++;
+    } catch(e) {}
+  }
+  alert('✅ '+lagret+' av '+poster.length+' scores lagret.');
+}
+
+function fkSkrivUt() {
+  var fag = $('fk-fag').value;
+  var fagNavn = {mat8:'Matematikk 8',mat9:'Matematikk 9',mat10:'Matematikk 10',nat:'Naturfag',prg:'Programmering'}[fag];
+  var elev = fkAktivElev;
+  var k = elev ? klasser.find(function(x){return x.id===elev.klasse_id;}) : null;
+  var grupper = fkHentGrupper(fag);
+
+  var rader = '';
+  grupper.forEach(function(gruppe) {
+    rader += '<tr style="background:#f0f0f0;"><td colspan="3"><strong>'+gruppe.gruppe+'</strong></td></tr>';
+    gruppe.ferdigheter.forEach(function(f) {
+      var s = fkData[f];
+      var farge = s==null?'#888':s>=80?'#16a34a':s>=40?'#ca8a04':'#dc2626';
+      rader += '<tr><td style="padding:4px 8px;">'+f+'</td>'
+        +'<td style="text-align:center;color:'+farge+';font-weight:bold;">'+(s!=null?s+'%':'—')+'</td>'
+        +'<td style="color:'+farge+';">'+(s==null?'Ikke vurdert':s>=80?'Høy':s>=40?'Middels':'Lav')+'</td></tr>';
+    });
+  });
+
+  var win = window.open('','_blank');
+  win.document.write('<html><head><meta charset="UTF-8"><title>Ferdighetskart</title><style>'
+    +'body{font-family:sans-serif;padding:20px;font-size:11px;}'
+    +'h1{font-size:15px;}h2{font-size:12px;color:#555;margin-bottom:8px;}'
+    +'table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:4px 8px;}'
+    +'th{background:#eee;}</style></head><body>'
+    +'<h1>🗺️ Ferdighetskart – '+(elev?elev.fullt_navn:'')+'</h1>'
+    +'<h2>'+(k?k.navn:'')+' · '+fagNavn+' · '+new Date().toLocaleDateString('nb-NO')+'</h2>'
+    +'<table><thead><tr><th>Ferdighet</th><th>Score</th><th>Nivå</th></tr></thead>'
+    +'<tbody>'+rader+'</tbody></table></body></html>');
+  win.document.close(); win.print();
+}
+
+// Init for Ferdighetskart dropdowns
+function fkFyllKlasseDropdown() {
+  var sel = $('fk-klasse');
+  if (!sel) return;
+  sel.innerHTML = klasser.map(function(k){
+    return '<option value="'+k.id+'">'+k.navn+'</option>';
+  }).join('');
+  if (klasser.length) fkLastElever();
+}
+
+
+
+
+// ── OPPGAVE-ARKIV ─────────────────────────────────────────────────────────
+async function lastArkiv() {
+  var klasseId = $('ark-klasse') ? $('ark-klasse').value : '';
+  var el = $('arkiv-innhold');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:12px 0;">Laster…</div>';
+
+  try {
+    var grense = new Date();
+    grense.setDate(grense.getDate() - 3);
+    var isoGrense = grense.toISOString().split('T')[0];
+
+    // Hent tildelinger med utløpt frist (>3 dager siden)
+    var tR = await SkapLab._get(
+      '/tildeling?klasse_id=eq.'+klasseId+'&frist=lt.'+isoGrense+'&select=id,frist,oppgaver(id,tittel,type,ressurs,url,fag)',
+      token
+    );
+    var tildelinger = Array.isArray(tR) ? tR.filter(function(t){return t.oppgaver && t.oppgaver.type !== 'provevarsel';}) : [];
+
+    if (!tildelinger.length) {
+      el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:12px 0;">Ingen arkiverte oppgaver.</div>';
+      return;
+    }
+
+    // Hent aktivitet for klassen for å se hvem som har gjort hva
+    var kElever = elever.filter(function(e){return e.klasse_id===klasseId;});
+    var aktRessurser = {};
+    if (kElever.length) {
+      try {
+        var ids = kElever.map(function(e){return e.id;}).join(',');
+        var aR = await SkapLab._get('/aktivitet?elev_id=in.('+ids+')&select=elev_id,ressurs,score_pst', token);
+        if (Array.isArray(aR)) aR.forEach(function(a){
+          if (!aktRessurser[a.ressurs]) aktRessurser[a.ressurs] = {};
+          if (!aktRessurser[a.ressurs][a.elev_id] || a.score_pst > aktRessurser[a.ressurs][a.elev_id]) {
+            aktRessurser[a.ressurs][a.elev_id] = a.score_pst;
+          }
+        });
+      } catch(e) {}
+    }
+
+    el.innerHTML = '';
+    tildelinger.forEach(function(t) {
+      var o = t.oppgaver;
+      var ressursAkt = aktRessurser[o.ressurs] || {};
+      var gjennomfort = kElever.filter(function(e){return ressursAkt[e.id] != null;});
+      var snitt = gjennomfort.length
+        ? Math.round(gjennomfort.reduce(function(s,e){return s+(ressursAkt[e.id]||0);},0)/gjennomfort.length)
+        : null;
+
+      var kortEl = document.createElement('div');
+      kortEl.className = 'sek';
+      kortEl.style.marginBottom = '10px';
+      kortEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+        +'<div>'
+          +'<div style="font-family:var(--font-h);font-size:.9rem;font-weight:800;">'+o.tittel+'</div>'
+          +'<div style="font-size:.75rem;color:var(--dim);margin-top:2px;">Frist: '+datoVis(t.frist)+' · '+gjennomfort.length+'/'+kElever.length+' gjennomført'+(snitt!=null?' · Snitt: '+snitt+'%':'')+'</div>'
+        +'</div>'
+        +'<a href="'+o.url+'" target="_blank" class="btn btn-sek btn-sm">↗ Åpne</a>'
+        +'</div>'
+        +'<table><thead><tr><th>Elev</th><th style="width:80px;text-align:center;">Score</th><th style="width:100px;">Status</th></tr></thead>'
+        +'<tbody>'
+        +kElever.map(function(e){
+          var sc = ressursAkt[e.id];
+          var farge = sc==null?'var(--dim)':sc>=70?'var(--gron)':sc>=40?'var(--gul)':'var(--rod)';
+          return '<tr><td style="font-size:.82rem;">'+e.fullt_navn+'</td>'
+            +'<td style="text-align:center;font-family:var(--font-m);color:'+farge+';">'+(sc!=null?sc+'%':'—')+'</td>'
+            +'<td><span class="chip '+(sc==null?'chip-u':sc>=70?'chip-h':sc>=40?'chip-m':'chip-l')+'">'+(sc==null?'Ikke gjort':sc>=70?'Fullført':sc>=40?'Delvis':'Lav score')+'</span></td>'
+            +'</tr>';
+        }).join('')
+        +'</tbody></table>';
+      el.appendChild(kortEl);
+    });
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--rod);font-size:.83rem;">Feil: '+e.message+'</div>';
+  }
+}
 
 </script>
