@@ -2098,19 +2098,13 @@ async function fkLastData() {
   var elevId = $('fk-elev').value;
   if (!elevId) { $('fk-innhold').style.display='none'; $('fk-tom').style.display=''; return; }
   // Auto-lagre forrige elev stille
-  if (fkAktivElev && Object.keys(fkData).length) {
-    await fkLagreAlle(true);
-  }
+  if (fkAktivElev && Object.keys(fkData).length) await fkLagreAlle(true);
   fkAktivElev = elever.find(function(e){return e.id===elevId;});
   fkData = {};
-  // Hent fra DB (bruker vurderinger-tabellen med km_kode prefixet med "fk_")
   try {
-    var vR = await SkapLab._get('/vurderinger?elev_id=eq.'+elevId+'&km_kode=like.fk_%', token);
-    if (Array.isArray(vR)) vR.forEach(function(v){
-      // km_kode format: "fk_<ferdighet>"
-      var key = v.km_kode.replace(/^fk_/, '');
-      fkData[key] = v.nivaa != null ? parseFloat(v.nivaa) : null;
-    });
+    var vR = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/ferdighetsvurdering?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid,
+      {headers: SkapLab._hdr(token)}).then(function(r){return r.json();});
+    if (Array.isArray(vR)) vR.forEach(function(v){ fkData[v.ferdighet] = v.score_pst; });
   } catch(e) {}
   $('fk-tom').style.display = 'none';
   $('fk-innhold').style.display = '';
@@ -2223,34 +2217,33 @@ function fkOppdaterSnitt(fag) {
 async function fkLagreAlle(stille) {
   if (!fkAktivElev) { if (!stille) alert('Velg elev først.'); return; }
   var elevId = fkAktivElev.id;
-  var poster = Object.keys(fkData).map(function(ferdighet) {
-    return {
-      elev_id: elevId,
-      laerer_id: lid,
-      km_kode: 'fk_' + ferdighet,
-      nivaa: String(fkData[ferdighet])
-    };
-  });
-  if (!poster.length) { if (!stille) alert('Ingen scores å lagre.'); return; }
+  if (!Object.keys(fkData).length) return;
 
-  // Upsert: slett gamle og sett inn nye
+  // Slett eksisterende scores for denne eleven
   try {
-    var km_liste = poster.map(function(p){return p.km_kode;}).join(',');
-    // Slett eksisterende for disse km_kode-ene
-    await fetch(SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elevId
-      +'&laerer_id=eq.'+lid+'&km_kode=in.('+km_liste+')', {
+    await fetch(SkapLab.SUPABASE_URL+'/rest/v1/ferdighetsvurdering?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid, {
       method: 'DELETE',
       headers: Object.assign({'Prefer':'return=minimal'}, SkapLab._hdr(token))
     });
-    // Sett inn alle på nytt
-    var resp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/vurderinger', {
+  } catch(e) {}
+
+  // Sett inn alle på nytt
+  var poster = Object.keys(fkData).map(function(ferdighet) {
+    return { elev_id: elevId, laerer_id: lid, ferdighet: ferdighet, score_pst: fkData[ferdighet] };
+  });
+
+  try {
+    var resp = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/ferdighetsvurdering', {
       method: 'POST',
       headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, SkapLab._hdr(token)),
       body: JSON.stringify(poster)
     });
     if (!stille) {
       if (resp.ok) alert('✅ '+poster.length+' scores lagret.');
-      else { var err = await resp.json().catch(function(){return {};}); alert('Feil: '+JSON.stringify(err).substring(0,80)); }
+      else {
+        var err = await resp.json().catch(function(){return {};});
+        alert('Feil: '+JSON.stringify(err).substring(0,120));
+      }
     }
   } catch(e) { if (!stille) alert('Feil: '+e.message); }
 }
