@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Planetens 9 tålegrenser</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1824;--border:rgba(96,160,240,.07);
+  --text:#e8f0ff;--dim:#2a3a58;
+  --accent:#60a0f0;--accent2:#60d0a0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(32,80,140,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(20,100,60,.12) 0%,transparent 60%);pointer-events:none;z-index:0}
+nav{position:sticky;top:0;z-index:40;background:rgba(6,10,14,.92);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:8px;font-size:.8rem;backdrop-filter:blur(8px)}
+.nav-lnk{color:var(--accent);text-decoration:none;opacity:.7;transition:opacity .15s}.nav-lnk:hover{opacity:1}
+.nav-sep{color:var(--dim)}.nav-tittel{color:var(--text);opacity:.85}
+.page{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:32px 20px 60px}
+.hero{padding:40px 0 32px;border-bottom:1px solid var(--border);margin-bottom:36px}
+.hero-over{font-size:.75rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px}
+h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3rem);font-weight:700;line-height:1.1;margin-bottom:14px}
+h1 em{color:var(--accent2);font-style:italic}
+.hero-sub{font-size:.95rem;color:rgba(232,240,255,.65);max-width:620px;line-height:1.6}
+/* KARUSELL */
+.karusell{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:32px}
+.k-slides{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 280px;gap:0}
+.k-info{padding:28px 28px 24px;display:flex;flex-direction:column;gap:12px}
+.k-nr{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.k-kat{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.04em;width:fit-content}
+.k-tittel{font-family:var(--font-d);font-size:1.35rem;font-weight:600;line-height:1.25;color:var(--text)}
+.k-ingress{font-size:.85rem;color:rgba(232,240,255,.7);line-height:1.65}
+.k-faktaliste{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.k-fakt{display:flex;gap:10px;align-items:flex-start;font-size:.8rem;line-height:1.55;color:rgba(232,240,255,.78)}
+.k-fakt-ikon{font-size:1rem;flex-shrink:0;margin-top:1px}
+.k-anim{background:rgba(6,10,14,.6);display:flex;align-items:center;justify-content:center;padding:20px;border-left:1px solid var(--border)}
+.k-ctrl{display:flex;align-items:center;justify-content:center;gap:16px;padding:14px;border-top:1px solid var(--border);background:rgba(6,10,14,.4)}
+.k-pil{background:none;border:1px solid var(--border);color:var(--accent);border-radius:8px;width:36px;height:36px;font-size:1rem;cursor:pointer;transition:all .15s}.k-pil:hover:not(:disabled){background:rgba(96,160,240,.1);border-color:var(--accent)}.k-pil:disabled{opacity:.25;cursor:not-allowed}
+.k-dots{display:flex;gap:6px}
+.k-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);border:none;cursor:pointer;transition:all .2s;padding:0}.k-dot.on{background:var(--accent2);transform:scale(1.3)}
+/* RADAR-WIDGET */
+.radar-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:32px}
+.radar-tittel{font-family:var(--font-d);font-size:1.1rem;color:var(--accent2);margin-bottom:6px}
+.radar-sub{font-size:.8rem;color:var(--dim);margin-bottom:16px}
+.tg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.tg-kort{background:rgba(6,10,14,.5);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.tg-navn{font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.tg-bar-wrap{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.tg-bar{height:100%;border-radius:3px;transition:width .8s}
+.tg-status{font-size:.7rem}
+@media(max-width:680px){.k-slide{grid-template-columns:1fr}.k-anim{display:none}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag_hub.html" class="nav-lnk">Klima</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Planetens 9 tålegrenser</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Naturfag · Klimavitenskap · Bærekraft</div>
+    <h1>Planetens<br><em>9 tålegrenser</em></h1>
+    <p class="hero-sub">Jordas livsvilkår er avhengige av ni sammenkoblede systemer i balanse. Planetære tålegrenser definerer det trygge handlingsrommet for menneskelig sivilisasjon.</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <!-- S1 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌍 Rammeverk</div>
+          <h3 class="k-tittel">Hva er planetære tålegrenser?</h3>
+          <p class="k-ingress">I 2009 lanserte Johan Rockström og 28 vitenskapsmenn et rammeverk: ni jordprosesser som regulerer stabiliteten til Holocen – den varme, stabile epoken der menneskelig sivilisasjon har vokst frem de siste 10 000 årene.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🟢</span><div><strong>Trygg sone:</strong> Innenfor grensen kan systemer absorbere sjokk og komme tilbake til balanse. Stor usikkerhet rettferdiggjør forsiktighet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🟡</span><div><strong>Usikkerhetssone:</strong> Mellom «trygg» og «kritisk» – sannsynligheten for alvorlige, irreversible endringer øker.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Høy risiko:</strong> Overskridelse kan trigge vippepunkter – abrupte, selvforsterkende endringer som er vanskelige å reversere.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Sammenkobling:</strong> Systemene påvirker hverandre. Overskridelse av én grense øker risikoen for at andre brytes.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 260" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="260" fill="#060a0e"/>
+            <circle cx="130" cy="130" r="110" fill="none" stroke="rgba(96,208,160,.15)" stroke-width="1"/>
+            <circle cx="130" cy="130" r="80" fill="rgba(96,208,160,.06)" stroke="rgba(96,208,160,.3)" stroke-width="1.5"/>
+            <circle cx="130" cy="130" r="50" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.5)" stroke-width="1.5"/>
+            <text x="130" y="134" text-anchor="middle" font-family="Fraunces" font-size="10" fill="rgba(96,208,160,.9)" font-weight="600">TRYGG</text>
+            <text x="130" y="146" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,208,160,.7)">SONE</text>
+            <text x="130" y="92" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.7)">Usikkerhetssone</text>
+            <text x="130" y="176" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.6)">Høy risiko</text>
+            <!-- Prikker for 9 grenser -->
+            <g fill="rgba(96,208,160,.8)">
+              <circle cx="130" cy="50" r="4"/><circle cx="175" cy="65" r="4"/>
+              <circle cx="205" cy="105" r="4"/><circle cx="205" cy="155" r="4"/>
+              <circle cx="175" cy="195" r="4"/><circle cx="130" cy="210" r="4"/>
+              <circle cx="85" cy="195" r="4"/><circle cx="55" cy="155" r="4"/>
+              <circle cx="55" cy="105" r="4"/>
+            </g>
+            <text x="130" y="20" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.6)" letter-spacing=".08em">9 TÅLEGRENSER</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S2 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(240,96,96,.1);color:#f06060;border:1px solid rgba(240,96,96,.25)">🌡️ Klima</div>
+          <h3 class="k-tittel">Klimaendringer og ozonlaget</h3>
+          <p class="k-ingress">To av de mest kritiske grensene handler om atmosfærens sammensetning – CO₂-konsentrasjon og stratosfærisk ozon.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Klimaendringer:</strong> Trygg grense: CO₂ under 350 ppm. Vi er nå på ~422 ppm og stiger med ~2,5 ppm per år. Tålegrensen er allerede overskredet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Stratosfærisk ozon:</strong> Ozonlaget beskytter mot UV-stråling. Montreal-protokollen (1987) stanset utslipp av KFK-gasser – en suksesshistorie. Ozonlaget er på vei tilbake.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔁</span><div><strong>Vippepunkter i klimasystemet:</strong> Smeltende isbreer reduserer albedo → mer oppvarming. Tining av permafrost → metanutslipp → mer oppvarming. Selvforsterkende sykluser.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Parisavtalen:</strong> Mål om å begrense global oppvarming til 1,5–2 °C over førindustrielt nivå. Krever netto null utslipp innen 2050.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 240" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="240" fill="#060a0e"/>
+            <text x="130" y="15" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.6)" letter-spacing=".08em">CO₂ PPM 1960–I DAG</text>
+            <!-- Graf-akse -->
+            <line x1="30" y1="200" x2="240" y2="200" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <line x1="30" y1="20" x2="30" y2="200" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <!-- 350 ppm trygg grense -->
+            <line x1="30" y1="110" x2="240" y2="110" stroke="rgba(96,208,160,.4)" stroke-dasharray="4 3" stroke-width="1"/>
+            <text x="242" y="113" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.7)">350</text>
+            <!-- CO2-kurve (stigende) -->
+            <polyline points="30,180 60,172 90,162 120,150 150,135 180,118 210,98 240,78"
+              fill="none" stroke="#f06060" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Nåværende punkt -->
+            <circle cx="240" cy="78" r="5" fill="#f06060"/>
+            <text x="230" y="70" font-family="DM Sans" font-size="8" fill="#f06060" text-anchor="end">422 ppm</text>
+            <!-- Y-labels -->
+            <text x="25" y="183" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)" text-anchor="end">315</text>
+            <text x="25" y="23" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)" text-anchor="end">430</text>
+            <!-- X-labels -->
+            <text x="30" y="212" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.35)" text-anchor="middle">1960</text>
+            <text x="240" y="212" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.35)" text-anchor="middle">2025</text>
+            <text x="130" y="225" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.55)">Tålegrense overskredet</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S3 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.25)">💧 Vann og næring</div>
+          <h3 class="k-tittel">Ferskvannsbruk og biogeokjemiske strømmer</h3>
+          <p class="k-ingress">Nitrogen- og fosforkretsløpene og ferskvannsforbruket er fundamentale for liv på jorda – og alle er under press fra landbruket.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Ferskvann:</strong> Trygg grense: ~4000 km³/år globalt. Vi er på ~2600 km³/år – fremdeles innenfor, men ujevnt fordelt. Grunnvann tømmes i mange regioner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Nitrogenkretsløpet:</strong> Menneskelig fiksering av nitrogen (kunstgjødsel) overstiger den trygge grensen med 2–3 ganger. Eutrofiering → algeoppblomstring → oksygenmangel i fjorder og innsjøer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚗️</span><div><strong>Fosforkretsløpet:</strong> Fosfor er ikke-fornybart – vi bryter det ut og det havner i havet. Fosfat-avleiringer kan gå tom innen 100–300 år. Trygg grense er overskredet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🇳🇴</span><div><strong>Norge:</strong> Norske fjorder påvirkes av nitrogen fra landbruk og oppdrett. Oslofjorden har kritisk lav oksygentilstand og er sterkt påvirket av overgjødsling.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 240" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="240" fill="#060a0e"/>
+            <text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)" letter-spacing=".08em">NITROGENKRETSLØPET</text>
+            <!-- Atmosfære -->
+            <rect x="60" y="22" width="140" height="32" rx="8" fill="rgba(96,160,240,.08)" stroke="rgba(96,160,240,.3)" stroke-width="1.2"/>
+            <text x="130" y="42" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,160,240,.8)">N₂ i atmosfæren (78%)</text>
+            <!-- Jord -->
+            <rect x="60" y="110" width="140" height="32" rx="8" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.3)" stroke-width="1.2"/>
+            <text x="130" y="130" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,208,160,.8)">Jord – planterøtter</text>
+            <!-- Hav -->
+            <rect x="60" y="188" width="140" height="30" rx="8" fill="rgba(96,100,240,.08)" stroke="rgba(96,100,240,.25)" stroke-width="1"/>
+            <text x="130" y="207" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(140,130,255,.7)">Hav / vann</text>
+            <!-- Piler -->
+            <defs><marker id="arr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,160,.6)"/></marker>
+            <marker id="arr2" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,96,96,.6)"/></marker></defs>
+            <line x1="100" y1="54" x2="100" y2="108" stroke="rgba(96,208,160,.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="70" y="84" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">Fiksering</text>
+            <line x1="160" y1="108" x2="160" y2="56" stroke="rgba(96,208,160,.5)" stroke-width="1.5" marker-end="url(#arr)"/>
+            <text x="163" y="84" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">Denitrif.</text>
+            <line x1="130" y1="142" x2="130" y2="186" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#arr2)"/>
+            <text x="134" y="168" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">Avrenning</text>
+            <!-- Kunstgjødsel -->
+            <rect x="10" y="80" width="46" height="24" rx="5" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)" stroke-width="1"/>
+            <text x="33" y="94" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.8)">Kunstgjødsel</text>
+            <line x1="56" y1="92" x2="80" y2="115" stroke="rgba(240,96,96,.5)" stroke-width="1.2" marker-end="url(#arr2)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S4 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌿 Biologisk mangfold</div>
+          <h3 class="k-tittel">Biologisk mangfold og arealbruk</h3>
+          <p class="k-ingress">Artsmangfold er jordens livspolise. Vi befinner oss midt i det sjette masseutryddelsen, og tapet skjer 100–1000 ganger raskere enn naturlig bakgrunnsnivå.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🦋</span><div><strong>Biodiversitet:</strong> Trygg grense: maks 10 utrydninger per million arter per år. Vi er på ~100–1000. Pattedyr, amfibier og insekter er særlig utsatt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌳</span><div><strong>Arealbruk:</strong> Maks 15% av isfri landareal som dyrket mark. Vi er rundt 12% – nær grensen, og skogavvirkning fortsetter særlig i tropene.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐝</span><div><strong>Pollinatorer:</strong> 75% av matplantene er avhengige av insektpollinering. Insektbestander har kollapset med 40–80% i mange regioner siden 1970.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Kaskadeeffekter:</strong> Tap av en nøkkelart kan kollapse hele økosystemer. Ulv → elg → vegetasjon → erosjon illustrerer trofiske kaskader.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 240" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="240" fill="#060a0e"/>
+            <text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">ARTSUTRYDDELSE (pr. mill. pr. år)</text>
+            <!-- Søyler -->
+            <rect x="30" y="140" width="30" height="50" rx="3" fill="rgba(96,208,160,.6)"/>
+            <text x="45" y="202" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.7)">Naturlig</text>
+            <text x="45" y="212" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)">0,1–1</text>
+            <rect x="80" y="100" width="30" height="90" rx="3" fill="rgba(251,191,36,.5)"/>
+            <text x="95" y="202" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.7)">Grense</text>
+            <text x="95" y="212" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.5)">10</text>
+            <rect x="130" y="30" width="30" height="160" rx="3" fill="rgba(240,96,96,.6)"/>
+            <text x="145" y="202" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.7)">Nå</text>
+            <text x="145" y="212" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.5)">~100–1000</text>
+            <!-- Pil -->
+            <text x="145" y="24" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,96,96,.8)">↑ 100–1000×</text>
+            <!-- Legende -->
+            <rect x="10" y="220" width="240" height="16" rx="4" fill="rgba(240,96,96,.07)" stroke="rgba(240,96,96,.2)" stroke-width="1"/>
+            <text x="130" y="231" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.7)">Vi er i 6. masseutryddelse – men kan bremse den</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S5 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(200,140,255,.1);color:#c88cff;border:1px solid rgba(200,140,255,.25)">🧪 Kjemikalier og hav</div>
+          <h3 class="k-tittel">Kjemisk forurensning, havforsuring og aerosoler</h3>
+          <p class="k-ingress">Tre grenser vi vet minst om – men som allerede viser alarmerende tegn, særlig havforsuring.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Nye stoffer (kjemisk forurensning):</strong> Over 350 000 syntetiske kjemikalier i omløp. Plast, PFAS («evighetskjemikalier»), sprøytemidler – konsekvenser for økosystemer og helse er ufullstendig kartlagt. Tålegrense: ikke kvantifisert.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Havforsuring:</strong> Havet absorberer ~25% av CO₂-utslippene → karbonsyre. pH har sunket fra 8,2 til 8,1 siden industrialiseringen (30% surere). Koralldød og skallbærende organismer trues.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌫️</span><div><strong>Atmosfærisk aerosolbelastning:</strong> Luftforurensning og aerosoler påvirker monsunmønstre og nedbør. Regional overskridelse i Asia. 7 millioner dør av luftforurensning globalt hvert år.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 220" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="220" fill="#060a0e"/>
+            <text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.6)" letter-spacing=".06em">HAVFORSURING – pH OVER TID</text>
+            <line x1="30" y1="190" x2="240" y2="190" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <line x1="30" y1="25" x2="30" y2="190" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <!-- pH-linje -->
+            <polyline points="30,40 80,42 130,55 180,78 230,95"
+              fill="none" stroke="rgba(200,140,255,.8)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="230" cy="95" r="4" fill="rgba(200,140,255,.9)"/>
+            <!-- Labels -->
+            <text x="25" y="43" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)" text-anchor="end">8,2</text>
+            <text x="25" y="98" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)" text-anchor="end">8,1</text>
+            <text x="25" y="193" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)" text-anchor="end">7,9</text>
+            <text x="30" y="200" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)" text-anchor="middle">1850</text>
+            <text x="230" y="200" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)" text-anchor="middle">2025</text>
+            <text x="232" y="90" font-family="DM Sans" font-size="7.5" fill="rgba(200,140,255,.8)">pH 8,1</text>
+            <!-- Grense-linje -->
+            <line x1="30" y1="98" x2="240" y2="98" stroke="rgba(240,96,96,.3)" stroke-dasharray="3 3" stroke-width="1"/>
+            <text x="130" y="212" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.5)">30% surere siden 1850</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S6 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25)">⚠️ Status 2024</div>
+          <h3 class="k-tittel">Oppdatert status: 6 av 9 grenser er overskredet</h3>
+          <p class="k-ingress">En oppdatert analyse fra 2023 viser at seks av ni planetære tålegrenser nå er overskredet – noe som øker risikoen for irreversible endringer i jordsystemet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Overskredet (6):</strong> Klimaendringer · Biologisk mangfold · Arealbruk · Nitrogen/fosfor · Ferskvannsbruk · Nye stoffer/plast</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🟡</span><div><strong>Usikkerhetssone (1):</strong> Havforsuring – nærmer seg kritisk nivå, særlig i Arktis.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🟢</span><div><strong>Innenfor trygg sone (2):</strong> Ozonlaget (bedres) · Atmosfærisk aerosolbelastning (globalt, men regional overskridelse)</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>Hva kan gjøres?</strong> Fornybar energi, plantebasert kosthold, sirkulærøkonomi, naturrestaurering og sterkere internasjonale avtaler. Individuelle valg + systemendring.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 240" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="240" fill="#060a0e"/>
+            <text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.7)" letter-spacing=".06em">STATUS 2024</text>
+            <!-- 9 tålegrenser som sirkler -->
+            <g font-family="DM Sans" font-size="7.5">
+              <!-- Overskredet - rød -->
+              <circle cx="50" cy="45" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="50" y="42" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="7">Klima</text>
+              <text x="50" y="52" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <circle cx="100" cy="45" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="100" y="42" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="6.5">Biodiv.</text>
+              <text x="100" y="52" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <circle cx="150" cy="45" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="150" y="42" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="6.5">Areal</text>
+              <text x="150" y="52" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <circle cx="200" cy="45" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="200" y="42" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="6.5">N/P</text>
+              <text x="200" y="52" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <!-- Rad 2 -->
+              <circle cx="60" cy="110" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="60" y="107" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="6.5">Ferskvann</text>
+              <text x="60" y="118" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <circle cx="115" cy="110" r="18" fill="rgba(240,96,96,.15)" stroke="#f06060" stroke-width="1.5"/>
+              <text x="115" y="107" text-anchor="middle" fill="rgba(240,96,96,.9)" font-size="6">Kjemisk</text>
+              <text x="115" y="118" text-anchor="middle" fill="rgba(240,96,96,.7)" font-size="6">🔴</text>
+              <!-- Usikkerhetssone -->
+              <circle cx="178" cy="110" r="18" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.6)" stroke-width="1.5"/>
+              <text x="178" y="107" text-anchor="middle" fill="rgba(251,191,36,.9)" font-size="6.5">Havfors.</text>
+              <text x="178" y="118" text-anchor="middle" fill="rgba(251,191,36,.7)" font-size="6">🟡</text>
+              <!-- Trygg -->
+              <circle cx="80" cy="175" r="18" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.5)" stroke-width="1.5"/>
+              <text x="80" y="172" text-anchor="middle" fill="rgba(96,208,160,.9)" font-size="6.5">Ozon</text>
+              <text x="80" y="183" text-anchor="middle" fill="rgba(96,208,160,.7)" font-size="6">🟢</text>
+              <circle cx="148" cy="175" r="18" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.5)" stroke-width="1.5"/>
+              <text x="148" y="172" text-anchor="middle" fill="rgba(96,208,160,.9)" font-size="6">Aerosol</text>
+              <text x="148" y="183" text-anchor="middle" fill="rgba(96,208,160,.7)" font-size="6">🟢</text>
+            </g>
+            <text x="130" y="225" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.6)">6 av 9 grenser overskredet (2024)</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- S7 -->
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌱 LK20-kobling</div>
+          <h3 class="k-tittel">Relevans for skole og hverdagsliv</h3>
+          <p class="k-ingress">Planetære tålegrenser er ikke bare et akademisk konsept – de er direkte koblet til kompetansemål i naturfag og til beslutninger i ditt eget liv.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📚</span><div><strong>LK20-kobling:</strong> «Eleven skal kunne gjøre greie for naturlige og menneskeskapte klimaendringer og diskutere konsekvensene». Tålegrensene er faglig ramme for denne diskusjonen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🍽️</span><div><strong>Matvalg:</strong> Kjøttproduksjon bruker 70% av dyrket areal globalt. Plantebasert mat har dramatisk lavere fotavtrykk på alle 9 grensene.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">✈️</span><div><strong>Transport og energi:</strong> Én flytur Oslo–New York = 1,5 tonn CO₂. Bærekraftig personlig karbonbudsjett er ~2 tonn/år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🗳️</span><div><strong>Politisk handling:</strong> Forskning viser at systemendring (politikk, teknologi, økonomi) er viktigere enn individuelle valg alene – men individer påvirker systemer gjennom valg og stemmer.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg">
+            <rect width="260" height="230" fill="#060a0e"/>
+            <text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">CO₂ PR. MATVARE (kg per kg)</text>
+            <!-- Søylediagram -->
+            <line x1="30" y1="195" x2="240" y2="195" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+            <!-- Storfekjøtt -->
+            <rect x="35" y="65" width="28" height="130" rx="3" fill="rgba(240,96,96,.6)"/>
+            <text x="49" y="207" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.5)">Biff</text>
+            <text x="49" y="59" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.8)">27 kg</text>
+            <!-- Ost -->
+            <rect x="73" y="115" width="28" height="80" rx="3" fill="rgba(240,96,96,.45)"/>
+            <text x="87" y="207" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.5)">Ost</text>
+            <text x="87" y="109" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.7)">16 kg</text>
+            <!-- Svin -->
+            <rect x="111" y="150" width="28" height="45" rx="3" fill="rgba(251,191,36,.5)"/>
+            <text x="125" y="207" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.5)">Svin</text>
+            <text x="125" y="144" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.7)">9 kg</text>
+            <!-- Kylling -->
+            <rect x="149" y="170" width="28" height="25" rx="3" fill="rgba(251,191,36,.35)"/>
+            <text x="163" y="207" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.5)">Kylling</text>
+            <text x="163" y="164" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">5 kg</text>
+            <!-- Linser -->
+            <rect x="187" y="187" width="28" height="8" rx="2" fill="rgba(96,208,160,.6)"/>
+            <text x="201" y="207" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.5)">Linser</text>
+            <text x="201" y="181" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.8)">1,6 kg</text>
+          </svg>
+        </div>
+      </div>
+
+    </div><!-- k-slides -->
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j' },
+        body: JSON.stringify({ elev_id: _elev.id, ressurs: ressurs, km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0), antall_oppgaver: antall || null,
+          riktige: riktige || null, fullfort_antall: fullfort_ant || null, totalt_antall: totalt_ant || null })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY + window.innerHeight >= document.body.scrollHeight - 100) {
+      _sporet = true;
+      window._skaplab_logg('taalegrenser', 'NAT-23', 100, 1, 1, 1, 1);
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  setTimeout(function() { if (!_sporet) { _sporet=true; window._skaplab_logg('taalegrenser','NAT-23',80,1,1,1,1); } }, 120000);
+})();
+</script>
+</body>
+</html>

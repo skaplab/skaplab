@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Flora – plantelivet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1824;--border:rgba(96,160,240,.07);
+  --text:#e8f0ff;--dim:#2a3a58;
+  --accent:#60a0f0;--accent2:#60d0a0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(96,160,240,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,160,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,240,255,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(96,160,240,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,240,255,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* FLOKKIMMUNITET-SIMULATOR */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.flokk-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.flokk-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:4px}
+.flokk-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px}
+.flokk-kontroll{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:20px}
+.flokk-felt{display:flex;flex-direction:column;align-items:center;gap:4px}
+.flokk-felt label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.flokk-felt input[type=range]{width:160px;accent-color:var(--accent)}
+.flokk-felt span{font-size:.9rem;color:var(--accent);font-weight:600;min-width:50px;text-align:center}
+.flokk-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.flokk-canvas-wrap canvas{width:100%;border-radius:14px;background:rgba(0,0,0,.3)}
+.flokk-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.flokk-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:12px}
+.flokk-stat{display:flex;flex-direction:column;gap:10px}
+.flokk-boks{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.flokk-boks-v{font-family:var(--font-d);font-size:1.6rem;font-weight:700}
+.flokk-boks-l{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.flokk-knapper{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.flokk-btn{padding:9px 18px;border-radius:10px;border:1px solid rgba(96,160,240,.3);
+  background:rgba(96,160,240,.07);color:var(--accent);font-family:var(--font-d);
+  font-size:.88rem;font-style:italic;cursor:pointer;transition:all .2s}
+.flokk-btn:hover{background:rgba(96,160,240,.14);border-color:var(--accent)}
+.flokk-status{text-align:center;margin-top:12px;font-size:.82rem;min-height:22px;color:var(--dim)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.flokk-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag_hub.html" class="nav-lnk">Biologi</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Flora – plantelivet</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Botanikk · Okologi</div>
+    <h1>Flora –<br><em>plantelivet</em></h1>
+    <p class="hero-sub">Fra moser og bregner til blomsterplanter og barrtrær: forstå planterikets mangfold, fotosyntese, tilpasninger og norsk flora fra havstrand til fjelltopp.</p>
+  </div>
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌿 Definisjon</div>
+          <h3 class="k-tittel">Hva er flora?</h3>
+          <p class="k-ingress">Flora betyr plantelivet i et bestemt geografisk område eller tidsperiode. Det dekker alt fra mikroskopiske alger til de eldste og største trærne på jorda.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📖</span><div><strong>Botanisk definisjon:</strong> Flora = alle ville planter i et område. Kan brukes om en hel region (norsk flora), et habitat (alpinflora), en geologisk epoke (karbonflora) eller en planetkropp.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Planteriket (Plantae):</strong> Eukaryote, flercellet, autotrofe via fotosyntese (vanligvis). Inkluderer: moser (bryofytter) → bregner (pteridofytter) → nakne frøplanter (gymnospermer) → dekkfrøede (angiospermer).</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Floristikk:</strong> Vitenskapen om å kartlegge og beskrive plantelivet. Artsbeskrivelser, nøkler og florabøker (som «Flora Norvegica»). Norsk flora har ~3000 ville karplanter.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Flora vs. vegetasjon:</strong> Flora = hvilke arter finnes. Vegetasjon = hvordan de organiserer seg i plantesamfunn. Løvskog, myr og fjellhei er vegetasjonstyper, ikke floraer.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">PLANTERIKETS INNDELING</text><defs><marker id="af" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,160,.5)"/></marker></defs><rect x="90" y="22" width="80" height="24" rx="7" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.4)" stroke-width="1.5"/><text x="130" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.9)">Planteriket</text><line x1="85" y1="46" x2="50" y2="72" stroke="rgba(96,208,160,.4)" stroke-width="1.2" marker-end="url(#af)"/><line x1="110" y1="46" x2="110" y2="72" stroke="rgba(96,208,160,.4)" stroke-width="1.2" marker-end="url(#af)"/><line x1="155" y1="46" x2="180" y2="72" stroke="rgba(96,208,160,.4)" stroke-width="1.2" marker-end="url(#af)"/><rect x="10" y="74" width="78" height="24" rx="6" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.3)" stroke-width="1"/><text x="49" y="90" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.8)">Moser</text><rect x="91" y="74" width="78" height="24" rx="6" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.3)" stroke-width="1"/><text x="130" y="90" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.8)">Bregner</text><rect x="172" y="74" width="78" height="24" rx="6" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.3)" stroke-width="1"/><text x="211" y="90" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.8)">Frøplanter</text><line x1="211" y1="98" x2="160" y2="122" stroke="rgba(96,208,160,.3)" stroke-width="1.2" marker-end="url(#af)"/><line x1="211" y1="98" x2="230" y2="122" stroke="rgba(96,208,160,.3)" stroke-width="1.2" marker-end="url(#af)"/><rect x="115" y="124" width="90" height="24" rx="6" fill="rgba(96,160,240,.08)" stroke="rgba(96,160,240,.3)" stroke-width="1"/><text x="160" y="140" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.8)">Gymnospermer</text><rect x="190" y="124" width="64" height="24" rx="6" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)" stroke-width="1"/><text x="222" y="140" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.8)">Angiospermer</text><rect x="10" y="164" width="240" height="56" rx="8" fill="rgba(96,208,160,.05)" stroke="rgba(96,208,160,.15)" stroke-width="1"/><text x="130" y="180" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.7)" font-weight="600">~390 000 plantearter kjent globalt</text><text x="20" y="196" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.5)">Angiospermer: ~300 000 (blomsterplanter - 76%)</text><text x="20" y="210" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.4)">Moser: ~20 000  Bregner: ~10 000  Barrtreer: ~600</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌺 Angiospermer</div>
+          <h3 class="k-tittel">Blomsterplanter – angiospermer</h3>
+          <p class="k-ingress">Angiospermer (dekkfrøede planter) er den aller største gruppen med ~300 000 arter. De dominerer land-vegetasjonen og er grunnlaget for nesten all menneskelig mat.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🌸</span><div><strong>Definisjonskjennetegn:</strong> Frøene er dekket av frukt (fruktknuten). Blomster for pollinering. Dobbeltbefruktning: ett sædcellet danner embryo, ett danner frønæring (endosperm). Xylem med forvednete kar.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>Enmikimblader (monocots):</strong> Ett frøblad, parallelle blader, spredte karstrenger. Eks: gress, hvete, mais, ris, løk, orkideer. Grunnlag for matproduksjon globalt.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌳</span><div><strong>Tofrøbladede (dicots):</strong> To frøblad, forgrenede nerver, ringformede karstrenger. Eks: eik, eple, tomat, rose, solsikke, bønner. De fleste løvtrær og urter.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🐝</span><div><strong>Pollinering:</strong> Insektpollinering (entomofili): farge og nektar lokker bier og sommerfugler. Vindpollinering (anemofili): store mengder pollen, uanselig blomst (gress, or). Noen pollineres av flaggermus, fugler og vann.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">BLOMSTERPLANTENS LIVSSYKLUS</text><defs><marker id="afl" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(251,191,36,.5)"/></marker></defs><circle cx="130" cy="115" r="85" fill="none" stroke="rgba(96,208,160,.15)" stroke-width="1"/><rect x="95" y="22" width="70" height="24" rx="6" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.3)" stroke-width="1.2"/><text x="130" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.8)">🌸 Blomstring</text><rect x="185" y="72" width="70" height="24" rx="6" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.3)" stroke-width="1.2"/><text x="220" y="88" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)">🐝 Pollinering</text><rect x="185" y="145" width="70" height="24" rx="6" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.3)" stroke-width="1.2"/><text x="220" y="161" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)">🍎 Frukt/frø</text><rect x="95" y="195" width="70" height="24" rx="6" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.3)" stroke-width="1.2"/><text x="130" y="211" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.7)">🌱 Spiring</text><rect x="5" y="145" width="70" height="24" rx="6" fill="rgba(200,140,255,.1)" stroke="rgba(200,140,255,.3)" stroke-width="1.2"/><text x="40" y="161" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.8)">🪴 Vekst</text><rect x="5" y="72" width="70" height="24" rx="6" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.25)" stroke-width="1"/><text x="40" y="88" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.7)">🫚 Fotosyntese</text><path d="M165,34 Q200,34 200,72" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/><path d="M220,96 Q220,145 220,145" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/><path d="M185,157 Q160,195 165,195" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/><path d="M130,207 Q50,207 40,169" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/><path d="M40,145 Q40,96 75,84" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/><path d="M75,84 Q95,46 95,34" fill="none" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#afl)"/></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.25)">🌲 Gymnospermer</div>
+          <h3 class="k-tittel">Nakne frøplanter – gymnospermer</h3>
+          <p class="k-ingress">Gymnospermer (nakne frøplanter) har frø uten en dekkende frukt. De dominerte for 250 millioner år siden, og bartrær er fortsatt dominerende i boreale skoger (taiga).</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🌲</span><div><strong>Bartrær (Coniferae):</strong> Nålblader, kongler (strobiler), eviggrønne (unntatt lerk). Svært tørketolerante pga. tykt vokslag. Gran, furu, lerk, seder, sekvoia. Sekvoia er verdens tyngste levende organisme.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🍃</span><div><strong>Ginkgo (Ginkgo biloba):</strong> Eneste gjenlevende art av en en gang tallrik gruppe. Levende fossil – uendret i 200 millioner år. Tohjøyde. Hunntrær produserer illeluktende frø. Brukes medisinsk mot demens (omdiskutert).</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Sykader (Cycadophyta):</strong> Ligner palme. Overlevde dinosaurtiden. Noen av verdens eldste levende individer (~1000 år). Yin og yang av gymnospermer – separerte kjønn.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Norsk relevans:</strong> Gran (Picea abies) og furu (Pinus sylvestris) dekker 37% av Norges areal. Skogbruket er en sentral næring. Gran ble spredt nordover etter siste istid (~2500 år siden til Vest-Norge).</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)" letter-spacing=".06em">BARTRES ANATOMI</text><line x1="130" y1="210" x2="130" y2="100" stroke="rgba(96,160,240,.5)" stroke-width="3" stroke-linecap="round"/><polygon points="130,35 90,120 170,120" fill="rgba(96,160,240,.2)" stroke="rgba(96,160,240,.4)" stroke-width="1.2"/><polygon points="130,60 85,140 175,140" fill="rgba(96,160,240,.15)" stroke="rgba(96,160,240,.3)" stroke-width="1.2"/><polygon points="130,90 80,165 180,165" fill="rgba(96,160,240,.12)" stroke="rgba(96,160,240,.25)" stroke-width="1.2"/><ellipse cx="130" cy="215" rx="20" ry="8" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.3)" stroke-width="1"/><text x="130" y="230" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(96,160,240,.5)">Rotaystemet</text><circle cx="130" cy="110" r="5" fill="rgba(251,191,36,.7)"/><text x="148" y="113" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.7)">Kongle</text><text x="10" y="70" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.7)">Naleblad:</text><text x="10" y="82" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">- Vokslag</text><text x="10" y="93" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">- Lite areal</text><text x="10" y="104" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">- Eviggronn</text><text x="10" y="178" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.6)">Gran: Picea abies</text><text x="10" y="190" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.6)">Furu: Pinus sylvestris</text><text x="10" y="202" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.5)">Dekker 37% av Norge</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌿 Tilpasninger</div>
+          <h3 class="k-tittel">Plantetilpasninger til ulike miljøer</h3>
+          <p class="k-ingress">Planter har evolvert fantastiske tilpasninger til tørke, frost, saltmiljø, mørke og næringsstoffmangel. Norsk flora viser hele spekteret fra havstrand til fjelltopp.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🏔️</span><div><strong>Alpintilpasninger:</strong> Snøleievegetasjon – planter som lever under snøen store deler av året. Lav veksthøyde (unngår vind) · Hår og voks (isolasjon og UV-beskyttelse) · Raske vekstsesonger · Vegetativ formering.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Halofytter (saltplanter):</strong> Strandplanter tolererer høy saltkonsentrasjon. Mekanismer: saltsekresjons-kjertler, saltlagring i vakuoler, osmotisk justerte celler. Eks: strandkjeks, saltgress.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌵</span><div><strong>Xerofytter (tørkeplanter):</strong> CAM-fotosyntese (spalteåpninger åpne om natten). Sukkulent vev (kaktusar). Dype røtter. Voksbelagte blad. Liten bladflate. Kan overleve måneder uten vann.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🍀</span><div><strong>Nitrogen-fiksering:</strong> Belgvekster (erter, bønner, kløver) har nitrogenfikserende bakterier (Rhizobium) i rotknoller. Kan leve i nitrogenfattig jord. Nøkkelen til naturlig jordbruk og karbonfastbinding.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">NORSK FLORA - SONER</text><rect x="10" y="22" width="240" height="30" rx="6" fill="rgba(96,160,240,.08)" stroke="rgba(96,160,240,.25)" stroke-width="1"/><text x="130" y="41" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.7)">Snoleie og fjelltopp  (alpint)   0-50 arter pr. sted</text><rect x="10" y="62" width="240" height="30" rx="6" fill="rgba(96,208,160,.08)" stroke="rgba(96,208,160,.25)" stroke-width="1"/><text x="130" y="81" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.7)">Subalpint belte   Bjork, vier, fjellplanter</text><rect x="10" y="102" width="240" height="30" rx="6" fill="rgba(96,208,160,.12)" stroke="rgba(96,208,160,.35)" stroke-width="1.2"/><text x="130" y="121" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.8)">Boreal barskog   Gran, furu, blabarslyng</text><rect x="10" y="142" width="240" height="30" rx="6" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.25)" stroke-width="1"/><text x="130" y="161" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.7)">Blandingsskog   Eik, hassel, lind, ask</text><rect x="10" y="182" width="240" height="30" rx="6" fill="rgba(240,96,96,.07)" stroke="rgba(240,96,96,.2)" stroke-width="1"/><text x="130" y="201" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.6)">Strandvegetasjon   Halofytter, tang, tarestrand</text><text x="255" y="40" font-family="DM Sans" font-size="6" fill="rgba(255,255,255,.2)" text-anchor="end">Kald</text><text x="255" y="200" font-family="DM Sans" font-size="6" fill="rgba(255,255,255,.2)" text-anchor="end">Varm</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌳 Fotosyntese</div>
+          <h3 class="k-tittel">Fotosyntese og stoffomsetning</h3>
+          <p class="k-ingress">Fotosyntese er prosessen som omdanner lysenergi til kjemisk energi og er grunnlaget for nesten alt liv. Planter er primærprodusentene i nesten alle terrestriske næringskjeder.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Lyset reaksjon (i tylakoidene):</strong> Klorofyll absorberer lys → spalter vann (fotolysering) → frigjør O₂ → lager ATP og NADPH. Z-skjemaet: fotosystem II (680 nm) og fotosystem I (700 nm) i serie.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Calvin-syklusen (i stroma):</strong> Bruker ATP og NADPH til å fiksere CO₂ via RuBisCO. Tre CO₂ + 9 ATP + 6 NADPH → ett glyceraldehyd-3-fosfat (G3P). G3P er råmaterialet for glukose, fett og aminosyrer.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>C3, C4 og CAM:</strong> C3 (90% av planter): CO₂ fikseres direkte til 3-karbon-forbindelser. Lite effektivt i varme/tørke pga. fotorespirering. C4 (mais, sukkerrør): forhåndsfoksering i mesofyllceller → bedre i varmt klima. CAM (kaktus): nattlig opptak.</div></div><div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Primærproduksjon:</strong> Planter binder ~120 Gt C per år. Havet (fytoplankton) ~50 Gt C. Global oppvarming: varmere klima øker fotosyntesen i nord, men tørke reduserer den i tropene. Netto-effekten er usikker.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">FOTOSYNTESE</text><defs><marker id="afot" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(251,191,36,.5)"/></marker></defs><rect x="10" y="22" width="240" height="90" rx="10" fill="rgba(96,208,160,.07)" stroke="rgba(96,208,160,.25)" stroke-width="1.2"/><text x="130" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)" font-weight="600">6 CO2 + 6 H2O + lysenergi</text><text x="130" y="58" text-anchor="middle" font-family="DM Sans" font-size="12" fill="rgba(251,191,36,.7)">→</text><text x="130" y="80" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)" font-weight="600">C6H12O6 + 6 O2</text><text x="20" y="100" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)">glukose + oksygen</text><rect x="10" y="125" width="110" height="50" rx="8" fill="rgba(251,191,36,.07)" stroke="rgba(251,191,36,.25)" stroke-width="1"/><text x="65" y="141" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.8)" font-weight="600">Lys-reaksjoner</text><text x="65" y="155" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">Tylakoid-membran</text><text x="65" y="167" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.5)">H2O → O2, ATP, NADPH</text><rect x="140" y="125" width="110" height="50" rx="8" fill="rgba(96,160,240,.07)" stroke="rgba(96,160,240,.25)" stroke-width="1"/><text x="195" y="141" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)" font-weight="600">Calvin-syklus</text><text x="195" y="155" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">Stroma</text><text x="195" y="167" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">CO2 → G3P (glukose)</text><line x1="120" y1="150" x2="138" y2="150" stroke="rgba(96,208,160,.5)" stroke-width="1.5" marker-end="url(#afot)"/><text x="130" y="146" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">ATP</text><rect x="10" y="190" width="240" height="30" rx="8" fill="rgba(96,208,160,.06)" stroke="rgba(96,208,160,.15)" stroke-width="1"/><text x="130" y="209" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.6)">Planter binder ~120 Gt karbon per ar - grunnlag for livet</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">📚 LK20</div>
+          <h3 class="k-tittel">Flora og bærekraft – LK20-kobling</h3>
+          <p class="k-ingress">Kunnskap om flora er grunnlaget for å forstå biologisk mangfold, bærekraft, matproduksjon og klimaendringer. Alle er sentrale i LK20.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📖</span><div><strong>LK20-kobling:</strong> «Eleven skal kunne gjøre greie for celler, arv og variasjon, og bruke dette til å forklare mangfold og tilpasning i naturen». Flora er det levende mangfoldet på land.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Norsk naturmangfold:</strong> Naturmangfoldloven verner truede planter. Rødlista 2021: 4957 truede arter i Norge. Hovedtrussel: arealbruk og -endring (82% av truede arter). Klimaendringer viktigere fremover.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>Matplanter:</strong> Alle matplanter stammer fra ville planter gjennom domestisering (~10 000 år). Korn (Poaceae), belgvekster (Fabaceae), nattskygger (Solanaceae – tomat, potet) er nøkkelfamilier. Genetisk mangfold i villfloraen er avgjørende for avlsberedskap.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Restaurering:</strong> EUs restaureringslov (2024) krever at 30% degradert natur restaureres innen 2030. Naturbaserte løsninger – myrrestaurering, skogplanting, blomsterenger – kombinerer biodiversitet og klimatilpasning.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">TRUEDE PLANTER I NORGE</text><line x1="20" y1="195" x2="240" y2="195" stroke="rgba(255,255,255,.12)" stroke-width="1"/><line x1="20" y1="20" x2="20" y2="195" stroke="rgba(255,255,255,.12)" stroke-width="1"/><rect x="30" y="75" width="35" height="120" rx="3" fill="rgba(240,96,96,.5)"/><text x="47" y="207" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)">Kritisk truet</text><text x="47" y="70" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.8)">399</text><rect x="80" y="50" width="35" height="145" rx="3" fill="rgba(240,96,96,.4)"/><text x="97" y="207" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)">Sterkt truet</text><text x="97" y="45" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.7)">499</text><rect x="130" y="100" width="35" height="95" rx="3" fill="rgba(251,191,36,.5)"/><text x="147" y="207" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)">Saarbar</text><text x="147" y="95" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.8)">315</text><rect x="180" y="125" width="35" height="70" rx="3" fill="rgba(251,191,36,.3)"/><text x="197" y="207" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.4)">Naerom-truet</text><text x="197" y="120" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">~500</text><text x="130" y="222" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.5)">Rodlista 2021 - karplanter</text></svg></div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(r,k,s,a,ri,f,t) {
+      if (!_elev||!_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet',{
+        method:'POST',headers:{'Content-Type':'application/json',
+          'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body:JSON.stringify({elev_id:_elev.id,ressurs:r,km_kode:k,
+          score_pst:Math.round(s||0),antall_oppgaver:a||null,riktige:ri||null,
+          fullfort_antall:f||null,totalt_antall:t||null})
+      }).catch(function(){});
+    };
+  } catch(e) {}
+})();
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+(function(){var _s=false;function sc(){if(_s)return;if(window.scrollY+window.innerHeight>=document.body.scrollHeight-100){_s=true;window._skaplab_logg('flora','NAT-28',100,1,1,1,1);window.removeEventListener('scroll',sc);}}window.addEventListener('scroll',sc);setTimeout(function(){if(!_s){_s=true;window._skaplab_logg('flora','NAT-28',80,1,1,1,1);}},120000);})();
+</script>
+</body>
+</html>

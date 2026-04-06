@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Tilbakekoblingsmekanismer</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1824;--border:rgba(96,160,240,.07);
+  --text:#e8f0ff;--dim:#2a3a58;
+  --accent:#60a0f0;--accent2:#60d0a0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(96,160,240,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,160,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,240,255,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(96,160,240,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,240,255,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* FLOKKIMMUNITET-SIMULATOR */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.flokk-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.flokk-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:4px}
+.flokk-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px}
+.flokk-kontroll{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:20px}
+.flokk-felt{display:flex;flex-direction:column;align-items:center;gap:4px}
+.flokk-felt label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.flokk-felt input[type=range]{width:160px;accent-color:var(--accent)}
+.flokk-felt span{font-size:.9rem;color:var(--accent);font-weight:600;min-width:50px;text-align:center}
+.flokk-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.flokk-canvas-wrap canvas{width:100%;border-radius:14px;background:rgba(0,0,0,.3)}
+.flokk-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.flokk-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:12px}
+.flokk-stat{display:flex;flex-direction:column;gap:10px}
+.flokk-boks{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.flokk-boks-v{font-family:var(--font-d);font-size:1.6rem;font-weight:700}
+.flokk-boks-l{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.flokk-knapper{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.flokk-btn{padding:9px 18px;border-radius:10px;border:1px solid rgba(96,160,240,.3);
+  background:rgba(96,160,240,.07);color:var(--accent);font-family:var(--font-d);
+  font-size:.88rem;font-style:italic;cursor:pointer;transition:all .2s}
+.flokk-btn:hover{background:rgba(96,160,240,.14);border-color:var(--accent)}
+.flokk-status{text-align:center;margin-top:12px;font-size:.82rem;min-height:22px;color:var(--dim)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.flokk-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag_hub.html" class="nav-lnk">Utforsking</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Tilbakekoblingsmekanismer</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Fysiologi · Geofag</div>
+    <h1>Tilbakekoblings-<br><em>mekanismer</em></h1>
+    <p class="hero-sub">Negativ og positiv tilbakekobling regulerer alt fra blodsukkeret til klimaet. Forstå prinsippet én gang – og gjenkjenn det overalt i naturfag.</p>
+  </div>
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🔄 Grunnlag</div>
+          <h3 class="k-tittel">Hva er tilbakekoblingsmekanismer?</h3>
+          <p class="k-ingress">Homeostase er kroppens og naturens evne til å holde stabile indre forhold. Tilbakekoblingsmekanismer er de automatiske systemene som opprettholder denne balansen.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Negativ tilbakekobling (NTK):</strong> Den vanligste formen. En endring fra normalnivå utløser en respons som motvirker endringen og bringer systemet tilbake til set-punkt. Eks: termostat, blodtrykk, blodsukker.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔁</span><div><strong>Positiv tilbakekobling (PTK):</strong> En endring forsterker seg selv. Sjelden i homeostase, men avgjørende i spesifikke fysiologiske prosesser. Eks: fødselsveer (oxytocin), blodkoagulasjon, aksjonspotensialer.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Set-punkt:</strong> Normalnivået systemet styrer mot. Temperaturen er ~37 °C, blodsukker ~4–6 mmol/L, blodtrykk ~120/80 mmHg. Avvik fra set-punkt utløser korrigerende respons.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Kontrollsystemer:</strong> Nervesystemet (raskt, elektrisk), hormonsystemet (sakt, kjemisk) og immunsystemet samarbeider om homeostase. Mange systemer har overlappende kontroll for robusthet.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">NEGATIV VS. POSITIV TILBAKEKOBLING</text><defs><marker id="at" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,208,160,.5)"/></marker><marker id="atp" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,96,96,.5)"/></marker></defs><!-- NTK sirkel --><text x="65" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.7)" font-weight="600">Negativ TK</text><circle cx="65" cy="90" r="35" fill="none" stroke="rgba(96,208,160,.3)" stroke-width="1.5"/><text x="65" y="87" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.8)">Set-punkt</text><text x="65" y="98" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">↑ stimulus</text><path d="M65,55 Q100,70 100,90 Q100,110 65,125" fill="none" stroke="rgba(96,208,160,.5)" stroke-width="1.5" marker-end="url(#at)"/><text x="112" y="95" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">Motvirker</text><text x="112" y="105" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)">⊖ effekt</text><text x="65" y="147" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)">System stabiliseres</text><!-- PTK sirkel --><text x="195" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.7)" font-weight="600">Positiv TK</text><circle cx="195" cy="90" r="35" fill="none" stroke="rgba(240,96,96,.3)" stroke-width="1.5"/><text x="195" y="87" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.8)">Signal</text><text x="195" y="98" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">↑ stimulus</text><path d="M195,55 Q230,70 230,90 Q230,110 195,125" fill="none" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#atp)"/><text x="238" y="95" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">Forsterker</text><text x="238" y="105" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.5)">⊕ effekt</text><text x="195" y="147" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.5)">Eskalerer til sluttpunkt</text><!-- Tidslinje --><rect x="10" y="162" width="240" height="58" rx="10" fill="rgba(96,208,160,.05)" stroke="rgba(96,208,160,.15)" stroke-width="1"/><text x="130" y="177" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.7)" font-weight="600">Eksempler</text><text x="20" y="192" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.6)">⊖ Termostat · Blodsukker · Blodtrykk · Hormon</text><text x="20" y="206" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.6)">⊕ Fødsel · Koagulasjon · Aksjonspotensial · Ejakulasjon</text><text x="20" y="217" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)">NTK er normen – PTK er for raske, avgrensede prosesser</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25)">🌡️ Temperatur</div>
+          <h3 class="k-tittel">Termoregulering – negativ tilbakekobling</h3>
+          <p class="k-ingress">Kroppens temperaturregulering er et skoleeksempel på negativ tilbakekobling. Hypothalamus er «termostaten» som koordinerer responsen.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Termoreseptorer:</strong> Perifere termoreseptorer i hud og kjerne sender signaler til hypothalamus. Hypothalamus sammenligner med set-punkt (37 °C) og initierer korreksjon.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Respons på nedkjøling:</strong> Vasokonstriksjon (reduserer blodflow til hud) · Piloereaksjon (hårsreisning, lite effektivt hos mennesker) · Skjelving (muskelaktivitet genererer varme) · Økt metabolisme.</div></div><div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Respons på overoppheting:</strong> Vasodilatasjon (mer blodflow til hud → stråler ut varme) · Svetting (fordampning kjøler) · Redusert muskelaktivitet · Atferdsrespons (skygge, avkjøling).</div></div><div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Feber:</strong> Pyrogener (fra patogener og immunsystemet) hever set-punktet. Kroppen reagerer som om den er underkjølt → skjelving og vasokonstriksjon til ny høyere «normal». Adaptivt, ikke feil!</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.6)" letter-spacing=".06em">TERMOREGULERING</text><defs><marker id="atemp" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(251,191,36,.5)"/></marker></defs><!-- Hypothalamus --><ellipse cx="130" cy="100" rx="55" ry="32" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.4)" stroke-width="2"/><text x="130" y="97" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(251,191,36,.9)" font-weight="600">Hypothalamus</text><text x="130" y="110" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">Set-punkt: 37 °C</text><!-- Kaldt --><rect x="10" y="30" width="60" height="30" rx="7" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.3)" stroke-width="1"/><text x="40" y="48" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)">🥶 Kaldt</text><line x1="70" y1="50" x2="95" y2="82" stroke="rgba(96,160,240,.4)" stroke-width="1.5" marker-end="url(#atemp)"/><line x1="95" y1="95" x2="70" y2="80" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#atemp)"/><!-- Varmt --><rect x="190" y="30" width="60" height="30" rx="7" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.3)" stroke-width="1"/><text x="220" y="48" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.8)">🥵 Varmt</text><line x1="190" y1="50" x2="175" y2="82" stroke="rgba(240,96,96,.4)" stroke-width="1.5" marker-end="url(#atemp)"/><line x1="175" y1="95" x2="190" y2="80" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#atemp)"/><!-- Korreksjon ned --><rect x="10" y="148" width="100" height="48" rx="8" fill="rgba(96,160,240,.08)" stroke="rgba(96,160,240,.2)" stroke-width="1"/><text x="60" y="163" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.8)" font-weight="600">Respons: varme↑</text><text x="60" y="176" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">🤸 Skjelving</text><text x="60" y="187" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">🩸 Vasokonstriksjon</text><!-- Korreksjon opp --><rect x="150" y="148" width="100" height="48" rx="8" fill="rgba(240,96,96,.08)" stroke="rgba(240,96,96,.2)" stroke-width="1"/><text x="200" y="163" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.8)" font-weight="600">Respons: varme↓</text><text x="200" y="176" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">💧 Svetting</text><text x="200" y="187" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.5)">🩸 Vasodilatasjon</text><!-- Piler ned --><line x1="85" y1="132" x2="60" y2="146" stroke="rgba(251,191,36,.3)" stroke-width="1.2" marker-end="url(#atemp)"/><line x1="175" y1="132" x2="200" y2="146" stroke="rgba(251,191,36,.3)" stroke-width="1.2" marker-end="url(#atemp)"/></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.25)">🍬 Blodsukker</div>
+          <h3 class="k-tittel">Blodsukkerkontroll – insulin og glukagon</h3>
+          <p class="k-ingress">Blodsukkerkontroll er et avgjørende eksempel på negativ tilbakekobling. To antagonistiske hormoner – insulin og glukagon – holder glukosenivået innenfor et smalt vindu.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📈</span><div><strong>Etter et måltid (hyperglykemi):</strong> Blodglukose stiger → beta-celler i bukspyttkjertelen frigjør insulin → insulin aktiverer GLUT4-transportere → celler tar opp glukose → blodglukose synker tilbake.</div></div><div class="k-fakt"><span class="k-fakt-ikon">📉</span><div><strong>Mellom måltider (hypoglykemi):</strong> Blodglukose faller → alfa-celler frigjør glukagon → lever konverterer glykogen til glukose (glykogenolyse) og lager ny glukose (glukoneogenese) → blodglukose stiger.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🩺</span><div><strong>Diabetes mellitus:</strong> Type 1: immunsystemet ødelegger beta-celler → ingen insulin → hyperglykemi. Type 2: insulinresistens → celler reagerer ikke på insulin → progressivt stigende blodsukker. Begge er brudd i tilbakekoblingen.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Andre hormoner:</strong> Kortisol, adrenalin og veksthormon øker blodsukkeret (kontrregulatorer). Dette er grunnen til at stress øker blodsukkeret – kamp-eller-flukt-respons krever energi.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)" letter-spacing=".06em">BLODSUKKERKONTROLL</text><line x1="20" y1="195" x2="240" y2="195" stroke="rgba(255,255,255,.12)" stroke-width="1"/><line x1="20" y1="20" x2="20" y2="195" stroke="rgba(255,255,255,.12)" stroke-width="1"/><!-- Normalnivå --><line x1="20" y1="110" x2="240" y2="110" stroke="rgba(96,208,160,.3)" stroke-dasharray="4 3" stroke-width="1.2"/><text x="242" y="113" font-family="DM Sans" font-size="6.5" fill="rgba(96,208,160,.7)">Norm.</text><!-- Blodsukker-kurve --><polyline points="20,150 40,130 60,90 80,55 100,65 120,90 140,105 160,115 180,120 200,118 220,115 240,112" fill="none" stroke="rgba(251,191,36,.8)" stroke-width="2.5" stroke-linecap="round"/><!-- Insulin-pil ned --><text x="80" y="45" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)">↑ Insulin</text><line x1="80" y1="50" x2="90" y2="62" stroke="rgba(96,160,240,.5)" stroke-width="1.5"/><!-- Glukagon-pil opp --><text x="28" y="180" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.7)">↑ Glukagon</text><line x1="30" y1="175" x2="30" y2="152" stroke="rgba(240,96,96,.5)" stroke-width="1.5"/><!-- Bukspyttkjertelen --><rect x="100" y="155" width="130" height="62" rx="8" fill="rgba(96,160,240,.07)" stroke="rgba(96,160,240,.2)" stroke-width="1"/><text x="165" y="170" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.8)" font-weight="600">Bukspyttkjertelen</text><text x="165" y="183" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">🔵 Beta-celler → Insulin</text><text x="165" y="195" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">🔴 Alfa-celler → Glukagon</text><text x="165" y="209" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,255,255,.3)">Antagonister – motvirker hverandre</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌊 Natur</div>
+          <h3 class="k-tittel">Tilbakekobling i natursystemer og klima</h3>
+          <p class="k-ingress">Tilbakekoblingsmekanismer er ikke bare fysiologi – de er avgjørende i økosystemer og klimasystemet. Positive tilbakekoblinger i klimaet er særlig bekymringsfulle.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🐺</span><div><strong>Trofisk kaskade (NTK):</strong> Ulv innføres i Yellowstone → elg reduseres → vegetasjon gjenvokser langs elvebredder → erosjon reduseres → elver stabiliseres. En predator kontrollerer hele systemet via NTK.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Albedo-tilbakekobling (PTK):</strong> Økt temperatur → is smelter → mørkere hav absorberer mer sol → ytterligere oppvarming. En selvforsterkende klimakjede – ett av klimaets farligste vippepunkter.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Vegetasjons-tilbakekobling (PTK):</strong> Tørke → vegetasjon dør → mindre fordampning og skyer → mer sol → mer tørke. Amazons tørkeproblemer kan eskalere via denne mekanismen.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>Permafrost-tilbakekobling (PTK):</strong> Oppvarming → permafrost tiner → metanutslipp → kraftig drivhuseffekt (metan er 84× sterkere enn CO₂ over 20 år) → mer oppvarming. Kritisk vippepunkt.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">KLIMATILBAKEKOBLINGER</text><defs><marker id="ak" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,96,96,.5)"/></marker></defs><!-- Sirkler for PTK-kjede --><circle cx="130" cy="80" r="30" fill="rgba(240,96,96,.1)" stroke="rgba(240,96,96,.35)" stroke-width="1.5"/><text x="130" y="77" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.9)">🌡️ Varme</text><text x="130" y="89" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,96,96,.6)">+2°C</text><circle cx="40" cy="155" r="26" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.35)" stroke-width="1.5"/><text x="40" y="152" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.8)">🧊 Is</text><text x="40" y="163" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(96,160,240,.5)">smelter</text><circle cx="220" cy="155" r="26" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.35)" stroke-width="1.5"/><text x="220" y="152" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.8)">❄️ Permafrost</text><text x="220" y="163" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(251,191,36,.5)">metanutslipp</text><!-- Piler --><line x1="108" y1="102" x2="62" y2="135" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#ak)"/><line x1="55" y1="135" x2="115" y2="102" stroke="rgba(96,160,240,.4)" stroke-width="1.2" marker-end="url(#ak)"/><line x1="152" y1="102" x2="198" y2="135" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#ak)"/><line x1="200" y1="135" x2="155" y2="102" stroke="rgba(251,191,36,.4)" stroke-width="1.2" marker-end="url(#ak)"/><text x="80" y="122" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">⊕ Albedo</text><text x="172" y="122" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.6)">⊕ Metan</text><!-- Permafrost-label --><text x="130" y="197" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.6)" font-weight="600">Selvforsterkende oppvarming</text><text x="130" y="210" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.4)">Begge er positive tilbakekoblinger → vippepunkter</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(200,140,255,.1);color:#c88cff;border:1px solid rgba(200,140,255,.25)">🧬 Hormoner</div>
+          <h3 class="k-tittel">Hormonelle tilbakekoblinger – hypofyse-aksen</h3>
+          <p class="k-ingress">Hypotalamus-hypofyse-organaksen er kroppens hormonelle tilbakekoblingssystem. Det regulerer alt fra stressrespons til reproduksjon.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Hypotalamus-hypofyse:</strong> Hypotalamus sender frigjøringshormoner til hypofysen → hypofysen sender tropiske hormoner til målkjertler (skjoldbruskkjertelen, binyrer, gonader) → målkjertelen produserer hormon.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Negativ tilbakekobling:</strong> Høye nivåer av sluttproduktet (f.eks. kortisol, tyroxin, østrogen) hemmer hypotalamus og hypofysen. Dette begrenser videre produksjon – klassisk NTK.</div></div><div class="k-fakt"><span class="k-fakt-ikon">😰</span><div><strong>HPA-aksen (stress):</strong> Hypothalamus → CRH → Hypofyse → ACTH → Binyrebarken → kortisol. Kortisol hemmer CRH og ACTH (NTK), men kronisk stress kan «slite ut» dette systemet.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🚺</span><div><strong>Menstruasjonssyklus (unntak):</strong> Midt i syklus skifter østrogen fra NTK til PTK-respons på LH – utløser eggløsning. Et av få eksempler på en hormonal PTK i normalt fysiologi.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.6)" letter-spacing=".06em">HPA-AKSEN (STRESSRESPONS)</text><defs><marker id="ap" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(200,140,255,.5)"/></marker><marker id="apn" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(240,96,96,.5)"/></marker></defs><!-- Stressor --><rect x="90" y="22" width="80" height="24" rx="7" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)" stroke-width="1"/><text x="130" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.8)">😰 Stressor</text><!-- Hypothalamus --><rect x="80" y="60" width="100" height="30" rx="8" fill="rgba(200,140,255,.1)" stroke="rgba(200,140,255,.4)" stroke-width="1.5"/><text x="130" y="79" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.9)">🧠 Hypothalamus</text><!-- Hypofyse --><rect x="80" y="110" width="100" height="30" rx="8" fill="rgba(200,140,255,.08)" stroke="rgba(200,140,255,.3)" stroke-width="1.2"/><text x="130" y="129" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,140,255,.8)">Hypofysen</text><!-- Binyrer --><rect x="80" y="160" width="100" height="30" rx="8" fill="rgba(240,96,96,.08)" stroke="rgba(240,96,96,.3)" stroke-width="1.2"/><text x="130" y="179" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.8)">🦷 Binyrebarken</text><!-- Kortisol --><rect x="80" y="205" width="100" height="20" rx="6" fill="rgba(240,96,96,.06)" stroke="rgba(240,96,96,.2)" stroke-width="1"/><text x="130" y="219" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.7)">⚡ Kortisol</text><!-- Piler ned --><line x1="130" y1="46" x2="130" y2="58" stroke="rgba(200,140,255,.5)" stroke-width="1.5" marker-end="url(#ap)"/><text x="145" y="56" font-family="DM Sans" font-size="7" fill="rgba(200,140,255,.6)">CRH</text><line x1="130" y1="90" x2="130" y2="108" stroke="rgba(200,140,255,.5)" stroke-width="1.5" marker-end="url(#ap)"/><text x="145" y="102" font-family="DM Sans" font-size="7" fill="rgba(200,140,255,.6)">ACTH</text><line x1="130" y1="140" x2="130" y2="158" stroke="rgba(240,96,96,.5)" stroke-width="1.5" marker-end="url(#apn)"/><line x1="130" y1="190" x2="130" y2="203" stroke="rgba(240,96,96,.4)" stroke-width="1.5" marker-end="url(#apn)"/><!-- NTK tilbake --><path d="M80,215 Q20,215 20,90 Q20,60 80,70" fill="none" stroke="rgba(96,208,160,.4)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ap)"/><text x="8" y="148" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)" text-anchor="middle">⊖</text><text x="8" y="158" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)" text-anchor="middle">NTK</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">📚 LK20</div>
+          <h3 class="k-tittel">Sammendrag og kompetansemål</h3>
+          <p class="k-ingress">Tilbakekoblingsmekanismer er et sentralt prinsipp i biologi, kjemi, fysikk og geofag. LK20 forventer at du kan identifisere og forklare disse mekanismene i ulike kontekster.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>LK20-kobling:</strong> «Eleven skal kunne beskrive og forklare mekanismer for regulering i organismer og i naturen». Tilbakekobling er det samlende prinsippet.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Gjenkjenne mekanismen:</strong> Spør alltid: (1) Hva er set-punktet? (2) Hva er stimulusen? (3) Hva er effektoren? (4) Motvirker eller forsterker responsen stimulusen?</div></div><div class="k-fakt"><span class="k-fakt-ikon">🧩</span><div><strong>Tverrfaglig:</strong> NTK og PTK dukker opp i: biologi (homeostase, hormoner) · kjemi (Le Chateliers prinsipp er NTK) · fysikk (termostat) · geofag (klimasystem) · økonomi (markedsbalanse).</div></div><div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>Nøkkelforskjell:</strong> NTK → stabilitet og homeostase. PTK → hurtige, avgrensede prosesser med klar start og slutt (koagulasjon stopper når såret er tett; fødsel slutter når barnet er ute).</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">TILBAKEKOBLING – OPPSUMMERING</text><rect x="10" y="24" width="240" height="90" rx="10" fill="rgba(96,208,160,.06)" stroke="rgba(96,208,160,.2)" stroke-width="1"/><text x="130" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)" font-weight="600">Negativ tilbakekobling (NTK) ⊖</text><text x="20" y="57" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.6)">Temperatur · Blodsukker · Blodtrykk · Hormonakser</text><text x="20" y="71" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.5)">Albedo (kan brytes ved vippepunkt)</text><text x="20" y="85" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.4)">Le Chateliers prinsipp i kjemisk likevekt</text><text x="20" y="99" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.35)">Populasjonsregulering via rovdyr-bytte</text><rect x="10" y="126" width="240" height="90" rx="10" fill="rgba(240,96,96,.05)" stroke="rgba(240,96,96,.2)" stroke-width="1"/><text x="130" y="142" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.8)" font-weight="600">Positiv tilbakekobling (PTK) ⊕</text><text x="20" y="159" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.6)">Fødselsveer (oxytocin) · Blodkoagulasjon</text><text x="20" y="173" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.5)">Aksjonspotensial · Eggløsning (LH-surge)</text><text x="20" y="187" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.4)">Klimavippepunkter: permafrost, albedo, vegetasjon</text><text x="20" y="201" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.35)">HIV-progresjon til AIDS</text></svg></div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(r,k,s,a,ri,f,t) {
+      if (!_elev||!_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet',{
+        method:'POST',headers:{'Content-Type':'application/json',
+          'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body:JSON.stringify({elev_id:_elev.id,ressurs:r,km_kode:k,
+          score_pst:Math.round(s||0),antall_oppgaver:a||null,riktige:ri||null,
+          fullfort_antall:f||null,totalt_antall:t||null})
+      }).catch(function(){});
+    };
+  } catch(e) {}
+})();
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+(function(){var _s=false;function sc(){if(_s)return;if(window.scrollY+window.innerHeight>=document.body.scrollHeight-100){_s=true;window._skaplab_logg('tilbakekobling','NAT-26',100,1,1,1,1);window.removeEventListener('scroll',sc);}}window.addEventListener('scroll',sc);setTimeout(function(){if(!_s){_s=true;window._skaplab_logg('tilbakekobling','NAT-26',80,1,1,1,1);}},120000);})();
+</script>
+</body>
+</html>

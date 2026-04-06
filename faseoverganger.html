@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Faseoverganger</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060a0e;--surface:#0a1018;--card:#0e1824;--border:rgba(96,160,240,.07);
+  --text:#e8f0ff;--dim:#2a3a58;
+  --accent:#60a0f0;--accent2:#60d0a0;--accent3:#f06060;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(96,160,240,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 80%,rgba(96,208,160,.03),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,14,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 48px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,5vw,3.6rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:520px;margin:0 auto;line-height:1.8}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.9rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,240,255,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(96,160,240,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,240,255,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+/* FLOKKIMMUNITET-SIMULATOR */
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+.flokk-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.flokk-tittel{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);text-align:center;margin-bottom:4px}
+.flokk-sub{font-size:.78rem;color:var(--dim);text-align:center;margin-bottom:20px}
+.flokk-kontroll{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:20px}
+.flokk-felt{display:flex;flex-direction:column;align-items:center;gap:4px}
+.flokk-felt label{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.flokk-felt input[type=range]{width:160px;accent-color:var(--accent)}
+.flokk-felt span{font-size:.9rem;color:var(--accent);font-weight:600;min-width:50px;text-align:center}
+.flokk-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.flokk-canvas-wrap canvas{width:100%;border-radius:14px;background:rgba(0,0,0,.3)}
+.flokk-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.flokk-panel h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:12px}
+.flokk-stat{display:flex;flex-direction:column;gap:10px}
+.flokk-boks{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.flokk-boks-v{font-family:var(--font-d);font-size:1.6rem;font-weight:700}
+.flokk-boks-l{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.flokk-knapper{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.flokk-btn{padding:9px 18px;border-radius:10px;border:1px solid rgba(96,160,240,.3);
+  background:rgba(96,160,240,.07);color:var(--accent);font-family:var(--font-d);
+  font-size:.88rem;font-style:italic;cursor:pointer;transition:all .2s}
+.flokk-btn:hover{background:rgba(96,160,240,.14);border-color:var(--accent)}
+.flokk-status{text-align:center;margin-top:12px;font-size:.82rem;min-height:22px;color:var(--dim)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.flokk-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <a href="naturfag_hub.html" class="nav-lnk">Kjemi</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Faseoverganger</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Fysikk · Geofag</div>
+    <h1>Fase-<br><em>overganger</em></h1>
+    <p class="hero-sub">Fra smelting til sublimering, fra hydrogenbindinger til klimavippepunkter: forstå faseoverganger pa molekylnivå og i det store klimasystemet.</p>
+  </div>
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.25)">⚗️ Grunnlag</div>
+          <h3 class="k-tittel">Hva er faseoverganger?</h3>
+          <p class="k-ingress">Materie eksisterer i ulike faser – fast, flytende og gass. Faseoverganger er de endringene som skjer mellom disse tilstandene, og de er styrt av temperatur og trykk.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🧊</span><div><strong>De tre aggregattilstandene:</strong> Fast stoff: ordnet, tett pakket. Partiklene vibrerer, men beveger seg ikke fritt. Væske: uordnet, men i kontakt. Partiklene glir forbi hverandre. Gass: uordnet, stor avstand. Partiklene beveger seg fritt.</div></div><div class="k-fakt"><span class="k-fakt-ikon">♨️</span><div><strong>Plasma – den fjerde tilstanden:</strong> Ionisert gass ved svært høy temperatur. Elektroner separeres fra kjernen. Finnes i sola, lysbuer og neonlys. Plasma er den vanligste tilstanden i universet.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Temperatur og trykk styrer faser:</strong> Fasediagrammet viser hvilken fase et stoff er i ved gitt T og P. Trippelpunktet: der alle tre faser eksisterer i likevekt. Kritisk punkt: over dette finnes ingen klar væske-gass-grense.</div></div><div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Vannets unike egenskaper:</strong> Vann er unikt: is er lettere enn flytende vann (hydrogenbindinger danner åpen hexagonal struktur). Uten dette ville havsbunn fryse og liv som vi kjenner det ikke eksistere.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)" letter-spacing=".06em">FASEDIAGRAM FOR VANN</text><line x1="20" y1="200" x2="240" y2="200" stroke="rgba(255,255,255,.2)" stroke-width="1"/><line x1="20" y1="20" x2="20" y2="200" stroke="rgba(255,255,255,.2)" stroke-width="1"/><text x="130" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.35)">Temperatur (T)</text><text x="8" y="115" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.35)" text-anchor="middle" transform="rotate(-90 8 115)">Trykk (P)</text><rect x="20" y="80" width="110" height="120" rx="0" fill="rgba(96,160,240,.1)"/><text x="75" y="145" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,160,240,.8)">🧊 Fast</text><rect x="130" y="100" width="55" height="100" rx="0" fill="rgba(96,208,160,.1)"/><text x="157" y="155" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(96,208,160,.8)">💧</text><rect x="130" y="20" width="110" height="80" rx="0" fill="rgba(251,191,36,.07)"/><text x="185" y="65" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(251,191,36,.7)">☁️ Gass</text><rect x="20" y="20" width="110" height="60" rx="0" fill="rgba(96,160,240,.07)"/><line x1="130" y1="20" x2="130" y2="200" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="3 3"/><line x1="20" y1="100" x2="240" y2="100" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="3 3"/><line x1="130" y1="100" x2="185" y2="20" stroke="rgba(251,191,36,.6)" stroke-width="1.5"/><circle cx="130" cy="100" r="5" fill="rgba(240,96,96,.8)"/><text x="145" y="98" font-family="DM Sans" font-size="7" fill="rgba(240,96,96,.8)">Trippelpunkt</text><circle cx="185" cy="20" r="4" fill="rgba(251,191,36,.7)"/><text x="188" y="18" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.7)">Kritisk p.</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🧊 Smelting/frysing</div>
+          <h3 class="k-tittel">Smelting, frysing og energi</h3>
+          <p class="k-ingress">Faseoverganger krever eller frigjør energi uten temperaturendring. Dette er forklart ved entalpi – varmeinnhold – og er avgjørende i alt fra matlagning til klimasystemet.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Smeltevarme (fusjonsvarme):</strong> Energi som kreves for å gå fra fast til flytende ved smeltepunktet – uten temperaturendring. Isen smelter ved 0 °C, men krever 334 J per gram. Denne energien brytes hydrogenbindingene.</div></div><div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Frysing:</strong> Motsatt prosess – energi frigjøres. Dette er grunnen til at vann plassert ut i frostvær ikke fryser umiddelbart; latent varme må fjernes. Havsisen modererer klimaet ved å absorbere og avgi latent varme.</div></div><div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Oppvarmingskurve:</strong> Temperatur vs. tid ved konstant energitilførsel viser platåer ved faseovergangene. Is oppvarmes → platå ved 0 °C (smelting) → vann oppvarmes → platå ved 100 °C (koking) → damp.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Klimarelevans:</strong> Smelting av is fra Grønland og Antarktis krever enorme mengder energi – det er grunnen til at havisen smelter sakte. Men den energien «skjules» og forsinkede oppvarmingseffekter er undervurderte.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">OPPVARMINGSKURVE FOR VANN</text><line x1="20" y1="200" x2="240" y2="200" stroke="rgba(255,255,255,.15)" stroke-width="1"/><line x1="20" y1="20" x2="20" y2="200" stroke="rgba(255,255,255,.15)" stroke-width="1"/><text x="130" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)">Tid / energi tilfort</text><text x="8" y="115" font-family="DM Sans" font-size="7" fill="rgba(255,255,255,.3)" text-anchor="middle">Temp</text><polyline points="20,185 50,155 70,155 95,115 120,115 145,55 170,55 200,25 230,20" fill="none" stroke="rgba(96,160,240,.8)" stroke-width="2.5" stroke-linecap="round"/><line x1="50" y1="200" x2="50" y2="155" stroke="rgba(96,160,240,.2)" stroke-dasharray="2 3" stroke-width="1"/><line x1="95" y1="200" x2="95" y2="155" stroke="rgba(96,160,240,.2)" stroke-dasharray="2 3" stroke-width="1"/><line x1="120" y1="200" x2="120" y2="115" stroke="rgba(251,191,36,.2)" stroke-dasharray="2 3" stroke-width="1"/><line x1="145" y1="200" x2="145" y2="115" stroke="rgba(251,191,36,.2)" stroke-dasharray="2 3" stroke-width="1"/><text x="72" y="148" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.8)">Smelting</text><text x="72" y="158" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">0 C</text><text x="132" y="108" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.8)">Koking</text><text x="132" y="118" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">100 C</text><text x="25" y="178" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">Is</text><text x="65" y="178" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">Vann</text><text x="160" y="42" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.6)">Damp</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.25)">☁️ Fordampning</div>
+          <h3 class="k-tittel">Fordampning, kondensasjon og sublimering</h3>
+          <p class="k-ingress">Verdensomspennende væskekretsløp, regn, tåke og kuldeopplevelse ved svetting – alle er faseoverganger mellom væske og gass.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Fordampning vs. koking:</strong> Fordampning skjer fra overflaten ved alle temperaturer. Koking skjer i hele volumet ved et bestemt trykk. Avdampning fra hav og innsjøer er motor i vannets kretsløp.</div></div><div class="k-fakt"><span class="k-fakt-ikon">❄️</span><div><strong>Kondensasjon:</strong> Gass → væske. Frigjør varme (latent kondensasjonsvarme). Skyer dannes når fuktig luft stiger og avkjøles → vanndamp kondenserer på støvpartikler (kondensasjonskjerner). Lyn frigjøres ved haglstorm.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌨️</span><div><strong>Sublimering:</strong> Fast → gass uten mellomliggende væsketrinn. Tørris (CO₂) sublimerer ved -78,5 °C. Snø kan sublimere i tørr luft. Liofilisering (frysetørking) bruker sublimering til å bevare mat.</div></div><div class="k-fakt"><span class="k-fakt-ikon">💦</span><div><strong>Avkjøling ved svetting:</strong> Fordampning krever energi (2260 J/g for vann). Energien hentes fra huden → kroppen kjøles. Fordampningsvarme er ~7× større enn smeltevarme – det er grunnen til at svetting er svært effektivt.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.6)" letter-spacing=".06em">VANNETS KRETSLOOP</text><defs><marker id="akret" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,160,240,.5)"/></marker></defs><rect x="60" y="185" width="140" height="30" rx="8" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.35)" stroke-width="1.2"/><text x="130" y="204" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)">💧 Hav / innsjø (flytende)</text><rect x="80" y="100" width="100" height="28" rx="8" fill="rgba(251,191,36,.1)" stroke="rgba(251,191,36,.35)" stroke-width="1.2"/><text x="130" y="118" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.8)">☁️ Skyer (gass)</text><rect x="80" y="30" width="100" height="28" rx="8" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.35)" stroke-width="1.2"/><text x="130" y="48" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)">🌧️ Nedbor / snø</text><!-- Fordampning --><path d="M80,185 Q40,185 40,128 Q40,100 80,110" fill="none" stroke="rgba(251,191,36,.5)" stroke-width="1.5" marker-end="url(#akret)"/><text x="25" y="150" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.7)" text-anchor="middle">Fordamp.</text><text x="25" y="162" font-family="DM Sans" font-size="7" fill="rgba(251,191,36,.5)" text-anchor="middle">2260 J/g</text><!-- Kondensasjon --><path d="M130" y="100" L130 y="58" stroke="rgba(96,160,240,.5)" stroke-width="1.5"/><line x1="130" y1="100" x2="130" y2="60" stroke="rgba(96,160,240,.5)" stroke-width="1.5" marker-end="url(#akret)"/><text x="148" y="83" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.7)">Kondens.</text><!-- Nedbor til hav --><path d="M180,30 Q220,30 220,120 Q220,185 180,185" fill="none" stroke="rgba(96,208,160,.5)" stroke-width="1.5" marker-end="url(#akret)"/><text x="235" y="100" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.7)" text-anchor="middle">Nedbor</text><!-- Latent varme --><rect x="10" y="218" width="240" height="10" rx="4" fill="rgba(240,96,96,.06)"/><text x="130" y="225" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,96,96,.5)">Fordampningsvarme: 2260 J/g  Smeltevarme: 334 J/g</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🔬 Molekylnivå</div>
+          <h3 class="k-tittel">Faseoverganger på molekylnivå</h3>
+          <p class="k-ingress">For å virkelig forstå faseoverganger må vi se på hva som skjer med molekylene og de intermolekylære kreftene under overgangen.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Intermolekylære krefter:</strong> Van der Waals-krefter (svake, finnes i alle molekyler) · Dipolkrefter (polare molekyler) · Hydrogenbindinger (spesielt sterke – O-H, N-H, F-H). Jo sterkere krefter, jo høyere smeltepunkt og kokepunkt.</div></div><div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Hydrogenbindinger i vann:</strong> Hvert vannmolekyl kan danne 4 hydrogenbindinger. I is er alle 4 dannet (åpen, hexagonal struktur) → lavere tetthet enn flytende vann. I flytende vann er gjennomsnittlig 3,4 aktive.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Kinetisk energi og temperatur:</strong> Temperatur = gjennomsnittlig kinetisk energi til partiklene. Ved faseovergang er energien tilgjengelig for å bryte intermolekylære bindinger – ikke til å øke farten. Derav platåene i oppvarmingskurven.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>Entalpi og entropi:</strong> ΔG = ΔH – TΔS. Faseovergangen skjer spontant når Gibbs fri energi er negativ. Is smelter ved T > 0 °C fordi entropigevinsten (TΔS) overstiger den endotermiske entalpien (ΔH).</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">INTERMOLEKYLARE KREFTER</text><text x="65" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.7)" font-weight="600">Fast</text><g opacity="0.9"><circle cx="40" cy="60" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="60" cy="60" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="80" cy="60" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="40" cy="80" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="60" cy="80" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="80" cy="80" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="40" cy="100" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="60" cy="100" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><circle cx="80" cy="100" r="6" fill="rgba(96,160,240,.4)" stroke="rgba(96,160,240,.6)" stroke-width="1"/><line x1="46" y1="60" x2="54" y2="60" stroke="rgba(96,208,160,.6)" stroke-width="1.5"/><line x1="66" y1="60" x2="74" y2="60" stroke="rgba(96,208,160,.6)" stroke-width="1.5"/><line x1="40" y1="66" x2="40" y2="74" stroke="rgba(96,208,160,.6)" stroke-width="1.5"/><line x1="60" y1="66" x2="60" y2="74" stroke="rgba(96,208,160,.6)" stroke-width="1.5"/><line x1="80" y1="66" x2="80" y2="74" stroke="rgba(96,208,160,.6)" stroke-width="1.5"/></g><text x="130" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.7)" font-weight="600">Flytende</text><circle cx="115" cy="55" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="135" cy="68" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="152" cy="57" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="118" cy="82" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="142" cy="90" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="160" cy="78" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="122" cy="100" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><circle cx="148" cy="105" r="6" fill="rgba(96,208,160,.35)" stroke="rgba(96,208,160,.5)" stroke-width="1"/><text x="200" y="36" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.7)" font-weight="600">Gass</text><circle cx="180" cy="48" r="5" fill="rgba(251,191,36,.25)" stroke="rgba(251,191,36,.4)" stroke-width="1"/><circle cx="210" cy="63" r="5" fill="rgba(251,191,36,.25)" stroke="rgba(251,191,36,.4)" stroke-width="1"/><circle cx="195" cy="85" r="5" fill="rgba(251,191,36,.25)" stroke="rgba(251,191,36,.4)" stroke-width="1"/><circle cx="225" cy="50" r="5" fill="rgba(251,191,36,.25)" stroke="rgba(251,191,36,.4)" stroke-width="1"/><circle cx="185" cy="100" r="5" fill="rgba(251,191,36,.25)" stroke="rgba(251,191,36,.4)" stroke-width="1"/><rect x="10" y="118" width="240" height="100" rx="8" fill="rgba(96,208,160,.05)" stroke="rgba(96,208,160,.15)" stroke-width="1"/><text x="130" y="134" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.7)" font-weight="600">Kokepunkt og bindingsstyrke</text><g font-family="DM Sans" font-size="7.5"><text x="20" y="152" fill="rgba(96,160,240,.7)">H2O:  100 C   (4 H-bindinger)</text><text x="20" y="166" fill="rgba(96,160,240,.6)">HF:    19 C   (1 H-binding)</text><text x="20" y="180" fill="rgba(251,191,36,.6)">NH3:  -33 C   (1 H-binding)</text><text x="20" y="194" fill="rgba(240,96,96,.5)">CH4: -161 C   (kun van der Waals)</text><text x="20" y="208" fill="rgba(255,255,255,.2)">Sterkere bindinger → vanskeligere koking</text></g></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(96,208,160,.1);color:#60d0a0;border:1px solid rgba(96,208,160,.25)">🌍 Geofag</div>
+          <h3 class="k-tittel">Faseoverganger i naturen og klimasystemet</h3>
+          <p class="k-ingress">Faseoverganger er fundamentale drivkrefter i klimasystemet, bergartssyklus, vulkanisme og biogeokjemiske kretsløp.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Vannets globale kretsløp:</strong> 500 000 km³ vann fordamper fra havet per år. Kondensasjon frigjør 2,5 × 10²³ J energi daglig – det er motoren i jordas energifordeling, vinder og stormsystemer.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌋</span><div><strong>Magma og lava:</strong> Bergarter smelter under jorda (magma) og størkner igjen (ekstrusive: lava → basalt; intrusive: granitt). Faseovergangen styrer utslipp av CO₂ og SO₂ fra vulkaner.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🧊</span><div><strong>Kryosfæren:</strong> Is og snø dekker 10% av jordas overflate. Albedo-effekten (høy reflektivitet) gjør kryosfæren til en klimaregulator. Permafrost: is i jord; inneholder ~1,7 billioner tonn karbon.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Vippepunkt:</strong> Grønlandsisen: dersom gjennomsnittstemperaturen øker nok, smelter isen fullstendig og hever havnivå med 7 m. Prosessen er langsam (tusenvis av år), men kan starte irreversibelt ved ~1,5 °C oppvarming.</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.6)" letter-spacing=".06em">IS OG KLIMAREGULERING</text><defs><marker id="aklima" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(96,160,240,.5)"/></marker></defs><rect x="10" y="25" width="240" height="30" rx="7" fill="rgba(96,160,240,.1)" stroke="rgba(96,160,240,.3)" stroke-width="1.2"/><text x="130" y="44" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)">🌞 Solstrale treffer jordens overflate</text><rect x="10" y="75" width="110" height="30" rx="7" fill="rgba(96,160,240,.15)" stroke="rgba(96,160,240,.4)" stroke-width="1.2"/><text x="65" y="94" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.9)">🧊 Is: albedo 0.85</text><rect x="140" y="75" width="110" height="30" rx="7" fill="rgba(96,208,160,.1)" stroke="rgba(96,208,160,.3)" stroke-width="1"/><text x="195" y="94" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,208,160,.8)">🌊 Hav: albedo 0.06</text><line x1="65" y1="55" x2="65" y2="73" stroke="rgba(96,160,240,.5)" stroke-width="1.5" marker-end="url(#aklima)"/><text x="50" y="68" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.6)">85%</text><text x="50" y="76" font-family="DM Sans" font-size="7" fill="rgba(96,160,240,.5)">reflektert</text><line x1="195" y1="55" x2="195" y2="73" stroke="rgba(96,208,160,.4)" stroke-width="1.5" marker-end="url(#aklima)"/><text x="200" y="68" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.6)">94%</text><text x="200" y="76" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.5)">absorbert</text><rect x="10" y="120" width="240" height="40" rx="8" fill="rgba(240,96,96,.07)" stroke="rgba(240,96,96,.2)" stroke-width="1"/><text x="130" y="136" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,96,96,.8)" font-weight="600">Positiv tilbakekobling (albedo)</text><text x="130" y="150" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,96,96,.6)">Oppvarming → Is smelter → Lavere albedo → Mer absorpsjon</text><rect x="10" y="175" width="240" height="46" rx="8" fill="rgba(96,160,240,.06)" stroke="rgba(96,160,240,.15)" stroke-width="1"/><text x="130" y="191" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.7)" font-weight="600">Kryosfaerens karbonlager</text><text x="20" y="207" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.6)">Permafrost: ~1700 Gt C (mer enn all atmosfarisk CO2)</text><text x="20" y="217" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,240,.5)">Tining: metanutslipp → selvforsterkende oppvarming</text></svg></div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(96,160,240,.1);color:#60a0f0;border:1px solid rgba(96,160,240,.25)">📚 LK20</div>
+          <h3 class="k-tittel">Faseoverganger i kjemi og LK20</h3>
+          <p class="k-ingress">Faseoverganger er sentrale i kjemikurs, og koblingen til klimasystemet gjør det til et tverrfaglig LK20-tema av første rang.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📖</span><div><strong>LK20-kobling:</strong> «Eleven skal kunne forklare kjemiske bindinger og strukturer og bruke dette til å forklare egenskaper». Faseoverganger er direkte konsekvens av intermolekylære krefter.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Laboratoriekobling:</strong> Smeltepoint-bestemmelse er standard metode for å identifisere stoffer. Destillasjon utnytter ulike kokepunkter til å separere blandinger (olje-raffinering, alkohol-destillasjon).</div></div><div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Beregninger:</strong> q = m × c × ΔT (varmekapasitet). q = m × ΔHfus (smeltevarme). q = m × ΔHvap (fordampningsvarme). Disse brukes til å beregne energibudsjettet i klimamodeller og kjemiske prosesser.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Tverrfaglighet:</strong> Faseoverganger i geofag (magma, is, vannsyklus) · Kjemi (reaksjoner, separasjon) · Biologi (cellefrysing, proteindenaturering) · Fysikk (termodynamikk, Carnot-syklusen).</div></div></div>
+        </div>
+        <div class="k-anim"><svg viewBox="0 0 260 230" width="240" xmlns="http://www.w3.org/2000/svg"><rect width="260" height="230" fill="#060a0e"/><text x="130" y="14" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.6)" letter-spacing=".06em">ENERGIBEREGNING - FASEOVERGANG</text><rect x="10" y="24" width="240" height="90" rx="10" fill="rgba(96,160,240,.06)" stroke="rgba(96,160,240,.2)" stroke-width="1"/><text x="130" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,240,.8)" font-weight="600">Formler</text><g font-family="DM Sans" font-size="8"><text x="20" y="58" fill="rgba(96,208,160,.8)">q = m x c x DeltaT</text><text x="180" y="58" fill="rgba(96,208,160,.5)" font-size="7">(oppvarming)</text><text x="20" y="76" fill="rgba(251,191,36,.8)">q = m x DeltaHfus</text><text x="180" y="76" fill="rgba(251,191,36,.5)" font-size="7">(smelting)</text><text x="20" y="94" fill="rgba(200,140,255,.8)">q = m x DeltaHvap</text><text x="180" y="94" fill="rgba(200,140,255,.5)" font-size="7">(fordampning)</text><text x="20" y="108" fill="rgba(96,160,240,.5)" font-size="7">c(vann) = 4186 J/kgC  Hfus = 334 kJ/kg  Hvap = 2260 kJ/kg</text></g><rect x="10" y="126" width="240" height="55" rx="8" fill="rgba(251,191,36,.06)" stroke="rgba(251,191,36,.15)" stroke-width="1"/><text x="130" y="142" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(251,191,36,.7)" font-weight="600">Eksempel: Smelting av 1 kg is (0 C)</text><text x="20" y="158" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.6)">q = 1 kg x 334 000 J/kg = 334 000 J = 334 kJ</text><text x="20" y="172" font-family="DM Sans" font-size="7.5" fill="rgba(251,191,36,.5)">Nok energi til a varme 1 kg vann fra 0 til 80 C!</text><rect x="10" y="192" width="240" height="30" rx="8" fill="rgba(96,208,160,.06)" stroke="rgba(96,208,160,.15)" stroke-width="1"/><text x="130" y="208" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,208,160,.6)">Destillasjon: ulike kokepkt. brukes til separasjon</text><text x="130" y="218" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,208,160,.4)">Eks: Olje-raffinering, destillasjon av alkohol</text></svg></div>
+      </div>
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)" disabled>←</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">→</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(r,k,s,a,ri,f,t) {
+      if (!_elev||!_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet',{
+        method:'POST',headers:{'Content-Type':'application/json',
+          'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body:JSON.stringify({elev_id:_elev.id,ressurs:r,km_kode:k,
+          score_pst:Math.round(s||0),antall_oppgaver:a||null,riktige:ri||null,
+          fullfort_antall:f||null,totalt_antall:t||null})
+      }).catch(function(){});
+    };
+  } catch(e) {}
+})();
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+// ═══ KARUSELL ═══
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+(function(){var _s=false;function sc(){if(_s)return;if(window.scrollY+window.innerHeight>=document.body.scrollHeight-100){_s=true;window._skaplab_logg('faseoverganger','NAT-30',100,1,1,1,1);window.removeEventListener('scroll',sc);}}window.addEventListener('scroll',sc);setTimeout(function(){if(!_s){_s=true;window._skaplab_logg('faseoverganger','NAT-30',80,1,1,1,1);}},120000);})();
+</script>
+</body>
+</html>
