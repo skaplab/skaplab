@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prøvetrener – Likninger</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f14;--bg2:#16161e;--bg3:#1e1e2a;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --text:#e8e8f0;--dim:#888899;
+  --accent:#e8b84b;--accent2:#5b8dd9;
+  --green:#5bc98e;--red:#e05c6e;--orange:#e8874b;
+  --font-d:'Playfair Display',serif;--font-b:'Source Sans 3',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:16px;}
+
+/* HEADER */
+#header{background:linear-gradient(135deg,#16161e 0%,#1a1a28 100%);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;}
+#header .logo{font-family:var(--font-d);font-size:1.3rem;font-weight:900;color:var(--accent);}
+#header .undertittel{font-size:.78rem;color:var(--dim);}
+#header .spacer{flex:1;}
+#header .stats{display:flex;gap:14px;font-size:.82rem;}
+#header .stats span{color:var(--dim);}
+#header .stats b{color:var(--accent);}
+#back-link{font-size:.8rem;color:var(--dim);text-decoration:none;}
+#back-link:hover{color:var(--text);}
+
+/* TIDSVELGER MODAL */
+#modal-tid{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+#modal-tid.vis{display:flex;}
+.modal-kort{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:32px 28px;max-width:420px;width:100%;text-align:center;}
+.modal-tittel{font-family:var(--font-d);font-size:1.4rem;color:var(--accent);margin-bottom:8px;}
+.modal-sub{color:var(--dim);font-size:.88rem;margin-bottom:24px;line-height:1.5;}
+.modal-knapper{display:flex;gap:10px;flex-direction:column;}
+.modal-tid-btn{padding:13px 20px;border:1px solid var(--border2);border-radius:10px;background:var(--bg3);color:var(--text);font-size:.9rem;font-weight:600;cursor:pointer;font-family:var(--font-b);transition:all .15s;text-align:left;display:flex;align-items:center;gap:12px;}
+.modal-tid-btn:hover{border-color:var(--accent);background:rgba(232,184,75,.07);color:var(--accent);}
+.modal-tid-btn .tid-ikon{font-size:1.3rem;}
+.modal-tid-btn .tid-info{display:flex;flex-direction:column;}
+.modal-tid-btn .tid-label{font-weight:700;}
+.modal-tid-btn .tid-ant{font-size:.76rem;color:var(--dim);}
+
+/* PROGRESS */
+#progress-wrap{padding:10px 24px;background:var(--bg2);border-bottom:1px solid var(--border);display:none;}
+#progress-info{display:flex;justify-content:space-between;font-size:.76rem;color:var(--dim);margin-bottom:5px;}
+#progress-bar{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:3px;transition:width .4s;}
+#tidtaker{padding:6px 24px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:.78rem;color:var(--dim);display:none;text-align:right;}
+#tid-display{color:var(--orange);font-weight:700;font-size:.9rem;}
+#tid-display.kritisk{color:var(--red);animation:blink 1s infinite;}
+@keyframes blink{50%{opacity:.4;}}
+
+/* LAYOUT */
+#app{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 120px);}
+
+/* LISTE */
+#liste{background:var(--bg2);border-right:1px solid var(--border);padding:10px 6px;overflow-y:auto;}
+.liste-knapp{display:flex;align-items:center;gap:7px;width:100%;padding:7px 9px;border-radius:7px;background:transparent;border:1px solid transparent;color:var(--dim);cursor:pointer;font-size:.79rem;font-family:var(--font-b);text-align:left;transition:all .12s;}
+.liste-knapp:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.liste-knapp.aktiv{background:rgba(232,184,75,.07);border-color:rgba(232,184,75,.2);color:var(--accent);}
+.liste-knapp.ok{color:var(--green);}
+.liste-knapp.ok .liste-ikon{color:var(--green);}
+.liste-knapp.feil .liste-ikon{color:var(--red);}
+.liste-ikon{font-size:.85rem;width:16px;text-align:center;}
+.liste-poeng{margin-left:auto;font-size:.7rem;color:var(--dim);}
+
+/* PANEL */
+#panel{padding:28px 32px;max-width:800px;}
+.oppg-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.oppg-badge{background:rgba(232,184,75,.12);border:1px solid rgba(232,184,75,.25);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;}
+.oppg-tittel{font-family:var(--font-d);font-size:1.1rem;color:var(--text);}
+.oppg-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.meta-tag{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid;}
+.meta-poeng{border-color:rgba(91,141,217,.3);color:var(--accent2);background:rgba(91,141,217,.07);}
+.meta-niva{border-color:rgba(91,201,142,.3);color:var(--green);background:rgba(91,201,142,.07);}
+.meta-niva.middels{border-color:rgba(232,135,75,.3);color:var(--orange);background:rgba(232,135,75,.07);}
+.meta-niva.hard{border-color:rgba(224,92,110,.3);color:var(--red);background:rgba(224,92,110,.07);}
+.oppg-tekst{font-size:.97rem;line-height:1.7;margin-bottom:16px;white-space:pre-line;}
+.instruksjon{font-size:.82rem;color:var(--dim);border-left:3px solid var(--border2);padding-left:10px;margin-bottom:18px;line-height:1.5;}
+.svar-wrap{margin-bottom:16px;}
+.svar-label{font-size:.78rem;color:var(--dim);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+
+/* INPUT-TYPER */
+.svar-inp{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:9px;font-size:.95rem;font-family:var(--font-b);width:160px;outline:none;}
+.svar-inp:focus{border-color:rgba(232,184,75,.4);}
+.svar-inp.wide{width:100%;max-width:400px;}
+.svar-enhet{font-size:.85rem;color:var(--dim);margin-left:8px;}
+
+/* FLERVALG */
+.fv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:500px;}
+.fv-btn{padding:11px 16px;border:1.5px solid var(--border2);border-radius:9px;background:var(--bg3);color:var(--text);cursor:pointer;font-size:.88rem;text-align:left;font-family:var(--font-b);transition:all .15s;line-height:1.4;}
+.fv-btn:hover{border-color:rgba(232,184,75,.3);background:rgba(232,184,75,.05);}
+.fv-btn.valgt{border-color:var(--accent);background:rgba(232,184,75,.1);color:var(--accent);}
+.fv-btn.riktig-svar{border-color:var(--green);background:rgba(91,201,142,.1);color:var(--green);}
+.fv-btn.feil-svar{border-color:var(--red);background:rgba(224,92,110,.1);color:var(--red);}
+
+/* FLERLINJE */
+.svar-textarea{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:12px 14px;border-radius:9px;font-size:.9rem;font-family:var(--font-b);width:100%;max-width:560px;min-height:100px;outline:none;resize:vertical;line-height:1.5;}
+.svar-textarea:focus{border-color:rgba(232,184,75,.4);}
+
+/* SANN/USANN */
+.su-rad{display:flex;align-items:center;gap:12px;margin-bottom:8px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;}
+.su-tekst{flex:1;font-size:.88rem;line-height:1.4;}
+.su-knapper{display:flex;gap:6px;}
+.su-btn{padding:5px 14px;border:1px solid var(--border2);border-radius:7px;background:var(--bg2);color:var(--dim);cursor:pointer;font-size:.8rem;font-family:var(--font-b);transition:all .12s;}
+.su-btn:hover{border-color:var(--accent);color:var(--accent);}
+.su-btn.valgt-s{border-color:var(--accent2);background:rgba(91,141,217,.15);color:var(--accent2);}
+.su-btn.valgt-u{border-color:var(--orange);background:rgba(232,135,75,.1);color:var(--orange);}
+.su-btn.riktig{border-color:var(--green);background:rgba(91,201,142,.15);color:var(--green);}
+.su-btn.gal{border-color:var(--red);background:rgba(224,92,110,.1);color:var(--red);}
+
+/* SORTERING */
+.sort-wrap{display:flex;flex-direction:column;gap:6px;max-width:380px;}
+.sort-item{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;cursor:grab;font-size:.88rem;transition:background .12s;}
+.sort-item:active{cursor:grabbing;}
+.sort-item.dragging{opacity:.4;}
+.sort-item.drag-over{border-color:var(--accent);background:rgba(232,184,75,.07);}
+.sort-pil{display:flex;flex-direction:column;gap:2px;}
+.sort-pil button{background:none;border:none;cursor:pointer;color:var(--dim);font-size:.75rem;padding:1px 4px;border-radius:3px;}
+.sort-pil button:hover{background:rgba(255,255,255,.08);color:var(--text);}
+
+/* KNAPPER */
+.knapp-rad{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap;}
+.sjekk-btn{padding:11px 24px;background:var(--accent);color:#1a1a00;font-weight:700;border:none;border-radius:9px;cursor:pointer;font-size:.88rem;font-family:var(--font-b);transition:opacity .15s;}
+.sjekk-btn:hover{opacity:.9;}
+.sjekk-btn:disabled{opacity:.4;cursor:not-allowed;}
+.neste-btn{display:none;padding:11px 22px;background:var(--accent2);color:#fff;font-weight:600;border:none;border-radius:9px;cursor:pointer;font-size:.88rem;font-family:var(--font-b);}
+.neste-btn:hover{opacity:.9;}
+.hopp-btn{padding:10px 18px;background:transparent;border:1px solid var(--border2);color:var(--dim);border-radius:9px;cursor:pointer;font-size:.82rem;font-family:var(--font-b);}
+.hopp-btn:hover{color:var(--text);border-color:rgba(255,255,255,.25);}
+.lever-btn{padding:13px 28px;background:linear-gradient(135deg,var(--green),#3ab87a);color:#0a1f0a;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-size:.95rem;font-family:var(--font-b);display:none;}
+.lever-btn:hover{opacity:.9;}
+
+/* FEEDBACK */
+.fb{margin-top:12px;padding:11px 14px;border-radius:9px;font-size:.86rem;line-height:1.5;display:none;}
+.fb.riktig{background:rgba(91,201,142,.1);border:1px solid rgba(91,201,142,.25);color:var(--green);}
+.fb.delvis{background:rgba(232,135,75,.1);border:1px solid rgba(232,135,75,.25);color:var(--orange);}
+.fb.feil{background:rgba(224,92,110,.1);border:1px solid rgba(224,92,110,.25);color:var(--red);}
+
+/* FASIT */
+.fasit-boks{margin-top:14px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;font-size:.85rem;line-height:1.7;color:var(--text);}
+.fasit-tittel{font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);font-weight:700;margin-bottom:8px;}
+.fasit-boks pre{font-family:var(--font-b);white-space:pre-wrap;}
+
+/* RESULTAT */
+#resultat{display:none;max-width:680px;margin:0 auto;padding:40px 32px;}
+.resultat-tittel{font-family:var(--font-d);font-size:2rem;color:var(--accent);margin-bottom:6px;text-align:center;}
+.resultat-score{font-size:3rem;font-weight:900;text-align:center;margin:12px 0;}
+.resultat-pst{font-size:1.1rem;color:var(--dim);text-align:center;margin-bottom:28px;}
+.resultat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.res-kort{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px;text-align:center;}
+.res-tall{font-size:1.6rem;font-weight:800;color:var(--accent);}
+.res-lab{font-size:.75rem;color:var(--dim);margin-top:4px;}
+
+/* GJENNOMGANG */
+.gjennomgang-rad{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;padding:14px 16px;}
+.gjennomgang-rad.ok{border-left:3px solid var(--green);}
+.gjennomgang-rad.gal{border-left:3px solid var(--red);}
+.gjennomgang-rad.delvis{border-left:3px solid var(--orange);}
+.gjennomgang-spørsmål{font-size:.84rem;color:var(--dim);margin-bottom:6px;}
+.gjennomgang-ditt{font-size:.88rem;margin-bottom:2px;}
+.gjennomgang-fasit{font-size:.85rem;color:var(--green);}
+
+.ny-økt-btn{display:block;width:100%;padding:14px;background:var(--accent);color:#1a1a00;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-size:.95rem;font-family:var(--font-b);margin-top:20px;margin-bottom:10px;}
+.gjennomgang-btn{display:block;width:100%;padding:12px;background:transparent;border:1px solid var(--border2);color:var(--dim);border-radius:10px;cursor:pointer;font-size:.88rem;font-family:var(--font-b);}
+.gjennomgang-btn:hover{color:var(--text);}
+.resultat-overskrift{font-size:.8rem;text-transform:uppercase;letter-spacing:.6px;color:var(--dim);margin-bottom:10px;margin-top:20px;font-weight:700;}
+
+@media(max-width:700px){
+  #app{grid-template-columns:1fr;}
+  #liste{display:none;}
+  #panel{padding:18px 16px;}
+  .fv-grid{grid-template-columns:1fr;}
+  .resultat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div id="modal-tid" class="vis">
+  <div class="modal-kort"><div class="modal-tittel">📝 Prøvetrener</div><div class="modal-sub">Likninger · Velg prøvetid</div>
+  <div class="modal-knapper">
+    <button class="modal-tid-btn" onclick="startProve(45)"><div class="tid-ikon">⚡</div><div class="tid-info"><div class="tid-label">45 minutter</div><div class="tid-ant" id="ant-45">Laster…</div></div></button>
+    <button class="modal-tid-btn" onclick="startProve(60)"><div class="tid-ikon">⏱</div><div class="tid-info"><div class="tid-label">60 minutter</div><div class="tid-ant" id="ant-60">Laster…</div></div></button>
+    <button class="modal-tid-btn" onclick="startProve(90)"><div class="tid-ikon">🧠</div><div class="tid-info"><div class="tid-label">90 minutter</div><div class="tid-ant" id="ant-90">Laster…</div></div></button>
+  </div></div>
+</div>
+<div id="header">
+  <a href="matte_hub.html" id="back-link">← Matte-hub</a>
+  <div><div class="logo">📝 Prøvetrener</div><div class="undertittel" id="prv-undertittel">Likninger</div></div>
+  <div class="spacer"></div>
+  <div class="stats"><span>✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> p</span><span>📋 <b id="st-besvart">0</b>/<b id="st-tot">0</b></span></div>
+  <div id="tidtaker"><span id="tid-display">–:––</span></div>
+</div>
+<div id="progress-wrap">
+  <div id="progress-info"><span id="prog-tekst">Oppgave 1</span><span id="prog-pst">0%</span></div>
+  <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+</div>
+<div id="app" style="display:none;"><div id="liste"></div><div id="panel"></div></div>
+<div id="resultat"></div>
+<script>
+
+// ── SPORING ───────────────────────────────────────────────────────
+(function(){
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e){}
+    window._skaplab_logg = function(ressurs, km, score, ant, rik, fa, tot) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method:'POST',
+        headers:{'Content-Type':'application/json',
+          'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body: JSON.stringify({elev_id:_elev.id, ressurs:ressurs, km_kode:km,
+          score_pst:score, antall_oppgaver:ant, riktige:rik,
+          fullfort_antall:fa, totalt_antall:tot})
+      }).catch(function(){});
+    };
+  } catch(e){}
+})();
+
+// ── HJELPEFUNKSJONER ─────────────────────────────────────────────
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d||1));}
+function plukk(arr){return arr[rnd(0,arr.length-1)];}
+function bland(arr){return arr.slice().sort(function(){return Math.random()-.5;});}
+function gcd(a,b){return b===0?a:gcd(b,a%b);}
+function factorial(k){return k<=1?1:k*factorial(k-1);}
+var KM_KODE='KM6';var RESSURS='provetrener_likninger';var UNDERTITTEL='Likninger';
+function genSjekkl(){var a=rnd(2,7),b=rnd(1,12),x=rnd(1,9);return{type:'sjekkl',tema:'Sette prøve på svaret',poeng:1,nivå:'lett',spørsmål:'Er x = '+x+' en løsning på:\n\n'+a+'x + '+b+' = '+(a*x+b)+'?',instruksjon:'Sett inn x og sjekk.',svarType:'flervalg',alternativer:['Ja','Nei'],fasitIdx:0,løsning:a+'·'+x+'+'+b+'='+(a*x+b)+' ✓'};}
+// ── OPPGAVEBANK: LIKNINGER ────────────────────────────────────────
+
+function genEnkelLikning() {
+  var a=rnd(2,9),b=rnd(1,15);
+  var x=rnd(1,10);
+  var c=a*x+b;
+  return {type:'enkell',tema:'Enkle likninger',poeng:2,nivå:'lett',
+    spørsmål:'Løs likningen:\n\n'+a+'x + '+b+' = '+c,
+    instruksjon:'Isoler x ved å bruke samme operasjon på begge sider.',
+    svarType:'tall',fasit:x,tol:0,enhet:'(x = ?)',
+    løsning:a+'x = '+c+' – '+b+' = '+(c-b)+'\nx = '+(c-b)+' / '+a+' = '+x};
+}
+
+function genVariabelBeggedeSider() {
+  var a=rnd(3,9),b=rnd(2,a-1),c=rnd(1,20),d=rnd(1,15);
+  var x=rnd(1,8);
+  var c_val=a*x+d;
+  var d_val=b*x+c;
+  return {type:'beggesider',tema:'Variabel på begge sider',poeng:2,nivå:'middels',
+    spørsmål:'Løs likningen:\n\n'+a+'x + '+d+' = '+b+'x + '+(a*x+d-b*x),
+    instruksjon:'Flytt alle x-ledd til én side og alle tall til den andre.',
+    svarType:'tall',fasit:x,tol:0,enhet:'(x = ?)',
+    løsning:a+'x – '+b+'x = '+(a*x+d-b*x)+' – '+d+'\n'+(a-b)+'x = '+(a-b)*x+'\nx = '+x};
+}
+
+function genLikningMedParentes() {
+  var a=rnd(2,5),b=rnd(1,8),c=rnd(2,6),x=rnd(1,7);
+  var d=a*(x+b)+c;
+  return {type:'parentesl',tema:'Likninger med parentes',poeng:2,nivå:'middels',
+    spørsmål:'Løs likningen:\n\n'+a+'(x + '+b+') + '+c+' = '+d,
+    instruksjon:'Gange ut parentesen først, så isoler x.',
+    svarType:'tall',fasit:x,tol:0,enhet:'(x = ?)',
+    løsning:a+'x + '+a*b+' + '+c+' = '+d+'\n'+a+'x = '+(d-a*b-c)+'\nx = '+x};
+}
+
+function genBroklikning() {
+  var a=rnd(2,6),b=rnd(1,5),x=rnd(2,9);
+  var h=a*x+b;
+  return {type:'brokl',tema:'Likninger med brøk',poeng:2,nivå:'middels',
+    spørsmål:'Løs likningen:\n\n('+a+'x + '+b+') / '+a+' = '+x,
+    instruksjon:'Gange begge sider med nevneren.',
+    svarType:'tall',fasit:x,tol:0,enhet:'(x = ?)',
+    løsning:'Ganger begge sider med '+a+':\n'+a+'x + '+b+' = '+a+'·'+x+' = '+(a*x)+'\n'+a+'x = '+(a*x-b)+'\nx = '+(a*x-b)+' / '+a+' = '+x};
+}
+
+function genTekstLikning() {
+  var kontekster=[
+    function(){var p=rnd(10,25),ant=rnd(3,8),tot=rnd(ant+1,ant+10)*p;
+      return {sp:'En bil er '+rnd(15,25)+' år gammel.\nFor '+rnd(3,8)+' år siden var den dobbelt så gammel som for '+rnd(1,5)+' år siden.\n\nNei, vent – enklere:\n\nEt antall epler deles likt mellom '+ant+' barn, og hver får '+rnd(3,8)+' epler.\n\nHvor mange epler er det totalt?',
+        x:ant*rnd(3,8),løsn:'x = '+ant+' × '+rnd(3,8)};},
+    function(){var a=rnd(15,30),b=rnd(5,15);
+      return {sp:'Tobias er '+a+' år. Han er '+b+' år eldre enn søsteren sin.\n\nSett opp en likning og finn søsterens alder.',
+        x:a-b,løsn:'La søsterens alder = x\nx + '+b+' = '+a+'\nx = '+( a-b)};},
+    function(){var pris=rnd(12,28),ant=rnd(4,9),tot=pris*ant+rnd(5,20);
+      return {sp:'På butikken koster en appelsin '+pris+' kr. Du kjøper x appelsiner og betaler '+(pris*ant)+' kr.\n\nSett opp og løs en likning for x.',
+        x:ant,løsn:pris+'x = '+(pris*ant)+'\nx = '+ant};},
+  ];
+  var k=plukk(kontekster)();
+  return {type:'tekstl',tema:'Tekstoppgaver med likninger',poeng:3,nivå:'middels',
+    spørsmål:k.sp,instruksjon:'Sett opp en likning og løs den. Vis alle steg.',
+    svarType:'tall',fasit:k.x,tol:0,løsning:k.løsn};
+}
+
+function genUlikhet() {
+  var a=rnd(2,6),b=rnd(1,12),c=rnd(b+1,25);
+  var tegn=plukk(['<','>','≤','≥']);
+  var x_min=Math.ceil((c-b)/a);
+  return {type:'ulikhet',tema:'Ulikheter',poeng:2,nivå:'middels',
+    spørsmål:'Løs ulikheten og skriv svaret på tallinje-form:\n\n'+a+'x + '+b+' '+tegn+' '+c,
+    instruksjon:'Behandle som en likning, men husk å snu fortegnet om du deler med negativt tall.',
+    svarType:'tekst',fasitTekst:'x '+tegn+' '+x_min,
+    løsning:a+'x '+tegn+' '+(c-b)+'\nx '+tegn+' '+(c-b)+'/'+a+' = '+((c-b)/a).toFixed(2)};
+}
+
+function genLikningssett() {
+  var x=rnd(2,8), y=rnd(1,6);
+  var a1=rnd(1,3), b1=rnd(1,3);
+  var a2=rnd(1,3), b2=b1+rnd(1,2);
+  var c1=a1*x+b1*y, c2=a2*x+b2*y;
+  return {type:'sett',tema:'Likningssett',poeng:3,nivå:'krevende',
+    spørsmål:'Løs likningssettet:\n\n'+a1+'x + '+b1+'y = '+c1+'\n'+a2+'x + '+b2+'y = '+c2,
+    instruksjon:'Bruk innsettingsmetoden eller addisjonsmetoden.',
+    svarType:'flertall',labels:['x','y'],fasitArr:[x,y],
+    løsning:'x = '+x+', y = '+y+'\nSjekk: '+a1+'·'+x+' + '+b1+'·'+y+' = '+c1+' ✓'};
+}
+
+function genSjekk() {
+  var a=rnd(2,7),b=rnd(1,12),x=rnd(1,9);
+  var riktig=a*x+b===rnd(a*x+b-5,a*x+b+5)?a*x+b:a*x+b+rnd(1,3);
+  return {type:'sjekkl',tema:'Sette prøve på svaret',poeng:1,nivå:'lett',
+    spørsmål:'Er x = '+x+' en løsning på likningen:\n\n'+a+'x + '+b+' = '+(a*x+b)+'?',
+    instruksjon:'Sett inn x = '+x+' og sjekk om venstre side = høyre side.',
+    svarType:'flervalg',alternativer:['Ja, x = '+x+' er en løsning','Nei, x = '+x+' er ikke en løsning'],
+    fasitIdx:0,
+    løsning:a+'·'+x+' + '+b+' = '+(a*x)+' + '+b+' = '+(a*x+b)+' = '+(a*x+b)+' ✓\nJa, x = '+x+' er riktig.'};
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// NYE FLERTRINNS-OPPGAVER PER EMNE
+// Minst 1/3 av alle oppgaver skal kreve flere regneoperasjoner
+// ══════════════════════════════════════════════════════════════════════
+
+// ── TALL: NYE FLERTRINNS ─────────────────────────────────────────────
+function genHandletur() {
+  var varer = [
+    {navn:'brød', pris:rnd(25,45)},
+    {navn:'melk', pris:rnd(18,28)},
+    {navn:'ost', pris:rnd(55,95)},
+    {navn:'epler', pris:rnd(30,55)},
+  ];
+  var utvalg = bland(varer).slice(0,3);
+  var ant = utvalg.map(function(){return rnd(1,4);});
+  var sum = utvalg.reduce(function(s,v,i){return s+v.pris*ant[i];},0);
+  var betalt = Math.ceil(sum/50)*50;
+  var rest = betalt-sum;
+  var tekst = utvalg.map(function(v,i){return ant[i]+' '+v.navn+' à '+v.pris+' kr';}).join(', ');
+  return {type:'handletur',tema:'Sammensatt tallregning',nivå:'middels',poeng:3,
+    spørsmål:'Du kjøper: '+tekst+'.\n\nDu betaler med '+betalt+' kr.\n\na) Sett opp og regn ut totalkostnaden.\nb) Hvor mye får du igjen?',
+    instruksjon:'Regn ut delkostnad for hver vare, summer, finn resten.',
+    svarType:'flertall',labels:['a) Totalkostnad (kr)','b) Tilbake (kr)'],
+    fasitArr:[sum,rest],
+    løsning:'Totalt: '+utvalg.map(function(v,i){return ant[i]+'×'+v.pris+'='+ant[i]*v.pris;}).join(' + ')+' = '+sum+' kr\nTilbake: '+betalt+' – '+sum+' = '+rest+' kr'};
+}
+
+function genFartsRegning() {
+  var v1=rnd(60,90), t1=rndF(0.5,2.5,1);
+  var v2=rnd(90,120), t2=rndF(0.5,2.0,1);
+  var d1=parseFloat((v1*t1).toFixed(1));
+  var d2=parseFloat((v2*t2).toFixed(1));
+  var dtot=parseFloat((d1+d2).toFixed(1));
+  var ttot=parseFloat((t1+t2).toFixed(1));
+  var vsnitt=parseFloat((dtot/ttot).toFixed(1));
+  return {type:'fart_sammensatt',tema:'Fart, tid og strekning – sammensatt',nivå:'krevende',poeng:4,
+    spørsmål:'En bil kjører '+v1+' km/t i '+t1+' time'+(t1!==1?'r':'')+', deretter '+v2+' km/t i '+t2+' time'+(t2!==1?'r':'')+'.\n\na) Finn total strekning.\nb) Finn gjennomsnittsfarten for hele turen.',
+    instruksjon:'Strekning = fart × tid for hvert delstrekk. Gjsn. fart = total strekning / total tid.',
+    svarType:'flertall',labels:['a) Total strekning (km)','b) Gjennomsnittsfart (km/t)'],
+    fasitArr:[dtot,vsnitt],
+    løsning:'Del 1: '+v1+'×'+t1+'='+d1+' km\nDel 2: '+v2+'×'+t2+'='+d2+' km\nTotalt: '+dtot+' km\nGjsn. fart: '+dtot+'/'+ttot+'='+vsnitt+' km/t'};
+}
+
+function genProsentEndring() {
+  var start=rnd(200,1000);
+  var opp=rnd(10,40);
+  var ned=rnd(5,30);
+  var etter_opp=parseFloat((start*(1+opp/100)).toFixed(0));
+  var etter_ned=parseFloat((etter_opp*(1-ned/100)).toFixed(1));
+  return {type:'pst_endring',tema:'Prosentvis endring – to steg',nivå:'krevende',poeng:3,
+    spørsmål:'En aksje er verdt '+start+' kr.\nDen stiger med '+opp+'% den første måneden.\nSå faller den med '+ned+'% den neste måneden.\n\na) Hva er kursen etter første måneden?\nb) Hva er kursen etter andre måneden?\nc) Er aksjen mer eller mindre verdt enn utgangspunktet?',
+    instruksjon:'Bruk vekstfaktor for hvert steg: ny verdi = gammel × (1 ± prosent/100)',
+    svarType:'flertall',labels:['a) Etter mnd 1 (kr)','b) Etter mnd 2 (kr)'],
+    fasitArr:[etter_opp,etter_ned],
+    løsning:'Etter mnd 1: '+start+'×'+(1+opp/100).toFixed(2)+'='+etter_opp+' kr\nEtter mnd 2: '+etter_opp+'×'+(1-ned/100).toFixed(2)+'='+etter_ned+' kr\n'+(etter_ned<start?'Mindre ('+parseFloat((etter_ned-start).toFixed(1))+' kr)':'Mer ('+parseFloat((etter_ned-start).toFixed(1))+' kr)')};
+}
+
+function genPotensFlertrinns() {
+  var a=rnd(2,4),b=rnd(2,3),c=rnd(2,3);
+  var del1=Math.pow(a,b);
+  var del2=Math.pow(del1,c);
+  return {type:'potens_f',tema:'Potensregler – flertrinns',nivå:'middels',poeng:2,
+    spørsmål:'Regn ut:\n\n('+a+'^'+b+')^'+c,
+    instruksjon:'Bruk regelen (aⁿ)ᵐ = aⁿᵐ: gang eksponentene.',
+    svarType:'tall',fasit:del2,tol:0,
+    løsning:'('+a+'^'+b+')^'+c+' = '+a+'^('+(b*c)+') = '+del2};
+}
+
+function genSammensattArealOmkrets() {
+  var l=rnd(8,20),b=rnd(5,12);
+  var r=rnd(2,4);
+  var A_rekt=l*b, O_rekt=2*(l+b);
+  var A_sir=parseFloat((3.14*r*r).toFixed(2));
+  var A_tot=parseFloat((A_rekt+A_sir).toFixed(2));
+  return {type:'areal_o',tema:'Areal – sammensatt figur',nivå:'krevende',poeng:3,
+    spørsmål:'En figur består av et rektangel ('+l+'×'+b+' cm) og en halvfull sirkel med radius '+r+' cm på toppen.\n\na) Finn arealet av rektangelet.\nb) Finn arealet av halvstirkelen. (π ≈ 3,14)\nc) Finn totalt areal.',
+    instruksjon:'A(halvsirkel) = π×r²/2',
+    svarType:'flertall',labels:['a) Rektangel (cm²)','b) Halvsirkel (cm²)','c) Totalt (cm²)'],
+    fasitArr:[A_rekt, parseFloat((A_sir/2).toFixed(2)), parseFloat((A_rekt+A_sir/2).toFixed(2))],
+    løsning:'A(rekt)='+l+'×'+b+'='+A_rekt+' cm²\nA(halvsirkel)=3.14×'+r+'²/2='+A_sir+'/2='+A_sir/2+'cm²\nTotalt='+(A_rekt+A_sir/2).toFixed(2)+' cm²'};
+}
+
+// ── ALGEBRA: NYE FLERTRINNS ───────────────────────────────────────────
+function genForenkleSammensatt() {
+  var a=rnd(2,5),b=rnd(1,4),c=rnd(1,3),d=rnd(2,6);
+  // a(bx+c) – d(bx–a) = abx+ac – dbx+da = (ab-db)x + (ac+da)
+  var koeffX=a*b-d*b, konst=a*c+d*a;
+  return {type:'forenkle_s',tema:'Forenkle sammensatte algebrauttrykk',nivå:'krevende',poeng:3,
+    spørsmål:'Forenkle:\n\n'+a+'('+b+'x + '+c+') – '+d+'('+b+'x – '+a+')',
+    instruksjon:'Gange ut begge parentesene, deretter samle like ledd.',
+    svarType:'tekst',fasitTekst:koeffX+'x + '+konst,
+    løsning:a+'×'+b+'x + '+a+'×'+c+' – '+d+'×'+b+'x + '+d+'×'+a+'\n= '+a*b+'x + '+a*c+' – '+d*b+'x + '+d*a+'\n= '+koeffX+'x + '+konst};
+}
+
+function genAlgebraOgTall() {
+  var a=rnd(2,5),b=rnd(1,8),x=rnd(2,6),y=rnd(1,5);
+  var val=a*x*x+b*y;
+  return {type:'alg_tall',tema:'Beregn algebraisk uttrykk',nivå:'middels',poeng:2,
+    spørsmål:'Beregn verdien av:\n\n'+a+'x² + '+b+'y\n\nnår x = '+x+' og y = '+y,
+    instruksjon:'Sett inn verdiene og bruk riktig regnerekkefølge (potens først).',
+    svarType:'tall',fasit:val,tol:0,
+    løsning:a+'·'+x+'² + '+b+'·'+y+' = '+a+'·'+x*x+' + '+b*y+' = '+a*x*x+' + '+b*y+' = '+val};
+}
+
+function genToLeddsuttrykk() {
+  var a=rnd(2,7),b=rnd(1,6),c=rnd(2,5),d=rnd(1,5);
+  // (ax+b)(cx+d) = acx²+(ad+bc)x+bd
+  var ac=a*c, mid=a*d+b*c, bd=b*d;
+  return {type:'toledd',tema:'Gange to tochsuttrykk (foil)',nivå:'krevende',poeng:3,
+    spørsmål:'Gange ut og forenkle:\n\n('+a+'x + '+b+')('+c+'x + '+d+')',
+    instruksjon:'Bruk FOIL: (a+b)(c+d) = ac + ad + bc + bd',
+    svarType:'tekst',fasitTekst:ac+'x² + '+mid+'x + '+bd,
+    løsning:'F: '+a+'x·'+c+'x = '+ac+'x²\nO: '+a+'x·'+d+' = '+a*d+'x\nI: '+b+'·'+c+'x = '+b*c+'x\nL: '+b+'·'+d+' = '+bd+'\n= '+ac+'x² + '+mid+'x + '+bd};
+}
+
+function genAlgebraFraVirkelighet() {
+  var pris_stk=rnd(12,30),fast=rnd(20,80),ant=rnd(5,15);
+  var total=pris_stk*ant+fast;
+  return {type:'alg_virkelig',tema:'Sette opp og bruke algebraisk uttrykk',nivå:'krevende',poeng:3,
+    spørsmål:'En taxi koster '+fast+' kr i startpris og '+pris_stk+' kr per km.\n\na) Sett opp funksjonsuttrykket f(x) for turen.\nb) Hva koster en tur på '+ant+' km?\nc) Hvor langt kan du kjøre for '+total*2+' kr?',
+    instruksjon:'a) f(x) = pris_per_km·x + startpris\nb) Sett inn x\nc) Løs likning',
+    svarType:'flertall',labels:['b) Kostnad (kr)','c) Avstand (km)'],
+    fasitArr:[total,(total*2-fast)/pris_stk],
+    løsning:'f(x)='+pris_stk+'x+'+fast+'\nb) f('+ant+')='+pris_stk+'×'+ant+'+'+fast+'='+total+' kr\nc) '+pris_stk+'x+'+fast+'='+total*2+' → x='+(total*2-fast)+'/'+pris_stk+'='+(total*2-fast)/pris_stk+' km'};
+}
+
+// ── LIKNINGER: NYE FLERTRINNS ─────────────────────────────────────────
+function genLikningOgSjekk() {
+  var a=rnd(3,8),b=rnd(2,a-1),c=rnd(5,25),x=rnd(2,8);
+  var c_val=a*x-b*x+c;
+  return {type:'lik_sjekk',tema:'Løse og sjekke likning',nivå:'middels',poeng:3,
+    spørsmål:'Løs likningen:\n\n'+a+'x – '+b+'x + '+c+' = '+c_val+'\n\nSett deretter prøve på svaret.',
+    instruksjon:'Samle x-leddene, løs for x, kontrollregn.',
+    svarType:'tall',fasit:x,tol:0,enhet:'(x = ?)',
+    løsning:(a-b)+'x = '+c_val+' – '+c+' = '+(c_val-c)+'\nx = '+(c_val-c)+'/'+(a-b)+' = '+x+'\nSjekk: '+a+'·'+x+' – '+b+'·'+x+' + '+c+' = '+(a*x-b*x+c)+' = '+c_val+' ✓'};
+}
+
+function genTekstOgLikning() {
+  var eldre=rnd(8,15),diff=rnd(3,10);
+  var totAlder=eldre*2+diff;
+  var yngre=eldre-diff;
+  return {type:'tekst_lik',tema:'Tekstoppgave – alderslikning',nivå:'krevende',poeng:3,
+    spørsmål:'Sofie er '+diff+' år eldre enn broren sin.\nTilsammen er de '+totAlder+' år gamle.\n\nSett opp en likning og finn alderen til begge.',
+    instruksjon:'La x = brorens alder. Sofie = x + '+diff+'. Sum = '+totAlder+'.',
+    svarType:'flertall',labels:['Brorens alder (år)','Sofies alder (år)'],
+    fasitArr:[yngre,eldre],
+    løsning:'x + (x+'+diff+') = '+totAlder+'\n2x + '+diff+' = '+totAlder+'\n2x = '+(totAlder-diff)+'\nx = '+(totAlder-diff)/2+' år\nSofie: '+((totAlder-diff)/2+diff)+' år'};
+}
+
+function genLikningssettFlertrinns() {
+  var x=rnd(3,9),y=rnd(2,7);
+  var a1=rnd(1,3),b1=rnd(1,2);
+  var a2=rnd(1,2),b2=b1+rnd(1,2);
+  var c1=a1*x+b1*y,c2=a2*x+b2*y;
+  return {type:'sett2',tema:'Likningssett – innsetting',nivå:'krevende',poeng:4,
+    spørsmål:a1+'x + '+b1+'y = '+c1+'\n'+a2+'x + '+b2+'y = '+c2+'\n\nLøs likningssettet og begrunn metoden.',
+    instruksjon:'Bruk innsettingsmetoden: isoler én variabel i en likning, sett inn i den andre.',
+    svarType:'flertall',labels:['x','y'],fasitArr:[x,y],
+    løsning:'Fra lign 1: x = ('+c1+' – '+b1+'y)/'+a1+'\nSett inn i lign 2 og løs.\nx = '+x+', y = '+y};
+}
+
+// ── FUNKSJONER: NYE FLERTRINNS ────────────────────────────────────────
+function genFunksjonsanalyse() {
+  var a=plukk([-3,-2,-1,1,2,3]),b=rnd(-5,8);
+  var x0=-b/a;
+  var x_test=rnd(1,5);
+  var y_test=a*x_test+b;
+  return {type:'fanalyse',tema:'Funksjonsanalyse – nullpunkt og verdi',nivå:'krevende',poeng:3,
+    spørsmål:'Funksjonen f(x) = '+a+'x + '+b+'\n\na) Finn nullpunktet.\nb) Finn f('+x_test+').\nc) Er f('+x_test+') positiv eller negativ?',
+    instruksjon:'Nullpunkt: sett f(x)=0. Funksjonsverdi: sett inn x.',
+    svarType:'flertall',labels:['a) Nullpunkt x =','b) f('+x_test+') ='],
+    fasitArr:[x0,y_test],
+    løsning:'a) '+a+'x+'+b+'=0 → x='+x0.toFixed(2)+'\nb) f('+x_test+')='+a+'·'+x_test+'+'+b+'='+y_test+'\nc) '+(y_test>0?'Positiv':'Negativ')};
+}
+
+function genLinFunkFraData() {
+  var a=plukk([-2,-1,1,2,3]),b=rnd(-4,8);
+  var x1=rnd(0,3),x2=x1+rnd(2,4);
+  var y1=a*x1+b,y2=a*x2+b;
+  var x3=rnd(x2+1,x2+5);
+  var y3=a*x3+b;
+  return {type:'linfunk_data',tema:'Lineær funksjon fra datapunkter',nivå:'krevende',poeng:4,
+    spørsmål:'En lineær funksjon går gjennom punktene P('+x1+', '+y1+') og Q('+x2+', '+y2+').\n\na) Finn stigningstallet a.\nb) Finn konstantleddet b.\nc) Hva er y når x = '+x3+'?',
+    instruksjon:'a = (y₂–y₁)/(x₂–x₁), deretter b = y₁ – a·x₁',
+    svarType:'flertall',labels:['a) Stigningstall a','b) Konstantledd b','c) y når x='+x3],
+    fasitArr:[a,b,y3],
+    løsning:'a=('+y2+'–'+y1+')/('+x2+'–'+x1+')='+(y2-y1)+'/'+(x2-x1)+'='+a+'\nb='+y1+'–'+a+'·'+x1+'='+b+'\ny('+x3+')='+a+'·'+x3+'+'+b+'='+y3};
+}
+
+function genToFunksjoner() {
+  var a1=rnd(1,3),b1=rnd(2,10);
+  var a2=-rnd(1,3),b2=b1+rnd(5,20);
+  var xS=parseFloat(((b2-b1)/(a1-a2)).toFixed(2));
+  var yS=parseFloat((a1*xS+b1).toFixed(2));
+  return {type:'tofunk',tema:'To funksjoner – skjæringspunkt og sammenligning',nivå:'krevende',poeng:4,
+    spørsmål:'f(x) = '+a1+'x + '+b1+'\ng(x) = '+a2+'x + '+b2+'\n\na) Finn skjæringspunktet mellom grafene.\nb) For hvilke x-verdier er f(x) > g(x)?',
+    instruksjon:'Sett f(x)=g(x) og løs. For ulikheten: tenk på stigningstallene.',
+    svarType:'flertall',labels:['a) x-koordinat','a) y-koordinat'],
+    fasitArr:[xS,yS],
+    løsning:a1+'x+'+b1+'='+a2+'x+'+b2+'\n'+(a1-a2)+'x='+(b2-b1)+'\nx='+xS+', y='+yS+'\nb) f(x)>g(x) når x'+(a1>a2?'>':'<')+xS};
+}
+
+// ── GEOMETRI: NYE FLERTRINNS ──────────────────────────────────────────
+function genPytOgAreal() {
+  var pytTripler=[[3,4,5],[5,12,13],[8,15,17]];
+  var t=plukk(pytTripler);
+  var a=t[0],b=t[1],c=t[2];
+  return {type:'pyt_areal',tema:'Pytagoras og areal',nivå:'krevende',poeng:3,
+    spørsmål:'En rettvinklet trekant har kateter a = '+a+' cm og b = '+b+' cm.\n\na) Finn hypotenusen.\nb) Finn arealet av trekanten.',
+    instruksjon:'c² = a² + b². Areal = (a × b) / 2',
+    svarType:'flertall',labels:['a) Hypotenuse (cm)','b) Areal (cm²)'],
+    fasitArr:[c,a*b/2],
+    løsning:'c=√('+a+'²+'+b+'²)=√('+a*a+'+'+b*b+')=√'+c*c+'='+c+' cm\nA='+a+'×'+b+'/2='+a*b/2+' cm²'};
+}
+
+function genVolumOgOverflate() {
+  var r=rnd(3,7),h=rnd(5,12);
+  var V=parseFloat((3.14*r*r*h).toFixed(1));
+  var O=parseFloat((2*3.14*r*h+2*3.14*r*r).toFixed(1));
+  return {type:'vol_overfl',tema:'Sylinder – volum og overflate',nivå:'krevende',poeng:4,
+    spørsmål:'En sylinder har radius r = '+r+' cm og høyde h = '+h+' cm.\n\na) Finn volumet.\nb) Finn den totale overflaten.\n\n(π ≈ 3,14)',
+    instruksjon:'V = π·r²·h\nO = 2π·r·h + 2π·r²',
+    svarType:'flertall',labels:['a) Volum (cm³)','b) Overflate (cm²)'],
+    fasitArr:[V,O],
+    løsning:'V=3.14×'+r+'²×'+h+'='+V+' cm³\nO=2×3.14×'+r+'×'+h+'+2×3.14×'+r+'²='+O+' cm²'};
+}
+
+function genSkaleringOgAreal() {
+  var skala=plukk([100,200,500,1000]);
+  var kart_l=rnd(3,12),kart_b=rnd(2,8);
+  var virkl=kart_l*skala/100;  // i meter
+  var virkb=kart_b*skala/100;
+  var areal=parseFloat((virkl*virkb).toFixed(0));
+  return {type:'skal_areal',tema:'Målestokk og arealberegning',nivå:'krevende',poeng:3,
+    spørsmål:'Et kart har målestokk 1:'+skala+'.\nPå kartet er en tomt '+kart_l+' cm lang og '+kart_b+' cm bred.\n\na) Finn virkelig lengde og bredde (i meter).\nb) Finn arealet av tomten.',
+    instruksjon:'Virkelig mål = kartmål × skala. Husk å gjøre om enheter.',
+    svarType:'flertall',labels:['a) Lengde (m)','a) Bredde (m)','b) Areal (m²)'],
+    fasitArr:[virkl,virkb,areal],
+    løsning:kart_l+' cm × '+skala+' = '+kart_l*skala+' cm = '+virkl+' m\n'+kart_b+' cm × '+skala+' = '+virkb+' m\nAreal: '+virkl+' × '+virkb+' = '+areal+' m²'};
+}
+
+// ── STATISTIKK: NYE FLERTRINNS ────────────────────────────────────────
+function genKomplettStatistikk() {
+  var n=rnd(6,9);
+  var tall=Array.from({length:n},function(){return rnd(4,24);}).sort(function(a,b){return a-b;});
+  var sum=tall.reduce(function(a,b){return a+b;},0);
+  var gjsn=parseFloat((sum/n).toFixed(2));
+  var mid=Math.floor(n/2);
+  var median=n%2===0?(tall[mid-1]+tall[mid])/2:tall[mid];
+  var vv=tall[tall.length-1]-tall[0];
+  var typetall=tall[Math.floor(n/3)];
+  return {type:'stat_komplett',tema:'Sentralmål og spredningsmål – komplett analyse',nivå:'krevende',poeng:4,
+    spørsmål:'Datasettet er:\n'+tall.join(', ')+'\n\nFinn:\na) Gjennomsnitt\nb) Median\nc) Variasjonsbredde',
+    instruksjon:'Gjsn = sum/n. Median = midterste (etter sortering). VV = max – min.',
+    svarType:'flertall',labels:['a) Gjennomsnitt','b) Median','c) Variasjonsbredde'],
+    fasitArr:[gjsn,median,vv],
+    løsning:'Sortert: '+tall.join(', ')+'\nGjsn: '+sum+'/'+n+'='+gjsn+'\nMedian: '+median+'\nVV: '+tall[tall.length-1]+' – '+tall[0]+' = '+vv};
+}
+
+function genFrekvensRelativ() {
+  var total=rnd(25,60);
+  var kats=['A','B','C','D'];
+  var ants=[rnd(5,15),rnd(4,12),rnd(3,10)];
+  ants.push(total-ants[0]-ants[1]-ants[2]);
+  return {type:'frekv_rel',tema:'Frekvens og relativ frekvens – sammensatt',nivå:'krevende',poeng:3,
+    spørsmål:total+' elever fikk disse karakterene:\n'+kats.map(function(k,i){return k+': '+ants[i];}).join(', ')+'\n\na) Finn relativ frekvens for A i prosent.\nb) Finn relativ frekvens for D.\nc) Hva er summen av alle relative frekvenser?',
+    instruksjon:'Relativ frekvens = antall / totalt × 100%',
+    svarType:'flertall',labels:['a) A-frekvens (%)','b) D-frekvens (%)'],
+    fasitArr:[parseFloat((ants[0]/total*100).toFixed(1)),parseFloat((ants[3]/total*100).toFixed(1))],
+    løsning:'a) '+ants[0]+'/'+total+'×100='+parseFloat((ants[0]/total*100).toFixed(1))+'%\nb) '+ants[3]+'/'+total+'×100='+parseFloat((ants[3]/total*100).toFixed(1))+'%\nc) 100% alltid'};
+}
+
+// ── SANNSYNLIGHET: NYE FLERTRINNS ─────────────────────────────────────
+function genSannsynlOgKomplement() {
+  var r=rnd(3,7),b=rnd(2,5),g=rnd(1,4),tot=r+b+g;
+  var p_rod=r/tot, p_blaa=b/tot;
+  var p_ikke_grønn=parseFloat(((r+b)/tot).toFixed(4));
+  return {type:'sann_komplett',tema:'Sannsynlighet og komplement – sammensatt',nivå:'krevende',poeng:3,
+    spørsmål:'En pose: '+r+' røde, '+b+' blå, '+g+' grønne ('+tot+' totalt).\n\na) P(rød)\nb) P(blå)\nc) P(ikke grønn)',
+    instruksjon:'P(ikke grønn) = 1 – P(grønn), eller tell direkte.',
+    svarType:'flertall',labels:['a) P(rød)','b) P(blå)','c) P(ikke grønn)'],
+    fasitArr:[parseFloat(p_rod.toFixed(4)),parseFloat(p_blaa.toFixed(4)),p_ikke_grønn],
+    løsning:'P(rød)='+r+'/'+tot+'='+p_rod.toFixed(4)+'\nP(blå)='+b+'/'+tot+'\nP(ikke grønn)='+(r+b)+'/'+tot+'='+p_ikke_grønn};
+}
+
+function genFlereTrekk() {
+  var r=rnd(3,6),b=rnd(2,4),tot=r+b;
+  var p1=r/tot, p2=(r-1)/(tot-1);
+  var pBegge=parseFloat((p1*p2).toFixed(4));
+  return {type:'trekk_f',tema:'Sannsynlighet – to trekk uten tilbakelegging',nivå:'krevende',poeng:4,
+    spørsmål:'Pose: '+r+' røde og '+b+' blå ('+tot+' totalt).\n\nDu trekker to kuler uten tilbakelegging.\n\na) Hva er P(1. kule rød)?\nb) Hva er P(2. kule rød | 1. var rød)?\nc) Hva er P(begge røde)?',
+    instruksjon:'c) P(A og B) = P(A) × P(B|A)',
+    svarType:'flertall',labels:['a) P(1. rød)','b) P(2. rød | 1. rød)','c) P(begge røde)'],
+    fasitArr:[parseFloat(p1.toFixed(4)),parseFloat(p2.toFixed(4)),pBegge],
+    løsning:'a) '+r+'/'+tot+'='+p1.toFixed(4)+'\nb) '+(r-1)+'/'+(tot-1)+'='+p2.toFixed(4)+'\nc) '+p1.toFixed(4)+'×'+p2.toFixed(4)+'='+pBegge};
+}
+
+// ── ØKONOMI: NYE FLERTRINNS ───────────────────────────────────────────
+function genRentesRente() {
+  var K=rnd(5,20)*1000, r=plukk([4,5,6,7,8]), n=rnd(3,6);
+  var enkel=parseFloat((K+K*r*n/100).toFixed(0));
+  var rente=parseFloat((K*Math.pow(1+r/100,n)).toFixed(0));
+  return {type:'rentes_rente',tema:'Enkel rente vs. rentes rente',nivå:'krevende',poeng:4,
+    spørsmål:'Du setter inn '+K.toLocaleString('no')+' kr med '+r+'% rente per år i '+n+' år.\n\na) Beregn sluttsummen med enkel rente.\nb) Beregn sluttsummen med rentes rente (vekstfaktor).\nc) Hva er forskjellen?',
+    instruksjon:'Enkel: K+K·r·n/100. Rentes: K·(1+r/100)^n',
+    svarType:'flertall',labels:['a) Enkel rente (kr)','b) Rentes rente (kr)'],
+    fasitArr:[enkel,rente],
+    løsning:'a) '+K+'+'+K+'×'+r+'/100×'+n+'='+enkel+' kr\nb) '+K+'×'+(1+r/100).toFixed(2)+'^'+n+'≈'+rente+' kr\nForskjell: '+(rente-enkel)+' kr'};
+}
+
+function genBudsjettAnalyse() {
+  var inntekt=rnd(30,60)*1000;
+  var utgifter={husleie:rnd(8,16)*1000,mat:rnd(4,7)*1000,transport:rnd(2,4)*1000,klær:rnd(1,3)*1000};
+  var tot_ut=Object.values(utgifter).reduce(function(a,b){return a+b;},0);
+  var rest=inntekt-tot_ut;
+  var spar_pst=parseFloat((rest/inntekt*100).toFixed(1));
+  return {type:'budsjett_analyse',tema:'Budsjettanalyse',nivå:'krevende',poeng:4,
+    spørsmål:'Månedsinntekt: '+inntekt.toLocaleString('no')+' kr\nHusleie: '+utgifter.husleie.toLocaleString('no')+' kr\nMat: '+utgifter.mat.toLocaleString('no')+' kr\nTransport: '+utgifter.transport.toLocaleString('no')+' kr\nKlær: '+utgifter.klær.toLocaleString('no')+' kr\n\na) Finn totale utgifter.\nb) Finn hva som er igjen.\nc) Finn spareprosenten (rest / inntekt × 100).',
+    instruksjon:'Summer alle utgifter, trekk fra inntekt, regn prosent.',
+    svarType:'flertall',labels:['a) Totale utgifter (kr)','b) Rest (kr)','c) Spareprosent (%)'],
+    fasitArr:[tot_ut,rest,spar_pst],
+    løsning:'Utgifter: '+tot_ut.toLocaleString('no')+' kr\nRest: '+rest.toLocaleString('no')+' kr\nSpareprosent: '+spar_pst+'%'};
+}
+
+// ── MÅLING: NYE FLERTRINNS ────────────────────────────────────────────
+function genFartOgTidSammensatt() {
+  var v=rnd(60,100),d1=rnd(50,150),d2=rnd(30,100);
+  var t1=parseFloat((d1/v).toFixed(2));
+  var t2=parseFloat((d2/v).toFixed(2));
+  var dtot=d1+d2, ttot=parseFloat((t1+t2).toFixed(2));
+  return {type:'fart_tid_s',tema:'Fart og tid – sammensatt tur',nivå:'krevende',poeng:4,
+    spørsmål:'En bil kjører '+v+' km/t.\n\nFørste strekning: '+d1+' km\nAndre strekning: '+d2+' km\n\na) Finn reisetiden for hver strekning.\nb) Finn total reisetid (timer).\nc) Finn total strekning.',
+    instruksjon:'Tid = strekning / fart for hvert strekk.',
+    svarType:'flertall',labels:['a) Tid 1 (t)','a) Tid 2 (t)','b) Total tid (t)','c) Total (km)'],
+    fasitArr:[t1,t2,ttot,dtot],
+    løsning:'t1='+d1+'/'+v+'='+t1+' t\nt2='+d2+'/'+v+'='+t2+' t\nTotalt: '+ttot+' t, '+dtot+' km'};
+}
+
+function genEnhetsomgjøringKjede() {
+  var fart_ms=rnd(5,25);
+  var fart_kmh=fart_ms*3.6;
+  var d_km=rnd(5,30);
+  var t_timer=parseFloat((d_km/fart_kmh).toFixed(3));
+  var t_min=parseFloat((t_timer*60).toFixed(1));
+  return {type:'enheter_kjede',tema:'Enhetsomgjøring – kjede av omgjøringer',nivå:'krevende',poeng:3,
+    spørsmål:'En løper holder '+fart_ms+' m/s.\n\na) Gjør om til km/t.\nb) Hvor lang tid bruker løperen på '+d_km+' km? (svar i minutter)',
+    instruksjon:'1 m/s = 3,6 km/t. Tid = strekning / fart.',
+    svarType:'flertall',labels:['a) Fart (km/t)','b) Tid (min)'],
+    fasitArr:[fart_kmh,t_min],
+    løsning:fart_ms+' m/s × 3,6 = '+fart_kmh+' km/t\nt = '+d_km+'/'+fart_kmh.toFixed(2)+'= '+t_timer+' t = '+t_min+' min'};
+}
+
+function byggProve(minutter) {
+  var enkle=[genEnkelLikning, genSjekkl, genLikningMedParentes, genVariabelBeggedeSider, genUlikhet, genBroklikning, genTekstLikning, genLikningssett];
+  var ft=[genLikningOgSjekk, genTekstOgLikning, genLikningssettFlertrinns];
+  var ant=minutter<=45?15:minutter<=60?20:27;
+  var n_ft=Math.min(ft.length,Math.ceil(ant/3));
+  var n_e=ant-n_ft;
+  var vft=bland(ft).slice(0,n_ft);
+  var ve=bland(enkle).slice(0,Math.min(n_e,enkle.length));
+  while(ve.length+vft.length<ant) vft.push(plukk(ft));
+  return bland(vft.concat(ve)).map(function(fn,i){var o=fn();o._idx=i;return o;});
+}
+// ── STATE ────────────────────────────────────────────────────────
+var state = {
+  oppgaver: [],
+  svar: {},
+  gjeldende: 0,
+  minutter: 0,
+  tidIgjen: 0,
+  tidtakerInt: null,
+  suValg: {},
+  fvValg: {},
+  dragSrc: null,
+};
+
+// oppdaterAntModal genereres per emne
+
+function startProve(min) {
+  document.getElementById('modal-tid').classList.remove('vis');
+  state.minutter = min;
+  state.oppgaver = byggProve(min);
+  state.svar = {};
+  state.gjeldende = 0;
+  state.suValg = {};
+  state.fvValg = {};
+
+  document.getElementById('st-tot').textContent = state.oppgaver.length;
+  document.getElementById('prv-undertittel').textContent = UNDERTITTEL+' · '+min+' min';
+  document.getElementById('app').style.display = 'grid';
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('resultat').style.display = 'none';
+
+  // Start tidtaker
+  state.tidIgjen = min * 60;
+  document.getElementById('tidtaker').style.display = 'block';
+  oppdaterTid();
+  state.tidtakerInt = setInterval(function() {
+    state.tidIgjen--;
+    oppdaterTid();
+    if (state.tidIgjen <= 0) {
+      clearInterval(state.tidtakerInt);
+      leverProve();
+    }
+  }, 1000);
+
+  renderOppgave(0);
+}
+
+function oppdaterTid() {
+  var m = Math.floor(state.tidIgjen/60);
+  var s = state.tidIgjen % 60;
+  var el = document.getElementById('tid-display');
+  el.textContent = m+':'+(s<10?'0':'')+s;
+  el.classList.toggle('kritisk', state.tidIgjen <= 120);
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function renderOppgave(idx) {
+  state.gjeldende = idx;
+  var o = state.oppgaver[idx];
+  var panel = document.getElementById('panel');
+  var besvart = !!state.svar[idx];
+
+  var nivåHtml = '';
+  var cls = o.nivå==='krevende'?'hard':o.nivå==='middels'?'middels':'';
+  var emo = o.nivå==='lett'?'🍎':o.nivå==='middels'?'⭐':'🔥';
+  nivåHtml = '<span class="meta-tag meta-niva '+cls+'">'+emo+' '+(o.nivå||'lett')+'</span>';
+
+  var fasitHtml = besvart ? renderFasit(o, state.svar[idx]) : '';
+
+  panel.innerHTML =
+    '<div class="oppg-header">'+
+      '<div class="oppg-badge">Oppg. '+(idx+1)+'</div>'+
+      '<div class="oppg-tittel">'+(o.tema||o.type)+'</div>'+
+    '</div>'+
+    '<div class="oppg-meta">'+
+      '<span class="meta-tag meta-poeng">🏅 '+o.poeng+' '+(o.poeng===1?'poeng':'poeng')+'</span>'+
+      nivåHtml+
+    '</div>'+
+    '<div class="oppg-tekst">'+(o.spørsmål||'')+'</div>'+
+    '<div class="instruksjon">📌 '+(o.instruksjon||'')+'</div>'+
+    (besvart ? '' : renderSvarBoks(o))+
+    '<div class="knapp-rad">'+
+      '<button class="sjekk-btn" id="sjekk-btn" onclick="sjekk('+idx+')"'+(besvart?' disabled':'')+'>✓ Sjekk svar</button>'+
+      '<button class="hopp-btn" onclick="neste()">Hopp over →</button>'+
+      (idx===state.oppgaver.length-1 ? '<button class="lever-btn" id="lever-btn" style="display:block" onclick="leverProve()">📩 Lever prøven</button>' : '')+
+      '<button class="neste-btn" id="neste-btn" onclick="neste()"'+(besvart?'style="display:block"':'')+'>Neste ▶</button>'+
+    '</div>'+
+    '<div class="fb" id="fb"></div>'+
+    fasitHtml;
+
+  // Lever-knapp synlig på siste etter besvart
+  oppdaterListe();
+  oppdaterProgress();
+}
+
+function renderSvarBoks(o) {
+  if (o.svarType === 'tall') {
+    return '<div class="svar-wrap"><div class="svar-label">Ditt svar</div>'+
+      '<input type="number" step="any" class="svar-inp" id="svar-inp" placeholder="Svar…" onkeydown="if(event.key===\'Enter\')sjekk(state.gjeldende)">'+
+      (o.enhet?'<span class="svar-enhet">'+o.enhet+'</span>':'')+
+      '</div>';
+  }
+  if (o.svarType === 'tekst') {
+    return '<div class="svar-wrap"><div class="svar-label">Ditt svar</div>'+
+      '<input type="text" class="svar-inp wide" id="svar-tekst" placeholder="Svar…">'+
+      '</div>';
+  }
+  if (o.svarType === 'flertall') {
+    var html = '<div class="svar-wrap"><div class="svar-label">Dine svar</div>';
+    o.labels.forEach(function(lbl,i){
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+
+        '<span style="font-size:.82rem;color:var(--dim);min-width:150px;">'+lbl+'</span>'+
+        '<input type="number" step="any" class="svar-inp" id="svar-inp-'+i+'" placeholder="…">'+
+        '</div>';
+    });
+    return html+'</div>';
+  }
+  if (o.svarType === 'flervalg') {
+    if (!state.fvValg[state.gjeldende]) state.fvValg[state.gjeldende] = null;
+    var html = '<div class="svar-wrap fv-grid">';
+    o.alternativer.forEach(function(alt,i){
+      html += '<button class="fv-btn" id="fv-'+i+'" onclick="velgFV('+i+')">'+alt+'</button>';
+    });
+    return html+'</div>';
+  }
+  return '';
+}
+
+function velgFV(i) {
+  var idx = state.gjeldende;
+  state.fvValg[idx] = i;
+  var btns = document.querySelectorAll('.fv-btn');
+  btns.forEach(function(b,j){ b.classList.toggle('valgt', j===i); });
+}
+
+function renderFasit(o) {
+  if (!o.løsning) return '';
+  return '<div class="fasit-boks">'+
+    '<div class="fasit-tittel">📖 Fremgangsmåte</div>'+
+    '<pre>'+(o.løsning||'')+'</pre>'+
+    '</div>';
+}
+
+// ── SJEKK ────────────────────────────────────────────────────────
+function sjekk(idx) {
+  var o = state.oppgaver[idx];
+  var fb = document.getElementById('fb');
+  var poeng = 0, maxPoeng = o.poeng;
+  var status = 'feil', melding = '';
+
+  function hentTall(id){var el=document.getElementById(id);return el?parseFloat(el.value.replace(',','.')):NaN;}
+  function hentTekst(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+  function sjekkTall(v,f,tol){return !isNaN(v) && Math.abs(v-f)<=(tol||0.05);}
+
+  if (o.svarType === 'tall') {
+    var v = hentTall('svar-inp');
+    if (isNaN(v)){fb.style.display='block';fb.className='fb feil';fb.textContent='Skriv inn et tall!';return;}
+    var ok = sjekkTall(v, o.fasit, o.tol);
+    poeng = ok ? maxPoeng : 0;
+    status = ok ? 'riktig' : 'feil';
+    melding = ok ? '✓ Riktig! Svaret er '+o.fasit+(o.enhet?' '+o.enhet:'')+' ✓'
+               : '✗ Ikke riktig. Fasit: '+o.fasit+(o.enhet?' '+o.enhet:'')+'. Se fremgangsmåten under.';
+    state.svar[idx] = {status, poeng, ditt: v};
+  }
+
+  else if (o.svarType === 'tekst') {
+    var t = hentTekst('svar-tekst').toLowerCase();
+    var fasitLow = (o.fasitTekst||'').toLowerCase();
+    var ok2 = t.includes(fasitLow.replace(/\s/g,'')) || t===fasitLow;
+    poeng = ok2 ? maxPoeng : 0;
+    status = ok2 ? 'riktig' : 'feil';
+    melding = ok2 ? '✓ Riktig!' : '✗ Fasit: '+o.fasitTekst;
+    state.svar[idx] = {status, poeng, ditt: t};
+  }
+
+  else if (o.svarType === 'flervalg') {
+    var valgt = state.fvValg[idx];
+    if (valgt === null || valgt === undefined){fb.style.display='block';fb.className='fb feil';fb.textContent='Velg et svar!';return;}
+    var korrektIdx = o.fasitIdx !== undefined ? o.fasitIdx : o.alternativer.indexOf(o.alternativer.find(function(a){return String(a)===String(o.fasit);}));
+    var okFV = valgt === korrektIdx;
+    poeng = okFV ? maxPoeng : 0;
+    status = okFV ? 'riktig' : 'feil';
+    melding = okFV ? '✓ Riktig!' : '✗ Riktig svar: '+o.alternativer[korrektIdx];
+    // Marker knapper
+    document.querySelectorAll('.fv-btn').forEach(function(btn,j){
+      btn.disabled = true;
+      if (j===korrektIdx) btn.className='fv-btn riktig-svar';
+      else if (j===valgt) btn.className='fv-btn feil-svar';
+    });
+    state.svar[idx] = {status, poeng, ditt: o.alternativer[valgt], fasit: o.alternativer[korrektIdx]};
+  }
+
+  else if (o.svarType === 'flertall') {
+    poeng = 0;
+    state.svar[idx] = {status:'delvis', poeng:0, ditt:'—'};
+    melding = 'Se fremgangsmåten under og vurder selv.';
+    status = 'delvis';
+  }
+
+  fb.style.display = 'block';
+  fb.className = 'fb '+status;
+  fb.textContent = melding;
+
+  // Vis neste-knapp
+  var neste = document.getElementById('neste-btn');
+  if (neste) neste.style.display = 'block';
+  var sjekkBtn = document.getElementById('sjekk-btn');
+  if (sjekkBtn) sjekkBtn.disabled = true;
+
+  // Legg til fasit
+  var fasitDiv = document.createElement('div');
+  fasitDiv.innerHTML = renderFasit(o);
+  document.getElementById('panel').appendChild(fasitDiv);
+
+  oppdaterStats();
+  oppdaterListe();
+}
+
+function neste() {
+  var n = state.gjeldende + 1;
+  if (n >= state.oppgaver.length) leverProve();
+  else renderOppgave(n);
+}
+
+// ── LEVER ────────────────────────────────────────────────────────
+function leverProve() {
+  clearInterval(state.tidtakerInt);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+
+  var totPoeng=0, totMax=0, riktige=0;
+  state.oppgaver.forEach(function(o,i){
+    totMax += o.poeng;
+    var sv = state.svar[i];
+    if (sv){ totPoeng += sv.poeng; if(sv.status==='riktig') riktige++; }
+  });
+  var pst = totMax>0 ? Math.round(100*totPoeng/totMax) : 0;
+
+  // Logg
+  try { if(window._skaplab_logg) window._skaplab_logg(RESSURS,KM_KODE,pst,state.oppgaver.length,riktige,state.oppgaver.length,state.oppgaver.length); } catch(e){}
+
+  // Render resultat
+  var html = '<div class="resultat-tittel">Prøve levert! 🎉</div>'+
+    '<div class="resultat-score">'+totPoeng+' / '+totMax+' poeng</div>'+
+    '<div class="resultat-pst">'+pst+'% riktig</div>'+
+    '<div class="resultat-grid">'+
+      '<div class="res-kort"><div class="res-tall">'+riktige+'</div><div class="res-lab">Riktige svar</div></div>'+
+      '<div class="res-kort"><div class="res-tall">'+(state.oppgaver.length-riktige)+'</div><div class="res-lab">Galt eller hoppet</div></div>'+
+      '<div class="res-kort"><div class="res-tall">'+state.minutter+' min</div><div class="res-lab">Tid</div></div>'+
+    '</div>'+
+    '<div class="resultat-overskrift">Gjennomgang</div>';
+
+  state.oppgaver.forEach(function(o,i){
+    var sv = state.svar[i];
+    var cls = sv ? sv.status : 'gal';
+    var ditt = sv ? (sv.ditt !== undefined ? sv.ditt : '—') : '(ikke besvart)';
+    var fasit = o.svarType==='flervalg' ? (sv && sv.fasit || o.alternativer[o.fasitIdx||0]) : (o.fasit||o.fasitTekst||'Se løsning');
+    html += '<div class="gjennomgang-rad '+(cls==='riktig'?'ok':cls==='delvis'?'delvis':'gal')+'">'+
+      '<div class="gjennomgang-spørsmål">Oppg. '+(i+1)+': '+(o.tema||o.type)+'</div>'+
+      '<div class="gjennomgang-ditt">Ditt svar: <b>'+ditt+'</b></div>'+
+      (cls!=='riktig'?'<div class="gjennomgang-fasit">✓ Fasit: '+fasit+'</div>':'')+
+    '</div>';
+  });
+
+  html += '<button class="ny-økt-btn" onclick="location.reload()">🔀 Ny prøve</button>'+
+    '<button class="gjennomgang-btn" onclick="history.back()">← Tilbake til matte-hub</button>';
+
+  var res = document.getElementById('resultat');
+  res.innerHTML = html;
+  res.style.display = 'block';
+}
+
+// ── STATS OG NAVIGASJON ──────────────────────────────────────────
+function oppdaterStats() {
+  var totPoeng=0, totMax=0, besvart=0;
+  state.oppgaver.forEach(function(o,i){
+    totMax += o.poeng;
+    if(state.svar[i]){besvart++;totPoeng+=state.svar[i].poeng;}
+  });
+  document.getElementById('st-poeng').textContent = totPoeng;
+  document.getElementById('st-max').textContent = totMax;
+  document.getElementById('st-besvart').textContent = besvart;
+}
+
+function oppdaterProgress() {
+  var n = state.oppgaver.length;
+  var idx = state.gjeldende;
+  var pst = Math.round(100*(idx+1)/n);
+  document.getElementById('prog-tekst').textContent = 'Oppgave '+(idx+1)+' av '+n;
+  document.getElementById('prog-pst').textContent = pst+'%';
+  document.getElementById('progress-fill').style.width = pst+'%';
+}
+
+function oppdaterListe() {
+  var liste = document.getElementById('liste');
+  var html = '';
+  state.oppgaver.forEach(function(o,i){
+    var sv = state.svar[i];
+    var ikon = sv ? (sv.status==='riktig'?'✅':sv.status==='delvis'?'🟡':'❌') : (i===state.gjeldende?'▶':'○');
+    var cls = 'liste-knapp'+(i===state.gjeldende?' aktiv':'')+(sv?sv.status==='riktig'?' ok':' feil':'');
+    html += '<button class="'+cls+'" onclick="renderOppgave('+i+')">'+
+      '<span class="liste-ikon">'+ikon+'</span>'+
+      '<span>Oppg. '+(i+1)+'</span>'+
+      '<span class="liste-poeng">'+(sv?sv.poeng+'/'+o.poeng:'_/'+o.poeng)+'</span>'+
+    '</button>';
+  });
+  liste.innerHTML = html;
+}
+
+// ── START ────────────────────────────────────────────────────────
+oppdaterAntModal();
+
+function oppdaterAntModal(){[45,60,90].forEach(function(m){var ant=m<=45?15:m<=60?20:27;document.getElementById('ant-'+m).textContent=ant+' oppgaver · ca. '+m+' min';});}
+oppdaterAntModal();
+</script></body></html>
