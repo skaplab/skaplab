@@ -225,10 +225,18 @@ select option{background:#0b0d18;}
       var data = localStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
-      // Returner null KUN om det er en tydelig feilrespons uten token
-      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
-        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
-        return null;
+      // Må ha access_token
+      if (!parsed || !parsed.access_token) return null;
+      // Returner null ved feilrespons
+      if (parsed.error_code || parsed.error) return null;
+      // Sjekk utløp (expires_at er Unix-sekunder fra Supabase)
+      if (parsed.expires_at) {
+        var nå = Math.floor(Date.now() / 1000);
+        if (nå > parsed.expires_at - 60) {
+          // Token utløpt – fjern og be bruker logge inn igjen
+          localStorage.removeItem(LAERER_NØKKEL);
+          return null;
+        }
       }
       return parsed;
     } catch (e) { return null; }
