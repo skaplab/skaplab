@@ -629,10 +629,27 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
         <button class="btn btn-sek btn-sm" onclick="edSkrivUtVurdering()">🖨️ Skriv ut</button>
       </div>
       <div id="ed-vurd-innhold"></div>
+      <!-- SEND FERDIGHETSKART TIL ELEV -->
+      <div style="margin-top:14px;padding:12px 14px;background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:.83rem;font-weight:600;color:var(--lilla);">📤 Send ferdighetskart til elev</div>
+          <div style="font-size:.75rem;color:var(--dim);margin-top:2px;">Eleven vil se dette i sin portal under «Mitt ferdighetskart»</div>
+        </div>
+        <button class="btn btn-prim btn-sm" id="send-fk-btn" onclick="sendFerdighetskart()">
+          📤 Send nå
+        </button>
+      </div>
     </div>
 
     <!-- TAB: AKTIVITETSLOGG -->
     <div id="ed-panel-logg" style="display:none;">
+      <!-- Prøveresultater med progresjon -->
+      <div class="sek" style="margin-bottom:16px;">
+        <div class="sek-tittel">📝 Prøveresultater</div>
+        <div class="sek-sub" style="font-size:.78rem;color:var(--dim);margin-bottom:10px;">Snitt og siste forsøk per prøvetrener. Pil viser om siste er høyere/lavere enn snittet.</div>
+        <div id="ed-prove-resultater"></div>
+      </div>
+      <!-- Full aktivitetslogg -->
       <div class="sek">
         <div class="sek-tittel">📋 Aktivitetslogg</div>
         <table>
@@ -640,6 +657,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
             <tr>
               <th>Ressurs</th>
               <th>KM</th>
+              <th>Ant. oppg.</th>
               <th>Score</th>
               <th>Tid</th>
             </tr>
@@ -2345,6 +2363,156 @@ function edByttTab(tab) {
   if (tab==='opp')  edVisOppgaver();
 }
 
+// ── SEND FERDIGHETSKART TIL ELEV ────────────────────────────────────────
+async function sendFerdighetskart() {
+  var btn = $('send-fk-btn');
+  if (!btn) return;
+  var elev = edAktivElev;
+  if (!elev) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Sender…';
+
+  try {
+    var fag = $('ed-fag') ? $('ed-fag').value : 'mat8';
+    var kmListe = getKMListe(fag);
+
+    // Bygg JSON-snapshot av nåværende vurderinger
+    var snapshot = {
+      elev_id: elev.id,
+      laerer_id: lid,
+      fag: fag,
+      tidspunkt: new Date().toISOString(),
+      vurderinger: {}
+    };
+
+    kmListe.forEach(function(km) {
+      var v = edVurderinger[km[0]];
+      if (v && v.nivaa) snapshot.vurderinger[km[0]] = { nivaa: v.nivaa, km_tekst: km[1] };
+    });
+
+    // Tell antall vurderte KM
+    var antVurdert = Object.keys(snapshot.vurderinger).length;
+    if (antVurdert === 0) {
+      alert('Ingen vurderinger er registrert for dette faget ennå. Registrer vurderinger i Målark først.');
+      btn.disabled = false;
+      btn.textContent = '📤 Send nå';
+      return;
+    }
+
+    // Beregn prosentandeler per nivå (for varslingslogikk)
+    var nivaTeller = { '-': 0, 'l': 0, 'm': 0, 'h': 0, 'e': 0 };
+    Object.values(snapshot.vurderinger).forEach(function(v){ if(nivaTeller[v.nivaa]!==undefined) nivaTeller[v.nivaa]++; });
+    snapshot.prosentAndeler = {};
+    var total = antVurdert;
+    Object.keys(nivaTeller).forEach(function(k){ snapshot.prosentAndeler[k] = parseFloat((nivaTeller[k]/total*100).toFixed(1)); });
+
+    // Lagre til Supabase: ferdighetskart_sendt-tabellen
+    var res = await SkapLab._post('/ferdighetskart_sendt', {
+      elev_id: elev.id,
+      laerer_id: lid,
+      fag: fag,
+      snapshot: JSON.stringify(snapshot.vurderinger),
+      prosentandeler: JSON.stringify(snapshot.prosentAndeler),
+      antall_vurdert: antVurdert
+    }, token);
+
+    btn.textContent = '✅ Sendt!';
+    btn.style.background = 'var(--gron)';
+    setTimeout(function(){
+      btn.disabled = false;
+      btn.textContent = '📤 Send nå';
+      btn.style.background = '';
+    }, 3000);
+
+    // Vis bekreftelse
+    console.log('Ferdighetskart sendt:', antVurdert, 'KM vurdert for', elev.fullt_navn);
+
+    // Sjekk om det er markant endring fra forrige sendte kart
+    await sjekkOgVarsleProgresjon(elev, fag, snapshot.prosentAndeler);
+
+  } catch(e) {
+    console.error('Feil ved sending:', e);
+    btn.disabled = false;
+    btn.textContent = '📤 Send nå';
+    alert('Kunne ikke sende ferdighetskart. Sjekk internettforbindelsen.');
+  }
+}
+
+// ── VARSLINGSSYSTEM FOR MARKANTE ENDRINGER ──────────────────────────────
+async function sjekkOgVarsleProgresjon(elev, fag, nyePst) {
+  try {
+    // Hent forrige sendte ferdighetskart (nest siste)
+    var forrige = await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/ferdighetskart_sendt?elev_id=eq.'+elev.id+'&fag=eq.'+fag+'&order=created_at.desc&limit=2',
+      { headers: { 'apikey': SkapLab.SUPABASE_KEY, 'Authorization': 'Bearer '+token } }
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+
+    if (!Array.isArray(forrige) || forrige.length < 2) return; // Ingen forrige å sammenligne med
+
+    var gammePst = {};
+    try { gammePst = JSON.parse(forrige[1].prosentandeler||'{}'); } catch(e) { return; }
+
+    // Beregn høy+eksempel andel (h + e)
+    var nyHoyAndel = (parseFloat(nyePst['h']||0) + parseFloat(nyePst['e']||0));
+    var gammelHoyAndel = (parseFloat(gammePst['h']||0) + parseFloat(gammePst['e']||0));
+    var diff = Math.round(nyHoyAndel - gammelHoyAndel);
+
+    if (Math.abs(diff) < 10) return; // Ikke markant nok (under 10 prosentpoeng)
+
+    // Logg varselet
+    var retning = diff > 0 ? 'fremgang' : 'tilbakegang';
+    var melding = elev.fullt_navn + ': ' + (diff>0?'+':'')+diff+'pp i høy/eksempel-andel for ' + fag;
+    console.log('Varsel:', melding);
+
+    // Lagre varselet til Supabase (ny tabell: laerer_varsler)
+    await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/laerer_varsler',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SkapLab.SUPABASE_KEY,
+          'Authorization': 'Bearer '+token,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          laerer_id: lid,
+          elev_id: elev.id,
+          type: 'ferdighetskart_endring',
+          retning: retning,
+          diff_pp: diff,
+          fag: fag,
+          melding: melding,
+          lest: false
+        })
+      }
+    ).catch(function(){});
+
+    // Vis varselet i UI umiddelbart
+    visVarselBanner(melding, diff > 0 ? 'gron' : 'rod');
+
+  } catch(e) { console.warn('Varselsjekk feil:', e); }
+}
+
+function visVarselBanner(melding, farge) {
+  // Fjern evt. eksisterende banner
+  var gammelt = document.getElementById('varsel-banner');
+  if (gammelt) gammelt.remove();
+
+  var banner = document.createElement('div');
+  banner.id = 'varsel-banner';
+  var bg = farge==='gron' ? 'rgba(52,211,153,.15)' : 'rgba(248,113,113,.15)';
+  var border = farge==='gron' ? 'rgba(52,211,153,.3)' : 'rgba(248,113,113,.3)';
+  var ikon = farge==='gron' ? '📈' : '📉';
+  banner.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:'+bg+';border:1px solid '+border+';border-radius:12px;padding:14px 18px;max-width:360px;font-size:.83rem;color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.3);';
+  banner.innerHTML = '<div style="font-weight:700;margin-bottom:4px;">'+ikon+' Markant endring registrert</div><div style="color:var(--dim);">'+melding+'</div><button onclick="this.parentElement.remove()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--dim);font-size:1rem;cursor:pointer;">×</button>';
+  document.body.appendChild(banner);
+  setTimeout(function(){ if(banner.parentElement) banner.remove(); }, 10000);
+}
+
+
+
 function edVisFag(elevId, egenvurd) {
   var fag = $('ed-fag') ? $('ed-fag').value : 'mat8';
   var kmListe = getKMListe(fag);
@@ -2429,19 +2597,80 @@ function apneMalarkForElev() {
 
 function edVisLogg() {
   var tbody = $('ed-logg-tbody');
+  var proveDiv = $('ed-prove-resultater');
   if (!tbody) return;
+
   if (!edAktivitet.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--dim);">Ingen aktivitet registrert.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--dim);">Ingen aktivitet registrert.</td></tr>';
+    if (proveDiv) proveDiv.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:12px 0;">Ingen prøveresultater ennå.</div>';
     return;
   }
+
+  // ── PRØVERESULTATER MED SNITT OG SISTE ──────────────────────────────
+  if (proveDiv) {
+    // Finn alle prøvetrener-ressurser (har score_pst og antall_oppgaver > 1)
+    var proveAktivitet = edAktivitet.filter(function(a){
+      return a.score_pst != null && a.antall_oppgaver > 1 &&
+             a.ressurs && a.ressurs.indexOf('provetrener') >= 0;
+    });
+
+    // Grupper per ressurs
+    var proveMap = {};
+    proveAktivitet.forEach(function(a) {
+      if (!proveMap[a.ressurs]) proveMap[a.ressurs] = [];
+      proveMap[a.ressurs].push(a);
+    });
+
+    var proveHtml = '';
+    Object.keys(proveMap).sort().forEach(function(ressurs) {
+      var forsok = proveMap[ressurs];
+      // Sorter: nyeste først
+      forsok.sort(function(x,y){ return (y.tidspunkt||'').localeCompare(x.tidspunkt||''); });
+      var siste = forsok[0].score_pst;
+      var snitt = Math.round(forsok.reduce(function(s,a){return s+a.score_pst;},0) / forsok.length);
+      var diff = siste - snitt;
+      var progresjonPil = diff > 3 ? '<span style="color:var(--gron);font-weight:700;" title="Siste høyere enn snitt">↑ +'+diff+'%</span>'
+                        : diff < -3 ? '<span style="color:var(--rod);font-weight:700;" title="Siste lavere enn snitt">↓ '+diff+'%</span>'
+                        : '<span style="color:var(--dim);" title="Stabil">→</span>';
+
+      function karFarge(p){ return p>=77?'var(--gron)':p>=50?'var(--gul)':'var(--rod)'; }
+      function karTall(p){ return p>=90?'6':p>=77?'5':p>=63?'4':p>=50?'3':p>=37?'2':'1'; }
+
+      var navnVisning = ressurs.replace('provetrener_','').replace(/_/g,' ');
+      navnVisning = navnVisning.charAt(0).toUpperCase() + navnVisning.slice(1);
+
+      proveHtml += '<div style="display:grid;grid-template-columns:1fr auto auto auto auto;align-items:center;gap:8px 16px;padding:10px 0;border-bottom:1px solid var(--border);">' +
+        '<div style="font-size:.85rem;font-weight:600;color:var(--text);">'+navnVisning+'</div>' +
+        '<div style="text-align:center;font-size:.78rem;color:var(--dim);">'+forsok.length+' forsøk</div>' +
+        '<div style="text-align:center;"><span style="font-size:.8rem;color:var(--dim);">Snitt: </span><b style="color:'+karFarge(snitt)+';">'+snitt+'%</b> <span style="font-size:.72rem;color:var(--dim);">('+karTall(snitt)+')</span></div>' +
+        '<div style="text-align:center;"><span style="font-size:.8rem;color:var(--dim);">Siste: </span><b style="color:'+karFarge(siste)+';">'+siste+'%</b> <span style="font-size:.72rem;color:var(--dim);">('+karTall(siste)+')</span></div>' +
+        '<div style="text-align:center;font-size:.85rem;">'+progresjonPil+'</div>' +
+        '</div>';
+    });
+
+    if (!proveHtml) {
+      proveDiv.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:12px 0;">Ingen prøveresultater ennå.</div>';
+    } else {
+      proveDiv.innerHTML = '<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:4px 16px;padding:6px 0;border-bottom:2px solid var(--border2);margin-bottom:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);">' +
+        '<div>Prøvetrener</div><div>Forsøk</div><div>Snitt</div><div>Siste</div><div>Progresjon</div></div>' +
+        proveHtml;
+    }
+  }
+
+  // ── FULL AKTIVITETSLOGG ──────────────────────────────────────────────
   tbody.innerHTML = '';
-  edAktivitet.slice(0,100).forEach(function(a) {
+  edAktivitet.slice(0,150).forEach(function(a) {
     var tr = document.createElement('tr');
-    var score = a.score_pst!=null ? '<span style="color:'+(a.score_pst>=70?'var(--gron)':a.score_pst>=40?'var(--gul)':'var(--rod)')+'">'+a.score_pst+'%</span>' : '—';
-    tr.innerHTML = '<td style="font-size:.8rem;">'+(a.ressurs||'—')+'</td>'
-      +'<td><code class="km-kod">'+(a.km_kode||'—')+'</code></td>'
-      +'<td style="text-align:center;">'+score+'</td>'
-      +'<td style="font-size:.75rem;color:var(--dim);">'+datoVis(a.tidspunkt)+'</td>';
+    var score = a.score_pst != null
+      ? '<span style="color:'+(a.score_pst>=70?'var(--gron)':a.score_pst>=40?'var(--gul)':'var(--rod)')+'">'+a.score_pst+'%</span>'
+      : '—';
+    var ressursVis = (a.ressurs||'—');
+    var erProve = a.antall_oppgaver > 1 && a.score_pst != null;
+    tr.innerHTML = '<td style="font-size:.8rem;'+(erProve?'font-weight:600;':'')+'">' + ressursVis + '</td>'
+      + '<td><code class="km-kod">'+(a.km_kode||'—')+'</code></td>'
+      + '<td style="text-align:center;">'+(a.antall_oppgaver||'—')+'</td>'
+      + '<td style="text-align:center;">'+score+'</td>'
+      + '<td style="font-size:.75rem;color:var(--dim);">'+datoVis(a.tidspunkt)+'</td>';
     tbody.appendChild(tr);
   });
 }

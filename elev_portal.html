@@ -343,6 +343,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline-offset: 3px;
 }
 
+
+/* ── FERDIGHETSKART ── */
+.fk-header { margin-bottom:16px; }
+.fk-tittel { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+.fk-sendt-info { font-size:.75rem; color:var(--dim); }
+.fk-fag-tittel { font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin:18px 0 8px; }
+.fk-rad { display:grid; grid-template-columns:70px 1fr 90px; gap:6px 12px; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:.82rem; }
+.fk-km-kode { color:var(--dim); font-size:.75rem; font-weight:600; }
+.fk-km-tekst { color:var(--text); line-height:1.4; }
+.fk-nivaa { text-align:center; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.fk-nivaa-l { background:rgba(248,113,113,.15); color:#f87171; }
+.fk-nivaa-m { background:rgba(251,191,36,.15); color:#fbbf24; }
+.fk-nivaa-h { background:rgba(52,211,153,.15); color:#34d399; }
+.fk-nivaa-e { background:rgba(167,139,250,.15); color:#a78bfa; }
+.fk-sammendrag { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; margin-bottom:16px; }
+.fk-sum-boks { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px; text-align:center; }
+.fk-sum-pst { font-size:1.4rem; font-weight:800; line-height:1; margin-bottom:3px; }
+.fk-sum-lab { font-size:.7rem; color:var(--dim); }
+
 </style>
 </head>
 <body>
@@ -387,6 +406,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <button class="fane prog" onclick="visFane('prog',this)">💻 Programmering</button>
       <button class="fane alle" onclick="visFane('alle',this)">🎮 Alle spill</button>
       <button class="fane vurder" onclick="visFane('vurder',this)">📋 Egenvurdering</button>
+      <button class="fane fk" onclick="visFane('fk',this)">🗺️ Ferdighetskart</button>
     </div>
 
     <div id="fane-matte">
@@ -410,6 +430,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     </div>
     <div id="fane-vurder" style="display:none;">
       <div class="egenv-seksjon" id="egenv-innhold"><div class="tom">Laster egenvurdering...</div></div>
+    </div>
+
+    <div id="fane-fk" style="display:none;">
+      <div class="egenv-seksjon" id="fk-innhold">
+        <div class="tom" style="padding:20px;text-align:center;color:var(--dim);">Laster ferdighetskart...</div>
+      </div>
     </div>
 
     <div style="margin-top:28px;">
@@ -934,13 +960,16 @@ function byggAktivitet() {
 function visFane(fane, el) {
   // Deaktiver alle faner
   document.querySelectorAll('.fane').forEach(function(f){f.classList.remove('ak');});
-  el.classList.add('ak');
+  if (el) el.classList.add('ak');
   // Vis riktig panel
-  ['matte','natur','prog','alle'].forEach(function(f){
+  ['matte','natur','prog','alle','vurder','fk'].forEach(function(f){
     var p = document.getElementById('fane-'+f);
     if (p) p.style.display = f===fane ? 'block' : 'none';
   });
   aktiveFane = fane;
+  // Spesialhåndtering
+  if (fane === 'fk') setTimeout(hentOgVisFK, 50);
+  if (fane === 'vurder') setTimeout(function(){ if(typeof byggEgenvurdering==='function') byggEgenvurdering(); }, 50);
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
@@ -1534,6 +1563,82 @@ function genererAnbefalinger() {
 }
 
 
+
+
+// ── FERDIGHETSKART FRA LÆRER ──────────────────────────────────────────────
+async function hentOgVisFK() {
+  var innhold = document.getElementById('fk-innhold');
+  if (!innhold) return;
+
+  var elev = hentElev ? hentElev() : null;
+  if (!SkapLab || !elev || !elev.id) {
+    innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;">Logg inn for å se ferdighetskart.</div>';
+    return;
+  }
+
+  try {
+    innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;color:var(--dim);">Laster...</div>';
+    var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+    var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+
+    var res = await fetch(
+      SUPABASE_URL+'/rest/v1/ferdighetskart_sendt?elev_id=eq.'+elev.id+'&order=created_at.desc&limit=1',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY } }
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+
+    if (!Array.isArray(res) || res.length === 0) {
+      innhold.innerHTML = '<div class="tom" style="padding:24px;text-align:center;">Læreren har ikke sendt ferdighetskart ennå.</div>';
+      return;
+    }
+
+    var fk = res[0];
+    var vurderinger = {};
+    var prosentandeler = {};
+    try { vurderinger = JSON.parse(fk.snapshot||'{}'); } catch(e) {}
+    try { prosentandeler = JSON.parse(fk.prosentandeler||'{}'); } catch(e) {}
+    var fagNavn = {mat8:'Matematikk 8. trinn',mat9:'Matematikk 9. trinn',mat10:'Matematikk 10. trinn',nat:'Naturfag',prg:'Programmering'}[fk.fag] || fk.fag;
+
+    var dato = fk.created_at ? new Date(fk.created_at).toLocaleDateString('nb-NO',{day:'numeric',month:'long',year:'numeric'}) : '';
+
+    var NIVA_LABEL = {'-':'Ikke vurdert','l':'Lav kompetanse','m':'Middels kompetanse','h':'Høy kompetanse','e':'Eksemplarisk'};
+    var NIVA_CLS   = {'-':'','l':'fk-nivaa-l','m':'fk-nivaa-m','h':'fk-nivaa-h','e':'fk-nivaa-e'};
+
+    // Sammendrag
+    var sumHtml = '<div class="fk-sammendrag">';
+    [['h','Høy/Eksempel'],['m','Middels'],['l','Lav'],['e','Eksemplarisk']].forEach(function(p){
+      var pst = prosentandeler[p[0]]||0;
+      var cls = {h:'color:#34d399',m:'color:#fbbf24',l:'color:#f87171',e:'color:#a78bfa'}[p[0]]||'';
+      if(pst>0) sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="'+cls+'">'+pst+'%</div><div class="fk-sum-lab">'+p[1]+'</div></div>';
+    });
+    sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="color:var(--accent)">'+Object.keys(vurderinger).length+'</div><div class="fk-sum-lab">Vurderte mål</div></div>';
+    sumHtml += '</div>';
+
+    // Vurderingstabellen
+    var tabHtml = '';
+    Object.keys(vurderinger).forEach(function(km) {
+      var v = vurderinger[km];
+      var cls = NIVA_CLS[v.nivaa]||'';
+      tabHtml += '<div class="fk-rad">'
+        +'<div class="fk-km-kode">'+km+'</div>'
+        +'<div class="fk-km-tekst">'+(v.km_tekst||'')+'</div>'
+        +'<div class="fk-nivaa '+cls+'">'+(NIVA_LABEL[v.nivaa]||v.nivaa)+'</div>'
+        +'</div>';
+    });
+
+    innhold.innerHTML =
+      '<div class="fk-header">'
+      +'<div class="fk-tittel">🗺️ '+fagNavn+'</div>'
+      +'<div class="fk-sendt-info">Sendt av lærer · '+dato+'</div>'
+      +'</div>'
+      + sumHtml
+      + '<div class="fk-fag-tittel">Kompetansemål og vurdering</div>'
+      + (tabHtml || '<div class="tom">Ingen vurderinger registrert.</div>');
+
+  } catch(e) {
+    innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;">Kunne ikke laste ferdighetskart.</div>';
+    console.error('FK feil:', e);
+  }
+}
 
 </script>
 
