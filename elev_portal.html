@@ -1618,7 +1618,7 @@ async function hentOgVisFK() {
   var innhold = document.getElementById('fk-innhold');
   if (!innhold) return;
 
-  var elev = hentElev ? hentElev() : null;
+  var elev = (typeof hentElev === 'function') ? hentElev() : null;
   if (!SkapLab || !elev || !elev.id) {
     innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;">Logg inn for å se ferdighetskart.</div>';
     return;
@@ -1632,44 +1632,56 @@ async function hentOgVisFK() {
     var res = await fetch(
       SUPABASE_URL+'/rest/v1/ferdighetskart_sendt?elev_id=eq.'+elev.id+'&order=created_at.desc&limit=1',
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY } }
-    ).then(function(r){return r.json();}).catch(function(){return [];});
+    ).then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; });
 
     if (!Array.isArray(res) || res.length === 0) {
-      innhold.innerHTML = '<div class="tom" style="padding:24px;text-align:center;">Læreren har ikke sendt ferdighetskart ennå.</div>';
+      innhold.innerHTML = '<div class="tom" style="padding:24px;text-align:center;color:var(--dim);">Læreren har ikke sendt ferdighetskart ennå.</div>';
       return;
     }
 
     var fk = res[0];
-    var vurderinger = {};
+    var snapshot = {};
     var prosentandeler = {};
-    try { vurderinger = JSON.parse(fk.snapshot||'{}'); } catch(e) {}
-    try { prosentandeler = JSON.parse(fk.prosentandeler||'{}'); } catch(e) {}
-    var fagNavn = {mat8:'Matematikk 8. trinn',mat9:'Matematikk 9. trinn',mat10:'Matematikk 10. trinn',nat:'Naturfag',prg:'Programmering'}[fk.fag] || fk.fag;
+    try { snapshot = JSON.parse(fk.snapshot || '{}'); } catch(e) {}
+    try { prosentandeler = JSON.parse(fk.prosentandeler || '{}'); } catch(e) {}
 
+    var fagNavn = {mat8:'Matematikk 8',mat9:'Matematikk 9',mat10:'Matematikk 10',nat:'Naturfag',prg:'Programmering'}[fk.fag] || (fk.fag||'');
     var dato = fk.created_at ? new Date(fk.created_at).toLocaleDateString('nb-NO',{day:'numeric',month:'long',year:'numeric'}) : '';
+    var antall = Object.keys(snapshot).length;
 
-    var NIVA_LABEL = {'-':'Ikke vurdert','l':'Lav kompetanse','m':'Middels kompetanse','h':'Høy kompetanse','e':'Eksemplarisk'};
-    var NIVA_CLS   = {'-':'','l':'fk-nivaa-l','m':'fk-nivaa-m','h':'fk-nivaa-h','e':'fk-nivaa-e'};
-
-    // Sammendrag
+    // Bygg sammendrag
+    function fargePst(p){ return p>=70?'#34d399':p>=40?'#fbbf24':'#f87171'; }
     var sumHtml = '<div class="fk-sammendrag">';
-    [['h','Høy/Eksempel'],['m','Middels'],['l','Lav'],['e','Eksemplarisk']].forEach(function(p){
-      var pst = prosentandeler[p[0]]||0;
-      var cls = {h:'color:#34d399',m:'color:#fbbf24',l:'color:#f87171',e:'color:#a78bfa'}[p[0]]||'';
-      if(pst>0) sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="'+cls+'">'+pst+'%</div><div class="fk-sum-lab">'+p[1]+'</div></div>';
+    if (prosentandeler.snitt !== undefined) {
+      sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="color:'+fargePst(prosentandeler.snitt||0)+'">'+Math.round(prosentandeler.snitt||0)+'%</div><div class="fk-sum-lab">Snitt score</div></div>';
+    }
+    [['h','Høy'],['m','Middels'],['l','Lav']].forEach(function(p){
+      var pst = parseFloat(prosentandeler[p[0]]||0);
+      if (pst > 0) {
+        var cls = p[0]==='h'?'#34d399':p[0]==='m'?'#fbbf24':'#f87171';
+        sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="color:'+cls+'">'+pst+'%</div><div class="fk-sum-lab">'+p[1]+'</div></div>';
+      }
     });
-    sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="color:var(--accent)">'+Object.keys(vurderinger).length+'</div><div class="fk-sum-lab">Vurderte mål</div></div>';
+    sumHtml += '<div class="fk-sum-boks"><div class="fk-sum-pst" style="color:var(--accent)">'+antall+'</div><div class="fk-sum-lab">Ferdigheter</div></div>';
     sumHtml += '</div>';
 
-    // Vurderingstabellen
-    var tabHtml = '';
-    Object.keys(vurderinger).forEach(function(km) {
-      var v = vurderinger[km];
-      var cls = NIVA_CLS[v.nivaa]||'';
-      tabHtml += '<div class="fk-rad">'
-        +'<div class="fk-km-kode">'+km+'</div>'
-        +'<div class="fk-km-tekst">'+(v.km_tekst||'')+'</div>'
-        +'<div class="fk-nivaa '+cls+'">'+(NIVA_LABEL[v.nivaa]||v.nivaa)+'</div>'
+    // Bygg ferdighetslisten – håndter begge snapshot-formater
+    var radHtml = '';
+    Object.keys(snapshot).forEach(function(key) {
+      var v = snapshot[key];
+      var nivaa = typeof v === 'object' ? (v.nivaa || '') : '';
+      var score = typeof v === 'object' ? (v.score !== undefined ? v.score : null) : null;
+      var km_tekst = typeof v === 'object' ? (v.km_tekst || '') : '';
+
+      var fargeNivaa = nivaa==='h'?'#34d399':nivaa==='m'?'#fbbf24':nivaa==='l'?'#f87171':'rgba(255,255,255,.3)';
+      var nvLabel = {h:'Høy',m:'Middels',l:'Lav',e:'Eksemplarisk','-':'–'}[nivaa] || nivaa;
+
+      radHtml += '<div class="fk-rad">'
+        +'<div class="fk-km-kode" style="font-size:.72rem;color:var(--dim);">'+key+'</div>'
+        +'<div class="fk-km-tekst">'+(km_tekst || key)+'</div>'
+        +(score !== null
+          ? '<div style="font-size:.78rem;font-weight:700;color:'+fargePst(score)+';">'+score+'%</div>'
+          : '<div class="fk-nivaa" style="background:'+fargeNivaa+'20;color:'+fargeNivaa+';border:1px solid '+fargeNivaa+'40;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;">'+nvLabel+'</div>')
         +'</div>';
     });
 
@@ -1679,12 +1691,12 @@ async function hentOgVisFK() {
       +'<div class="fk-sendt-info">Sendt av lærer · '+dato+'</div>'
       +'</div>'
       + sumHtml
-      + '<div class="fk-fag-tittel">Kompetansemål og vurdering</div>'
-      + (tabHtml || '<div class="tom">Ingen vurderinger registrert.</div>');
+      + '<div class="fk-fag-tittel" style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:18px 0 8px;">Dine ferdigheter</div>'
+      + (radHtml || '<div class="tom" style="padding:16px 0;">Ingen ferdigheter registrert ennå.</div>');
 
   } catch(e) {
-    innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;">Kunne ikke laste ferdighetskart.</div>';
-    console.error('FK feil:', e);
+    innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;">Kunne ikke laste ferdighetskart. Prøv igjen.</div>';
+    console.error('hentOgVisFK feil:', e);
   }
 }
 

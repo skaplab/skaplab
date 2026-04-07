@@ -516,7 +516,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     </div>
     <div id="malark-innhold" style="display:none">
       <div class="sek">
-        <div class="sek-tittel" id="malark-elev-navn"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+  <div class="sek-tittel" id="malark-elev-navn"></div>
+  <span style="font-size:.75rem;color:var(--dim);font-style:italic;">💾 Lagres automatisk ved klikk</span>
+</div>
         <div id="malark-km-liste"></div>
       </div>
     </div>
@@ -2237,45 +2240,44 @@ function settNiv(btn) {
   var km = btn.dataset.km;
   var niv = btn.dataset.niv;
   maVurderinger[km] = niv;
-  btn.closest('.niv-sel').querySelectorAll('.niv-btn').forEach(function(b){b.classList.remove('h','m','l','hoy','middels','lav');});
+  var sel = btn.closest('.niv-sel');
+  sel.querySelectorAll('.niv-btn').forEach(function(b){b.classList.remove('h','m','l','hoy','middels','lav');});
   btn.classList.add(niv==='hoy'?'h':niv==='middels'?'m':'l');
   var elevId = $('ma-elev').value;
   if (!elevId) return;
-  upsertVurdering(elevId, km, niv);
-  console.log('Lagrer vurdering:', {elevId, km, niv, lid: lid ? lid.substring(0,8)+'...' : 'mangler', token: token ? 'OK' : 'mangler'});
+  // Lagrer automatisk – vis kort bekreftelse
+  var origTxt = btn.textContent;
+  upsertVurdering(elevId, km, niv).then(function(){
+    btn.textContent = '✓';
+    setTimeout(function(){ btn.textContent = origTxt; }, 1200);
+  }).catch(function(){});
 }
 
 function upsertVurdering(elevId, km, niv) {
-  if (!token) { console.error('upsertVurdering: Ingen token - er lærer innlogget?'); return; }
-  if (!lid) { console.error('upsertVurdering: lid mangler'); return; }
-
-  // Prøv PATCH (oppdater eksisterende rad)
-  SkapLab._patch(
+  if (!token) { console.error('upsertVurdering: ingen token'); return Promise.reject('ingen token'); }
+  if (!lid)   { console.error('upsertVurdering: lid mangler'); return Promise.reject('lid mangler'); }
+  return SkapLab._patch(
     '/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+lid+'&km_kode=eq.'+km,
-    {nivaa: niv},
-    token
+    {nivaa: niv}, token
   ).then(function(res) {
-    // Supabase PATCH med return=representation: [] = ingen rad, [{}] = oppdatert
     if (Array.isArray(res) && res.length === 0) {
-      // Rad finnes ikke – INSERT
       return SkapLab._post('/vurderinger', {
-        elev_id: elevId,
-        laerer_id: lid,
-        km_kode: km,
-        nivaa: niv
+        elev_id: elevId, laerer_id: lid, km_kode: km, nivaa: niv
       }, token).then(function(postRes) {
         if (postRes && postRes.message) {
-          console.error('INSERT feilet:', postRes.message, postRes.hint || '');
           visFeilmelding('Lagring feilet: ' + postRes.message);
+          return Promise.reject(postRes.message);
         }
       });
     } else if (res && res.message) {
-      console.error('PATCH feilet:', res.message, res.hint || '');
       visFeilmelding('Lagring feilet: ' + res.message);
+      return Promise.reject(res.message);
     }
   }).catch(function(e) {
-    console.error('upsertVurdering nettverksfeil:', e);
+    if (typeof e === 'string' && e.includes('ingen token')) return;
+    console.error('upsertVurdering feil:', e);
     visFeilmelding('Nettverksfeil ved lagring');
+    return Promise.reject(e);
   });
 }
 
