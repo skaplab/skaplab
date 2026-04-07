@@ -1214,8 +1214,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     <div class="modal-tittel">+ Legg til elev</div>
     <button class="modal-lukk" onclick="lukkModal()">✕</button>
     <div class="felt"><label class="felt-lbl">Fullt navn</label>
-      <input type="text" id="ny-elev-navn" placeholder="Fornavn Etternavn"></div>
-    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" id="ny-elev-navn" placeholder="Fornavn Etternavn" oninput="oppdaterKallenavn()"></div>
+    <div class="felt" style="margin-top:10px;">
+      <label class="felt-lbl">Kallenavn <span style="color:var(--dim);font-weight:400;">(eleven bruker dette ved innlogging)</span></label>
+      <input type="text" id="ny-elev-kallenavn" placeholder="f.eks. fornavn eller et kallenavn">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
       <button class="btn btn-prim" onclick="opprettElev()">Legg til</button>
       <button class="btn btn-sek" onclick="lukkModal()">Avbryt</button>
     </div>
@@ -1572,7 +1576,7 @@ async function init() {
   try {
     if (klasser.length) {
       var ids = klasser.map(function(k){return k.id;}).join(',');
-      var eR = await SkapLab._get('/elever?klasse_id=in.('+ids+')&aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne', token);
+      var eR = await SkapLab._get('/elever?klasse_id=in.('+ids+')&aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,kallenavn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne', token);
       elever = Array.isArray(eR) ? eR : [];
     }
   } catch(e) { elever = []; }
@@ -1674,7 +1678,10 @@ async function lastEleverForKlasse(klasseId) {
       + e.fullt_navn
       + (e.trenger_hjelp ? '<span class="lyspare-badge" title="Trenger hjelp: '+(e.hjelp_emne||'')+'">💡 Hjelp</span>' : '')
       + '</div></td>'
-      + '<td><code class="km-kod">'+e.innloggingskode+'</code></td>'
+      + '<td>'
+      + '<code class="km-kod">'+e.innloggingskode+'</code>'
+      + (e.kallenavn ? '<div style="font-size:.7rem;color:var(--dim);margin-top:2px;">👤 '+e.kallenavn+'</div>' : '')
+      + '</td>'
       + '<td style="color:var(--dim);font-size:.8rem;">'+sistPalogget+'</td>'
       + '<td><button class="btn btn-rod btn-sm" data-eid="'+e.id+'" data-enavn="'+e.fullt_navn+'" onclick="slettElev(this.dataset.eid,this.dataset.enavn)">🗑</button></td>';
     tbody.appendChild(tr);
@@ -1806,6 +1813,14 @@ async function slettKlasse(id, navn) {
 }
 
 // ── ELEVER CRUD ───────────────────────────────────────────────────────
+async 
+function oppdaterKallenavn() {
+  var navn = $('ny-elev-navn').value.trim();
+  var kn = $('ny-elev-kallenavn');
+  if (kn && !kn.dataset.manuelt) {
+    kn.value = navn.split(' ')[0].toLowerCase();
+  }
+}
 async function opprettElev() {
   var navn = $('ny-elev-navn').value.trim();
   var feilEl = $('ny-elev-feil');
@@ -1816,9 +1831,10 @@ async function opprettElev() {
   // Sjekk at koden er unik
   while (elever.some(function(e){return e.innloggingskode===kode;})) kode = genKode();
   try {
+    var kallenavn = ($('ny-elev-kallenavn').value.trim() || navn.split(' ')[0]).toLowerCase();
     var res = await SkapLab._post('/elever', {
-      fullt_navn: navn, klasse_id: aktivKlasse,
-      innloggingskode: kode, aktiv: true
+      fullt_navn: navn, kallenavn: kallenavn,
+      klasse_id: aktivKlasse, innloggingskode: kode, aktiv: true
     }, token);
     if (Array.isArray(res)) res = res[0];
     if (res && res.id) {
@@ -2244,8 +2260,18 @@ function settNiv(btn) {
   var origTxt = btn.textContent;
   upsertVurdering(elevId, km, niv).then(function(){
     btn.textContent = '✓';
-    setTimeout(function(){ btn.textContent = origTxt; }, 1200);
-  }).catch(function(){});
+    btn.style.background = 'rgba(52,211,153,.2)';
+    setTimeout(function(){
+      btn.textContent = origTxt;
+      btn.style.background = '';
+    }, 1200);
+  }).catch(function(e){
+    // Lagring feilet – vis feilmelding og tilbakestill lokal cache
+    btn.textContent = '✗';
+    btn.style.background = 'rgba(248,113,113,.2)';
+    setTimeout(function(){ btn.textContent = origTxt; btn.style.background = ''; }, 2000);
+    maVurderinger[km] = null; // tilbakestill slik DB og UI er synkronisert
+  });
 }
 
 function upsertVurdering(elevId, km, niv) {

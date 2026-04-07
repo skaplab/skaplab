@@ -32,13 +32,23 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
 .divider{height:1px;background:rgba(255,255,255,.08);margin:24px 0;}
 .laerer-link{font-size:.78rem;color:rgba(255,255,255,.35);}
 .laerer-link a{color:#60a5fa;text-decoration:none;}
+
+  .kallenavn-felt { margin-bottom: 20px; }
+  .kallenavn-felt label { display:block; font-size:.82rem; color:rgba(255,255,255,.55); margin-bottom:6px; text-align:center; }
+  .kallenavn-input { width:100%; padding:12px 16px; border-radius:10px; border:2px solid rgba(255,255,255,.12); background:rgba(255,255,255,.08); color:#e0e8ff; font-size:1rem; font-family:inherit; text-align:center; outline:none; transition:border .2s; }
+  .kallenavn-input:focus { border-color:#60a5fa; }
+  .kallenavn-input::placeholder { color:rgba(255,255,255,.3); }
 </style>
 </head>
 <body>
 <div class="boks">
   <a href="index.html" class="logo" style="text-decoration:none;display:block;">Skap<span>Lab</span></a>
   <h2>Logg inn</h2>
-  <p>Skriv inn den 6-sifrede koden du har fatt av laereren din.</p>
+  <p>Skriv inn kallenavnet ditt og den 6-sifrede koden du har fått av læreren.</p>
+  <div class="kallenavn-felt">
+    <label for="kallenavn-input">Kallenavn</label>
+    <input class="kallenavn-input" type="text" id="kallenavn-input" placeholder="Skriv kallenavnet ditt" autocomplete="off" autocapitalize="none" oninput="sjekkKlar()">
+  </div>
   <div class="kode-felt">
     <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s0">
     <input class="kode-siffer" maxlength="1" type="text" inputmode="numeric" id="s1">
@@ -51,7 +61,7 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   <div id="feilmelding"></div>
   <div id="laster">Logger inn...</div>
   <div class="divider"></div>
-  <div class="laerer-link">Er du laerer? <a href="laerer_login.html">Logg inn her</a></div>
+  <div class="laerer-link">Er du lærer? <a href="laerer_login.html">Logg inn her</a></div>
 </div>
 <script>// skaplab_auth.js - SkapLab autentisering
 (function () {
@@ -106,15 +116,21 @@ p{font-size:.88rem;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px
   }
 
   // ── ELEV-INNLOGGING ────────────────────────────────────────────
-  async function elevLoggInn(kode) {
+  async function elevLoggInn(kode, kallenavn) {
     try {
       var resp = await fetch(
         API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
-        '&select=id,fullt_navn,klasse_id,klasser(navn,trinn,skoler(navn))',
+        '&select=id,fullt_navn,kallenavn,klasse_id,klasser(navn,trinn,skoler(navn))',
         { headers: hdr() }
       );
       var data = await resp.json();
-      if (!data || data.length === 0) return { ok: false, feil: 'Feil kode' };
+      if (!data || data.length === 0) return { ok: false, feil: 'Feil kallenavn eller kode' };
+      // Verifiser kallenavn om det er oppgitt og lagret
+      if (kallenavn && data[0].kallenavn) {
+        if (data[0].kallenavn.toLowerCase() !== kallenavn.toLowerCase()) {
+          return { ok: false, feil: 'Feil kallenavn eller kode' };
+        }
+      }
       var elev = data[0];
       // Bruk localStorage slik at sesjonen deles mellom faner
       localStorage.setItem(SESSION_NØKKEL, JSON.stringify({...elev, _lagret: Date.now()}));
@@ -296,7 +312,7 @@ sifre.forEach(function(el,i){
   el.addEventListener('input',function(){
     this.value=this.value.replace(/[^0-9]/g,'').slice(-1);
     if(this.value&&i<5) sifre[i+1].focus();
-    btn.disabled=hentKode().length<6;
+    sjekkKlar();
   });
   el.addEventListener('keydown',function(e){
     if(e.key==='Backspace'&&!this.value&&i>0){sifre[i-1].focus();sifre[i-1].value='';btn.disabled=true;}
@@ -306,19 +322,31 @@ sifre.forEach(function(el,i){
     var t=(e.clipboardData||window.clipboardData).getData('text').replace(/[^0-9]/g,'').slice(0,6);
     for(var j=0;j<t.length&&j<6;j++) sifre[j].value=t[j];
     if(t.length<6) sifre[t.length].focus(); else sifre[5].focus();
-    btn.disabled=hentKode().length<6;
+    sjekkKlar();
   });
 });
 function hentKode(){return Array.from(sifre).map(function(s){return s.value;}).join('');}
 async function loggInn(){
-  var kode=hentKode(); if(kode.length<6) return;
-  btn.disabled=true;
-  document.getElementById('feilmelding').textContent='';
-  document.getElementById('laster').style.display='block';
-  var res=await SkapLab.elevLoggInn(kode);
-  document.getElementById('laster').style.display='none';
-  if(res.ok){location.href='elev_portal.html';}
-  else{document.getElementById('feilmelding').textContent='Feil kode. Prøv igjen.';btn.disabled=false;}
+  var kode = hentKode();
+  var kallenavn = document.getElementById('kallenavn-input').value.trim().toLowerCase();
+  if (kode.length < 6 || !kallenavn) return;
+  btn.disabled = true;
+  document.getElementById('feilmelding').textContent = '';
+  document.getElementById('laster').style.display = 'block';
+  var res = await SkapLab.elevLoggInn(kode, kallenavn);
+  document.getElementById('laster').style.display = 'none';
+  if (res.ok) {
+    location.href = 'elev_portal.html';
+  } else {
+    document.getElementById('feilmelding').textContent = res.feil || 'Feil kallenavn eller kode. Prøv igjen.';
+    btn.disabled = false;
+  }
+}
+
+function sjekkKlar() {
+  var kode = hentKode();
+  var kallenavn = document.getElementById('kallenavn-input') ? document.getElementById('kallenavn-input').value.trim() : '';
+  btn.disabled = !(kode.length === 6 && kallenavn.length > 0);
 }
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&!btn.disabled)loggInn();});
 sifre[0].focus();
