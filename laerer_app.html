@@ -1518,7 +1518,24 @@ var RES={"MAT8-11":[{"r":"algoritmedetektiven","fil":"algoritmedetektiven.html",
 // ── GLOBAL STATE ──────────────────────────────────────────────────────
 var laerer = SkapLab.hentLaerer();
 var token  = laerer ? laerer.access_token : null;
-var lid    = laerer ? ((laerer.user&&laerer.user.id)||laerer.id||'') : '';
+var lid = '';
+if (laerer) {
+  // Prøv user.id (Supabase v2 standard)
+  if (laerer.user && laerer.user.id) {
+    lid = laerer.user.id;
+  } else if (laerer.id) {
+    lid = laerer.id;
+  } else if (laerer.access_token) {
+    // Fallback: parse JWT sub-claim
+    try {
+      var jwtParts = laerer.access_token.split('.');
+      if (jwtParts.length === 3) {
+        var payload = JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        lid = payload.sub || '';
+      }
+    } catch(e) {}
+  }
+}
 
 if (!laerer) { location.href = 'laerer_login.html'; }
 
@@ -1567,6 +1584,17 @@ function lagrePlanTilLS(klasseId, data) {
 
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
+  // Sjekk at lid er satt - om ikke, parse JWT på nytt
+  if (!lid && token) {
+    try {
+      var parts = token.split('.');
+      if (parts.length === 3) {
+        var pl = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        lid = pl.sub || '';
+      }
+    } catch(e) {}
+  }
+
   // Vis lærerens navn
   try {
     var lR = await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn,skole_id', token);
