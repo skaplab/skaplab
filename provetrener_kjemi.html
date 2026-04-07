@@ -2,9 +2,9 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prøvetrener – Statistikk</title>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Prøvetrener Kjemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0f0f14;--bg2:#16161e;--bg3:#1e1e2a;
@@ -178,150 +178,252 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 </style>
 </head>
 <body>
-<div id="modal-tid" class="vis">
-  <div class="modal-kort"><div class="modal-tittel">📝 Prøvetrener</div><div class="modal-sub">Statistikk · Velg prøvetid</div>
-  <div class="modal-knapper">
-    <button class="modal-tid-btn" onclick="startProve(45)"><div class="tid-ikon">⚡</div><div class="tid-info"><div class="tid-label">45 minutter</div><div class="tid-ant" id="ant-45">Laster…</div></div></button>
-    <button class="modal-tid-btn" onclick="startProve(60)"><div class="tid-ikon">⏱</div><div class="tid-info"><div class="tid-label">60 minutter</div><div class="tid-ant" id="ant-60">Laster…</div></div></button>
-    <button class="modal-tid-btn" onclick="startProve(90)"><div class="tid-ikon">🧠</div><div class="tid-info"><div class="tid-label">90 minutter</div><div class="tid-ant" id="ant-90">Laster…</div></div></button>
-  </div></div>
+<a href="naturfag_hub.html" class="skip-link">Hopp til innhold</a>
+<div id="modal-tid" class="vis" role="dialog" aria-modal="true" aria-labelledby="modal-tittel">
+  <div class="modal-kort">
+    <div class="modal-tittel" id="modal-tittel">📝 Prøvetrener</div>
+    <div class="modal-sub">Kjemi – atomer, reaksjoner og miljø · Velg prøvetid</div>
+    <div class="modal-knapper">
+      <button class="modal-tid-btn" onclick="startProve(45)" aria-label="Start 45-minutters prøve"><div class="tid-ikon">⚡</div><div class="tid-info"><div class="tid-label">45 minutter</div><div class="tid-ant" id="ant-45">Laster…</div></div></button>
+      <button class="modal-tid-btn" onclick="startProve(60)" aria-label="Start 60-minutters prøve"><div class="tid-ikon">⏱</div><div class="tid-info"><div class="tid-label">60 minutter</div><div class="tid-ant" id="ant-60">Laster…</div></div></button>
+      <button class="modal-tid-btn" onclick="startProve(90)" aria-label="Start 90-minutters prøve"><div class="tid-ikon">🧠</div><div class="tid-info"><div class="tid-label">90 minutter</div><div class="tid-ant" id="ant-90">Laster…</div></div></button>
+    </div>
+  </div>
 </div>
-<div id="header">
-  <a href="matte_hub.html" id="back-link">← Matte-hub</a>
-  <div><div class="logo">📝 Prøvetrener</div><div class="undertittel" id="prv-undertittel">Statistikk</div></div>
+<div id="header" role="banner">
+  <a href="naturfag_hub.html" id="back-link">← Naturfag-hub</a>
+  <div><div class="logo">📝 Prøvetrener</div><div class="undertittel" id="prv-undertittel">Kjemi – atomer, reaksjoner og miljø</div></div>
   <div class="spacer"></div>
-  <div class="stats"><span>✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> p</span><span>📋 <b id="st-besvart">0</b>/<b id="st-tot">0</b></span></div>
-  <div id="tidtaker"><span id="tid-display">–:––</span></div>
+  <div class="stats"><span aria-label="Poeng">✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> p</span><span aria-label="Besvarte oppgaver">📋 <b id="st-besvart">0</b>/<b id="st-tot">0</b></span></div>
+  <div id="tidtaker" aria-live="polite"><span id="tid-display">–:––</span></div>
 </div>
-<div id="progress-wrap">
+<div id="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
   <div id="progress-info"><span id="prog-tekst">Oppgave 1</span><span id="prog-pst">0%</span></div>
   <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
 </div>
-<div id="app" style="display:none;"><div id="liste"></div><div id="panel"></div></div>
-<div id="resultat"></div>
+<div id="app" style="display:none;" id="main-content" role="main"><div id="liste"></div><div id="panel"></div></div>
+<div id="resultat" aria-live="polite"></div>
 <script>
-
-// ── SPORING ───────────────────────────────────────────────────────
 (function(){
-  try {
-    var _elev = null;
-    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e){}
-    window._skaplab_logg = function(ressurs, km, score, ant, rik, fa, tot) {
-      if (!_elev || !_elev.id) return;
-      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+  try{
+    var _e=null;
+    try{_e=JSON.parse(localStorage.getItem('skaplab_elev'));}catch(e){}
+    window._skaplab_logg=function(r,k,s,a,ri,f,t){
+      if(!_e||!_e.id)return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet',{
         method:'POST',
         headers:{'Content-Type':'application/json',
           'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
           'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
-        body: JSON.stringify({elev_id:_elev.id, ressurs:ressurs, km_kode:km,
-          score_pst:score, antall_oppgaver:ant, riktige:rik,
-          fullfort_antall:fa, totalt_antall:tot})
+        body:JSON.stringify({elev_id:_e.id,ressurs:r,km_kode:k,
+          score_pst:Math.round(s||0),antall_oppgaver:a||null,riktige:ri||null,
+          fullfort_antall:f||null,totalt_antall:t||null})
       }).catch(function(){});
     };
-  } catch(e){}
+  }catch(e){}
 })();
-
-// ── HJELPEFUNKSJONER ─────────────────────────────────────────────
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d||1));}
 function plukk(arr){return arr[rnd(0,arr.length-1)];}
 function bland(arr){return arr.slice().sort(function(){return Math.random()-.5;});}
 function gcd(a,b){return b===0?a:gcd(b,a%b);}
 function factorial(k){return k<=1?1:k*factorial(k-1);}
-var KM_KODE='KM9';var RESSURS='provetrener_statistikk';var UNDERTITTEL='Statistikk';
+var KM_KODE='KM1';var RESSURS='provetrener_tall';var UNDERTITTEL='Tall og tallforståelse';
 
-// ── OPPGAVEBANK: STATISTIKK ───────────────────────────────────────
-
-function genGjennomsnitt() {
-  var n=rnd(4,7);
-  var tall=Array.from({length:n},function(){return rnd(3,20);});
-  var sum=tall.reduce(function(a,b){return a+b;},0);
-  var snitt=parseFloat((sum/n).toFixed(2));
-  return {type:'gjsn',tema:'Gjennomsnitt (aritmetisk middelverdi)',poeng:2,nivå:'lett',
-    spørsmål:'Finn gjennomsnittet av tallene:\n\n'+tall.join(', '),
-    instruksjon:'Gjennomsnitt = sum / antall',
-    svarType:'tall',fasit:snitt,tol:0.05,
-    løsning:'Sum: '+sum+'\nAntall: '+n+'\nGjennomsnitt: '+sum+' / '+n+' = '+snitt};
+function genHeltallsregning() {
+  var ops = [
+    function(){
+      var a=rnd(12,99), b=rnd(12,99);
+      return {spørsmål:'Regn ut:\n\n'+a+' × '+b,fasit:a*b,svarType:'tall',tol:0,
+        løsning:a+' × '+b+' = '+a*b,poeng:2,nivå:'lett',
+        instruksjon:'Still opp og regn ut. Vis framgangsmåten.'};
+    },
+    function(){
+      var a=rnd(100,999), b=plukk([2,3,4,6]);
+      return {spørsmål:'Regn ut:\n\n'+a+' ÷ '+b,fasit:Math.floor(a/b),
+        svarType:'tall',tol:0.5,
+        løsning:a+' ÷ '+b+' = '+Math.floor(a/b)+(a%b?' rest '+a%b:''),
+        poeng:2,nivå:'lett',instruksjon:'Vis framgangsmåten.'};
+    },
+  ];
+  var o = plukk(ops)();
+  return Object.assign(o,{type:'heltall',tema:'Heltallsregning'});
 }
 
-function genMedian() {
-  var n=rnd(5,8)|1; // odde
-  var tall=Array.from({length:n},function(){return rnd(2,20);}).sort(function(a,b){return a-b;});
-  var mid=Math.floor(n/2);
-  return {type:'median',tema:'Median',poeng:2,nivå:'lett',
-    spørsmål:'Finn medianen:\n\n'+tall.join(', '),
-    instruksjon:'Sorter tallene og finn midterste verdi.',
-    svarType:'tall',fasit:tall[mid],tol:0,
-    løsning:'Sortert: '+tall.join(', ')+'\nMedian = '+tall[mid]+' (plass '+(mid+1)+' av '+n+')'};
+function genDesimaltall() {
+  var a=rndF(1.2,9.8,1), b=rndF(0.2,4.5,1);
+  var ops = [
+    {spørsmål:'Regn ut:\n\n'+a+' × '+b,fasit:parseFloat((a*b).toFixed(2)),tol:0.05,løsning:a+' × '+b+' = '+(a*b).toFixed(2)},
+    {spørsmål:'Regn ut:\n\n'+a+' ÷ '+b,fasit:parseFloat((a/b).toFixed(2)),tol:0.05,løsning:a+' ÷ '+b+' ≈ '+(a/b).toFixed(2)},
+  ];
+  var o = plukk(ops);
+  return Object.assign({},{type:'desimal',tema:'Desimaltall',poeng:2,nivå:'middels',
+    instruksjon:'Vis framgangsmåten. Rund av til to desimaler om nødvendig.',
+    svarType:'tall'},o);
 }
 
-function genTypetall() {
-  var base=[2,4,4,4,7,9,9];
-  var ekstra=[rnd(1,10),rnd(1,10)];
-  var data=base.concat(ekstra).sort(function(a,b){return a-b;});
-  return {type:'typetall',tema:'Typetall (modus)',poeng:1,nivå:'lett',
-    spørsmål:'Finn typetallet i datasettet:\n\n'+data.join(', '),
-    instruksjon:'Typetallet er den verdien som forekommer flest ganger.',
-    svarType:'tall',fasit:4,tol:0,
-    løsning:'4 forekommer 3 ganger – det er typetallet'};
+function genNegativeTall() {
+  var a=rnd(2,9), b=rnd(2,9);
+  var type=plukk(['mult_neg_pos','mult_neg_neg','uttrykk']);
+  if (type==='mult_neg_pos') {
+    return {type:'negative',tema:'Negative tall',poeng:1,nivå:'lett',
+      spørsmål:'Regn ut:\n\n(-'+a+') × '+b,fasit:-a*b,tol:0,
+      løsning:'(-'+a+') × '+b+' = -'+(a*b),svarType:'tall',
+      instruksjon:'Husk fortegnreglene.'};
+  } else if (type==='mult_neg_neg') {
+    return {type:'negative',tema:'Negative tall',poeng:1,nivå:'lett',
+      spørsmål:'Regn ut:\n\n(-'+a+') × (-'+b+')',fasit:a*b,tol:0,
+      løsning:'(-'+a+') × (-'+b+') = '+(a*b),svarType:'tall',
+      instruksjon:'Minus × minus = pluss.'};
+  } else {
+    var c=rnd(2,6),d=rnd(2,5);
+    var res=(-a)*b - c*(-d);
+    return {type:'negative',tema:'Negative tall',poeng:2,nivå:'middels',
+      spørsmål:'Regn ut:\n\n(-'+a+') × '+b+' – '+c+' × (-'+d+')',
+      fasit:res,tol:0,løsning:'(-'+a+') × '+b+' – '+c+' × (-'+d+') = -'+(a*b)+' + '+(c*d)+' = '+res,
+      svarType:'tall',instruksjon:'Husk fortegnregler og regnerekkefølge.'};
+  }
 }
 
-function genVariasjon() {
-  var n=rnd(5,8);
-  var tall=Array.from({length:n},function(){return rnd(3,25);}).sort(function(a,b){return a-b;});
-  var vv=tall[tall.length-1]-tall[0];
-  return {type:'variasjon',tema:'Variasjonsbredde og spredningsmål',poeng:1,nivå:'lett',
-    spørsmål:'Finn variasjonsbredden:\n\n'+tall.join(', '),
-    instruksjon:'Variasjonsbredde = største verdi – minste verdi',
-    svarType:'tall',fasit:vv,tol:0,
-    løsning:'Størst: '+tall[tall.length-1]+', Minst: '+tall[0]+'\nVariasjonsbredde: '+(tall[tall.length-1])+' – '+tall[0]+' = '+vv};
+function genPotenser() {
+  var base=rnd(2,5), exp1=rnd(2,4), exp2=rnd(2,4);
+  var typer = [
+    function(){return {spørsmål:'Regn ut:\n\n'+base+'³ – 3 × '+rnd(2,5),
+      fasit:Math.pow(base,3)-3*rnd(2,5),tol:0,poeng:1,nivå:'lett',
+      løsning:base+'³ = '+(base*base*base),svarType:'tall',
+      instruksjon:'Regn potensen først, deretter subtraksjon.'};},
+    function(){var a=rnd(2,4);return {spørsmål:'Skriv som én potens:\n\n'+base+'^'+exp1+' × '+base+'^'+exp2,
+      fasit:base,tol:0,tema:'Potenser',poeng:2,nivå:'middels',
+      løsning:base+'^'+exp1+' × '+base+'^'+exp2+' = '+base+'^'+(exp1+exp2),
+      svarType:'flervalg',
+      alternativer:[base+'^'+(exp1+exp2), base+'^'+(exp1*exp2), base+'^'+(Math.abs(exp1-exp2)), (base*2)+'^'+(exp1+exp2)],
+      instruksjon:'Bruk potensreglene: aᵐ × aⁿ = aᵐ⁺ⁿ'};},
+  ];
+  return Object.assign({type:'potenser',tema:'Potenser og røtter'},plukk(typer)());
 }
 
-function genFrekvens() {
-  var total=rnd(20,50);
-  var a=rnd(5,total-10), b=rnd(3,total-a-5);
-  var c=total-a-b;
-  return {type:'frekv',tema:'Frekvenstabeller og relativ frekvens',poeng:2,nivå:'middels',
-    spørsmål:'I en klasse med '+total+' elever liker:\n'+a+' elever fotball\n'+b+' elever håndball\n'+c+' elever svømming\n\nFinn den relative frekvensen for fotball. Skriv som prosent.',
-    instruksjon:'Relativ frekvens = antall / total × 100%',
-    svarType:'tall',fasit:parseFloat((a/total*100).toFixed(1)),tol:0.2,enhet:'%',
-    løsning:a+' / '+total+' = '+(a/total).toFixed(3)+' = '+(a/total*100).toFixed(1)+'%'};
+function genRegnerekkefølge() {
+  var a=rnd(2,6),b=rnd(2,8),c=rnd(3,9),d=rnd(2,5);
+  var uttrykk = a+'×('+b+'+'+c+') – '+d;
+  var fasit = a*(b+c)-d;
+  return {type:'rekkefølge',tema:'Regnerekkefølge',poeng:2,nivå:'middels',
+    spørsmål:'Regn ut og skriv svaret:\n\n'+uttrykk,
+    instruksjon:'Husk PEMDAS: parentes → potens → × og ÷ → + og –',
+    fasit:fasit,tol:0,svarType:'tall',
+    løsning:'= '+a+'×'+(b+c)+' – '+d+' = '+(a*(b+c))+' – '+d+' = '+fasit};
 }
 
-function genDiagramLes() {
-  var kategorier=['Epler','Pærer','Bananer','Druer'];
-  var verdier=kategorier.map(function(){return rnd(5,20);});
-  var sum=verdier.reduce(function(a,b){return a+b;},0);
-  var stst=kategorier[verdier.indexOf(Math.max.apply(null,verdier))];
-  return {type:'diagram',tema:'Lese og tolke diagrammer',poeng:2,nivå:'middels',
-    spørsmål:'Et søylediagram viser solgte frukt:\n'+kategorier.map(function(k,i){return k+': '+verdier[i];}).join('\n')+'\n\na) Hvilken frukt ble solgt mest?\nb) Hvor mange frukt ble solgt totalt?',
-    instruksjon:'Les av verdiene og regn ut totalen.',
-    svarType:'flertall',labels:['a) Frukt (skriv navn)','b) Total'],
-    fasitArr:[0,sum],
-    løsning:'Mest solgt: '+stst+'\nTotal: '+sum};
+function genStandardform() {
+  var koeff = rndF(1.1,9.9,1);
+  var eks = plukk([3,4,5,6,-1,-2,-3]);
+  var tall = koeff * Math.pow(10, eks);
+  return {type:'standardform',tema:'Standardform (vitenskapelig notasjon)',poeng:2,nivå:'middels',
+    spørsmål:'Skriv dette tallet på standardform:\n\n'+tall.toLocaleString('no'),
+    instruksjon:'Standardform: a × 10ⁿ, der 1 ≤ a < 10',
+    svarType:'tekst',fasitTekst:koeff+' × 10^'+eks,
+    løsning:koeff+' × 10^'+eks,
+    tol:0};
 }
 
-function genKritisk() {
-  var gj=rnd(60,80),n=rnd(20,50);
-  var ny=rnd(85,99);
-  var nyGj=parseFloat(((gj*n+ny)/(n+1)).toFixed(1));
-  return {type:'kritisk',tema:'Kritisk vurdering av statistikk',poeng:3,nivå:'krevende',
-    spørsmål:'En klasse med '+n+' elever har gjennomsnittskarakter '+gj+' på en prøve.\nEn ny elev meldes inn og scorer '+ny+'.\n\nHva blir det nye gjennomsnittet?',
-    instruksjon:'Nytt gjennomsnitt = (gammel sum + ny verdi) / (n+1)',
-    svarType:'tall',fasit:nyGj,tol:0.2,
-    løsning:'Gammel sum: '+gj+' × '+n+' = '+gj*n+'\nNy sum: '+(gj*n+ny)+'\nNytt gjsn: '+(gj*n+ny)+' / '+(n+1)+' = '+nyGj};
+function genFortegnOgParentes() {
+  var a=rnd(2,8), b=rnd(3,9), c=rnd(2,6);
+  var uttrykk = '('+a+' – '+b+') × ('+b+' – '+c+')';
+  var fasit = (a-b)*(b-c);
+  return {type:'parentes',tema:'Parentes og fortegn',poeng:2,nivå:'middels',
+    spørsmål:'Regn ut:\n\n'+uttrykk,
+    instruksjon:'Regn hva som er i hver parentes, deretter gang dem.',
+    fasit:fasit,tol:0,svarType:'tall',
+    løsning:'= ('+(a-b)+') × ('+(b-c)+') = '+fasit};
 }
 
-function genBegrunne() {
-  var data=[12,14,14,14,15,16,18,45];
-  return {type:'begrunne',tema:'Velge riktig sentralmål',poeng:2,nivå:'middels',
-    spørsmål:'Et datasett inneholder:\n'+data.join(', ')+'\n\nEr gjennomsnitt eller median det beste sentralmålet for dette datasettet? Velg og begrunn.',
-    instruksjon:'Tenk på hva som skjer med gjennomsnitt når det finnes ekstreme verdier (uteliggere).',
+function genProporsjonal() {
+  var kontekster = [
+    {subjekt:'Ingrid',verb:'løper',enhet:'km',tidsenhet:'minutter',gjør:'løpe'},
+    {subjekt:'Emil',verb:'sykler',enhet:'km',tidsenhet:'minutter',gjør:'sykle'},
+    {subjekt:'En bil',verb:'kjører',enhet:'mil',tidsenhet:'timer',gjør:'kjøre'},
+  ];
+  var k = plukk(kontekster);
+  var d1=rnd(3,8), t1=plukk([20,30,40,60]);
+  var t2=plukk([15,45,90,120]);
+  var d2=parseFloat((d1*t2/t1).toFixed(2));
+  return {type:'proporsjonal',tema:'Proporsjonale størrelser',poeng:3,nivå:'middels',
+    spørsmål:k.subjekt+' '+k.verb+' '+d1+' '+k.enhet+' på '+t1+' '+k.tidsenhet+'.\n\nHvor langt kan '+k.subjekt.toLowerCase().replace('en ','en ')+(k.subjekt==='En bil'?' kjøre':' '+k.gjør)+' på '+t2+' '+k.tidsenhet+'? (Regn med jevn hastighet.)',
+    instruksjon:'Sett opp en enkel proporsjon eller beregn farten.',
+    fasit:d2,tol:0.1,svarType:'tall',enhet:k.enhet,
+    løsning:'Hastighet: '+d1+' '+k.enhet+' / '+t1+' min = '+(d1/t1).toFixed(3)+' '+k.enhet+'/min\nPå '+t2+' min: '+(d1/t1).toFixed(3)+' × '+t2+' = '+d2+' '+k.enhet};
+}
+
+function genProsentOgForbold() {
+  var helhet=plukk([200,250,400,500,800,1000]);
+  var pst=plukk([10,15,20,25,30,40,50]);
+  var del=helhet*pst/100;
+  return {type:'prosent_tall',tema:'Prosent og forholdstall',poeng:2,nivå:'middels',
+    spørsmål:pst+' % av '+helhet+' er lik?',
+    instruksjon:'Regn ut prosenten direkte: del = prosent/100 × helhet',
+    fasit:del,tol:0,svarType:'tall',
+    løsning:pst+'/100 × '+helhet+' = '+del};
+}
+
+function genTallMønster() {
+  var typer = [
+    function(){var start=rnd(2,8),diff=rnd(2,6);
+      var seq=[start,start+diff,start+2*diff,start+3*diff,start+4*diff];
+      return {spørsmål:'Se på tallrekken:\n\n'+seq[0]+', '+seq[1]+', '+seq[2]+', '+seq[3]+', __\n\nHva er neste tall?',
+        fasit:seq[4],tol:0,løsning:'Differanse: '+diff+'\nNeste: '+seq[3]+' + '+diff+' = '+seq[4]};},
+    function(){var a=rnd(2,5);
+      var seq=[a,a*a,a*a*a,a*a*a*a];
+      return {spørsmål:'Se på tallrekken:\n\n'+seq[0]+', '+seq[1]+', '+seq[2]+', __\n\nHva er neste tall?',
+        fasit:seq[3],tol:0,løsning:'Mønster: '+a+', '+a+'², '+a+'³, '+a+'⁴ = '+seq[3]};},
+  ];
+  var o = plukk(typer)();
+  return Object.assign({type:'mønster',tema:'Tallmønster og sammenhenger',poeng:2,nivå:'middels',
+    svarType:'tall',instruksjon:'Finn mønsteret og regn ut neste tall.'},o);
+}
+
+function genAbsolutt() {
+  var a=rnd(-9,-2), b=rnd(2,9);
+  var svar = Math.abs(a) + b;
+  return {type:'absolutt',tema:'Absolutt verdi',poeng:1,nivå:'lett',
+    spørsmål:'Regn ut:\n\n|'+a+'| + '+b,
+    instruksjon:'Absolutt verdi er alltid positiv: |tall| = avstand fra 0.',
+    fasit:svar,tol:0,svarType:'tall',
+    løsning:'|'+a+'| = '+Math.abs(a)+'\n'+Math.abs(a)+' + '+b+' = '+svar};
+}
+
+function genStørreMindre() {
+  var par = [
+    function(){var a=rnd(2,5),b=rnd(2,5);return {a:a+'³',b:b*b,fasit:Math.pow(a,3)>b*b?0:1,numA:Math.pow(a,3),numB:b*b};},
+    function(){var a=rnd(-9,-2),b=rnd(-8,-1);return {a:''+a,b:''+b,fasit:a>b?0:1,numA:a,numB:b};},
+    function(){var a=rndF(0.1,0.9,2),b=rndF(0.1,0.9,2);return {a:''+a,b:''+b,fasit:a>b?0:1,numA:a,numB:b};},
+  ];
+  var p = plukk(par)();
+  return {type:'størremindre',tema:'Sammenligning av tall',poeng:1,nivå:'lett',
+    spørsmål:'Hvilket uttrykk er størst?',
+    instruksjon:'Regn ut begge og sammenlign.',
     svarType:'flervalg',
-    alternativer:['Gjennomsnitt, fordi det bruker alle verdiene','Median, fordi 45 er en uteligger som drar gjennomsnittet opp','Typetall, fordi 14 er den vanligste verdien'],
-    fasitIdx:1,
-    løsning:'45 er en uteligger. Gjennomsnitt = '+(data.reduce(function(a,b){return a+b;})/data.length).toFixed(1)+'\nMedian = '+(data[3]+data[4])/2+'\nMedian er mer representativ her.'};
+    alternativer:[p.a, p.b],
+    fasitIdx:p.fasit,
+    løsning:p.a+' = '+p.numA+'\n'+p.b+' = '+p.numB+'\n\n'+( p.fasit===0 ? p.a : p.b)+' er størst.'};
 }
+
+function genVelgDifficult() {
+  var d=rnd(1,3);
+  if (d===1) {
+    var a=rnd(3,9),b=rnd(2,5),c=rnd(10,50);
+    var res=(a*b-c/b).toFixed(2);
+    return {type:'krevende',tema:'Sammensatt tallregning',poeng:3,nivå:'krevende',
+      spørsmål:'En bil bruker '+rndF(0.3,0.8,1)+' liter bensin på 1 mil.\n\nHvor mange liter trenger den på '+rnd(8,20)+' mil?\n\nHvis en liter koster '+rnd(18,25)+' kr, hva koster hele turen?',
+      instruksjon:'Vis alle steg. Sett opp regnestykket tydelig.',
+      svarType:'flertall',
+      labels:['Liter bensin','Totalkostnad (kr)'],
+      fasitArr:[null,null],
+      løsning:'Beregn liter = forbruk × antall mil\nBeregn kostnad = liter × literpris'};
+  } else {
+    return genProporsjonal();
+  }
+}
+
+// ── BYGG PRØVE ──────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════════
 // NYE FLERTRINNS-OPPGAVER PER EMNE
@@ -675,17 +777,311 @@ function genEnhetsomgjøringKjede() {
     løsning:fart_ms+' m/s × 3,6 = '+fart_kmh+' km/t\nt = '+d_km+'/'+fart_kmh.toFixed(2)+'= '+t_timer+' t = '+t_min+' min'};
 }
 
+
+
+// ─── KJEMI OPPGAVEGENERATORER ────────────────────────────────────────
+
+function genAtomOgGrunnstoffer() {
+  var typer = [
+    function(){return {spørsmål:'Hva kalles det minste partikkelen i et grunnstoff?',
+      svarType:'flervalg',fasit:'Atom',
+      alternativer:['Atom','Elektron','Molekyl','Proton'],
+      tema:'Atom og grunnstoffer',poeng:1,nivå:'lett',
+      instruksjon:'Tenk på atomets oppbygging.'};},
+    function(){return {spørsmål:'Hva er det periodiske system?',
+      svarType:'flervalg',
+      fasit:'En tabell der alle grunnstoffer er ordnet etter atomnummer',
+      alternativer:[
+        'En tabell der alle grunnstoffer er ordnet etter atomnummer',
+        'En liste over alle molekyler i naturen',
+        'En oversikt over kjemiske reaksjoner',
+        'En beskrivelse av elektroner i atomer'
+      ],
+      tema:'Atomteori',poeng:1,nivå:'lett',instruksjon:'Husk: Z = antall protoner = atomnummer.'};},
+    function(){
+      var el=[['Hydrogen','H',1],['Helium','He',2],['Karbon','C',6],['Oksygen','O',8],
+              ['Nitrogen','N',7],['Natrium','Na',11],['Klor','Cl',17],['Jern','Fe',26],
+              ['Kalsium','Ca',20],['Kalium','K',19]];
+      var e=plukk(el);
+      return {spørsmål:'Hva er kjemisk symbol for '+e[0]+'?',
+        svarType:'flervalg',fasit:e[1],
+        alternativer:bland([e[1]].concat(bland(el.filter(x=>x[0]!==e[0])).slice(0,3).map(x=>x[1]))),
+        tema:'Grunnstoffer',poeng:1,nivå:'lett',instruksjon:'Lær de vanligste symbolene utenat.'};},
+    function(){
+      var el=[['Hydrogen','H',1],['Helium','He',2],['Karbon','C',6],['Oksygen','O',8],
+              ['Nitrogen','N',7],['Natrium','Na',11],['Klor','Cl',17]];
+      var e=plukk(el);
+      return {spørsmål:'Hva er atomnummeret til '+e[0]+' ('+e[1]+')?',
+        svarType:'flervalg',fasit:''+e[2],
+        alternativer:bland([''+e[2],''+( e[2]+1),''+( e[2]-1),''+( e[2]+2)]),
+        tema:'Periodisk system',poeng:1,nivå:'middels',instruksjon:'Atomnummer = antall protoner.'};},
+  ];
+  return Object.assign({type:'atom',tema:'Atom og grunnstoffer'},plukk(typer)());
+}
+
+function genKjemiskeFormler() {
+  var typer = [
+    function(){return {spørsmål:'Hva er den kjemiske formelen for vann?',
+      svarType:'flervalg',fasit:'H₂O',
+      alternativer:['H₂O','HO','H₂O₂','OH'],
+      tema:'Kjemiske formler',poeng:1,nivå:'lett',instruksjon:'Vann = 2 hydrogen + 1 oksygen.'};},
+    function(){return {spørsmål:'Hva er den kjemiske formelen for karbondioksid?',
+      svarType:'flervalg',fasit:'CO₂',
+      alternativer:['CO₂','CO','C₂O','C₂O₂'],
+      tema:'Kjemiske formler',poeng:1,nivå:'lett',instruksjon:'CO₂ = karbondioksid. Dannes ved forbrenning.'};},
+    function(){return {spørsmål:'Hva er den kjemiske formelen for natrium klorid (bordsalt)?',
+      svarType:'flervalg',fasit:'NaCl',
+      alternativer:['NaCl','NaC','Na₂Cl','NaCl₂'],
+      tema:'Kjemiske forbindelser',poeng:1,nivå:'middels',instruksjon:'Na = natrium, Cl = klor. Ionebinding.'};},
+    function(){
+      var forbind=[
+        ['oksygen','O₂'],['nitrogen','N₂'],['hydrogen','H₂'],
+        ['ammoniakk','NH₃'],['saltsyre','HCl'],['svovelsyre','H₂SO₄']
+      ];
+      var f=plukk(forbind);
+      return {spørsmål:'Hva er formelen for '+f[0]+'?',
+        svarType:'flervalg',fasit:f[1],
+        alternativer:bland([f[1]].concat(bland(forbind.filter(x=>x[0]!==f[0])).slice(0,3).map(x=>x[1]))),
+        tema:'Kjemiske formler',poeng:1,nivå:'middels',instruksjon:'Lær de vanligste formlene.'};},
+  ];
+  return Object.assign({type:'formler',tema:'Kjemiske formler'},plukk(typer)());
+}
+
+function genKjemiskeReaksjoner() {
+  var typer = [
+    function(){return {spørsmål:'Hvilke produkter dannes når hydrogen brenner i luft?',
+      svarType:'flervalg',fasit:'Vann (H₂O)',
+      alternativer:['Vann (H₂O)','Karbondioksid (CO₂)','Oksygen (O₂)','Hydrogengass'],
+      tema:'Forbrenning',poeng:2,nivå:'middels',instruksjon:'2H₂ + O₂ → 2H₂O. Hydrogen er et rent drivstoff.'};},
+    function(){return {spørsmål:'Hva menes med en eksoterm reaksjon?',
+      svarType:'flervalg',
+      fasit:'En reaksjon som avgir varme til omgivelsene',
+      alternativer:[
+        'En reaksjon som avgir varme til omgivelsene',
+        'En reaksjon som krever varme for å starte',
+        'En reaksjon som produserer gass',
+        'En reaksjon som foregår i vann'
+      ],
+      tema:'Energi i kjemi',poeng:2,nivå:'middels',instruksjon:'Ekso = ut. Energi ut → varmeutvikling.'};},
+    function(){return {spørsmål:'Hva er en nøytraliseringsreaksjon?',
+      svarType:'flervalg',
+      fasit:'En reaksjon mellom en syre og en base som danner salt og vann',
+      alternativer:[
+        'En reaksjon mellom en syre og en base som danner salt og vann',
+        'En reaksjon der et metall løses i syre',
+        'En reaksjon der vann spaltes til hydrogen og oksygen',
+        'En reaksjon der CO₂ dannes'
+      ],
+      tema:'Syre-base',poeng:2,nivå:'middels',instruksjon:'Syre + base → salt + vann. pH nærmer seg 7.'};},
+    function(){
+      var re=[
+        ['Fe + S → FeS','Jern + svovel → jernsulfid','Syntese'],
+        ['2HgO → 2Hg + O₂','Kvikksølvoksid spaltes til kvikksølv og oksygen','Spalting'],
+        ['Zn + 2HCl → ZnCl₂ + H₂','Sink + saltsyre → sinkklorid + hydrogengass','Fordrivning'],
+      ];
+      var r=plukk(re);
+      return {spørsmål:'Hva slags type reaksjon er dette?\n\n'+r[0],
+        svarType:'flervalg',fasit:r[2],
+        alternativer:bland([r[2],'Forbrenning','Nøytralisering','Oksidasjon']),
+        tema:'Reaksjonstyper',poeng:2,nivå:'middels',instruksjon:r[1]};},
+  ];
+  return Object.assign({type:'reaksjoner',tema:'Kjemiske reaksjoner'},plukk(typer)());
+}
+
+function genSyreBase() {
+  var typer = [
+    function(){return {spørsmål:'Hva er pH til en nøytral løsning ved romtemperatur?',
+      svarType:'flervalg',fasit:'7',
+      alternativer:['7','0','14','1'],
+      tema:'pH-skala',poeng:1,nivå:'lett',instruksjon:'pH-skalaen går fra 0 (sterk syre) til 14 (sterk base). 7 = nøytral.'};},
+    function(){return {spørsmål:'En løsning har pH 3. Hva kjennetegner den?',
+      svarType:'flervalg',fasit:'Den er sur',
+      alternativer:['Den er sur','Den er basisk','Den er nøytral','Den er saltaktig'],
+      tema:'pH-skala',poeng:1,nivå:'lett',instruksjon:'pH under 7 = sur. pH over 7 = basisk.'};},
+    function(){return {spørsmål:'Hvilken av disse er en sterk syre?',
+      svarType:'flervalg',fasit:'Saltsyre (HCl)',
+      alternativer:['Saltsyre (HCl)','Eddik (CH₃COOH)','Sitronjuice','Melkesyre'],
+      tema:'Syrer og baser',poeng:2,nivå:'middels',instruksjon:'Sterke syrer er fullstendig ionisert i vann. HCl, H₂SO₄, HNO₃ er sterke.'};},
+    function(){
+      var eks=[['Natrium hydroksid (NaOH)','12-14','sterk base'],['Eddik','3-4','svak syre'],
+               ['Blod','7,4','svak base'],['Sitronsaft','2-3','sterk syre'],
+               ['Magesjuice','1-2','sterk syre'],['Såpe','9-10','svak base']];
+      var e=plukk(eks);
+      return {spørsmål:'Hva er omtrentlig pH for '+e[0]+'?',
+        svarType:'flervalg',fasit:e[1],
+        alternativer:bland([e[1],'7','12','0-1']),
+        tema:'pH i hverdagen',poeng:2,nivå:'middels',instruksjon:e[0]+' er '+e[2]+'.'};},
+  ];
+  return Object.assign({type:'syre-base',tema:'Syre-base og pH'},plukk(typer)());
+}
+
+function genMetaller() {
+  var typer = [
+    function(){return {spørsmål:'Hva kjennetegner metaller sammenlignet med ikke-metaller?',
+      svarType:'flervalg',
+      fasit:'Metaller leder varme og elektrisitet godt',
+      alternativer:[
+        'Metaller leder varme og elektrisitet godt',
+        'Metaller er alltid flytende ved romtemperatur',
+        'Metaller er umagnetiske',
+        'Metaller reagerer ikke med oksygen'
+      ],
+      tema:'Metallenes egenskaper',poeng:1,nivå:'lett',instruksjon:'Metallenes frie elektroner gjør dem ledende.'};},
+    function(){return {spørsmål:'Hva skjer med jern når det ruster?',
+      svarType:'flervalg',
+      fasit:'Jern reagerer med oksygen og vann og danner jernoksid',
+      alternativer:[
+        'Jern reagerer med oksygen og vann og danner jernoksid',
+        'Jern smelter og endrer form',
+        'Jern avgir hydrogen til luften',
+        'Jern blir til et ikke-metall'
+      ],
+      tema:'Korrosjon',poeng:2,nivå:'middels',instruksjon:'4Fe + 3O₂ + 6H₂O → 4Fe(OH)₃ → rust.'};},
+    function(){return {spørsmål:'Hva er en legering?',
+      svarType:'flervalg',
+      fasit:'En blanding av to eller flere metaller (eller metall og ikke-metall)',
+      alternativer:[
+        'En blanding av to eller flere metaller (eller metall og ikke-metall)',
+        'Et rent metall med høy renhet',
+        'Et metall som er magnetisk',
+        'Et metall som leder strøm bedre enn kobber'
+      ],
+      tema:'Legeringer',poeng:2,nivå:'middels',instruksjon:'Eksempler: stål (Fe+C), bronse (Cu+Sn), messing (Cu+Zn).'};},
+  ];
+  return Object.assign({type:'metaller',tema:'Metaller og egenskaper'},plukk(typer)());
+}
+
+function genBlandinger() {
+  var typer = [
+    function(){return {spørsmål:'Hva er forskjellen på et rent stoff og en blanding?',
+      svarType:'flervalg',
+      fasit:'Et rent stoff har fast sammensetning, en blanding har variabel sammensetning',
+      alternativer:[
+        'Et rent stoff har fast sammensetning, en blanding har variabel sammensetning',
+        'En blanding kan ikke separeres',
+        'Et rent stoff er alltid fast',
+        'En blanding har alltid en bestemt formel'
+      ],
+      tema:'Stoffer og blandinger',poeng:1,nivå:'lett',instruksjon:'H₂O = rent stoff. Saltvann = blanding.'};},
+    function(){return {spørsmål:'Hvilken separasjonsmetode brukes for å skille saltvannsblanding?',
+      svarType:'flervalg',fasit:'Destillasjon',
+      alternativer:['Destillasjon','Filtrering','Magnetisk separasjon','Sentrifugering'],
+      tema:'Separasjonsmetoder',poeng:2,nivå:'middels',instruksjon:'Destillasjon: vann fordamper, kondenserer – salt gjenværende.'};},
+    function(){
+      var met=[['Filtrering','separere fast stoff fra væske'],
+               ['Destillasjon','separere løste stoffer etter kokepunkt'],
+               ['Krystallisering','utfelle oppløst salt fra en mettet løsning'],
+               ['Magnetisk sep.','skille magnetiske metaller fra blandinger'],
+               ['Sentrifugering','separere stoffer etter tetthet']];
+      var m=plukk(met);
+      return {spørsmål:'Hva brukes '+m[0]+' til?',
+        svarType:'flervalg',fasit:m[1],
+        alternativer:bland([m[1]].concat(bland(met.filter(x=>x[0]!==m[0])).slice(0,3).map(x=>x[1]))),
+        tema:'Separasjonsmetoder',poeng:2,nivå:'middels',instruksjon:'Velg metode etter hva som skiller stoffene.'};},
+  ];
+  return Object.assign({type:'blandinger',tema:'Blandinger og separasjon'},plukk(typer)());
+}
+
+function genKjemiFlertrinns() {
+  var typer = [
+    function(){
+      var g=rnd(1,9)*10;
+      return {spørsmål:'Du har '+g+' g NaCl (bordsalt, molvekt = 58,44 g/mol).\n\nBeregn antall mol NaCl.',
+        svarType:'tall',fasit:parseFloat((g/58.44).toFixed(2)),tol:0.02,
+        tema:'Molaritet',poeng:3,nivå:'krevende',løsning:'n = m / M = '+g+' / 58,44 = '+(g/58.44).toFixed(2)+' mol',
+        instruksjon:'n = m / M. Molvekt = gram per mol.'};},
+    function(){
+      var konsentrasjon=plukk([0.1,0.5,1.0,2.0]);
+      var volum=plukk([0.5,1.0,2.0]);
+      var mol=(konsentrasjon*volum).toFixed(2);
+      return {spørsmål:'Du har en '+konsentrasjon+' M NaOH-løsning. Hva er antall mol NaOH i '+volum+' liter?\n\nBruk: n = c × V',
+        svarType:'tall',fasit:parseFloat(mol),tol:0.01,
+        tema:'Konsentrasjon',poeng:3,nivå:'krevende',løsning:'n = c × V = '+konsentrasjon+' × '+volum+' = '+mol+' mol',
+        instruksjon:'Konsentrasjon (M) = mol/liter. n = c × V'};},
+    function(){
+      var syre=plukk(['Saltsyre (HCl)','Svovelsyre (H₂SO₄)','Salpetersyre (HNO₃)']);
+      var base=plukk(['Natrium hydroksid (NaOH)','Kalium hydroksid (KOH)']);
+      return {spørsmål:'Du blander 50 mL '+syre+' (pH 2) med 50 mL '+base+' (pH 12).\n\nHva skjer med pH til blandingen, og hva dannes?',
+        svarType:'flervalg',fasit:'pH nærmer seg 7 og salt + vann dannes',
+        alternativer:[
+          'pH nærmer seg 7 og salt + vann dannes',
+          'pH stiger til 14',
+          'pH synker til 0',
+          'Ingen reaksjon skjer'
+        ],
+        tema:'Nøytralisering',poeng:3,nivå:'krevende',instruksjon:'Syre + base → nøytralisering → pH ≈ 7 (avhenger av styrke).'};},
+    function(){return {spørsmål:'Beskriv hva som skjer i en elektrolysecelle der vann (H₂O) brytes ned.\n\nHvilke gasser dannes ved hvilke elektroder?',
+      svarType:'flervalg',fasit:'Hydrogen (H₂) ved katoden, oksygen (O₂) ved anoden',
+      alternativer:[
+        'Hydrogen (H₂) ved katoden, oksygen (O₂) ved anoden',
+        'Oksygen ved katoden, hydrogen ved anoden',
+        'Kun hydrogen dannes',
+        'CO₂ ved katoden, H₂ ved anoden'
+      ],
+      tema:'Elektrolyse',poeng:3,nivå:'krevende',instruksjon:'2H₂O → 2H₂ + O₂. Katode (-) = H₂, Anode (+) = O₂.'};},
+  ];
+  return Object.assign({type:'flertrinns',tema:'Kjemi avansert'},plukk(typer)());
+}
+
+function genMiljøkjemi() {
+  var typer = [
+    function(){return {spørsmål:'Hva er drivhuseffekten?',
+      svarType:'flervalg',
+      fasit:'Drivhusgasser i atmosfæren fanger varme og varmer opp jorda',
+      alternativer:[
+        'Drivhusgasser i atmosfæren fanger varme og varmer opp jorda',
+        'Ozonlaget beskytter mot UV-stråling',
+        'Sola sender mer energi mot jorda enn normalt',
+        'Havene absorberer mer karbon'
+      ],
+      tema:'Klimakjemi',poeng:2,nivå:'middels',instruksjon:'CO₂, CH₄, N₂O = drivhusgasser. Absorberer IR-stråling.'};},
+    function(){return {spørsmål:'Sur nedbør dannes når svoveldioksid (SO₂) og nitrogenoksider (NOₓ) reagerer med vann i atmosfæren.\n\nHvilket stoff dannes?',
+      svarType:'flervalg',fasit:'Svovelsyre (H₂SO₄) og salpetersyre (HNO₃)',
+      alternativer:[
+        'Svovelsyre (H₂SO₄) og salpetersyre (HNO₃)',
+        'Natriumhydroksid (NaOH)',
+        'Karbonsyre (H₂CO₃)',
+        'Hydrogen (H₂)'
+      ],
+      tema:'Sur nedbør',poeng:2,nivå:'middels',instruksjon:'SO₂ + H₂O → H₂SO₃ (videre → H₂SO₄). Skader skog og innsjøer.'};},
+    function(){return {spørsmål:'Hva er ozonlagets funksjon?',
+      svarType:'flervalg',
+      fasit:'Det absorberer skadelig UV-stråling fra sola',
+      alternativer:[
+        'Det absorberer skadelig UV-stråling fra sola',
+        'Det holder CO₂ nede i atmosfæren',
+        'Det regulerer temperatur ved havet',
+        'Det produserer oksygen til livet på jorda'
+      ],
+      tema:'Atmosfærekjemi',poeng:1,nivå:'lett',instruksjon:'O₃ i stratosfæren beskytter mot UV-B og UV-C.'};},
+  ];
+  return Object.assign({type:'miljø',tema:'Miljøkjemi'},plukk(typer)());
+}
+
+
 function byggProve(minutter) {
-  var enkle=[genGjennomsnitt, genMedian, genTypetall, genVariasjon, genFrekvens, genDiagramLes, genBegrunne, genKritisk];
-  var ft=[genKomplettStatistikk, genFrekvensRelativ];
-  var ant=minutter<=45?14:minutter<=60?19:26;
-  var n_ft=Math.min(ft.length,Math.ceil(ant/3));
-  var n_e=ant-n_ft;
-  var vft=bland(ft).slice(0,n_ft);
-  var ve=bland(enkle).slice(0,Math.min(n_e,enkle.length));
-  while(ve.length+vft.length<ant) vft.push(plukk(ft));
+  var enkle = [genAtomOgGrunnstoffer, genKjemiskeFormler, genSyreBase, genMetaller, genBlandinger, genMiljøkjemi];
+  var ft = [genKjemiskeReaksjoner, genKjemiFlertrinns, genKjemiFlertrinns];
+  var ant = minutter<=45 ? 15 : minutter<=60 ? 21 : 30;
+  var n_ft = Math.min(ft.length, Math.ceil(ant/3));
+  var n_e = ant - n_ft;
+  var vft = bland(ft).slice(0, n_ft);
+  var ve = bland(enkle).slice(0, Math.min(n_e, enkle.length));
+  while (ve.length + vft.length < ant) ve.push(plukk(enkle));
   return bland(vft.concat(ve)).map(function(fn,i){var o=fn();o._idx=i;return o;});
 }
+
+
+function oppdaterAntModal() {
+  var t45=byggProve(45).length, t60=byggProve(60).length, t90=byggProve(90).length;
+  document.getElementById('ant-45').textContent=t45+' oppgaver';
+  document.getElementById('ant-60').textContent=t60+' oppgaver';
+  document.getElementById('ant-90').textContent=t90+' oppgaver';
+}
+var RESSURS='provetrener_kjemi';var KM_KODE='NAT-kjemi';
+var UNDERTITTEL='Kjemi – atomer, reaksjoner og miljø';
+
+
 // ── STATE ────────────────────────────────────────────────────────
 var state = {
   oppgaver: [],
@@ -1016,6 +1412,9 @@ function oppdaterListe() {
 // ── START ────────────────────────────────────────────────────────
 oppdaterAntModal();
 
-function oppdaterAntModal(){[45,60,90].forEach(function(m){var ant=m<=45?14:m<=60?19:26;document.getElementById('ant-'+m).textContent=ant+' oppgaver · ca. '+m+' min';});}
+function oppdaterAntModal(){[45,60,90].forEach(function(m){var ant=m<=45?15:m<=60?21:30;document.getElementById('ant-'+m).textContent=ant+' oppgaver · ca. '+m+' min';});}
 oppdaterAntModal();
-</script></body></html>
+
+</script>
+</body>
+</html>

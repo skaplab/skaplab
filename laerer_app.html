@@ -263,9 +263,78 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 .fk-snitt-pst{font-family:var(--font-m);font-size:.75rem;width:40px;text-align:right;}
 .fk-chip{font-size:.65rem;padding:1px 6px;border-radius:4px;font-family:var(--font-h);font-weight:700;}
 
+
+/* ── WCAG 2.1 AA ── */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 16px;
+  background: var(--accent,#00e5ff);
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 0 0 8px 8px;
+  font-weight: 700;
+  font-size: .9rem;
+  z-index: 9999;
+  text-decoration: none;
+  transition: top .15s;
+}
+.skip-link:focus { top: 0; }
+:focus-visible {
+  outline: 2px solid var(--accent,#60a0f0);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent,#60a0f0);
+  outline-offset: 3px;
+}
+
+
+/* ── LÆRERVEILEDNING ── */
+.veil-fane-rad { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.veil-fane-btn {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--dim);
+  font-family: var(--font-b);
+  font-size: .83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: -1px;
+}
+.veil-fane-btn:hover { color: var(--text); }
+.veil-fane-btn.ak { color: var(--bla); border-bottom-color: var(--bla); }
+.veil-fane-innhold { display: none; }
+.veil-fane-innhold.ak { display: block; }
+
+/* Karusell for veilednings-slides */
+.veil-karusell { position: relative; overflow: hidden; border-radius: 12px; background: var(--bg2); border: 1px solid var(--border); margin-bottom: 20px; }
+.veil-slides { display: flex; transition: transform .4s cubic-bezier(.4,0,.2,1); }
+.veil-slide { min-width: 100%; padding: 28px 32px; box-sizing: border-box; }
+.veil-slide-nr { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--dim); margin-bottom: 10px; }
+.veil-slide-ikon { font-size: 2rem; margin-bottom: 10px; }
+.veil-slide-tittel { font-family: var(--font-h); font-size: 1.2rem; color: var(--text); margin-bottom: 10px; }
+.veil-slide-tekst { font-size: .88rem; color: var(--dim); line-height: 1.7; margin-bottom: 14px; }
+.veil-slide-tips { background: rgba(var(--bla-rgb,0,162,255),.07); border-left: 3px solid var(--bla); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: .83rem; color: var(--text); margin-top: 8px; }
+.veil-slide-tips b { color: var(--bla); }
+.veil-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg3); }
+.veil-pil { background: none; border: 1px solid var(--border2); color: var(--bla); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: .95rem; transition: all .15s; }
+.veil-pil:hover:not(:disabled) { background: rgba(0,162,255,.1); }
+.veil-pil:disabled { opacity: .25; cursor: not-allowed; }
+.veil-dots { display: flex; gap: 5px; }
+.veil-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); border: none; cursor: pointer; padding: 0; transition: all .2s; }
+.veil-dot.ak { background: var(--bla); transform: scale(1.3); }
+.veil-fremgang { font-size: .78rem; color: var(--dim); }
+
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Hopp til innhold</a>
+
 
 <!-- NAV -->
 <nav id="topnav">
@@ -290,6 +359,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <button class="nav-link" onclick="visside('malark')"><span class="ikon">📋</span>Målark</button>
   <button class="nav-link" onclick="visside('proveplan')"><span class="ikon">📝</span>Prøveplan</button>
 
+    <button class="nav-link" onclick="visside('veiledning')"><span class="ikon">📚</span>Lærerveiledning</button>
   <button class="nav-link btn-rod" id="logg-ut-btn" onclick="loggUt()"><span class="ikon">🚪</span>Logg ut</button>
 </nav>
 
@@ -713,6 +783,349 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
+  <div class="side" id="side-veiledning">
+    <div class="side-tittel">📚 Lærerveiledning</div>
+    <div class="side-sub">Steg-for-steg guide til alle fagene på SkapLab. For deg som er ny – og for deg som vil bli enda bedre.</div>
+    <div class="veil-fane-rad" role="tablist">
+      <button class="veil-fane-btn ak" id="veil-btn-matte" onclick="veilFane('matte')" role="tab" aria-selected="true">📐 Matematikk</button>
+      <button class="veil-fane-btn" id="veil-btn-naturfag" onclick="veilFane('naturfag')" role="tab">🔬 Naturfag</button>
+      <button class="veil-fane-btn" id="veil-btn-programmering" onclick="veilFane('programmering')" role="tab">💻 Programmering</button>
+      <button class="veil-fane-btn" id="veil-btn-skaperverksted" onclick="veilFane('skaperverksted')" role="tab">🛠️ Skaperverksted</button>
+      <button class="veil-fane-btn" id="veil-btn-spill" onclick="veilFane('spill')" role="tab">🎮 Spill</button>
+    </div>
+    <div class="veil-fane-innhold ak" id="veil-fane-matte" role="tabpanel">
+      <p class="side-sub" style="margin-bottom:16px;">Matematikk-hubben dekker alle LK20-kompetansemål for 8.–10. trinn med teorileksjoner, øvingssett, prøvetrenere og eksamenstrener.</p>
+      <div class="veil-karusell" id="veil-k-matte">
+  <div class="veil-slides" id="veil-slides-matte">
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 01 / 09</div>
+  <div class="veil-slide-ikon">📐</div>
+  <div class="veil-slide-tittel">Kom i gang med matematikk-hubben</div>
+  <div class="veil-slide-tekst">Matematikk-hubben inneholder 69 fagkort fordelt på 9 emner: Tall, Algebra, Likninger, Funksjoner, Geometri, Statistikk, Sannsynlighet, Økonomi og Måling – alle koblet til LK20-kompetansemål for 8.–10. trinn.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Gå til matte_hub.html og klikk på et emne for å se alle fagkort. Hvert fagkort har én teorileksjon og én eller flere øvingsoppgaver.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 02 / 09</div>
+  <div class="veil-slide-ikon">📖</div>
+  <div class="veil-slide-tittel">Teorikort og leksjoner</div>
+  <div class="veil-slide-tekst">Hvert fagkort lenker til en teorileksjon med forklaringer, eksempler og oppgaver. Kortene er fargekodet etter trinn (8., 9. eller 10. klasse) og har en «Åpne teori»-knapp. PDF-kompendier kan skrives ut for elever uten internett.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Klikk «+ Bok» på fagkortet for å legge det i elevenes digitale arbeidsbok – de kan da åpne det direkte fra elev-portalen.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 03 / 09</div>
+  <div class="veil-slide-ikon">⚡</div>
+  <div class="veil-slide-tittel">Øvingssett og mengdetrening</div>
+  <div class="veil-slide-tekst">Mengdetreningsoppgavene (⚡ Øv-knappen) genererer nye tilfeldig sammensatte oppgaver hver gang. Ideelt for hjemmelekse, da alle elever får ulike oppgaver med samme faglige innhold. Elever logger inn for at resultater lagres.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Tildel et mengdetreningssett til klassen via «Tildel oppgave» i sidemenyen. Elever ser oppgaven i sin portal.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 04 / 09</div>
+  <div class="veil-slide-ikon">📝</div>
+  <div class="veil-slide-tittel">Prøvetrenere – 9 emner</div>
+  <div class="veil-slide-tekst">Prøvetrenerne simulerer eksamenslignende prøver med 15–30 oppgaver i 45, 60 eller 90 minutter. De inkluderer enkle oppgaver og flertrinns-oppgaver. Etter levering vises karakterestimat (1–6) og detaljert gjennomgang.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> La elevene ta en prøvetrener som forberedelse til klasseprøve. De kan ta den hjemme og se sin score. Du ser aktiviteten i elev-oversikten.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 05 / 09</div>
+  <div class="veil-slide-ikon">🏆</div>
+  <div class="veil-slide-tittel">Eksamenstrener</div>
+  <div class="veil-slide-tekst">Eksamenstreneren er SkapLabs mest avanserte verktøy – 15 dynamiske oppgavegeneratorer lager uendelig mange unike oppgavekombinasjoner i eksamensstil (Del 1 uten hjelpemidler, Del 2 med). Anbefalt for 10. trinn.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk eksamenstreneren i siste semester som regelmessig øving. En prøve per uke i 6–8 uker gir god eksamensforberedelse.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 06 / 09</div>
+  <div class="veil-slide-ikon">🃏</div>
+  <div class="veil-slide-tittel">Flashcards</div>
+  <div class="veil-slide-tekst">SkapLab har 6 flashcard-sett: Algebra og likninger, Funksjoner, Geometri, Matematikere, Sannsynlighet og Økonomi. Flipper mellom begrep og definisjon. Egnet for begreps-repetisjon og aktivitet tidlig i timen.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Start timen med 5 minutter flashcards som «oppvarming». La elevene sjekke seg selv uten å logge inn – ingen pålogging nødvendig.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 07 / 09</div>
+  <div class="veil-slide-ikon">📊</div>
+  <div class="veil-slide-tittel">Progresjonskart og fremgang</div>
+  <div class="veil-slide-tekst">Progresjonkartet øverst på matematikk-hubben viser elevens fremgang per emnekategori. Basert på fullførte aktiviteter og prøver. Synlig for eleven – og for læreren i ferdighetskart-siden.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk progresjonskart i elevsamtaler: vis eleven sin fremgang visuelt og diskuter hvilke emner de trenger mer øving på.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 08 / 09</div>
+  <div class="veil-slide-ikon">🎯</div>
+  <div class="veil-slide-tittel">Differensiering</div>
+  <div class="veil-slide-tekst">Fagkortene er merket med trinn (8., 9., 10.) – bruk dette til å gi ulike elever ulike oppgaver. Mengdetreningene har automatisk vanskelighetsgradering. Eksamenstreneren er krevende – bruk den selektivt for faglig sterke elever.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Tildel 8.-trinns fagkort til elever som sliter, og 10.-trinns til elever som vil ha utfordringer. Bruk «Tildel»-funksjonen i appen.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 09 / 09</div>
+  <div class="veil-slide-ikon">🔗</div>
+  <div class="veil-slide-tittel">Kobling til LK20</div>
+  <div class="veil-slide-tekst">Alle fagkort i matematikk er tagget med LK20-kompetansemål (KM1–KM60+). Søk i hubben på «KM12» for å finne alt som dekker det kompetansemålet. Ferdighetskart viser fremgang per LK20-mål.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Planlegg en periode med å søke på kompetansemålet i hubben og tildele relevante fagkort og prøvetrenere til klassen.</div>
+</div>
+  </div>
+  <div class="veil-nav">
+    <button class="veil-pil" id="veil-prev-matte" onclick="veilGo('matte',-1,true)" disabled aria-label="Forrige">←</button>
+    <div class="veil-dots" id="veil-dots-matte"><button class="veil-dot ak" onclick="veilGo('matte',0)" aria-label="Slide 1"></button><button class="veil-dot" onclick="veilGo('matte',1)" aria-label="Slide 2"></button><button class="veil-dot" onclick="veilGo('matte',2)" aria-label="Slide 3"></button><button class="veil-dot" onclick="veilGo('matte',3)" aria-label="Slide 4"></button><button class="veil-dot" onclick="veilGo('matte',4)" aria-label="Slide 5"></button><button class="veil-dot" onclick="veilGo('matte',5)" aria-label="Slide 6"></button><button class="veil-dot" onclick="veilGo('matte',6)" aria-label="Slide 7"></button><button class="veil-dot" onclick="veilGo('matte',7)" aria-label="Slide 8"></button><button class="veil-dot" onclick="veilGo('matte',8)" aria-label="Slide 9"></button></div>
+    <span class="veil-fremgang" id="veil-nr-matte">1 / 9</span>
+    <button class="veil-pil" id="veil-next-matte" onclick="veilGo('matte',1,true)" aria-label="Neste">→</button>
+  </div>
+</div>
+    </div>
+    <div class="veil-fane-innhold" id="veil-fane-naturfag" role="tabpanel">
+      <p class="side-sub" style="margin-bottom:16px;">Naturfag-hubben har 87 fagkort med leksjoner, prøvetrenere for kjemi og fysikk, og interaktive simuleringer.</p>
+      <div class="veil-karusell" id="veil-k-naturfag">
+  <div class="veil-slides" id="veil-slides-naturfag">
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 01 / 09</div>
+  <div class="veil-slide-ikon">🔬</div>
+  <div class="veil-slide-tittel">Kom i gang med naturfag-hubben</div>
+  <div class="veil-slide-tekst">Naturfag-hubben inneholder 87 fagkort fordelt på 8 emner: Utforsking, Teknologi, Kjemi, Fysikk, Klima, Biologi, Geofag og Kropp. Hvert kort lenker til en leksjon, prøvetrener, flashcards eller interaktiv ressurs.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Start med å klikke på emnet du jobber med i perioden. Alle fagkort er koblet til LK20-kompetansemål for naturfag 8.–10. trinn.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 02 / 09</div>
+  <div class="veil-slide-ikon">📚</div>
+  <div class="veil-slide-tittel">Leksjonsformatet – karusell med SVG</div>
+  <div class="veil-slide-tekst">De 38+ naturfagleksjonene er bygget som interaktive karuseller med 6–9 slides. Hvert slide har én faglig bit, SVG-illustrasjon og LK20-kobling. Siste slide oppsummerer alltid kompetansemål.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Vis en leksjon på storskjerm som introduksjon til tema. Bruk illustrasjonene som diskusjonsgrunnlag – spørsmålet «hva ser du?» gir god klasseromsdialog.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 03 / 09</div>
+  <div class="veil-slide-ikon">📝</div>
+  <div class="veil-slide-tittel">Prøvetrenere – kjemi og fysikk</div>
+  <div class="veil-slide-tekst">SkapLab har nå to naturfag-prøvetrenere: Kjemi (atomer, formler, reaksjoner, syre-base, miljø) og Fysikk (Newtons lover, energi, elektrisitet, bølger). Format som matematikk: 45/60/90 min med karakterestimat.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> La elevene ta en prøvetrener i forkant av en klasseprøve for å identifisere egne svakheter. Bruk gjennomgangen etter levering som selvvurdering.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 04 / 09</div>
+  <div class="veil-slide-ikon">🃏</div>
+  <div class="veil-slide-tittel">Flashcards – 12 kortsett</div>
+  <div class="veil-slide-tekst">12 flashcard-sett dekker biologi, elektronikk, fysikk, kjemi, teknologi og økologi (del 1 og 2 for hvert). Ideelt for begrepsinnlæring. Elevene kan bruke dem uten å logge inn.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Del flashcard-lenken i læringsplattform og la elevene øve hjemme. 10 minutter flashcards tre dager etter en leksjon styrker langtidshukommelse betydelig.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 05 / 09</div>
+  <div class="veil-slide-ikon">🌡️</div>
+  <div class="veil-slide-tittel">Interaktive simuleringer</div>
+  <div class="veil-slide-tekst">Naturfag-hubben inneholder simuleringer som flokkimmunitetssimulator (immunforsvar) og andre interaktive verktøy. Disse lar elever utforske parametere og se konsekvenser visuelt.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk flokkimmunitetssimulator til å la elevene eksperimentere med vaksinasjonsgrad. Still spørsmål: «Hva skjer hvis du senker vaksinasjonsgraden til 60%?»</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 06 / 09</div>
+  <div class="veil-slide-ikon">🧪</div>
+  <div class="veil-slide-tittel">Forsøk og labsikkerhet</div>
+  <div class="veil-slide-tekst">Naturfag-hubben har fagkort om labsikkerhet og forsøksdesign. Bruk disse til å forberede klassen til laboratoriearbeid. Fagkortet om vitenskapelig metode (utforsking) er godt som introduksjon til forsøk.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Les «Labsikkerhet og forsøksdesign»-leksjonen med klassen FØR hvert forsøk. La elever forklare sikkerhetspunkter med egne ord.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 07 / 09</div>
+  <div class="veil-slide-ikon">🌍</div>
+  <div class="veil-slide-tittel">Bærekraft og dagsaktuelle temaer</div>
+  <div class="veil-slide-tekst">Klima, tålegrenser (NAT-23), KI (NAT-27), naturressurser (NAT-33) og fauna/flora-leksjonene er spesielt relevante for tverrfaglige bærekraftstemaer i LK20. Disse er koblet til FNs bærekraftsmål.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Kombiner naturfag-leksjonene med samfunnsfag-diskusjoner. For eksempel: «Jordas 9 tålegrenser» + «Norges klimapolitikk» som tverrfaglig prosjekt.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 08 / 09</div>
+  <div class="veil-slide-ikon">🔭</div>
+  <div class="veil-slide-tittel">Geofag og jordlære</div>
+  <div class="veil-slide-tekst">Geofag-gruppen har 7 fagkort: astronomileksjon, platetektonikk, Pangea-puslespill, bergarter, jordskorpen, naturressurser og jordas indre. Dekker kjernestoff fra 10. trinn.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Pangea-puslespillet er egnet som introtasktivstet til platetektonikk-temaet. La elevene løse det i par og diskuter «hva forteller dette om jorda for 250 millioner år siden?»</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 09 / 09</div>
+  <div class="veil-slide-ikon">🔗</div>
+  <div class="veil-slide-tittel">Kobling til LK20</div>
+  <div class="veil-slide-tekst">Alle naturfag-fagkort er merket med NAT-koder (NAT-1 til NAT-34+). Koden angir kompetansemålet kortet dekker. Søk på NAT-koden i hubben for å finne alle ressurser til et gitt mål.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Planlegg perioden ved å finne alle NAT-koder for ditt tema og tildel tilhørende fagkort til klassen. Bruk planleggeren i appen for å legge inn periodeplan.</div>
+</div>
+  </div>
+  <div class="veil-nav">
+    <button class="veil-pil" id="veil-prev-naturfag" onclick="veilGo('naturfag',-1,true)" disabled aria-label="Forrige">←</button>
+    <div class="veil-dots" id="veil-dots-naturfag"><button class="veil-dot ak" onclick="veilGo('naturfag',0)" aria-label="Slide 1"></button><button class="veil-dot" onclick="veilGo('naturfag',1)" aria-label="Slide 2"></button><button class="veil-dot" onclick="veilGo('naturfag',2)" aria-label="Slide 3"></button><button class="veil-dot" onclick="veilGo('naturfag',3)" aria-label="Slide 4"></button><button class="veil-dot" onclick="veilGo('naturfag',4)" aria-label="Slide 5"></button><button class="veil-dot" onclick="veilGo('naturfag',5)" aria-label="Slide 6"></button><button class="veil-dot" onclick="veilGo('naturfag',6)" aria-label="Slide 7"></button><button class="veil-dot" onclick="veilGo('naturfag',7)" aria-label="Slide 8"></button><button class="veil-dot" onclick="veilGo('naturfag',8)" aria-label="Slide 9"></button></div>
+    <span class="veil-fremgang" id="veil-nr-naturfag">1 / 9</span>
+    <button class="veil-pil" id="veil-next-naturfag" onclick="veilGo('naturfag',1,true)" aria-label="Neste">→</button>
+  </div>
+</div>
+    </div>
+    <div class="veil-fane-innhold" id="veil-fane-programmering" role="tabpanel">
+      <p class="side-sub" style="margin-bottom:16px;">Programmeringsressurser på SkapLab: Debugrommet, pseudokode-verktøy og tverrfaglig koding via Tidsmaskinen.</p>
+      <div class="veil-karusell" id="veil-k-programmering">
+  <div class="veil-slides" id="veil-slides-programmering">
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 01 / 06</div>
+  <div class="veil-slide-ikon">💻</div>
+  <div class="veil-slide-tittel">Programmering på SkapLab</div>
+  <div class="veil-slide-tekst">SkapLab har programmeringsressurser koblet til LK20-kompetansemål om algoritmisk tenkning, pseudokode og enkel koding. Spillene «Debugrommet» og «Pseudokode-utfordreren» er kjerneverktøyene.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Programmeringshubben er under aktiv utvikling. Disse veilederne gir deg de beste ressursene som finnes per nå.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 02 / 06</div>
+  <div class="veil-slide-ikon">🔍</div>
+  <div class="veil-slide-tittel">Debugrommet – feilsøking i kode</div>
+  <div class="veil-slide-tekst">Debugrommet er et spill der elevene retter feil i kode-utsnitt. Trener på å lese kode nøye, forstå logisk flyt og identifisere syntaksfeil. Passer for elever som har grunnleggende kjennskap til kodestruktur.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk Debugrommet som klasseaktivitet: vis et feil-eksempel på skjerm og la klassen diskutere feilen FØR de spiller individuelt.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 03 / 06</div>
+  <div class="veil-slide-ikon">📝</div>
+  <div class="veil-slide-tittel">Pseudokode-utfordreren</div>
+  <div class="veil-slide-tekst">Pseudokode-utfordreren trener elevene i å skrive algoritmer i menneskelig lesbar form, uten spesifikt programmeringsspråk. Viktig LK20-ferdighet: «planlegge og beskrive løsninger på enkle problemer med algoritmer».</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Start med å la elevene skrive pseudokode for hverdagslige aktiviteter (f.eks. «lag toast») før de bruker verktøyet. Overfør så til pseudokode for matematiske problemer.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 04 / 06</div>
+  <div class="veil-slide-ikon">🎮</div>
+  <div class="veil-slide-tittel">Tidsmaskinen – tverrfaglig koding</div>
+  <div class="veil-slide-tekst">Tidsmaskinen-spillet inkluderer programmeringsoppgaver integrert i realfaglig kontekst. Elevene koder løsninger for å komme videre i spillet. Motiverende ramme for kode-øving.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> La elevene spille Tidsmaskinen i par. Paired programming (to elever, ett tastatur) er pedagogisk effektivt og gir naturlig dialog om problemløsning.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 05 / 06</div>
+  <div class="veil-slide-ikon">📊</div>
+  <div class="veil-slide-tittel">Matte og programmering</div>
+  <div class="veil-slide-tekst">Matematikk-hubben har ressurser som «Programmering i matte» og «Løkker og betingelser i matte» – disse kobler kode til matematikk. GeoGebra-ressursene (dynamiske geometriprogram) er også tilgjengelige.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk «Programmering i matte»-leksjonen som bro mellom matte og kode. Vis at en løkke er det samme som en matematisk rekke.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 06 / 06</div>
+  <div class="veil-slide-ikon">🔗</div>
+  <div class="veil-slide-tittel">LK20 og fremoverskuende kompetanse</div>
+  <div class="veil-slide-tekst">LK20 forventer at elever kan: planlegge algoritmer, skrive enkle programmer, feilsøke og bruke digitale verktøy. SkapLab dekker disse med spill og øvinger – men husk at praktisk koding trenger egne verktøy (Scratch, Python, micro:bit).</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Kombiner SkapLabs programmeringsressurser med gratis verktøy: Scratch (scratch.mit.edu) for blokk-koding, og code.org for strukturerte kurs.</div>
+</div>
+  </div>
+  <div class="veil-nav">
+    <button class="veil-pil" id="veil-prev-programmering" onclick="veilGo('programmering',-1,true)" disabled aria-label="Forrige">←</button>
+    <div class="veil-dots" id="veil-dots-programmering"><button class="veil-dot ak" onclick="veilGo('programmering',0)" aria-label="Slide 1"></button><button class="veil-dot" onclick="veilGo('programmering',1)" aria-label="Slide 2"></button><button class="veil-dot" onclick="veilGo('programmering',2)" aria-label="Slide 3"></button><button class="veil-dot" onclick="veilGo('programmering',3)" aria-label="Slide 4"></button><button class="veil-dot" onclick="veilGo('programmering',4)" aria-label="Slide 5"></button><button class="veil-dot" onclick="veilGo('programmering',5)" aria-label="Slide 6"></button></div>
+    <span class="veil-fremgang" id="veil-nr-programmering">1 / 6</span>
+    <button class="veil-pil" id="veil-next-programmering" onclick="veilGo('programmering',1,true)" aria-label="Neste">→</button>
+  </div>
+</div>
+    </div>
+    <div class="veil-fane-innhold" id="veil-fane-skaperverksted" role="tabpanel">
+      <p class="side-sub" style="margin-bottom:16px;">Skaperverkstedet kobler realfag til praktisk skapelse. Her finner du veiledning for å komme i gang med prosjektbasert læring.</p>
+      <div class="veil-karusell" id="veil-k-skaperverksted">
+  <div class="veil-slides" id="veil-slides-skaperverksted">
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 01 / 06</div>
+  <div class="veil-slide-ikon">🛠️</div>
+  <div class="veil-slide-tittel">Skaperverksted på SkapLab</div>
+  <div class="veil-slide-tekst">Skaperverkstedet er stedet der teori møter praksis. Her finner elevene prosjekter som kobler realfaglig kompetanse til å lage, bygge og designe. Skaperverkstedet er koblet til LK20-tverrfaglige temaer.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Skaperverkstedet er i aktiv utvikling. Ressursene som finnes nå gir et grunnlag for praktisk arbeid i klasserommet.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 02 / 06</div>
+  <div class="veil-slide-ikon">💡</div>
+  <div class="veil-slide-tittel">Hva er et skaperverksted?</div>
+  <div class="veil-slide-tekst">Et skaperverksted (makerspace) er et miljø der elever lærer gjennom å lage. Typiske aktiviteter: konstruksjon med materialer, elektronikk og Arduino, 3D-printing, programmering av fysiske systemer, design-tenkning.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Du trenger ikke avansert utstyr for å starte. En limpistol, noen papirkasser og en utfordring er nok for et godt skaperverkstedprosjekt.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 03 / 06</div>
+  <div class="veil-slide-ikon">🔧</div>
+  <div class="veil-slide-tittel">Kobling til kompetansemål</div>
+  <div class="veil-slide-tekst">Skaperverksted-aktiviteter kan dekke kompetansemål fra naturfag (kraft og energi, materialer, teknologi), matematikk (geometri, måling, statistikk) og valgfag (design og redesign, sal og scene).</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Plasser skaperverksted-prosjekter etter relevante teorileksjoner. Eksempel: etter fysikk-leksjon om krefter → bygg en bro og test vekt den tåler.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 04 / 06</div>
+  <div class="veil-slide-ikon">🎯</div>
+  <div class="veil-slide-tittel">Vurdering av skaperprosjekter</div>
+  <div class="veil-slide-tekst">Skaperverkstedprosjekter vurderes best med prosessvurdering: skisser, iterasjoner og refleksjon er like viktige som sluttproduktet. Bruk LK20-kompetansemål som grunnlag for vurderingskriterier.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> La elevene dokumentere prosessen (foto, logg) underveis. En enkel logg (hva prøvde du, hva fungerte, hva endret du?) gir grunnlag for god egenvurdering.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 05 / 06</div>
+  <div class="veil-slide-ikon">👥</div>
+  <div class="veil-slide-tittel">Grupper og samarbeid</div>
+  <div class="veil-slide-tekst">Skaperverkstedprosjekter egner seg godt for grupper på 2–4. Gruppearbeid trener kommunikasjon, ansvarsfordeling og konflikthåndtering – tverrfaglige kompetanser i LK20.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Gi grupper ulike roller: prosjektleder, materialansvarlig, dokumentasjonsansvarlig. Roter rollene mellom prosjekter for at alle erfarer alle.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 06 / 06</div>
+  <div class="veil-slide-ikon">🌱</div>
+  <div class="veil-slide-tittel">Kom i gang – tre nybegynnerprosjekter</div>
+  <div class="veil-slide-tekst"><strong>1. Brobygging:</strong> Bygg bro av is-pinner og limpistol. Test vekt. Knytt til fysikk og geometri.<br><br><strong>2. Sumobot-kamp:</strong> Bygg robot av LEGO/papp som skyver motstanderen ut. Knytt til krefter.<br><br><strong>3. Klimadesign:</strong> Design et produkt som løser et klimaproblem. Knytt til bærekraft.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Start med det enkleste prosjektet og bygg kompleksitet. Suksess tidlig øker motivasjon for mer ambisiøse prosjekter.</div>
+</div>
+  </div>
+  <div class="veil-nav">
+    <button class="veil-pil" id="veil-prev-skaperverksted" onclick="veilGo('skaperverksted',-1,true)" disabled aria-label="Forrige">←</button>
+    <div class="veil-dots" id="veil-dots-skaperverksted"><button class="veil-dot ak" onclick="veilGo('skaperverksted',0)" aria-label="Slide 1"></button><button class="veil-dot" onclick="veilGo('skaperverksted',1)" aria-label="Slide 2"></button><button class="veil-dot" onclick="veilGo('skaperverksted',2)" aria-label="Slide 3"></button><button class="veil-dot" onclick="veilGo('skaperverksted',3)" aria-label="Slide 4"></button><button class="veil-dot" onclick="veilGo('skaperverksted',4)" aria-label="Slide 5"></button><button class="veil-dot" onclick="veilGo('skaperverksted',5)" aria-label="Slide 6"></button></div>
+    <span class="veil-fremgang" id="veil-nr-skaperverksted">1 / 6</span>
+    <button class="veil-pil" id="veil-next-skaperverksted" onclick="veilGo('skaperverksted',1,true)" aria-label="Neste">→</button>
+  </div>
+</div>
+    </div>
+    <div class="veil-fane-innhold" id="veil-fane-spill" role="tabpanel">
+      <p class="side-sub" style="margin-bottom:16px;">15+ pedagogiske spill koblet til LK20. Fra det store eventyrspillet Tidsmaskinen til raske fagquizer for alle trinn.</p>
+      <div class="veil-karusell" id="veil-k-spill">
+  <div class="veil-slides" id="veil-slides-spill">
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 01 / 08</div>
+  <div class="veil-slide-ikon">🎮</div>
+  <div class="veil-slide-tittel">Spill som læringsverktøy</div>
+  <div class="veil-slide-tekst">SkapLab har 15+ pedagogiske spill koblet til LK20. Spill øker motivasjon, gir umiddelbar tilbakemelding og lar elever øve i eget tempo. Forskning viser at spillbasert læring er særlig effektivt for repetisjon og begrepsinnlæring.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Spill fungerer best som repetisjon og motivasjon, ikke som primær innlæring. Kombiner spill med leksjoner og diskusjon.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 02 / 08</div>
+  <div class="veil-slide-ikon">⏳</div>
+  <div class="veil-slide-tittel">Tidsmaskinen – det store eventyrspillet</div>
+  <div class="veil-slide-tekst">Tidsmaskinen er SkapLabs mest ambisiøse spill: 6 verdener, 30+ NPC-er, tverrfaglige realfagsoppgaver. Elevene løser oppgaver for å reise gjennom tid – fra dinosaurtiden til industriell London og år 2324. Passer for 8.–10. trinn.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Sett av en hel skoletime (eller to) for Tidsmaskinen. La elevene spille i par og diskuter underveis. Bruk det som intro til en tverrfaglig periode.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 03 / 08</div>
+  <div class="veil-slide-ikon">🧬</div>
+  <div class="veil-slide-tittel">Fagspesifikke spill</div>
+  <div class="veil-slide-tekst"><strong>Matematikk:</strong> Mattequiz, Linjespillet, Kanonbane, Matte-labyrint<br><strong>Naturfag:</strong> Genetikklaben, Kretsspillet, Mikroskopspillet, Kjemispillet<br><strong>Programmering:</strong> Debugrommet, Pseudokode-utfordreren</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk fagspesifikke spill som avslutning på en undervisningsperiode. «Quiz deg selv»-formatet motiverer repetisjon uten at det føles som lekse.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 04 / 08</div>
+  <div class="veil-slide-ikon">🏷️</div>
+  <div class="veil-slide-tittel">Filtrer etter fag og trinn</div>
+  <div class="veil-slide-tekst">Spillhubben (spill_hub.html) har filterknapper for fag (matematikk, naturfag, programmering) og trinn (5.–7. og 8.–10.). Bruk filtrene for å finne relevante spill raskt.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Del lenken til et filtrert spill-utvalg med klassen. F.eks.: spillhubben med filter «naturfag» + «8.–10. trinn» er et godt startpunkt for naturfagstimer.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 05 / 08</div>
+  <div class="veil-slide-ikon">📊</div>
+  <div class="veil-slide-tittel">Sporing og fremgang</div>
+  <div class="veil-slide-tekst">Elever som er logget inn får sin spillaktivitet registrert i aktivitetshistorikken i elev-portalen. Som lærer ser du hvilke spill elevene har spilt i aktivitetsloggen.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Sjekk aktivitetslogg i starten av en time for å se hvem som har spilt hjemme. Bruk det som springbrett: «Jeg ser mange spilte Genetikklaben – hva lærte dere?»</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 06 / 08</div>
+  <div class="veil-slide-ikon">⚡</div>
+  <div class="veil-slide-tittel">Raske spill for 10–15 minutter</div>
+  <div class="veil-slide-tekst">Mattequiz, Naturfagquiz og Linjespillet er korte spill (10–15 min) som egner seg som intro- eller avslutningsaktivitet. De kan brukes uten pålogging og fungerer på alle enheter.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Bruk Mattequiz som «billett ut av timen»: elever spiller siste 5–10 minutter. Det er en lavterskel og motiverende avslutning.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 07 / 08</div>
+  <div class="veil-slide-ikon">🏆</div>
+  <div class="veil-slide-tittel">Fremme konkurranse og samarbeid</div>
+  <div class="veil-slide-tekst">Mange spill støtter score og gjennomspilling. Du kan bruke dette til lagkonkurranse: hvilken gruppe får høyest score på Mattequiz? Eller: hvem klarer å komme lengst i Tidsmaskinen på én time?</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Moderer konkurranse slik at den inkluderer alle. Grupper etter faglig nivå (ikke tilfeldig) for at alle grupper kan oppleve mestring.</div>
+</div>
+<div class="veil-slide">
+  <div class="veil-slide-nr">Slide 08 / 08</div>
+  <div class="veil-slide-ikon">🎯</div>
+  <div class="veil-slide-tittel">Tildele spill til klassen</div>
+  <div class="veil-slide-tekst">Bruk «Tildel oppgave»-siden i lærerappen for å sende et spill til klassen. Elevene ser oppgaven i sin portal med evt. frist. Dette gjør det lett å koordinere spilløkter og sikre at alle vet hva de skal gjøre.</div>
+  <div class="veil-slide-tips"><b>💡 Tips:</b> Tildel spill som hjemmeoppgave fremfor tradisjonell lekse. F.eks.: «Spill Genetikklaben og skriv tre ting du lærte» er mer engasjerende enn mange oppgavesett.</div>
+</div>
+  </div>
+  <div class="veil-nav">
+    <button class="veil-pil" id="veil-prev-spill" onclick="veilGo('spill',-1,true)" disabled aria-label="Forrige">←</button>
+    <div class="veil-dots" id="veil-dots-spill"><button class="veil-dot ak" onclick="veilGo('spill',0)" aria-label="Slide 1"></button><button class="veil-dot" onclick="veilGo('spill',1)" aria-label="Slide 2"></button><button class="veil-dot" onclick="veilGo('spill',2)" aria-label="Slide 3"></button><button class="veil-dot" onclick="veilGo('spill',3)" aria-label="Slide 4"></button><button class="veil-dot" onclick="veilGo('spill',4)" aria-label="Slide 5"></button><button class="veil-dot" onclick="veilGo('spill',5)" aria-label="Slide 6"></button><button class="veil-dot" onclick="veilGo('spill',6)" aria-label="Slide 7"></button><button class="veil-dot" onclick="veilGo('spill',7)" aria-label="Slide 8"></button></div>
+    <span class="veil-fremgang" id="veil-nr-spill">1 / 8</span>
+    <button class="veil-pil" id="veil-next-spill" onclick="veilGo('spill',1,true)" aria-label="Neste">→</button>
+  </div>
+</div>
+    </div>
+  </div>
+
 
 <script>
 // skaplab_auth.js - SkapLab autentisering
@@ -949,6 +1362,36 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   };
 
 })();
+
+</script>
+<script>
+
+var veilCur = {};
+function veilGo(id, dir, rel) {
+  var slides = document.querySelectorAll('#veil-slides-'+id+' .veil-slide');
+  if (!veilCur[id]) veilCur[id] = 0;
+  if (rel) {
+    veilCur[id] = Math.max(0, Math.min(slides.length-1, veilCur[id]+dir));
+  } else {
+    veilCur[id] = dir;
+  }
+  var cur = veilCur[id];
+  document.getElementById('veil-slides-'+id).style.transform = 'translateX(-'+cur*100+'%)';
+  document.querySelectorAll('#veil-dots-'+id+' .veil-dot').forEach(function(d,i){
+    d.classList.toggle('ak', i===cur);
+  });
+  document.getElementById('veil-prev-'+id).disabled = cur===0;
+  document.getElementById('veil-next-'+id).disabled = cur===slides.length-1;
+  document.getElementById('veil-nr-'+id).textContent = (cur+1)+' / '+slides.length;
+}
+function veilFane(fag) {
+  document.querySelectorAll('.veil-fane-innhold').forEach(function(d){d.classList.remove('ak');});
+  document.querySelectorAll('.veil-fane-btn').forEach(function(b){b.classList.remove('ak');});
+  var el = document.getElementById('veil-fane-'+fag);
+  if (el) el.classList.add('ak');
+  var btn = document.getElementById('veil-btn-'+fag);
+  if (btn) btn.classList.add('ak');
+}
 
 </script>
 <script>

@@ -2,9 +2,9 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prøvetrener – Statistikk</title>
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkapLab – Prøvetrener Fysikk</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0f0f14;--bg2:#16161e;--bg3:#1e1e2a;
@@ -178,150 +178,252 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 </style>
 </head>
 <body>
-<div id="modal-tid" class="vis">
-  <div class="modal-kort"><div class="modal-tittel">📝 Prøvetrener</div><div class="modal-sub">Statistikk · Velg prøvetid</div>
-  <div class="modal-knapper">
-    <button class="modal-tid-btn" onclick="startProve(45)"><div class="tid-ikon">⚡</div><div class="tid-info"><div class="tid-label">45 minutter</div><div class="tid-ant" id="ant-45">Laster…</div></div></button>
-    <button class="modal-tid-btn" onclick="startProve(60)"><div class="tid-ikon">⏱</div><div class="tid-info"><div class="tid-label">60 minutter</div><div class="tid-ant" id="ant-60">Laster…</div></div></button>
-    <button class="modal-tid-btn" onclick="startProve(90)"><div class="tid-ikon">🧠</div><div class="tid-info"><div class="tid-label">90 minutter</div><div class="tid-ant" id="ant-90">Laster…</div></div></button>
-  </div></div>
+<a href="naturfag_hub.html" class="skip-link">Hopp til innhold</a>
+<div id="modal-tid" class="vis" role="dialog" aria-modal="true" aria-labelledby="modal-tittel">
+  <div class="modal-kort">
+    <div class="modal-tittel" id="modal-tittel">📝 Prøvetrener</div>
+    <div class="modal-sub">Fysikk – krefter, energi og elektrisitet · Velg prøvetid</div>
+    <div class="modal-knapper">
+      <button class="modal-tid-btn" onclick="startProve(45)" aria-label="Start 45-minutters prøve"><div class="tid-ikon">⚡</div><div class="tid-info"><div class="tid-label">45 minutter</div><div class="tid-ant" id="ant-45">Laster…</div></div></button>
+      <button class="modal-tid-btn" onclick="startProve(60)" aria-label="Start 60-minutters prøve"><div class="tid-ikon">⏱</div><div class="tid-info"><div class="tid-label">60 minutter</div><div class="tid-ant" id="ant-60">Laster…</div></div></button>
+      <button class="modal-tid-btn" onclick="startProve(90)" aria-label="Start 90-minutters prøve"><div class="tid-ikon">🧠</div><div class="tid-info"><div class="tid-label">90 minutter</div><div class="tid-ant" id="ant-90">Laster…</div></div></button>
+    </div>
+  </div>
 </div>
-<div id="header">
-  <a href="matte_hub.html" id="back-link">← Matte-hub</a>
-  <div><div class="logo">📝 Prøvetrener</div><div class="undertittel" id="prv-undertittel">Statistikk</div></div>
+<div id="header" role="banner">
+  <a href="naturfag_hub.html" id="back-link">← Naturfag-hub</a>
+  <div><div class="logo">📝 Prøvetrener</div><div class="undertittel" id="prv-undertittel">Fysikk – krefter, energi og elektrisitet</div></div>
   <div class="spacer"></div>
-  <div class="stats"><span>✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> p</span><span>📋 <b id="st-besvart">0</b>/<b id="st-tot">0</b></span></div>
-  <div id="tidtaker"><span id="tid-display">–:––</span></div>
+  <div class="stats"><span aria-label="Poeng">✅ <b id="st-poeng">0</b>/<b id="st-max">0</b> p</span><span aria-label="Besvarte oppgaver">📋 <b id="st-besvart">0</b>/<b id="st-tot">0</b></span></div>
+  <div id="tidtaker" aria-live="polite"><span id="tid-display">–:––</span></div>
 </div>
-<div id="progress-wrap">
+<div id="progress-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
   <div id="progress-info"><span id="prog-tekst">Oppgave 1</span><span id="prog-pst">0%</span></div>
   <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
 </div>
-<div id="app" style="display:none;"><div id="liste"></div><div id="panel"></div></div>
-<div id="resultat"></div>
+<div id="app" style="display:none;" id="main-content" role="main"><div id="liste"></div><div id="panel"></div></div>
+<div id="resultat" aria-live="polite"></div>
 <script>
-
-// ── SPORING ───────────────────────────────────────────────────────
 (function(){
-  try {
-    var _elev = null;
-    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e){}
-    window._skaplab_logg = function(ressurs, km, score, ant, rik, fa, tot) {
-      if (!_elev || !_elev.id) return;
-      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+  try{
+    var _e=null;
+    try{_e=JSON.parse(localStorage.getItem('skaplab_elev'));}catch(e){}
+    window._skaplab_logg=function(r,k,s,a,ri,f,t){
+      if(!_e||!_e.id)return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet',{
         method:'POST',
         headers:{'Content-Type':'application/json',
           'apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
           'Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
-        body: JSON.stringify({elev_id:_elev.id, ressurs:ressurs, km_kode:km,
-          score_pst:score, antall_oppgaver:ant, riktige:rik,
-          fullfort_antall:fa, totalt_antall:tot})
+        body:JSON.stringify({elev_id:_e.id,ressurs:r,km_kode:k,
+          score_pst:Math.round(s||0),antall_oppgaver:a||null,riktige:ri||null,
+          fullfort_antall:f||null,totalt_antall:t||null})
       }).catch(function(){});
     };
-  } catch(e){}
+  }catch(e){}
 })();
-
-// ── HJELPEFUNKSJONER ─────────────────────────────────────────────
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function rndF(a,b,d){return parseFloat((Math.random()*(b-a)+a).toFixed(d||1));}
 function plukk(arr){return arr[rnd(0,arr.length-1)];}
 function bland(arr){return arr.slice().sort(function(){return Math.random()-.5;});}
 function gcd(a,b){return b===0?a:gcd(b,a%b);}
 function factorial(k){return k<=1?1:k*factorial(k-1);}
-var KM_KODE='KM9';var RESSURS='provetrener_statistikk';var UNDERTITTEL='Statistikk';
+var KM_KODE='KM1';var RESSURS='provetrener_tall';var UNDERTITTEL='Tall og tallforståelse';
 
-// ── OPPGAVEBANK: STATISTIKK ───────────────────────────────────────
-
-function genGjennomsnitt() {
-  var n=rnd(4,7);
-  var tall=Array.from({length:n},function(){return rnd(3,20);});
-  var sum=tall.reduce(function(a,b){return a+b;},0);
-  var snitt=parseFloat((sum/n).toFixed(2));
-  return {type:'gjsn',tema:'Gjennomsnitt (aritmetisk middelverdi)',poeng:2,nivå:'lett',
-    spørsmål:'Finn gjennomsnittet av tallene:\n\n'+tall.join(', '),
-    instruksjon:'Gjennomsnitt = sum / antall',
-    svarType:'tall',fasit:snitt,tol:0.05,
-    løsning:'Sum: '+sum+'\nAntall: '+n+'\nGjennomsnitt: '+sum+' / '+n+' = '+snitt};
+function genHeltallsregning() {
+  var ops = [
+    function(){
+      var a=rnd(12,99), b=rnd(12,99);
+      return {spørsmål:'Regn ut:\n\n'+a+' × '+b,fasit:a*b,svarType:'tall',tol:0,
+        løsning:a+' × '+b+' = '+a*b,poeng:2,nivå:'lett',
+        instruksjon:'Still opp og regn ut. Vis framgangsmåten.'};
+    },
+    function(){
+      var a=rnd(100,999), b=plukk([2,3,4,6]);
+      return {spørsmål:'Regn ut:\n\n'+a+' ÷ '+b,fasit:Math.floor(a/b),
+        svarType:'tall',tol:0.5,
+        løsning:a+' ÷ '+b+' = '+Math.floor(a/b)+(a%b?' rest '+a%b:''),
+        poeng:2,nivå:'lett',instruksjon:'Vis framgangsmåten.'};
+    },
+  ];
+  var o = plukk(ops)();
+  return Object.assign(o,{type:'heltall',tema:'Heltallsregning'});
 }
 
-function genMedian() {
-  var n=rnd(5,8)|1; // odde
-  var tall=Array.from({length:n},function(){return rnd(2,20);}).sort(function(a,b){return a-b;});
-  var mid=Math.floor(n/2);
-  return {type:'median',tema:'Median',poeng:2,nivå:'lett',
-    spørsmål:'Finn medianen:\n\n'+tall.join(', '),
-    instruksjon:'Sorter tallene og finn midterste verdi.',
-    svarType:'tall',fasit:tall[mid],tol:0,
-    løsning:'Sortert: '+tall.join(', ')+'\nMedian = '+tall[mid]+' (plass '+(mid+1)+' av '+n+')'};
+function genDesimaltall() {
+  var a=rndF(1.2,9.8,1), b=rndF(0.2,4.5,1);
+  var ops = [
+    {spørsmål:'Regn ut:\n\n'+a+' × '+b,fasit:parseFloat((a*b).toFixed(2)),tol:0.05,løsning:a+' × '+b+' = '+(a*b).toFixed(2)},
+    {spørsmål:'Regn ut:\n\n'+a+' ÷ '+b,fasit:parseFloat((a/b).toFixed(2)),tol:0.05,løsning:a+' ÷ '+b+' ≈ '+(a/b).toFixed(2)},
+  ];
+  var o = plukk(ops);
+  return Object.assign({},{type:'desimal',tema:'Desimaltall',poeng:2,nivå:'middels',
+    instruksjon:'Vis framgangsmåten. Rund av til to desimaler om nødvendig.',
+    svarType:'tall'},o);
 }
 
-function genTypetall() {
-  var base=[2,4,4,4,7,9,9];
-  var ekstra=[rnd(1,10),rnd(1,10)];
-  var data=base.concat(ekstra).sort(function(a,b){return a-b;});
-  return {type:'typetall',tema:'Typetall (modus)',poeng:1,nivå:'lett',
-    spørsmål:'Finn typetallet i datasettet:\n\n'+data.join(', '),
-    instruksjon:'Typetallet er den verdien som forekommer flest ganger.',
-    svarType:'tall',fasit:4,tol:0,
-    løsning:'4 forekommer 3 ganger – det er typetallet'};
+function genNegativeTall() {
+  var a=rnd(2,9), b=rnd(2,9);
+  var type=plukk(['mult_neg_pos','mult_neg_neg','uttrykk']);
+  if (type==='mult_neg_pos') {
+    return {type:'negative',tema:'Negative tall',poeng:1,nivå:'lett',
+      spørsmål:'Regn ut:\n\n(-'+a+') × '+b,fasit:-a*b,tol:0,
+      løsning:'(-'+a+') × '+b+' = -'+(a*b),svarType:'tall',
+      instruksjon:'Husk fortegnreglene.'};
+  } else if (type==='mult_neg_neg') {
+    return {type:'negative',tema:'Negative tall',poeng:1,nivå:'lett',
+      spørsmål:'Regn ut:\n\n(-'+a+') × (-'+b+')',fasit:a*b,tol:0,
+      løsning:'(-'+a+') × (-'+b+') = '+(a*b),svarType:'tall',
+      instruksjon:'Minus × minus = pluss.'};
+  } else {
+    var c=rnd(2,6),d=rnd(2,5);
+    var res=(-a)*b - c*(-d);
+    return {type:'negative',tema:'Negative tall',poeng:2,nivå:'middels',
+      spørsmål:'Regn ut:\n\n(-'+a+') × '+b+' – '+c+' × (-'+d+')',
+      fasit:res,tol:0,løsning:'(-'+a+') × '+b+' – '+c+' × (-'+d+') = -'+(a*b)+' + '+(c*d)+' = '+res,
+      svarType:'tall',instruksjon:'Husk fortegnregler og regnerekkefølge.'};
+  }
 }
 
-function genVariasjon() {
-  var n=rnd(5,8);
-  var tall=Array.from({length:n},function(){return rnd(3,25);}).sort(function(a,b){return a-b;});
-  var vv=tall[tall.length-1]-tall[0];
-  return {type:'variasjon',tema:'Variasjonsbredde og spredningsmål',poeng:1,nivå:'lett',
-    spørsmål:'Finn variasjonsbredden:\n\n'+tall.join(', '),
-    instruksjon:'Variasjonsbredde = største verdi – minste verdi',
-    svarType:'tall',fasit:vv,tol:0,
-    løsning:'Størst: '+tall[tall.length-1]+', Minst: '+tall[0]+'\nVariasjonsbredde: '+(tall[tall.length-1])+' – '+tall[0]+' = '+vv};
+function genPotenser() {
+  var base=rnd(2,5), exp1=rnd(2,4), exp2=rnd(2,4);
+  var typer = [
+    function(){return {spørsmål:'Regn ut:\n\n'+base+'³ – 3 × '+rnd(2,5),
+      fasit:Math.pow(base,3)-3*rnd(2,5),tol:0,poeng:1,nivå:'lett',
+      løsning:base+'³ = '+(base*base*base),svarType:'tall',
+      instruksjon:'Regn potensen først, deretter subtraksjon.'};},
+    function(){var a=rnd(2,4);return {spørsmål:'Skriv som én potens:\n\n'+base+'^'+exp1+' × '+base+'^'+exp2,
+      fasit:base,tol:0,tema:'Potenser',poeng:2,nivå:'middels',
+      løsning:base+'^'+exp1+' × '+base+'^'+exp2+' = '+base+'^'+(exp1+exp2),
+      svarType:'flervalg',
+      alternativer:[base+'^'+(exp1+exp2), base+'^'+(exp1*exp2), base+'^'+(Math.abs(exp1-exp2)), (base*2)+'^'+(exp1+exp2)],
+      instruksjon:'Bruk potensreglene: aᵐ × aⁿ = aᵐ⁺ⁿ'};},
+  ];
+  return Object.assign({type:'potenser',tema:'Potenser og røtter'},plukk(typer)());
 }
 
-function genFrekvens() {
-  var total=rnd(20,50);
-  var a=rnd(5,total-10), b=rnd(3,total-a-5);
-  var c=total-a-b;
-  return {type:'frekv',tema:'Frekvenstabeller og relativ frekvens',poeng:2,nivå:'middels',
-    spørsmål:'I en klasse med '+total+' elever liker:\n'+a+' elever fotball\n'+b+' elever håndball\n'+c+' elever svømming\n\nFinn den relative frekvensen for fotball. Skriv som prosent.',
-    instruksjon:'Relativ frekvens = antall / total × 100%',
-    svarType:'tall',fasit:parseFloat((a/total*100).toFixed(1)),tol:0.2,enhet:'%',
-    løsning:a+' / '+total+' = '+(a/total).toFixed(3)+' = '+(a/total*100).toFixed(1)+'%'};
+function genRegnerekkefølge() {
+  var a=rnd(2,6),b=rnd(2,8),c=rnd(3,9),d=rnd(2,5);
+  var uttrykk = a+'×('+b+'+'+c+') – '+d;
+  var fasit = a*(b+c)-d;
+  return {type:'rekkefølge',tema:'Regnerekkefølge',poeng:2,nivå:'middels',
+    spørsmål:'Regn ut og skriv svaret:\n\n'+uttrykk,
+    instruksjon:'Husk PEMDAS: parentes → potens → × og ÷ → + og –',
+    fasit:fasit,tol:0,svarType:'tall',
+    løsning:'= '+a+'×'+(b+c)+' – '+d+' = '+(a*(b+c))+' – '+d+' = '+fasit};
 }
 
-function genDiagramLes() {
-  var kategorier=['Epler','Pærer','Bananer','Druer'];
-  var verdier=kategorier.map(function(){return rnd(5,20);});
-  var sum=verdier.reduce(function(a,b){return a+b;},0);
-  var stst=kategorier[verdier.indexOf(Math.max.apply(null,verdier))];
-  return {type:'diagram',tema:'Lese og tolke diagrammer',poeng:2,nivå:'middels',
-    spørsmål:'Et søylediagram viser solgte frukt:\n'+kategorier.map(function(k,i){return k+': '+verdier[i];}).join('\n')+'\n\na) Hvilken frukt ble solgt mest?\nb) Hvor mange frukt ble solgt totalt?',
-    instruksjon:'Les av verdiene og regn ut totalen.',
-    svarType:'flertall',labels:['a) Frukt (skriv navn)','b) Total'],
-    fasitArr:[0,sum],
-    løsning:'Mest solgt: '+stst+'\nTotal: '+sum};
+function genStandardform() {
+  var koeff = rndF(1.1,9.9,1);
+  var eks = plukk([3,4,5,6,-1,-2,-3]);
+  var tall = koeff * Math.pow(10, eks);
+  return {type:'standardform',tema:'Standardform (vitenskapelig notasjon)',poeng:2,nivå:'middels',
+    spørsmål:'Skriv dette tallet på standardform:\n\n'+tall.toLocaleString('no'),
+    instruksjon:'Standardform: a × 10ⁿ, der 1 ≤ a < 10',
+    svarType:'tekst',fasitTekst:koeff+' × 10^'+eks,
+    løsning:koeff+' × 10^'+eks,
+    tol:0};
 }
 
-function genKritisk() {
-  var gj=rnd(60,80),n=rnd(20,50);
-  var ny=rnd(85,99);
-  var nyGj=parseFloat(((gj*n+ny)/(n+1)).toFixed(1));
-  return {type:'kritisk',tema:'Kritisk vurdering av statistikk',poeng:3,nivå:'krevende',
-    spørsmål:'En klasse med '+n+' elever har gjennomsnittskarakter '+gj+' på en prøve.\nEn ny elev meldes inn og scorer '+ny+'.\n\nHva blir det nye gjennomsnittet?',
-    instruksjon:'Nytt gjennomsnitt = (gammel sum + ny verdi) / (n+1)',
-    svarType:'tall',fasit:nyGj,tol:0.2,
-    løsning:'Gammel sum: '+gj+' × '+n+' = '+gj*n+'\nNy sum: '+(gj*n+ny)+'\nNytt gjsn: '+(gj*n+ny)+' / '+(n+1)+' = '+nyGj};
+function genFortegnOgParentes() {
+  var a=rnd(2,8), b=rnd(3,9), c=rnd(2,6);
+  var uttrykk = '('+a+' – '+b+') × ('+b+' – '+c+')';
+  var fasit = (a-b)*(b-c);
+  return {type:'parentes',tema:'Parentes og fortegn',poeng:2,nivå:'middels',
+    spørsmål:'Regn ut:\n\n'+uttrykk,
+    instruksjon:'Regn hva som er i hver parentes, deretter gang dem.',
+    fasit:fasit,tol:0,svarType:'tall',
+    løsning:'= ('+(a-b)+') × ('+(b-c)+') = '+fasit};
 }
 
-function genBegrunne() {
-  var data=[12,14,14,14,15,16,18,45];
-  return {type:'begrunne',tema:'Velge riktig sentralmål',poeng:2,nivå:'middels',
-    spørsmål:'Et datasett inneholder:\n'+data.join(', ')+'\n\nEr gjennomsnitt eller median det beste sentralmålet for dette datasettet? Velg og begrunn.',
-    instruksjon:'Tenk på hva som skjer med gjennomsnitt når det finnes ekstreme verdier (uteliggere).',
+function genProporsjonal() {
+  var kontekster = [
+    {subjekt:'Ingrid',verb:'løper',enhet:'km',tidsenhet:'minutter',gjør:'løpe'},
+    {subjekt:'Emil',verb:'sykler',enhet:'km',tidsenhet:'minutter',gjør:'sykle'},
+    {subjekt:'En bil',verb:'kjører',enhet:'mil',tidsenhet:'timer',gjør:'kjøre'},
+  ];
+  var k = plukk(kontekster);
+  var d1=rnd(3,8), t1=plukk([20,30,40,60]);
+  var t2=plukk([15,45,90,120]);
+  var d2=parseFloat((d1*t2/t1).toFixed(2));
+  return {type:'proporsjonal',tema:'Proporsjonale størrelser',poeng:3,nivå:'middels',
+    spørsmål:k.subjekt+' '+k.verb+' '+d1+' '+k.enhet+' på '+t1+' '+k.tidsenhet+'.\n\nHvor langt kan '+k.subjekt.toLowerCase().replace('en ','en ')+(k.subjekt==='En bil'?' kjøre':' '+k.gjør)+' på '+t2+' '+k.tidsenhet+'? (Regn med jevn hastighet.)',
+    instruksjon:'Sett opp en enkel proporsjon eller beregn farten.',
+    fasit:d2,tol:0.1,svarType:'tall',enhet:k.enhet,
+    løsning:'Hastighet: '+d1+' '+k.enhet+' / '+t1+' min = '+(d1/t1).toFixed(3)+' '+k.enhet+'/min\nPå '+t2+' min: '+(d1/t1).toFixed(3)+' × '+t2+' = '+d2+' '+k.enhet};
+}
+
+function genProsentOgForbold() {
+  var helhet=plukk([200,250,400,500,800,1000]);
+  var pst=plukk([10,15,20,25,30,40,50]);
+  var del=helhet*pst/100;
+  return {type:'prosent_tall',tema:'Prosent og forholdstall',poeng:2,nivå:'middels',
+    spørsmål:pst+' % av '+helhet+' er lik?',
+    instruksjon:'Regn ut prosenten direkte: del = prosent/100 × helhet',
+    fasit:del,tol:0,svarType:'tall',
+    løsning:pst+'/100 × '+helhet+' = '+del};
+}
+
+function genTallMønster() {
+  var typer = [
+    function(){var start=rnd(2,8),diff=rnd(2,6);
+      var seq=[start,start+diff,start+2*diff,start+3*diff,start+4*diff];
+      return {spørsmål:'Se på tallrekken:\n\n'+seq[0]+', '+seq[1]+', '+seq[2]+', '+seq[3]+', __\n\nHva er neste tall?',
+        fasit:seq[4],tol:0,løsning:'Differanse: '+diff+'\nNeste: '+seq[3]+' + '+diff+' = '+seq[4]};},
+    function(){var a=rnd(2,5);
+      var seq=[a,a*a,a*a*a,a*a*a*a];
+      return {spørsmål:'Se på tallrekken:\n\n'+seq[0]+', '+seq[1]+', '+seq[2]+', __\n\nHva er neste tall?',
+        fasit:seq[3],tol:0,løsning:'Mønster: '+a+', '+a+'², '+a+'³, '+a+'⁴ = '+seq[3]};},
+  ];
+  var o = plukk(typer)();
+  return Object.assign({type:'mønster',tema:'Tallmønster og sammenhenger',poeng:2,nivå:'middels',
+    svarType:'tall',instruksjon:'Finn mønsteret og regn ut neste tall.'},o);
+}
+
+function genAbsolutt() {
+  var a=rnd(-9,-2), b=rnd(2,9);
+  var svar = Math.abs(a) + b;
+  return {type:'absolutt',tema:'Absolutt verdi',poeng:1,nivå:'lett',
+    spørsmål:'Regn ut:\n\n|'+a+'| + '+b,
+    instruksjon:'Absolutt verdi er alltid positiv: |tall| = avstand fra 0.',
+    fasit:svar,tol:0,svarType:'tall',
+    løsning:'|'+a+'| = '+Math.abs(a)+'\n'+Math.abs(a)+' + '+b+' = '+svar};
+}
+
+function genStørreMindre() {
+  var par = [
+    function(){var a=rnd(2,5),b=rnd(2,5);return {a:a+'³',b:b*b,fasit:Math.pow(a,3)>b*b?0:1,numA:Math.pow(a,3),numB:b*b};},
+    function(){var a=rnd(-9,-2),b=rnd(-8,-1);return {a:''+a,b:''+b,fasit:a>b?0:1,numA:a,numB:b};},
+    function(){var a=rndF(0.1,0.9,2),b=rndF(0.1,0.9,2);return {a:''+a,b:''+b,fasit:a>b?0:1,numA:a,numB:b};},
+  ];
+  var p = plukk(par)();
+  return {type:'størremindre',tema:'Sammenligning av tall',poeng:1,nivå:'lett',
+    spørsmål:'Hvilket uttrykk er størst?',
+    instruksjon:'Regn ut begge og sammenlign.',
     svarType:'flervalg',
-    alternativer:['Gjennomsnitt, fordi det bruker alle verdiene','Median, fordi 45 er en uteligger som drar gjennomsnittet opp','Typetall, fordi 14 er den vanligste verdien'],
-    fasitIdx:1,
-    løsning:'45 er en uteligger. Gjennomsnitt = '+(data.reduce(function(a,b){return a+b;})/data.length).toFixed(1)+'\nMedian = '+(data[3]+data[4])/2+'\nMedian er mer representativ her.'};
+    alternativer:[p.a, p.b],
+    fasitIdx:p.fasit,
+    løsning:p.a+' = '+p.numA+'\n'+p.b+' = '+p.numB+'\n\n'+( p.fasit===0 ? p.a : p.b)+' er størst.'};
 }
+
+function genVelgDifficult() {
+  var d=rnd(1,3);
+  if (d===1) {
+    var a=rnd(3,9),b=rnd(2,5),c=rnd(10,50);
+    var res=(a*b-c/b).toFixed(2);
+    return {type:'krevende',tema:'Sammensatt tallregning',poeng:3,nivå:'krevende',
+      spørsmål:'En bil bruker '+rndF(0.3,0.8,1)+' liter bensin på 1 mil.\n\nHvor mange liter trenger den på '+rnd(8,20)+' mil?\n\nHvis en liter koster '+rnd(18,25)+' kr, hva koster hele turen?',
+      instruksjon:'Vis alle steg. Sett opp regnestykket tydelig.',
+      svarType:'flertall',
+      labels:['Liter bensin','Totalkostnad (kr)'],
+      fasitArr:[null,null],
+      løsning:'Beregn liter = forbruk × antall mil\nBeregn kostnad = liter × literpris'};
+  } else {
+    return genProporsjonal();
+  }
+}
+
+// ── BYGG PRØVE ──────────────────────────────────────────────────
 
 // ══════════════════════════════════════════════════════════════════════
 // NYE FLERTRINNS-OPPGAVER PER EMNE
@@ -675,17 +777,287 @@ function genEnhetsomgjøringKjede() {
     løsning:fart_ms+' m/s × 3,6 = '+fart_kmh+' km/t\nt = '+d_km+'/'+fart_kmh.toFixed(2)+'= '+t_timer+' t = '+t_min+' min'};
 }
 
+
+
+// ─── FYSIKK OPPGAVEGENERATORER ───────────────────────────────────────
+
+function genKrefter() {
+  var typer = [
+    function(){return {spørsmål:'Hva sier Newtons 1. lov (treghetslovene)?',
+      svarType:'flervalg',
+      fasit:'Et legeme fortsetter i ro eller rettlinjet bevegelse hvis resultantkraften er null',
+      alternativer:[
+        'Et legeme fortsetter i ro eller rettlinjet bevegelse hvis resultantkraften er null',
+        'Kraft = masse × akselerasjon',
+        'For hver kraft er det en like stor motkraft',
+        'Kraften er proporsjonal med hastigheten'
+      ],
+      tema:'Newtons lover',poeng:2,nivå:'middels',instruksjon:'1. lov: Treghetsloven. Ingen nettokraft → ingen akselerasjon.'};},
+    function(){
+      var m=rnd(2,20), a=rnd(1,10);
+      var F=m*a;
+      return {spørsmål:'En gjenstand med masse '+m+' kg har akselerasjon '+a+' m/s².\n\nHva er kraften (F) som virker på gjenstanden?\n\nBruk: F = m × a',
+        svarType:'tall',fasit:F,tol:0.5,
+        tema:'Newtons 2. lov',poeng:2,nivå:'middels',løsning:'F = m × a = '+m+' × '+a+' = '+F+' N',
+        instruksjon:'F = m × a. Enhet: Newton (N). 1 N = 1 kg·m/s²'};},
+    function(){return {spørsmål:'Hva er friksjonskraft?',
+      svarType:'flervalg',
+      fasit:'En kraft som motvirker bevegelse mellom to overflater i kontakt',
+      alternativer:[
+        'En kraft som motvirker bevegelse mellom to overflater i kontakt',
+        'En kraft som virker mellom ladete partikler',
+        'Gravitasjonstrekket fra jorda',
+        'Luftmotstanden ved høy hastighet'
+      ],
+      tema:'Friksjon',poeng:1,nivå:'lett',instruksjon:'Friksjon = μ × N. μ = friksjonskoeffisient, N = normalkraft.'};},
+    function(){
+      var m=rnd(1,20);
+      var g=9.81;
+      var G=parseFloat((m*g).toFixed(1));
+      return {spørsmål:'En gjenstand veier '+m+' kg. Hva er tyngdekraften (G) som virker på den?\n\n(g = 9,81 m/s²)',
+        svarType:'tall',fasit:G,tol:1,
+        tema:'Tyngdekraft',poeng:2,nivå:'middels',løsning:'G = m × g = '+m+' × 9,81 = '+G+' N',
+        instruksjon:'G = m × g. Tyngdekraft = vekt i Newton.'};},
+  ];
+  return Object.assign({type:'krefter',tema:'Krefter og Newtons lover'},plukk(typer)());
+}
+
+function genBevegelse() {
+  var typer = [
+    function(){
+      var s=rnd(20,200), t=rnd(2,20);
+      var v=parseFloat((s/t).toFixed(1));
+      return {spørsmål:'En bil tilbakelegger '+s+' meter på '+t+' sekunder.\n\nHva er gjennomsnittsfarten?\n\nBruk: v = s / t',
+        svarType:'tall',fasit:v,tol:0.2,
+        tema:'Bevegelse',poeng:2,nivå:'middels',løsning:'v = s / t = '+s+' / '+t+' = '+v+' m/s',
+        instruksjon:'v = s/t. Fart [m/s] = distanse [m] / tid [s]'};},
+    function(){
+      var v=rnd(5,30), t=rnd(2,10);
+      var s=v*t;
+      return {spørsmål:'En syklist holder konstant fart '+v+' m/s i '+t+' sekunder.\n\nHvor langt sykler de?',
+        svarType:'tall',fasit:s,tol:1,
+        tema:'Bevegelse',poeng:1,nivå:'lett',løsning:'s = v × t = '+v+' × '+t+' = '+s+' m',
+        instruksjon:'s = v × t. Gjelder kun ved konstant fart.'};},
+    function(){return {spørsmål:'Hva er akselerasjon?',
+      svarType:'flervalg',
+      fasit:'Endring i hastighet per tidsenhet',
+      alternativer:[
+        'Endring i hastighet per tidsenhet',
+        'Tilbakelagt distanse per tidsenhet',
+        'Kraften som virker på et legeme',
+        'Produktet av masse og hastighet'
+      ],
+      tema:'Akselerasjon',poeng:1,nivå:'lett',instruksjon:'a = Δv / Δt. Enhet: m/s². Kan være negativ (retardasjon).'};},
+    function(){
+      var v0=rnd(0,20), a=rnd(1,5), t=rnd(2,8);
+      var v1=v0+a*t;
+      return {spørsmål:'Et objekt starter med fart '+v0+' m/s og akselererer jevnt '+a+' m/s² i '+t+' s.\n\nHva er slutthastigheten?\n\nBruk: v = v₀ + a × t',
+        svarType:'tall',fasit:v1,tol:0.5,
+        tema:'Jevn akselerasjon',poeng:2,nivå:'middels',løsning:'v = '+v0+' + '+a+' × '+t+' = '+v1+' m/s',
+        instruksjon:'v = v₀ + at gjelder ved konstant akselerasjon.'};},
+  ];
+  return Object.assign({type:'bevegelse',tema:'Bevegelse og fart'},plukk(typer)());
+}
+
+function genEnergi() {
+  var typer = [
+    function(){return {spørsmål:'Hva er bevart i et isolert system uten friksjon?',
+      svarType:'flervalg',fasit:'Mekanisk energi (Ek + Ep)',
+      alternativer:['Mekanisk energi (Ek + Ep)','Hastighet','Kraft','Temperatur'],
+      tema:'Energibevaring',poeng:1,nivå:'lett',instruksjon:'Energibevaringsloven: energi kan ikke lages eller ødelegges.'};},
+    function(){
+      var m=rnd(1,10), h=rnd(2,20);
+      var g=9.81;
+      var Ep=parseFloat((m*g*h).toFixed(0));
+      return {spørsmål:'Et objekt med masse '+m+' kg befinner seg '+h+' m over bakken.\n\nHva er den potensielle energien (Ep)?\n\nBruk: Ep = m × g × h (g = 9,81 m/s²)',
+        svarType:'tall',fasit:Ep,tol:5,
+        tema:'Potensiell energi',poeng:2,nivå:'middels',løsning:'Ep = m × g × h = '+m+' × 9,81 × '+h+' ≈ '+Ep+' J',
+        instruksjon:'Ep = mgh. Enhet: Joule (J).'};},
+    function(){
+      var m=rnd(1,10), v=rnd(2,20);
+      var Ek=parseFloat((0.5*m*v*v).toFixed(0));
+      return {spørsmål:'Et objekt med masse '+m+' kg har hastighet '+v+' m/s.\n\nHva er den kinetiske energien (Ek)?\n\nBruk: Ek = ½mv²',
+        svarType:'tall',fasit:Ek,tol:5,
+        tema:'Kinetisk energi',poeng:2,nivå:'middels',løsning:'Ek = ½ × '+m+' × '+v+'² = '+Ek+' J',
+        instruksjon:'Ek = ½mv². Dobbel fart → 4× kinetisk energi!'};},
+    function(){return {spørsmål:'Hva er enheten for effekt?',
+      svarType:'flervalg',fasit:'Watt (W)',
+      alternativer:['Watt (W)','Joule (J)','Newton (N)','Pascal (Pa)'],
+      tema:'Effekt',poeng:1,nivå:'lett',instruksjon:'Effekt = energi / tid. P = W/t. 1 W = 1 J/s.'};},
+  ];
+  return Object.assign({type:'energi',tema:'Energi og arbeid'},plukk(typer)());
+}
+
+function genElektrisitet() {
+  var typer = [
+    function(){return {spørsmål:'Hva er Ohms lov?',
+      svarType:'flervalg',fasit:'U = R × I (spenning = motstand × strøm)',
+      alternativer:[
+        'U = R × I (spenning = motstand × strøm)',
+        'P = U × I (effekt = spenning × strøm)',
+        'Q = m × c × ΔT',
+        'F = m × a'
+      ],
+      tema:'Ohms lov',poeng:1,nivå:'lett',instruksjon:'U = R×I. U [V], R [Ω], I [A]. Grunnleggende kretslov.'};},
+    function(){
+      var R=rnd(2,20), I=plukk([0.5,1,1.5,2,2.5,3]);
+      var U=parseFloat((R*I).toFixed(1));
+      return {spørsmål:'En krets har motstand '+R+' Ω og strøm '+I+' A.\n\nHva er spenningen?\n\nBruk: U = R × I',
+        svarType:'tall',fasit:U,tol:0.2,
+        tema:'Ohms lov',poeng:2,nivå:'middels',løsning:'U = R × I = '+R+' × '+I+' = '+U+' V',
+        instruksjon:'U = R × I. Spenning [V] = Motstand [Ω] × Strøm [A]'};},
+    function(){return {spørsmål:'Hva er forskjellen på serieforbindelse og parallelforbindelse av motstander?',
+      svarType:'flervalg',
+      fasit:'Serie: total motstand øker. Parallell: total motstand synker',
+      alternativer:[
+        'Serie: total motstand øker. Parallell: total motstand synker',
+        'Serieforbindelsen gir lavere spenning',
+        'Parallell gir lavere strøm totalt',
+        'De gir alltid same total motstand'
+      ],
+      tema:'Kretser',poeng:2,nivå:'middels',instruksjon:'Serie: R_tot = R₁+R₂. Parallell: 1/R_tot = 1/R₁+1/R₂'};},
+    function(){
+      var U=rnd(6,24), I=plukk([0.5,1.0,1.5,2.0]);
+      var P=parseFloat((U*I).toFixed(1));
+      return {spørsmål:'En elektrisk ovn har spenning '+U+' V og strøm '+I+' A.\n\nHva er effekten?\n\nBruk: P = U × I',
+        svarType:'tall',fasit:P,tol:0.5,
+        tema:'Elektrisk effekt',poeng:2,nivå:'middels',løsning:'P = U × I = '+U+' × '+I+' = '+P+' W',
+        instruksjon:'P = UI. Effekt [W] = Spenning [V] × Strøm [A]'};},
+  ];
+  return Object.assign({type:'elektrisitet',tema:'Elektrisitet og kretser'},plukk(typer)());
+}
+
+function genBølger() {
+  var typer = [
+    function(){return {spørsmål:'Hva er bølgelengde?',
+      svarType:'flervalg',
+      fasit:'Avstanden mellom to påfølgende bølgetopper (eller bunnpunkter)',
+      alternativer:[
+        'Avstanden mellom to påfølgende bølgetopper (eller bunnpunkter)',
+        'Antall bølger per sekund',
+        'Høyden på en bølge',
+        'Hastigheten til bølgen'
+      ],
+      tema:'Bølger',poeng:1,nivå:'lett',instruksjon:'Bølgelengde λ [m]. Frekvens f [Hz]. v = f × λ'};},
+    function(){
+      var f=plukk([100,200,500,1000,2000]);
+      var lam=plukk([0.1,0.2,0.5,1.0]);
+      var v=parseFloat((f*lam).toFixed(0));
+      return {spørsmål:'En bølge har frekvens '+f+' Hz og bølgelengde '+lam+' m.\n\nHva er bølgehastigheten?\n\nBruk: v = f × λ',
+        svarType:'tall',fasit:v,tol:5,
+        tema:'Bølgehastighet',poeng:2,nivå:'middels',løsning:'v = f × λ = '+f+' × '+lam+' = '+v+' m/s',
+        instruksjon:'v = f × λ. v [m/s], f [Hz], λ [m]'};},
+    function(){return {spørsmål:'Hva er lyd?',
+      svarType:'flervalg',
+      fasit:'Mekaniske trykkbølger som trenger et medium (luft, vann, fast stoff)',
+      alternativer:[
+        'Mekaniske trykkbølger som trenger et medium (luft, vann, fast stoff)',
+        'Elektromagnetiske bølger som kan reise i vakuum',
+        'Elektriske signaler i luft',
+        'Partikler som skytes ut fra en lydkilde'
+      ],
+      tema:'Lyd',poeng:1,nivå:'lett',instruksjon:'Lyd = trykkbølger. Lyset er el.mag. – trenger ikke medium.'};},
+    function(){return {spørsmål:'Hva er lysets hastighet i vakuum?',
+      svarType:'flervalg',fasit:'Ca. 300 000 km/s (3 × 10⁸ m/s)',
+      alternativer:['Ca. 300 000 km/s (3 × 10⁸ m/s)','Ca. 340 m/s','Ca. 150 000 km/s','Ca. 1 500 m/s'],
+      tema:'Lys',poeng:1,nivå:'lett',instruksjon:'c = 2,998 × 10⁸ m/s ≈ 300 000 km/s. Lydhastighet ≈ 340 m/s.'};},
+  ];
+  return Object.assign({type:'bølger',tema:'Bølger, lyd og lys'},plukk(typer)());
+}
+
+function genVarme() {
+  var typer = [
+    function(){return {spørsmål:'Hva er varme?',
+      svarType:'flervalg',
+      fasit:'Overføring av termisk energi mellom stoffer med ulik temperatur',
+      alternativer:[
+        'Overføring av termisk energi mellom stoffer med ulik temperatur',
+        'Temperaturen til et stoff',
+        'Mengden energi lagret i et stoff',
+        'Bevegelsen til atomer og molekyler'
+      ],
+      tema:'Varme og temperatur',poeng:1,nivå:'lett',instruksjon:'Varme er energi under overføring. Temperatur er gjennomsnittlig kinetisk energi.'};},
+    function(){
+      var m=rnd(1,5), c=plukk([385,490,900,4186]), dT=rnd(5,50);
+      var Q=m*c*dT;
+      var stoff=c===4186?'vann':c===900?'aluminium':c===490?'jern':'kobber';
+      return {spørsmål:''+m+' kg '+stoff+' varmes opp '+dT+' °C.\n\nHvor mye varme trengs?\n\nBruk: Q = m × c × ΔT  (c = '+c+' J/kg°C)',
+        svarType:'tall',fasit:Q,tol:Q*0.05,
+        tema:'Varmekapasitet',poeng:3,nivå:'krevende',løsning:'Q = '+m+' × '+c+' × '+dT+' = '+Q+' J',
+        instruksjon:'Q = mcΔT. c [J/kg°C] = spesifikk varmekapasitet'};},
+    function(){return {spørsmål:'Hva er de tre måtene varme overføres på?',
+      svarType:'flervalg',fasit:'Ledning, konveksjon og stråling',
+      alternativer:[
+        'Ledning, konveksjon og stråling',
+        'Konduksjon, induksjon og refleksjon',
+        'Kondensasjon, fordampning og sublimering',
+        'Diffusjon, osmose og filtrering'
+      ],
+      tema:'Varmeoverføring',poeng:1,nivå:'lett',instruksjon:'Ledning: kontakt. Konveksjon: fluidstrøm. Stråling: elektromagnetisk.'};},
+  ];
+  return Object.assign({type:'varme',tema:'Varme og energioverføring'},plukk(typer)());
+}
+
+function genFysikkFlertrinns() {
+  var typer = [
+    function(){
+      var m=rnd(2,15), h=rnd(5,30);
+      var Ep=parseFloat((m*9.81*h).toFixed(0));
+      var v=parseFloat(Math.sqrt(2*9.81*h).toFixed(1));
+      return {spørsmål:'Et objekt med masse '+m+' kg slippes fra '+h+' m høyde (ingen luftmotstand).\n\nA) Hva er potensiell energi i starten?\nB) Hva er hastigheten rett før det treffer bakken?\n\nBruk Ep = mgh og Ek = ½mv²',
+        svarType:'flervalg',
+        fasit:'Ep = '+Ep+' J · v ≈ '+v+' m/s',
+        alternativer:[
+          'Ep = '+Ep+' J · v ≈ '+v+' m/s',
+          'Ep = '+Math.round(m*9.81*h*0.5)+' J · v ≈ '+parseFloat((v*0.7).toFixed(1))+' m/s',
+          'Ep = '+Math.round(m*h*10)+' J · v ≈ '+(h)+' m/s',
+          'Ep = '+Ep+' J · v ≈ '+parseFloat((v*2).toFixed(1))+' m/s'
+        ],
+        tema:'Energibevaring',poeng:3,nivå:'krevende',instruksjon:'All Ep → Ek ved landing. Ep = Ek → mgh = ½mv² → v = √(2gh)'};},
+    function(){
+      var P=rnd(500,3000), t=rnd(1,8)*600;
+      var E=P*t;
+      var tmin=t/60;
+      return {spørsmål:'En elektrisk ovn bruker '+P+' W i '+tmin+' minutter.\n\nHvor mye energi forbrukes?\n\nBruk: E = P × t (t i sekunder)',
+        svarType:'tall',fasit:E,tol:E*0.02,
+        tema:'Elektrisk energi',poeng:3,nivå:'krevende',løsning:'t = '+tmin+' min = '+t+' s. E = '+P+' × '+t+' = '+E+' J',
+        instruksjon:'E = P × t. Husk å omregne tid til sekunder!'};},
+    function(){
+      var v1=rnd(10,30), v2=rnd(30,80);
+      var at=rnd(2,8);
+      var a=parseFloat(((v2-v1)/at).toFixed(1));
+      return {spørsmål:'En bil akselererer fra '+v1+' km/t til '+v2+' km/t på '+at+' sekunder.\n\nHva er akselerasjonen i m/s²?\n\n(Husk: km/t ÷ 3,6 = m/s)',
+        svarType:'tall',fasit:a,tol:0.2,
+        tema:'Akselerasjon',poeng:3,nivå:'krevende',løsning:'v₁ = '+(v1/3.6).toFixed(1)+' m/s, v₂ = '+(v2/3.6).toFixed(1)+' m/s. a = Δv/t = '+a+' m/s²',
+        instruksjon:'a = (v₂-v₁)/t. Omregn km/t til m/s først (÷3,6)'};},
+  ];
+  return Object.assign({type:'flertrinns',tema:'Fysikk avansert'},plukk(typer)());
+}
+
+
 function byggProve(minutter) {
-  var enkle=[genGjennomsnitt, genMedian, genTypetall, genVariasjon, genFrekvens, genDiagramLes, genBegrunne, genKritisk];
-  var ft=[genKomplettStatistikk, genFrekvensRelativ];
-  var ant=minutter<=45?14:minutter<=60?19:26;
-  var n_ft=Math.min(ft.length,Math.ceil(ant/3));
-  var n_e=ant-n_ft;
-  var vft=bland(ft).slice(0,n_ft);
-  var ve=bland(enkle).slice(0,Math.min(n_e,enkle.length));
-  while(ve.length+vft.length<ant) vft.push(plukk(ft));
+  var enkle = [genKrefter, genBevegelse, genEnergi, genElektrisitet, genBølger, genVarme];
+  var ft = [genFysikkFlertrinns, genFysikkFlertrinns, genElektrisitet];
+  var ant = minutter<=45 ? 15 : minutter<=60 ? 21 : 30;
+  var n_ft = Math.min(ft.length, Math.ceil(ant/3));
+  var n_e = ant - n_ft;
+  var vft = bland(ft).slice(0, n_ft);
+  var ve = bland(enkle).slice(0, Math.min(n_e, enkle.length));
+  while (ve.length + vft.length < ant) ve.push(plukk(enkle));
   return bland(vft.concat(ve)).map(function(fn,i){var o=fn();o._idx=i;return o;});
 }
+
+
+function oppdaterAntModal() {
+  var t45=byggProve(45).length, t60=byggProve(60).length, t90=byggProve(90).length;
+  document.getElementById('ant-45').textContent=t45+' oppgaver';
+  document.getElementById('ant-60').textContent=t60+' oppgaver';
+  document.getElementById('ant-90').textContent=t90+' oppgaver';
+}
+var RESSURS='provetrener_fysikk';var KM_KODE='NAT-fysikk';
+var UNDERTITTEL='Fysikk – krefter, energi og elektrisitet';
+
+
 // ── STATE ────────────────────────────────────────────────────────
 var state = {
   oppgaver: [],
@@ -1016,6 +1388,9 @@ function oppdaterListe() {
 // ── START ────────────────────────────────────────────────────────
 oppdaterAntModal();
 
-function oppdaterAntModal(){[45,60,90].forEach(function(m){var ant=m<=45?14:m<=60?19:26;document.getElementById('ant-'+m).textContent=ant+' oppgaver · ca. '+m+' min';});}
+function oppdaterAntModal(){[45,60,90].forEach(function(m){var ant=m<=45?15:m<=60?21:30;document.getElementById('ant-'+m).textContent=ant+' oppgaver · ca. '+m+' min';});}
 oppdaterAntModal();
-</script></body></html>
+
+</script>
+</body>
+</html>
