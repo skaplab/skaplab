@@ -1604,8 +1604,16 @@ async function init() {
   // Hent klasser
   try {
     var kR = await SkapLab._get('/klasser?laerer_id=eq.'+lid+'&order=navn', token);
-    klasser = Array.isArray(kR) ? kR : [];
-  } catch(e) { klasser = []; }
+    if (Array.isArray(kR)) {
+      klasser = kR;
+    } else {
+      // Supabase returnerte feil - vis det i sidebar
+      console.error('klasser feil:', JSON.stringify(kR));
+      klasser = [];
+      var dbg = document.getElementById('sidebar-klasser');
+      if (dbg) dbg.innerHTML = '<div style="color:#f87171;font-size:.72rem;padding:8px;">Debug: lid='+lid+'<br>'+JSON.stringify(kR).substring(0,100)+'</div>';
+    }
+  } catch(e) { klasser = []; console.error('klasser exception:', e); }
 
   // Hent alle elever
   try {
