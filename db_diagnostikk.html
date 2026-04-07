@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<title>DB Diagnostikk</title>
+<style>
+body { font-family: monospace; background: #07090f; color: #e0e8ff; padding: 20px; }
+button { background: #2d4a8a; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin: 4px; font-size: .9rem; }
+pre { background: #0d1020; border: 1px solid rgba(255,255,255,.1); padding: 12px; border-radius: 8px; white-space: pre-wrap; word-break: break-all; margin: 8px 0; font-size: .8rem; max-height: 200px; overflow-y: auto; }
+h3 { color: #60a5fa; margin: 16px 0 4px; }
+.ok { color: #34d399; }
+.feil { color: #f87171; }
+input { background: #0d1020; border: 1px solid rgba(255,255,255,.2); color: #e0e8ff; padding: 8px; border-radius: 6px; width: 250px; margin: 4px; font-family: monospace; }
+</style>
+</head>
+<body>
+<h2>🔧 SkapLab DB Diagnostikk</h2>
+<p style="color:rgba(255,255,255,.5);font-size:.85rem;">Tester tilkobling og RLS direkte</p>
+
+<div id="status"></div>
+
+<h3>1. LocalStorage</h3>
+<pre id="ls-output">Klikk test...</pre>
+<button onclick="testLS()">Test localStorage</button>
+
+<h3>2. Hent klasser (med token fra localStorage)</h3>
+<pre id="klasser-output">Klikk test...</pre>
+<button onclick="testKlasser()">Test klasser</button>
+
+<h3>3. Hent klasser (uten token / anon)</h3>
+<pre id="klasser-anon-output">Klikk test...</pre>
+<button onclick="testKlasserAnon()">Test klasser anon</button>
+
+<h3>4. Innlogging og klasse-henting</h3>
+<input type="email" id="test-epost" placeholder="E-post">
+<input type="password" id="test-passord" placeholder="Passord">
+<br>
+<button onclick="testLoggInn()">Logg inn og hent klasser</button>
+<pre id="login-output">Klikk test...</pre>
+
+<script>
+var URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+var KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+
+function testLS() {
+  var data = localStorage.getItem('skaplab_laerer');
+  var el = document.getElementById('ls-output');
+  if (!data) {
+    el.textContent = 'IKKE FUNNET - ingen skaplab_laerer i localStorage';
+    el.className = 'feil';
+    return;
+  }
+  try {
+    var parsed = JSON.parse(data);
+    el.className = 'ok';
+    el.textContent = 'FUNNET:\n'
+      + 'access_token: ' + (parsed.access_token ? parsed.access_token.substring(0,40)+'...' : 'MANGLER') + '\n'
+      + 'user.id: ' + (parsed.user && parsed.user.id ? parsed.user.id : 'MANGLER') + '\n'
+      + 'expires_at: ' + (parsed.expires_at || 'MANGLER') + '\n'
+      + 'Utløpt: ' + (parsed.expires_at ? (Date.now()/1000 > parsed.expires_at ? 'JA ❌' : 'NEI ✅') : 'UKJENT');
+  } catch(e) {
+    el.className = 'feil';
+    el.textContent = 'PARSE FEIL: ' + e.message;
+  }
+}
+
+async function testKlasser() {
+  var el = document.getElementById('klasser-output');
+  el.textContent = 'Henter...';
+  try {
+    var data = localStorage.getItem('skaplab_laerer');
+    if (!data) { el.textContent = 'Ingen token i localStorage'; return; }
+    var parsed = JSON.parse(data);
+    var token = parsed.access_token;
+    var lid = parsed.user && parsed.user.id ? parsed.user.id : '';
+    // Prøv JWT sub om user.id mangler
+    if (!lid && token) {
+      try {
+        var parts = token.split('.');
+        var pl = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        lid = pl.sub || '';
+      } catch(e) {}
+    }
+    el.textContent = 'lid: ' + lid + '\n';
+    
+    // Hent alle klasser (ingen filter)
+    var r1 = await fetch(URL+'/rest/v1/klasser?select=*&limit=10', {
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer '+token }
+    });
+    var d1 = await r1.json();
+    el.textContent += 'ALLE klasser (ingen filter): HTTP ' + r1.status + '\n' + JSON.stringify(d1, null, 2) + '\n\n';
+    
+    // Hent klasser med laerer_id filter
+    var r2 = await fetch(URL+'/rest/v1/klasser?laerer_id=eq.'+lid+'&select=*', {
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer '+token }
+    });
+    var d2 = await r2.json();
+    el.textContent += 'Klasser med laerer_id filter: HTTP ' + r2.status + '\n' + JSON.stringify(d2, null, 2);
+    el.className = r1.ok ? 'ok' : 'feil';
+  } catch(e) {
+    el.textContent = 'FEIL: ' + e.message;
+    el.className = 'feil';
+  }
+}
+
+async function testKlasserAnon() {
+  var el = document.getElementById('klasser-anon-output');
+  el.textContent = 'Henter...';
+  try {
+    var r = await fetch(URL+'/rest/v1/klasser?select=*&limit=10', {
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer '+KEY }
+    });
+    var d = await r.json();
+    el.textContent = 'HTTP ' + r.status + '\n' + JSON.stringify(d, null, 2);
+    el.className = r.ok ? 'ok' : 'feil';
+  } catch(e) {
+    el.textContent = 'FEIL: ' + e.message;
+    el.className = 'feil';
+  }
+}
+
+async function testLoggInn() {
+  var el = document.getElementById('login-output');
+  var epost = document.getElementById('test-epost').value.trim();
+  var passord = document.getElementById('test-passord').value;
+  if (!epost || !passord) { el.textContent = 'Fyll inn e-post og passord'; return; }
+  el.textContent = 'Logger inn...';
+  
+  try {
+    // 1. Logg inn
+    var authResp = await fetch(URL+'/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': KEY },
+      body: JSON.stringify({ email: epost, password: passord })
+    });
+    var authData = await authResp.json();
+    
+    if (!authData.access_token) {
+      el.textContent = 'INNLOGGING FEILET:\n' + JSON.stringify(authData, null, 2);
+      el.className = 'feil';
+      return;
+    }
+    
+    var token = authData.access_token;
+    var userId = authData.user && authData.user.id ? authData.user.id : '';
+    // JWT fallback
+    if (!userId) {
+      var parts = token.split('.');
+      var pl = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+      userId = pl.sub || '';
+    }
+    
+    el.textContent = 'INNLOGGING OK\nuser.id: ' + userId + '\n\n';
+    
+    // 2. Hent alle klasser
+    var r1 = await fetch(URL+'/rest/v1/klasser?select=*&limit=10', {
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer '+token }
+    });
+    var d1 = await r1.json();
+    el.textContent += 'ALLE klasser: HTTP ' + r1.status + '\n' + JSON.stringify(d1, null, 2) + '\n\n';
+    
+    // 3. Klasser med filter
+    var r2 = await fetch(URL+'/rest/v1/klasser?laerer_id=eq.'+userId+'&select=*', {
+      headers: { 'apikey': KEY, 'Authorization': 'Bearer '+token }
+    });
+    var d2 = await r2.json();
+    el.textContent += 'Klasser (laerer_id='+userId.substring(0,8)+'...): HTTP ' + r2.status + '\n' + JSON.stringify(d2, null, 2);
+    el.className = 'ok';
+    
+    // 4. Lagre token
+    localStorage.setItem('skaplab_laerer', JSON.stringify(authData));
+    el.textContent += '\n\n✅ Token lagret i localStorage';
+    
+  } catch(e) {
+    el.textContent = 'FEIL: ' + e.message;
+    el.className = 'feil';
+  }
+}
+
+// Kjør LS-test automatisk
+window.onload = testLS;
+</script>
+</body>
+</html>
