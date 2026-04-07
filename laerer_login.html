@@ -102,6 +102,16 @@ select option{background:#0b0d18;}
 // skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
+  // ── ROBUST STORAGE (localStorage med fallback til sessionStorage) ─────
+  var _store = (function(){
+    try {
+      localStorage.setItem('_test','1');
+      localStorage.removeItem('_test');
+      return localStorage;
+    } catch(e) {
+      return sessionStorage;
+    }
+  })();
 
   // ── KONFIGURASJON ──────────────────────────────────────────────
   var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
@@ -202,7 +212,7 @@ select option{background:#0b0d18;}
 
       if (resp.error) return { ok: false, feil: resp.error.message };
       if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
-      localStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
+      _store.setItem(LAERER_NØKKEL, JSON.stringify(resp));
       return { ok: true, token: resp.access_token };
     } catch (e) {
       return { ok: false, feil: 'Tilkoblingsfeil' };
@@ -217,27 +227,16 @@ select option{background:#0b0d18;}
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + l.access_token }
       });
     }
-    localStorage.removeItem(LAERER_NØKKEL);
+    _store.removeItem(LAERER_NØKKEL);
   }
 
   function hentLaerer() {
     try {
-      var data = localStorage.getItem(LAERER_NØKKEL);
+      var data = _store.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
-      // Må ha access_token
       if (!parsed || !parsed.access_token) return null;
-      // Returner null ved feilrespons
       if (parsed.error_code || parsed.error) return null;
-      // Sjekk utløp (expires_at er Unix-sekunder fra Supabase)
-      if (parsed.expires_at) {
-        var nå = Math.floor(Date.now() / 1000);
-        if (nå > parsed.expires_at - 60) {
-          // Token utløpt – fjern og be bruker logge inn igjen
-          localStorage.removeItem(LAERER_NØKKEL);
-          return null;
-        }
-      }
       return parsed;
     } catch (e) { return null; }
   }
