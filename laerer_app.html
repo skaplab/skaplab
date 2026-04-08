@@ -622,15 +622,14 @@ function byttKlasse(id) {
   visside('klasser');
 }
 
-function byggDashboard() {
+async function byggDashboard() {
   var el = $('dashboard-innhold');
   if (!aktivKlasse) { el.innerHTML = ''; return; }
   var kElever = elever.filter(function(e){return e.klasse_id===aktivKlasse;});
   el.innerHTML = '';
 
-  // Elevtabell
-  var sek = document.createElement('div');
-  sek.className = 'sek';
+  // -- ELEVTABELL --
+  var sek = document.createElement('div'); sek.className='sek';
   var html = '<div class="sek-tittel">👥 Elever <span style="font-size:.7rem;font-weight:400;color:var(--dim);">'+kElever.length+'</span></div>';
   if (!kElever.length) {
     html += '<p style="color:var(--dim);font-size:.83rem;">Ingen elever. <button class="btn btn-gron btn-sm" onclick="apneModal(\'ny-elev\')">+ Legg til elev</button></p>';
@@ -649,8 +648,76 @@ function byggDashboard() {
     html += '</tbody></table>';
     html += '<button class="btn btn-gron btn-sm" onclick="apneModal(\'ny-elev\')" style="margin-top:10px;">+ Legg til elev</button>';
   }
-  sek.innerHTML = html;
-  el.appendChild(sek);
+  sek.innerHTML = html; el.appendChild(sek);
+
+  // -- TILDELTE OPPGAVER --
+  var sek2 = document.createElement('div'); sek2.className='sek';
+  sek2.innerHTML = '<div class="sek-tittel">📤 Tildelte oppgaver</div><div id="dash-oppgaver-innhold" style="color:var(--dim);font-size:.83rem;">Laster…</div>';
+  el.appendChild(sek2);
+
+  // -- KOMMENDE PRØVER --
+  var sek3 = document.createElement('div'); sek3.className='sek';
+  sek3.innerHTML = '<div class="sek-tittel">📝 Kommende prøver</div><div id="dash-prover-innhold" style="color:var(--dim);font-size:.83rem;">Laster…</div>';
+  el.appendChild(sek3);
+
+  // Hent asynkront
+  try {
+    var r = await apiGet('/tildeling?klasse_id=eq.'+aktivKlasse
+      +'&select=id,frist,oppgaver(tittel,type,ressurs,url,fag)&order=frist.asc&limit=30');
+    var data = Array.isArray(r) ? r : [];
+    var oppgaver = data.filter(function(t){return t.oppgaver && t.oppgaver.type!=='provevarsel';});
+    var prover   = data.filter(function(t){return t.oppgaver && t.oppgaver.type==='provevarsel';});
+
+    // Tildelte oppgaver
+    var oppEl = $('dash-oppgaver-innhold');
+    if (oppEl) {
+      if (!oppgaver.length) {
+        oppEl.innerHTML = 'Ingen aktive tildelinger. <button class="btn btn-sek btn-sm" onclick="visside(\'tildel\')">Tildel oppgave →</button>';
+      } else {
+        var oh = '<table><thead><tr><th>Oppgave</th><th>Fag</th><th>Frist</th><th></th></tr></thead><tbody>';
+        oppgaver.forEach(function(o){
+          var frist = datoVis(o.frist);
+          var forfalt = o.frist && new Date(o.frist) < new Date() ? ' style="color:var(--rod);"' : '';
+          oh += '<tr>'
+            +'<td style="font-size:.82rem;">'+o.oppgaver.tittel+'</td>'
+            +'<td style="font-size:.75rem;color:var(--dim);">'+(o.oppgaver.fag||'—')+'</td>'
+            +'<td'+forfalt+' style="font-family:var(--font-m);font-size:.78rem;">'+frist+'</td>'
+            +'<td><button class="btn btn-rod btn-sm" onclick="slettTildeling(\''+o.id+'\')">Slett</button></td>'
+            +'</tr>';
+        });
+        oh += '</tbody></table>';
+        oppEl.innerHTML = oh;
+      }
+    }
+
+    // Kommende prøver
+    var pvEl = $('dash-prover-innhold');
+    if (pvEl) {
+      if (!prover.length) {
+        pvEl.innerHTML = 'Ingen kommende prøver. <button class="btn btn-sek btn-sm" onclick="visside(\'proveplan\')">Planlegg prøve →</button>';
+      } else {
+        var ph = '<table><thead><tr><th>Prøve</th><th>Dato</th><th></th></tr></thead><tbody>';
+        prover.forEach(function(p){
+          ph += '<tr>'
+            +'<td style="font-size:.82rem;">'+p.oppgaver.tittel.replace('Prøve: ','')+'</td>'
+            +'<td style="font-family:var(--font-m);font-size:.78rem;">'+datoVis(p.frist)+'</td>'
+            +'<td><button class="btn btn-rod btn-sm" onclick="slettTildeling(\''+p.id+'\')">Slett</button></td>'
+            +'</tr>';
+        });
+        ph += '</tbody></table>';
+        pvEl.innerHTML = ph;
+      }
+    }
+  } catch(e) {
+    var oe=$('dash-oppgaver-innhold'); if(oe) oe.innerHTML='Feil ved lasting.';
+    var pe=$('dash-prover-innhold'); if(pe) pe.innerHTML='Feil ved lasting.';
+  }
+}
+
+async function slettTildeling(id) {
+  if (!confirm('Slett denne tildelingen?')) return;
+  await apiDelete('/tildeling?id=eq.'+id);
+  byggDashboard();
 }
 
 function fyllDropdowns() {
@@ -1103,27 +1170,67 @@ function maVisFag() {
   var fag = $('ma-fag').value;
   var kmer = getKM(fag);
   var el = $('ma-innhold');
-  var html = '<div class="sek"><table><thead><tr><th>KM</th><th>Kompetansemål</th><th>Nivå</th><th>Notat</th></tr></thead><tbody>';
+  var elev = elever.find(function(e){return e.id===$('ma-elev').value;});
+  var elevNavn = elev ? elev.fullt_navn : '';
+  var html = '<div class="sek">';
+  html += '<table><thead><tr><th>KM</th><th>Kompetansemål</th><th>Nivå</th><th>Notat</th></tr></thead><tbody>';
   kmer.forEach(function(km) {
     var v = maVurderinger[km[0]] || {nivaa:'',merknad:''};
     var nivHtml = ['h','m','l'].map(function(n){
-      var cls = 'niv-btn' + (v.nivaa===n?' ak-'+n:'');
+      var ak = v.nivaa===n ? ' ak-'+n : '';
       var txt = n==='h'?'Høy':n==='m'?'Mid':'Lav';
-      return '<button class="'+cls+'" onclick="maSettNiv(\''+km[0]+'\',\''+n+'\',this)">'+txt+'</button>';
+      return '<button class="niv-btn'+ak+'" data-niv="'+n+'" onclick="maSettNiv(\''+km[0]+'\',\''+n+'\',this)">'+txt+'</button>';
     }).join('');
     html += '<tr>'
       +'<td><code class="km-kod">'+km[0]+'</code></td>'
-      +'<td style="font-size:.78rem;color:var(--dim);max-width:250px;">'+km[1]+'</td>'
+      +'<td style="font-size:.78rem;color:var(--dim);max-width:250px;line-height:1.4;">'+km[1]+'</td>'
       +'<td><div class="niv-sel">'+nivHtml+'</div></td>'
       +'<td><input type="text" value="'+(v.merknad||'')+'" placeholder="Notat…" '
-        +'onchange="maSettMerknad(\''+km[0]+'\',this.value)" style="font-size:.78rem;min-width:120px;"></td>'
+        +'onchange="maSettMerknad(\''+km[0]+'\',this.value)" style="font-size:.78rem;min-width:120px;width:100%;"></td>'
       +'</tr>';
   });
   html += '</tbody></table>';
-  html += '<div style="margin-top:14px;display:flex;gap:8px;align-items:center;">'
-    + '<button class="btn btn-prim" onclick="maLagreAlle()">💾 Lagre alle vurderinger</button>'
-    + '<span id="ma-lagre-melding" style="font-size:.8rem;color:var(--gron);"></span></div>';
+  html += '<div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+    +'<button class="btn btn-prim" onclick="maLagreAlle()">💾 Lagre alle vurderinger</button>'
+    +'<button class="btn btn-sek" onclick="maSkrivUt()">🖨️ Skriv ut / PDF</button>'
+    +'<span id="ma-lagre-melding" style="font-size:.8rem;color:var(--gron);"></span>'
+    +'</div>'
+    +'</div>';
   el.innerHTML = html;
+}
+
+function maSkrivUt() {
+  var elevEl = $('ma-elev');
+  var fagEl = $('ma-fag');
+  var elev = elever.find(function(e){return e.id===elevEl.value;});
+  var elevNavn = elev ? elev.fullt_navn : 'Elev';
+  var fagTxt = fagEl.options[fagEl.selectedIndex].text;
+  var kmer = getKM(fagEl.value);
+  var rows = kmer.map(function(km){
+    var v = maVurderinger[km[0]]||{nivaa:'',merknad:''};
+    var niv = v.nivaa==='h'?'Høy':v.nivaa==='m'?'Middels':v.nivaa==='l'?'Lav':'—';
+    var farge = v.nivaa==='h'?'#16a34a':v.nivaa==='m'?'#ca8a04':v.nivaa==='l'?'#dc2626':'#888';
+    return '<tr><td style="font-family:monospace;font-size:11px;padding:6px 8px;border:1px solid #ddd;">'+km[0]+'</td>'
+      +'<td style="font-size:12px;padding:6px 8px;border:1px solid #ddd;">'+km[1]+'</td>'
+      +'<td style="font-size:12px;font-weight:700;color:'+farge+';padding:6px 8px;border:1px solid #ddd;">'+niv+'</td>'
+      +'<td style="font-size:11px;color:#555;padding:6px 8px;border:1px solid #ddd;">'+(v.merknad||'')+'</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Målark – '+elevNavn+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;max-width:800px;}h1{font-size:18px;}h2{font-size:14px;color:#555;}table{width:100%;border-collapse:collapse;margin-top:12px;}@media print{button{display:none;}}</style>'
+    +'</head><body>'
+    +'<h1>📋 Målark – '+elevNavn+'</h1>'
+    +'<h2>Fag: '+fagTxt+' &nbsp;|&nbsp; Dato: '+new Date().toLocaleDateString('nb-NO')+'</h2>'
+    +'<table><thead><tr style="background:#f3f4f6;"><th style="padding:6px 8px;border:1px solid #ddd;text-align:left;">KM</th>'
+    +'<th style="padding:6px 8px;border:1px solid #ddd;text-align:left;">Kompetansemål</th>'
+    +'<th style="padding:6px 8px;border:1px solid #ddd;text-align:left;">Nivå</th>'
+    +'<th style="padding:6px 8px;border:1px solid #ddd;text-align:left;">Notat</th></tr></thead><tbody>'
+    +rows+'</tbody></table>'
+    +'<p style="margin-top:20px;font-size:11px;color:#888;">Generert fra SkapLab Lærerapp</p>'
+    +'<button onclick="window.print()" style="margin-top:12px;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Skriv ut</button>'
+    +'</body></html>';
+  var w = window.open('','_blank','width=900,height=700');
+  w.document.write(html);
+  w.document.close();
 }
 
 
@@ -1318,63 +1425,63 @@ async function slettProve(id) {
 ══════════════════════════════════════════════════════════════════ */
 var VEIL = {
   matte: [
-    {ikon:'📐',tittel:'Kom i gang med matematikk-hubben',tekst:'Matematikk-hubben inneholder 69 fagkort fordelt på 9 emner: Tall, Algebra, Likninger, Funksjoner, Geometri, Statistikk, Sannsynlighet, Økonomi og Måling – alle koblet til LK20-kompetansemål for 8.–10. trinn.',tips:'Gå til matte_hub.html og klikk på et emne for å se alle fagkort. Hvert fagkort har én teorileksjon og én eller flere øvingsoppgaver.'},
-    {ikon:'📖',tittel:'Teorikort og leksjoner',tekst:'Hvert fagkort lenker til en teorileksjon med forklaringer, eksempler og oppgaver. Kortene er fargekodet etter trinn (8., 9. eller 10. klasse) og har en «Åpne teori»-knapp. PDF-kompendier kan skrives ut for elever uten internett.',tips:'Klikk «+ Bok» på fagkortet for å legge det i elevenes digitale arbeidsbok – de kan da åpne det direkte fra elev-portalen.'},
-    {ikon:'⚡',tittel:'Øvingssett og mengdetrening',tekst:'Mengdetreningsoppgavene (⚡ Øv-knappen) genererer nye tilfeldig sammensatte oppgaver hver gang. Ideelt for hjemmelekse, da alle elever får ulike oppgaver med samme faglige innhold. Elever logger inn for at resultater lagres.',tips:'Tildel et mengdetreningssett til klassen via «Tildel oppgave» i sidemenyen. Elever ser oppgaven i sin portal.'},
-    {ikon:'📝',tittel:'Prøvetrenere – 9 emner',tekst:'Prøvetrenerne simulerer eksamenslignende prøver med 15–30 oppgaver i 45, 60 eller 90 minutter. De inkluderer enkle oppgaver og flertrinns-oppgaver. Etter levering vises karakterestimat (1–6) og detaljert gjennomgang.',tips:'La elevene ta en prøvetrener som forberedelse til klasseprøve. De kan ta den hjemme og se sin score. Du ser aktiviteten i elev-oversikten.'},
-    {ikon:'🏆',tittel:'Eksamenstrener',tekst:'Eksamenstreneren er SkapLabs mest avanserte verktøy – 15 dynamiske oppgavegeneratorer lager uendelig mange unike oppgavekombinasjoner i eksamensstil (Del 1 uten hjelpemidler, Del 2 med). Anbefalt for 10. trinn.',tips:'Bruk eksamenstreneren i siste semester som regelmessig øving. En prøve per uke i 6–8 uker gir god eksamensforberedelse.'},
-    {ikon:'🃏',tittel:'Flashcards',tekst:'SkapLab har 6 flashcard-sett: Algebra og likninger, Funksjoner, Geometri, Matematikere, Sannsynlighet og Økonomi. Flipper mellom begrep og definisjon. Egnet for begreps-repetisjon og aktivitet tidlig i timen.',tips:'Start timen med 5 minutter flashcards som «oppvarming». La elevene sjekke seg selv uten å logge inn – ingen pålogging nødvendig.'},
-    {ikon:'📊',tittel:'Progresjonskart og fremgang',tekst:'Progresjonkartet øverst på matematikk-hubben viser elevens fremgang per emnekategori. Basert på fullførte aktiviteter og prøver. Synlig for eleven – og for læreren i ferdighetskart-siden.',tips:'Bruk progresjonskart i elevsamtaler: vis eleven sin fremgang visuelt og diskuter hvilke emner de trenger mer øving på.'},
-    {ikon:'🎯',tittel:'Differensiering',tekst:'Fagkortene er merket med trinn (8., 9., 10.) – bruk dette til å gi ulike elever ulike oppgaver. Mengdetreningene har automatisk vanskelighetsgradering. Eksamenstreneren er krevende – bruk den selektivt for faglig sterke elever.',tips:'Tildel 8.-trinns fagkort til elever som sliter, og 10.-trinns til elever som vil ha utfordringer. Bruk «Tildel»-funksjonen i appen.'},
-    {ikon:'🔗',tittel:'Kobling til LK20',tekst:'Alle fagkort i matematikk er tagget med LK20-kompetansemål (KM1–KM60+). Søk i hubben på «KM12» for å finne alt som dekker det kompetansemålet. Ferdighetskart viser fremgang per LK20-mål.',tips:'Planlegg en periode med å søke på kompetansemålet i hubben og tildele relevante fagkort og prøvetrenere til klassen.'},
+    {ikon:'📐',tittel:'Kom i gang med matematikk-hubben',tekst:'Matematikk-hubben dekker alle kompetansemål for 8.–10. trinn. Ressursene er organisert per KM og inneholder leksjoner, mengdetrening og prøvetrenere. Hvert KM har egne fagkort med teorileksjon og øvingsoppgaver.',tips:'Velg fag og trinn i «Tildel oppgave», klikk et kompetansemål og velg de ressursene du vil sende til klassen. Elevene ser dem i sin portal med fristen.'},
+    {ikon:'📖',tittel:'Leksjoner og teorikort',tekst:'Leksjonene er bygget som interaktive karuseller med 6–9 slides, SVG-illustrasjoner og eksempeloppgaver. Det finnes 40+ matematikkleksjoner fordelt på Tall, Algebra, Likninger, Funksjoner, Geometri, Statistikk, Sannsynlighet, Økonomi og Måling.',tips:'Tildel en leksjon som introduksjon til temaet. Bruk «+ Bok»-knappen på fagkortet for å legge den i elevens arbeidsbok, slik at de alltid finner tilbake.'},
+    {ikon:'⚡',tittel:'Mengdetrening',tekst:'Mengdetreningsoppgavene genererer nye tilfeldig sammensatte oppgaver hver gang. Det finnes 50+ mengdetreningssett i matematikk. Ideelt til hjemmelekse – alle elever får ulike oppgaver med samme faglige innhold. Resultater lagres automatisk.',tips:'Tildel mengdetrening etter leksjon. Elever logger inn for at resultater registreres i aktivitetsloggen din.'},
+    {ikon:'📝',tittel:'Prøvetrenere',tekst:'SkapLab har 9 matematikk-prøvetrenere: Tall, Algebra, Likninger, Funksjoner, Geometri, Statistikk, Sannsynlighet, Økonomi og Maling. Prøvetrenerne simulerer eksamenslignende prøver med valg av tidsgrense og vanskelighetsgrad.',tips:'La elevene ta en prøvetrener 2–3 dager før klasseprøven. De ser egen score og hvilke oppgaver de svarte feil – perfekt for målrettet repetisjon.'},
+    {ikon:'🏆',tittel:'Eksamenstrener og flashcards',tekst:'Eksamenstreneren genererer uendelig mange unike oppgaver på tvers av alle emner. SkapLab har 6 flashcard-sett: Algebra, Funksjoner, Geometri, Matematikere, Sannsynlighet og Økonomi.',tips:'Flashcards fungerer godt som 5-minutters oppvarming i starten av timen. Eksamenstreneren er best de siste 6–8 ukene før eksamen.'},
+    {ikon:'🎯',tittel:'Differensiering og LK20',tekst:'Alle ressurser er tagget med LK20-kompetansemål. Fagkortene er fargekodet etter trinn (8., 9., 10.) slik at du enkelt kan gi ulike elever ulike oppgaver. Mengdetreningene tilpasser vanskelighetsgraden automatisk.',tips:'Tildel 8.-trinns KM til elever som trenger støtte, og 10.-trinns til elever som vil ha utfordringer. Aktivitetsloggen viser hvem som jobber med hva.'},
+    {ikon:'📊',tittel:'Progresjon og aktivitetslogg',tekst:'Alle ressurser en elev åpner eller fullfører lagres i aktivitetsloggen. Klikk på et elevnavn i klasselisten for å se alle aktiviteter med KM-kode, score og dato. Progresjonkartet i hubben viser fremgang per emnekategori.',tips:'Bruk aktivitetsloggen i elevsamtaler. Vis eleven fremgangen deres visuelt – det er motiverende å se hva man faktisk har gjort.'},
+    {ikon:'🔗',tittel:'Kobling mellom ressurser',tekst:'Hvert KM i «Tildel oppgave» viser alle tilhørende ressurser: leksjoner, mengdetrening og prøvetrenere. Du kan velge én eller flere ressurser per KM og sende dem til klassen med én frist.',tips:'Sett en progresjon: tildel leksjon mandag, mengdetrening onsdag, prøvetrener fredag. Elevene ser alle tre i portalen sin.'},
+    {ikon:'💡',tittel:'Tips til klasseromsledelse',tekst:'SkapLab er best brukt som supplement til undervisning, ikke erstatning. Bruk 10–20 minutter av timen til selvstendig arbeid med SkapLab-ressurser mens du går rundt og veileder. Se hvem som trenger hjelp via aktivitetsloggen.',tips:'Elevene som har «Trenger hjelp»-flagg i klasselisten har bedt om hjelp inne i en ressurs. Sjekk dette før du starter timen.'},
   ],
   naturfag: [
-    {ikon:'🔬',tittel:'Kom i gang med naturfag-hubben',tekst:'Naturfag-hubben inneholder 87 fagkort fordelt på 8 emner: Utforsking, Teknologi, Kjemi, Fysikk, Klima, Biologi, Geofag og Kropp. Hvert kort lenker til en leksjon, prøvetrener, flashcards eller interaktiv ressurs.',tips:'Start med å klikke på emnet du jobber med i perioden. Alle fagkort er koblet til LK20-kompetansemål for naturfag 8.–10. trinn.'},
-    {ikon:'📚',tittel:'Leksjonsformatet – karusell med SVG',tekst:'De 38+ naturfagleksjonene er bygget som interaktive karuseller med 6–9 slides. Hvert slide har én faglig bit, SVG-illustrasjon og LK20-kobling. Siste slide oppsummerer alltid kompetansemål.',tips:'Vis en leksjon på storskjerm som introduksjon til tema. Bruk illustrasjonene som diskusjonsgrunnlag – spørsmålet «hva ser du?» gir god klasseromsdialog.'},
-    {ikon:'📝',tittel:'Prøvetrenere – kjemi og fysikk',tekst:'SkapLab har nå to naturfag-prøvetrenere: Kjemi (atomer, formler, reaksjoner, syre-base, miljø) og Fysikk (Newtons lover, energi, elektrisitet, bølger). Format som matematikk: 45/60/90 min med karakterestimat.',tips:'La elevene ta en prøvetrener i forkant av en klasseprøve for å identifisere egne svakheter. Bruk gjennomgangen etter levering som selvvurdering.'},
-    {ikon:'🃏',tittel:'Flashcards – 12 kortsett',tekst:'12 flashcard-sett dekker biologi, elektronikk, fysikk, kjemi, teknologi og økologi (del 1 og 2 for hvert). Ideelt for begrepsinnlæring. Elevene kan bruke dem uten å logge inn.',tips:'Del flashcard-lenken i læringsplattform og la elevene øve hjemme. 10 minutter flashcards tre dager etter en leksjon styrker langtidshukommelse betydelig.'},
-    {ikon:'🌡️',tittel:'Interaktive simuleringer',tekst:'Naturfag-hubben inneholder simuleringer som flokkimmunitetssimulator (immunforsvar) og andre interaktive verktøy. Disse lar elever utforske parametere og se konsekvenser visuelt.',tips:'Bruk flokkimmunitetssimulator til å la elevene eksperimentere med vaksinasjonsgrad. Still spørsmål: «Hva skjer hvis du senker vaksinasjonsgraden til 60%?»'},
-    {ikon:'🧪',tittel:'Forsøk og labsikkerhet',tekst:'Naturfag-hubben har fagkort om labsikkerhet og forsøksdesign. Bruk disse til å forberede klassen til laboratoriearbeid. Fagkortet om vitenskapelig metode (utforsking) er godt som introduksjon til forsøk.',tips:'Les «Labsikkerhet og forsøksdesign»-leksjonen med klassen FØR hvert forsøk. La elever forklare sikkerhetspunkter med egne ord.'},
-    {ikon:'🌍',tittel:'Bærekraft og dagsaktuelle temaer',tekst:'Klima, tålegrenser (NAT-23), KI (NAT-27), naturressurser (NAT-33) og fauna/flora-leksjonene er spesielt relevante for tverrfaglige bærekraftstemaer i LK20. Disse er koblet til FNs bærekraftsmål.',tips:'Kombiner naturfag-leksjonene med samfunnsfag-diskusjoner. For eksempel: «Jordas 9 tålegrenser» + «Norges klimapolitikk» som tverrfaglig prosjekt.'},
-    {ikon:'🔭',tittel:'Geofag og jordlære',tekst:'Geofag-gruppen har 7 fagkort: astronomileksjon, platetektonikk, Pangea-puslespill, bergarter, jordskorpen, naturressurser og jordas indre. Dekker kjernestoff fra 10. trinn.',tips:'Pangea-puslespillet er egnet som introtasktivstet til platetektonikk-temaet. La elevene løse det i par og diskuter «hva forteller dette om jorda for 250 millioner år siden?»'},
-    {ikon:'🔗',tittel:'Kobling til LK20',tekst:'Alle naturfag-fagkort er merket med NAT-koder (NAT-1 til NAT-34+). Koden angir kompetansemålet kortet dekker. Søk på NAT-koden i hubben for å finne alle ressurser til et gitt mål.',tips:'Planlegg perioden ved å finne alle NAT-koder for ditt tema og tildel tilhørende fagkort til klassen. Bruk planleggeren i appen for å legge inn periodeplan.'},
+    {ikon:'🔬',tittel:'Kom i gang med naturfag-hubben',tekst:'Naturfag-hubben dekker alle kompetansemål for ungdomstrinnet. Ressursene er organisert per NAT-kode og inneholder 38+ leksjoner, 6 prøvetrenere (Kjemi, Fysikk, Teknologi, Biologi, Kropp, Klima), 12 flashcard-sett og simuleringer.',tips:'Start med å finne NAT-koden for temaet du jobber med og tildel tilhørende ressurser. Elevene ser dem i portalen med fristen du setter.'},
+    {ikon:'📚',tittel:'Leksjoner og interaktivt format',tekst:'Naturfagleksjonene er bygget som interaktive karuseller med 6–9 slides. Hvert slide har én faglig bit, SVG-illustrasjon og nøkkelbegreper. Siste slide oppsummerer alltid LK20-kompetansemålet. Elevene navigerer i sitt eget tempo.',tips:'Vis en leksjon på storskjerm som introduksjon. Bruk SVG-illustrasjonene som diskusjonsgrunnlag og still spørsmålet «hva ser du?» for god klasseromsdialogg.'},
+    {ikon:'📝',tittel:'Prøvetrenere – 6 fagområder',tekst:'SkapLab har 6 naturfag-prøvetrenere: Kjemi (atomer, periodesystemet, reaksjoner, syre-base), Fysikk (kraft, energi, elektrisitet, bølger), Teknologi (kretser, elektronikk), Biologi (celler, genetikk, evolusjon), Kropp (organer, fysiologi) og Klima (klima, miljø, bærekraft).',tips:'La elevene ta en prøvetrener rett før klasseprøven. De ser hvilke delområder de er svake på og kan prioritere repetisjonen.'},
+    {ikon:'🃏',tittel:'Flashcards – 12 kortsett',tekst:'12 flashcard-sett: Biologi del 1 og 2, Elektronikk del 1 og 2, Fysikk del 1 og 2, Kjemi del 1 og 2, Teknologi del 1 og 2, Økologi del 1 og 2, pluss Vitenskapspersoner. Kan brukes uten innlogging.',tips:'Del flashcard-lenken i læringsplattformen. 10 minutter flashcards tre dager etter en leksjon gir sterk minneforankring.'},
+    {ikon:'🌡️',tittel:'Simuleringer og interaktive verktøy',tekst:'Naturfag-hubben har simuleringer som flokkimmunitetssimulator (immunforsvar og vaksinasjon), Strømlaben (elektriske kretser), Kjemilaben og Mikroskoplaben. Disse lar elevene eksperimentere og observere konsekvenser i sanntid.',tips:'Bruk Strømlaben til å la elevene bygge kretser digitalt FØR de gjør det fysisk. Flokkimmunitetssimulator er sterk til immunforsvar – la elevene finne vaksinasjonsgrensen selv.'},
+    {ikon:'🧪',tittel:'Forsøk og vitenskapelig metode',tekst:'Ressurser om labsikkerhet, forsøksdesign og vitenskapelig metode (NAT-1 og NAT-4). Disse dekker hvordan man utformer hypoteser, planlegger og gjennomfører forsøk, og tolker resultater.',tips:'Les labsikkerhetsleksjonen med klassen FØR hvert forsøk. La elevene forklare HMS-punktene med egne ord – ikke bare lese dem opp.'},
+    {ikon:'🌍',tittel:'Bærekraft, klima og tverrfaglige temaer',tekst:'Klima og drivhuseffekt, jordas tålegrenser, naturressurser, KI og teknologisamfunnet er koblet til tverrfaglige temaer og FNs bærekraftsmål. Ressursene er spesielt relevante for tverrfaglig samarbeid med samfunnsfag og KRLE.',tips:'«Planetens 9 tålegrenser» og «KI – Kunstig intelligens» er gode utgangspunkt for tverrfaglig prosjektarbeid.'},
+    {ikon:'🔭',tittel:'Geofag og jordlære',tekst:'Geofag-ressursene dekker astronomi, platetektonikk, Pangea-puslespill, bergarter, jordskorpen og jordas indre (NAT-3, NAT-4, NAT-19). Pangea-puslespillet er spesielt populært som inngangsaktivitet til temaet.',tips:'Pangea-puslespillet er perfekt som 10-minutters aktivitet for å sette i gang diskusjon om kontinentaldrift. La elevene løse det i par.'},
+    {ikon:'🔗',tittel:'Kobling til LK20',tekst:'Alle naturfag-ressurser er merket med NAT-koder. Koden angir LK20-kompetansemålet ressursen dekker. Bruk «Tildel oppgave» og velg riktig KM for å finne alle tilhørende ressurser direkte.',tips:'Planlegg perioden ved å finne NAT-kodene for ditt tema, velg dem i «Tildel oppgave» og send alle tilhørende ressurser til klassen i én operasjon.'},
   ],
   programmering: [
-    {ikon:'💻',tittel:'Programmering på SkapLab',tekst:'SkapLab har programmeringsressurser koblet til LK20-kompetansemål om algoritmisk tenkning, pseudokode og enkel koding. Spillene «Debugrommet» og «Pseudokode-utfordreren» er kjerneverktøyene.',tips:'Programmeringshubben er under aktiv utvikling. Disse veilederne gir deg de beste ressursene som finnes per nå.'},
-    {ikon:'🔍',tittel:'Debugrommet – feilsøking i kode',tekst:'Debugrommet er et spill der elevene retter feil i kode-utsnitt. Trener på å lese kode nøye, forstå logisk flyt og identifisere syntaksfeil. Passer for elever som har grunnleggende kjennskap til kodestruktur.',tips:'Bruk Debugrommet som klasseaktivitet: vis et feil-eksempel på skjerm og la klassen diskutere feilen FØR de spiller individuelt.'},
-    {ikon:'📝',tittel:'Pseudokode-utfordreren',tekst:'Pseudokode-utfordreren trener elevene i å skrive algoritmer i menneskelig lesbar form, uten spesifikt programmeringsspråk. Viktig LK20-ferdighet: «planlegge og beskrive løsninger på enkle problemer med algoritmer».',tips:'Start med å la elevene skrive pseudokode for hverdagslige aktiviteter (f.eks. «lag toast») før de bruker verktøyet. Overfør så til pseudokode for matematiske problemer.'},
-    {ikon:'🎮',tittel:'Tidsmaskinen – tverrfaglig koding',tekst:'Tidsmaskinen-spillet inkluderer programmeringsoppgaver integrert i realfaglig kontekst. Elevene koder løsninger for å komme videre i spillet. Motiverende ramme for kode-øving.',tips:'La elevene spille Tidsmaskinen i par. Paired programming (to elever, ett tastatur) er pedagogisk effektivt og gir naturlig dialog om problemløsning.'},
-    {ikon:'📊',tittel:'Matte og programmering',tekst:'Matematikk-hubben har ressurser som «Programmering i matte» og «Løkker og betingelser i matte» – disse kobler kode til matematikk. GeoGebra-ressursene (dynamiske geometriprogram) er også tilgjengelige.',tips:'Bruk «Programmering i matte»-leksjonen som bro mellom matte og kode. Vis at en løkke er det samme som en matematisk rekke.'},
-    {ikon:'🔗',tittel:'LK20 og fremoverskuende kompetanse',tekst:'LK20 forventer at elever kan: planlegge algoritmer, skrive enkle programmer, feilsøke og bruke digitale verktøy. SkapLab dekker disse med spill og øvinger – men husk at praktisk koding trenger egne verktøy (Scratch, Python, micro:bit).',tips:'Kombiner SkapLabs programmeringsressurser med gratis verktøy: Scratch (scratch.mit.edu) for blokk-koding, og code.org for strukturerte kurs.'},
+    {ikon:'💻',tittel:'Programmering på SkapLab',tekst:'SkapLab har programmeringsressurser koblet til LK20: pseudokode og flytskjema, algoritmer, variabler, betingelser, løkker, funksjoner, lister og feilsøking. Ressursene finnes under PRG-1 til PRG-8 i «Tildel oppgave».',tips:'Start med PRG-1 (Pseudokode og flytskjema) og la elevene planlegge algoritmen på papir før de åpner noen kode.'},
+    {ikon:'🔍',tittel:'Debugrommet – feilsøking i kode',tekst:'Debugrommet er et spill der elevene retter feil i kode-utsnitt. Spillet trener på å lese kode nøye, forstå logisk flyt og identifisere både syntaksfeil og logiske feil. Passer for alle nivåer.',tips:'Bruk Debugrommet som klasseaktivitet: vis et feil-eksempel på storskjerm og la klassen diskutere feilen kollektivt før elevene prøver selv.'},
+    {ikon:'📝',tittel:'Pseudokode-utfordreren',tekst:'Pseudokode-utfordreren trener elevene i å skrive algoritmer i menneskelig lesbar form, uten spesifikt programmeringsspråk. Dekker sekvens, valg og gjentakelse – grunnstrukturen i all programmering.',tips:'Start med hverdagslige algoritmer («lag mat», «kom deg til skolen») før elevene skriver matematiske og faglige algoritmer.'},
+    {ikon:'🎮',tittel:'Algoritmiske spill og tverrfaglig koding',tekst:'Algoritmedetektiven og Labyrint Kode er spill som trener algoritmisk tenkning og logisk problemløsing. Tidsmaskinen integrerer programmeringsoppgaver i tverrfaglig realfaglig kontekst.',tips:'La elevene spille i par (paired programming). To elever, ett tastatur, diskuter hvert steg – det er dokumentert mer effektivt enn å kode alene.'},
+    {ikon:'📊',tittel:'Matte og programmering',tekst:'Matematikk-hubben har ressurser som kobler kode til matematisk tenkning: «Programmering i matte», «Løkker og betingelser i matte» og programmeringssimuleringer. Disse er under MAT8-11, MAT9-10 og MAT10-10.',tips:'Bruk programmeringsressursene i matte til å vise at en løkke er det samme som gjentatt addering. Kobler abstrakt kode til konkret matematikk.'},
+    {ikon:'🔗',tittel:'LK20 og fremoverskuende kompetanse',tekst:'LK20 krever at elever kan planlegge algoritmer (PRG-1, PRG-2), skrive enkle programmer (PRG-4, PRG-5), bruke funksjoner og lister (PRG-6, PRG-7), og feilsøke (PRG-8). SkapLab dekker alle disse gjennom kombinasjon av leksjoner og spill.',tips:'Kombiner SkapLabs ressurser med gratis verktøy: Scratch for blokkoding og Trinket for Python. SkapLab-leksjonene gir teorien, de eksterne verktøyene gir praksisen.'},
   ],
   skaperverksted: [
-    {ikon:'🛠️',tittel:'Skaperverksted på SkapLab',tekst:'Skaperverkstedet er stedet der teori møter praksis. Her finner elevene prosjekter som kobler realfaglig kompetanse til å lage, bygge og designe. Skaperverkstedet er koblet til LK20-tverrfaglige temaer.',tips:'Skaperverkstedet er i aktiv utvikling. Ressursene som finnes nå gir et grunnlag for praktisk arbeid i klasserommet.'},
-    {ikon:'💡',tittel:'Hva er et skaperverksted?',tekst:'Et skaperverksted (makerspace) er et miljø der elever lærer gjennom å lage. Typiske aktiviteter: konstruksjon med materialer, elektronikk og Arduino, 3D-printing, programmering av fysiske systemer, design-tenkning.',tips:'Du trenger ikke avansert utstyr for å starte. En limpistol, noen papirkasser og en utfordring er nok for et godt skaperverkstedprosjekt.'},
-    {ikon:'🔧',tittel:'Kobling til kompetansemål',tekst:'Skaperverksted-aktiviteter kan dekke kompetansemål fra naturfag (kraft og energi, materialer, teknologi), matematikk (geometri, måling, statistikk) og valgfag (design og redesign, sal og scene).',tips:'Plasser skaperverksted-prosjekter etter relevante teorileksjoner. Eksempel: etter fysikk-leksjon om krefter → bygg en bro og test vekt den tåler.'},
-    {ikon:'🎯',tittel:'Vurdering av skaperprosjekter',tekst:'Skaperverkstedprosjekter vurderes best med prosessvurdering: skisser, iterasjoner og refleksjon er like viktige som sluttproduktet. Bruk LK20-kompetansemål som grunnlag for vurderingskriterier.',tips:'La elevene dokumentere prosessen (foto, logg) underveis. En enkel logg (hva prøvde du, hva fungerte, hva endret du?) gir grunnlag for god egenvurdering.'},
-    {ikon:'👥',tittel:'Grupper og samarbeid',tekst:'Skaperverkstedprosjekter egner seg godt for grupper på 2–4. Gruppearbeid trener kommunikasjon, ansvarsfordeling og konflikthåndtering – tverrfaglige kompetanser i LK20.',tips:'Gi grupper ulike roller: prosjektleder, materialansvarlig, dokumentasjonsansvarlig. Roter rollene mellom prosjekter for at alle erfarer alle.'},
-    {ikon:'🌱',tittel:'Kom i gang – tre nybegynnerprosjekter',tekst:'1. Brobygging: Bygg bro av is-pinner og limpistol. Test vekt. Knytt til fysikk og geometri.2. Sumobot-kamp: Bygg robot av LEGO/papp som skyver motstanderen ut. Knytt til krefter.3. Klimadesign: Design et produkt som løser et klimaproblem. Knytt til bærekraft.',tips:'Start med det enkleste prosjektet og bygg kompleksitet. Suksess tidlig øker motivasjon for mer ambisiøse prosjekter.'},
+    {ikon:'🛠️',tittel:'Skaperverksted på SkapLab',tekst:'Skaperverkstedet støtter tverrfaglige prosjekter der elever designer, bygger og tester løsninger. Ressursene kobler realfaglig kompetanse (fysikk, matematikk, teknologi) til praktisk skaperarbeid og designtenkning.',tips:'Skaperverkstedet fungerer best etter relevante teorileksjoner. Eksempel: etter fysikk-leksjon om krefter → bygg og test en modell-bro.'},
+    {ikon:'💡',tittel:'Hva er et skaperverksted?',tekst:'Et makerspace er et miljø der elever lærer gjennom å lage. Aktiviteter kan inkludere konstruksjon med materialer, elektronikkprosjekter, 3D-printing, robotikk og digitalt design. Du trenger ikke avansert utstyr – en limpistol og noen utfordringer holder.',tips:'Start enkelt. Tre nybegynnerprosjekter: 1) Brobygging av ispinner (kobl til fysikk/geometri). 2) Elektrisk krets med batteri og LED (kobl til NAT-6). 3) Papirfly-konkurranse (kobl til aerodynamikk og måling).'},
+    {ikon:'🔧',tittel:'Kobling til kompetansemål',tekst:'Skaperverksted-aktiviteter kan dekke naturfag (kraft, energi, materialer, teknologi), matematikk (geometri, måling, økonomi) og programmering (algoritmer, robotstyring). Bruk Målark til å registrere underliggende KM.',tips:'Plasser skaperprosjektet etter teorileksjon og bruk Tildel oppgave til å gi elevene de relevante leksjonene som bakgrunn.'},
+    {ikon:'🎯',tittel:'Vurdering av skaperprosjekter',tekst:'Vurder skaperprosjekter med prosessvurdering: skisser, iterasjoner og refleksjon er like viktige som sluttprodukt. Dokumentasjon (foto, logg) underveis gir rik vurderingsdokumentasjon. Bruk Målark i appen for å registrere KM-vurdering.',tips:'La elevene dokumentere tre ting i sin logg: «Hva prøvde jeg?», «Hva fungerte?» og «Hva ville jeg gjort annerledes?»'},
+    {ikon:'👥',tittel:'Grupper og samarbeid',tekst:'Skaperprosjekter er ideelle for grupper på 2–4 elever. Gruppearbeid trener kommunikasjon, ansvarsfordeling og konflikthåndtering – alle eksplisitt nevnt i overordnet del av LK20. Gi grupper tydelige roller.',tips:'Roller som fungerer: prosjektleder (holder oversikt), materialansvarlig (holder styr på utstyr), dokumentasjonsansvarlig (tar bilder og notater). Roter rollene mellom prosjekter.'},
+    {ikon:'🌱',tittel:'Progresjon og kompleksitet',tekst:'Bygg kompleksitet gradvis. Start med enkle prosjekter der alle kan lykkes, og øk utfordringsnivået. Suksess tidlig er avgjørende for motivasjon til mer krevende prosjekter. Vis elevarbeider fra tidligere klasser som inspirasjon.',tips:'Dokumenter vellykkede prosjekter fra klassen med bilder. Del dem som inspirasjon til neste klasse – det skaper kultur for skaperarbeid på skolen.'},
   ],
   spill: [
-    {ikon:'🎮',tittel:'Spill som læringsverktøy',tekst:'SkapLab har 15+ pedagogiske spill koblet til LK20. Spill øker motivasjon, gir umiddelbar tilbakemelding og lar elever øve i eget tempo. Forskning viser at spillbasert læring er særlig effektivt for repetisjon og begrepsinnlæring.',tips:'Spill fungerer best som repetisjon og motivasjon, ikke som primær innlæring. Kombiner spill med leksjoner og diskusjon.'},
-    {ikon:'⏳',tittel:'Tidsmaskinen – det store eventyrspillet',tekst:'Tidsmaskinen er SkapLabs mest ambisiøse spill: 6 verdener, 30+ NPC-er, tverrfaglige realfagsoppgaver. Elevene løser oppgaver for å reise gjennom tid – fra dinosaurtiden til industriell London og år 2324. Passer for 8.–10. trinn.',tips:'Sett av en hel skoletime (eller to) for Tidsmaskinen. La elevene spille i par og diskuter underveis. Bruk det som intro til en tverrfaglig periode.'},
-    {ikon:'🧬',tittel:'Fagspesifikke spill',tekst:'Matematikk: Mattequiz, Linjespillet, Kanonbane, Matte-labyrintNaturfag: Genetikklaben, Kretsspillet, Mikroskopspillet, KjemispilletProgrammering: Debugrommet, Pseudokode-utfordreren',tips:'Bruk fagspesifikke spill som avslutning på en undervisningsperiode. «Quiz deg selv»-formatet motiverer repetisjon uten at det føles som lekse.'},
-    {ikon:'🏷️',tittel:'Filtrer etter fag og trinn',tekst:'Spillhubben (spill_hub.html) har filterknapper for fag (matematikk, naturfag, programmering) og trinn (5.–7. og 8.–10.). Bruk filtrene for å finne relevante spill raskt.',tips:'Del lenken til et filtrert spill-utvalg med klassen. F.eks.: spillhubben med filter «naturfag» + «8.–10. trinn» er et godt startpunkt for naturfagstimer.'},
-    {ikon:'📊',tittel:'Sporing og fremgang',tekst:'Elever som er logget inn får sin spillaktivitet registrert i aktivitetshistorikken i elev-portalen. Som lærer ser du hvilke spill elevene har spilt i aktivitetsloggen.',tips:'Sjekk aktivitetslogg i starten av en time for å se hvem som har spilt hjemme. Bruk det som springbrett: «Jeg ser mange spilte Genetikklaben – hva lærte dere?»'},
-    {ikon:'⚡',tittel:'Raske spill for 10–15 minutter',tekst:'Mattequiz, Naturfagquiz og Linjespillet er korte spill (10–15 min) som egner seg som intro- eller avslutningsaktivitet. De kan brukes uten pålogging og fungerer på alle enheter.',tips:'Bruk Mattequiz som «billett ut av timen»: elever spiller siste 5–10 minutter. Det er en lavterskel og motiverende avslutning.'},
-    {ikon:'🏆',tittel:'Fremme konkurranse og samarbeid',tekst:'Mange spill støtter score og gjennomspilling. Du kan bruke dette til lagkonkurranse: hvilken gruppe får høyest score på Mattequiz? Eller: hvem klarer å komme lengst i Tidsmaskinen på én time?',tips:'Moderer konkurranse slik at den inkluderer alle. Grupper etter faglig nivå (ikke tilfeldig) for at alle grupper kan oppleve mestring.'},
-    {ikon:'🎯',tittel:'Tildele spill til klassen',tekst:'Bruk «Tildel oppgave»-siden i lærerappen for å sende et spill til klassen. Elevene ser oppgaven i sin portal med evt. frist. Dette gjør det lett å koordinere spilløkter og sikre at alle vet hva de skal gjøre.',tips:'Tildel spill som hjemmeoppgave fremfor tradisjonell lekse. F.eks.: «Spill Genetikklaben og skriv tre ting du lærte» er mer engasjerende enn mange oppgavesett.'},
+    {ikon:'🎮',tittel:'Spill som læringsverktøy',tekst:'SkapLab har 15+ pedagogiske spill koblet til LK20-kompetansemål. Spill øker motivasjon, gir umiddelbar tilbakemelding og lar elever øve i eget tempo. Aktivitetsloggen registrerer automatisk hvem som har spilt og med hvilken score.',tips:'Spill fungerer best som repetisjon og motivasjon, ikke som primær innlæring. Kombiner leksjon og spill: teori først, spill for å befeste kunnskapen.'},
+    {ikon:'⏳',tittel:'Tidsmaskinen – det store eventyrspillet',tekst:'Tidsmaskinen er SkapLabs mest ambisiøse spill: 6 verdener, 30+ NPC-er, tverrfaglige realfagsoppgaver fra matte, naturfag og programmering. Elevene løser faglige oppgaver for å komme videre. Tar 4–8 timer å fullføre.',tips:'Sett av minst én hel skoletime for Tidsmaskinen. La elevene spille i par og diskuter underveis. Bruk det som tverrfaglig aktivitet på slutten av en periode.'},
+    {ikon:'🧬',tittel:'Fagspesifikke spill',tekst:'Matematikk: Mattequiz, Linjespillet, Kanonbane, Matte-labyrint, Eksamenstrener. Naturfag: Genetikklaben, Strømlaben, Kjemilaben, Mikroskoplaben, Kraft og bevegelse. Programmering: Debugrommet, Algoritmedetektiven, Labyrint Kode. Alle logger aktivitet.',tips:'Bruk fagspesifikke spill som avslutning på en undervisningsperiode. Genetikklaben er spesielt effektiv etter leksjon om arv og genetikk.'},
+    {ikon:'🏷️',tittel:'Finn spill i hubben',tekst:'Spillhubben (spill_hub.html) har filterknapper for fag og trinn. Spillene er merket med LK20-kompetansemål slik at du finner spill som dekker akkurat det du jobber med. Tildel spill direkte via «Tildel oppgave» i lærerappen.',tips:'Tildel spill som hjemmeoppgave i stedet for tradisjonell lekse. «Spill Genetikklaben og skriv tre ting du lærte» kombinerer spilling med faglig refleksjon.'},
+    {ikon:'📊',tittel:'Sporing og aktivitetslogg',tekst:'Elever som er logget inn får all spillaktivitet registrert automatisk. Du ser hvem som har spilt, hvilket spill og med hvilken score i aktivitetsloggen. Bruk dette til å identifisere elever som trenger ekstra støtte eller utfordring.',tips:'Sjekk aktivitetslogg i begynnelsen av timen for å se hvem som har spilt hjemme. «Jeg ser du spilte Genetikklaben – hva lærte du?» er et godt startspørsmål.'},
+    {ikon:'⚡',tittel:'Raske spill for 10–15 minutter',tekst:'Mattequiz, Naturfagquiz og Linjespillet er korte spill som egner seg som intro- eller avslutningsaktivitet. De trener begreper og hurtig faktahukommelse på en engasjerende måte.',tips:'Bruk Mattequiz som «billett ut av timen» de siste 5–10 minuttene. Lavterskelaktivitet som gir deg uformell vurdering av hvem som husker teorien.'},
+    {ikon:'🏆',tittel:'Fremme konkurranse og samarbeid',tekst:'Mange spill støtter score og gjennomspilling. Lagkonkurranse (hvilken gruppe får høyest score?) og samarbeidsspilling (to elever, ett tastatur) er begge effektive pedagogiske grep.',tips:'Moderer konkurranse slik at den er inkluderende. Del inn i grupper etter faglig nivå (ikke tilfeldig) for at alle par har en realistisk sjanse.'},
+    {ikon:'🎯',tittel:'Tildele spill til klassen',tekst:'Tildel spill via «Tildel oppgave» i lærerappen. Velg fag og KM, finn spillet i ressurslisten, sett frist. Elevene ser tildelingen i portalen. Aktivitetsloggen viser hvem som har gjennomført.',tips:'Kombiner spill-tildeling med en kort refleksjonsoppgave: «Etter du har spilt, skriv én ting du lærte og én ting du vil lære mer om.»'},
   ],
   laererapp: [
-    {ikon:'🏫',tittel:'Kom i gang – opprett klasse og legg til elever',tekst:'Start med å klikke + Legg til klasse i venstremenyen. Gi klassen et navn (f.eks. «9B») og velg trinn. Etter at klassen er opprettet, klikk på den i menyen for å åpne dashbordet.',tips:'Du kan ha flere klasser. Elever som bytter trinn kan du flytte – eller opprett en ny klasse for hvert skoleår.'},
-    {ikon:'👥',tittel:'Legg til elever i klassen',tekst:'Inne på en klasse, klikk + Legg til elev. Skriv inn elevens fulle navn. Eleven får automatisk en 6-sifret påloggingskode som vises i elevraden. Del koden med eleven – de logger inn på elev-portalen med koden.',tips:'Koden er unik per elev og endres ikke. Elevene trenger ikke e-post eller passord – bare koden.'},
-    {ikon:'📋',tittel:'Tildel oppgaver til klassen',tekst:'Gå til Tildel oppgave i sidemenyen. Velg fag og trinn – ressursene som er koblet til kompetansemålene vises automatisk. Klikk de ressursene du vil tildele, velg klasse og evt. frist, og klikk «Tildel». Elevene ser oppgavene i sin portal.',tips:'Du kan tildele til hele klassen eller enkeltmottakere. Ressurser uten frist forsvinner ikke – de vises til eleven til du fjerner dem.'},
-    {ikon:'🗺️',tittel:'Ferdighetskart – internt lærerverktøy',tekst:'I Ferdighetskart-siden velger du klasse, elev og fag. Du vurderer eleven på individuelle delferdigheter med score fra 0–100%. Klikk «Lagre alle vurderinger» for å lagre. Ferdighetskart er et internt verktøy – det gir deg oversikt over elevens styrker og utviklingsområder til bruk i samtaler og planlegging.',tips:'Bruk ferdighetskart som forberedelse til utviklingssamtaler. Du kan justere scorene når eleven gjør fremgang, og sammenligningsfunksjonen viser deg hvilke emner som trenger mer fokus.'},
-    {ikon:'📋',tittel:'Målark – KM-basert vurdering',tekst:'I Målark velger du elev og fag og setter vurdering per LK20-kompetansemål: Høy, Middels eller Lav. Klikk en knapp for å lagre – lagringen skjer automatisk. Målark er lærers private notat og vises ikke til eleven.',tips:'Målark er nyttig til utviklingssamtaler og for å ha oversikt over hvilke kompetansemål eleven har mestret. Det kan skrives ut til elev/foresatte.'},
-    {ikon:'📊',tittel:'Aktivitetslogg – se elevens fremgang',tekst:'Inne på en elev (klikk elevnavnet i klasselisten) finner du fanen Aktivitetslogg. Her ser du alle ressurser eleven har besøkt, med dato og score. Øverst vises prøveresultater med snitt, siste score og progresjonspil (↑↓→).',tips:'Bruk aktivitetsloggen i elevsamtaler: vis eleven at du ser hva de jobber med, og diskuter fremgang på konkrete prøveresultater.'},
-    {ikon:'📅',tittel:'Planlegger – ukesvis ressursplanlegging',tekst:'I Planlegger kan du planlegge hvilke ressurser klassen skal jobbe med uke for uke. Velg uke, klasse og dag, og legg til ressurser. Planlagte ressurser vises i dashboardet med uke og dato.',tips:'Planleggeren bruker lokal lagring i nettleseren – den følger ikke med på tvers av enheter. Eksporter/skriv ut ukeplanen fra planleggeren for å dele den.'},
-    {ikon:'📝',tittel:'Prøveplan – varsle og forberede',tekst:'I Prøveplan kan du opprette prøvevarsler med dato og emne. Varslet vises i dashboardet og i elevens portal frem til prøvedatoen (+ 3 dager etter). Når du oppretter et prøvevarsel legges det automatisk til en øvingsanbefaling i elevens portal – eleven ser hvilke ressurser de bør jobbe med før prøven.',tips:'Kombiner prøveplan med Tildel oppgave: opprett prøvevarslet først, så ser du hvilke prøvetrenere og leksjoner som passer til emnet. Tildel disse til klassen, og elevene har alt samlet på ett sted.'},
-    {ikon:'🔔',tittel:'Varsler – følg med på markante endringer',tekst:'Lærerappen varsler deg automatisk når en elevs ferdighetsnivå endrer seg med 10 prosentpoeng eller mer mellom to sendinger. Varselet dukker opp som et banner nederst til høyre og lagres i databasen.',tips:'Se på varsler som et signal til handling – ikke en alarm. Negativ endring kan bety at eleven trenger hjelp. Positiv endring er en god anledning til å gi tilbakemelding.'},
+    {ikon:'🏫',tittel:'Kom i gang – opprett klasse og elever',tekst:'Start med + Ny klasse i venstremenyen. Gi klassen et navn og trinn. Klikk + Legg til elev for å registrere elevene – de får automatisk en 6-sifret innloggingskode. Del koden med eleven. Ingen e-post eller passord nødvendig for elevene.',tips:'Opprett klassen og legg inn alle elever den første skoledagen. Del innloggingskodene ut umiddelbart – da kan elevene logge inn fra dag én.'},
+    {ikon:'👥',tittel:'Elever og innlogging',tekst:'Elevene logger inn med kallenavn og 6-sifret kode på elev_login.html. Kallenavnet er valgfritt og settes av deg. Elevene ser sine tildelte oppgaver, prøvevarsler og aktivitetshistorikk i elev-portalen.',tips:'La gjerne eleven velge eget kallenavn – det øker tilhørigheten og gjør innloggingen mer motiverende. Koden kan ikke endres, men kallenavnet kan.'},
+    {ikon:'📤',tittel:'Tildel oppgaver',tekst:'Velg «Tildel oppgave» i menyen. Velg fag, deretter et kompetansemål fra dropdown-menyen. Enkeltressursene for det KM-et vises – klikk én eller flere. Sett frist og klikk Tildel. Elevene ser oppgaven i portalen.',tips:'Du kan tildele flere ressurser fra samme KM i én operasjon. Velg leksjon + mengdetrening + prøvetrener for én komplett læringsøkt rundt et KM.'},
+    {ikon:'🗺️',tittel:'Ferdighetskart',tekst:'Velg klasse, elev og fag. Sett score (0–100%) per delferdighet ved å klikke på prosentknappene. Totalsnitt og klassesnitt beregnes automatisk og vises øverst. Lagre med «💾 Lagre alle».',tips:'Bruk ferdighetskart som forberedelse til utviklingssamtaler. Du kan justere scorene løpende. Klassesnitt-sammenligningen hjelper deg se hvilke elever som skiller seg ut.'},
+    {ikon:'📋',tittel:'Målark',tekst:'Velg elev og fag. Sett nivå (Høy/Mid/Lav) per KM og legg til et notat. Lagre alle vurderinger med én knapp. Bruk «🖨️ Skriv ut / PDF» for å åpne et utskriftsvennlig målark i nytt vindu.',tips:'Oppdater Målark etter hver prøve. Bruk utskriftsfunksjonen til halvårsamtaler – da har du og eleven et felles dokument å diskutere ut fra.'},
+    {ikon:'📝',tittel:'Prøveplan',tekst:'Opprett prøvevarsler med dato, fag og emne. Velg hvilke kompetansemål prøven dekker – systemet genererer automatisk øvingstips med lenker til relevante leksjoner som elevene ser i portalen. Ditt eget notat er kun synlig for deg.',tips:'Kombiner prøveplan med Tildel oppgave: opprett varslet, se hvilke KM du velger, og tildel de tilhørende prøvetrenerne med samme frist.'},
+    {ikon:'📊',tittel:'Aktivitetslogg og elevdetaljer',tekst:'Klikk på et elevnavn i klasselisten for å se elevens aktivitetslogg: alle ressurser eleven har jobbet med, med KM-kode, score og dato. Vurderinger fra Målark vises også her.',tips:'Bruk aktivitetsloggen i elevsamtaler. Vis eleven konkret hva de har gjort og diskuter fremgang per KM. Det er motiverende å se sin egen aktivitet.'},
+    {ikon:'🔒',tittel:'Personvern og superadmin',tekst:'SkapLab lagrer kun nødvendig informasjon: navn, klasse og aktivitetslogg. Ingen sensitive persondata. Superadmin-siden gir oversikt over skoler, lærere og klasser. Krever er_admin=true i databasen.',tips:'For å få superadmin-tilgang: kjør i Supabase SQL Editor: UPDATE laerere SET er_admin = true WHERE epost = \'din@epost.no\'; Logg deretter inn på superadmin.html.'},
+    {ikon:'🔔',tittel:'Klasseoversikten',tekst:'Klassevisningen viser elevliste med innloggingskoder, aktive tildelinger og kommende prøvevarsler. Slett en tildeling direkte fra oversikten. Bruk prøve- og oppgavelisten til å holde oversikt over hva klassen har foran seg.',tips:'Sjekk klasseoversikten ved starten av uken. Se hvilke oppgaver som har frist og hvilke prøver som nærmer seg, og planlegg deretter.'},
   ],
 };
 
