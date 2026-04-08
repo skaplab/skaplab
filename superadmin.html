@@ -172,7 +172,7 @@ input:focus,select:focus{border-color:rgba(96,165,250,.5);}
   var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
   var API = SUPABASE_URL + '/rest/v1';
   var SESSION_NØKKEL = 'skaplab_elev';
-  var LAERER_NØKKEL  = 'skaplab_laerer';
+  var LAERER_NØKKEL  = 'skaplab_laerer_v2'; // Ny nøkkel fra ombygging apr 2026
 
   // ── HJELPEFUNKSJONER ───────────────────────────────────────────
   function hdr(token) {
@@ -286,7 +286,7 @@ input:focus,select:focus{border-color:rgba(96,165,250,.5);}
 
   function hentLaerer() {
     try {
-      var data = sessionStorage.getItem(LAERER_NØKKEL);
+      var data = localStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
       // Returner null KUN om det er en tydelig feilrespons uten token
@@ -408,15 +408,25 @@ var alleData = [], alleLaerere = [], alleKlasser = [];
 var aktivTab = 'skoler', aktivFilter = 'alle';
 
 async function init() {
-  // Vis bruker
+  // Vis bruker og sjekk admin
   try {
-    var me = await fetch(SkapLab.SUPABASE_URL+'/auth/v1/user',
+    var meResp = await fetch(SkapLab.SUPABASE_URL+'/auth/v1/user',
       {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+token}}).then(function(r){return r.json();});
-    $('nav-bruker').textContent = me.email||'';
+    // Håndter både direkte {id,...} og wrappert {user:{id,...}}
+    var me = (meResp && meResp.user) ? meResp.user : meResp;
+    // Fallback: parse JWT sub om me.id mangler
+    if (!me || !me.id) {
+      try {
+        var parts = token.split('.');
+        var pl = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        me = { id: pl.sub, email: pl.email || '' };
+      } catch(e2) {}
+    }
+    $('nav-bruker').textContent = (me && me.email) || '';
     // Sjekk admin
-    var lR = await SkapLab._get('/laerere?id=eq.'+(me.id)+'&select=er_admin', token);
-    if (!lR||!lR[0]||!lR[0].er_admin) { alert('Ikke tilgang.'); location.href='laerer_app.html'; return; }
-  } catch(e) {}
+    var lR = await SkapLab._get('/laerere?id=eq.'+(me&&me.id||'')+'&select=er_admin', token);
+    if (!lR||!lR[0]||!lR[0].er_admin) { alert('Ikke tilgang. er_admin må settes i databasen.'); location.href='laerer_app.html'; return; }
+  } catch(e) { alert('Feil ved admin-sjekk: '+e.message); location.href='laerer_app.html'; return; }
 
   // Hent alle data parallelt
   var [sR, lR, kR, eR, aR] = await Promise.all([
