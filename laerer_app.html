@@ -258,7 +258,13 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <div class="felt"><label class="felt-lbl">Frist</label>
         <input type="date" id="til-frist"></div>
     </div>
-    <div id="til-res-grid" class="res-grid"></div>
+    <div class="rad" style="margin-top:4px;">
+      <div class="felt"><label class="felt-lbl">Kompetansemål</label>
+        <select id="til-km" onchange="tildelByttKM()">
+          <option value="">— Velg KM —</option>
+        </select></div>
+    </div>
+    <div id="til-res-liste" style="margin-top:8px;"></div>
     <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
       <span id="til-valgt-ant" style="font-size:.78rem;color:var(--dim);">0 ressurser valgt</span>
       <button class="btn btn-prim" onclick="sendTildeling()">Tildel til klasse</button>
@@ -367,6 +373,26 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
     <div class="sek-tittel">📅 Planlagte prøver</div>
     <div id="pp-rader" style="color:var(--dim);font-size:.83rem;">Ingen prøver registrert.</div>
   </div>
+</div>
+
+<!-- LÆRERVEILEDNING -->
+<div class="side" id="side-veiledning">
+  <div class="side-tittel">📚 Lærerveiledning</div>
+  <div class="side-sub">Steg-for-steg guide til alle fagene og verktøyene på SkapLab.</div>
+  <div class="veil-fane-rad">
+    <button class="veil-fane-btn ak" id="veil-tab-matte" onclick="veilFane('matte')">🔢 Matte</button>
+    <button class="veil-fane-btn" id="veil-tab-naturfag" onclick="veilFane('naturfag')">🔬 Naturfag</button>
+    <button class="veil-fane-btn" id="veil-tab-programmering" onclick="veilFane('programmering')">💻 Programmering</button>
+    <button class="veil-fane-btn" id="veil-tab-skaperverksted" onclick="veilFane('skaperverksted')">🔧 Skaperverksted</button>
+    <button class="veil-fane-btn" id="veil-tab-spill" onclick="veilFane('spill')">🎮 Spill</button>
+    <button class="veil-fane-btn" id="veil-tab-laererapp" onclick="veilFane('laererapp')">📱 Lærerapp</button>
+  </div>
+  <div id="veil-fane-matte" class="veil-fane-innhold ak"></div>
+  <div id="veil-fane-naturfag" class="veil-fane-innhold"></div>
+  <div id="veil-fane-programmering" class="veil-fane-innhold"></div>
+  <div id="veil-fane-skaperverksted" class="veil-fane-innhold"></div>
+  <div id="veil-fane-spill" class="veil-fane-innhold"></div>
+  <div id="veil-fane-laererapp" class="veil-fane-innhold"></div>
 </div>
 
 <!-- ELEVDETALJER -->
@@ -809,31 +835,48 @@ var RES={"MAT8-11":[{"r":"algoritmedetektiven","fil":"algoritmedetektiven.html",
 
 function tildelByttFag(){
   var fag=$('til-fag').value;
-  var container=$('til-res-grid');container.innerHTML='';
-  tildelValgte.clear();$('til-valgt-ant').textContent='0 ressurser valgt';
+  var kmSel=$('til-km');
+  if(!kmSel) return;
+  kmSel.innerHTML='<option value="">— Velg KM —</option>';
   getKM(fag).forEach(function(km){
-    var res=RES[km[0]];if(!res||!res.length)return;
-    var gruppe=document.createElement('div');
-    gruppe.style.cssText='margin-bottom:16px;';
-    gruppe.innerHTML='<div style="font-family:var(--font-h);font-size:.75rem;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;gap:6px;">'
-      +'<code class="km-kod">'+km[0]+'</code> '+km[1]
-      +' <span style="color:var(--dim);font-size:.65rem;font-weight:400;">('+res.length+')</span></div>';
-    var grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;';
-    res.forEach(function(r){
-      var div=document.createElement('div');div.className='res-kort';
-      div.innerHTML='<div style="font-size:1rem;margin-bottom:3px;">'+(r.ikon||'📖')+'</div>'
-        +'<div style="font-size:.8rem;font-weight:600;margin-bottom:3px;">'+r.t+'</div>'
-        +'<div style="font-size:.67rem;color:var(--dim);">'+r.type+'</div>';
-      div.onclick=(function(fil){return function(){
-        if(tildelValgte.has(fil)){tildelValgte.delete(fil);div.classList.remove('valgt');}
-        else{tildelValgte.add(fil);div.classList.add('valgt');}
-        $('til-valgt-ant').textContent=tildelValgte.size+' ressurser valgt';
-      };})(r.fil);
-      grid.appendChild(div);
-    });
-    gruppe.appendChild(grid);container.appendChild(gruppe);
+    var res=RES[km[0]];
+    if(!res||!res.length) return;
+    var opt=document.createElement('option');
+    opt.value=km[0];
+    opt.textContent=km[0]+' · '+km[1]+' ('+res.length+')';
+    kmSel.appendChild(opt);
   });
+  tildelValgte.clear();
+  var liste=$('til-res-liste');if(liste)liste.innerHTML='';
+  var ant=$('til-valgt-ant');if(ant)ant.textContent='0 ressurser valgt';
+}
+
+function tildelByttKM(){
+  var km=$('til-km').value;
+  var liste=$('til-res-liste');
+  if(!liste) return;
+  tildelValgte.clear();
+  var ant=$('til-valgt-ant');if(ant)ant.textContent='0 ressurser valgt';
+  if(!km){liste.innerHTML='';return;}
+  var res=RES[km]||[];
+  if(!res.length){liste.innerHTML='<p style="color:var(--dim);font-size:.83rem;">Ingen ressurser for dette KM.</p>';return;}
+  liste.innerHTML='';
+  var grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:4px;';
+  res.forEach(function(r){
+    var div=document.createElement('div');
+    div.className='res-kort';
+    div.innerHTML='<div style="font-size:1.1rem;margin-bottom:4px;">'+(r.ikon||'📖')+'</div>'
+      +'<div style="font-size:.82rem;font-weight:600;margin-bottom:3px;">'+r.t+'</div>'
+      +'<div style="font-size:.68rem;color:var(--dim);">'+r.type+'</div>';
+    div.onclick=(function(fil){return function(){
+      if(tildelValgte.has(fil)){tildelValgte.delete(fil);div.classList.remove('valgt');}
+      else{tildelValgte.add(fil);div.classList.add('valgt');}
+      var a=$('til-valgt-ant');if(a)a.textContent=tildelValgte.size+' ressurser valgt';
+    };})(r.fil);
+    grid.appendChild(div);
+  });
+  liste.appendChild(grid);
 }
 
 async function sendTildeling() {
@@ -922,6 +965,8 @@ async function fkLastData() {
   $('fk-tom').style.display='none';
   $('fk-innhold').style.display='';
   fkVisFag();
+  $('fk-totalsnitt').style.display='';
+  fkOppdaterKlassesnitt();
 }
 
 function fkVisFag() {
@@ -1074,22 +1119,14 @@ function maVisFag() {
         +'onchange="maSettMerknad(\''+km[0]+'\',this.value)" style="font-size:.78rem;min-width:120px;"></td>'
       +'</tr>';
   });
-  html += '</tbody></table></div>';
-    html += '<div style="margin-top:14px;display:flex;gap:8px;align-items:center;">'
+  html += '</tbody></table>';
+  html += '<div style="margin-top:14px;display:flex;gap:8px;align-items:center;">'
     + '<button class="btn btn-prim" onclick="maLagreAlle()">💾 Lagre alle vurderinger</button>'
     + '<span id="ma-lagre-melding" style="font-size:.8rem;color:var(--gron);"></span></div>';
   el.innerHTML = html;
 }
 
-function maSettNiv(km, nivaa, btn) {
-  if (!maVurderinger[km]) maVurderinger[km]={nivaa:'',merknad:''};
-  maVurderinger[km].nivaa = nivaa;
-  var rad = btn.closest('td');
-  rad.querySelectorAll('.niv-btn').forEach(function(b){
-    b.className = 'niv-btn';
-    if (b.textContent === (nivaa==='h'?'Høy':nivaa==='m'?'Mid':'Lav')) b.classList.add('ak-'+nivaa);
-  });
-}
+
 
 function maSettMerknad(km, verdi) {
   if (!maVurderinger[km]) maVurderinger[km]={nivaa:'',merknad:''};
@@ -1199,13 +1236,20 @@ function ppOppdaterTips(){
   var tipsEl=$('pp-tips-innhold'),boks=$('pp-tips-forhands');
   if(!ppValgte.size){if(boks)boks.style.display='none';return;}
   if(boks)boks.style.display='';
-  var DEFAULT='Gå gjennom teorien fra leksjonene og bruk mengdetrening for å automatisere ferdigheten.';
-  var html='<ul style="padding-left:16px;margin:0;">';
+  var DEFAULT='Gå gjennom teorien og bruk mengdetrening.';
+  var html='';
   ppValgte.forEach(function(km){
     var tips=PP_TIPS[km]||DEFAULT;
-    html+='<li style="margin-bottom:6px;"><strong style="color:var(--bla);">'+km+':</strong> '+tips+'</li>';
+    var res=RES[km]||[];
+    var lenker=res.slice(0,3).map(function(r){
+      return '<a href="'+r.fil+'" target="_blank" style="display:inline-block;margin:2px 4px 2px 0;padding:2px 8px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);border-radius:5px;color:var(--bla);font-size:.72rem;text-decoration:none;">'+r.ikon+' '+r.t+'</a>';
+    }).join('');
+    html+='<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);">'
+      +'<div style="font-weight:700;color:var(--bla);font-family:var(--font-h);margin-bottom:3px;">'+km+'</div>'
+      +'<div style="font-size:.82rem;color:var(--dim);margin-bottom:5px;">'+tips+'</div>'
+      +(lenker?'<div>'+lenker+'</div>':'')
+      +'</div>';
   });
-  html+='</ul>';
   if(tipsEl)tipsEl.innerHTML=html;
 }
 
