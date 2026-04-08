@@ -698,9 +698,18 @@ async function byggDashboard() {
       } else {
         var ph = '<table><thead><tr><th>Prøve</th><th>Dato</th><th></th></tr></thead><tbody>';
         prover.forEach(function(p){
+          var ressurs=p.oppgaver.ressurs||'';
+          var notatIdx=ressurs.indexOf('\nLÆRER_NOTAT:');
+          var notatTekst=notatIdx>=0?ressurs.substring(notatIdx+13).split('\n')[0]:'';
+          var kmIdx=ressurs.indexOf('\nKM:');
+          var kmTekst=kmIdx>=0?ressurs.substring(kmIdx+4).split('\n')[0].trim():'';
           ph += '<tr>'
-            +'<td style="font-size:.82rem;">'+p.oppgaver.tittel.replace('Prøve: ','')+'</td>'
-            +'<td style="font-family:var(--font-m);font-size:.78rem;">'+datoVis(p.frist)+'</td>'
+            +'<td style="font-size:.82rem;">'
+              +'<div style="font-weight:600;">'+p.oppgaver.tittel.replace('Prøve: ','')+'</div>'
+              +(kmTekst?'<div style="font-size:.72rem;color:var(--bla);margin-top:2px;">KM: '+kmTekst+'</div>':'')
+              +(notatTekst?'<div style="font-size:.72rem;color:var(--gul);margin-top:2px;">📌 '+notatTekst+'</div>':'')
+              +'</td>'
+            +'<td style="font-family:var(--font-m);font-size:.78rem;white-space:nowrap;">'+datoVis(p.frist)+'</td>'
             +'<td><button class="btn btn-rod btn-sm" onclick="slettTildeling(\''+p.id+'\')">Slett</button></td>'
             +'</tr>';
         });
@@ -1147,7 +1156,8 @@ async function fkOppdaterKlassesnitt(){
 /* ══════════════════════════════════════════════════════════════════
    MÅLARK
 ══════════════════════════════════════════════════════════════════ */
-var maVurderinger = {};
+var maVurderinger = {}
+var NIVAA_MAP={'h':'hoy','m':'middels','l':'lav'};;
 
 function maLastElever() {
   fyllElevDropdown('ma-klasse','ma-elev');
@@ -1159,7 +1169,10 @@ async function maLastData() {
   maVurderinger = {};
   try {
     var vR = await apiGet('/vurderinger?elev_id=eq.'+elevId+'&laerer_id=eq.'+LID);
-    if (Array.isArray(vR)) vR.forEach(function(v){ maVurderinger[v.km_kode]={nivaa:v.nivaa,merknad:v.merknad||'',id:v.id}; });
+    if (Array.isArray(vR)) vR.forEach(function(v){
+    var nUI = v.nivaa==='hoy'?'h':v.nivaa==='middels'?'m':v.nivaa==='lav'?'l':v.nivaa;
+    maVurderinger[v.km_kode]={nivaa:nUI, merknad:v.merknad||'', id:v.id};
+  });
   } catch(e) {}
   $('ma-tom').style.display='none';
   $('ma-innhold').style.display='';
@@ -1250,28 +1263,34 @@ function maSettNiv(km,nivaa,btn){
 }
 
 async function maLagreAlle(){
-  var elevId=$('ma-elev').value,meldEl=$('ma-lagre-melding');
+  var elevId=$('ma-elev').value, meldEl=$('ma-lagre-melding');
   if(!elevId){alert('Velg elev først.');return;}
   var harNivaa=Object.keys(maVurderinger).some(function(k){return maVurderinger[k].nivaa;});
   if(!harNivaa){if(meldEl)meldEl.textContent='Ingen nivåer satt ennå.';return;}
-  if(meldEl)meldEl.style.color='var(--dim)',meldEl.textContent='Lagrer…';
-  var ok=0,feil=0;
+  if(meldEl){meldEl.style.color='var(--dim)';meldEl.textContent='Lagrer…';}
+  var ok=0, feil=0;
   for(var km in maVurderinger){
-    var v=maVurderinger[km];if(!v.nivaa)continue;
+    var v=maVurderinger[km]; if(!v.nivaa) continue;
+    // Konverter h/m/l → hoy/middels/lav (database-format)
+    var nivaaDB = NIVAA_MAP[v.nivaa] || v.nivaa;
     try{
       if(v.id){
-        await apiPatch('/vurderinger?id=eq.'+v.id,{nivaa:v.nivaa,merknad:v.merknad||''});ok++;
+        var pr=await apiPatch('/vurderinger?id=eq.'+v.id, {nivaa:nivaaDB, merknad:v.merknad||''});
+        if(pr.ok) ok++; else { console.error('PATCH feil',pr.data); feil++; }
       }else{
-        var res=await apiPost('/vurderinger',{elev_id:elevId,laerer_id:LID,km_kode:km,nivaa:v.nivaa,merknad:v.merknad||''});
-        if(res.ok){var ny=Array.isArray(res.data)?res.data[0]:res.data;if(ny&&ny.id)maVurderinger[km].id=ny.id;ok++;}
-        else feil++;
+        var res=await apiPost('/vurderinger', {elev_id:elevId, laerer_id:LID, km_kode:km, nivaa:nivaaDB, merknad:v.merknad||''});
+        if(res.ok){
+          var ny=Array.isArray(res.data)?res.data[0]:res.data;
+          if(ny&&ny.id) maVurderinger[km].id=ny.id;
+          ok++;
+        }else{ console.error('POST feil',km,res.status,res.data); feil++; }
       }
-    }catch(e){feil++;}
+    }catch(e){ console.error('Exception',km,e); feil++; }
   }
   if(meldEl){
     meldEl.style.color=feil===0?'var(--gron)':'var(--gul)';
-    meldEl.textContent=feil===0?'✅ Lagret!':'⚠️ '+ok+' OK, '+feil+' feilet';
-    setTimeout(function(){if(meldEl)meldEl.textContent='';},3000);
+    meldEl.textContent=feil===0?'✅ Lagret '+ok+' vurderinger!':'⚠️ '+ok+' OK, '+feil+' feilet';
+    setTimeout(function(){if(meldEl)meldEl.textContent='';},4000);
   }
 }
 
@@ -1361,34 +1380,38 @@ function ppOppdaterTips(){
 }
 
 async function sendProvevarsel(){
-  var klasseId=$('pp-klasse').value,dato=$('pp-dato').value,emne=$('pp-emne').value.trim();
-  var notat=$('pp-notat')&&$('pp-notat').value.trim()||'';
-  var meld=$('pp-melding'),fag=$('pp-fag')&&$('pp-fag').value||'mat8';
+  var klasseId=$('pp-klasse').value, dato=$('pp-dato').value, emne=$('pp-emne').value.trim();
+  var notat=($('pp-notat')&&$('pp-notat').value.trim())||'';
+  var meld=$('pp-melding'), fag=($('pp-fag')&&$('pp-fag').value)||'mat8';
   if(!klasseId||!dato||!emne){meld.style.color='var(--rod)';meld.textContent='Fyll inn klasse, dato og emne.';return;}
   meld.style.color='var(--dim)';meld.textContent='Sender…';
   try{
     var kmListe=Array.from(ppValgte).join(', ');
-    var tipsHtml='';
+    // Bygg tips-tekst for elev (med lenker)
     var DEFAULT='Gå gjennom teorien og bruk mengdetrening.';
-    if(ppValgte.size){
-      tipsHtml='<br><strong>Øv på disse KM:</strong><ul>';
-      ppValgte.forEach(function(km){tipsHtml+='<li><b>'+km+':</b> '+(PP_TIPS[km]||DEFAULT)+'</li>';});
-      tipsHtml+='</ul>';
-    }
-    var ressursTekst='Prøve: '+emne+(kmListe?'\nKM: '+kmListe:'')+(tipsHtml?'\nTIPS:'+tipsHtml:'');
-    var oRes=await apiPost('/oppgaver',{tittel:'Prøve: '+emne,type:'provevarsel',ressurs:ressursTekst,url:'#',fag:fag});
-    if(!oRes.ok)throw new Error('Opprettelse feilet');
+    var tipsTekst='';
+    ppValgte.forEach(function(km){ tipsTekst+=(tipsTekst?'\n':'')+km+': '+(PP_TIPS[km]||DEFAULT); });
+    // Bygg ressurs-felt: TIPS (for elev) + NOTAT (kun lærer, merket tydelig)
+    var ressursTekst='Prøve: '+emne;
+    if(kmListe) ressursTekst+='\nKM: '+kmListe;
+    if(tipsTekst) ressursTekst+='\nTIPS:'+tipsTekst;
+    if(notat) ressursTekst+='\nLÆRER_NOTAT:'+notat;
+
+    var oRes=await apiPost('/oppgaver',{tittel:'Prøve: '+emne, type:'provevarsel', ressurs:ressursTekst, url:'#', fag:fag});
+    if(!oRes.ok) throw new Error('Feil ved opprettelse: HTTP '+oRes.status+' '+JSON.stringify(oRes.data).substring(0,80));
     var oppgave=Array.isArray(oRes.data)?oRes.data[0]:oRes.data;
-    if(!oppgave||!oppgave.id)throw new Error('Ingen ID fra server');
-    await apiPost('/tildeling',{klasse_id:klasseId,oppgave_id:oppgave.id,frist:dato,laerer_id:LID});
-    meld.style.color='var(--gron)';meld.textContent='✅ Prøvevarsel sendt!';
+    if(!oppgave||!oppgave.id) throw new Error('Ingen ID fra server');
+    await apiPost('/tildeling',{klasse_id:klasseId, oppgave_id:oppgave.id, frist:dato, laerer_id:LID});
+    meld.style.color='var(--gron)';meld.textContent='✅ Prøvevarsel sendt til klassen!';
     $('pp-dato').value='';$('pp-emne').value='';
     if($('pp-notat'))$('pp-notat').value='';
     ppValgte.clear();
     document.querySelectorAll('#pp-km-liste input[type=checkbox]').forEach(function(cb){cb.checked=false;});
-    document.querySelectorAll('#pp-km-liste div').forEach(function(d){d.style.background='';});
+    document.querySelectorAll('#pp-km-liste > div').forEach(function(d){d.style.background='';});
     if($('pp-tips-forhands'))$('pp-tips-forhands').style.display='none';
     lastProveplan();
+    // Oppdater dashboard hvis riktig klasse er aktiv
+    if(aktivKlasse===klasseId) byggDashboard();
   }catch(e){meld.style.color='var(--rod)';meld.textContent='Feil: '+e.message;}
 }
 
