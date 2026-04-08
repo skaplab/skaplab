@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>SkapLab – Lærerdashboard v2</title>
+<title>SkapLab – Lærerdashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1217,12 +1214,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     <div class="modal-tittel">+ Legg til elev</div>
     <button class="modal-lukk" onclick="lukkModal()">✕</button>
     <div class="felt"><label class="felt-lbl">Fullt navn</label>
-      <input type="text" id="ny-elev-navn" placeholder="Fornavn Etternavn" oninput="oppdaterKallenavn()"></div>
-    <div class="felt" style="margin-top:10px;">
-      <label class="felt-lbl">Kallenavn <span style="color:var(--dim);font-weight:400;">(eleven bruker dette ved innlogging)</span></label>
-      <input type="text" id="ny-elev-kallenavn" placeholder="f.eks. fornavn eller et kallenavn">
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
+      <input type="text" id="ny-elev-navn" placeholder="Fornavn Etternavn"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn btn-prim" onclick="opprettElev()">Legg til</button>
       <button class="btn btn-sek" onclick="lukkModal()">Avbryt</button>
     </div>
@@ -1237,6 +1230,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 // skaplab_auth.js - SkapLab autentisering
 (function () {
   'use strict';
+
   // ── KONFIGURASJON ──────────────────────────────────────────────
   var SUPABASE_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
@@ -1336,7 +1330,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
       if (resp.error) return { ok: false, feil: resp.error.message };
       if (!resp.access_token) return { ok: false, feil: 'Ingen token i respons: ' + JSON.stringify(resp) };
-      localStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
+      sessionStorage.setItem(LAERER_NØKKEL, JSON.stringify(resp));
       return { ok: true, token: resp.access_token };
     } catch (e) {
       return { ok: false, feil: 'Tilkoblingsfeil' };
@@ -1351,16 +1345,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + l.access_token }
       });
     }
-    localStorage.removeItem(LAERER_NØKKEL);
+    sessionStorage.removeItem(LAERER_NØKKEL);
   }
 
   function hentLaerer() {
     try {
-      var data = localStorage.getItem(LAERER_NØKKEL);
+      var data = sessionStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
-      if (!parsed || !parsed.access_token) return null;
-      if (parsed.error_code || parsed.error) return null;
+      // Returner null KUN om det er en tydelig feilrespons uten token
+      if (parsed && !parsed.access_token && (parsed.error_code || parsed.error)) {
+        console.log('Ugyldig sesjon i storage:', JSON.stringify(Object.keys(parsed)));
+        return null;
+      }
       return parsed;
     } catch (e) { return null; }
   }
@@ -1510,24 +1507,7 @@ var RES={"MAT8-11":[{"r":"algoritmedetektiven","fil":"algoritmedetektiven.html",
 // ── GLOBAL STATE ──────────────────────────────────────────────────────
 var laerer = SkapLab.hentLaerer();
 var token  = laerer ? laerer.access_token : null;
-var lid = '';
-if (laerer) {
-  // Prøv user.id (Supabase v2 standard)
-  if (laerer.user && laerer.user.id) {
-    lid = laerer.user.id;
-  } else if (laerer.id) {
-    lid = laerer.id;
-  } else if (laerer.access_token) {
-    // Fallback: parse JWT sub-claim
-    try {
-      var jwtParts = laerer.access_token.split('.');
-      if (jwtParts.length === 3) {
-        var payload = JSON.parse(atob(jwtParts[1].replace(/-/g,'+').replace(/_/g,'/')));
-        lid = payload.sub || '';
-      }
-    } catch(e) {}
-  }
-}
+var lid    = laerer ? ((laerer.user&&laerer.user.id)||laerer.id||'') : '';
 
 if (!laerer) { location.href = 'laerer_login.html'; }
 
@@ -1576,17 +1556,6 @@ function lagrePlanTilLS(klasseId, data) {
 
 // ── INIT ─────────────────────────────────────────────────────────────
 async function init() {
-  // Sjekk at lid er satt - om ikke, parse JWT på nytt
-  if (!lid && token) {
-    try {
-      var parts = token.split('.');
-      if (parts.length === 3) {
-        var pl = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-        lid = pl.sub || '';
-      }
-    } catch(e) {}
-  }
-
   // Vis lærerens navn
   try {
     var lR = await SkapLab._get('/laerere?id=eq.'+lid+'&select=fullt_navn,skole_id', token);
@@ -1595,20 +1564,15 @@ async function init() {
 
   // Hent klasser
   try {
-    var _kResp = await fetch(
-      'https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/klasser?laerer_id=eq.'+lid+'&order=navn',
-      { headers: { 'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j', 'Authorization': 'Bearer '+token } }
-    );
-    var kR = await _kResp.json();
+    var kR = await SkapLab._get('/klasser?laerer_id=eq.'+lid+'&order=navn', token);
     klasser = Array.isArray(kR) ? kR : [];
-    alert('init kjort! lid=' + lid.substring(0,8) + ' klasser=' + klasser.length);
-  } catch(e) { klasser = []; alert('FEIL i klasse-henting: ' + e.message); }
+  } catch(e) { klasser = []; }
 
   // Hent alle elever
   try {
     if (klasser.length) {
       var ids = klasser.map(function(k){return k.id;}).join(',');
-      var eR = await SkapLab._get('/elever?klasse_id=in.('+ids+')&aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,kallenavn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne', token);
+      var eR = await SkapLab._get('/elever?klasse_id=in.('+ids+')&aktiv=eq.true&order=fullt_navn&select=id,fullt_navn,innloggingskode,klasse_id,trenger_hjelp,hjelp_emne', token);
       elever = Array.isArray(eR) ? eR : [];
     }
   } catch(e) { elever = []; }
@@ -1710,10 +1674,7 @@ async function lastEleverForKlasse(klasseId) {
       + e.fullt_navn
       + (e.trenger_hjelp ? '<span class="lyspare-badge" title="Trenger hjelp: '+(e.hjelp_emne||'')+'">💡 Hjelp</span>' : '')
       + '</div></td>'
-      + '<td>'
-      + '<code class="km-kod">'+e.innloggingskode+'</code>'
-      + (e.kallenavn ? '<div style="font-size:.7rem;color:var(--dim);margin-top:2px;">👤 '+e.kallenavn+'</div>' : '')
-      + '</td>'
+      + '<td><code class="km-kod">'+e.innloggingskode+'</code></td>'
       + '<td style="color:var(--dim);font-size:.8rem;">'+sistPalogget+'</td>'
       + '<td><button class="btn btn-rod btn-sm" data-eid="'+e.id+'" data-enavn="'+e.fullt_navn+'" onclick="slettElev(this.dataset.eid,this.dataset.enavn)">🗑</button></td>';
     tbody.appendChild(tr);
@@ -1806,9 +1767,7 @@ async function opprettKlasse() {
   if (!navn) { feilEl.textContent = 'Skriv inn klassenavn.'; return; }
   feilEl.textContent = '';
   try {
-    var klasseData = {navn:navn, trinn:parseInt(trinn), laerer_id:lid};
-    if (skoleId) klasseData.skole_id = skoleId;
-    var res = await SkapLab._post('/klasser', klasseData, token);
+    var res = await SkapLab._post('/klasser', {navn:navn, trinn:parseInt(trinn), laerer_id:lid, skole_id:skoleId}, token);
     if (Array.isArray(res)) res = res[0];
     if (res && res.id) {
       klasser.push(res);
@@ -1847,14 +1806,6 @@ async function slettKlasse(id, navn) {
 }
 
 // ── ELEVER CRUD ───────────────────────────────────────────────────────
-async 
-function oppdaterKallenavn() {
-  var navn = $('ny-elev-navn').value.trim();
-  var kn = $('ny-elev-kallenavn');
-  if (kn && !kn.dataset.manuelt) {
-    kn.value = navn.split(' ')[0].toLowerCase();
-  }
-}
 async function opprettElev() {
   var navn = $('ny-elev-navn').value.trim();
   var feilEl = $('ny-elev-feil');
@@ -1865,10 +1816,9 @@ async function opprettElev() {
   // Sjekk at koden er unik
   while (elever.some(function(e){return e.innloggingskode===kode;})) kode = genKode();
   try {
-    var kallenavn = ($('ny-elev-kallenavn').value.trim() || navn.split(' ')[0]).toLowerCase();
     var res = await SkapLab._post('/elever', {
-      fullt_navn: navn, kallenavn: kallenavn,
-      klasse_id: aktivKlasse, innloggingskode: kode, aktiv: true
+      fullt_navn: navn, klasse_id: aktivKlasse,
+      innloggingskode: kode, aktiv: true
     }, token);
     if (Array.isArray(res)) res = res[0];
     if (res && res.id) {
@@ -1925,9 +1875,9 @@ async function pollLysparer() {
 }
 
 function loggUt() {
-  // Fjern sesjon synkront – bruk begge storages for å være sikker
-  try { localStorage.removeItem('skaplab_laerer'); } catch(e) {}
+  // Fjern sesjon synkront FØRST, så er siden "innlogget ut" uansett hva som skjer
   try { sessionStorage.removeItem('skaplab_laerer'); } catch(e) {}
+  try { localStorage.removeItem('skaplab_laerer'); } catch(e) {}
   // Send logout til Supabase i bakgrunnen (ikke-blokkerende)
   try {
     var tok = laerer ? laerer.access_token : null;
@@ -1945,20 +1895,6 @@ function loggUt() {
 // ── FYLL DROPDOWNS ────────────────────────────────────────────────────
 function fyllDropdowns() {
   fyllKlasseDropdowns(aktivKlasse);
-  // Oppdater FK-dropdown
-  fkFyllKlasseDropdown();
-  // Oppdater arkiv-dropdown
-  var arkSel = $('ark-klasse');
-  if (arkSel) arkSel.innerHTML = klasser.map(function(k){
-    return '<option value="'+k.id+'">'+k.navn+'</option>';
-  }).join('');
-  // Oppdater prøveplan-dropdown
-  var ppSel = $('pp-klasse');
-  if (ppSel && !ppSel.options.length) {
-    ppSel.innerHTML = klasser.map(function(k){
-      return '<option value="'+k.id+'">'+k.navn+'</option>';
-    }).join('');
-  }
 }
 function fyllKlasseDropdowns(valgtId) {
   ['til-klasse','plan-klasse','ma-klasse','pp-klasse'].forEach(function(selId) {
@@ -2308,18 +2244,8 @@ function settNiv(btn) {
   var origTxt = btn.textContent;
   upsertVurdering(elevId, km, niv).then(function(){
     btn.textContent = '✓';
-    btn.style.background = 'rgba(52,211,153,.2)';
-    setTimeout(function(){
-      btn.textContent = origTxt;
-      btn.style.background = '';
-    }, 1200);
-  }).catch(function(e){
-    // Lagring feilet – vis feilmelding og tilbakestill lokal cache
-    btn.textContent = '✗';
-    btn.style.background = 'rgba(248,113,113,.2)';
-    setTimeout(function(){ btn.textContent = origTxt; btn.style.background = ''; }, 2000);
-    maVurderinger[km] = null; // tilbakestill slik DB og UI er synkronisert
-  });
+    setTimeout(function(){ btn.textContent = origTxt; }, 1200);
+  }).catch(function(){});
 }
 
 function upsertVurdering(elevId, km, niv) {
