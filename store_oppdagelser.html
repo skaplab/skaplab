@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Store oppdagelser</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0a02;--surface:#12100a;--card:#181608;--border:rgba(224,176,64,.07);
+  --text:#fff8e0;--dim:rgba(255,248,224,.3);
+  --accent:#e0b040;--accent2:#60c864;--accent3:#60a0ff;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(224,176,64,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,200,100,.02),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+
+/* QUIZ */
+.quiz-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.quiz-spm{font-family:var(--font-d);font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.quiz-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.quiz-alt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  font-size:.84rem;color:var(--text);text-align:left;transition:all .18s;width:100%}
+.quiz-alt:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+.quiz-alt.riktig{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.quiz-alt.feil{border-color:#f05050;background:rgba(240,80,80,.08);color:#f08080}
+.quiz-alt:disabled{cursor:default}
+.quiz-fb{font-size:.82rem;line-height:1.65;padding:10px 14px;border-radius:9px;min-height:24px;margin-bottom:4px}
+.quiz-fb.riktig{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)}
+.quiz-fb.feil{background:rgba(240,80,80,.07);color:#f08080;border:1px solid rgba(240,80,80,.15)}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.q-pil{padding:8px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-d);font-style:italic;font-size:.85rem;color:var(--text);transition:all .18s}
+.q-pil:hover{border-color:var(--accent);color:var(--accent)}
+.q-pil:disabled{opacity:.3;cursor:default}
+.q-teller{font-size:.75rem;color:var(--dim);font-family:var(--font-d);font-style:italic}
+
+:root{--accent-rgb:224,176,64;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Store oppdagelser</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Vitenskapshistorie · LK20 Metode</div>
+    <h1>Store oppdagelser<br><em>historien bak den vitenskapelige revolusjonen</em></h1>
+    <p class="hero-sub">Fra Kopernik og Darwin til DNA og mørk materie – om serendipitet, paradigmeskifter og nordiske bidrag til verdensvitenskap</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(224,176,64,.1);color:#e0b040;border:1px solid rgba(224,176,64,.2)">🔭 Metode</div>
+          <h3 class="k-tittel">Den vitenskapelige metoden</h3>
+          <p class="k-ingress">Bak enhver stor oppdagelse ligger den vitenskapelige metoden – en systematisk fremgangsmåte for å stille spørsmål og teste svar. Men historien er full av serendipitet, feil og tilfeldige funn.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔍</span><div><strong>Syklusen:</strong> Observasjon → Hypotese → Eksperiment → Analyse → Konklusjon → Ny hypotese. Vitenskapelig kunnskap er alltid tentativ – den er det beste vi vet nå, men kan revideres ved nye bevis. Det er styrken, ikke svakheten.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎲</span><div><strong>Serendipitet:</strong> Mange av historiens største oppdagelser skjedde ved en tilfeldighet: penicillin (Fleming, 1928 – muggsoppforurenset petalskål), røntgen (Röntgen, 1895 – fluorescens av en skjerm), mikrobølgeovnen (Spencer, 1945 – smeltet sjokolade i lommen). Men tilfeldigheten hjelper bare den forberedte.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Paradigmeskifter:</strong> Thomas Kuhn viste at vitenskapen ikke alltid er gradvis fremgang. «Normal vitenskap» opererer innen et paradigme til anomaliene tårner seg opp og en revolusjon skjer. Kopernikansk revolusjon, Darwins evolusjonsteori og kvantemekanikken er eksempler.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Replikasjon og fagfellevurdering:</strong> En vitenskapelig oppdagelse er ikke akseptert før andre laboratorier har reprodusert resultatet. Fagfellevurdering (peer review) sikrer kvaliteten. Replikasjonskrisen i psykologi (2010-tallet) avslørte at mange kjente resultater ikke lot seg reprodusere.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="280" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,176,64,.6)" letter-spacing=".1em">VITENSKAPELIG METODE</text>
+            <!-- Sirkel -->
+            <circle cx="140" cy="148" r="90" fill="none" stroke="rgba(224,176,64,.1)" stroke-width="1" stroke-dasharray="5,4"/>
+            <!-- 6 noder -->
+            <circle cx="140" cy="58" r="22" fill="rgba(224,176,64,.12)" stroke="rgba(224,176,64,.45)" stroke-width="1.5"/>
+            <text x="140" y="54" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">👁️ Observ.</text>
+            <text x="140" y="66" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.5)">Hva skjer?</text>
+            <circle cx="218" cy="100" r="22" fill="rgba(224,176,64,.1)" stroke="rgba(224,176,64,.35)" stroke-width="1.5"/>
+            <text x="218" y="96" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">❓ Hypotese</text>
+            <text x="218" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Forklaring?</text>
+            <circle cx="218" cy="196" r="22" fill="rgba(224,176,64,.1)" stroke="rgba(224,176,64,.35)" stroke-width="1.5"/>
+            <text x="218" y="192" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">🧪 Eksper.</text>
+            <text x="218" y="204" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Test det!</text>
+            <circle cx="140" cy="238" r="22" fill="rgba(224,176,64,.1)" stroke="rgba(224,176,64,.35)" stroke-width="1.5"/>
+            <text x="140" y="234" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">📊 Analyse</text>
+            <text x="140" y="246" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Hva viser data?</text>
+            <circle cx="62" cy="196" r="22" fill="rgba(224,176,64,.1)" stroke="rgba(224,176,64,.35)" stroke-width="1.5"/>
+            <text x="62" y="192" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">💡 Konkl.</text>
+            <text x="62" y="204" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Stemte det?</text>
+            <circle cx="62" cy="100" r="22" fill="rgba(224,176,64,.1)" stroke="rgba(224,176,64,.35)" stroke-width="1.5"/>
+            <text x="62" y="96" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">📢 Publiser</text>
+            <text x="62" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Del funnene</text>
+            <!-- Piler langs sirkelen -->
+            <g stroke="rgba(224,176,64,.3)" stroke-width="1.5" fill="none">
+              <path d="M158,68 Q195,76 206,82" marker-end="url(#oArr)"/>
+              <path d="M218,122 Q218,160 218,174" marker-end="url(#oArr)"/>
+              <path d="M200,210 Q174,228 160,234" marker-end="url(#oArr)"/>
+              <path d="M118,238 Q86,232 78,214" marker-end="url(#oArr)"/>
+              <path d="M62,174 Q62,140 62,122" marker-end="url(#oArr)"/>
+              <path d="M78,88 Q105,70 118,64" marker-end="url(#oArr)"/>
+            </g>
+            <defs><marker id="oArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(224,176,64,.5)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(224,176,64,.1);color:#e0b040;border:1px solid rgba(224,176,64,.2)">🌍 Astronomi</div>
+          <h3 class="k-tittel">Den kopernikanske revolusjonen</h3>
+          <p class="k-ingress">I over 1400 år dominerte Ptolemaios' geosentriske verdensbilde. Nikolaus Kopernik snudde det på hodet i 1543 – og satte i gang en vitenskapelig revolusjon som forandret alt.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Ptolemaios (ca. 150 e.Kr.):</strong> Jorda er universets sentrum. Planetene beveger seg i epikyler (sirkler-på-sirkler) for å forklare retrograd bevegelse. Systemet var komplisert, men fungerte for navigasjon og kalender. Kirken støttet det – skapte ikke bry.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Kopernik (1543):</strong> «De revolutionibus orbium coelestium» – Sola er i sentrum (heliosentrisk). Forenklet modellen og forklarte retrograd bevegelse naturlig. Publiserte i dødsøyeblikket for å unngå Kirken. Galilei brukte teleskop til å bekrefte teorien i 1609.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Galilei og Kirken:</strong> Galilei publiserte bevis for heliosentrisme (Jupiters måner, fasene til Venus). Kirken tvang ham til å avsverge i 1633. Han ble husarrestert resten av livet. Vatikanet rehabiliterte ham offisielt i 1992 – 359 år etter.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔭</span><div><strong>Keplers lover (1609–1619):</strong> Planetenes baner er ellipser, ikke sirkler (lov 1). Arealoven: planet beveger seg raskere nær sola (lov 2). Harmoniloven: T² ∝ a³ (lov 3). Newton forklarte alle tre med tyngdekraftens lov i 1687.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,176,64,.6)" letter-spacing=".1em">GEO vs. HELIO-SENTRISK</text>
+            <!-- GEOSENTRISK venstre -->
+            <text x="68" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(220,180,60,.55)" font-weight="600">Ptolemaios</text>
+            <text x="68" y="50" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.35)">Jorda i sentrum</text>
+            <circle cx="68" cy="130" r="12" fill="rgba(96,160,255,.3)" stroke="rgba(96,160,255,.6)" stroke-width="1.5"/>
+            <text x="68" y="134" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.8)">🌍</text>
+            <circle cx="68" cy="130" r="30" fill="none" stroke="rgba(220,180,60,.2)" stroke-width="1"/>
+            <circle cx="68" cy="130" r="50" fill="none" stroke="rgba(220,180,60,.15)" stroke-width="1"/>
+            <circle cx="68" cy="130" r="70" fill="none" stroke="rgba(220,180,60,.12)" stroke-width="1"/>
+            <!-- Planeter i epikykler -->
+            <circle cx="68" cy="100" r="5" fill="rgba(220,120,40,.5)" stroke="rgba(220,120,40,.7)" stroke-width="1"/>
+            <circle cx="108" cy="140" r="4" fill="rgba(180,160,60,.5)" stroke="rgba(180,160,60,.7)" stroke-width="1"/>
+            <circle cx="58" cy="200" r="4" fill="rgba(200,80,40,.5)" stroke="rgba(200,80,40,.7)" stroke-width="1"/>
+            <!-- Epikylpil -->
+            <circle cx="68" cy="100" r="10" fill="none" stroke="rgba(220,180,60,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <!-- HELIOSENTRISK høyre -->
+            <text x="200" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(224,176,64,.7)" font-weight="600">Kopernik</text>
+            <text x="200" y="50" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.35)">Sola i sentrum</text>
+            <circle cx="200" cy="130" r="14" fill="rgba(255,200,40,.3)" stroke="rgba(255,200,40,.7)" stroke-width="2"/>
+            <text x="200" y="134" text-anchor="middle" font-family="DM Sans" font-size="8">☀️</text>
+            <circle cx="200" cy="130" r="30" fill="none" stroke="rgba(224,176,64,.25)" stroke-width="1"/>
+            <circle cx="200" cy="130" r="52" fill="none" stroke="rgba(224,176,64,.18)" stroke-width="1"/>
+            <circle cx="200" cy="130" r="75" fill="none" stroke="rgba(224,176,64,.12)" stroke-width="1"/>
+            <!-- Planeter -->
+            <circle cx="200" cy="100" r="5" fill="rgba(96,160,255,.5)" stroke="rgba(96,160,255,.7)" stroke-width="1"/>
+            <circle cx="248" cy="130" r="6" fill="rgba(220,120,40,.5)" stroke="rgba(220,120,40,.7)" stroke-width="1"/>
+            <circle cx="190" cy="205" r="4" fill="rgba(180,160,60,.5)" stroke="rgba(180,160,60,.7)" stroke-width="1"/>
+            <!-- Skillelinje -->
+            <line x1="140" y1="55" x2="140" y2="210" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+            <!-- Tidslinje -->
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.4)">Ptolemaios ~150 e.Kr. → Kopernik 1543 → Galilei 1609</text>
+            <text x="140" y="246" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.3)">Newton 1687: gravitasjonsloven forklarer alt</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,100,.1);color:#60c864;border:1px solid rgba(96,200,100,.2)">🌿 Biologi</div>
+          <h3 class="k-tittel">Darwin og evolusjonsteorien</h3>
+          <p class="k-ingress">Charles Darwins «On the Origin of Species» (1859) er trolig den viktigste vitenskapelige boken noensinne. Naturlig seleksjon er mekanismen som forklarer alt liv på Jorda.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚢</span><div><strong>Beagle-reisen (1831–1836):</strong> Darwin samlet enorme mengder observasjoner i Sør-Amerika, Galápagos og Australia. Finkene på Galápagos – med nebb tilpasset ulike matkilder – ble det ikoniske eksempelet på adaptiv radiasjon. Han brukte 20 år på å formulere teorien.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔑</span><div><strong>Naturlig seleksjon – tre premisser:</strong> (1) Variasjon: individer er forskjellige. (2) Arv: variasjonen er arvbar. (3) Differensiell reproduksjon: de best tilpassede individene overlever og reproduserer mer. Over generasjoner gir dette tilpasning til miljøet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Etter Darwin:</strong> Darwin kjente ikke til mekanismen for arv. Mendel oppdaget arveloven samtidig (1865) – men de to møttes aldri og Darwin leste ikke Mendels verk. Moderne syntese (1940-tallet) smeltet Darwins seleksjonsteori og Mendels genetikk til én teori.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⏱️</span><div><strong>Evolusjon i sanntid:</strong> Peppermøll i England (industriell melanisme): hvite møll ble svarte under industrialiseringen da trær ble sot-dekket. Antibiotikaresistens utvikles på dager. SARS-CoV-2-varianter viste evolusjon i sanntid under pandemien.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,100,.6)" letter-spacing=".1em">NATURLIG SELEKSJON</text>
+            <!-- Generasjon 1 -->
+            <text x="50" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.6)" font-weight="600">Gen. 1</text>
+            <g>
+              <circle cx="20" cy="60" r="8" fill="rgba(224,176,64,.3)" stroke="rgba(224,176,64,.5)" stroke-width="1"/>
+              <circle cx="40" cy="55" r="8" fill="rgba(224,176,64,.3)" stroke="rgba(224,176,64,.5)" stroke-width="1"/>
+              <circle cx="60" cy="62" r="8" fill="rgba(200,80,40,.3)" stroke="rgba(200,80,40,.5)" stroke-width="1.5"/>
+              <circle cx="80" cy="58" r="8" fill="rgba(224,176,64,.3)" stroke="rgba(224,176,64,.5)" stroke-width="1"/>
+              <circle cx="100" cy="55" r="8" fill="rgba(224,176,64,.3)" stroke="rgba(224,176,64,.5)" stroke-width="1"/>
+            </g>
+            <!-- Seleksjon -->
+            <text x="140" y="80" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(220,80,60,.6)">☠️ Seleksjon</text>
+            <line x1="140" y1="86" x2="140" y2="106" stroke="rgba(220,80,60,.3)" stroke-width="1.5"/>
+            <text x="170" y="76" font-family="DM Sans" font-size="7" fill="rgba(200,80,40,.55)">Rød = overlever</text>
+            <!-- Gen 2 -->
+            <text x="50" y="122" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.55)" font-weight="600">Gen. 2</text>
+            <g>
+              <circle cx="20" cy="140" r="8" fill="rgba(200,80,40,.3)" stroke="rgba(200,80,40,.5)" stroke-width="1.5"/>
+              <circle cx="45" cy="136" r="8" fill="rgba(200,80,40,.3)" stroke="rgba(200,80,40,.5)" stroke-width="1.5"/>
+              <circle cx="68" cy="142" r="8" fill="rgba(200,80,40,.3)" stroke="rgba(200,80,40,.5)" stroke-width="1.5"/>
+              <circle cx="92" cy="138" r="8" fill="rgba(224,176,64,.2)" stroke="rgba(224,176,64,.35)" stroke-width="1"/>
+            </g>
+            <!-- Gen 3 -->
+            <text x="50" y="172" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.5)" font-weight="600">Gen. 3</text>
+            <g>
+              <circle cx="18" cy="188" r="9" fill="rgba(200,80,40,.4)" stroke="rgba(200,80,40,.6)" stroke-width="2"/>
+              <circle cx="42" cy="185" r="9" fill="rgba(200,80,40,.4)" stroke="rgba(200,80,40,.6)" stroke-width="2"/>
+              <circle cx="68" cy="190" r="9" fill="rgba(200,80,40,.4)" stroke="rgba(200,80,40,.6)" stroke-width="2"/>
+              <circle cx="94" cy="186" r="9" fill="rgba(200,80,40,.4)" stroke="rgba(200,80,40,.6)" stroke-width="2"/>
+              <circle cx="116" cy="190" r="8" fill="rgba(200,80,40,.35)" stroke="rgba(200,80,40,.5)" stroke-width="1.5"/>
+            </g>
+            <text x="70" y="218" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(200,80,40,.55)">Rød-egenskap dominerer nå</text>
+            <!-- Tidspil -->
+            <line x1="180" y1="46" x2="180" y2="206" stroke="rgba(96,200,100,.3)" stroke-width="1.5"/>
+            <polygon points="180,210 176,200 184,200" fill="rgba(96,200,100,.4)"/>
+            <text x="190" y="130" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.5)">Tid</text>
+            <!-- Fakta boks -->
+            <rect x="10" y="226" width="260" height="24" rx="6" fill="rgba(96,200,100,.05)" stroke="rgba(96,200,100,.2)" stroke-width="1"/>
+            <text x="140" y="241" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.6)">Variasjon + Arv + Seleksjon = Evolusjon (Darwin, 1859)</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(224,176,64,.1);color:#e0b040;border:1px solid rgba(224,176,64,.2)">⚛️ Fysikk</div>
+          <h3 class="k-tittel">DNA, radioaktivitet og kvantemekanikk</h3>
+          <p class="k-ingress">Det 20. århundre var vitenskapens gullalder – med oppdagelser som forandret menneskenes syn på liv, materie og virkelighet. Tre av de mest omveltende:</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>DNA-strukturen (1953):</strong> Watson og Crick brukte Rosalind Franklins røntgenkrystallografibilder (Foto 51) til å avsløre DNAs dobbeltheliks. Franklin fikk aldri Nobelprisen (hun døde 1958). Strukturen forklarte umiddelbart hvordan arvestoff kopieres og kodes.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☢️</span><div><strong>Radioaktivitet (1896–1898):</strong> Henri Becquerel oppdaget radioaktivitet tilfeldig. Marie Curie og Pierre Curie isolerte polonium og radium. Marie fikk to Nobelpriser (Fysikk 1903, Kjemi 1911) – eneste person til da. Curie døde av leukemi fra stråling hun arbeidet med uten beskyttelse.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Kvantemekanikken (1900–1930-tallet):</strong> Max Planck viste at energi er kvantisert (1900). Einstein forklarte fotoelektrisk effekt (lys er fotoner, 1905). Bohr atommodell (1913). Heisenbergs usikkerhetsprinsipp (1927): posisjon og bevegelsesmengde kan ikke begge kjennes presist. Einstein likte det ikke: «Gud spiller ikke terning.»</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💻</span><div><strong>Konsekvenser:</strong> DNA-oppdagelsen → genteknologi, PCR, CRISPR. Radioaktivitet → medisinsk bildediagnostikk (MRI, PET), strålebehandling og kjernekraft. Kvantemekanikk → halvleder, laser, MRI og grunnlag for moderne elektronikk og datamaskiner.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,176,64,.6)" letter-spacing=".1em">GJENNOMBRUDD PÅ 1900-TALLET</text>
+            <!-- DNA helix -->
+            <text x="52" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,100,.6)" font-weight="600">DNA (1953)</text>
+            <g stroke="rgba(96,200,100,.5)" stroke-width="1.5" fill="none">
+              <path d="M32,54 C52,60 52,70 32,76 C12,82 12,92 32,98 C52,104 52,114 32,120 C12,126 12,136 32,142"/>
+              <path d="M72,54 C52,60 52,70 72,76 C92,82 92,92 72,98 C52,104 52,114 72,120 C92,126 92,136 72,142"/>
+            </g>
+            <g stroke="rgba(96,200,100,.3)" stroke-width="1">
+              <line x1="37" y1="62" x2="67" y2="62"/><line x1="37" y1="72" x2="67" y2="72"/>
+              <line x1="37" y1="90" x2="67" y2="90"/><line x1="37" y1="100" x2="67" y2="100"/>
+              <line x1="37" y1="118" x2="67" y2="118"/><line x1="37" y1="128" x2="67" y2="128"/>
+            </g>
+            <text x="52" y="162" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,100,.5)">Watson, Crick,</text>
+            <text x="52" y="173" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,100,.4)">Franklin (1953)</text>
+            <!-- Radioaktivitet -->
+            <text x="140" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(224,176,64,.6)" font-weight="600">Radioaktivitet</text>
+            <text x="140" y="52" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,176,64,.5)">(1896–1898)</text>
+            <circle cx="140" cy="100" r="20" fill="rgba(224,176,64,.12)" stroke="rgba(224,176,64,.5)" stroke-width="1.5"/>
+            <text x="140" y="104" text-anchor="middle" font-family="DM Sans" font-size="12">☢️</text>
+            <g stroke="rgba(224,176,64,.3)" stroke-width="1" fill="none">
+              <path d="M140,80 Q120,60 110,50" marker-end="url(#rArr)"/>
+              <path d="M160,80 Q178,60 188,50" marker-end="url(#rArr)"/>
+              <path d="M120,96 Q96,96 84,96" marker-end="url(#rArr)"/>
+              <path d="M160,96 Q184,96 196,96" marker-end="url(#rArr)"/>
+            </g>
+            <text x="140" y="145" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,176,64,.5)">Marie Curie · 2× Nobel</text>
+            <!-- Kvantemekanikk -->
+            <text x="228" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,255,.6)" font-weight="600">Kvante-</text>
+            <text x="228" y="52" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,160,255,.6)" font-weight="600">mekanikk</text>
+            <!-- Bohr-atom -->
+            <circle cx="228" cy="100" r="6" fill="rgba(240,150,40,.5)" stroke="rgba(240,150,40,.7)" stroke-width="1.5"/>
+            <circle cx="228" cy="100" r="20" fill="none" stroke="rgba(96,160,255,.3)" stroke-width="1"/>
+            <circle cx="248" cy="100" r="4" fill="rgba(96,160,255,.5)" stroke="rgba(96,160,255,.7)" stroke-width="1"/>
+            <circle cx="228" cy="100" r="32" fill="none" stroke="rgba(96,160,255,.2)" stroke-width="1"/>
+            <circle cx="228" cy="68" r="4" fill="rgba(96,160,255,.4)" stroke="rgba(96,160,255,.6)" stroke-width="1"/>
+            <text x="228" y="148" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.5)">Planck · Bohr</text>
+            <text x="228" y="160" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.4)">Heisenberg</text>
+            <!-- Tidslinje bunnkant -->
+            <line x1="20" y1="190" x2="265" y2="190" stroke="rgba(224,176,64,.15)" stroke-width="1"/>
+            <text x="52" y="206" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.35)">CRISPR</text>
+            <text x="140" y="206" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.35)">MRI · PET</text>
+            <text x="228" y="206" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.35)">Halvleder</text>
+            <text x="140" y="225" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.25)">Moderne konsekvenser av disse oppdagelsene</text>
+            <defs><marker id="rArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(224,176,64,.4)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,160,255,.1);color:#60a0ff;border:1px solid rgba(96,160,255,.2)">🚀 Romfart</div>
+          <h3 class="k-tittel">Månelanding og mørk materie</h3>
+          <p class="k-ingress">Det 20. og 21. århundre har utvidet menneskenes forståelse av universet dramatisk – fra å sette fot på Månen til å oppdage at 95 % av universet er noe vi ennå ikke forstår.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌙</span><div><strong>Månelandingen (1969):</strong> Apollo 11 satte Neil Armstrong og Buzz Aldrin på Månen 20. juli 1969. Saturn V-raketten var 111 m høy og den kraftigste noensinne. Datamaskinen om bord hadde 4 kB RAM. En moderne smarttelefon er én milliard ganger kraftigere.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌌</span><div><strong>Den store bangsmellen (1927/1964):</strong> Georges Lemaître foreslo at universet begynte i ett punkt og ekspanderer (1927). Bekreftet av Hubble (1929: galakser beveger seg fra oss). CMB-bakgrunnsstrålingen oppdaget ved uhell av Penzias og Wilson (1964) ga direkte bevis for Big Bang.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌑</span><div><strong>Mørk materie (oppdaget 1933/1970):</strong> Fritz Zwicky observerte at galaksehoper beveger seg for fort for synlig masse å forklare. Vera Rubin bekreftet i 1970 at galakser roterer for fort. Ca. 27 % av universet er mørk materie – vi vet ikke hva det er.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Mørk energi (1998):</strong> Supernova-observasjoner avslørte at universets ekspansjon akselererer – det motsatte av hva gravitasjon skulle tilsi. Noe – kalt mørk energi – driver ekspansjonen. Det utgjør ~68 % av universets energi. Nobelpris 2011 til Perlmutter, Schmidt og Riess.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,160,255,.6)" letter-spacing=".1em">UNIVERSETS SAMMENSETNING</text>
+            <!-- Kake-diagram -->
+            <!-- Mørk energi 68% -->
+            <path d="M140,138 L140,60 A78,78 0 1 1 88,206 Z" fill="rgba(96,120,200,.25)" stroke="rgba(96,120,200,.45)" stroke-width="1.5"/>
+            <!-- Mørk materie 27% -->
+            <path d="M140,138 L88,206 A78,78 0 0 1 60,130 Z" fill="rgba(60,60,120,.35)" stroke="rgba(60,60,120,.5)" stroke-width="1.5"/>
+            <!-- Vanlig materie 5% -->
+            <path d="M140,138 L60,130 A78,78 0 0 1 140,60 Z" fill="rgba(224,176,64,.3)" stroke="rgba(224,176,64,.6)" stroke-width="1.5"/>
+            <!-- Labels -->
+            <text x="185" y="110" font-family="DM Sans" font-size="7.5" fill="rgba(96,120,200,.7)" font-weight="600">Mørk energi</text>
+            <text x="185" y="122" font-family="DM Sans" font-size="7.5" fill="rgba(96,120,200,.6)">68%</text>
+            <text x="50" y="190" font-family="DM Sans" font-size="7.5" fill="rgba(160,160,220,.65)" font-weight="600">Mørk</text>
+            <text x="50" y="202" font-family="DM Sans" font-size="7.5" fill="rgba(160,160,220,.6)">materie 27%</text>
+            <text x="65" y="100" font-family="DM Sans" font-size="7.5" fill="rgba(224,176,64,.8)" font-weight="600">Vanlig</text>
+            <text x="65" y="112" font-family="DM Sans" font-size="7.5" fill="rgba(224,176,64,.7)">materie 5%</text>
+            <!-- Sentrum -->
+            <circle cx="140" cy="138" r="6" fill="rgba(224,176,64,.4)"/>
+            <text x="140" y="230" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.4)">95 % av universet er noe vi ikke forstår</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.3)">Den største uoppdagede territorien i vitenskapen</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(224,176,64,.1);color:#e0b040;border:1px solid rgba(224,176,64,.2)">🇸🇪🇳🇴 Norden</div>
+          <h3 class="k-tittel">Nordiske bidrag til vitenskapen</h3>
+          <p class="k-ingress">Skandinavia har levert uforholdsmessig store bidrag til vitenskapen – fra Celsius og Linné til norske Nobelprisvinnere i det 21. århundre.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Anders Celsius (1701–1744):</strong> Svensk astronom som utviklet Celsius-temperaturskalaen i 1742 – opprinnelig med 0 som kokepunktet og 100 som frysepunktet! Linné snudde den om etter hans død. Celsius jobbet også med nordlys og kartlegging av jordskorpens variasjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Carl von Linné (1707–1778):</strong> Skapte det binære nomenklatursystemet – to-delt latinske artsnavn (genus + species) – som fortsatt brukes. Beskrev 12 000+ plante- og dyrearter. Systematiserte botanikken og grunnla moderne taksonomi. Homo sapiens er hans navn på mennesket.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>May-Britt og Edvard Moser (Nobel 2014):</strong> Norske nevrovitere fra NTNU som oppdaget stedsceller og gitterceller i hippocampus – hjernens GPS. Viste hvordan hjernen kartlegger romlig posisjon. Nobelpris i fysiologi/medisin 2014. Grunnleggende for å forstå Alzheimers sykdom.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚢</span><div><strong>Fridtjof Nansen (1861–1930):</strong> Polarforsker og oseanograf som oppdaget at Polhavet er et dyphavsbekken. Nan Hansen-kastedressen (isolerende ullkledning) revolusjonerte polar-ekspedisjoner. Utviklet Nansen-flasken for havprøver. Nobels fredspris 1922 for flyktningarbeid.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#0c0a02"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(224,176,64,.6)" letter-spacing=".1em">NORDISKE VITENSKAPSBIDRAG</text>
+            <!-- Tidslinje -->
+            <line x1="30" y1="134" x2="260" y2="134" stroke="rgba(224,176,64,.2)" stroke-width="1.5"/>
+            <!-- Celsius 1742 -->
+            <line x1="55" y1="134" x2="55" y2="88" stroke="rgba(224,176,64,.3)" stroke-width="1"/>
+            <circle cx="55" cy="134" r="5" fill="rgba(224,176,64,.5)" stroke="rgba(224,176,64,.7)" stroke-width="1"/>
+            <rect x="20" y="56" width="70" height="32" rx="5" fill="rgba(224,176,64,.08)" stroke="rgba(224,176,64,.25)" stroke-width="1"/>
+            <text x="55" y="70" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#e0b040" font-weight="600">Celsius</text>
+            <text x="55" y="81" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">°C-skala (1742)</text>
+            <text x="55" y="148" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,235,180,.3)">1742</text>
+            <!-- Linné 1758 -->
+            <line x1="100" y1="134" x2="100" y2="170" stroke="rgba(96,200,100,.3)" stroke-width="1"/>
+            <circle cx="100" cy="134" r="5" fill="rgba(96,200,100,.5)" stroke="rgba(96,200,100,.7)" stroke-width="1"/>
+            <rect x="65" y="170" width="70" height="32" rx="5" fill="rgba(96,200,100,.08)" stroke="rgba(96,200,100,.25)" stroke-width="1"/>
+            <text x="100" y="184" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.8)" font-weight="600">Linné</text>
+            <text x="100" y="195" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Binært system</text>
+            <text x="100" y="148" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,235,180,.3)">1758</text>
+            <!-- Nansen 1895 -->
+            <line x1="170" y1="134" x2="170" y2="88" stroke="rgba(96,160,255,.3)" stroke-width="1"/>
+            <circle cx="170" cy="134" r="5" fill="rgba(96,160,255,.5)" stroke="rgba(96,160,255,.7)" stroke-width="1"/>
+            <rect x="135" y="56" width="70" height="32" rx="5" fill="rgba(96,160,255,.08)" stroke="rgba(96,160,255,.2)" stroke-width="1"/>
+            <text x="170" y="70" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,255,.8)" font-weight="600">Nansen</text>
+            <text x="170" y="81" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Polhav (1895)</text>
+            <text x="170" y="148" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,235,180,.3)">1895</text>
+            <!-- Moser 2014 -->
+            <line x1="230" y1="134" x2="230" y2="170" stroke="rgba(200,100,200,.3)" stroke-width="1"/>
+            <circle cx="230" cy="134" r="5" fill="rgba(200,100,200,.5)" stroke="rgba(200,100,200,.7)" stroke-width="1"/>
+            <rect x="195" y="170" width="70" height="32" rx="5" fill="rgba(200,100,200,.08)" stroke="rgba(200,100,200,.2)" stroke-width="1"/>
+            <text x="230" y="184" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,200,.8)" font-weight="600">Moser-paret</text>
+            <text x="230" y="195" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,235,180,.45)">Nobel 2014</text>
+            <text x="230" y="148" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(255,235,180,.3)">2014</text>
+            <text x="140" y="234" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,235,180,.3)">Skandinavia: 30+ Nobelpriser i vitenskap</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide hel">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(240,200,60,.1);color:#f0c840;border:1px solid rgba(240,200,60,.2)">📋 LK20</div>
+          <h3 class="k-tittel">Store oppdagelser – sammendrag og LK20</h3>
+          <p class="k-ingress">Historien om de store oppdagelsene er en fortelling om nysgjerrighet, mot, tilfeldigheter og hardt arbeid – og om at vitenskapelig kunnskap alltid kan revideres.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔍</span><div><strong>Vitenskapelig metode:</strong> Observasjon → Hypotese → Eksperiment → Analyse → Konklusjon. Fagfellevurdering og replikasjon er kravene for aksept. Paradigmeskifter (Kuhn) viser at vitenskapen ikke alltid er gradvis – den kan ha revolusjonære hopp.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Tre store paradigmeskifter:</strong> (1) Heliosentrisisme – Kopernik/Galilei snudde verdensbildet. (2) Evolusjonsteorien – Darwin forklarte livets mangfold uten guddommelig plan. (3) Kvantemekanikken – virkeligheten på atomnivå bryter med hverdagslogikken.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌌</span><div><strong>Grenser for kunnskap:</strong> 95 % av universet (mørk materie + mørk energi) er fortsatt uforklart. DNA-strukturen er kjent, men 98 % av genomet er ikke fullt forstått. Bevisstheten forblir en av de største gåtene i vitenskapen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>LK20 – Naturvitenskapens metoder:</strong> Elevene skal «gjøre rede for sentrale aspekter ved vitenskapelig metode» og «diskutere hvordan ny kunnskap etableres». Historien om store oppdagelser illustrerer dette bedre enn noe lærebok-eksempel.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)">&#8592;</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sjekk forståelsen din</div><div class="sep-r"></div></div>
+
+  <div class="quiz-wrapper" id="quiz">
+    <div class="quiz-spm" id="q-spm"></div>
+    <div class="quiz-alts" id="q-alts"></div>
+    <div class="quiz-fb" id="q-fb"></div>
+    <div class="quiz-nav">
+      <button class="q-pil" id="q-prev" onclick="qGo(-1)" disabled>&#8592; Forrige</button>
+      <span class="q-teller" id="q-tell"></span>
+      <button class="q-pil" id="q-next" onclick="qGo(1)">Neste &#8594;</button>
+    </div>
+  </div>
+</div>
+<script>
+
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+
+
+const QUIZ_DATA = [{"spm": "Hva er serendipitet i vitenskapelig sammenheng?", "alts": ["En planlagt eksperimentmetode", "Tilfeldige funn som leder til viktige oppdagelser", "En type fagfellevurdering", "En statistisk metode for å analysere data"], "riktig": 1, "fork": "Serendipitet betyr tilfeldige oppdagelser – som penicillin (flemings muggsoppforurensede skål) og røntgen. Men tilfeldigheten hjelper bare den forberedte vitenskapsmannen."}, {"spm": "Hva kalles Koperniks bidrag til astronomien?", "alts": ["Han oppdaget at Jorda er rund", "Han foreslo at Sola er i sentrum av solsystemet (heliosentrisme)", "Han målte Jordens radius", "Han oppdaget tyngdekraften"], "riktig": 1, "fork": "Nikolaus Kopernik foreslo i 1543 at Sola er i sentrum (heliosentrisk modell). Dette erstattet Ptolemaios' geosentriske modell der Jorda var i sentrum og satte i gang en vitenskapelig revolusjon."}, {"spm": "Hva er naturlig seleksjon (Darwin)?", "alts": ["Alle individer overlever like godt", "De best tilpassede individene overlever og reproduserer mer", "Arter endrer seg tilfeldig over tid", "Bare sterke individer overlever i alle miljøer"], "riktig": 1, "fork": "Naturlig seleksjon: variasjon + arv + differensiell reproduksjon. De individene som tilfeldigvis har egenskaper som passer bedre til miljøet, overlever mer og gir disse egenskapene videre til neste generasjon."}, {"spm": "Hvem oppdaget DNA-dobbelthelixstrukturen i 1953?", "alts": ["Einstein og Bohr", "Watson, Crick – basert på Franklins røntgenbilder", "Darwin og Mendel", "Curie og Becquerel"], "riktig": 1, "fork": "Watson og Crick publiserte DNA-strukturen i 1953, men brukte Rosalind Franklins røntgenkrystallografibilde (Foto 51) som avgjørende bevis. Franklin fikk aldri Nobelprisen – hun døde i 1958."}, {"spm": "Hva er mørk materie?", "alts": ["Materie som er svart og absorberer lys", "En usynlig komponent som utgjør ca. 27 % av universet, hvis natur er ukjent", "Støv og gass mellom stjernene", "Materie i svarte hull"], "riktig": 1, "fork": "Mørk materie er noe vi vet eksisterer pga. gravitasjonelle effekter (galakserotasjon, galaksehopbevegelse), men vi vet ikke hva det er. Det utgjør ca. 27 % av universets totale innhold."}, {"spm": "Hva oppfant Carl von Linné?", "alts": ["Celsius-temperaturskalaen", "Det binære nomenklatursystemet for artsnavn (genus + species)", "Periodebordet", "Teorien om kontinentaldrift"], "riktig": 1, "fork": "Carl von Linné opprettet det binære nomenklatursystemet der alle arter navnsettes med to latinske ord: slektsnavn (genus) og artsnavn (species). Homo sapiens er hans navn på mennesket."}, {"spm": "Hva oppdaget May-Britt og Edvard Moser?", "alts": ["Genet for Alzheimers sykdom", "Sted- og gitterceller – hjernens GPS-system", "Strukturen til CRISPR", "En ny type kreftbehandling"], "riktig": 1, "fork": "Moser-paret ved NTNU fikk Nobelprisen i fysiologi/medisin 2014 for å oppdage stedsceller og gitterceller i hippocampus – neuronene som kartlegger romlig posisjon og utgjør hjernens interne GPS."}, {"spm": "Hva er et paradigmeskifte (Thomas Kuhn)?", "alts": ["En gradvis, jevn forbedring av vitenskapelig kunnskap", "En revolusjonær endring av det dominerende rammeverket i vitenskapen", "En ny eksperimentell metode", "En feil i den vitenskapelige metoden"], "riktig": 1, "fork": "Thomas Kuhn viste at vitenskapen ikke alltid er gradvis. Den opererer innen et paradigme til anomaliene tårner seg opp og en vitenskapelig revolusjon skjer – som heliosentrisme, evolusjonsteorien og kvantemekanikken."}];
+let qCur = 0, qSvar = Array(QUIZ_DATA.length).fill(null);
+function visQ(i) {
+  const q = QUIZ_DATA[i];
+  document.getElementById('q-spm').textContent = (i+1) + '. ' + q.spm;
+  const altsEl = document.getElementById('q-alts');
+  altsEl.innerHTML = '';
+  q.alts.forEach((a, j) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-alt'; b.textContent = a;
+    if (qSvar[i] !== null) {
+      b.disabled = true;
+      if (j === q.riktig) b.classList.add('riktig');
+      else if (j === qSvar[i]) b.classList.add('feil');
+    } else { b.onclick = () => svarQ(i, j); }
+    altsEl.appendChild(b);
+  });
+  const fb = document.getElementById('q-fb');
+  if (qSvar[i] !== null) {
+    fb.textContent = (qSvar[i] === q.riktig ? '✅ ' : '❌ ') + q.fork;
+    fb.className = 'quiz-fb ' + (qSvar[i] === q.riktig ? 'riktig' : 'feil');
+  } else { fb.textContent = ''; fb.className = 'quiz-fb'; }
+  document.getElementById('q-tell').textContent = (i+1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('q-prev').disabled = i === 0;
+  document.getElementById('q-next').disabled = i === QUIZ_DATA.length - 1;
+}
+function svarQ(i, j) {
+  qSvar[i] = j; visQ(i);
+  const riktige = qSvar.filter((s,k) => s !== null && s === QUIZ_DATA[k].riktig).length;
+  if (window._skaplab_logg) window._skaplab_logg(
+    location.pathname.split('/').pop(), 'nat_oppdagelser',
+    riktige / QUIZ_DATA.length * 100, QUIZ_DATA.length, riktige, null, null);
+}
+function qGo(d) { qCur = Math.max(0, Math.min(QUIZ_DATA.length-1, qCur+d)); visQ(qCur); }
+visQ(0);
+
+</script>
+</body>
+</html>

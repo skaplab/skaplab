@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Sirkulasjonssystemet</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0408;--surface:#160810;--card:#1e0c16;--border:rgba(220,50,60,.07);
+  --text:#ffe8ec;--dim:rgba(255,232,236,.3);
+  --accent:#dc323c;--accent2:#f07832;--accent3:#f0d23c;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(220,50,60,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(240,120,50,.025),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+
+/* QUIZ */
+.quiz-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.quiz-spm{font-family:var(--font-d);font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.quiz-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.quiz-alt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  font-size:.84rem;color:var(--text);text-align:left;transition:all .18s;width:100%}
+.quiz-alt:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+.quiz-alt.riktig{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.quiz-alt.feil{border-color:#f05050;background:rgba(240,80,80,.08);color:#f08080}
+.quiz-alt:disabled{cursor:default}
+.quiz-fb{font-size:.82rem;line-height:1.65;padding:10px 14px;border-radius:9px;min-height:24px;margin-bottom:4px}
+.quiz-fb.riktig{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)}
+.quiz-fb.feil{background:rgba(240,80,80,.07);color:#f08080;border:1px solid rgba(240,80,80,.15)}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.q-pil{padding:8px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-d);font-style:italic;font-size:.85rem;color:var(--text);transition:all .18s}
+.q-pil:hover{border-color:var(--accent);color:var(--accent)}
+.q-pil:disabled{opacity:.3;cursor:default}
+.q-teller{font-size:.75rem;color:var(--dim);font-family:var(--font-d);font-style:italic}
+
+:root{--accent-rgb:220,50,60;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Sirkulasjonssystemet</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Biologi · Kropp og helse · LK20</div>
+    <h1>Sirkulasjonssystemet<br><em>hjerte, blod og 100 000 km blodkar</em></h1>
+    <p class="hero-sub">Dobbelkretssystemet, hjertets elektriske system, blodets bestanddeler og forebygging av hjerte- og karsykdom</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(220,50,60,.1);color:#dc323c;border:1px solid rgba(220,50,60,.2)">❤️ Oversikt</div>
+          <h3 class="k-tittel">Sirkulasjonssystemets oppgaver</h3>
+          <p class="k-ingress">Sirkulasjonssystemet er kroppens transportsystem – et nettverk på over 100 000 km blodkar som forsyner alle 37 billioner celler med oksygen, næring og hormoner, og fjerner avfallsstoffer.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚚</span><div><strong>Transport:</strong> Oksygen fra lungene til cellene, CO₂ tilbake. Glukose, aminosyrer og fettsyrer fra tarmen. Hormoner fra kjertler til målorganer. Varme fra muskler til hud for temperaturregulering.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛡️</span><div><strong>Forsvar:</strong> Hvite blodceller (leukocytter) og antistoffer transporteres til infeksjonssted. Blodplater (trombocytter) tetter sår. Komplementsystemet sirkulerer som en del av det medfødte immunforsvaret.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Homeostase:</strong> Blod fordeler varme – kald hud får redusert blodstrøm (vasokonstriksjon), varm kropp øker hudblodstrøm (vasodilatasjon). pH-buffer: bikarbonat i blod holder pH 7,35–7,45. Presist regulert!</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">❤️</span><div><strong>Dobbelkretssystemet:</strong> Mennesket har et lukket dobbelkretssystem: den lille kretsen (lunge) og den store kretsen (kroppen). Hjertet er egentlig to pumper i ett – høyre side pumper til lungene, venstre side til kroppen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="280" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(220,50,60,.6)" letter-spacing=".1em">DOBBELKRETSSYSTEMET</text>
+            <!-- Hjerte sentrum -->
+            <path d="M140,130 C130,118 112,112 112,128 C112,138 120,148 140,162 C160,148 168,138 168,128 C168,112 150,118 140,130 Z" fill="rgba(220,50,60,.3)" stroke="rgba(220,50,60,.7)" stroke-width="2"/>
+            <text x="140" y="148" text-anchor="middle" font-family="DM Sans" font-size="8" fill="#dc323c" font-weight="600">HJERTE</text>
+            <!-- Lille krets opp -->
+            <path d="M128,116 Q90,80 90,50 Q90,28 140,26 Q190,28 190,50 Q190,80 152,116" fill="none" stroke="rgba(96,180,255,.45)" stroke-width="2.5" stroke-dasharray="5,3"/>
+            <text x="140" y="22" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,180,255,.7)" font-weight="600">🫁 LUNGER</text>
+            <text x="60" y="55" font-family="DM Sans" font-size="7" fill="rgba(96,180,255,.5)">O₂ inn</text>
+            <text x="196" y="55" font-family="DM Sans" font-size="7" fill="rgba(180,180,180,.4)">CO₂ ut</text>
+            <!-- Store krets ned -->
+            <path d="M128,164 Q80,196 80,230 Q80,258 140,260 Q200,258 200,230 Q200,196 152,164" fill="none" stroke="rgba(220,50,60,.4)" stroke-width="2.5" stroke-dasharray="5,3"/>
+            <text x="140" y="275" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(220,50,60,.65)" font-weight="600">🫀 KROPPEN</text>
+            <text x="42" y="230" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.4)">CO₂ ut</text>
+            <text x="202" y="230" font-family="DM Sans" font-size="7" fill="rgba(96,180,255,.5)">O₂ inn</text>
+            <!-- Piler -->
+            <polygon points="128,116 122,130 134,130" fill="rgba(96,180,255,.5)"/>
+            <polygon points="152,116 146,130 158,130" fill="rgba(96,180,255,.3)"/>
+            <polygon points="128,164 122,150 134,150" fill="rgba(220,50,60,.4)"/>
+            <polygon points="152,164 146,150 158,150" fill="rgba(220,50,60,.3)"/>
+            <!-- Arterie/vene -->
+            <text x="50" y="186" font-family="DM Sans" font-size="7" fill="rgba(96,180,255,.45)">← Oksygenrikt blod</text>
+            <text x="168" y="186" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.45)">Avlevert O₂ →</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(220,50,60,.1);color:#dc323c;border:1px solid rgba(220,50,60,.2)">❤️ Hjerte</div>
+          <h3 class="k-tittel">Hjertets anatomi og pumpsyklus</h3>
+          <p class="k-ingress">Hjertet er en dobbel pumpe – to forkamre (atrier) og to hjertekamre (ventrikler) i én pakke. Det slår ca. 100 000 ganger per dag og pumper 7 000 liter blod i hvile.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🏗️</span><div><strong>Anatomi:</strong> Høyre forkammer mottar oksygenfattig blod fra kroppen (vena cava). Høyre hjertekammer pumper til lungene (lungearterie). Venstre forkammer mottar oksygenrikt blod fra lungene. Venstre hjertekammer pumper til aorta – kroppens største pulsåre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚪</span><div><strong>Hjerteklaffene:</strong> To-flinsklaff (mitralklaff) og tre-flinsklaff (trikuspidalklaff) mellom forkamre og hjertekamre. Halvmåneklaffene (aorta- og lungeklaff) mellom hjertekamre og store kar. Klaffene sørger for at blodet bare strømmer én vei.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Elektrisk system:</strong> Sinusknuten (naturlig pacemaker) i høyre forkammer genererer elektriske impulser ~70/min. Impulsen spres via AV-knuten og His-bundelen til alle hjertemuskelceller. EKG måler dette elektriske mønsteret.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💪</span><div><strong>Hjertemuskelen:</strong> Myokard er en spesiell muskeltype – verken skjelettmuskel eller glatt muskel. Den tretter aldri, har egne rytmiske cellekoblinger (gap junctions) og har coronararterer som forsyner seg selv med blod. Ved hjerteinfarkt stenges disse.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="280" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(220,50,60,.6)" letter-spacing=".1em">HJERTETS KAMRE</text>
+            <!-- Hjerte yttre form -->
+            <path d="M140,250 C60,200 30,160 40,110 C50,70 90,55 120,70 C130,75 138,85 140,95 C142,85 150,75 160,70 C190,55 230,70 240,110 C250,160 220,200 140,250 Z" fill="rgba(220,50,60,.08)" stroke="rgba(220,50,60,.25)" stroke-width="1.5"/>
+            <!-- Septum - vegg mellom venstre og høyre -->
+            <line x1="140" y1="80" x2="155" y2="240" stroke="rgba(255,255,255,.15)" stroke-width="2"/>
+            <!-- Høyre forkammer -->
+            <ellipse cx="100" cy="108" rx="42" ry="28" fill="rgba(96,160,255,.12)" stroke="rgba(96,160,255,.4)" stroke-width="1.5"/>
+            <text x="100" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,255,.8)" font-weight="600">Høyre</text>
+            <text x="100" y="116" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.6)">forkammer</text>
+            <!-- Høyre hjertekammer -->
+            <path d="M60,138 Q56,190 100,230 Q120,245 135,245 L135,138 Z" fill="rgba(96,160,255,.1)" stroke="rgba(96,160,255,.35)" stroke-width="1.5"/>
+            <text x="96" y="196" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,255,.65)" font-weight="600">Høyre</text>
+            <text x="96" y="208" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.5)">hjertekammer</text>
+            <!-- Venstre forkammer -->
+            <ellipse cx="182" cy="108" rx="42" ry="28" fill="rgba(220,50,60,.12)" stroke="rgba(220,50,60,.4)" stroke-width="1.5"/>
+            <text x="182" y="104" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,50,60,.8)" font-weight="600">Venstre</text>
+            <text x="182" y="116" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.6)">forkammer</text>
+            <!-- Venstre hjertekammer (tykkere vegg) -->
+            <path d="M145,138 L145,245 Q164,245 186,228 Q226,192 224,138 Z" fill="rgba(220,50,60,.1)" stroke="rgba(220,50,60,.35)" stroke-width="2"/>
+            <text x="186" y="196" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,50,60,.65)" font-weight="600">Venstre</text>
+            <text x="186" y="208" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.5)">hjertekammer</text>
+            <!-- Klaff symboler -->
+            <line x1="100" y1="136" x2="115" y2="138" stroke="rgba(255,200,100,.4)" stroke-width="2"/>
+            <line x1="182" y1="136" x2="167" y2="138" stroke="rgba(255,200,100,.4)" stroke-width="2"/>
+            <text x="140" y="144" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,200,100,.5)">Klaffer</text>
+            <!-- Kar labels -->
+            <text x="52" y="78" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.5)">← Vena cava</text>
+            <text x="52" y="88" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.4)">(O₂-fattig)</text>
+            <text x="178" y="78" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.5)">Aorta →</text>
+            <text x="178" y="88" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.4)">(O₂-rikt)</text>
+            <text x="140" y="264" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,180,.3)">~100 000 slag/dag · 7 000 liter blod i hvile</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(240,120,50,.1);color:#f07832;border:1px solid rgba(240,120,50,.2)">🩸 Blod</div>
+          <h3 class="k-tittel">Blodets bestanddeler</h3>
+          <p class="k-ingress">Blod er et flytende vev – 55 % plasma (vandig løsning) og 45 % cellulære bestanddeler. Det er langt mer enn bare røde blodceller.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Røde blodceller (erytrocytter):</strong> 5 millioner per mm³ blod. Bikonkave skiver uten cellekjerne – mer plass til hemoglobin. Hemoglobin binder O₂ (oksyhemoglobin, rødt) og CO₂. Levetid 120 dager. Produseres i beinmarg, brytes ned i milt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⬜</span><div><strong>Hvite blodceller (leukocytter):</strong> 5 000–10 000 per mm³. Mange typer: nøytrofile (spiser bakterier), lymfocytter (B- og T-celler, antistoffer), monocytter (blir makrofager). Sykdomsbekjempelse – ved infeksjon stiger antallet dramatisk.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🟡</span><div><strong>Blodplater (trombocytter):</strong> 150 000–400 000 per mm³. Cellefragramenter fra megakaryocytter i beinmarg. Aktiveres ved skade og danner blodpropp (hemostase) via koagulasjonsystemet. Viktige ved sårleging.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Plasma:</strong> 90 % vann. Inneholder albumin (osmotisk trykk), fibrinogen (koagulasjon), globuliner (immunsystem), næringsstoffer, hormoner, elektrolytter (Na⁺, K⁺, Ca²⁺) og avfallsstoffer (urea, CO₂, bilirubin).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,120,50,.6)" letter-spacing=".1em">BLODETS SAMMENSETNING</text>
+            <!-- Hematokrit rør -->
+            <rect x="105" y="28" width="70" height="200" rx="6" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+            <!-- Plasma (55%) -->
+            <rect x="108" y="31" width="64" height="110" rx="4" fill="rgba(240,200,120,.18)" stroke="rgba(240,200,120,.3)" stroke-width="1"/>
+            <text x="140" y="78" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,120,.8)" font-weight="600">PLASMA</text>
+            <text x="140" y="92" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,200,120,.55)">55 %</text>
+            <text x="140" y="105" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,220,180,.4)">vann · proteiner</text>
+            <text x="140" y="117" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,220,180,.35)">hormoner · salter</text>
+            <!-- Buffy coat (<1%) -->
+            <rect x="108" y="141" width="64" height="5" fill="rgba(220,220,100,.3)" stroke="rgba(220,220,100,.4)" stroke-width="0.5"/>
+            <text x="182" y="147" font-family="DM Sans" font-size="6.5" fill="rgba(220,220,100,.55)">&lt;1% hvite + blodplater</text>
+            <!-- Røde blodceller (45%) -->
+            <rect x="108" y="146" width="64" height="81" rx="4" fill="rgba(220,50,60,.25)" stroke="rgba(220,50,60,.45)" stroke-width="1"/>
+            <text x="140" y="182" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(220,50,60,.9)" font-weight="600">RØD BLODCELLE</text>
+            <text x="140" y="196" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,50,60,.6)">45 %</text>
+            <text x="140" y="208" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.4)">erytrocytter</text>
+            <text x="140" y="220" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.35)">hemoglobin</text>
+            <!-- Piler til høyre med detaljer -->
+            <line x1="175" y1="78" x2="215" y2="55" stroke="rgba(240,200,120,.25)" stroke-width="1"/>
+            <text x="218" y="50" font-family="DM Sans" font-size="7" fill="rgba(240,200,120,.55)">Albumin</text>
+            <text x="218" y="61" font-family="DM Sans" font-size="7" fill="rgba(240,200,120,.45)">Fibrinogen</text>
+            <text x="218" y="72" font-family="DM Sans" font-size="7" fill="rgba(240,200,120,.4)">Globuliner</text>
+            <line x1="175" y1="182" x2="215" y2="172" stroke="rgba(220,50,60,.25)" stroke-width="1"/>
+            <text x="218" y="167" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.55)">5 mill/mm³</text>
+            <text x="218" y="179" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.45)">Ø 8 µm</text>
+            <text x="218" y="191" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.4)">Levetid: 120 d</text>
+            <text x="140" y="248" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,180,.3)">5 liter blod i menneskekroppen</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(220,50,60,.1);color:#dc323c;border:1px solid rgba(220,50,60,.2)">🫀 Blodkar</div>
+          <h3 class="k-tittel">Arterier, vener og kapillærer</h3>
+          <p class="k-ingress">Blodkarnettet er over 100 000 km langt – 2,5 ganger rundt Jorda. Tre fundamentalt forskjellige kartyper sørger for effektiv fordeling og utveksling.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Arterier:</strong> Fører blod fra hjertet. Tykk, elastisk muskelvegg som tåler høyt blodtrykk (120/80 mmHg). Pulserer med hvert hjerteslag. Aorta er 2–3 cm i diameter. Arteriolveggen kontrollerer blodstrøm til organer (vasokonstriksjon/dilatasjon).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔵</span><div><strong>Vener:</strong> Fører blod tilbake til hjertet. Tynnere vegger, lavere trykk. Veneklaffene hindrer blodet i å renne tilbake. Muskelklemming ved bevegelse og pust driver blodstrømmen. Inneholder 65 % av blodet i hvile (blodreservoir).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Kapillærer:</strong> Veggen er bare ett cellelag tykt – én enkelt rad endotelceller (0,5–1 µm). Her skjer all utveksling: O₂ og glukose diffunderer ut, CO₂ og avfall inn. Så tette at røde blodceller må deformeres for å passe gjennom (7–8 µm bred kanal).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Lymfesystemet:</strong> Kapillærer slipper ut ca. 20 liter væske per dag til vevet (ultrafiltrasjon). Lymfekarene samler opp 17–18 liter og returnerer til blodet. Resten reabsorberes i kapillærene. Lymfevev (lymfeknuter) filtrerer patogener.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(220,50,60,.6)" letter-spacing=".1em">TVERRSNITT – 3 KARTYPER</text>
+            <!-- ARTERIE -->
+            <circle cx="62" cy="110" r="44" fill="rgba(220,50,60,.04)" stroke="rgba(220,50,60,.2)" stroke-width="1"/>
+            <circle cx="62" cy="110" r="26" fill="rgba(220,50,60,.08)" stroke="rgba(220,50,60,.4)" stroke-width="2.5"/>
+            <circle cx="62" cy="110" r="13" fill="rgba(220,50,60,.2)" stroke="rgba(220,50,60,.6)" stroke-width="1.5"/>
+            <text x="62" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#dc323c" font-weight="600">O₂</text>
+            <text x="62" y="119" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(220,50,60,.6)">rikt</text>
+            <text x="62" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="#dc323c" font-weight="600">ARTERIE</text>
+            <text x="62" y="178" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.45)">Tykk elastisk vegg</text>
+            <text x="62" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.4)">Høyt trykk · pulserer</text>
+            <!-- VENE -->
+            <circle cx="140" cy="110" r="44" fill="rgba(96,120,255,.04)" stroke="rgba(96,120,255,.15)" stroke-width="1"/>
+            <circle cx="140" cy="110" r="32" fill="rgba(96,120,255,.06)" stroke="rgba(96,120,255,.3)" stroke-width="1.5"/>
+            <circle cx="140" cy="110" r="17" fill="rgba(96,120,255,.15)" stroke="rgba(96,120,255,.5)" stroke-width="1.5"/>
+            <text x="140" y="108" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,120,255,.8)" font-weight="600">CO₂</text>
+            <text x="140" y="119" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(96,120,255,.55)">rikt</text>
+            <text x="140" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(96,120,255,.8)" font-weight="600">VENE</text>
+            <text x="140" y="178" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,190,255,.4)">Tynn vegg, klaffar</text>
+            <text x="140" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,190,255,.35)">Lavt trykk · 65 % blod</text>
+            <!-- KAPILLÆR -->
+            <circle cx="220" cy="110" r="44" fill="rgba(240,200,80,.03)" stroke="rgba(240,200,80,.12)" stroke-width="1"/>
+            <circle cx="220" cy="110" r="8" fill="rgba(240,200,80,.2)" stroke="rgba(240,200,80,.5)" stroke-width="1.5"/>
+            <text x="220" y="107" text-anchor="middle" font-family="DM Sans" font-size="6" fill="rgba(240,200,80,.8)">1 celle</text>
+            <text x="220" y="117" text-anchor="middle" font-family="DM Sans" font-size="6" fill="rgba(240,200,80,.6)">1 µm</text>
+            <!-- Diffusjons-piler rundt kapillær -->
+            <g stroke="rgba(240,200,80,.3)" stroke-width="1" fill="none">
+              <line x1="212" y1="86" x2="208" y2="76"/><line x1="220" y1="84" x2="220" y2="74"/>
+              <line x1="228" y1="86" x2="232" y2="76"/>
+              <line x1="212" y1="134" x2="208" y2="144"/><line x1="220" y1="136" x2="220" y2="146"/>
+              <line x1="228" y1="134" x2="232" y2="144"/>
+            </g>
+            <text x="220" y="68" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,200,80,.5)">O₂ ut / CO₂ inn</text>
+            <text x="220" y="158" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,200,80,.5)">diffusjon</text>
+            <text x="220" y="166" text-anchor="middle" font-family="DM Sans" font-size="8.5" fill="rgba(240,200,80,.8)" font-weight="600">KAPILLÆR</text>
+            <text x="220" y="178" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,220,180,.4)">1 cellelag tykt</text>
+            <text x="220" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,220,180,.35)">All stoffutveksling</text>
+            <text x="140" y="212" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,180,.3)">100 000 km blodkar i menneskekroppen</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(240,120,50,.1);color:#f07832;border:1px solid rgba(240,120,50,.2)">🩺 Helse</div>
+          <h3 class="k-tittel">Hjerte- og karsykdommer</h3>
+          <p class="k-ingress">Hjerte- og karsykdommer er den vanligste dødsårsaken globalt – ansvarlig for 17,9 millioner dødsfall per år (WHO). De fleste er forebyggbare.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🫀</span><div><strong>Aterosklerose:</strong> Fettavleiringer (plakk) bygges opp i arterieveggen over år. Innsnevrer karet, øker blodtrykk og kan føre til blodpropp. Risikofaktorer: høyt LDL-kolesterol, røyking, diabetes, hypertensjon, overvekt og arvelighet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💔</span><div><strong>Hjerteinfarkt:</strong> Oppstår når en coronararterie blokkeres og hjertemuskelvev dør av oksygenmangel. Symptomer: brystsmerter som stråler til venstre arm/kjeve, kaldsvette, pustevansker. Hvert minutt uten behandling ødelegger mer hjertemuskel.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Hjerneslag:</strong> Enten blodpropp i hjernens kar (iskemisk, 85 %) eller brist i kar (hemorrhagisk, 15 %). Symptomer huskes med FAST: Face (ansiktsskjevhet), Arms (armsvakhet), Speech (taleproblemer), Time (ring 113 umiddelbart).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🩺</span><div><strong>Forebygging:</strong> Regelmessig trening (30 min moderat aktivitet 5×/uke) senker blodtrykk og styrker hjertmuskelen. Ikke-røyking, sunn kost (lite mettet fett, mye fiber) og stressmestring. Blodtrykk under 130/80 mmHg er målet.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,120,50,.6)" letter-spacing=".1em">ATEROSKLEROSE</text>
+            <!-- Sunn arterie -->
+            <text x="70" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,220,160,.6)" font-weight="600">SUNN ARTERIE</text>
+            <rect x="20" y="48" width="100" height="50" rx="25" fill="rgba(220,50,60,.06)" stroke="rgba(220,50,60,.3)" stroke-width="2"/>
+            <rect x="34" y="62" width="72" height="22" rx="11" fill="rgba(220,50,60,.2)" stroke="rgba(220,50,60,.5)" stroke-width="1"/>
+            <text x="70" y="76" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.6)">Full blodstrøm</text>
+            <text x="70" y="112" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,220,160,.5)">Åpen lumen · god sirkulasjon</text>
+            <!-- Syk arterie -->
+            <text x="210" y="40" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,120,50,.6)" font-weight="600">MED PLAKK</text>
+            <rect x="160" y="48" width="100" height="50" rx="25" fill="rgba(240,120,50,.06)" stroke="rgba(240,120,50,.35)" stroke-width="2"/>
+            <!-- Plakk innsnevring -->
+            <path d="M160,58 Q192,52 210,56 Q228,52 260,58" fill="rgba(240,180,60,.2)" stroke="rgba(240,180,60,.4)" stroke-width="1"/>
+            <path d="M160,88 Q192,94 210,90 Q228,94 260,88" fill="rgba(240,180,60,.2)" stroke="rgba(240,180,60,.4)" stroke-width="1"/>
+            <rect x="200" y="66" width="20" height="14" rx="7" fill="rgba(240,100,40,.3)" stroke="rgba(240,100,40,.6)" stroke-width="1"/>
+            <text x="210" y="112" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,120,50,.5)">Innsnevret · høyere trykk</text>
+            <!-- Faktorer -->
+            <rect x="10" y="130" width="260" height="114" rx="10" fill="rgba(240,120,50,.04)" stroke="rgba(240,120,50,.15)" stroke-width="1"/>
+            <text x="140" y="148" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,120,50,.7)" font-weight="600">Risikofaktorer</text>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(240,220,200,.55)">
+              <text x="30" y="165">🚬 Røyking</text>
+              <text x="30" y="180">🍔 Høyt LDL-kolesterol</text>
+              <text x="30" y="195">💊 Hypertensjon</text>
+              <text x="30" y="210">🍬 Diabetes</text>
+              <text x="150" y="165">❤️ Arvelighet</text>
+              <text x="150" y="180">⚖️ Overvekt</text>
+              <text x="150" y="195">😰 Stress</text>
+              <text x="150" y="210">🏃 Inaktivitet</text>
+            </g>
+            <text x="140" y="234" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,180,.3)">17,9 mill. dødsfall/år · #1 dødsårsak globalt (WHO)</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(220,50,60,.1);color:#dc323c;border:1px solid rgba(220,50,60,.2)">🏃 Aktivitet</div>
+          <h3 class="k-tittel">Sirkulasjon under fysisk aktivitet</h3>
+          <p class="k-ingress">Under hard trening øker hjertets minuttvolum fra 5 liter til 25 liter per minutt – fem ganger så mye. Kroppen omfordeler blodet radikalt.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">❤️</span><div><strong>Hjertets respons:</strong> Hjertefrekvensen øker fra ~70 til 180–200 slag/min. Slagvolumet øker fra 70 ml til 120+ ml. Minuttvolum = hjertefrekvens × slagvolum: hvile 70×70=4,9 L/min, maks ~190×130=24 L/min for trent person.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💪</span><div><strong>Redistribusjon av blod:</strong> I hvile får muskler 15–20 % av blodet. Under maks trening: 80–85 %. Blodstrøm til hud øker (kjøling). Til fordøyelses-organer og nyrer reduseres drastisk. Vasodilatasjon i aktive muskler via CO₂, O₂-mangel og melkesyre.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🫁</span><div><strong>VO₂max:</strong> Maksimalt oksygenopptak er det beste målet på kondisjon. Eliteutøvere: 80–90 mL O₂/kg/min. Gjennomsnittlig voksen: 35–45. Øker med 15–20 % ved regelmessig kondisjonstrening. Begrenset av hjertes pumpevolum.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Langtidseffekter av trening:</strong> Hjertet blir større og sterkere (kardiomegali er normalt hos idrettsutøvere). Hvilepuls synker – Lance Armstrong hadde 32 slag/min! Kapillærtetthet i muskler øker. Blodtrykk senkes. Risiko for hjerte-karsykdom reduseres med 30–35 %.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#100408"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(220,50,60,.6)" letter-spacing=".1em">HVILE vs. TRENING</text>
+            <!-- Y-akse -->
+            <line x1="40" y1="210" x2="40" y2="40" stroke="rgba(240,180,180,.2)" stroke-width="1"/>
+            <line x1="40" y1="210" x2="268" y2="210" stroke="rgba(240,180,180,.2)" stroke-width="1"/>
+            <!-- Hjertefrekvens -->
+            <text x="20" y="200" font-family="DM Sans" font-size="6.5" fill="rgba(220,50,60,.4)" text-anchor="middle">0</text>
+            <text x="20" y="155" font-family="DM Sans" font-size="6.5" fill="rgba(220,50,60,.4)" text-anchor="middle">70</text>
+            <text x="20" y="82" font-family="DM Sans" font-size="6.5" fill="rgba(220,50,60,.4)" text-anchor="middle">190</text>
+            <!-- Stolper hjertefrekvens -->
+            <rect x="60" y="155" width="40" height="55" fill="rgba(220,50,60,.25)" stroke="rgba(220,50,60,.5)" stroke-width="1" rx="3"/>
+            <text x="80" y="148" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,50,60,.6)">70/min</text>
+            <text x="80" y="222" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.45)">Hvile</text>
+            <rect x="110" y="82" width="40" height="128" fill="rgba(220,50,60,.4)" stroke="rgba(220,50,60,.7)" stroke-width="1" rx="3"/>
+            <text x="130" y="76" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#dc323c">190/min</text>
+            <text x="130" y="222" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.45)">Trening</text>
+            <!-- Minuttvolum -->
+            <rect x="168" y="185" width="40" height="25" fill="rgba(240,120,50,.2)" stroke="rgba(240,120,50,.5)" stroke-width="1" rx="3"/>
+            <text x="188" y="178" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,120,50,.6)">5 L/min</text>
+            <text x="188" y="222" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.45)">Hvile</text>
+            <rect x="218" y="102" width="40" height="108" fill="rgba(240,120,50,.4)" stroke="rgba(240,120,50,.7)" stroke-width="1" rx="3"/>
+            <text x="238" y="96" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#f07832">25 L/min</text>
+            <text x="238" y="222" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,180,.45)">Trening</text>
+            <!-- Labels -->
+            <text x="100" y="36" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,50,60,.6)" font-weight="600">Hjertefrekvens</text>
+            <text x="210" y="36" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,120,50,.6)" font-weight="600">Minuttvolum</text>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,180,.3)">VO₂max øker 15–20 % med regelmessig trening</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide hel">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(240,120,50,.1);color:#f07832;border:1px solid rgba(240,120,50,.2)">📋 LK20</div>
+          <h3 class="k-tittel">Sammendrag og kompetansemål</h3>
+          <p class="k-ingress">Sirkulasjonssystemet er sentralt i LK20 kompetansemål for kropp og helse – og gir elevene grunnlag for å forstå livsstilsvalg og sykdomsforebygging.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🫀</span><div><strong>Dobbelkretssystemet:</strong> Hjertet er to pumper i ett. Den lille kretsen oksygenerer blodet i lungene. Den store kretsen distribuerer oksygenrikt blod til alle organer. Begge kretser gjennomføres med hvert hjerteslag (~70/min i hvile).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🩸</span><div><strong>Blodets funksjoner:</strong> Transport (O₂, næring, hormoner, CO₂, varme), forsvar (leukocytter, antistoffer), hemostase (blodplater) og homeostase (pH, temperatur, osmotisk trykk). Plasma = flytende del. 5 liter i menneskekroppen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🩺</span><div><strong>Livsstil og helse:</strong> Aterosklerose, hjerteinfarkt og hjerneslag forebygges med ikke-røyking, regelmessig trening, sunn kost og normale blodtrykksverdier. FAST-modellen for å oppdage hjerneslag er pensum.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏃</span><div><strong>Fysiologi og trening:</strong> Under trening øker minuttvolum 5× (fra 5 til 25 L/min). Langvarig trening gir større hjerte, lavere hvilepuls og økt kapillærtetthet. VO₂max er gullstandarden for kondisjonsmåling.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)">&#8592;</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sjekk forståelsen din</div><div class="sep-r"></div></div>
+
+  <div class="quiz-wrapper" id="quiz">
+    <div class="quiz-spm" id="q-spm"></div>
+    <div class="quiz-alts" id="q-alts"></div>
+    <div class="quiz-fb" id="q-fb"></div>
+    <div class="quiz-nav">
+      <button class="q-pil" id="q-prev" onclick="qGo(-1)" disabled>&#8592; Forrige</button>
+      <span class="q-teller" id="q-tell"></span>
+      <button class="q-pil" id="q-next" onclick="qGo(1)">Neste &#8594;</button>
+    </div>
+  </div>
+</div>
+<script>
+
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+
+
+const QUIZ_DATA = [{"spm": "Hva er dobbelkretssystemet?", "alts": ["Hjertet pumper blod to ganger per slag", "En liten krets til lungene og en stor krets til kroppen", "To separate hjerter i menneskekroppen", "Arterier og vener er doble"], "riktig": 1, "fork": "Dobbelkretssystemet betyr at hjertet pumper blod gjennom to separate kretsløp: den lille (lunge-) kretsen for oksygenering, og den store (kropp-) kretsen for distribusjon."}, {"spm": "Hva er hemoglobin?", "alts": ["Et enzym som bryter ned fett", "Et protein i røde blodceller som binder O₂", "En type hvit blodcelle", "Stoffet som får blod til å koagulere"], "riktig": 1, "fork": "Hemoglobin er proteinet i røde blodceller (erytrocytter) som binder oksygen (O₂) i lungene og frigir det i vevene der O₂-trykket er lavere."}, {"spm": "Hva er kapillærer?", "alts": ["Store kar som fører blod fra hjertet", "Blodkar med klaffar som hindrer tilbakestrøm", "Blodkar med ett cellelag tykt vegg – sted for stoffutveksling", "Blodkar kun i lungene"], "riktig": 2, "fork": "Kapillærer har vegger som er bare ett cellelag tykke (endotelceller). Her diffunderer O₂ og næring ut til celler, og CO₂ og avfall inn – all egentlig stoffutveksling skjer her."}, {"spm": "Hva er sinusknuten?", "alts": ["En blokkasje i koronararteriene", "Den naturlige pacemakeren i høyre forkammer", "En klaff mellom forkammer og hjertekammer", "Et blodkar i hjernen"], "riktig": 1, "fork": "Sinusknuten er en liten gruppe celler i høyre forkammer som genererer elektriske impulser ~70 ganger per minutt og styrer hele hjertets rytme."}, {"spm": "Hva skjer med blodfordelingen under trening?", "alts": ["Blodstrøm til fordøyelsesorganer øker", "Blodet fordeles jevnt til alle organer", "80–85 % av blodet går til aktive muskler", "Hjernen får mer blod for konsentrasjon"], "riktig": 2, "fork": "Under hard trening omfordeles blodet dramatisk – opptil 85 % kanaliseres til aktive muskler via vasodilatasjon. Blodstrøm til fordøyelsesorganer og nyrer reduseres kraftig."}, {"spm": "Hva er FAST-modellen?", "alts": ["En metode for å måle blodtrykk hjemme", "Akronym for å gjenkjenne symptomer på hjerneslag", "Kostholdsplan for hjertepasiententer", "Treningsprogram for hjerterehab."], "riktig": 1, "fork": "FAST: Face (ansiktsskjevhet), Arms (armsvakhet), Speech (taleproblemer), Time (ring 113 umiddelbart). Hvert minutt uten behandling ved hjerneslag ødelegger hjerneceller."}, {"spm": "Hva er minuttvolumet til hjertet i hvile?", "alts": ["1–2 liter per minutt", "5 liter per minutt", "15 liter per minutt", "25 liter per minutt"], "riktig": 1, "fork": "I hvile pumper hjertet ca. 5 liter per minutt (70 slag × 70 mL/slag = 4 900 mL). Under hard trening kan dette øke til 25 liter per minutt hos godt trente."}, {"spm": "Hva er aterosklerose?", "alts": ["En betennelse i hjerteklaffen", "Fettavleiringer i arterieveggen som innsnevrer lumen", "En arytmi i hjerterytmen", "Blodmangel pga. jernmangel"], "riktig": 1, "fork": "Aterosklerose er opphoping av fettplakk i arterieveggen over år. Det innsnevrer blodkaret, øker blodtrykket og kan til slutt føre til hjerteinfarkt eller hjerneslag."}];
+let qCur = 0, qSvar = Array(QUIZ_DATA.length).fill(null);
+function visQ(i) {
+  const q = QUIZ_DATA[i];
+  document.getElementById('q-spm').textContent = (i+1) + '. ' + q.spm;
+  const altsEl = document.getElementById('q-alts');
+  altsEl.innerHTML = '';
+  q.alts.forEach((a, j) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-alt'; b.textContent = a;
+    if (qSvar[i] !== null) {
+      b.disabled = true;
+      if (j === q.riktig) b.classList.add('riktig');
+      else if (j === qSvar[i]) b.classList.add('feil');
+    } else { b.onclick = () => svarQ(i, j); }
+    altsEl.appendChild(b);
+  });
+  const fb = document.getElementById('q-fb');
+  if (qSvar[i] !== null) {
+    fb.textContent = (qSvar[i] === q.riktig ? '✅ ' : '❌ ') + q.fork;
+    fb.className = 'quiz-fb ' + (qSvar[i] === q.riktig ? 'riktig' : 'feil');
+  } else { fb.textContent = ''; fb.className = 'quiz-fb'; }
+  document.getElementById('q-tell').textContent = (i+1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('q-prev').disabled = i === 0;
+  document.getElementById('q-next').disabled = i === QUIZ_DATA.length - 1;
+}
+function svarQ(i, j) {
+  qSvar[i] = j; visQ(i);
+  const riktige = qSvar.filter((s,k) => s !== null && s === QUIZ_DATA[k].riktig).length;
+  if (window._skaplab_logg) window._skaplab_logg(
+    location.pathname.split('/').pop(), 'nat_sirkulasjon',
+    riktige / QUIZ_DATA.length * 100, QUIZ_DATA.length, riktige, null, null);
+}
+function qGo(d) { qCur = Math.max(0, Math.min(QUIZ_DATA.length-1, qCur+d)); visQ(qCur); }
+visQ(0);
+
+</script>
+</body>
+</html>

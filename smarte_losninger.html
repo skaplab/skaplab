@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Smarte løsninger</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020814;--surface:#060c18;--card:#0a1020;--border:rgba(64,128,255,.07);
+  --text:#e0e8ff;--dim:rgba(224,232,255,.3);
+  --accent:#4080ff;--accent2:#60c8a0;--accent3:#f0c840;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(64,128,255,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,200,160,.02),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+
+/* QUIZ */
+.quiz-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.quiz-spm{font-family:var(--font-d);font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.quiz-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.quiz-alt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  font-size:.84rem;color:var(--text);text-align:left;transition:all .18s;width:100%}
+.quiz-alt:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+.quiz-alt.riktig{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.quiz-alt.feil{border-color:#f05050;background:rgba(240,80,80,.08);color:#f08080}
+.quiz-alt:disabled{cursor:default}
+.quiz-fb{font-size:.82rem;line-height:1.65;padding:10px 14px;border-radius:9px;min-height:24px;margin-bottom:4px}
+.quiz-fb.riktig{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)}
+.quiz-fb.feil{background:rgba(240,80,80,.07);color:#f08080;border:1px solid rgba(240,80,80,.15)}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.q-pil{padding:8px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-d);font-style:italic;font-size:.85rem;color:var(--text);transition:all .18s}
+.q-pil:hover{border-color:var(--accent);color:var(--accent)}
+.q-pil:disabled{opacity:.3;cursor:default}
+.q-teller{font-size:.75rem;color:var(--dim);font-family:var(--font-d);font-style:italic}
+
+:root{--accent-rgb:64,128,255;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Smarte løsninger</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Teknologi · Digitalisering · LK20</div>
+    <h1>Smarte løsninger<br><em>smarttelefon, AI og bærekraftig teknologi</em></h1>
+    <p class="hero-sub">Fra 19 milliarder transistorer i lomma til AI, smarte byer og CRISPR – teknologien som former fremtiden og krever kritisk forståelse</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(64,128,255,.1);color:#4080ff;border:1px solid rgba(64,128,255,.2)">📱 Teknologi</div>
+          <h3 class="k-tittel">Smarttelefonen – et laboratorium i lomma</h3>
+          <p class="k-ingress">Smarttelefonen er den hurtigst adopterte teknologien i historien – fra null til 5 milliarder brukere på 15 år. Den inneholder mer datakraft enn NASA hadde i 1969, og 30+ avanserte sensorer.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">💻</span><div><strong>Prosessor:</strong> En moderne smarttelefon-chip (f.eks. Apple A17 Pro) har 19 milliarder transistorer på 3 nm prosess. Transistorer er av og til-brytere for elektriske signaler. CPU, GPU, Neural Engine og modem på én chip – og den er raskere enn superdatamaskinen Cray-1 fra 1976.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📡</span><div><strong>Kommunikasjon:</strong> 5G: opptil 10 Gbit/s, latens 1 ms. WiFi 6E: opptil 9,6 Gbit/s. Bluetooth 5.3: 2 Mbit/s over 240 m. NFC (Near Field Communication): brukt til betaling, 10 cm rekkevidde. GPS: triangulerer via minst 4 av 30 satellitter, ±3–5 m nøyaktighet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔍</span><div><strong>Sensorer:</strong> Akselerometer (bevegelse og tyngdekraft), gyroskop (rotasjon), magnetometer (kompass), barometer (lufttrykk/høyde), lyssensor (lysstyrke), nærhetssensor (slukker skjermen ved øret), fingeravtrykk, ansiktsgjenkjenning, puls (PPG) og BlO₂-sensor.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📷</span><div><strong>Kameraet:</strong> Moderne mobilkameraer konkurrerer med speilreflekskameraer. Computational photography: HDR, nattmodus, portrettmodus og AI-skjerping gjøres av prosessoren. LIDAR-scanner (dybdesensor) i Pro-modeller er det samme prinsippet som autonome biler bruker.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="280" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,128,255,.6)" letter-spacing=".1em">SENSORER I EN SMARTTELEFON</text>
+            <!-- Telefon-silhuett -->
+            <rect x="104" y="28" width="72" height="130" rx="12" fill="rgba(64,128,255,.06)" stroke="rgba(64,128,255,.3)" stroke-width="1.5"/>
+            <!-- Skjerm -->
+            <rect x="110" y="40" width="60" height="100" rx="8" fill="rgba(64,128,255,.04)" stroke="rgba(64,128,255,.15)" stroke-width="1"/>
+            <!-- Piler til sensorer rundt -->
+            <!-- GPS topp -->
+            <line x1="140" y1="28" x2="140" y2="14" stroke="rgba(64,128,255,.3)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="140" y="10" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,128,255,.6)">📡 GPS</text>
+            <!-- Akselerometer venstre topp -->
+            <line x1="104" y1="58" x2="64" y2="48" stroke="rgba(96,200,160,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="40" y="44" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.6)">📐 Aksel.</text>
+            <!-- Gyroskop venstre -->
+            <line x1="104" y1="80" x2="60" y2="76" stroke="rgba(200,120,255,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="36" y="73" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,120,255,.6)">🔄 Gyro</text>
+            <!-- Kamera topp-høyre -->
+            <line x1="170" y1="48" x2="218" y2="38" stroke="rgba(240,180,60,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="236" y="35" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,60,.6)">📷 Kamera</text>
+            <!-- NFC -->
+            <line x1="176" y1="100" x2="218" y2="96" stroke="rgba(64,200,240,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="238" y="93" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,200,240,.6)">💳 NFC</text>
+            <!-- Barometer -->
+            <line x1="176" y1="120" x2="218" y2="126" stroke="rgba(240,100,80,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="240" y="123" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,100,80,.6)">🌡️ Baro.</text>
+            <!-- Fingeravtrykk bunn -->
+            <line x1="140" y1="158" x2="140" y2="172" stroke="rgba(64,128,255,.25)" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="140" y="180" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,128,255,.6)">👆 Fingeravtrykk</text>
+            <!-- Transistorer fakta -->
+            <rect x="14" y="200" width="252" height="68" rx="8" fill="rgba(64,128,255,.04)" stroke="rgba(64,128,255,.15)" stroke-width="1"/>
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(64,128,255,.7)" font-weight="600">Prosessorkraft – historisk perspektiv</text>
+            <text x="140" y="232" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.45)">1969 NASA-datamaskin: ~10 kHz · 4 kB RAM</text>
+            <text x="140" y="246" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.4)">2024 Smarttelefon: ~3 GHz · 8 GB RAM</text>
+            <text x="140" y="260" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.35)">Forbedring: 1 milliard ganger kraftigere</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(64,128,255,.1);color:#4080ff;border:1px solid rgba(64,128,255,.2)">🏠 IoT</div>
+          <h3 class="k-tittel">Smart hjem og tingenes internett (IoT)</h3>
+          <p class="k-ingress">Det er over 15 milliarder tilkoblede enheter i verden – og antallet tredobles innen 2030. Hjemmet, bilen og kroppen din er i ferd med å bli en sammenhengende digital organisme.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Smart termostater:</strong> Nest og Google Home lærer mønstre og optimerer oppvarming. Sparer gjennomsnittlig 10–15 % energi. Kommuniserer med strømnett for å redusere belastning i toppbelastningsperioder (demand response). Integrasjon med sol- og varmepumper.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔒</span><div><strong>Smart sikkerhet:</strong> Bevegelsessensorer, smarte låser, kameraer med AI-analyse. Bevegelsesdeteksjon skiller mellom mennesker, dyr og kjøretøy. Ansiktsgjenkjenning åpner dør. Problematikk: data sendes til cloud-servere (hvem eier dataene?) og kan hackes.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Smart energi:</strong> Smarte strømmålere registrerer forbruk i sanntid og kommuniserer med nettselskapet. Hjemmeenergilagring (Tesla Powerwall) + sol + smart nett: nettavlasting og spotprisoptimering. I Norge er alle husstander pålagt smart strømmåler (AMS) siden 2018.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔐</span><div><strong>Personvern og sikkerhet:</strong> Smart-høyttalere lytter kontinuerlig etter aktiveringsord. Hvert tilkoblet device er et potensielt angrepspunkt. Botnet-angrep bruker usikre IoT-enheter (som babykameraer og rutere) til DDoS-angrep. GDPR krever datainnhentingssamtykke i EU/EØS.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,128,255,.6)" letter-spacing=".1em">SMART HJEM – NETTVERK</text>
+            <!-- Hub i sentrum -->
+            <circle cx="140" cy="128" r="22" fill="rgba(64,128,255,.15)" stroke="rgba(64,128,255,.5)" stroke-width="2"/>
+            <text x="140" y="124" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#4080ff" font-weight="600">WiFi</text>
+            <text x="140" y="136" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#4080ff" font-weight="600">Router</text>
+            <!-- WiFi-ringer -->
+            <circle cx="140" cy="128" r="40" fill="none" stroke="rgba(64,128,255,.15)" stroke-width="1" stroke-dasharray="3,3"/>
+            <circle cx="140" cy="128" r="65" fill="none" stroke="rgba(64,128,255,.1)" stroke-width="1" stroke-dasharray="3,3"/>
+            <!-- Enheter -->
+            <g>
+              <circle cx="140" cy="60" r="16" fill="rgba(240,120,40,.1)" stroke="rgba(240,120,40,.4)" stroke-width="1.2"/>
+              <text x="140" y="58" text-anchor="middle" font-family="DM Sans" font-size="10">🌡️</text>
+              <text x="140" y="85" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,120,40,.6)">Termostat</text>
+            </g>
+            <line x1="140" y1="76" x2="140" y2="106" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <g>
+              <circle cx="208" cy="94" r="16" fill="rgba(96,200,160,.1)" stroke="rgba(96,200,160,.4)" stroke-width="1.2"/>
+              <text x="208" y="92" text-anchor="middle" font-family="DM Sans" font-size="10">🔒</text>
+              <text x="208" y="119" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.6)">Smart lås</text>
+            </g>
+            <line x1="196" y1="104" x2="162" y2="118" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <g>
+              <circle cx="220" cy="168" r="16" fill="rgba(200,100,200,.1)" stroke="rgba(200,100,200,.4)" stroke-width="1.2"/>
+              <text x="220" y="166" text-anchor="middle" font-family="DM Sans" font-size="10">📷</text>
+              <text x="220" y="193" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,100,200,.6)">Kamera</text>
+            </g>
+            <line x1="206" y1="162" x2="162" y2="140" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <g>
+              <circle cx="140" cy="196" r="16" fill="rgba(64,208,240,.1)" stroke="rgba(64,208,240,.4)" stroke-width="1.2"/>
+              <text x="140" y="194" text-anchor="middle" font-family="DM Sans" font-size="10">⚡</text>
+              <text x="140" y="221" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.6)">Strømmåler</text>
+            </g>
+            <line x1="140" y1="180" x2="140" y2="150" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <g>
+              <circle cx="60" cy="168" r="16" fill="rgba(240,200,60,.1)" stroke="rgba(240,200,60,.4)" stroke-width="1.2"/>
+              <text x="60" y="166" text-anchor="middle" font-family="DM Sans" font-size="10">🔊</text>
+              <text x="60" y="193" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.6)">Høyttaler</text>
+            </g>
+            <line x1="74" y1="162" x2="118" y2="140" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <g>
+              <circle cx="72" cy="94" r="16" fill="rgba(240,80,80,.1)" stroke="rgba(240,80,80,.4)" stroke-width="1.2"/>
+              <text x="72" y="92" text-anchor="middle" font-family="DM Sans" font-size="10">☀️</text>
+              <text x="72" y="119" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,80,80,.6)">Solceller</text>
+            </g>
+            <line x1="84" y1="104" x2="118" y2="118" stroke="rgba(64,128,255,.2)" stroke-width="1.5"/>
+            <text x="140" y="244" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.3)">15+ milliarder IoT-enheter globalt i 2024</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,160,.1);color:#60c8a0;border:1px solid rgba(96,200,160,.2)">🤖 AI</div>
+          <h3 class="k-tittel">Kunstig intelligens og maskinlæring</h3>
+          <p class="k-ingress">AI er ikke lenger science fiction – den er i mobiltelefonen din, strømmeplattformen, trafikklyset og røntgenapparatet. Maskinlæring er grunnprinsippet bak det meste.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>Nevrale nettverk:</strong> Inspirert av hjernens nevroner. Lag av matematiske funksjoner («nevroner») som justeres under trening. Dype nettverk (deep learning) med hundrevis av lag kan gjenkjenne bilder, tale og tekst bedre enn mennesker i mange oppgaver.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Trening:</strong> Et AI-system trenes på enorme datasett. ChatGPT ble trent på ~45 TB tekst. Under trening justeres milliarder av parametere (vekter) via backpropagation og gradientnedstigning. GPT-4 har anslagsvis 1 billion parametere. Treningen koster millioner av dollar.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏥</span><div><strong>Medisinsk AI:</strong> Google DeepMind AI oppdager øyesykdommer like godt som legespesialister. AI analyserer mammografi og CT-bilder for kreft. AlphaFold løste proteinfoldingproblemet (50 år gammelt biologisk problem) i 2020 og la ut strukturen til alle kjente proteiner.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Etikk og bias:</strong> AI lærer av data – og dataene kan inneholde menneskelige fordommer. Ansiktsgjenkjenning hadde opprinnelig langt lavere nøyaktighet for mørk hud (utrent på hvite ansikter). Autonome biler: hvis ulykkelig valg er uunngåelig, hvem har ansvar? AI-lovgivning (EU AI Act) forsøker å regulere dette.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,160,.6)" letter-spacing=".1em">NEVRALT NETTVERK</text>
+            <!-- Input lag -->
+            <text x="36" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,160,.5)">Input</text>
+            <g fill="rgba(96,200,160,.2)" stroke="rgba(96,200,160,.45)" stroke-width="1.2">
+              <circle cx="36" cy="60" r="10"/><circle cx="36" cy="90" r="10"/>
+              <circle cx="36" cy="120" r="10"/><circle cx="36" cy="150" r="10"/>
+              <circle cx="36" cy="180" r="10"/>
+            </g>
+            <!-- Skjult lag 1 -->
+            <text x="100" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(64,128,255,.5)">Skjult 1</text>
+            <g fill="rgba(64,128,255,.18)" stroke="rgba(64,128,255,.4)" stroke-width="1.2">
+              <circle cx="100" cy="68" r="10"/><circle cx="100" cy="98" r="10"/>
+              <circle cx="100" cy="128" r="10"/><circle cx="100" cy="158" r="10"/>
+            </g>
+            <!-- Skjult lag 2 -->
+            <text x="164" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,200,.5)">Skjult 2</text>
+            <g fill="rgba(200,100,200,.18)" stroke="rgba(200,100,200,.4)" stroke-width="1.2">
+              <circle cx="164" cy="78" r="10"/><circle cx="164" cy="108" r="10"/>
+              <circle cx="164" cy="138" r="10"/><circle cx="164" cy="168" r="10"/>
+            </g>
+            <!-- Output -->
+            <text x="228" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,60,.5)">Output</text>
+            <g fill="rgba(240,180,60,.2)" stroke="rgba(240,180,60,.45)" stroke-width="1.2">
+              <circle cx="228" cy="88" r="10"/><circle cx="228" cy="118" r="10"/>
+              <circle cx="228" cy="148" r="10"/>
+            </g>
+            <!-- Forbindelser input→h1 -->
+            <g stroke="rgba(96,200,160,.1)" stroke-width=".8" fill="none">
+              <line x1="46" y1="60" x2="90" y2="68"/><line x1="46" y1="60" x2="90" y2="98"/>
+              <line x1="46" y1="90" x2="90" y2="68"/><line x1="46" y1="90" x2="90" y2="98"/>
+              <line x1="46" y1="90" x2="90" y2="128"/>
+              <line x1="46" y1="120" x2="90" y2="98"/><line x1="46" y1="120" x2="90" y2="128"/>
+              <line x1="46" y1="120" x2="90" y2="158"/>
+              <line x1="46" y1="150" x2="90" y2="128"/><line x1="46" y1="150" x2="90" y2="158"/>
+              <line x1="46" y1="180" x2="90" y2="158"/>
+            </g>
+            <!-- h1→h2 -->
+            <g stroke="rgba(64,128,255,.1)" stroke-width=".8" fill="none">
+              <line x1="110" y1="68" x2="154" y2="78"/><line x1="110" y1="68" x2="154" y2="108"/>
+              <line x1="110" y1="98" x2="154" y2="78"/><line x1="110" y1="98" x2="154" y2="108"/>
+              <line x1="110" y1="98" x2="154" y2="138"/>
+              <line x1="110" y1="128" x2="154" y2="108"/><line x1="110" y1="128" x2="154" y2="138"/>
+              <line x1="110" y1="128" x2="154" y2="168"/>
+              <line x1="110" y1="158" x2="154" y2="138"/><line x1="110" y1="158" x2="154" y2="168"/>
+            </g>
+            <!-- h2→output -->
+            <g stroke="rgba(200,100,200,.1)" stroke-width=".8" fill="none">
+              <line x1="174" y1="78" x2="218" y2="88"/><line x1="174" y1="78" x2="218" y2="118"/>
+              <line x1="174" y1="108" x2="218" y2="88"/><line x1="174" y1="108" x2="218" y2="118"/>
+              <line x1="174" y1="108" x2="218" y2="148"/>
+              <line x1="174" y1="138" x2="218" y2="118"/><line x1="174" y1="138" x2="218" y2="148"/>
+              <line x1="174" y1="168" x2="218" y2="148"/>
+            </g>
+            <!-- Forklaring -->
+            <text x="140" y="205" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.4)">Trenes på data: justerer millioner av «vekter»</text>
+            <text x="140" y="219" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.35)">til feilraten er lav nok</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.3)">GPT-4: ~1 billion parametere</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(64,208,240,.1);color:#40d0f0;border:1px solid rgba(64,208,240,.2)">🏙️ Smart by</div>
+          <h3 class="k-tittel">Smart by og fremtidens infrastruktur</h3>
+          <p class="k-ingress">Smarte byer bruker data og teknologi til å effektivisere trafikk, energi, vann og avfall – og gjøre byene mer bærekraftige. Oslo er et av verdens ledende smartbyprosjekter.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚦</span><div><strong>Smart trafikk:</strong> Sensorer og kameraer i veien teller biler og justerer lyskryssenes tider i sanntid. Oslo reduserte gjennomsnittlig ventetid med 11 % med adaptiv trafikkstyring. Trondheim har dynamisk ruteprising på innfartsveier basert på belastning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>Smart belysning:</strong> LED-gatelys dimmes automatisk basert på tidspunkt og bevegelsessensor. Kommuniserer via LoRaWAN (lav effekt, lang rekkevidde). Oslo sparte 65 % strøm på gatebelysning ved å bytte til smart LED. Sensorer rapporterer pærer som er gått.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🗑️</span><div><strong>Smart avfall:</strong> Søppelkasser med nivåsensorer rapporterer fyllingsgrad. Hentelastebilen optimerer rute basert på faktiske behov i stedet for fast rute. Oslo Havn bruker vakuumsugebasert avfallssystem under bakken. Reduserer kjørelengde med 30–40 %.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Smart energi:</strong> Fjernvarme styres dynamisk basert på vær og forbruksprognose. Energilagring (batterier) utjevner topper fra solenergi. Microgrids: bydeler som kan operere selvstendig ved nettbrudd. EU krever at alle nye bygg skal være nesten-nullenergibygg innen 2030.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,208,240,.6)" letter-spacing=".1em">SMART BY – OSLO</text>
+            <!-- Bysilhuett -->
+            <g fill="rgba(64,128,255,.08)" stroke="rgba(64,128,255,.25)" stroke-width="1">
+              <rect x="20" y="140" width="30" height="72"/><rect x="55" y="120" width="24" height="92"/>
+              <rect x="84" y="100" width="36" height="112"/><rect x="125" y="130" width="20" height="82"/>
+              <rect x="150" y="108" width="30" height="104"/><rect x="186" y="124" width="26" height="88"/>
+              <rect x="218" y="110" width="32" height="102"/><rect x="256" y="145" width="22" height="67"/>
+            </g>
+            <!-- Data-noder -->
+            <g fill="rgba(64,208,240,.2)" stroke="rgba(64,208,240,.5)" stroke-width="1.2">
+              <circle cx="35" cy="132" r="5"/><circle cx="67" cy="112" r="5"/>
+              <circle cx="102" cy="92" r="5"/><circle cx="135" cy="122" r="5"/>
+              <circle cx="165" cy="100" r="5"/><circle cx="199" cy="116" r="5"/>
+              <circle cx="234" cy="102" r="5"/>
+            </g>
+            <!-- Data-linjer mellom noder -->
+            <g stroke="rgba(64,208,240,.15)" stroke-width="1" fill="none" stroke-dasharray="3,2">
+              <line x1="35" y1="132" x2="67" y2="112"/><line x1="67" y1="112" x2="102" y2="92"/>
+              <line x1="102" y1="92" x2="135" y2="122"/><line x1="135" y1="122" x2="165" y2="100"/>
+              <line x1="165" y1="100" x2="199" y2="116"/><line x1="199" y1="116" x2="234" y2="102"/>
+            </g>
+            <!-- Sentral datahub -->
+            <circle cx="140" cy="56" r="22" fill="rgba(64,208,240,.12)" stroke="rgba(64,208,240,.45)" stroke-width="1.5"/>
+            <text x="140" y="52" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#40d0f0" font-weight="600">Smart by</text>
+            <text x="140" y="64" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#40d0f0" font-weight="600">platform</text>
+            <!-- Forbindelser til hub -->
+            <g stroke="rgba(64,208,240,.12)" stroke-width="1" stroke-dasharray="2,3">
+              <line x1="102" y1="92" x2="124" y2="68"/><line x1="165" y1="100" x2="156" y2="70"/>
+            </g>
+            <!-- Ikon-labels -->
+            <text x="35" y="120" text-anchor="middle" font-family="DM Sans" font-size="8">🚦</text>
+            <text x="67" y="100" text-anchor="middle" font-family="DM Sans" font-size="8">💡</text>
+            <text x="102" y="80" text-anchor="middle" font-family="DM Sans" font-size="8">🗑️</text>
+            <text x="165" y="88" text-anchor="middle" font-family="DM Sans" font-size="8">☀️</text>
+            <text x="199" y="104" text-anchor="middle" font-family="DM Sans" font-size="8">🌡️</text>
+            <text x="234" y="90" text-anchor="middle" font-family="DM Sans" font-size="8">📡</text>
+            <text x="140" y="226" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.4)">Oslo: −65 % gatelysstøm · −30 % søppelkjøring</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.3)">Smart by = data + sensorer + automatisering</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(64,128,255,.1);color:#4080ff;border:1px solid rgba(64,128,255,.2)">🌱 Bærekraft</div>
+          <h3 class="k-tittel">Teknologi og bærekraftig utvikling</h3>
+          <p class="k-ingress">Teknologi kan både forsterke og løse miljøproblemer. Det grønne skiftet er avhengig av digitale løsninger – men digitaliseringen selv har et betydelig karbonfotavtrykk.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">☀️</span><div><strong>Fornybar energi og digitalisering:</strong> AI optimerer vindturbinenes vinkel i sanntid (+20 % energi). Smart nett balanserer sol og vind med etterspørsel. Blockchain-baserte energimarkeder lar huseiere selge solkraft direkte til naboer uten mellommann.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Klimaovervåking:</strong> 3 000+ satelitter overvåker metan-lekkasjer fra oljebrønner, avskoging i Amazonas og isbreers tilbakegang i sanntid. ESAs Sentinel-satellitter er åpne data – brukt av forskere, NGO-er og regjeringer. AI analyserer milliarder av pikselbilder automatisk.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔋</span><div><strong>Batterirevolusjonen:</strong> Litiumbatterier har blitt 97 % billigere siden 1991 (Wrights lov: pris halveres for hvert doblet volum). Solide elektrolyttbatterier (solid-state) er neste steg – tryggere og høyere energitetthet. Natriumionbatterier (billigere råvarer) er i produksjon fra 2024.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💡</span><div><strong>Teknologiens karbonfotavtrykk:</strong> Globalt IT-sektor: ~4 % av globale CO₂-utslipp (som luftfart). Trening av store AI-modeller kan bruke mer strøm enn én amerikaner på et år. Kryptovaluta (Bitcoin) bruker like mye strøm som et land som Argentina. Data-sentre bruker 200 TWh per år globalt.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,128,255,.6)" letter-spacing=".1em">BATTERIPRISER 1991–2024</text>
+            <!-- Graf -->
+            <line x1="36" y1="200" x2="268" y2="200" stroke="rgba(220,232,255,.15)" stroke-width="1"/>
+            <line x1="36" y1="200" x2="36" y2="40" stroke="rgba(220,232,255,.15)" stroke-width="1"/>
+            <!-- Y-akse labels (USD/kWh) -->
+            <text x="30" y="44" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.35)" text-anchor="end">1200</text>
+            <text x="30" y="100" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.35)" text-anchor="end">600</text>
+            <text x="30" y="160" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.35)" text-anchor="end">150</text>
+            <text x="30" y="200" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.35)" text-anchor="end">0</text>
+            <!-- Priskurve (eksponentiell nedgang) -->
+            <path d="M46,44 C60,44 80,54 100,72 C120,90 140,120 160,150 C175,170 190,180 210,188 C230,193 248,196 260,197" fill="none" stroke="rgba(64,128,255,.6)" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Scatter points -->
+            <g fill="rgba(64,128,255,.5)" stroke="rgba(64,128,255,.7)" stroke-width="1">
+              <circle cx="46" cy="44" r="4"/>
+              <circle cx="78" cy="56" r="4"/>
+              <circle cx="112" cy="80" r="4"/>
+              <circle cx="148" cy="130" r="4"/>
+              <circle cx="180" cy="165" r="4"/>
+              <circle cx="210" cy="186" r="4"/>
+              <circle cx="248" cy="194" r="4"/>
+            </g>
+            <!-- Labels på aksepunkter -->
+            <text x="46" y="38" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,232,255,.4)">1991</text>
+            <text x="248" y="188" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,128,255,.6)">2024</text>
+            <!-- Priser -->
+            <text x="56" y="55" font-family="DM Sans" font-size="7" fill="rgba(220,232,255,.4)">$1 200</text>
+            <text x="248" y="210" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(64,128,255,.7)" font-weight="600">~$53/kWh</text>
+            <!-- Pil ned -->
+            <text x="165" y="100" font-family="DM Sans" font-size="8" fill="rgba(96,200,160,.6)">↘ −97 %</text>
+            <text x="165" y="112" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,160,.5)">på 33 år</text>
+            <!-- X-akse labels -->
+            <text x="46" y="212" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.3)">91</text>
+            <text x="112" y="212" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.3)">00</text>
+            <text x="180" y="212" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.3)">10</text>
+            <text x="248" y="212" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(220,232,255,.3)">24</text>
+            <text x="140" y="234" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,232,255,.3)">Wrights lov: pris halveres ved dobling av produksjonsvolum</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(200,100,200,.1);color:#c864c8;border:1px solid rgba(200,100,200,.2)">🔬 Fremtid</div>
+          <h3 class="k-tittel">CRISPR, mRNA og hjernemaskin-grensesnitt</h3>
+          <p class="k-ingress">Teknologier som inntil nylig var science fiction er nå virkelighet. Tre gjennombrudd som kan forandre menneskeheten:</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">✂️</span><div><strong>CRISPR-Cas9 (Nobel 2020):</strong> «Gensaksen» lar forskere klippe og redigere DNA med presisjon. Behandler sigdcelleanemi og leukemi (godkjent i USA 2023). Kan i prinsippet fjerne arvelige sykdommer. Etisk debatt: hvem bestemmer hva som er «normal» genetikk? Designerbabyer?</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💉</span><div><strong>mRNA-vaksiner:</strong> Injiserer ikke virus – men oppskriften (mRNA) på et protein. Cellen produserer proteinet og immunforsvaret lærer å angripe det. BioNTech/Pfizer og Moderna COVID-vaksiner utviklet på rekordtid (10 måneder vs. normalt 10–15 år). Nå utforskes mRNA-vaksiner mot kreft, HIV og influensa.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧠</span><div><strong>BCI – Brain-Computer Interface:</strong> Neuralink (Elon Musk) implanterte chips i menneskehjernen i 2024. Tankekontrolf av datamus og tastatur er demonstrert. Cochlea-implantet er en allerede etablert BCI som gir hørsel til døve. Fremtid: minne-implantater, behandling av depresjon og Parkinsons.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Teknologi og samfunn:</strong> Disse teknologiene aktualiserer grunnleggende spørsmål: Hvem eier genomet ditt? Har du rett til å ikke bli genetisk screenet? Kan BCI brukes til overvåking? Hvem har råd til genbehandling? LK20 legger vekt på teknologiforståelse og kritisk tenkning – nettopp for slike avveininger.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#020814"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(200,100,200,.6)" letter-spacing=".1em">FREMTIDENS TEKNOLOGIER</text>
+            <!-- CRISPR -->
+            <rect x="10" y="30" width="120" height="90" rx="8" fill="rgba(96,200,160,.05)" stroke="rgba(96,200,160,.25)" stroke-width="1.2"/>
+            <text x="70" y="48" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(96,200,160,.7)" font-weight="600">✂️ CRISPR</text>
+            <!-- DNA + klipp -->
+            <path d="M30,65 C50,55 50,75 70,65 C90,55 90,75 110,65" fill="none" stroke="rgba(96,200,160,.4)" stroke-width="1.5"/>
+            <path d="M30,80 C50,70 50,90 70,80 C90,70 90,90 110,80" fill="none" stroke="rgba(96,200,160,.35)" stroke-width="1.5"/>
+            <g stroke="rgba(96,200,160,.5)" stroke-width="1.5">
+              <line x1="50" y1="60" x2="50" y2="85"/><line x1="90" y1="60" x2="90" y2="85"/>
+            </g>
+            <!-- Sakser-symbol -->
+            <text x="70" y="103" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.5)">Kutter DNA presist</text>
+            <text x="70" y="113" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.4)">Nobel 2020</text>
+            <!-- mRNA -->
+            <rect x="150" y="30" width="120" height="90" rx="8" fill="rgba(64,128,255,.05)" stroke="rgba(64,128,255,.25)" stroke-width="1.2"/>
+            <text x="210" y="48" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(64,128,255,.7)" font-weight="600">💉 mRNA-vaksine</text>
+            <!-- mRNA streng -->
+            <path d="M162,68 L238,68" fill="none" stroke="rgba(64,128,255,.4)" stroke-width="2" stroke-linecap="round"/>
+            <!-- Ribosom produserer protein -->
+            <rect x="188" y="72" width="24" height="18" rx="5" fill="rgba(64,128,255,.2)" stroke="rgba(64,128,255,.5)" stroke-width="1"/>
+            <text x="200" y="84" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(64,128,255,.7)">ribo.</text>
+            <!-- Protein ut -->
+            <path d="M200,90 L200,103" stroke="rgba(240,180,60,.4)" stroke-width="1.5" marker-end="url(#bArr)"/>
+            <circle cx="200" cy="110" r="8" fill="rgba(240,180,60,.2)" stroke="rgba(240,180,60,.5)" stroke-width="1"/>
+            <text x="200" y="113" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,60,.7)">🛡️</text>
+            <!-- BCI -->
+            <rect x="10" y="136" width="120" height="90" rx="8" fill="rgba(200,100,200,.05)" stroke="rgba(200,100,200,.25)" stroke-width="1.2"/>
+            <text x="70" y="153" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,100,200,.7)" font-weight="600">🧠 BCI</text>
+            <ellipse cx="70" cy="185" rx="30" ry="24" fill="rgba(200,100,200,.1)" stroke="rgba(200,100,200,.35)" stroke-width="1"/>
+            <text x="70" y="183" text-anchor="middle" font-family="DM Sans" font-size="8">🧠</text>
+            <!-- Bluetooth-signal -->
+            <path d="M100,175 Q118,178 128,185" fill="none" stroke="rgba(200,100,200,.3)" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <text x="70" y="220" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,100,200,.5)">Tanke → digital</text>
+            <!-- Etikk boks -->
+            <rect x="150" y="136" width="120" height="90" rx="8" fill="rgba(240,180,60,.05)" stroke="rgba(240,180,60,.2)" stroke-width="1.2"/>
+            <text x="210" y="153" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(240,180,60,.65)" font-weight="600">⚖️ Etikk</text>
+            <g font-family="DM Sans" font-size="7" fill="rgba(255,248,224,.4)">
+              <text x="162" y="170">Hvem eier genomet?</text>
+              <text x="162" y="184">Designerbaby-grense?</text>
+              <text x="162" y="198">BCI og overvåking?</text>
+              <text x="162" y="212">Hvem har råd?</text>
+            </g>
+            <defs><marker id="bArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(240,180,60,.5)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide hel">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(64,128,255,.1);color:#4080ff;border:1px solid rgba(64,128,255,.2)">📋 LK20</div>
+          <h3 class="k-tittel">Smarte løsninger – sammendrag og LK20</h3>
+          <p class="k-ingress">Teknologiforståelse er en av de viktigste kompetansene for det 21. århundrede. LK20 vektlegger kritisk teknologisk tenkning – ikke bare bruk, men forståelse og vurdering av konsekvenser.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📱</span><div><strong>Smarttelefonen:</strong> 30+ sensorer, 19 milliarder transistorer, kommuniserer via 5G, WiFi, Bluetooth og NFC. 1 milliard ganger kraftigere enn NASA-datamaskinen fra 1969. Computational photography er et eksempel på AI integrert i hverdagsteknologi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏠</span><div><strong>Smart hjem og IoT:</strong> 15+ milliarder tilkoblede enheter. Termostater, belysning, sikkerhet og energistyring. GDPR regulerer datahåndtering. Sikkerhetssårbarheter i IoT-enheter er et voksende problem. Alle norske husstander har hatt smart strømmåler siden 2018.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🤖</span><div><strong>AI og maskinlæring:</strong> Nevrale nettverk trenes på store datasett. Brukes til bildediagnostikk, proteinfoldning (AlphaFold), tale og oversettelse. Bias i treningsdata er et etisk problem. EU AI Act er verdens første AI-reguleringslov.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌱</span><div><strong>Teknologi og bærekraft:</strong> Litiumpriser: −97 % på 33 år. AI optimerer fornybar energi. Men IT-sektoren: ~4 % av globale CO₂-utslipp. CRISPR, mRNA og BCI er fremtidens teknologier med enorme muligheter – og etiske dilemmaer som må diskuteres kritisk.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)">&#8592;</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sjekk forståelsen din</div><div class="sep-r"></div></div>
+
+  <div class="quiz-wrapper" id="quiz">
+    <div class="quiz-spm" id="q-spm"></div>
+    <div class="quiz-alts" id="q-alts"></div>
+    <div class="quiz-fb" id="q-fb"></div>
+    <div class="quiz-nav">
+      <button class="q-pil" id="q-prev" onclick="qGo(-1)" disabled>&#8592; Forrige</button>
+      <span class="q-teller" id="q-tell"></span>
+      <button class="q-pil" id="q-next" onclick="qGo(1)">Neste &#8594;</button>
+    </div>
+  </div>
+</div>
+<script>
+
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+
+
+const QUIZ_DATA = [{"spm": "Hva er IoT (tingenes internett)?", "alts": ["Et nytt internettprotokoll", "Nettverket av tilkoblede fysiske enheter som kommuniserer data", "Et program for å lage smarte apper", "En type kryptering for nettsikkerhet"], "riktig": 1, "fork": "IoT (Internet of Things) er nettverket av fysiske enheter – termostater, kameraer, biler, sensorer – som kommuniserer data via internett. Det er over 15 milliarder slike enheter globalt."}, {"spm": "Hva er maskinlæring?", "alts": ["Programmering der datamaskinen følger faste regler", "En metode der datamaskiner lærer mønstre fra data uten eksplisitt programmering", "En type robot som kan lære å gå", "Et program for å lage smarte leker"], "riktig": 1, "fork": "Maskinlæring er en gren av AI der datamaskiner trenes på datasett og justerer interne parametere til de klarer oppgaver som bildegjenkjenning, oversettelse og tekst uten eksplisitt programmering."}, {"spm": "Hva er kapasitetsfaktoren til kjernekraft?", "alts": ["~20 % (som sol)", "~35 % (som vind)", "~60 % (god, men variabelt)", "~90 % (stabil grunnlast)"], "riktig": 3, "fork": "Kjernekraftverk har en kapasitetsfaktor på ~90 % – de leverer strøm nesten hele tiden, uavhengig av vær. Dette gjør dem til en viktig stabil grunnlastkilde."}, {"spm": "Hva er CRISPR-Cas9?", "alts": ["En type smarttelefon-sensor", "Et genediterings-verktøy som kan klippe og endre DNA", "Et AI-system for medisinsk diagnose", "Et mRNA-basert vaksinesystem"], "riktig": 1, "fork": "CRISPR-Cas9 er et presist genediterings-system som kan klippe DNA på spesifikke steder og erstatte gener. Det ble tildelt Nobelprisen i kjemi i 2020 og er godkjent for behandling av sigdcelleanemi."}, {"spm": "Hva er forskjellen på mRNA-vaksiner og tradisjonelle vaksiner?", "alts": ["mRNA-vaksiner injiserer levende virus", "mRNA-vaksiner gir genmodifiserte celler", "mRNA-vaksiner gir cellen oppskriften på et protein – ikke virus selv", "mRNA-vaksiner inneholder ingen biologisk materiale"], "riktig": 2, "fork": "mRNA-vaksiner injiserer messenger-RNA, som gir cellen instruksjoner til å produsere et protein (f.eks. spike-proteinet fra SARS-CoV-2). Immunforsvaret lærer da å angripe proteinet. Inget virus introduseres."}, {"spm": "Hva er kapasitetsfaktoren til solenergi?", "alts": ["~20 % (avhenger av sol)", "~35 % (som vind)", "~70 % (ganske stabil)", "~90 % (svært stabil)"], "riktig": 0, "fork": "Sol har en kapasitetsfaktor på ca. 20 % fordi den bare produserer strøm når sola skinner. Det betyr at den ikke kan stå alene som grunnlastkilde uten energilagring."}, {"spm": "Hva beskriver Wrights lov for batterier?", "alts": ["Batterier mister halvparten av kapasiteten hvert år", "Batteriprisene halveres for hvert doblet produksjonsvolum", "Batterier dobler kapasiteten hvert 10. år", "Batterier blir billigere bare med ny kjemi"], "riktig": 1, "fork": "Wrights lov: kostnaden per enhet faller med en fast prosentandel for hver gang den kumulative produksjonen dobles. For litiumsbatterier har dette betydd −97 % prisfallet siden 1991."}, {"spm": "Hva er BCI (Brain-Computer Interface)?", "alts": ["Et program for å trene opp AI-systemer", "Et grensesnitt mellom hjerne og datamaskiner", "En type nettverksteknologi for smarte byer", "En metode for å analysere hjerneskanninger"], "riktig": 1, "fork": "BCI (Brain-Computer Interface) er teknologi som kobler hjerne direkte til datamaskiner. Cochleaimplantet for hørsel er et allerede etablert eksempel. Neuralink demonstrerte tanke-kontroll av datamus i 2024."}];
+let qCur = 0, qSvar = Array(QUIZ_DATA.length).fill(null);
+function visQ(i) {
+  const q = QUIZ_DATA[i];
+  document.getElementById('q-spm').textContent = (i+1) + '. ' + q.spm;
+  const altsEl = document.getElementById('q-alts');
+  altsEl.innerHTML = '';
+  q.alts.forEach((a, j) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-alt'; b.textContent = a;
+    if (qSvar[i] !== null) {
+      b.disabled = true;
+      if (j === q.riktig) b.classList.add('riktig');
+      else if (j === qSvar[i]) b.classList.add('feil');
+    } else { b.onclick = () => svarQ(i, j); }
+    altsEl.appendChild(b);
+  });
+  const fb = document.getElementById('q-fb');
+  if (qSvar[i] !== null) {
+    fb.textContent = (qSvar[i] === q.riktig ? '✅ ' : '❌ ') + q.fork;
+    fb.className = 'quiz-fb ' + (qSvar[i] === q.riktig ? 'riktig' : 'feil');
+  } else { fb.textContent = ''; fb.className = 'quiz-fb'; }
+  document.getElementById('q-tell').textContent = (i+1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('q-prev').disabled = i === 0;
+  document.getElementById('q-next').disabled = i === QUIZ_DATA.length - 1;
+}
+function svarQ(i, j) {
+  qSvar[i] = j; visQ(i);
+  const riktige = qSvar.filter((s,k) => s !== null && s === QUIZ_DATA[k].riktig).length;
+  if (window._skaplab_logg) window._skaplab_logg(
+    location.pathname.split('/').pop(), 'nat_teknologi',
+    riktige / QUIZ_DATA.length * 100, QUIZ_DATA.length, riktige, null, null);
+}
+function qGo(d) { qCur = Math.max(0, Math.min(QUIZ_DATA.length-1, qCur+d)); visQ(qCur); }
+visQ(0);
+
+</script>
+</body>
+</html>

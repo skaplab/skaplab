@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Kjernekraft</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#02090e;--surface:#060e14;--card:#0a1420;--border:rgba(64,208,240,.07);
+  --text:#e0f8ff;--dim:rgba(224,248,255,.3);
+  --accent:#40d0f0;--accent2:#60c864;--accent3:#f0c840;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(64,208,240,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,200,100,.02),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+
+/* QUIZ */
+.quiz-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.quiz-spm{font-family:var(--font-d);font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.quiz-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.quiz-alt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  font-size:.84rem;color:var(--text);text-align:left;transition:all .18s;width:100%}
+.quiz-alt:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+.quiz-alt.riktig{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.quiz-alt.feil{border-color:#f05050;background:rgba(240,80,80,.08);color:#f08080}
+.quiz-alt:disabled{cursor:default}
+.quiz-fb{font-size:.82rem;line-height:1.65;padding:10px 14px;border-radius:9px;min-height:24px;margin-bottom:4px}
+.quiz-fb.riktig{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)}
+.quiz-fb.feil{background:rgba(240,80,80,.07);color:#f08080;border:1px solid rgba(240,80,80,.15)}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.q-pil{padding:8px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-d);font-style:italic;font-size:.85rem;color:var(--text);transition:all .18s}
+.q-pil:hover{border-color:var(--accent);color:var(--accent)}
+.q-pil:disabled{opacity:.3;cursor:default}
+.q-teller{font-size:.75rem;color:var(--dim);font-family:var(--font-d);font-style:italic}
+
+:root{--accent-rgb:64,208,240;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Kjernekraft</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Fysikk · Energi · Stråling · LK20</div>
+    <h1>Kjernekraft<br><em>fisjon, stråling og atomets energi</em></h1>
+    <p class="hero-sub">Fra E=mc² og kjedereaksjoner til Tsjernobyl og norske medisinisotoper – atomkraftens teknologi, risiko og klimapotensial</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(64,208,240,.1);color:#40d0f0;border:1px solid rgba(64,208,240,.2)">⚛️ Fysikk</div>
+          <h3 class="k-tittel">Fisjon og E=mc²</h3>
+          <p class="k-ingress">Kjernekraft utnytter energien som frigjøres når tunge atomkjerner splittes (fisjon). Einsteins berømte formel forteller oss at selv en liten masse inneholder en enorm mengde energi.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>E = mc²:</strong> Energi = masse × lysets hastighet i kvadrat. c = 3 × 10⁸ m/s, så c² = 9 × 10¹⁶. 1 gram stoff inneholder 9 × 10¹³ joule – nok til å koke 21 millioner liter vann. Men bare en liten del frigjøres ved fisjon (0,1 % av massen).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💥</span><div><strong>Kjernefisjon:</strong> En nøytron treffer en U-235-kjerne. Kjernen splittes i to lettere kjerner (f.eks. Ba-141 og Kr-92) + 2–3 nye nøytroner + energi (200 MeV). De nye nøytronene kan treffe nye U-235-kjerner – kjedereaksjon.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Kritisk masse:</strong> Kjedereaksjonen selvopprettholder seg bare hvis nøytronene treffer nok andre kjerner. Kritisk masse for U-235: ~52 kg (uanriket geometri). Under kritisk masse: reaksjonen dør ut. Atombomben bruker superkritisk masse momentant.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Oppdagelseshistorien:</strong> Otto Hahn og Fritz Strassmann oppdaget fisjon i 1938. Lise Meitner ga den teoretiske forklaringen (og ble oversett av Nobel-komiteen). Manhattan-prosjektet (1942–45) utviklet de første atombombene – Hiroshima og Nagasaki 1945: 200 000 drepte.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="280" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,208,240,.6)" letter-spacing=".1em">KJERNEFISJON – KJEDEREAKSJON</text>
+            <!-- U-235 kjerne 1 -->
+            <circle cx="80" cy="90" r="18" fill="rgba(64,208,240,.15)" stroke="rgba(64,208,240,.5)" stroke-width="2"/>
+            <text x="80" y="87" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#40d0f0" font-weight="600">U-235</text>
+            <text x="80" y="99" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.6)">92p · 143n</text>
+            <!-- Nøytron inn -->
+            <circle cx="32" cy="90" r="6" fill="rgba(255,200,60,.4)" stroke="rgba(255,200,60,.7)" stroke-width="1.5"/>
+            <text x="32" y="105" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,200,60,.6)">n</text>
+            <line x1="40" y1="90" x2="62" y2="90" stroke="rgba(255,200,60,.4)" stroke-width="1.5" marker-end="url(#kArr)"/>
+            <!-- Splitt -->
+            <circle cx="160" cy="72" r="13" fill="rgba(240,120,40,.2)" stroke="rgba(240,120,40,.5)" stroke-width="1.5"/>
+            <text x="160" y="69" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,120,40,.8)">Ba-141</text>
+            <text x="160" y="80" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,120,40,.5)">56p</text>
+            <circle cx="160" cy="112" r="11" fill="rgba(200,80,200,.2)" stroke="rgba(200,80,200,.5)" stroke-width="1.5"/>
+            <text x="160" y="109" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,80,200,.8)">Kr-92</text>
+            <text x="160" y="120" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,80,200,.5)">36p</text>
+            <!-- Energistråle -->
+            <path d="M98,90 Q120,90 147,75" stroke="rgba(64,208,240,.4)" stroke-width="1.5" fill="none" marker-end="url(#kArr)"/>
+            <path d="M98,90 Q120,90 149,107" stroke="rgba(64,208,240,.4)" stroke-width="1.5" fill="none" marker-end="url(#kArr)"/>
+            <text x="118" y="84" font-family="DM Sans" font-size="7" fill="rgba(255,240,100,.6)">⚡ 200 MeV</text>
+            <!-- Nye nøytroner -->
+            <g fill="rgba(255,200,60,.4)" stroke="rgba(255,200,60,.6)" stroke-width="1">
+              <circle cx="196" cy="58" r="5"/><circle cx="196" cy="90" r="5"/><circle cx="196" cy="122" r="5"/>
+            </g>
+            <line x1="172" y1="72" x2="192" y2="60" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <line x1="172" y1="90" x2="192" y2="90" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <line x1="172" y1="112" x2="192" y2="120" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <!-- Neste generasjon -->
+            <circle cx="240" cy="58" r="11" fill="rgba(64,208,240,.1)" stroke="rgba(64,208,240,.35)" stroke-width="1"/>
+            <text x="240" y="62" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.7)">U-235</text>
+            <circle cx="240" cy="90" r="11" fill="rgba(64,208,240,.1)" stroke="rgba(64,208,240,.35)" stroke-width="1"/>
+            <text x="240" y="94" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.7)">U-235</text>
+            <circle cx="240" cy="122" r="11" fill="rgba(64,208,240,.1)" stroke="rgba(64,208,240,.35)" stroke-width="1"/>
+            <text x="240" y="126" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.7)">U-235</text>
+            <line x1="201" y1="58" x2="229" y2="58" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <line x1="201" y1="90" x2="229" y2="90" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <line x1="201" y1="122" x2="229" y2="122" stroke="rgba(255,200,60,.3)" stroke-width="1" marker-end="url(#kArr2)"/>
+            <!-- E=mc² -->
+            <rect x="10" y="165" width="260" height="40" rx="8" fill="rgba(64,208,240,.05)" stroke="rgba(64,208,240,.2)" stroke-width="1"/>
+            <text x="140" y="181" text-anchor="middle" font-family="Fraunces" font-size="14" fill="rgba(64,208,240,.8)" font-style="italic">E = mc²</text>
+            <text x="140" y="198" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.4)">1g stoff = 9×10¹³ J ≈ 21 millioner liter kokt vann</text>
+            <text x="140" y="225" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.3)">Fisjon frigjør ~0,1 % av massen som energi</text>
+            <defs>
+              <marker id="kArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(64,208,240,.5)"/></marker>
+              <marker id="kArr2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,200,60,.5)"/></marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(64,208,240,.1);color:#40d0f0;border:1px solid rgba(64,208,240,.2)">🏭 Teknologi</div>
+          <h3 class="k-tittel">Hvordan et kjernekraftverk fungerer</h3>
+          <p class="k-ingress">Et kjernekraftverk er i bunn og grunn en avansert dampmaskin. Fissjonsenergien brukes til å koke vann, som driver en turbin, som driver en generator. Enkelt prinsipp – ekstrem teknologi.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Reaktorkjernen:</strong> Brensel-staver av anriket uran (2–5 % U-235) stablet i reaktortank fylt med vann. Kjedereaksjonen holder brenselstavene ved ~300 °C. Kontrollstaver (grafitt eller bor) absorberer nøytroner og regulerer reaktiviteten.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Kjølesystemer:</strong> Trykkvannsreaktor (PWR): primærkretsen (under trykk, koker ikke) overfører varme til sekundærkrets via dampgenerator. Sekundærkretsen lager damp som driver turbinen. Tertiærkretsen kjøler og kondenserer dampen tilbake til vann.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Effektivitet:</strong> Termisk effektivitet ~33 % (som kullkraft). Men energitettheten er enorm: 1 kg uran gir like mye energi som ~3 000 tonn kull. En brenselstav på 4 m kan drive en by i årevis. Det radioaktive avfallet er lite i volum men svært langlivet.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🛡️</span><div><strong>Sikkerhetssystemer:</strong> Passiv sikkerhetsdesign i moderne reaktorer: ved overoppheting stopper kjedereaksjonen automatisk (negativ temperaturkoeffisient). Reaktorinndekning (containment building) – 1–2 m tykk betong – hindrer stråling ved uhell.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,208,240,.6)" letter-spacing=".1em">KJERNEKRAFTVERK – PRINSIPP</text>
+            <!-- Reaktor -->
+            <rect x="14" y="70" width="64" height="100" rx="8" fill="rgba(64,208,240,.08)" stroke="rgba(64,208,240,.35)" stroke-width="2"/>
+            <text x="46" y="90" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#40d0f0" font-weight="600">REAKTOR</text>
+            <!-- Brenselstaver -->
+            <g fill="rgba(240,200,60,.3)" stroke="rgba(240,200,60,.5)" stroke-width="1">
+              <rect x="28" y="98" width="8" height="52" rx="2"/><rect x="42" y="98" width="8" height="52" rx="2"/>
+              <rect x="56" y="98" width="8" height="52" rx="2"/>
+            </g>
+            <text x="46" y="162" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,200,60,.55)">U-235-staver</text>
+            <!-- Pil varme til dampgenerator -->
+            <path d="M78,120 Q96,120 100,100" fill="none" stroke="rgba(240,80,40,.4)" stroke-width="2" marker-end="url(#pArr)"/>
+            <text x="84" y="108" font-family="DM Sans" font-size="7" fill="rgba(240,80,40,.5)">🌡️</text>
+            <!-- Dampgenerator -->
+            <rect x="100" y="60" width="48" height="80" rx="6" fill="rgba(64,208,240,.06)" stroke="rgba(64,208,240,.25)" stroke-width="1.5"/>
+            <text x="124" y="78" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.65)" font-weight="600">DAMP-</text>
+            <text x="124" y="88" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.65)" font-weight="600">GEN.</text>
+            <!-- Bølger = damp -->
+            <g stroke="rgba(200,220,255,.3)" stroke-width="1.2" fill="none">
+              <path d="M108,100 Q116,92 124,100 Q132,108 140,100"/>
+              <path d="M108,112 Q116,104 124,112 Q132,120 140,112"/>
+            </g>
+            <!-- Pil damp til turbin -->
+            <path d="M148,90 L174,90" fill="none" stroke="rgba(200,220,255,.35)" stroke-width="1.5" marker-end="url(#pArr2)"/>
+            <text x="161" y="83" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,220,255,.45)">damp ↑</text>
+            <!-- Turbin -->
+            <ellipse cx="192" cy="90" rx="18" ry="22" fill="rgba(96,200,160,.1)" stroke="rgba(96,200,160,.4)" stroke-width="1.5"/>
+            <text x="192" y="87" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.7)" font-weight="600">TURBIN</text>
+            <text x="192" y="98" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.5)">⚙️</text>
+            <!-- Pil til generator -->
+            <path d="M210,90 L230,90" fill="none" stroke="rgba(240,200,60,.35)" stroke-width="1.5" marker-end="url(#pArr3)"/>
+            <!-- Generator -->
+            <rect x="230" y="76" width="40" height="28" rx="5" fill="rgba(240,200,60,.1)" stroke="rgba(240,200,60,.4)" stroke-width="1.5"/>
+            <text x="250" y="88" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.7)" font-weight="600">GEN.</text>
+            <text x="250" y="98" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.5)">⚡</text>
+            <!-- Kondensor -->
+            <rect x="100" y="158" width="96" height="36" rx="5" fill="rgba(96,160,255,.06)" stroke="rgba(96,160,255,.25)" stroke-width="1.2"/>
+            <text x="148" y="174" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,160,255,.55)" font-weight="600">KONDENSOR</text>
+            <text x="148" y="185" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,160,255,.4)">damp → vann</text>
+            <path d="M192,112 Q192,145 190,158" fill="none" stroke="rgba(96,160,255,.3)" stroke-width="1.5" marker-end="url(#pArr4)"/>
+            <path d="M100,175 Q88,175 78,150 Q70,120 78,112" fill="none" stroke="rgba(96,160,255,.25)" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#pArr4)"/>
+            <!-- Strøm ut -->
+            <path d="M270,88 Q276,76 276,60" fill="none" stroke="rgba(240,200,60,.35)" stroke-width="1.5" marker-end="url(#pArr3)"/>
+            <text x="270" y="55" font-family="DM Sans" font-size="7.5" fill="rgba(240,200,60,.6)">⚡ Strøm</text>
+            <text x="140" y="210" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.3)">Termisk effektivitet ~33 % · 1 kg U = 3 000 t kull</text>
+            <defs>
+              <marker id="pArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(240,80,40,.5)"/></marker>
+              <marker id="pArr2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(200,220,255,.45)"/></marker>
+              <marker id="pArr3" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(240,200,60,.45)"/></marker>
+              <marker id="pArr4" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(96,160,255,.4)"/></marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(240,80,60,.1);color:#f05040;border:1px solid rgba(240,80,60,.2)">⚠️ Ulykker</div>
+          <h3 class="k-tittel">Tsjernobyl og Fukushima</h3>
+          <p class="k-ingress">To store kjernekraftulykker har formet den globale oppfatningen av atomkraft. Statistikken forteller imidlertid en mer nyansert historie enn frykten tilsier.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔴</span><div><strong>Tsjernobyl (1986):</strong> Reaktor 4 eksploderte under en feilhåndtert sikkerhetstest. Design-feil (positiv damputoppskoeffisient i RBMK-reaktor) + operatørfeil. 31 bekreftet drepte umiddelbart (inkl. brannmenn). WHO estimerer 4 000 langtidsdødsfall av kreft totalt (av 600 000 eksponerte).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🟡</span><div><strong>Fukushima (2011):</strong> Jordskjelv og tsunami slo ut nødstrøm og kjøling. Tre reaktorer smeltet (meltdown). 0 direkte strålingsdødsfall. ~2 000 evakuert og stressdødsfall (ikke stråling). WHOs risikoestimater for kreft er marginale. Årsaken var havnivået på anlegget.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Statistisk perspektiv:</strong> Kjernekraft dreper færre per TWh enn kull, olje, gass og til og med vindkraft (per produsert enhet). Ca. 7 millioner dør hvert år av luftforurensning fra fossil brensel. Kull er ansvarlig for 800 ganger flere dødsfall per kWh enn kjernekraft.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌿</span><div><strong>Eksklusjonssonen:</strong> Tjernobylsonen er i dag en uventet naturreservat. Ulv, gaupe, villsvin, bever og Przewalski-hester trives i fraværet av mennesker – til tross for forhøyet stråling. Biologer studerer nå langtidseffektene av lavdosestråling på dyrepopulasjoner.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,80,60,.6)" letter-spacing=".1em">DØDSFALL PER TWh ENERGI</text>
+            <!-- Stolpediagram - logaritmisk scale-->
+            <line x1="30" y1="214" x2="268" y2="214" stroke="rgba(255,248,224,.15)" stroke-width="1"/>
+            <line x1="30" y1="214" x2="30" y2="42" stroke="rgba(255,248,224,.15)" stroke-width="1"/>
+            <!-- Kull 24.6 -->
+            <rect x="42" y="50" width="26" height="164" fill="rgba(100,100,100,.5)" stroke="rgba(120,120,120,.6)" stroke-width="1" rx="2"/>
+            <text x="55" y="45" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,180,180,.7)">24,6</text>
+            <text x="55" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,180,180,.45)">🏭</text>
+            <text x="55" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(180,180,180,.4)">Kull</text>
+            <!-- Olje 18.4 -->
+            <rect x="78" y="92" width="26" height="122" fill="rgba(160,80,30,.5)" stroke="rgba(160,80,30,.6)" stroke-width="1" rx="2"/>
+            <text x="91" y="87" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,120,60,.7)">18,4</text>
+            <text x="91" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,120,60,.45)">🛢️</text>
+            <text x="91" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,120,60,.4)">Olje</text>
+            <!-- Gass 2.8 -->
+            <rect x="114" y="190" width="26" height="24" fill="rgba(200,160,40,.5)" stroke="rgba(200,160,40,.6)" stroke-width="1" rx="2"/>
+            <text x="127" y="185" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,160,40,.7)">2,8</text>
+            <text x="127" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,160,40,.45)">🔥</text>
+            <text x="127" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,160,40,.4)">Gass</text>
+            <!-- Vind 0.04 -->
+            <rect x="150" y="212" width="26" height="2" fill="rgba(96,200,160,.5)" stroke="rgba(96,200,160,.6)" stroke-width="1" rx="1"/>
+            <text x="163" y="206" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.7)">0,04</text>
+            <text x="163" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,160,.45)">🌬️</text>
+            <text x="163" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(96,200,160,.4)">Vind</text>
+            <!-- Sol 0.02 -->
+            <rect x="186" y="213" width="26" height="1" fill="rgba(240,200,60,.5)" stroke="rgba(240,200,60,.6)" stroke-width="1" rx="1"/>
+            <text x="199" y="206" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.7)">0,02</text>
+            <text x="199" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.45)">☀️</text>
+            <text x="199" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,200,60,.4)">Sol</text>
+            <!-- Kjernekraft 0.03 -->
+            <rect x="222" y="212" width="26" height="2" fill="rgba(64,208,240,.5)" stroke="rgba(64,208,240,.7)" stroke-width="1.5" rx="1"/>
+            <text x="235" y="206" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#40d0f0" font-weight="600">0,03</text>
+            <text x="235" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.6)">⚛️</text>
+            <text x="235" y="242" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(64,208,240,.4)">Kjerne</text>
+            <text x="140" y="258" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(255,248,224,.25)">Kilde: Our World in Data · dødsfall pr. TWh produsert</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(64,208,240,.1);color:#40d0f0;border:1px solid rgba(64,208,240,.2)">☢️ Stråling</div>
+          <h3 class="k-tittel">Radioaktiv stråling – typer og effekter</h3>
+          <p class="k-ingress">Radioaktiv stråling finnes overalt – i berggrunn, luft, mat og kosmisk stråling. Det avgjørende er type, dose og eksponeringstid. Ikke all stråling er farlig.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">α</span><div><strong>Alfastråling:</strong> Heliumkjerner (2p + 2n). Lav rekkevidde – stoppes av et ark papir eller 5 cm luft. Farlig kun hvis svelget eller inhalert (polomium-210 drepte Alexander Litvinenko i 2006). Brukes i røykvarslere (Am-241).</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">β</span><div><strong>Betastråling:</strong> Høyhastighets-elektroner (β⁻) eller positroner (β⁺). Stoppes av noen mm aluminium. Brukes i PET-skanning (positronemisjon-tomografi): F-18 injiseres, emitterer β⁺ som annihilerer med elektroner og gir 511 keV gammastråling som detekteres.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">γ</span><div><strong>Gammastråling:</strong> Elektromagnetisk stråling med høy energi. Penetrerende – krever cm til m bly eller tykk betong. Brukes i kreftbehandling (strålebehandling). Bakgrunnsstråling ~2,4 mSv/år fra naturlige kilder. Flypassasjerer får ~0,03 mSv per time på høy høyde.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚠️</span><div><strong>Biologiske effekter:</strong> Ioniserende stråling bryter kjemiske bindinger i DNA. Under 100 mSv: ingen påviste skader (kroppen reparerer). 1–6 Sv: strålesyke. Over 6 Sv uten behandling: dødelig. Lineær no-threshold (LNT)-modellen er omdiskutert – noen mener lav stråling stimulerer DNA-reparasjon (hormesis).</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(64,208,240,.6)" letter-spacing=".1em">STRÅLINGENS REKKEVIDDE</text>
+            <!-- Kilde -->
+            <circle cx="30" cy="130" r="16" fill="rgba(240,200,60,.2)" stroke="rgba(240,200,60,.6)" stroke-width="2"/>
+            <text x="30" y="127" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.8)" font-weight="600">☢️</text>
+            <text x="30" y="138" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,200,60,.6)">Kilde</text>
+            <!-- Alpha -->
+            <text x="70" y="85" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(240,80,40,.7)" font-weight="600">α</text>
+            <line x1="46" y1="118" x2="76" y2="100" stroke="rgba(240,80,40,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="78" y="92" width="8" height="16" fill="rgba(200,200,200,.3)" stroke="rgba(200,200,200,.5)" stroke-width="1"/>
+            <text x="82" y="120" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,200,200,.5)">📄</text>
+            <text x="82" y="132" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,200,200,.4)">Papir</text>
+            <text x="60" y="148" font-family="DM Sans" font-size="7" fill="rgba(240,80,40,.45)">5 cm luft</text>
+            <!-- Beta -->
+            <text x="140" y="68" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(180,100,240,.7)" font-weight="600">β</text>
+            <line x1="46" y1="126" x2="130" y2="82" stroke="rgba(180,100,240,.5)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="132" y="72" width="12" height="20" fill="rgba(180,180,220,.2)" stroke="rgba(180,180,220,.4)" stroke-width="1"/>
+            <text x="138" y="106" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(180,180,220,.5)">Al</text>
+            <text x="138" y="118" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(180,180,220,.4)">mm</text>
+            <!-- Gamma -->
+            <text x="218" y="55" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(64,208,240,.7)" font-weight="600">γ</text>
+            <line x1="46" y1="130" x2="196" y2="66" stroke="rgba(64,208,240,.45)" stroke-width="2.5" stroke-dasharray="6,3" stroke-linecap="round"/>
+            <rect x="198" y="50" width="18" height="26" fill="rgba(64,80,100,.3)" stroke="rgba(64,80,100,.5)" stroke-width="1"/>
+            <text x="207" y="64" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(64,208,240,.5)">Pb</text>
+            <text x="207" y="92" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(64,208,240,.4)">cm bly</text>
+            <!-- Note -->
+            <text x="246" y="60" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.5)">→ penetrerer</text>
+            <!-- Bakgrunnsstråling -->
+            <rect x="10" y="172" width="260" height="72" rx="8" fill="rgba(64,208,240,.04)" stroke="rgba(64,208,240,.15)" stroke-width="1"/>
+            <text x="140" y="188" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(64,208,240,.65)" font-weight="600">Naturlig bakgrunnsstråling</text>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.45)">
+              <text x="30" y="205">🌍 Jordstråling: ~0,5 mSv/år</text>
+              <text x="30" y="219">🌬️ Radon (inne): ~1,2 mSv/år</text>
+              <text x="160" y="205">🌌 Kosmisk: ~0,3 mSv/år</text>
+              <text x="160" y="219">🍎 Mat/drikke: ~0,3 mSv/år</text>
+            </g>
+            <text x="140" y="238" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.3)">Total: ~2,4 mSv/år per person (naturlig)</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,100,.1);color:#60c864;border:1px solid rgba(96,200,100,.2)">🌍 Klima</div>
+          <h3 class="k-tittel">Kjernekraft og klimakrisen</h3>
+          <p class="k-ingress">I lys av klimakrisen har debatten om kjernekraft fått ny aktualitet. Med de laveste CO₂-utslippene av alle energikilder og høy effekttetthet er atomkraft et verktøy i den grønne omstillingen.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>CO₂-utslipp:</strong> Kjernekraft: 12 g CO₂/kWh (livsløp). Vindkraft: 11 g. Sol: 45 g. Gass: 490 g. Kull: 820 g. Kjernekraft og vind er de to reneste energikildene per kWh – langt under sol og selvfølgelig fossil energi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏗️</span><div><strong>Kapasitetsfaktor:</strong> Kjernekraft leverer strøm ~90 % av tid (kapasitetsfaktor). Vind ~35 %, sol ~20 %. Kjernekraft gir stabil grunnlast – uavhengig av vær. Det gjør det til et viktig supplement til fornybar energi i et stabil strømnett.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>SMR – Small Modular Reactors:</strong> Neste generasjon kjernekraft. Modulbaserte reaktorer på 50–300 MW (vs. 1 000+ MW tradisjonelt). Fabrikert industrielt, kan monteres raskt. Lavere kapitalrisiko. Rollys-Royce og NuScale er blant utvikerene. Norge har vedtatt å utrede SMR.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Radioaktivt avfall:</strong> Høyaktivt avfall fra kjernekraft globalt per år: ~10 000 tonn – som fyller ett fotballstadion. Lagres i dype berglagre (f.eks. Finlands Onkalo, 500 m nede). Til sammenligning slipper kull ut milliarder tonn CO₂ og aske. Avfallet er lite, men må isoleres i 100 000 år.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,100,.6)" letter-spacing=".1em">CO₂ g/kWh – LIVSLØP</text>
+            <line x1="30" y1="214" x2="268" y2="214" stroke="rgba(255,248,224,.15)" stroke-width="1"/>
+            <line x1="30" y1="214" x2="30" y2="42" stroke="rgba(255,248,224,.15)" stroke-width="1"/>
+            <!-- Kull 820 -->
+            <rect x="42" y="50" width="26" height="164" fill="rgba(80,80,80,.55)" stroke="rgba(100,100,100,.6)" stroke-width="1" rx="2"/>
+            <text x="55" y="44" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,180,180,.7)">820</text>
+            <text x="55" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,180,180,.4)">Kull</text>
+            <!-- Gass 490 -->
+            <rect x="78" y="116" width="26" height="98" fill="rgba(180,140,40,.45)" stroke="rgba(180,140,40,.55)" stroke-width="1" rx="2"/>
+            <text x="91" y="110" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,140,40,.7)">490</text>
+            <text x="91" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(180,140,40,.4)">Gass</text>
+            <!-- Sol 45 -->
+            <rect x="114" y="205" width="26" height="9" fill="rgba(240,200,60,.45)" stroke="rgba(240,200,60,.6)" stroke-width="1" rx="2"/>
+            <text x="127" y="199" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.7)">45</text>
+            <text x="127" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.4)">Sol</text>
+            <!-- Vind 11 -->
+            <rect x="150" y="211" width="26" height="3" fill="rgba(96,200,100,.45)" stroke="rgba(96,200,100,.65)" stroke-width="1" rx="1"/>
+            <text x="163" y="205" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,100,.7)">11</text>
+            <text x="163" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,100,.4)">Vind</text>
+            <!-- Kjerne 12 -->
+            <rect x="186" y="210" width="26" height="4" fill="rgba(64,208,240,.5)" stroke="rgba(64,208,240,.75)" stroke-width="1.5" rx="1"/>
+            <text x="199" y="204" text-anchor="middle" font-family="DM Sans" font-size="7" fill="#40d0f0" font-weight="600">12</text>
+            <text x="199" y="230" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.5)">⚛️ Kjerne</text>
+            <text x="140" y="250" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.3)">Kjernekraft og vind: de reneste energikildene per kWh</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(200,100,200,.1);color:#c864c8;border:1px solid rgba(200,100,200,.2)">🏥 Medisin</div>
+          <h3 class="k-tittel">Norge og medisinsk bruk av isotoper</h3>
+          <p class="k-ingress">Norge har lange tradisjoner innen nukleær teknologi – ikke atomkraft, men medisinsk bruk av radioaktive isotoper. Norsk nukleær industri er en global nisjespiller.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>IFE – Institutt for energiteknikk:</strong> Norges kjernefysiske forskningsinstitusjon, etablert 1948. JEEP II-reaktoren på Kjeller produserer medisinsk radioaktive isotoper og forsker på materialer for fremtidige reaktorer. Norge eksporterer isotoper til Europa.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Medisinsk Mo-99/Tc-99m:</strong> Technetium-99m er verdens mest brukte radioaktive isotop i medisin – brukt i ~40 millioner prosedyrer per år. Produseres fra Mo-99 (laget i reaktor). Brukes i scintigrafi: injiseres og oppdager kreft, hjertesykdom og benbetennelse via gammastråling.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚛️</span><div><strong>Lutetium-177 (Lu-177):</strong> Norsk startup Nordic Nanovector og selskaper som Noridc Bioscience bruker Lu-177-merkede antistoffer til å angripe kreftseller selektivt – takket være alfa/beta-strålingens korte rekkevidde kan man bestråle svulster uten å skade frisk vev rundt.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>PET-skanning:</strong> Positronemisjonsskanning bruker korttlevende β⁺-isotoper (F-18 halvtid 110 min, C-11 20 min). Cyclotron produserer isotopene på sykehuset. Brukes til å kartlegge Alzheimers, kreft og hjertefunksjon. Oslo universitetssykehus har to syklotronenheter.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#02090e"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(200,100,200,.6)" letter-spacing=".1em">MEDISINSK BRUK AV ISOTOPER</text>
+            <!-- Tc-99m diagram -->
+            <text x="140" y="38" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,100,200,.65)" font-weight="600">Tc-99m – den viktigste isotopen</text>
+            <!-- Reaktor -->
+            <rect x="14" y="50" width="60" height="44" rx="7" fill="rgba(64,208,240,.08)" stroke="rgba(64,208,240,.3)" stroke-width="1.5"/>
+            <text x="44" y="68" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#40d0f0" font-weight="600">⚛️ Reaktor</text>
+            <text x="44" y="80" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,208,240,.5)">Mo-99 prod.</text>
+            <!-- pil -->
+            <path d="M74,72 L104,72" fill="none" stroke="rgba(64,208,240,.3)" stroke-width="1.5" marker-end="url(#mArr)"/>
+            <!-- Generator -->
+            <rect x="104" y="54" width="60" height="36" rx="6" fill="rgba(200,100,200,.08)" stroke="rgba(200,100,200,.3)" stroke-width="1.5"/>
+            <text x="134" y="68" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,200,.7)" font-weight="600">Mo/Tc-gen.</text>
+            <text x="134" y="80" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(200,100,200,.5)">t½: 67 t</text>
+            <!-- pil -->
+            <path d="M164,72 L194,72" fill="none" stroke="rgba(200,100,200,.3)" stroke-width="1.5" marker-end="url(#mArr2)"/>
+            <!-- Sykehus -->
+            <rect x="194" y="54" width="72" height="36" rx="6" fill="rgba(96,200,100,.08)" stroke="rgba(96,200,100,.3)" stroke-width="1.5"/>
+            <text x="230" y="68" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.7)" font-weight="600">🏥 Sykehus</text>
+            <text x="230" y="80" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(96,200,100,.5)">Tc-99m t½: 6t</text>
+            <!-- Pasient -->
+            <path d="M230,90 L230,110" fill="none" stroke="rgba(96,200,100,.3)" stroke-width="1.5" marker-end="url(#mArr3)"/>
+            <rect x="194" y="110" width="72" height="30" rx="5" fill="rgba(240,180,60,.08)" stroke="rgba(240,180,60,.3)" stroke-width="1.2"/>
+            <text x="230" y="125" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,180,60,.7)">🧍 Pasient injisert</text>
+            <!-- Gamma-detektor -->
+            <path d="M230,140 L230,162" fill="none" stroke="rgba(240,180,60,.3)" stroke-width="1.5" marker-end="url(#mArr4)"/>
+            <rect x="194" y="162" width="72" height="30" rx="5" fill="rgba(200,100,200,.08)" stroke="rgba(200,100,200,.3)" stroke-width="1.2"/>
+            <text x="230" y="180" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(200,100,200,.7)">📷 Gamma-kamera</text>
+            <!-- Bruksområder -->
+            <rect x="14" y="112" width="162" height="80" rx="8" fill="rgba(200,100,200,.04)" stroke="rgba(200,100,200,.15)" stroke-width="1"/>
+            <text x="95" y="128" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(200,100,200,.6)" font-weight="600">Bruksområder Tc-99m</text>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.45)">
+              <text x="24" y="145">🫀 Hjerteperfusjon</text>
+              <text x="24" y="159">🦴 Ben-scintigrafi</text>
+              <text x="24" y="173">🫁 Lungeembolier</text>
+              <text x="24" y="187">🧠 Hjerneskanning</text>
+            </g>
+            <text x="140" y="216" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(255,248,224,.3)">40 mill. prosedyrer/år globalt</text>
+            <defs>
+              <marker id="mArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(64,208,240,.5)"/></marker>
+              <marker id="mArr2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(200,100,200,.5)"/></marker>
+              <marker id="mArr3" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(96,200,100,.5)"/></marker>
+              <marker id="mArr4" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(240,180,60,.5)"/></marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide hel">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(64,208,240,.1);color:#40d0f0;border:1px solid rgba(64,208,240,.2)">📋 LK20</div>
+          <h3 class="k-tittel">Kjernekraft – sammendrag og LK20</h3>
+          <p class="k-ingress">Kjernekraft dekker kompetansemål om energi, stråling, teknologi og bærekraft – og krever evne til å vurdere risiko og statistikk kritisk.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">⚛️</span><div><strong>Fisjon:</strong> U-235-kjerner splittes av nøytroner og frigjør energi (200 MeV/fisjon) + nye nøytroner = kjedereaksjon. E=mc² forklarer energimengden. Reaktoren kontrollerer kjedereaksjonen med kontrollstaver. 1 kg U = 3 000 tonn kull energimessig.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">☢️</span><div><strong>Stråling:</strong> Alfa (papir), beta (aluminium), gamma (bly/betong). Alle er ioniserende og kan skade DNA. Naturlig bakgrunn: 2,4 mSv/år. Under 100 mSv: ingen påviste effekter. Over 6 Sv: dødelig uten behandling.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Klima og statistikk:</strong> Kjernekraft: 12 g CO₂/kWh og 0,03 dødsfall/TWh – lavest av alle energikilder. Kapasitetsfaktor ~90 % gir stabil grunnlast. Radioaktivt avfall er lite i volum, men krevende å lagre (100 000 år). Tsjernobyl: 31 akutte, ~4 000 langtidsdødsfall.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏥</span><div><strong>Medisinsk bruk:</strong> Tc-99m brukes i 40 millioner scintigrafi-prosedyrer per år. PET-skanning avdekker Alzheimers, kreft og hjertesykdom. Lu-177 brukes i målrettet kreftbehandling. IFE på Kjeller eksporterer isotoper til Europa.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)">&#8592;</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sjekk forståelsen din</div><div class="sep-r"></div></div>
+
+  <div class="quiz-wrapper" id="quiz">
+    <div class="quiz-spm" id="q-spm"></div>
+    <div class="quiz-alts" id="q-alts"></div>
+    <div class="quiz-fb" id="q-fb"></div>
+    <div class="quiz-nav">
+      <button class="q-pil" id="q-prev" onclick="qGo(-1)" disabled>&#8592; Forrige</button>
+      <span class="q-teller" id="q-tell"></span>
+      <button class="q-pil" id="q-next" onclick="qGo(1)">Neste &#8594;</button>
+    </div>
+  </div>
+</div>
+<script>
+
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+
+
+const QUIZ_DATA = [{"spm": "Hva beskriver E=mc²?", "alts": ["Energi er lik masse ganger akselerasjon", "Energi er lik masse ganger lysets hastighet i kvadrat", "Elektrisk ladning er lik masse ganger strøm", "Arbeid er lik kraft ganger avstand"], "riktig": 1, "fork": "E=mc² forteller at masse og energi er ekvivalente. c = 3×10⁸ m/s, så c² = 9×10¹⁶. Det betyr at selv svært lite masse inneholder enorm energi – grunnlaget for kjernekraft."}, {"spm": "Hva skjer under fisjon av U-235?", "alts": ["To atomer smeltes sammen og frigjør energi", "En nøytron splitter kjernen i to deler + energi + nye nøytroner", "Protoner skilles fra nøytroner i kjernen", "Elektroner frigjøres og skaper varme"], "riktig": 1, "fork": "Fisjon: en nøytron treffer U-235-kjernen og splitter den i to lettere kjerner (f.eks. Ba og Kr) + 2-3 nøytroner + ~200 MeV energi. De nye nøytronene kan starte ny fisjon – kjedereaksjon."}, {"spm": "Hva stopper alfastråling?", "alts": ["Bare tykk betong", "Noen cm bly", "Et ark papir eller 5 cm luft", "Noen mm aluminium"], "riktig": 2, "fork": "Alfastråling (heliumkjerner) stoppes av et papirark eller 5 cm luft. Den er farlig bare hvis svelget eller inhalert. Betastråling trenger aluminium, gammastråling trenger cm-meter bly."}, {"spm": "Hva er kapasitetsfaktoren til kjernekraft?", "alts": ["~20 % (som sol)", "~35 % (som vind)", "~90 % (stabil grunnlast)", "~60 % (god men variable)"], "riktig": 2, "fork": "Kjernekraftverk leverer strøm ~90 % av all tid – langt over sol (~20 %) og vind (~35 %). Dette gjør kjernekraft til en viktig stabil grunnlastkilde som ikke avhenger av vær."}, {"spm": "Hvor mange direkte strålingsdødsfall skjedde ved Fukushima?", "alts": ["Rundt 200", "Over 1000", "Ca. 50", "0 direkte strålingsdødsfall"], "riktig": 3, "fork": "Fukushima (2011) hadde 0 direkte strålingsdødsfall. Ca. 2000 evakuerte døde av evakueringsrelatert stress. WHOs risikoestimater for langtidskreft er marginale. Til sammenligning dør ~7 million per år av luftforurensning fra fossil energi."}, {"spm": "Hva er Tc-99m brukt til?", "alts": ["Å produsere kjernekraftbrensel", "Strålebehandling av svulster", "Radioaktiv merking i medisinsk bildediagnostikk (scintigrafi)", "Å lage røykvarslere"], "riktig": 2, "fork": "Technetium-99m er verdens mest brukte radioaktive isotop i medisin – brukt i 40 millioner scintigrafi-prosedyrer per år for å kartlegge hjerte, bein, lunger og hjerne via gammastråling."}, {"spm": "Hva er CO₂-utslippet per kWh fra kjernekraft (livsløp)?", "alts": ["820 g (som kull)", "490 g (som gass)", "45 g (som sol)", "~12 g – blant de laveste"], "riktig": 3, "fork": "Kjernekraft slipper ut ~12 g CO₂/kWh over livsløpet – omtrent likt som vindkraft (11 g) og langt under sol (45 g), gass (490 g) og kull (820 g). Det gjør kjernekraft til en av de reneste energikildene."}, {"spm": "Hva er Small Modular Reactors (SMR)?", "alts": ["Store industrireaktorer for storbyer", "Miniatyriserte reaktorer for medisinske formål", "Modulbaserte reaktorer på 50-300 MW som kan masseproduseres", "Ubåtreaktorer tilpasset sivil bruk"], "riktig": 2, "fork": "SMR (Small Modular Reactors) er neste generasjon kjernekraft: modulbaserte reaktorer på 50-300 MW som kan fabrikeres på fabrikk og monteres raskt. Lavere kapitalrisiko og fleksibel utbygging gjør dem attraktive for det grønne skiftet."}];
+let qCur = 0, qSvar = Array(QUIZ_DATA.length).fill(null);
+function visQ(i) {
+  const q = QUIZ_DATA[i];
+  document.getElementById('q-spm').textContent = (i+1) + '. ' + q.spm;
+  const altsEl = document.getElementById('q-alts');
+  altsEl.innerHTML = '';
+  q.alts.forEach((a, j) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-alt'; b.textContent = a;
+    if (qSvar[i] !== null) {
+      b.disabled = true;
+      if (j === q.riktig) b.classList.add('riktig');
+      else if (j === qSvar[i]) b.classList.add('feil');
+    } else { b.onclick = () => svarQ(i, j); }
+    altsEl.appendChild(b);
+  });
+  const fb = document.getElementById('q-fb');
+  if (qSvar[i] !== null) {
+    fb.textContent = (qSvar[i] === q.riktig ? '✅ ' : '❌ ') + q.fork;
+    fb.className = 'quiz-fb ' + (qSvar[i] === q.riktig ? 'riktig' : 'feil');
+  } else { fb.textContent = ''; fb.className = 'quiz-fb'; }
+  document.getElementById('q-tell').textContent = (i+1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('q-prev').disabled = i === 0;
+  document.getElementById('q-next').disabled = i === QUIZ_DATA.length - 1;
+}
+function svarQ(i, j) {
+  qSvar[i] = j; visQ(i);
+  const riktige = qSvar.filter((s,k) => s !== null && s === QUIZ_DATA[k].riktig).length;
+  if (window._skaplab_logg) window._skaplab_logg(
+    location.pathname.split('/').pop(), 'nat_kjernekraft',
+    riktige / QUIZ_DATA.length * 100, QUIZ_DATA.length, riktige, null, null);
+}
+function qGo(d) { qCur = Math.max(0, Math.min(QUIZ_DATA.length-1, qCur+d)); visQ(qCur); }
+visQ(0);
+
+</script>
+</body>
+</html>

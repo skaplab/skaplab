@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Plast</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#021210;--surface:#061a16;--card:#0a2018;--border:rgba(32,200,176,.07);
+  --text:#e0fff8;--dim:rgba(224,255,248,.3);
+  --accent:#20c8b0;--accent2:#60c864;--accent3:#f0a840;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 25% 20%,rgba(32,200,176,.04),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 75%,rgba(96,200,100,.02),transparent)}
+nav{position:sticky;top:0;z-index:200;background:rgba(5,10,6,.97);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:11px 28px;display:flex;align-items:center;gap:10px}
+.nav-lnk{font-size:.78rem;color:var(--dim);text-decoration:none;font-weight:500}
+.nav-lnk:hover{color:var(--text)}.nav-sep{color:var(--border)}
+.nav-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);font-style:italic}
+.page{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 24px 100px}
+.hero{text-align:center;padding:32px 0 44px}
+.hero-over{font-size:.6rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.hero h1{font-family:var(--font-d);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--accent)}
+.hero-sub{font-size:.9rem;color:var(--dim);max-width:540px;margin:0 auto;line-height:1.85}
+.karusell{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin-bottom:16px}
+.k-slides{display:flex;transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.k-slide{min-width:100%;display:grid;grid-template-columns:1fr 1fr;min-height:380px}
+.k-slide.hel{grid-template-columns:1fr}
+.k-info{padding:36px 38px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border)}
+.k-anim{display:flex;align-items:center;justify-content:center;background:var(--card);padding:20px}
+.k-nr{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.k-kat{display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:12px}
+.k-tittel{font-family:var(--font-d);font-size:clamp(1.3rem,2.5vw,1.85rem);font-weight:700;line-height:1.15;margin-bottom:10px}
+.k-ingress{font-size:.84rem;line-height:1.72;color:rgba(232,245,236,.55);margin-bottom:16px}
+.k-faktaliste{display:flex;flex-direction:column;gap:7px}
+.k-fakt{display:flex;gap:9px;align-items:flex-start;padding:9px 12px;border-radius:9px;
+  background:rgba(80,220,120,.03);border:1px solid var(--border);font-size:.79rem;line-height:1.6;color:rgba(232,245,236,.72)}
+.k-fakt-ikon{flex-shrink:0;font-size:1rem;margin-top:1px}
+.k-fakt strong{color:var(--text)}
+.k-ctrl{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border)}
+.k-pil{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:1rem;color:var(--text);transition:all .18s}
+.k-pil:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+.k-pil[disabled]{opacity:.3;cursor:default}
+.k-dots{display:flex;gap:5px}
+.k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
+.k-dot.on{background:var(--accent);transform:scale(1.4)}
+.sep{display:flex;align-items:center;gap:16px;margin:36px 0 20px}
+.sep-l,.sep-r{flex:1;height:1px}
+.sep-l{background:linear-gradient(90deg,transparent,var(--border))}
+.sep-r{background:linear-gradient(90deg,var(--border),transparent)}
+.sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
+/* LCA-SAMMENLIGNER */
+.lca-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.lca-tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.lca-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-size:.82rem;color:var(--dim);transition:all .18s}
+.lca-tab:hover{color:var(--text);border-color:rgba(80,220,120,.3)}
+.lca-tab.aktiv{color:var(--accent);background:rgba(80,220,120,.1);border-color:rgba(80,220,120,.4)}
+.lca-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lca-bar-seksjon{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-tittel{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:14px;font-style:italic}
+.lca-rad{display:grid;grid-template-columns:120px 1fr 50px;gap:8px;align-items:center;margin-bottom:8px;font-size:.78rem}
+.lca-label{color:rgba(232,245,236,.6)}
+.lca-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:16px;overflow:hidden}
+.lca-bar{height:100%;border-radius:4px;transition:width .4s ease}
+.lca-val{color:var(--accent);text-align:right;font-weight:600}
+.lca-info{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.lca-info h4{font-family:var(--font-d);font-size:.95rem;color:var(--accent);margin-bottom:10px;font-style:italic}
+.lca-punkt{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem;line-height:1.6;color:rgba(232,245,236,.7)}
+@media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.lca-grid{grid-template-columns:1fr}}
+
+/* QUIZ */
+.quiz-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:20px}
+.quiz-spm{font-family:var(--font-d);font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.4}
+.quiz-alts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.quiz-alt{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;
+  border:1px solid var(--border);background:transparent;cursor:pointer;
+  font-size:.84rem;color:var(--text);text-align:left;transition:all .18s;width:100%}
+.quiz-alt:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),.05)}
+.quiz-alt.riktig{border-color:var(--accent);background:rgba(var(--accent-rgb),.12);color:var(--accent)}
+.quiz-alt.feil{border-color:#f05050;background:rgba(240,80,80,.08);color:#f08080}
+.quiz-alt:disabled{cursor:default}
+.quiz-fb{font-size:.82rem;line-height:1.65;padding:10px 14px;border-radius:9px;min-height:24px;margin-bottom:4px}
+.quiz-fb.riktig{background:rgba(var(--accent-rgb),.08);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.2)}
+.quiz-fb.feil{background:rgba(240,80,80,.07);color:#f08080;border:1px solid rgba(240,80,80,.15)}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+.q-pil{padding:8px 20px;border-radius:9px;border:1px solid var(--border);background:transparent;
+  cursor:pointer;font-family:var(--font-d);font-style:italic;font-size:.85rem;color:var(--text);transition:all .18s}
+.q-pil:hover{border-color:var(--accent);color:var(--accent)}
+.q-pil:disabled{opacity:.3;cursor:default}
+.q-teller{font-size:.75rem;color:var(--dim);font-family:var(--font-d);font-style:italic}
+
+:root{--accent-rgb:32,200,176;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="naturfag_hub.html" class="nav-lnk">🔬 Naturfag</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-tittel">Plast</span>
+</nav>
+<div class="page">
+  <div class="hero">
+    <div class="hero-over">Kjemi · Miljø · Bærekraft · LK20</div>
+    <h1>Plast<br><em>polymerkjemi, havforurensning og løsninger</em></h1>
+    <p class="hero-sub">Fra polymerkjeder i oljeraffineriet til mikroplast i blodet ditt og 92 % norsk pant – plastens livsløp og krisen det skaper</p>
+  </div>
+
+  <div class="karusell" id="karusell">
+    <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 07</div>
+          <div class="k-kat" style="background:rgba(32,200,176,.1);color:#20c8b0;border:1px solid rgba(32,200,176,.2)">🧪 Kjemi</div>
+          <h3 class="k-tittel">Hva er plast? Polymerkjemi</h3>
+          <p class="k-ingress">Plast er ett av de viktigste materialene menneskeheten noensinne har skapt – allsidig, billig og holdbart. Men den samme holdbarhetene gjør det til et globalt forurensningsproblem.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🔗</span><div><strong>Polymerer:</strong> Plast er en polymer – lange kjeder av repeterte monomerer (enkle molekyler). Polyetylen (PE) er kjedet av etylen (C₂H₄)-monomerer. Polypropylen, PVC, PET, polystyren og nylon er alle polymerer med ulike egenskaper basert på monomeren og strukturen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⛽</span><div><strong>Råstoff:</strong> 99 % av all plast er laget av fossile råstoffer – petroleum og naturgass. Plastproduksjon bruker ~6 % av globalt oljeforbruk. Biologisk basert plast (PLA fra maisstivelse) og marint avfall-plast er under utvikling, men utgjør fortsatt en marginal andel.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔥</span><div><strong>Termoplast vs. herdeplast:</strong> Termoplast (PE, PP, PET) kan smeltes og formes på nytt – grunnlaget for resirkulering. Herdeplast (epoksy, bakelit) størkner irreversibelt ved herding (kovalente tverrforbindelser). Kan ikke smeltes og er mye vanskeligere å resirkulere.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏭</span><div><strong>Plasttyper:</strong> PE (bæreposer, flaske), PP (yoghurtbeger, bildeler), PET (brusflasker, polyester-tekstil), PVC (rør, gulvbelegg), PS (styropor, kopper), PC (CD-plater, brilleglass). Disse skilles med resirkuleringsnummer 1–7 på emballasjen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(32,200,176,.6)" letter-spacing=".1em">POLYMER – POLYETYLEN (PE)</text>
+            <!-- Monomer etylen -->
+            <text x="50" y="42" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(32,200,176,.65)" font-weight="600">Monomer</text>
+            <text x="50" y="54" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.5)">Etylen C₂H₄</text>
+            <!-- Etylen-molekyl -->
+            <circle cx="36" cy="78" r="8" fill="rgba(32,200,176,.2)" stroke="rgba(32,200,176,.5)" stroke-width="1.5"/>
+            <circle cx="64" cy="78" r="8" fill="rgba(32,200,176,.2)" stroke="rgba(32,200,176,.5)" stroke-width="1.5"/>
+            <text x="36" y="82" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.7)">C</text>
+            <text x="64" y="82" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.7)">C</text>
+            <line x1="44" y1="78" x2="56" y2="78" stroke="rgba(32,200,176,.5)" stroke-width="2"/>
+            <line x1="44" y1="74" x2="56" y2="74" stroke="rgba(32,200,176,.5)" stroke-width="2"/>
+            <!-- H-atomer -->
+            <g font-family="DM Sans" font-size="7" fill="rgba(240,240,220,.4)" text-anchor="middle">
+              <text x="26" y="70">H</text><text x="26" y="88">H</text>
+              <text x="74" y="70">H</text><text x="74" y="88">H</text>
+            </g>
+            <!-- Pil → polymer -->
+            <path d="M86,78 L112,78" fill="none" stroke="rgba(32,200,176,.4)" stroke-width="1.5" marker-end="url(#plArr)"/>
+            <text x="99" y="72" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.45)">×n</text>
+            <!-- Polymer kjede -->
+            <text x="188" y="42" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(32,200,176,.65)" font-weight="600">Polymer</text>
+            <text x="188" y="54" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.5)">Polyetylen –(C₂H₄)ₙ–</text>
+            <!-- Lang kjede -->
+            <g fill="rgba(32,200,176,.2)" stroke="rgba(32,200,176,.4)" stroke-width="1.2">
+              <circle cx="120" cy="80" r="6"/>
+              <circle cx="140" cy="72" r="6"/>
+              <circle cx="160" cy="80" r="6"/>
+              <circle cx="180" cy="72" r="6"/>
+              <circle cx="200" cy="80" r="6"/>
+              <circle cx="220" cy="72" r="6"/>
+              <circle cx="240" cy="80" r="6"/>
+              <circle cx="260" cy="72" r="6"/>
+            </g>
+            <g stroke="rgba(32,200,176,.35)" stroke-width="1.5">
+              <line x1="126" y1="77" x2="134" y2="75"/><line x1="146" y1="75" x2="154" y2="77"/>
+              <line x1="166" y1="77" x2="174" y2="75"/><line x1="186" y1="75" x2="194" y2="77"/>
+              <line x1="206" y1="77" x2="214" y2="75"/><line x1="226" y1="75" x2="234" y2="77"/>
+              <line x1="246" y1="77" x2="254" y2="75"/>
+            </g>
+            <!-- Plasttyper tabell -->
+            <rect x="10" y="110" width="260" height="128" rx="8" fill="rgba(32,200,176,.04)" stroke="rgba(32,200,176,.15)" stroke-width="1"/>
+            <text x="140" y="126" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(32,200,176,.7)" font-weight="600">Vanlige plasttyper</text>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.45)">
+              <text x="20" y="143">① PET – brusflasker, klær</text>
+              <text x="20" y="157">② HDPE – melkekartonger, rør</text>
+              <text x="20" y="171">③ PVC – gulvbelegg, vinduer</text>
+              <text x="20" y="185">⑤ PP – yoghurtbeger, bildeler</text>
+              <text x="20" y="199">⑥ PS – styropor, engangskopper</text>
+              <text x="20" y="213">④ LDPE – plastposer, folie</text>
+            </g>
+            <text x="140" y="234" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.3)">Tall 1–7 på emballasjen angir plasttype</text>
+            <defs><marker id="plArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(32,200,176,.5)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 07</div>
+          <div class="k-kat" style="background:rgba(32,200,176,.1);color:#20c8b0;border:1px solid rgba(32,200,176,.2)">🌊 Forurensning</div>
+          <h3 class="k-tittel">Havplast – en global krise</h3>
+          <p class="k-ingress">Over 11 millioner tonn plast havner i verdenshavene hvert år – tilsvarende én søppelbil per minutt. Det er nok til å dekke hele Norges kystlinje 40 ganger i plast.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🌀</span><div><strong>Søppeløyer:</strong> Havstrømmene samler plasten i fem store gyrer – søppeløyer. Den store stillehavsplastøyen (Great Pacific Garbage Patch) er tre ganger Frankrikes størrelse (1,6 millioner km²). 99 % er ikke synlig ovenfra – det er mikroplast under overflaten.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐟</span><div><strong>Marin fauna:</strong> 700+ marine arter er dokumentert å ha svelget eller vært viklet inn i plast. Schildkröter spiser plastposer de forveksler med manet. Albatrosser mater ungene med plastbiter. Nedbrytningstid: plastpose 20 år, PET-flaske 450 år, fiskesnøre 600 år.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Kilder:</strong> 80 % av havplast kommer fra land (elver, avfallsdeponi, avrenning). De 10 mest forurensende elvene er alle i Asia og Afrika. Asien produserer 82 % av havplast. Europeisk bidrag er lavt (~2 %) men viktig pga. eksport av plastskrot til Asia.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚓</span><div><strong>Rydding:</strong> The Ocean Cleanup (Boyan Slat, nederlandsk ungdom) har bygget flytende barrierer som samler plasten i gyren. Ocean Cleanup har til nå samlet ~300 tonn – men tilstrømmingen er 11 millioner tonn/år. Innsamling av ny plast er billigere enn å hente den fra havet.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(32,200,176,.6)" letter-spacing=".1em">PLASTFORURENSNING I HAVET</text>
+            <!-- Kart-bakgrunn (forenklet) -->
+            <ellipse cx="140" cy="132" rx="120" ry="90" fill="rgba(32,64,120,.2)" stroke="rgba(64,128,200,.2)" stroke-width="1"/>
+            <!-- Stillehavsplastøy -->
+            <ellipse cx="90" cy="110" rx="38" ry="28" fill="rgba(240,180,40,.12)" stroke="rgba(240,180,40,.35)" stroke-width="1.5"/>
+            <text x="90" y="106" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,40,.7)" font-weight="600">Stillehav</text>
+            <text x="90" y="118" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,40,.6)">Plastøy</text>
+            <text x="90" y="128" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(240,180,40,.5)">3× Frankrike</text>
+            <!-- Andre gyrer -->
+            <ellipse cx="180" cy="100" rx="20" ry="14" fill="rgba(240,100,60,.1)" stroke="rgba(240,100,60,.3)" stroke-width="1"/>
+            <text x="180" y="102" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,100,60,.6)">Atlanterhav</text>
+            <ellipse cx="155" cy="160" rx="22" ry="14" fill="rgba(200,80,200,.1)" stroke="rgba(200,80,200,.3)" stroke-width="1"/>
+            <text x="155" y="163" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(200,80,200,.6)">Indehav</text>
+            <ellipse cx="80" cy="175" rx="20" ry="12" fill="rgba(240,180,40,.08)" stroke="rgba(240,180,40,.25)" stroke-width="1"/>
+            <text x="80" y="177" text-anchor="middle" font-family="DM Sans" font-size="6.5" fill="rgba(240,180,40,.5)">Søratlant.</text>
+            <!-- Elv-piler inn -->
+            <path d="M230,80 Q215,90 200,100" fill="none" stroke="rgba(220,80,60,.3)" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#rArr)"/>
+            <text x="238" y="76" font-family="DM Sans" font-size="7" fill="rgba(220,80,60,.5)">Elver</text>
+            <text x="238" y="87" font-family="DM Sans" font-size="7" fill="rgba(220,80,60,.4)">fra Asia</text>
+            <!-- Fakta boks -->
+            <rect x="8" y="210" width="264" height="42" rx="7" fill="rgba(32,200,176,.05)" stroke="rgba(32,200,176,.2)" stroke-width="1"/>
+            <text x="140" y="225" text-anchor="middle" font-family="DM Sans" font-size="8" fill="rgba(32,200,176,.7)" font-weight="600">11 mill. tonn havner i havet hvert år</text>
+            <text x="140" y="239" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.4)">= 1 søppelbil per minutt · 80 % fra landkilder</text>
+            <text x="140" y="250" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.3)">700+ marine arter er rammet</text>
+            <defs><marker id="rArr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(220,80,60,.5)"/></marker></defs>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 07</div>
+          <div class="k-kat" style="background:rgba(240,120,50,.1);color:#f07832;border:1px solid rgba(240,120,50,.2)">♻️ Resirkulering</div>
+          <h3 class="k-tittel">Plastresirkulering – utfordringer og realiteter</h3>
+          <p class="k-ingress">Bare 9 % av all plast som noensinne er produsert, er blitt resirkulert. 12 % er brent, og 79 % havnet på deponier, i naturen eller i havet. Realiteten bak resirkuleringssymbolet.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Tallene:</strong> Siden 1950: ~9,2 milliarder tonn plast produsert. 9 % resirkulert. 12 % brent. 79 % akkumulert i deponi/natur. Plast brytes ikke ned – den fragmenterer til stadig mindre biter. Halvparten av all plastproduksjon er etter år 2000.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Utfordringer:</strong> 7 ulike plasttyper kan ikke blandes – de må sorteres rent. Fargestoffer og tilsetninger gjør resirkulering vanskeligere. Kvaliteten på resirkulert plast er lavere (nedcycling). Resirkulering er energikrevende og konkurrerer med billig jomfruelig plast fra olje.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Kjemisk resirkulering:</strong> Nye metoder bryter plast ned til monomerer (depolymerisering) for å lage ny plast av høy kvalitet – ikke nedcycling. Enzymatisk nedbrytning: PETase (oppdaget i japansk søppelfyllplass 2016) bryter ned PET. Industriell skalering pågår.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🚢</span><div><strong>Plastskroteksport:</strong> Til 2018 eksporterte rike land 111 millioner tonn plastskrot til Kina. Etter Kinas importforbud: Malaysia, Vietnam, Indonesia mottok strømmene. Mye ble ikke resirkulert men brent eller dumpet. EU forbyr nå eksport av usortert plast til ikke-OECD-land.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(240,120,50,.6)" letter-spacing=".1em">GLOBAL PLASTSKJEBNE</text>
+            <!-- Kake-diagram -->
+            <!-- 79% deponi/natur -->
+            <path d="M140,130 L140,52 A78,78 0 1 1 63,175 Z" fill="rgba(220,80,60,.2)" stroke="rgba(220,80,60,.4)" stroke-width="1.5"/>
+            <!-- 12% brent -->
+            <path d="M140,130 L63,175 A78,78 0 0 1 94,48 Z" fill="rgba(240,160,40,.2)" stroke="rgba(240,160,40,.4)" stroke-width="1.5"/>
+            <!-- 9% resirkulert -->
+            <path d="M140,130 L94,48 A78,78 0 0 1 140,52 Z" fill="rgba(32,200,176,.25)" stroke="rgba(32,200,176,.55)" stroke-width="1.5"/>
+            <!-- Labels -->
+            <text x="195" y="120" font-family="DM Sans" font-size="9" fill="rgba(220,80,60,.7)" font-weight="600">79%</text>
+            <text x="185" y="133" font-family="DM Sans" font-size="7.5" fill="rgba(220,80,60,.55)">Deponi/natur</text>
+            <text x="40" y="180" font-family="DM Sans" font-size="9" fill="rgba(240,160,40,.7)" font-weight="600">12%</text>
+            <text x="34" y="193" font-family="DM Sans" font-size="7.5" fill="rgba(240,160,40,.55)">Brent</text>
+            <text x="100" y="36" font-family="DM Sans" font-size="9" fill="rgba(32,200,176,.8)" font-weight="600">9%</text>
+            <text x="82" y="28" font-family="DM Sans" font-size="7.5" fill="rgba(32,200,176,.6)">Resirkulert</text>
+            <!-- Sentrum -->
+            <circle cx="140" cy="130" r="6" fill="rgba(240,240,220,.2)"/>
+            <!-- Fakta -->
+            <text x="140" y="228" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.4)">9,2 milliarder tonn produsert siden 1950</text>
+            <text x="140" y="242" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.3)">Halvparten etter år 2000</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 07</div>
+          <div class="k-kat" style="background:rgba(32,200,176,.1);color:#20c8b0;border:1px solid rgba(32,200,176,.2)">🔬 Mikroplast</div>
+          <h3 class="k-tittel">Mikroplast og nanoplast</h3>
+          <p class="k-ingress">Mikroplast (under 5 mm) finnes nå overalt: på Himalaya, i Antarktis, i regnvann, i fisken vi spiser, i blodet vårt og i morsmelk. Mikroplastforurensning er en av vår tids store miljøutfordringer.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">👕</span><div><strong>Kilder til mikroplast:</strong> Vask av syntetiske tekstiler (polyester, nylon): 700 000 mikrofibrer per vask. Bildekk-slitasje: den største kilden til mikroplast på land – 3–7 kg per bil per år. Kosmetikk (microbeads, nå forbudt i EU/Norge). Nedbrytning av større plastgjenstander.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐟</span><div><strong>I næringskjeden:</strong> Dyreplankton spiser mikroplast og forveksler det med mat. Det beveger seg oppover i næringskjeden via fiskelarver → fisk → sel → hvithval og til slutt til oss. En gjennomsnittlig person inhalerer og svelger ~5 gram mikroplast per uke – tilsvarende et kredittkort.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🩸</span><div><strong>I menneskekroppen:</strong> 2022: mikroplast funnet i menneskelig blod for første gang (77 % av donorer). 2023: funnet i lungevev, morsmelk, morkake og testikkelvev. Helseeffektene studeres nå intenst – foreløpige funn knytter høy eksponering til betennelse og hormonforstyrrelser.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">⚗️</span><div><strong>Nanoplast:</strong> Plast under 1 µm – kan krysse cellemembranene. Nanoplastpartikler er funnet i mus-hjerner og påvirket atferd. Kan potensielt frakte giftstoffer (PCB, pesticider) inn i celler. Analytisk utfordring: så liten at den er vanskelig å detektere og måle.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(32,200,176,.6)" letter-spacing=".1em">MIKROPLAST – VEIER INN I KROPPEN</text>
+            <!-- Kilder venstre -->
+            <text x="54" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,120,50,.6)" font-weight="600">Kilder</text>
+            <rect x="10" y="46" width="88" height="130" rx="6" fill="rgba(240,120,50,.05)" stroke="rgba(240,120,50,.2)" stroke-width="1"/>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.45)">
+              <text x="18" y="64">👕 Tekstilvask</text>
+              <text x="18" y="80">🚗 Dekk-slitasje</text>
+              <text x="18" y="96">🧴 Kosmetikk</text>
+              <text x="18" y="112">📦 Emballasje</text>
+              <text x="18" y="128">🎣 Fiskenøter</text>
+              <text x="18" y="144">🌊 Havnedbryt.</text>
+              <text x="18" y="160">🏙️ Overflateavr.</text>
+            </g>
+            <!-- Midtakse -->
+            <line x1="140" y1="50" x2="140" y2="185" stroke="rgba(32,200,176,.2)" stroke-width="1" stroke-dasharray="3,2"/>
+            <!-- Menneskekrop -->
+            <text x="226" y="38" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(32,200,176,.6)" font-weight="600">I kroppen (2022–23)</text>
+            <rect x="182" y="46" width="88" height="130" rx="6" fill="rgba(32,200,176,.05)" stroke="rgba(32,200,176,.2)" stroke-width="1"/>
+            <g font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.45)">
+              <text x="190" y="64">🩸 Blod (77%)</text>
+              <text x="190" y="80">🫁 Lunger</text>
+              <text x="190" y="96">🫀 Morkake</text>
+              <text x="190" y="112">🤱 Morsmelk</text>
+              <text x="190" y="128">🧪 Testikler</text>
+              <text x="190" y="144">🧠 (mus) Hjerne</text>
+            </g>
+            <!-- Veier gjennom miljøet (midten) -->
+            <rect x="108" y="56" width="64" height="108" rx="5" fill="rgba(64,128,255,.04)" stroke="rgba(64,128,255,.18)" stroke-width="1"/>
+            <text x="140" y="72" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(64,128,255,.5)" font-weight="600">Via:</text>
+            <g font-family="DM Sans" font-size="7" fill="rgba(220,230,255,.4)" text-anchor="middle">
+              <text x="140" y="87">🌊 Hav</text>
+              <text x="140" y="101">🐟 Fisk</text>
+              <text x="140" y="115">💧 Vann</text>
+              <text x="140" y="129">🌧️ Luft</text>
+              <text x="140" y="143">🧂 Salt</text>
+              <text x="140" y="157">🥦 Mat</text>
+            </g>
+            <!-- Kredittkort-fakta -->
+            <rect x="10" y="192" width="260" height="24" rx="6" fill="rgba(240,120,50,.07)" stroke="rgba(240,120,50,.2)" stroke-width="1"/>
+            <text x="140" y="207" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,120,50,.7)">~5 gram mikroplast per uke per person ≈ ett kredittkort</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.3)">Helseeffekter studeres nå intenst – foreløpige funn er urovekkende</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 07</div>
+          <div class="k-kat" style="background:rgba(96,200,100,.1);color:#60c864;border:1px solid rgba(96,200,100,.2)">💡 Løsninger</div>
+          <h3 class="k-tittel">Løsninger og avfallshierarkiet</h3>
+          <p class="k-ingress">Plastproblemet krever tiltak på alle nivåer – fra individ til internasjonal regulering. Avfallshierarkiet viser prioriteringen: forebygg, gjenbruk, resirkuler – forbrenning og deponi er siste utvei.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🚫</span><div><strong>Forebygging:</strong> EU-direktivet om engangsplast (2021) forbyr q-tips, sugerør, bestikk og tallerken av plast. Plastpose-avgift i Norge har redusert bruk med 80–90 %. Utvidet produsentansvar: produsentene betaler for innsamling og resirkulering av emballasjen de lager.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">♻️</span><div><strong>Panteordninger:</strong> Norge har verdens høyeste returandel for plastflasker: 92 % (2023). Det norske pant-systemet (Infinitum) er verdens beste – kopiert av over 40 land. Pantbeløp: 3–5 kr per flaske avhengig av størrelse. Krav: 94 % retur innen 2030.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🧬</span><div><strong>Bioplast:</strong> PLA (polymelkesyre fra mais) er biologisk nedbrytbar – men bare i industrielle komposteringsanlegg, ikke i naturen eller havet. Cellulosebasert plast fra skogbruksrester er under utvikling. Ingen bioplast brytes raskt ned i havmiljø ved normale temperaturer.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🤖</span><div><strong>Teknologiske løsninger:</strong> Enzymer (PETase, MHETase) kan bryte ned PET på timer (vs. 450 år naturlig). AI-basert sortering i resirkuleringsanlegg gjenkjenner plasttype med over 95 % nøyaktighet. Kjemisk resirkulering (depolymerisering) gjenoppretter jomfruelig plastkvalitet.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(96,200,100,.6)" letter-spacing=".1em">AVFALLSHIERARKIET</text>
+            <!-- Pyramide -->
+            <!-- Topp = best -->
+            <polygon points="140,36 96,84 184,84" fill="rgba(32,200,176,.2)" stroke="rgba(32,200,176,.5)" stroke-width="1.5"/>
+            <text x="140" y="66" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#20c8b0" font-weight="600">🚫 Forebygg</text>
+            <text x="140" y="78" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.6)">Best!</text>
+            <!-- Lag 2 -->
+            <polygon points="96,84 72,118 208,118 184,84" fill="rgba(96,200,100,.15)" stroke="rgba(96,200,100,.4)" stroke-width="1.2"/>
+            <text x="140" y="103" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(96,200,100,.7)" font-weight="600">♻️ Gjenbruk</text>
+            <!-- Lag 3 -->
+            <polygon points="72,118 50,152 230,152 208,118" fill="rgba(240,200,60,.1)" stroke="rgba(240,200,60,.35)" stroke-width="1.2"/>
+            <text x="140" y="137" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,200,60,.7)" font-weight="600">🔄 Resirkuler</text>
+            <!-- Lag 4 -->
+            <polygon points="50,152 28,186 252,186 230,152" fill="rgba(240,140,50,.1)" stroke="rgba(240,140,50,.3)" stroke-width="1.2"/>
+            <text x="140" y="171" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(240,140,50,.65)" font-weight="600">🔥 Energigjenvinning</text>
+            <!-- Bunn = verst -->
+            <polygon points="28,186 14,220 266,220 252,186" fill="rgba(220,80,60,.12)" stroke="rgba(220,80,60,.3)" stroke-width="1.2"/>
+            <text x="140" y="205" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(220,80,60,.65)" font-weight="600">🗑️ Deponi</text>
+            <text x="140" y="217" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(220,80,60,.5)">Verst!</text>
+            <text x="140" y="240" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.4)">Norsk pantsystem: 92 % returandel – verdens beste</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 07</div>
+          <div class="k-kat" style="background:rgba(32,200,176,.1);color:#20c8b0;border:1px solid rgba(32,200,176,.2)">🇳🇴 Norge</div>
+          <h3 class="k-tittel">Norge og plastutfordringen</h3>
+          <p class="k-ingress">Norge er i en unik posisjon: lav forurensning lokalt, høy pant-retur, men høyt plastforbruk per innbygger. Og havet vi er avhengige av for fisk, oppdrett og turisme er sårbart for global plastforurensning.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🎣</span><div><strong>Fiskerirelatert plastforurensning:</strong> Tapte fiskeredskaper (spøkelsesfiske) er et alvorlig problem i norske kystfarvann. Havfiskeorganisasjoner har samlet opp 700+ tonn tapte redskaper langs norskekysten. Fortapte ruser og garn fortsetter å fange fisk og krabber i årevis.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🐳</span><div><strong>Norsk havforskning:</strong> Havforskningsinstituttet dokumenterer mikroplast i norske fiskearter, reker og hval. En dødfunnet spermhval på Sotraøy (2017) hadde 30 plastposer i magen – ikonisk bilde som satte plast på den internasjonale agendaen.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🏖️</span><div><strong>Strandopprydding:</strong> Hold Norge Rent koordinerer 500 000+ frivillige til strandrydding hvert år. Ryddedugnad-apper (la oss rydde, 2lution) mobiliserer frivillige med GPS-sporing. Mye av plasten som vasker inn er av asiatisk opprinnelse – global forurensning krever global løsning.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Internasjonal plastkonvensjon:</strong> FNs plastkonvensjon (forhandlet fra 2022) skal bindende regulere plastproduksjon globalt – ikke bare håndtering av avfall. Norge er en pådriver. Avtale ventet innen 2025. Potensielt den viktigste miljøavtalen siden Parisavtalen.</div></div>
+          </div>
+        </div>
+        <div class="k-anim">
+          <svg viewBox="0 0 280 260" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="260" fill="#021210"/>
+            <text x="140" y="18" text-anchor="middle" font-family="Fraunces" font-size="9" fill="rgba(32,200,176,.6)" letter-spacing=".1em">NORSK PANT – RETURANDEL</text>
+            <!-- Søylediagram returandel over år -->
+            <line x1="30" y1="200" x2="268" y2="200" stroke="rgba(224,248,244,.15)" stroke-width="1"/>
+            <line x1="30" y1="200" x2="30" y2="40" stroke="rgba(224,248,244,.15)" stroke-width="1"/>
+            <!-- Y-labels -->
+            <text x="24" y="204" text-anchor="end" font-family="DM Sans" font-size="6.5" fill="rgba(224,248,244,.3)">0%</text>
+            <text x="24" y="162" text-anchor="end" font-family="DM Sans" font-size="6.5" fill="rgba(224,248,244,.3)">50%</text>
+            <text x="24" y="44" text-anchor="end" font-family="DM Sans" font-size="6.5" fill="rgba(224,248,244,.3)">100%</text>
+            <!-- 2000: 51% -->
+            <rect x="42" y="123" width="22" height="77" fill="rgba(32,200,176,.25)" stroke="rgba(32,200,176,.45)" stroke-width="1" rx="2"/>
+            <text x="53" y="118" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.6)">51%</text>
+            <text x="53" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.35)">2000</text>
+            <!-- 2005: 70% -->
+            <rect x="76" y="92" width="22" height="108" fill="rgba(32,200,176,.3)" stroke="rgba(32,200,176,.5)" stroke-width="1" rx="2"/>
+            <text x="87" y="86" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.65)">70%</text>
+            <text x="87" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.35)">2005</text>
+            <!-- 2010: 82% -->
+            <rect x="110" y="68" width="22" height="132" fill="rgba(32,200,176,.35)" stroke="rgba(32,200,176,.55)" stroke-width="1" rx="2"/>
+            <text x="121" y="62" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.7)">82%</text>
+            <text x="121" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.35)">2010</text>
+            <!-- 2015: 87% -->
+            <rect x="144" y="54" width="22" height="146" fill="rgba(32,200,176,.4)" stroke="rgba(32,200,176,.6)" stroke-width="1" rx="2"/>
+            <text x="155" y="48" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(32,200,176,.75)">87%</text>
+            <text x="155" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.35)">2015</text>
+            <!-- 2023: 92% -->
+            <rect x="178" y="45" width="22" height="155" fill="rgba(32,200,176,.5)" stroke="rgba(32,200,176,.75)" stroke-width="1.5" rx="2"/>
+            <text x="189" y="39" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="#20c8b0" font-weight="600">92%</text>
+            <text x="189" y="215" text-anchor="middle" font-family="DM Sans" font-size="7" fill="rgba(224,248,244,.35)">2023</text>
+            <!-- Mål -->
+            <line x1="30" y1="50" x2="268" y2="50" stroke="rgba(240,200,60,.2)" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="250" y="46" font-family="DM Sans" font-size="7" fill="rgba(240,200,60,.5)">Mål: 94 %</text>
+            <text x="140" y="238" text-anchor="middle" font-family="DM Sans" font-size="7.5" fill="rgba(224,248,244,.3)">Norsk pant: Kopiert av 40+ land · 500 mill. flasker per år</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="k-slide hel">
+        <div class="k-info">
+          <div class="k-nr">07 / 07</div>
+          <div class="k-kat" style="background:rgba(32,200,176,.1);color:#20c8b0;border:1px solid rgba(32,200,176,.2)">📋 LK20</div>
+          <h3 class="k-tittel">Plast – sammendrag og kompetansemål</h3>
+          <p class="k-ingress">Plast kobler kjemi, biologi, økonomi og bærekraft – og er et sentralt eksempel i LK20 på at teknologiske løsninger skaper nye miljøutfordringer som krever systemtenkning.</p>
+          <div class="k-faktaliste">
+            <div class="k-fakt"><span class="k-fakt-ikon">🧪</span><div><strong>Kjemi:</strong> Polymerer lages av monomerer ved polymerisering. Termoplast kan smeltes og formes på nytt. Herdeplast herder irreversibelt. PE (polyetylen) er kjeden –(C₂H₄)ₙ– fra etylen-monomer. 99 % av plast lages av fossil energi.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Forurensning:</strong> 11 millioner tonn plast per år til havet. 80 % fra land. Fem havgyrer samler plast. Nedbrytningstid: plastpose 20 år, PET-flaske 450 år. Mikroplast (under 5 mm) finnes overalt – inkludert i menneskelig blod og morsmelk.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">♻️</span><div><strong>Avfallsbehandling:</strong> Kun 9 % av all plast resirkulert (globalt). Avfallshierarkiet: forebygg → gjenbruk → resirkuler → energigjenvinning → deponi. Norge: 92 % returandel for plastflasker. EU-forbud mot engangsplast siden 2021.</div></div>
+            <div class="k-fakt"><span class="k-fakt-ikon">🌍</span><div><strong>Løsninger og LK20:</strong> Enzymatisk nedbrytning, bioplast og kjemisk resirkulering er teknologibaserte løsninger. Pantsystemer og produsentansvar er regulatoriske løsninger. FNs plastkonvensjon er en global løsning under forhandling. Bærekraftig utvikling krever alle tre nivåer.</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="k-ctrl">
+      <button class="k-pil" id="k-prev" onclick="kGo(-1)">&#8592;</button>
+      <div class="k-dots" id="k-dots"></div>
+      <button class="k-pil" id="k-next" onclick="kGo(1)">&#8594;</button>
+    </div>
+  </div>
+
+  <div class="sep"><div class="sep-l"></div><div class="sep-t">Sjekk forståelsen din</div><div class="sep-r"></div></div>
+
+  <div class="quiz-wrapper" id="quiz">
+    <div class="quiz-spm" id="q-spm"></div>
+    <div class="quiz-alts" id="q-alts"></div>
+    <div class="quiz-fb" id="q-fb"></div>
+    <div class="quiz-nav">
+      <button class="q-pil" id="q-prev" onclick="qGo(-1)" disabled>&#8592; Forrige</button>
+      <span class="q-teller" id="q-tell"></span>
+      <button class="q-pil" id="q-next" onclick="qGo(1)">Neste &#8594;</button>
+    </div>
+  </div>
+</div>
+<script>
+
+
+// ── SKAPLAB SPORING ──────────────────────────────────────────────
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+          'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'
+        },
+        body: JSON.stringify({
+          elev_id: _elev.id,
+          ressurs: ressurs,
+          km_kode: km_kode,
+          score_pst: Math.round(score_pst || 0),
+          antall_oppgaver: antall || null,
+          riktige: riktige || null,
+          fullfort_antall: fullfort_ant || null,
+          totalt_antall: totalt_ant || null
+        })
+      }).catch(function() {});
+    };
+  } catch(e) {}
+})();
+// ─────────────────────────────────────────────────────────────────
+const N = document.querySelectorAll('.k-slide').length;
+let cur = 0;
+const slidesEl = document.getElementById('k-slides');
+const dotsEl = document.getElementById('k-dots');
+for (let i = 0; i < N; i++) {
+  const d = document.createElement('button');
+  d.className = 'k-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+}
+function goTo(i) {
+  cur = i;
+  slidesEl.style.transform = `translateX(-${i * 100}%)`;
+  document.querySelectorAll('.k-dot').forEach((d, j) => d.classList.toggle('on', j === i));
+  document.getElementById('k-prev').disabled = i === 0;
+  document.getElementById('k-next').disabled = i === N - 1;
+}
+function kGo(d) { goTo(Math.max(0, Math.min(N - 1, cur + d))); }
+let tx = 0;
+document.getElementById('karusell').addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.getElementById('karusell').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) kGo(dx < 0 ? 1 : -1);
+}, { passive: true });
+goTo(0);
+
+
+
+const QUIZ_DATA = [{"spm": "Hva er en polymer?", "alts": ["En liten, enkel molekyltype", "En lang kjede av repeterte monomerer", "Et type metall med plastiske egenskaper", "Et biologisk materiale fra planter"], "riktig": 1, "fork": "En polymer er en lang kjede bestående av mange repeterte enheter kalt monomerer. Polyetylen (PE) er f.eks. kjeder av etylen-monomer (C₂H₄) bundet samen i lange kjeder."}, {"spm": "Hva er forskjellen på termoplast og herdeplast?", "alts": ["Termoplast er stivere, herdeplast er mykere", "Termoplast kan smeltes og formes på nytt, herdeplast størkner irreversibelt", "Termoplast er laget av olje, herdeplast av planter", "Termoplast er billigere enn herdeplast"], "riktig": 1, "fork": "Termoplast (PE, PP, PET) kan smeltes og formes på nytt – grunnlaget for resirkulering. Herdeplast (epoksy, bakelit) herder ved kovalente tverrforbindelser og kan ikke smeltes igjen."}, {"spm": "Hvor mye av all produsert plast er blitt resirkulert globalt?", "alts": ["Over 50 %", "Rundt 30 %", "Ca. 9 %", "Ca. 20 %"], "riktig": 2, "fork": "Bare 9 % av all plast som er produsert siden 1950 er blitt resirkulert. 12 % er brent, og 79 % er endt på deponier, i naturen eller i havet. Resirkulering er teknisk krevende og konkurrerer med billig ny plast."}, {"spm": "Hva er mikroplast?", "alts": ["Plast laget av mikroorganismer", "Plastpartikler under 5 mm", "Biologisk nedbrytbar plast", "Nano-teknologisk plast for medisiner"], "riktig": 1, "fork": "Mikroplast er plastpartikler under 5 mm i diameter. De kommer fra tekstilvask, dekk-slitasje, kosmetikk og nedbrytning av større plastgjenstander. De er nå funnet overalt – inkludert i menneskelig blod."}, {"spm": "Hva er den beste løsningen i avfallshierarkiet?", "alts": ["Energigjenvinning ved forbrenning", "Resirkulering", "Deponi", "Forebygging – ikke bruke plast i det hele tatt"], "riktig": 3, "fork": "Avfallshierarkiet prioriterer: forebygg > gjenbruk > resirkuler > energigjenvinning > deponi. Det beste er å ikke produsere avfall i det hele tatt – gjennom forbud mot engangsplast, produsentansvar og designendringer."}, {"spm": "Hva er returandelen for plastflasker i Norge?", "alts": ["Rundt 50 %", "Ca. 70 %", "Rundt 80 %", "92 % – verdens høyeste"], "riktig": 3, "fork": "Norges pantsystem (Infinitum) har en returandel på 92 % for plastflasker – verdens høyeste. Systemet er kopiert av over 40 land og regnes som det beste pantsystemet globalt."}, {"spm": "Hvilken kilde er størst til mikroplast på land?", "alts": ["Plastpose-avfall", "Bildekk-slitasje", "Tekstilvask", "Kosmetikk og microbeads"], "riktig": 1, "fork": "Bildekk-slitasje er den største kilden til mikroplast på land – 3–7 kg per bil per år. Gummidekk frigjør plastpartikler som vaskes ut i avløp, elver og hav. Tekstilvask er den nest største kilden."}, {"spm": "Hva er PETase?", "alts": ["Et plasttype brukt til mat-emballasje", "Et enzym som kan bryte ned PET-plast", "Et kjemisk stoff som lager mikroplast", "En type bioplast laget av mais"], "riktig": 1, "fork": "PETase er et enzym oppdaget i japansk søppelfyllplass i 2016. Det kan bryte ned PET-plast på timer til monomerer – mye raskere enn naturlig nedbrytning på 450 år. Det er en lovende metode for kjemisk resirkulering."}];
+let qCur = 0, qSvar = Array(QUIZ_DATA.length).fill(null);
+function visQ(i) {
+  const q = QUIZ_DATA[i];
+  document.getElementById('q-spm').textContent = (i+1) + '. ' + q.spm;
+  const altsEl = document.getElementById('q-alts');
+  altsEl.innerHTML = '';
+  q.alts.forEach((a, j) => {
+    const b = document.createElement('button');
+    b.className = 'quiz-alt'; b.textContent = a;
+    if (qSvar[i] !== null) {
+      b.disabled = true;
+      if (j === q.riktig) b.classList.add('riktig');
+      else if (j === qSvar[i]) b.classList.add('feil');
+    } else { b.onclick = () => svarQ(i, j); }
+    altsEl.appendChild(b);
+  });
+  const fb = document.getElementById('q-fb');
+  if (qSvar[i] !== null) {
+    fb.textContent = (qSvar[i] === q.riktig ? '✅ ' : '❌ ') + q.fork;
+    fb.className = 'quiz-fb ' + (qSvar[i] === q.riktig ? 'riktig' : 'feil');
+  } else { fb.textContent = ''; fb.className = 'quiz-fb'; }
+  document.getElementById('q-tell').textContent = (i+1) + ' / ' + QUIZ_DATA.length;
+  document.getElementById('q-prev').disabled = i === 0;
+  document.getElementById('q-next').disabled = i === QUIZ_DATA.length - 1;
+}
+function svarQ(i, j) {
+  qSvar[i] = j; visQ(i);
+  const riktige = qSvar.filter((s,k) => s !== null && s === QUIZ_DATA[k].riktig).length;
+  if (window._skaplab_logg) window._skaplab_logg(
+    location.pathname.split('/').pop(), 'nat_plast',
+    riktige / QUIZ_DATA.length * 100, QUIZ_DATA.length, riktige, null, null);
+}
+function qGo(d) { qCur = Math.max(0, Math.min(QUIZ_DATA.length-1, qCur+d)); visQ(qCur); }
+visQ(0);
+
+</script>
+</body>
+</html>
