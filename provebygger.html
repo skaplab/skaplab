@@ -484,7 +484,7 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
 // CONFIG
 // ════════════════════════════════════════════════
 // API-kall går via Cloudflare Worker – ingen nøkkel her
-const WORKER_URL = 'https://skaplabproxy.tlnnorda.workers.dev/'; // f.eks. https://skaplab-proxy.dinbruker.workers.dev
+const WORKER_URL = 'DIN_WORKER_URL_HER'; // f.eks. https://skaplab-proxy.dinbruker.workers.dev
 const SB_URL='https://cqzmzsqhuawpsvnjjzse.supabase.co';
 const SB_KEY='sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
 
@@ -876,6 +876,142 @@ function delO(idx){if(!confirm('Slette oppgave '+(idx+1)+'?'))return;S.oppgaver.
 // ════════════════════════════════════════════════
 // DOCX – klient-side med docx.umd.cjs
 // ════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════
+//  LaTeX → Word Math-konverterer
+//  Konverterer $...$ og $$...$$ til docx Math-objekter
+// ════════════════════════════════════════════════════════════
+function latexTilDocxSegmenter(tekst) {
+  // Splitter tekst i segmenter: {type:'tekst'} og {type:'math', latex:'...', display:bool}
+  var seg = [];
+  var rest = tekst;
+  var re = /\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g;
+  var sist = 0;
+  var m;
+  while ((m = re.exec(tekst)) !== null) {
+    if (m.index > sist) seg.push({type:'tekst', val: tekst.slice(sist, m.index)});
+    var display = m[1] !== undefined;
+    var latexStr = (display ? m[1] : m[2]).trim();
+    seg.push({type:'math', val: latexStr, display: display});
+    sist = m.index + m[0].length;
+  }
+  if (sist < tekst.length) seg.push({type:'tekst', val: tekst.slice(sist)});
+  return seg;
+}
+
+function latexTilMathRun(latexStr) {
+  // Konverterer ett LaTeX-uttrykk til docx Math-noder
+  var {Math, MathRun, MathFraction, MathNumerator, MathDenominator,
+       MathSuperScript, MathSubScript, MathSubSuperScript,
+       MathRadical, MathRadicalProperties, MathRoundBrackets,
+       MathSquareBrackets} = window.docx;
+
+  function parse(s) {
+    s = s.trim();
+    // Håndter \frac{a}{b}
+    if (s.startsWith('\\frac{')) {
+      var inner = s.slice(7);
+      var num = trekkUtBlokk(inner, 0);
+      var den = trekkUtBlokk(inner, num.end + 1);
+      return new MathFraction({
+        numerator: new MathNumerator({children: [parseTilRun(num.val)]}),
+        denominator: new MathDenominator({children: [parseTilRun(den.val)]})
+      });
+    }
+    // Håndter \sqrt{a}
+    if (s.startsWith('\\sqrt{')) {
+      var inner2 = s.slice(7, s.indexOf('}', 7));
+      return new MathRadical({
+        radicalProperties: new MathRadicalProperties({hideIndex: true}),
+        children: [parseTilRun(inner2)]
+      });
+    }
+    return parseTilRun(s);
+  }
+
+  function parseTilRun(s) {
+    // Håndter a^{b} superskript
+    var supRe = /^([^_^{}]+)\^\{([^}]+)\}(.*)$/;
+    var subRe = /^([^_^{}]+)_\{([^}]+)\}(.*)$/;
+    var supM = supRe.exec(s);
+    var subM = subRe.exec(s);
+    if (supM) {
+      return new MathSuperScript({
+        children: [new MathRun(supM[1] + (supM[3]||''))],
+        superScript: [new MathRun(supM[2])]
+      });
+    }
+    if (subM) {
+      return new MathSubScript({
+        children: [new MathRun(subM[1] + (subM[3]||''))],
+        subScript: [new MathRun(subM[2])]
+      });
+    }
+    // Enkle symbolerstatninger
+    var rent = s
+      .replace(/\\cdot/g, '·').replace(/\\times/g, '×')
+      .replace(/\\div/g, '÷').replace(/\\pm/g, '±')
+      .replace(/\\leq/g, '≤').replace(/\\geq/g, '≥')
+      .replace(/\\neq/g, '≠').replace(/\\approx/g, '≈')
+      .replace(/\\pi/g, 'π').replace(/\\infty/g, '∞')
+      .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β')
+      .replace(/\\Delta/g, 'Δ').replace(/\\theta/g, 'θ')
+      .replace(/\\sqrt/g, '√').replace(/\\frac/g, '/')
+      .replace(/[{}]/g, '');
+    return new MathRun(rent);
+  }
+
+  function trekkUtBlokk(s, start) {
+    var dybde = 0, i = start;
+    if (s[i] === '{') {
+      dybde = 1; i++;
+      var fra = i;
+      while (i < s.length && dybde > 0) {
+        if (s[i] === '{') dybde++;
+        else if (s[i] === '}') dybde--;
+        i++;
+      }
+      return {val: s.slice(fra, i-1), end: i};
+    }
+    return {val: s[i]||'', end: i+1};
+  }
+
+  try {
+    return new Math({ children: [parse(latexStr)] });
+  } catch(e) {
+    // Fallback: vanlig tekstrun
+    return null;
+  }
+}
+
+function byggParagrafMedLatex(tekst, opts) {
+  // Bygger en Paragraph med blanding av tekst og Math-objekter
+  var {Paragraph, TextRun, Math: DocxMath} = window.docx;
+  opts = opts || {};
+  var seg = latexTilDocxSegmenter(tekst);
+  var children = [];
+
+  seg.forEach(function(s) {
+    if (s.type === 'tekst' && s.val) {
+      children.push(new TextRun(Object.assign({text: s.val}, opts)));
+    } else if (s.type === 'math') {
+      var mathNode = latexTilMathRun(s.val);
+      if (mathNode) {
+        children.push(mathNode);
+      } else {
+        // Fallback: tekst uten $-tegn
+        children.push(new TextRun(Object.assign({text: s.val}, opts)));
+      }
+    }
+  });
+
+  return new Paragraph({
+    spacing: opts.spacing || {after: 100},
+    alignment: opts.alignment,
+    children: children
+  });
+}
+
 async function lastNed(){
   if(!S.oppgaver.length){snack('Ingen oppgaver','err');return;}
   if(!window.docx){snack('docx.umd.cjs ikke lastet – sjekk at filen ligger i samme mappe','err');return;}
@@ -932,7 +1068,7 @@ async function lastNed(){
       if(o.type==='regneoppgave'){
         mkHd();
         if(o.tittel&&o.tittel!=='Regneoppgave')ch.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:o.tittel,size:24,font:'Arial',color:'374151',italics:true})]}));
-        if(o.tekst)ch.push(new Paragraph({spacing:{after:100},children:[new TextRun({text:o.tekst,size:24,font:'Arial'})]}));
+        if(o.tekst)ch.push(byggParagrafMedLatex(o.tekst,{size:24,font:'Arial',spacing:{after:100}}));
         ch.push(new Paragraph({spacing:{before:90,after:50},children:[new TextRun({text:'Svar:',bold:true,size:22,font:'Arial',color:'6B7280'})]}));
         mkLinjer(o.linjer);
       }else if(o.type==='fritekst'){
@@ -948,7 +1084,7 @@ async function lastNed(){
             ch.push(new Paragraph({spacing:{after:100},children:[new ImageRun({data:arr,transformation:{width:400,height:240},type:imgType})]}));
           }catch(imgErr){console.warn('Bilde feilet:',imgErr);}
         }
-        if(o.tekst)ch.push(new Paragraph({spacing:{after:100},children:[new TextRun({text:o.tekst,size:24,font:'Arial'})]}));
+        if(o.tekst)ch.push(byggParagrafMedLatex(o.tekst,{size:24,font:'Arial',spacing:{after:100}}));
         mkLinjer(o.linjer);
       }else if(o.type==='flersvar'){
         mkHd();
