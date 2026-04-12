@@ -796,28 +796,60 @@ async function fetchAi(){
   document.getElementById('btn-sai').disabled=true;
   document.getElementById('ai-eb').style.display='none';
 
-  const kmTxt=S.km.map(x=>x.k+': '+x.t).join('\n');
+  // Hent fra Supabase-databasen (gratis) for alle valgte KM
+  const kmKoder = S.km.map(x=>x.k);
   try{
-    const res=await fetch(WORKER_URL,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1200,
-        system:`Du er en erfaren norsk ungdomsskolelærer. Svar KUN med et JSON-objekt – ingen annen tekst, ingen kodeblokker.
-Format: {"oppgaver":[{"tekst":"...","type":"beregning|analyse|drøfting|praktisk|kort-svar"}]}
-Regler: Lag nøyaktig 4 varierte oppgaver på norsk bokmål tilpasset ungdomsskolen. For matematikk: bruk $...$ for matematiske uttrykk. Ikke skriv "Oppgave 1:" foran.`,
-        messages:[{role:'user',content:`Fag: ${S.fag}\nKompetansemål:\n${kmTxt}\n\nLag 4 prøveoppgaver.`}]
-      })
-    });
-    const data=await res.json();
-    const raw=(data.content?.[0]?.text||'').replace(/```[\w]*|```/g,'').trim();
-    let parsed;try{parsed=JSON.parse(raw);}catch{throw new Error('Ugyldig svar fra AI');}
-    renderAI(parsed.oppgaver||[]);
+    // Hent inntil 4 tilfeldige oppgaver per valgt KM
+    const alleOppgaver = [];
+    for(const kode of kmKoder){
+      const url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.${kode}&select=oppgave,type&limit=8&order=random()`;
+      const r = await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      if(r.ok){
+        const data = await r.json();
+        if(Array.isArray(data)) alleOppgaver.push(...data);
+      }
+    }
+
+    if(alleOppgaver.length > 0){
+      // Bland og vis inntil 6 forslag
+      const blandet = alleOppgaver.sort(()=>Math.random()-.5).slice(0,6);
+      renderAI(blandet.map(o=>({tekst:o.oppgave, type:o.type||'oppgave'})));
+      return;
+    }
+
+    // Fallback: ingen oppgaver i DB – prøv Worker om konfigurert
+    if(WORKER_URL && WORKER_URL !== 'DIN_WORKER_URL_HER'){
+      await fetchAiFraWorker();
+    } else {
+      document.getElementById('ai-list').innerHTML=
+        '<div style="color:var(--dim);font-size:.82rem;padding:12px;line-height:1.6">'
+        +'📭 Ingen oppgaver i databasen for disse kompetansemålene ennå.<br>'
+        +'Kjør <code>generer_oppgavebank.py</code> for å fylle opp databasen.'
+        +'</div>';
+    }
   }catch(e){
     document.getElementById('ai-list').innerHTML=`<div style="color:var(--red);font-size:.82rem;padding:8px">⚠️ Feil: ${esc(e.message)}</div>`;
   }finally{
     document.getElementById('ai-load').style.display='none';
     document.getElementById('btn-nai').disabled=false;
   }
+}
+
+// Fallback: hent fra Cloudflare Worker (koster penger per kall)
+async function fetchAiFraWorker(){
+  const kmTxt=S.km.map(x=>x.k+': '+x.t).join('\n');
+  const res=await fetch(WORKER_URL,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',max_tokens:1000,
+      system:'Du er en norsk ungdomsskolelærer. Svar KUN med JSON: {"oppgaver":[{"tekst":"...","type":"..."}]}. Fire oppgaver, norsk bokmål, ingen kodeblokker.',
+      messages:[{role:'user',content:`Fag: ${S.fag}\nKM: ${kmTxt}\nLag 4 prøveoppgaver.`}]
+    })
+  });
+  const data=await res.json();
+  const raw=(data.content?.[0]?.text||'').replace(/```[\w]*|```/g,'').trim();
+  let parsed;try{parsed=JSON.parse(raw);}catch{throw new Error('Ugyldig svar fra AI');}
+  renderAI(parsed.oppgaver||[]);
 }
 
 function renderAI(liste){
