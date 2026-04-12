@@ -364,7 +364,10 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
       <input type="text" id="rn-t" placeholder="f.eks. Oppgave: Løs ligningen for x">
     </div>
     <div class="es">
-      <div class="el">Oppgavetekst – LaTeX støttes med <code>$ ... $</code></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div class="el" style="margin-bottom:0">Oppgavetekst – LaTeX støttes med <code>$ ... $</code></div>
+        <a href="latex_editor.html" target="_blank" class="btn bg sm" style="text-decoration:none;font-size:.75rem;padding:5px 11px">⎘ Åpne LaTeX-editor</a>
+      </div>
       <div class="lw">
         <textarea class="la" id="rn-la" rows="6" placeholder="Eksempel:&#10;Løs ligningen&#10;$2x + 3 = 11$&#10;&#10;Vis utregning og svar."></textarea>
         <div class="tbox">
@@ -480,6 +483,8 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
 // ════════════════════════════════════════════════
 // CONFIG
 // ════════════════════════════════════════════════
+// API-kall går via Cloudflare Worker – ingen nøkkel her
+const WORKER_URL = 'https://skaplabproxy.tlnnorda.workers.dev/'; // f.eks. https://skaplab-proxy.dinbruker.workers.dev
 const SB_URL='https://cqzmzsqhuawpsvnjjzse.supabase.co';
 const SB_KEY='sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
 
@@ -793,7 +798,7 @@ async function fetchAi(){
 
   const kmTxt=S.km.map(x=>x.k+': '+x.t).join('\n');
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch(WORKER_URL,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',max_tokens:1200,
@@ -1049,6 +1054,26 @@ function snack(msg,type='ok'){
 }
 
 renderSB();
+
+// Hent oppgave fra LaTeX-editor om vi kom tilbake derfra
+(function() {
+  var fra = new URLSearchParams(location.search).get('fra');
+  if (fra === 'latex') {
+    var tekst = sessionStorage.getItem('latex_oppgave');
+    if (tekst) {
+      sessionStorage.removeItem('latex_oppgave');
+      setTimeout(function() {
+        setStep(4);
+        openM();
+        vType('regneoppgave', true);
+        setTimeout(function() {
+          var ta = document.getElementById('rn-la');
+          if (ta) { ta.value = tekst; snack('LaTeX-oppgave hentet ✓', 'ok'); }
+        }, 80);
+      }, 200);
+    }
+  }
+})();
 </script>
 </body>
 </html>

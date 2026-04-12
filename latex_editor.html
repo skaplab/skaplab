@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – LaTeX-editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,700;1,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+:root {
+  --bg:     #0d1117;
+  --surf:   #13181f;
+  --card:   #191f2a;
+  --card2:  #1e2535;
+  --edge:   rgba(255,255,255,.06);
+  --edge2:  rgba(255,255,255,.12);
+  --text:   #dde4f5;
+  --dim:    rgba(221,228,245,.42);
+  --dim2:   rgba(221,228,245,.65);
+  --acc:    #5b9cf6;
+  --aglow:  rgba(91,156,246,.15);
+  --grn:    #36d79c;
+  --ylw:    #f5c842;
+  --red:    #f07070;
+  --lav:    #a98ffc;
+  --fh:     'Fraunces', serif;
+  --fb:     'DM Sans', sans-serif;
+  --fm:     'DM Mono', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--fb)}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:52px;display:flex;align-items:center;padding:0 24px;gap:12px;
+  background:var(--surf);border-bottom:1px solid var(--edge);
+  position:sticky;top:0;z-index:50;
+}
+.tb-back{color:var(--dim);font-size:.8rem;text-decoration:none;transition:color .15s}
+.tb-back:hover{color:var(--text)}
+.tb-title{font-family:var(--fh);font-size:1rem;font-weight:700}
+.tb-badge{
+  margin-left:auto;padding:3px 10px;border-radius:20px;
+  font-size:.7rem;font-weight:600;letter-spacing:.06em;
+  background:var(--aglow);border:1px solid rgba(91,156,246,.3);color:var(--acc);
+}
+
+/* ── LAYOUT ── */
+.wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+.page-hd{margin-bottom:28px}
+.page-hd h1{font-family:var(--fh);font-size:1.7rem;font-weight:700;margin-bottom:6px}
+.page-hd p{font-size:.88rem;color:var(--dim2);line-height:1.6}
+
+/* ── EDITOR CARD ── */
+.card{
+  background:var(--card);border:1px solid var(--edge);
+  border-radius:14px;padding:22px 24px;margin-bottom:20px;
+}
+.card-title{
+  font-family:var(--fh);font-size:1rem;font-weight:700;
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.card-title span{font-size:1.1rem}
+
+/* ── LABEL ── */
+.lbl{font-size:.77rem;color:var(--dim);margin-bottom:6px;display:block}
+
+/* ── TEXTAREA ── */
+.tex-area{
+  width:100%;min-height:130px;resize:vertical;
+  background:var(--card2);border:1.5px solid var(--edge2);
+  border-radius:10px;color:var(--text);
+  font-family:var(--fm);font-size:.92rem;line-height:1.75;
+  padding:14px 16px;outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.tex-area:focus{
+  border-color:var(--acc);
+  box-shadow:0 0 0 3px var(--aglow);
+}
+
+/* ── KNAPPER-GRID ── */
+.btn-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
+  gap:6px;margin-top:12px;
+}
+.math-btn{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--card2);border:1px solid var(--edge2);
+  border-radius:9px;padding:9px 6px 8px;
+  cursor:pointer;transition:all .15s;gap:4px;
+  font-family:var(--fb);
+}
+.math-btn:hover{
+  border-color:var(--acc);background:var(--aglow);
+  transform:translateY(-1px);
+}
+.math-btn:active{transform:translateY(0)}
+.math-btn .sym{
+  font-size:1.05rem;font-family:var(--fm);
+  color:var(--acc);line-height:1;
+  min-height:22px;display:flex;align-items:center;
+}
+.math-btn .lbl2{font-size:.62rem;color:var(--dim);text-align:center;line-height:1.25}
+
+/* Kategori-header */
+.btn-kat{
+  grid-column:1/-1;
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--dim);
+  padding:10px 0 4px;border-bottom:1px solid var(--edge);
+  margin-bottom:2px;
+}
+
+/* ── PREVIEW ── */
+.preview-wrap{
+  background:var(--card2);border:1px solid var(--edge2);
+  border-radius:10px;min-height:60px;
+  padding:14px 18px;margin-top:12px;
+  font-size:1rem;line-height:1.8;color:var(--text);
+  transition:all .2s;
+}
+.preview-empty{color:var(--dim);font-style:italic;font-size:.88rem}
+
+/* ── TABS for hente-oppgaver ── */
+.tabs{display:flex;gap:3px;margin-bottom:16px;
+  background:var(--card2);border-radius:10px;padding:4px;}
+.tab{
+  flex:1;padding:8px;border-radius:7px;border:none;
+  background:transparent;color:var(--dim);
+  font-family:var(--fb);font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.tab.ak{background:var(--card);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.tab-panel{display:none}.tab-panel.on{display:block}
+
+/* ── OPPGAVE-FORSLAG ── */
+.opp-grid{display:flex;flex-direction:column;gap:8px}
+.opp-kort{
+  background:var(--card2);border:1.5px solid var(--edge2);
+  border-radius:10px;padding:13px 15px;cursor:pointer;
+  transition:all .18s;display:flex;align-items:flex-start;gap:10px;
+}
+.opp-kort:hover{border-color:rgba(91,156,246,.4);background:var(--aglow)}
+.opp-kort.sel{border-color:var(--acc);background:var(--aglow)}
+.opp-type{
+  font-size:.63rem;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--acc);
+  white-space:nowrap;margin-top:1px;
+}
+.opp-tekst{font-size:.86rem;line-height:1.55;flex:1}
+
+/* Supabase søk */
+.sb-row{display:flex;gap:8px;margin-bottom:12px}
+.sb-inp{
+  flex:1;background:var(--card2);border:1px solid var(--edge2);
+  border-radius:8px;color:var(--text);font-family:var(--fb);
+  font-size:.87rem;padding:9px 13px;outline:none;
+  transition:border-color .15s;
+}
+.sb-inp:focus{border-color:var(--acc)}
+select.sb-inp{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  padding-right:30px;cursor:pointer;
+}
+
+/* ── KNAPPER ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:8px;border:none;cursor:pointer;
+  font-family:var(--fb);font-size:.86rem;font-weight:600;
+  transition:all .18s;white-space:nowrap;
+}
+.bp{background:var(--acc);color:#fff}
+.bp:hover{background:#4a8ae8;box-shadow:0 4px 14px var(--aglow)}
+.bg{background:transparent;color:var(--dim);border:1px solid var(--edge2)}
+.bg:hover{color:var(--text);background:var(--card2)}
+.bgr{background:rgba(54,215,156,.1);color:var(--grn);border:1px solid rgba(54,215,156,.2)}
+.bgr:hover{background:rgba(54,215,156,.18)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── SPINNER ── */
+.spin-row{display:flex;align-items:center;gap:9px;padding:12px;color:var(--dim);font-size:.84rem}
+.spin{width:17px;height:17px;border:2px solid var(--edge2);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ── SNACK ── */
+.snack{
+  position:fixed;bottom:22px;left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:var(--card2);border:1px solid var(--edge2);
+  border-radius:9px;padding:10px 16px;
+  font-size:.83rem;color:var(--text);
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
+  z-index:999;opacity:0;pointer-events:none;transition:all .2s;
+}
+.snack.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.snack.ok{border-color:rgba(54,215,156,.35);color:var(--grn)}
+.snack.err{border-color:rgba(240,112,112,.35);color:var(--red)}
+
+/* ── FLIS-ROWS ── */
+.row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+
+/* KaTeX overrides */
+.katex{font-size:1.05em}
+.preview-wrap .katex-display{margin:.3em 0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="provebygger.html" class="tb-back">← Prøvebygger</a>
+  <span style="color:var(--edge2)">／</span>
+  <span class="tb-title">LaTeX-editor</span>
+  <span class="tb-badge">∑ Math</span>
+</div>
+
+<div class="wrap">
+
+  <div class="page-hd">
+    <h1>LaTeX matematikkeditor</h1>
+    <p>Skriv oppgaveteksten under. Bruk knappene for å sette inn matematiske symboler og uttrykk. Forhåndsvisningen viser how oppgaven ser ut for elevene.</p>
+  </div>
+
+  <!-- TEKST-EDITOR -->
+  <div class="card">
+    <div class="card-title"><span>✏️</span> Oppgavetekst</div>
+    <label class="lbl">Skriv oppgaven – omgi matematikk med <code style="color:var(--acc);font-family:var(--fm)">$...$</code> for innlinja eller <code style="color:var(--acc);font-family:var(--fm)">$$...$$</code> for sentrert</label>
+    <textarea class="tex-area" id="editor"
+      placeholder="Eksempel:&#10;Løs likningen&#10;$$2x + 3 = 11$$&#10;Vis alle utregninger og svar.&#10;&#10;Hint: Trekk fra 3 på begge sider, deretter del på 2."
+      oninput="oppdaterPreview()"
+      onkeydown="tabHåndtering(event)"></textarea>
+
+    <!-- KNAPPER GRID -->
+    <div class="btn-grid" id="knapper"></div>
+
+    <!-- PREVIEW -->
+    <label class="lbl" style="margin-top:18px;margin-bottom:6px">Forhåndsvisning</label>
+    <div class="preview-wrap" id="preview">
+      <span class="preview-empty">Forhåndsvisningen vises her...</span>
+    </div>
+
+    <div class="row">
+      <button class="btn bp" onclick="brukOppgave()">✓ Bruk denne oppgaven i prøven</button>
+      <button class="btn bg" onclick="tøm()">Tøm</button>
+      <button class="btn bg" onclick="kopier()">⎘ Kopier tekst</button>
+    </div>
+  </div>
+
+  <!-- HENTE FRA DATABASE -->
+  <div class="card">
+    <div class="card-title"><span>📚</span> Hent oppgave fra database</div>
+
+    <div class="tabs">
+      <button class="tab ak" onclick="byttTab('adaptiv',this)">🧠 Adaptiv trener</button>
+      <button class="tab" onclick="byttTab('km',this)">🎯 Kompetansemål</button>
+    </div>
+
+    <!-- Adaptiv-tab -->
+    <div class="tab-panel on" id="tp-adaptiv">
+      <div class="sb-row">
+        <select class="sb-inp" id="emne-sel" onchange="hentAdaptiv()">
+          <option value="">– Velg emne –</option>
+          <option value="heltall">Heltall og regning</option>
+          <option value="brok">Brøk</option>
+          <option value="desimal">Desimaltall</option>
+          <option value="prosent">Prosent og promille</option>
+          <option value="potenser">Potenser og røtter</option>
+          <option value="standardform">Standardform</option>
+          <option value="uttrykk">Algebraiske uttrykk</option>
+          <option value="likn1">Likninger (1. grad)</option>
+          <option value="ulikheter">Ulikheter</option>
+          <option value="liknsyst">Likningssystemer</option>
+          <option value="funksjoner">Funksjoner og grafer</option>
+          <option value="polynomer">Polynomer</option>
+          <option value="areal">Areal og omkrets</option>
+          <option value="volum">Volum og overflate</option>
+          <option value="pythagoras">Pytagoras</option>
+          <option value="trig">Trigonometri</option>
+          <option value="koordinater">Koordinatsystem</option>
+          <option value="snitt">Gjennomsnitt og median</option>
+          <option value="diagrammer">Diagrammer og tabeller</option>
+          <option value="sannsynl">Sannsynlighet</option>
+          <option value="kombinat">Kombinatorikk</option>
+        </select>
+        <select class="sb-inp" id="nivaa-sel" style="max-width:130px" onchange="hentAdaptiv()">
+          <option value="">Alle nivåer</option>
+          <option value="1">Nivå 1</option><option value="2">Nivå 2</option>
+          <option value="3">Nivå 3</option><option value="4">Nivå 4</option>
+          <option value="5">Nivå 5</option><option value="6">Nivå 6</option>
+          <option value="7">Nivå 7</option><option value="8">Nivå 8</option>
+          <option value="9">Nivå 9</option><option value="10">Nivå 10</option>
+        </select>
+      </div>
+      <div id="ad-resultat"></div>
+    </div>
+
+    <!-- KM-tab -->
+    <div class="tab-panel" id="tp-km">
+      <div class="sb-row">
+        <select class="sb-inp" id="km-fag" onchange="oppdaterKmListe()">
+          <option value="mat">📐 Matematikk</option>
+          <option value="nat">🔬 Naturfag</option>
+        </select>
+        <select class="sb-inp" id="km-sel" onchange="hentKm()">
+          <option value="">– Velg kompetansemål –</option>
+        </select>
+      </div>
+      <div id="km-resultat"></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<div class="snack" id="snack"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────
+const SB_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+const SB_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+
+// ─── KNAPPER-DEFINISJON ───────────────────────────────────────────
+const KATS = [
+  {
+    kat: 'Grunnleggende',
+    btns: [
+      { sym: '$\\,x\\,$', lbl: 'Innlinja', ins: '$$' },
+      { sym: '$$x$$',     lbl: 'Sentrert', ins: '$$$$' },
+      { sym: 'x²',        lbl: 'Potens',   ins: '^{}' },
+      { sym: 'x₂',        lbl: 'Nedsrift', ins: '_{}' },
+      { sym: '√',         lbl: 'Rot',      ins: '\\sqrt{}' },
+      { sym: '∛',         lbl: 'Kubikkrot',ins: '\\sqrt[3]{}' },
+      { sym: 'a/b',       lbl: 'Brøk',     ins: '\\frac{}{}' },
+    ]
+  },
+  {
+    kat: 'Operasjoner',
+    btns: [
+      { sym: '·',    lbl: 'Gange ·',    ins: '\\cdot ' },
+      { sym: '×',    lbl: 'Gange ×',    ins: '\\times ' },
+      { sym: '÷',    lbl: 'Dele ÷',     ins: '\\div ' },
+      { sym: '±',    lbl: '±',          ins: '\\pm ' },
+      { sym: '≈',    lbl: 'Tilnærmet',  ins: '\\approx ' },
+      { sym: '≠',    lbl: 'Ikke lik',   ins: '\\neq ' },
+      { sym: '≤',    lbl: 'Maks',       ins: '\\leq ' },
+      { sym: '≥',    lbl: 'Minst',      ins: '\\geq ' },
+    ]
+  },
+  {
+    kat: 'Geometri og algebra',
+    btns: [
+      { sym: 'π',    lbl: 'Pi',         ins: '\\pi ' },
+      { sym: '∞',    lbl: 'Uendelig',   ins: '\\infty ' },
+      { sym: '△',    lbl: 'Trekant',    ins: '\\triangle ' },
+      { sym: '°',    lbl: 'Grader',     ins: '^{\\circ}' },
+      { sym: '⃗v',   lbl: 'Vektor',     ins: '\\vec{}' },
+      { sym: '|x|',  lbl: 'Absoluttv',  ins: '|{}|' },
+      { sym: '( )',  lbl: 'Parentes',   ins: '\\left(\\right)' },
+      { sym: '[ ]',  lbl: 'Klamme',    ins: '\\left[\\right]' },
+    ]
+  },
+  {
+    kat: 'Greske bokstaver',
+    btns: [
+      { sym: 'α',  lbl: 'alfa',    ins: '\\alpha ' },
+      { sym: 'β',  lbl: 'beta',    ins: '\\beta ' },
+      { sym: 'Δ',  lbl: 'Delta',   ins: '\\Delta ' },
+      { sym: 'θ',  lbl: 'theta',   ins: '\\theta ' },
+      { sym: 'λ',  lbl: 'lambda',  ins: '\\lambda ' },
+      { sym: 'μ',  lbl: 'my',      ins: '\\mu ' },
+      { sym: 'σ',  lbl: 'sigma',   ins: '\\sigma ' },
+      { sym: 'φ',  lbl: 'fi',      ins: '\\phi ' },
+    ]
+  },
+  {
+    kat: 'Funksjoner og statistikk',
+    btns: [
+      { sym: 'Σ',      lbl: 'Sum',      ins: '\\sum_{i=1}^{n} ' },
+      { sym: '∫',      lbl: 'Integral', ins: '\\int_{a}^{b} ' },
+      { sym: 'x̄',     lbl: 'Gjsn.',    ins: '\\bar{x}' },
+      { sym: 'P(A)',   lbl: 'Sannsynl', ins: 'P(A)' },
+      { sym: 'f(x)',   lbl: 'Funksjon', ins: 'f(x)' },
+      { sym: 'log',    lbl: 'Log',      ins: '\\log_{}' },
+      { sym: '…',      lbl: 'Prikker',  ins: '\\ldots' },
+      { sym: '∈',      lbl: 'Element i',ins: '\\in ' },
+    ]
+  },
+  {
+    kat: 'Hurtigmaler',
+    btns: [
+      { sym: 'ax+b',   lbl: 'Lin. funk', ins: 'y = ax + b' },
+      { sym: 'ax²',    lbl: 'Kvadr.',    ins: 'y = ax^2 + bx + c' },
+      { sym: 'a²+b²',  lbl: 'Pytagoras', ins: 'a^2 + b^2 = c^2' },
+      { sym: 'sin',    lbl: 'Sinus',     ins: '\\sin(\\theta) = \\frac{\\text{mot}}{\\text{hyp}}' },
+      { sym: 'n!',     lbl: 'Fakultet',  ins: 'n! = n \\cdot (n-1) \\cdot \\ldots \\cdot 1' },
+      { sym: 'C(n,r)', lbl: 'Kombin.',   ins: 'C(n,r) = \\frac{n!}{r!(n-r)!}' },
+      { sym: 'P(A∩B)', lbl: 'Sanns.',    ins: 'P(A \\cap B) = P(A) \\cdot P(B)' },
+      { sym: '\\bar',  lbl: 'Gjennomsnitt', ins: '\\bar{x} = \\frac{\\sum x_i}{n}' },
+    ]
+  },
+];
+
+// ─── BYGG KNAPPERID ───────────────────────────────────────────────
+(function byggKnapper() {
+  const grid = document.getElementById('knapper');
+  KATS.forEach(kat => {
+    const hd = document.createElement('div');
+    hd.className = 'btn-kat';
+    hd.textContent = kat.kat;
+    grid.appendChild(hd);
+
+    kat.btns.forEach(b => {
+      const el = document.createElement('button');
+      el.className = 'math-btn';
+      el.title = b.ins;
+      el.innerHTML = `<span class="sym">${b.sym}</span><span class="lbl2">${b.lbl}</span>`;
+      el.addEventListener('click', () => settInn(b.ins));
+      grid.appendChild(el);
+    });
+  });
+})();
+
+// ─── SETT INN I TEXTAREA ──────────────────────────────────────────
+function settInn(tekst) {
+  const ta = document.getElementById('editor');
+  ta.focus();
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  const valgt = ta.value.slice(s, e);
+
+  let ny;
+  // Spesialhåndtering for $$ (innlinja) og $$$$ (sentrert)
+  if (tekst === '$$') {
+    ny = '$' + (valgt || 'x') + '$';
+  } else if (tekst === '$$$$') {
+    ny = '\n$$' + (valgt || 'x') + '$$\n';
+  } else if (valgt && (tekst.endsWith('{}') || tekst.endsWith('{}'))) {
+    // Sett valgt tekst inn i første {}
+    ny = tekst.replace('{}', '{' + valgt + '}');
+  } else if (tekst === '\\frac{}{}') {
+    ny = valgt ? '\\frac{' + valgt + '}{}' : '\\frac{}{}';
+  } else if (tekst === '|{}|') {
+    ny = '|' + (valgt || '') + '|';
+  } else if (tekst === '\\left(\\right)') {
+    ny = '\\left(' + valgt + '\\right)';
+  } else if (tekst === '\\left[\\right]') {
+    ny = '\\left[' + valgt + '\\right]';
+  } else {
+    ny = tekst;
+  }
+
+  ta.value = ta.value.slice(0, s) + ny + ta.value.slice(e);
+
+  // Flytt cursor til riktig sted (inni første {})
+  let cursor = s + ny.length;
+  const tomBrøk = ny.indexOf('{}');
+  if (tomBrøk >= 0 && !valgt) cursor = s + tomBrøk + 1;
+
+  ta.setSelectionRange(cursor, cursor);
+  oppdaterPreview();
+}
+
+// Tab-innrykk i textarea
+function tabHåndtering(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    settInn('  ');
+  }
+}
+
+// ─── PREVIEW ─────────────────────────────────────────────────────
+function oppdaterPreview() {
+  const tekst = document.getElementById('editor').value.trim();
+  const prv   = document.getElementById('preview');
+  if (!tekst) {
+    prv.innerHTML = '<span class="preview-empty">Forhåndsvisningen vises her...</span>';
+    return;
+  }
+  prv.textContent = tekst;
+  if (window.renderMathInElement) {
+    renderMathInElement(prv, {
+      delimiters: [
+        {left:'$$',right:'$$',display:true},
+        {left:'$',right:'$',display:false},
+      ],
+      throwOnError: false
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.renderMathInElement) oppdaterPreview();
+});
+
+// ─── HANDLINGER ───────────────────────────────────────────────────
+function tøm() {
+  document.getElementById('editor').value = '';
+  oppdaterPreview();
+}
+
+function kopier() {
+  const ta = document.getElementById('editor');
+  navigator.clipboard.writeText(ta.value).then(() => snack('Tekst kopiert!', 'ok'));
+}
+
+function brukOppgave() {
+  const tekst = document.getElementById('editor').value.trim();
+  if (!tekst) { snack('Ingenting å bruke – skriv en oppgave først', 'err'); return; }
+  // Lagre i sessionStorage og gå tilbake til prøvebygger
+  sessionStorage.setItem('latex_oppgave', tekst);
+  snack('Oppgave klar – returnerer til prøvebygger...', 'ok');
+  setTimeout(() => { window.location.href = 'provebygger.html?fra=latex'; }, 900);
+}
+
+// ─── TABS ────────────────────────────────────────────────────────
+function byttTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('ak'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('on'));
+  el.classList.add('ak');
+  document.getElementById('tp-' + id).classList.add('on');
+}
+
+// ─── KM-LISTE ────────────────────────────────────────────────────
+const KM_MAT = [
+  {k:'MAT8-1',t:'Geometri – figurer og relasjoner'},
+  {k:'MAT8-2',t:'Formlar, likningar og ulikskapar'},
+  {k:'MAT8-3',t:'Potenser og standardform'},
+  {k:'MAT8-4',t:'Prosent – vekst og tap'},
+  {k:'MAT8-5',t:'Brøk, desimal og negative tal'},
+  {k:'MAT8-6',t:'Koordinatsystem'},
+  {k:'MAT8-7',t:'Statistiske framstillingar'},
+  {k:'MAT8-8',t:'Undersøkingar og data'},
+  {k:'MAT9-1',t:'Geometri – argument og samanhengar'},
+  {k:'MAT9-2',t:'Pytagoras'},
+  {k:'MAT9-3',t:'Potenser og røter'},
+  {k:'MAT9-4',t:'Likningar og likningssett'},
+  {k:'MAT9-5',t:'Funksjonar'},
+  {k:'MAT9-6',t:'Statistiske metodar'},
+  {k:'MAT9-7',t:'Modellering med algebra'},
+  {k:'MAT9-8',t:'Sannsynlegheit'},
+  {k:'MAT10-1',t:'Geometri – eigenskapar og samanhengar'},
+  {k:'MAT10-2',t:'Trigonometri'},
+  {k:'MAT10-3',t:'Sentralmål og variasjonsbreidd'},
+  {k:'MAT10-4',t:'Samansette problem'},
+  {k:'MAT10-5',t:'Funksjonar med teknologi'},
+  {k:'MAT10-6',t:'Talrepresentasjonar'},
+  {k:'MAT10-7',t:'Prosent og promille'},
+  {k:'MAT10-8',t:'Sannsynlegheit frå statistiske data'},
+];
+const KM_NAT = [
+  {k:'NAT-1',t:'Celler i planter og dyr'},{k:'NAT-2',t:'Bioteknologi og DNA'},
+  {k:'NAT-3',t:'Energiomvandlinger'},{k:'NAT-4',t:'Kjemiske bindinger og reaksjoner'},
+  {k:'NAT-5',t:'Atomer og molekyler'},{k:'NAT-6',t:'pH og buffermekanismer'},
+  {k:'NAT-7',t:'Elektrisitet og magnetisme'},{k:'NAT-8',t:'Biologisk mangfold'},
+  {k:'NAT-9',t:'Evolusjon og naturlig seleksjon'},{k:'NAT-10',t:'Klimaendringer og bærekraft'},
+  {k:'NAT-11',t:'Reproduksjon og genetikk'},{k:'NAT-12',t:'Energiproduksjon og miljø'},
+  {k:'NAT-13',t:'Sirkulasjonssystem og lunger'},{k:'NAT-14',t:'Virus, bakterier og immunforsvar'},
+  {k:'NAT-15',t:'Vitenskapelig metode'},
+];
+
+function oppdaterKmListe() {
+  const fag  = document.getElementById('km-fag').value;
+  const sel  = document.getElementById('km-sel');
+  const data = fag === 'mat' ? KM_MAT : KM_NAT;
+  sel.innerHTML = '<option value="">– Velg kompetansemål –</option>';
+  data.forEach(({k, t}) => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k + ': ' + t;
+    sel.appendChild(o);
+  });
+  document.getElementById('km-resultat').innerHTML = '';
+}
+oppdaterKmListe();
+
+// ─── HENT FRA SUPABASE ────────────────────────────────────────────
+async function hentAdaptiv() {
+  const emne  = document.getElementById('emne-sel').value;
+  const nivaa = document.getElementById('nivaa-sel').value;
+  if (!emne) { document.getElementById('ad-resultat').innerHTML = ''; return; }
+
+  const el = document.getElementById('ad-resultat');
+  el.innerHTML = '<div class="spin-row"><div class="spin"></div> Henter oppgaver fra databasen...</div>';
+
+  let url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.adaptiv&emne=eq.${emne}&select=*&limit=12&order=random()`;
+  if (nivaa) url += `&nivaa=eq.${nivaa}`;
+
+  try {
+    const r = await fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }});
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:10px">Ingen oppgaver i databasen for dette emnet ennå. Kjør generatorskriptet.</div>';
+      return;
+    }
+    visOppgaveListe(data, el);
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--red);font-size:.83rem;padding:10px">⚠️ Feil: ${e.message}</div>`;
+  }
+}
+
+async function hentKm() {
+  const kode = document.getElementById('km-sel').value;
+  if (!kode) { document.getElementById('km-resultat').innerHTML = ''; return; }
+
+  const el = document.getElementById('km-resultat');
+  el.innerHTML = '<div class="spin-row"><div class="spin"></div> Henter oppgaver...</div>';
+
+  const url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.${kode}&select=*&limit=12&order=random()`;
+  try {
+    const r = await fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }});
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:10px">Ingen oppgaver for dette kompetansemålet ennå.</div>';
+      return;
+    }
+    visOppgaveListe(data, el);
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--red);font-size:.83rem;padding:10px">⚠️ Feil: ${e.message}</div>`;
+  }
+}
+
+function visOppgaveListe(data, container) {
+  const grid = document.createElement('div');
+  grid.className = 'opp-grid';
+
+  data.forEach(opp => {
+    const div = document.createElement('div');
+    div.className = 'opp-kort';
+    const typeTxt = opp.type === 'mc' ? 'Flervalg' : 'Inntasting';
+    const nivTxt  = opp.nivaa ? `· Niv. ${opp.nivaa}` : '';
+    div.innerHTML = `
+      <div>
+        <div class="opp-type">${typeTxt} ${nivTxt}</div>
+      </div>
+      <div class="opp-tekst">${esc(opp.oppgave)}</div>`;
+
+    div.onclick = () => {
+      document.querySelectorAll('.opp-kort').forEach(k => k.classList.remove('sel'));
+      div.classList.add('sel');
+      // Sett oppgaveteksten inn i editoren
+      document.getElementById('editor').value = opp.oppgave;
+      oppdaterPreview();
+      snack('Oppgave hentet – rediger og bruk den!', 'ok');
+      // Scroll til editor
+      document.getElementById('editor').scrollIntoView({behavior:'smooth', block:'center'});
+    };
+    grid.appendChild(div);
+  });
+
+  // Hent nye knapp
+  const nyBtn = document.createElement('button');
+  nyBtn.className = 'btn bg';
+  nyBtn.style.marginTop = '8px';
+  nyBtn.innerHTML = '🔄 Vis andre oppgaver';
+  nyBtn.onclick = () => {
+    const emne = document.getElementById('emne-sel').value;
+    if (emne) hentAdaptiv(); else hentKm();
+  };
+
+  container.innerHTML = '';
+  container.appendChild(grid);
+  container.appendChild(nyBtn);
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+let snT;
+function snack(msg, type='ok') {
+  const el = document.getElementById('snack');
+  el.textContent = (type==='ok'?'✓  ':'⚠  ') + msg;
+  el.className = 'snack on ' + type;
+  clearTimeout(snT);
+  snT = setTimeout(() => el.classList.remove('on'), 3000);
+}
+
+// ─── KaTeX når lastet ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Vent på KaTeX
+  const ventet = setInterval(() => {
+    if (window.renderMathInElement) {
+      clearInterval(ventet);
+      oppdaterPreview();
+    }
+  }, 100);
+});
+</script>
+</body>
+</html>
