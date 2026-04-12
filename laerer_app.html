@@ -1737,7 +1737,8 @@ async function lastAdaptivElev(elevId){
       innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem">Eleven har ikke brukt adaptiv trener ennå.</div>';return;
     }
     var fj=new Date();fj.setDate(fj.getDate()-14);
-    var logg=await apiGet('/adaptiv_logg?elev_id=eq.'+elevId+'&opprettet=gte.'+fj.toISOString()+'&select=emne,riktig,opprettet&order=opprettet.asc&limit=200');
+    var logg=[];
+    try{logg=await apiGet('/adaptiv_logg?elev_id=eq.'+elevId+'&opprettet=gte.'+fj.toISOString()+'&select=emne,riktig,opprettet&order=opprettet.asc&limit=200');}catch(e2){}
     if(!Array.isArray(logg))logg=[];
     var totR=prog.reduce(function(s,p){return s+(p.totalt_riktige||0);},0);
     var totF=prog.reduce(function(s,p){return s+(p.totalt_feil||0);},0);
@@ -1767,7 +1768,10 @@ async function lastAdaptivElev(elevId){
     }
     h+='</div>';
     innhold.innerHTML=h;
-  }catch(e){innhold.innerHTML='<div style="color:var(--rod);font-size:.83rem">⚠️ '+e.message+'</div>';}
+  }catch(e){
+    console.warn('lastAdaptivElev feil:', e);
+    innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem">Adaptiv data ikke tilgjengelig ennå.</div>';
+  }
 }
 
 function atStat(lbl,val,farge){
