@@ -221,6 +221,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
   <div class="sek-lbl" style="margin-top:12px;">Verktøy</div>
   <button class="nav-link" onclick="visside('tildel')"><span>📤</span> Tildel oppgave</button>
+  <button class="nav-link" onclick="visside('adaptiv');fyllAtKlasseSelect()" id="nav-adaptiv"><span>🧠</span> Adaptiv trener</button>
   <button class="nav-link" onclick="visside('ferdighetskart')"><span>🗺️</span> Ferdighetskart</button>
   <button class="nav-link" onclick="visside('malark')"><span>📋</span> Målark</button>
   <button class="nav-link" onclick="visside('proveplan')"><span>📝</span> Prøveplan</button>
@@ -409,6 +410,40 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <div class="sek">
     <div class="sek-tittel">📋 Vurderinger</div>
     <div id="elev-vurd-innhold"></div>
+  </div>
+  <div class="sek" id="elev-adaptiv-sek" style="display:none"><div class="sek-tittel">🧠 Adaptiv trener</div><div id="elev-adaptiv-innhold"><div style="color:var(--dim);font-size:.83rem">Laster...</div></div></div>
+</div>
+
+
+<!-- ══════ ADAPTIV TRENER – KLASSEOVERSIKT ══════ -->
+<div class="side" id="side-adaptiv">
+  <div class="side-tittel">🧠 Adaptiv trener – fremgang</div>
+  <div class="side-sub">Oversikt over elevenes nivå i hvert matematikkemne.</div>
+  <div class="sek">
+    <div class="at-filter-rad">
+      <select id="at-klasse-sel" onchange="lastAdaptivKlasse()">
+        <option value="">— Velg klasse —</option>
+      </select>
+      <select id="at-kat-sel" onchange="filtrerHeatmap()">
+        <option value="">Alle emner</option>
+        <option value="Tall">🔢 Tall</option>
+        <option value="Algebra">🔣 Algebra</option>
+        <option value="Geometri">📐 Geometri</option>
+        <option value="Statistikk">📊 Statistikk</option>
+      </select>
+    </div>
+    <div id="at-heatmap-innhold">
+      <div style="color:var(--dim);font-size:.85rem;padding:20px 0">Velg en klasse for å se elevenes fremgang.</div>
+    </div>
+    <div class="at-legend" id="at-legend" style="display:none">
+      <span>Nivå:</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(255,255,255,.07)"></span>Ikke startet</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(248,113,113,.3)"></span>1–2</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(251,191,36,.3)"></span>3–4</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(96,165,250,.35)"></span>5–6</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(52,211,153,.35)"></span>7–8</span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="at-leg-rute" style="background:rgba(167,139,250,.4)"></span>9–10 🏆</span>
+    </div>
   </div>
 </div>
 
@@ -836,6 +871,7 @@ async function visElev(elevId) {
   $('elev-navn').textContent = elev.fullt_navn;
   $('elev-sub').textContent = (k?k.navn:'') + (elev.kallenavn?' · '+elev.kallenavn:'') + (elev.trenger_hjelp?' · 💡 Trenger hjelp':'');
   visside('elev');
+  lastAdaptivElev(elevId);
 
   // Hent aktivitet
   try {
@@ -1230,7 +1266,37 @@ function maSkrivUt() {
       +'<td style="font-size:11px;color:#555;padding:6px 8px;border:1px solid #ddd;">'+(v.merknad||'')+'</td></tr>';
   }).join('');
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Målark – '+elevNavn+'</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:20px;max-width:800px;}h1{font-size:18px;}h2{font-size:14px;color:#555;}table{width:100%;border-collapse:collapse;margin-top:12px;}@media print{button{display:none;}}</style>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;max-width:800px;}h1{font-size:18px;}h2{font-size:14px;color:#555;}table{width:100%;border-collapse:collapse;margin-top:12px;}@media print{button{display:none;}}
+/* ── ADAPTIV TRENER – LÆRERVISNING ── */
+.at-heatmap-wrap{overflow-x:auto;margin-top:12px;}
+.at-heatmap{border-collapse:collapse;width:100%;font-size:.72rem;min-width:680px;}
+.at-heatmap th{padding:5px 7px;text-align:left;color:var(--dim);font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border2);}
+.at-heatmap th.emne-hd{writing-mode:vertical-rl;transform:rotate(180deg);height:80px;padding:4px 3px;font-size:.68rem;text-align:left;vertical-align:bottom;}
+.at-heatmap td{padding:4px 3px;text-align:center;border:1px solid rgba(255,255,255,.04);min-width:26px;}
+.at-heatmap td.elev-namn{text-align:left;padding:5px 10px;white-space:nowrap;font-size:.8rem;color:var(--text);min-width:120px;}
+.at-celle{width:22px;height:22px;border-radius:5px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;cursor:default;transition:transform .12s;}
+.at-celle:hover{transform:scale(1.3);}
+.at-celle.niv-0{background:rgba(255,255,255,.05);color:var(--dim);}
+.at-celle.niv-1,.at-celle.niv-2{background:rgba(248,113,113,.18);color:#f87171;}
+.at-celle.niv-3,.at-celle.niv-4{background:rgba(251,191,36,.18);color:#fbbf24;}
+.at-celle.niv-5,.at-celle.niv-6{background:rgba(96,165,250,.2);color:#60a5fa;}
+.at-celle.niv-7,.at-celle.niv-8{background:rgba(52,211,153,.2);color:#34d399;}
+.at-celle.niv-9,.at-celle.niv-10{background:rgba(167,139,250,.25);color:#a78bfa;}
+.at-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:.72rem;color:var(--dim);align-items:center;}
+.at-leg-rute{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+.at-profil-kort{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px 13px;}
+.at-profil-emne{font-size:.75rem;font-weight:700;margin-bottom:6px;color:var(--text);}
+.at-profil-niv{font-family:var(--font-h);font-size:1.4rem;font-weight:900;}
+.at-profil-meta{font-size:.68rem;color:var(--dim);margin-top:3px;}
+.at-sterkt{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.2);}
+.at-svakt{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);}
+.at-filter-rad{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.at-filter-rad select{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:6px 10px;font-size:.8rem;font-family:var(--font-b);outline:none;cursor:pointer;}
+.at-sparkline{height:28px;display:flex;align-items:flex-end;gap:2px;margin-top:6px;}
+.at-spark-bar{flex:1;border-radius:2px 2px 0 0;background:rgba(96,165,250,.4);min-height:2px;transition:background .15s;}
+.at-spark-bar:hover{background:var(--bla);}
+
+</style>'
     +'</head><body>'
     +'<h1>📋 Målark – '+elevNavn+'</h1>'
     +'<h2>Fag: '+fagTxt+' &nbsp;|&nbsp; Dato: '+new Date().toLocaleDateString('nb-NO')+'</h2>'
@@ -1574,6 +1640,162 @@ function veilFane(fag) {
    START
 ══════════════════════════════════════════════════════════════════ */
 init();
+
+
+var ADAPTIV_EMNER = [
+  {id:'heltall',n:'Heltall',kat:'Tall',farge:'#60a5fa'},
+  {id:'brok',n:'Brøk',kat:'Tall',farge:'#60a5fa'},
+  {id:'desimal',n:'Desimal',kat:'Tall',farge:'#60a5fa'},
+  {id:'prosent',n:'Prosent',kat:'Tall',farge:'#60a5fa'},
+  {id:'potenser',n:'Potenser',kat:'Tall',farge:'#60a5fa'},
+  {id:'standardform',n:'Standardform',kat:'Tall',farge:'#60a5fa'},
+  {id:'uttrykk',n:'Uttrykk',kat:'Algebra',farge:'#a78bfa'},
+  {id:'likn1',n:'Likninger',kat:'Algebra',farge:'#a78bfa'},
+  {id:'ulikheter',n:'Ulikheter',kat:'Algebra',farge:'#a78bfa'},
+  {id:'liknsyst',n:'Likn.syst.',kat:'Algebra',farge:'#a78bfa'},
+  {id:'funksjoner',n:'Funksjoner',kat:'Algebra',farge:'#a78bfa'},
+  {id:'polynomer',n:'Polynomer',kat:'Algebra',farge:'#a78bfa'},
+  {id:'areal',n:'Areal',kat:'Geometri',farge:'#34d399'},
+  {id:'volum',n:'Volum',kat:'Geometri',farge:'#34d399'},
+  {id:'pythagoras',n:'Pythagoras',kat:'Geometri',farge:'#34d399'},
+  {id:'trig',n:'Trig.',kat:'Geometri',farge:'#34d399'},
+  {id:'koordinater',n:'Koordinater',kat:'Geometri',farge:'#34d399'},
+  {id:'snitt',n:'Gjennomsnitt',kat:'Statistikk',farge:'#fbbf24'},
+  {id:'diagrammer',n:'Diagrammer',kat:'Statistikk',farge:'#fbbf24'},
+  {id:'sannsynl',n:'Sannsynlighet',kat:'Statistikk',farge:'#fbbf24'},
+  {id:'kombinat',n:'Kombinatorikk',kat:'Statistikk',farge:'#fbbf24'},
+];
+
+function fyllAtKlasseSelect(){
+  var sel=$('at-klasse-sel');if(!sel)return;
+  sel.innerHTML='<option value="">— Velg klasse —</option>';
+  klasser.forEach(function(k){sel.innerHTML+='<option value="'+k.id+'">'+k.navn+'</option>';});
+}
+
+async function lastAdaptivKlasse(){
+  var klasseId=$('at-klasse-sel').value;if(!klasseId)return;
+  var innhold=$('at-heatmap-innhold');
+  innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem;padding:16px">Henter data...</div>';
+  $('at-legend').style.display='none';
+  atKlasseElever=elever.filter(function(e){return e.klasse_id===klasseId;});
+  if(!atKlasseElever.length){
+    innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem;padding:16px">Ingen elever.</div>';return;
+  }
+  var ids=atKlasseElever.map(function(e){return e.id;});
+  try{
+    var prog=await apiGet('/adaptiv_progresjon?elev_id=in.('+ids.join(',')+')'
+      +'&select=elev_id,emne,nivaa,beste_nivaa,xp,totalt_riktige,totalt_feil,sist_aktiv');
+    if(!Array.isArray(prog))prog=[];
+    atData={};
+    atKlasseElever.forEach(function(e){atData[e.id]=[];});
+    prog.forEach(function(r){if(atData[r.elev_id])atData[r.elev_id].push(r);});
+    filtrerHeatmap();
+    $('at-legend').style.display='flex';
+  }catch(e){innhold.innerHTML='<div style="color:var(--rod);font-size:.83rem;padding:16px">⚠️ '+e.message+'</div>';}
+}
+
+var atData={};var atKlasseElever=[];
+
+function filtrerHeatmap(){
+  var kat=$('at-kat-sel')?$('at-kat-sel').value:'';
+  var emner=kat?ADAPTIV_EMNER.filter(function(e){return e.kat===kat;}):ADAPTIV_EMNER;
+  var innhold=$('at-heatmap-innhold');
+  if(!atKlasseElever.length)return;
+  var h='<div class="at-heatmap-wrap"><table class="at-heatmap"><thead><tr>';
+  h+='<th style="min-width:120px">Elev</th>';
+  emner.forEach(function(em){h+='<th class="emne-hd" style="color:'+em.farge+'" title="'+em.n+'">'+em.n+'</th>';});
+  h+='<th style="min-width:50px">XP</th></tr></thead><tbody>';
+  atKlasseElever.forEach(function(elev){
+    var prog=atData[elev.id]||[];
+    h+='<tr><td class="elev-namn"><button class="btn btn-lys btn-sm" onclick="visElev(''+elev.id+'')" style="text-align:left;padding:3px 8px;">'+elev.fullt_navn+'</button></td>';
+    var totalXp=0;
+    emner.forEach(function(em){
+      var p=prog.find(function(r){return r.emne===em.id;});
+      var niv=p?(p.beste_nivaa||0):0;totalXp+=p?(p.xp||0):0;
+      var tittel=p?'Nivå '+p.nivaa+' (beste: '+p.beste_nivaa+') · '+p.totalt_riktige+' riktige':'Ikke startet';
+      h+='<td><div class="at-celle niv-'+niv+'" title="'+tittel+'">'+(niv>0?niv:'–')+'</div></td>';
+    });
+    h+='<td style="font-size:.72rem;color:var(--gul);font-weight:700;text-align:center">'+(totalXp>0?totalXp:'–')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  var snitt=[];
+  emner.forEach(function(em){
+    var nivs=atKlasseElever.map(function(elev){var p=(atData[elev.id]||[]).find(function(r){return r.emne===em.id;});return p?(p.beste_nivaa||0):0;}).filter(function(n){return n>0;});
+    snitt.push(nivs.length?(nivs.reduce(function(a,b){return a+b;},0)/nivs.length).toFixed(1):'–');
+  });
+  h+='<div style="margin-top:12px;font-size:.78rem;color:var(--dim)"><strong>Klassesnitt:</strong> ';
+  emner.forEach(function(em,i){h+='<span style="margin-right:10px;color:'+em.farge+'">'+em.n+': <strong>'+snitt[i]+'</strong></span>';});
+  h+='</div>';
+  innhold.innerHTML=h;
+}
+
+async function lastAdaptivElev(elevId){
+  var sek=$('elev-adaptiv-sek'),innhold=$('elev-adaptiv-innhold');
+  if(!sek||!innhold)return;
+  sek.style.display='';
+  innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem">Laster...</div>';
+  try{
+    var prog=await apiGet('/adaptiv_progresjon?elev_id=eq.'+elevId+'&select=*&order=beste_nivaa.desc');
+    if(!Array.isArray(prog)||!prog.length){
+      innhold.innerHTML='<div style="color:var(--dim);font-size:.83rem">Eleven har ikke brukt adaptiv trener ennå.</div>';return;
+    }
+    var fj=new Date();fj.setDate(fj.getDate()-14);
+    var logg=await apiGet('/adaptiv_logg?elev_id=eq.'+elevId+'&opprettet=gte.'+fj.toISOString()+'&select=emne,riktig,opprettet&order=opprettet.asc&limit=200');
+    if(!Array.isArray(logg))logg=[];
+    var totR=prog.reduce(function(s,p){return s+(p.totalt_riktige||0);},0);
+    var totF=prog.reduce(function(s,p){return s+(p.totalt_feil||0);},0);
+    var totXp=prog.reduce(function(s,p){return s+(p.xp||0);},0);
+    var aktE=prog.filter(function(p){return(p.beste_nivaa||0)>0;}).length;
+    var pst2=(totR+totF)>0?Math.round(totR/(totR+totF)*100):0;
+    var h='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">';
+    h+=atStat('⭐ XP',totXp,'#fbbf24');
+    h+=atStat('✅ Riktige',totR,'#34d399');
+    h+=atStat('🎯 Treffsikkerhet',pst2+'%',pst2>=70?'#34d399':pst2>=50?'#fbbf24':'#f87171');
+    h+=atStat('📚 Aktive emner',aktE+'/21','#60a5fa');
+    h+='</div>';
+    if(logg.length>0){h+='<div style="font-size:.75rem;color:var(--dim);margin-bottom:4px">Aktivitet siste 14 dager</div>'+byggSparkline(logg);}
+    var sortert=prog.slice().sort(function(a,b){return(b.beste_nivaa||0)-(a.beste_nivaa||0);});
+    var sterke=sortert.slice(0,3).filter(function(p){return(p.beste_nivaa||0)>0;});
+    var svake=sortert.slice(-3).reverse().filter(function(p){return(p.totalt_feil||0)>0;});
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">';
+    if(sterke.length){
+      h+='<div><div style="font-size:.72rem;font-weight:700;color:#34d399;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">💪 Sterkest</div>';
+      sterke.forEach(function(p){var em=ADAPTIV_EMNER.find(function(e){return e.id===p.emne;});h+='<div class="at-profil-kort at-sterkt" style="margin-bottom:6px"><div class="at-profil-emne">'+(em?em.n:p.emne)+'</div><div class="at-profil-niv" style="color:#34d399">Nivå '+(p.beste_nivaa||0)+'</div><div class="at-profil-meta">'+p.totalt_riktige+' riktige</div></div>';});
+      h+='</div>';
+    }
+    if(svake.length){
+      h+='<div><div style="font-size:.72rem;font-weight:700;color:#f87171;margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase">📉 Trenger øving</div>';
+      svake.forEach(function(p){var em=ADAPTIV_EMNER.find(function(e){return e.id===p.emne;});var tf=p.totalt_feil||0,tr=p.totalt_riktige||0,ep=(tr+tf)>0?Math.round(tr/(tr+tf)*100):0;h+='<div class="at-profil-kort at-svakt" style="margin-bottom:6px"><div class="at-profil-emne">'+(em?em.n:p.emne)+'</div><div class="at-profil-niv" style="color:#f87171">Nivå '+(p.nivaa||0)+'</div><div class="at-profil-meta">'+ep+'% riktig · '+tf+' feil</div></div>';});
+      h+='</div>';
+    }
+    h+='</div>';
+    innhold.innerHTML=h;
+  }catch(e){innhold.innerHTML='<div style="color:var(--rod);font-size:.83rem">⚠️ '+e.message+'</div>';}
+}
+
+function atStat(lbl,val,farge){
+  return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;min-width:90px;">'
+    +'<div style="font-size:.68rem;color:var(--dim);margin-bottom:3px">'+lbl+'</div>'
+    +'<div style="font-family:var(--font-h);font-size:1.2rem;font-weight:900;color:'+farge+'">'+val+'</div></div>';
+}
+
+function byggSparkline(logg){
+  var dager={};
+  logg.forEach(function(r){var dag=r.opprettet.slice(0,10);if(!dager[dag])dager[dag]={r:0,f:0};if(r.riktig)dager[dag].r++;else dager[dag].f++;});
+  var dagArr=Object.keys(dager).sort();
+  var maks=Math.max.apply(null,dagArr.map(function(d){return dager[d].r+dager[d].f;}));
+  var h='<div class="at-sparkline">';
+  dagArr.forEach(function(dag){
+    var tot=dager[dag].r+dager[dag].f;
+    var pst3=maks>0?Math.round(tot/maks*100):10;
+    var rp=tot>0?Math.round(dager[dag].r/tot*100):0;
+    var fg=rp>=70?'rgba(52,211,153,.5)':rp>=50?'rgba(251,191,36,.5)':'rgba(248,113,113,.5)';
+    var dato=new Date(dag).toLocaleDateString('no',{day:'numeric',month:'short'});
+    h+='<div class="at-spark-bar" style="height:'+pst3+'%;background:'+fg+'" title="'+dato+': '+tot+' oppgaver · '+rp+'% riktig"></div>';
+  });
+  return h+'</div>';
+}
+
 </script>
 </body>
 </html>
