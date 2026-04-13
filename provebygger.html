@@ -802,7 +802,7 @@ async function fetchAi(){
     // Hent inntil 4 tilfeldige oppgaver per valgt KM
     const alleOppgaver = [];
     for(const kode of kmKoder){
-      const url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.${kode}&select=oppgave,type&limit=8&order=random()`;
+      const url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.${kode}&select=oppgave,type,fork&limit=50`;
       const r = await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
       if(r.ok){
         const data = await r.json();
@@ -812,8 +812,12 @@ async function fetchAi(){
 
     if(alleOppgaver.length > 0){
       // Bland og vis inntil 6 forslag
-      const blandet = alleOppgaver.sort(()=>Math.random()-.5).slice(0,6);
-      renderAI(blandet.map(o=>({tekst:o.oppgave, type:o.type||'oppgave'})));
+      // Bland tilfeldig client-side og map til renderAI-format
+      const blandet = alleOppgaver
+        .sort(()=>Math.random()-.5)
+        .slice(0,6)
+        .map(o=>({tekst:o.oppgave, type:o.type||'oppgave', forklaring:o.fork||''}));
+      renderAI(blandet);
       return;
     }
 
@@ -823,7 +827,7 @@ async function fetchAi(){
     } else {
       document.getElementById('ai-list').innerHTML=
         '<div style="color:var(--dim);font-size:.82rem;padding:12px;line-height:1.6">'
-        +'📭 Ingen oppgaver i databasen for disse kompetansemålene ennå.<br>'
+        +'📭 Ingen oppgaver i databasen for KM: '+kmKoder.join(', ')+'.<br>'
         +'Kjør <code>generer_oppgavebank.py</code> for å fylle opp databasen.'
         +'</div>';
     }
