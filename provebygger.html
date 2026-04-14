@@ -1109,10 +1109,15 @@ async function lastBibliotek(){
   el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">Laster…</div>';
   try{
     // Hent alle delte prøver (maks 100) – filtrer client-side for søk/KM
-    var url=SB_URL+'/rest/v1/prover?delt=eq.true&order=delt_dato.desc&limit=100&select=id,tittel,fag,klasse,antall,laerer_navn,skole,beskrivelse,delt_dato,km_koder';
+    var url=SB_URL+'/rest/v1/prover?delt=eq.true&order=delt_dato.desc&limit=100&select=*';
     if(fag) url+='&fag=eq.'+fag;
     var r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    var data=r.ok?await r.json():[];
+    if(!r.ok){
+      var feilTekst=await r.text().catch(function(){return '';});
+      el.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ '+esc(feilTekst.slice(0,150))+'</div>';
+      return;
+    }
+    var data=await r.json();
     _bibCache=Array.isArray(data)?data:[];
 
     // Client-side filter: KM og søk
