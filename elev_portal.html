@@ -957,7 +957,15 @@ async function init() {
   // Vis siste aktivitet
   byggAktivitet();
 
-  // P7: XP og streak
+  // P7: XP/streak-oppdatering - sett opp global funksjon som adaptiv trener kan kalle
+  window._oppdaterVelkomstXP = function(xp, streak) {
+    var _xe = document.getElementById('stat-xp');
+    var _se = document.getElementById('stat-streak');
+    if (_xe) _xe.textContent = (xp||0);
+    if (_se) _se.textContent = (streak||0);
+    if ((xp||0) > 0 || (streak||0) > 0) { if(typeof epVisBadges==='function') epVisBadges(xp, streak); }
+  };
+  // Hent XP direkte fra DB (anon-key + RLS=true)
   try {
     var _xr = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streak_riktig',
       {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}});
@@ -965,11 +973,8 @@ async function init() {
     if (!Array.isArray(_xd)) _xd = [];
     var _tx = _xd.reduce(function(s,r){return s+(r.xp||0);},0);
     var _ms = _xd.length ? Math.max.apply(null,_xd.map(function(r){return r.streak_riktig||0;})) : 0;
-    var _xe=document.getElementById('stat-xp'); var _se=document.getElementById('stat-streak');
-    if(_xe) _xe.textContent = _tx;
-    if(_se) _se.textContent = _ms;
-    if(_tx>0||_ms>0) epVisBadges(_tx,_ms);
-  } catch(e){console.warn('XP:',e);}
+    window._oppdaterVelkomstXP(_tx, _ms);
+  } catch(e){console.warn('XP-henting feilet:',e);}
 
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
@@ -2126,7 +2131,9 @@ async function lagreProgresjon(emneId) {
   var elev = JSON.parse(localStorage.getItem('skaplab_elev') || '{}');
   if (!elev.id) return;
   var p = prog[emneId];
-  await fetch(SB + '/rest/v1/adaptiv_progresjon', {
+  if (!p) return;
+  // Bruk PATCH med ?on_conflict for å sikre at nivå/XP faktisk skrives til DB
+  await fetch(SB + '/rest/v1/adaptiv_progresjon?on_conflict=elev_id,emne', {
     method: 'POST',
     headers: {
       'apikey': SK, 'Authorization': 'Bearer ' + SK,
@@ -2745,6 +2752,12 @@ function behandleSvar(riktig, riktigSvar, forklaring) {
   // Lagre i Supabase
   lagreProgresjon(aktivEmne.id);
   loggAdaptivLogg(aktivEmne.id, riktig, tidsbruk);
+  // Oppdater velkomst-XP live
+  try {
+    var _allXP = Object.values(prog).reduce(function(s,p){return s+(p.xp||0);},0);
+    var _allStr = Object.values(prog).reduce(function(s,p){return Math.max(s,p.streakR||0);},0);
+    if (typeof window._oppdaterVelkomstXP === 'function') window._oppdaterVelkomstXP(_allXP, _allStr);
+  } catch(e) {}
 }
 
 function oppdaterHUD() {
@@ -2800,10 +2813,10 @@ function escHtml(s) {
 
 // ─── INIT ────────────────────────────────────────────────────────────
 async function initAdaptivTrener() {
-  if (erInitiert) { renderOversikt(); return; }
+  // Alltid hent fersk progresjon fra DB - nivåer/XP kan ha endret seg
   injiserCSS();
   var el = document.getElementById('adaptiv-app');
-  if (el) el.innerHTML = '<div class="at-loader"><div class="at-spin"></div> Laster progresjon...</div>';
+  if (!erInitiert && el) el.innerHTML = '<div class="at-loader"><div class="at-spin"></div> Laster progresjon...</div>';
   await hentProgresjon();
   erInitiert = true;
   renderOversikt();
@@ -2811,11 +2824,15 @@ async function initAdaptivTrener() {
   try {
     var _tx = Object.values(prog).reduce(function(s,p){return s+(p.xp||0);},0);
     var _ms = Object.values(prog).reduce(function(s,p){return Math.max(s,p.streakR||0);},0);
-    var _xe = document.getElementById('stat-xp');
-    var _se = document.getElementById('stat-streak');
-    if (_xe) _xe.textContent = _tx;
-    if (_se) _se.textContent = _ms;
-    if (typeof epVisBadges === 'function') epVisBadges(_tx, _ms);
+    if (typeof window._oppdaterVelkomstXP === 'function') {
+      window._oppdaterVelkomstXP(_tx, _ms);
+    } else {
+      var _xe = document.getElementById('stat-xp');
+      var _se = document.getElementById('stat-streak');
+      if (_xe) _xe.textContent = _tx;
+      if (_se) _se.textContent = _ms;
+      if (typeof epVisBadges === 'function') epVisBadges(_tx, _ms);
+    }
   } catch(e) {}
 }
 
