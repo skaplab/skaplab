@@ -363,6 +363,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .fk-sum-pst { font-size:1.4rem; font-weight:800; line-height:1; margin-bottom:3px; }
 .fk-sum-lab { font-size:.7rem; color:var(--dim); }
 
+
+/* ── P5: Vurdering-feed i elevportal ── */
+.ep-vurd-kort{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.ep-vurd-kort .ep-vurd-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ep-vurd-niv{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px}
+.ep-vurd-niv.hoy{background:rgba(52,211,153,.15);color:#34d399}
+.ep-vurd-niv.middels{background:rgba(251,191,36,.12);color:#fbbf24}
+.ep-vurd-niv.lav{background:rgba(248,113,113,.12);color:#f87171}
+.ep-vurd-km{font-size:.7rem;font-weight:600;color:#60a5fa;background:rgba(96,165,250,.1);padding:2px 7px;border-radius:4px}
+.ep-vurd-tekst{font-size:.84rem;color:var(--text);line-height:1.55}
+.ep-vurd-dato{font-size:.68rem;color:var(--dim);margin-top:4px}
+/* ── P7: Badges i elevportal ── */
+.gamif-badge-kort{display:flex;flex-direction:column;align-items:center;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;min-width:80px;gap:4px}
+.gamif-badge-ikon{font-size:1.6rem}
+.gamif-badge-navn{font-size:.68rem;font-weight:600;color:var(--text);text-align:center}
+.gamif-badge-ny{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06)}
+
 </style>
 </head>
 <body>
@@ -394,6 +411,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <div class="velk-stats">
         <div class="velk-stat"><div class="velk-stat-tall" id="stat-okter">0</div><div class="velk-stat-lab">Aktiviteter</div></div>
         <div class="velk-stat"><div class="velk-stat-tall" id="stat-snitt">–</div><div class="velk-stat-lab">Snitt score</div></div>
+        <div class="velk-stat"><div class="velk-stat-tall" id="stat-xp" style="color:#fbbf24">0</div><div class="velk-stat-lab">XP</div></div>
+        <div class="velk-stat"><div class="velk-stat-tall" id="stat-streak" style="color:#f97316">0</div><div class="velk-stat-lab">Dagers streak</div></div>
 
       </div>
     </div>
@@ -429,6 +448,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     <div id="fane-alle" style="display:none;">
       <div class="res-gruppe"><div class="res-gruppe-tittel">Alle spill</div><div class="res-grid" id="alle-spill"></div></div>
     </div>
+
+    <!-- P5: Vurderinger fra lærer -->
+    <div id="ep-vurd-sek" style="display:none;margin-bottom:24px">
+      <div class="karusell-tittel">💬 Tilbakemeldinger fra lærer</div>
+      <div id="ep-vurd-innhold"></div>
+    </div>
+
+    <!-- P7: Badges -->
+    <div id="ep-badge-sek" style="display:none;margin-bottom:24px">
+      <div class="karusell-tittel">🎖️ Badges</div>
+      <div id="ep-badge-innhold" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+
     <div id="fane-adaptiv" style="display:none;">
       <div id="adaptiv-app"></div>
     </div>
@@ -1141,6 +1173,52 @@ async function init() {
   document.getElementById('stat-okter').textContent = aktivitet.length;
   document.getElementById('stat-snitt').textContent = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length)+'%' : '–';
 
+
+  // P7: Oppdater XP og streak fra adaptiv_progresjon
+  try {
+    var _xpData = await fetch(
+      SkapLab.SUPABASE_BASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
+      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+    if (Array.isArray(_xpData) && _xpData.length) {
+      var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
+      var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
+      window._skaplabXP = _totXP;
+      var _xpEl = document.getElementById('stat-xp');
+      var _stEl = document.getElementById('stat-streak');
+      if (_xpEl) _xpEl.textContent = _totXP;
+      if (_stEl) _stEl.textContent = _maxStreak;
+      epVisBadges(_totXP, _maxStreak);
+    }
+  } catch(_e) { console.warn('XP-henting:', _e); }
+
+  // P5: Hent vurderinger fra laerer
+  try {
+    var _vurdData = await fetch(
+      SkapLab.SUPABASE_BASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
+      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+    if (Array.isArray(_vurdData) && _vurdData.length) {
+      var _vSek = document.getElementById('ep-vurd-sek');
+      var _vInn = document.getElementById('ep-vurd-innhold');
+      if (_vSek) _vSek.style.display = '';
+      if (_vInn) {
+        var _nivNavn = {hoy:'Hoy',middels:'Middels',lav:'Lav'};
+        _vInn.innerHTML = _vurdData.map(function(v){
+          var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
+          return '<div class="ep-vurd-kort">'
+            +'<div class="ep-vurd-hd">'
+            +(v.km_kode&&v.km_kode!=='GENERELL'?'<span class="ep-vurd-km">'+v.km_kode+'</span>':'')
+            +'<span class="ep-vurd-niv '+v.nivaa+'">'+(_nivNavn[v.nivaa]||v.nivaa)+'</span>'
+            +'</div>'
+            +(v.merknad?'<div class="ep-vurd-tekst">'+v.merknad+'</div>':'')
+            +'<div class="ep-vurd-dato">'+_d+'</div>'
+            +'</div>';
+        }).join('');
+      }
+    }
+  } catch(_e) { console.warn('Vurdering-henting:', _e); }
+
   byggKarusell();
   byggAlleGrids();
   byggEgenvurdering();
@@ -1713,6 +1791,32 @@ async function hentOgVisFK() {
     innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;color:#f87171;">Nettverksfeil – kunne ikke laste ferdighetskart.</div>';
     console.error('hentOgVisFK:', e);
   }
+}
+
+
+/* ── P7: epVisBadges – badges basert på XP og streak ── */
+function epVisBadges(totXP, maxStreak) {
+  try {
+    var sek = document.getElementById('ep-badge-sek');
+    var inn = document.getElementById('ep-badge-innhold');
+    if (!sek || !inn) return;
+    var badges = [];
+    if (totXP >= 10)   badges.push({ikon:'⭐', navn:'Første 10 XP'});
+    if (totXP >= 100)  badges.push({ikon:'💫', navn:'100 XP'});
+    if (totXP >= 500)  badges.push({ikon:'🌟', navn:'500 XP'});
+    if (totXP >= 1000) badges.push({ikon:'🏆', navn:'1 000 XP'});
+    if (maxStreak >= 3) badges.push({ikon:'🔥', navn:'3 dagers streak'});
+    if (maxStreak >= 7) badges.push({ikon:'💥', navn:'7 dagers streak'});
+    if (maxStreak >= 30) badges.push({ikon:'🚀', navn:'30 dagers streak'});
+    if (!badges.length) return;
+    sek.style.display = '';
+    inn.innerHTML = badges.map(function(b){
+      return '<div class="gamif-badge-kort gamif-badge-ny">'
+        +'<span class="gamif-badge-ikon">'+b.ikon+'</span>'
+        +'<span class="gamif-badge-navn">'+b.navn+'</span>'
+        +'</div>';
+    }).join('');
+  } catch(e) { console.warn('epVisBadges:', e); }
 }
 
 </script>
