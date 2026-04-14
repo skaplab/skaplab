@@ -963,52 +963,6 @@ async function init() {
   // Vis siste aktivitet
   byggAktivitet();
 
-  // P7: XP og streak
-  try {
-    var _xpData = await fetch(
-      SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
-      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
-    ).then(function(r){return r.json();}).catch(function(){return [];});
-    if (Array.isArray(_xpData) && _xpData.length) {
-      var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
-      var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
-      var _xpEl = document.getElementById('stat-xp');
-      var _stEl = document.getElementById('stat-streak');
-      if (_xpEl) _xpEl.textContent = _totXP;
-      if (_stEl) _stEl.textContent = _maxStreak;
-      epVisBadges(_totXP, _maxStreak);
-    }
-  } catch(_e) { console.warn('XP:', _e); }
-
-  // P5: Tilbakemeldinger fra lærer
-  try {
-    var _vResp = await fetch(
-      SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=20',
-      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
-    );
-    var _vData = _vResp.ok ? await _vResp.json() : [];
-    if (!Array.isArray(_vData)) _vData = [];
-    var _vInn = document.getElementById('ep-vurd-innhold');
-    if (_vInn) {
-      if (_vData.length) {
-        var _niv = {hoy:'Høy',middels:'Middels',lav:'Lav'};
-        _vInn.innerHTML = _vData.map(function(v){
-          var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
-          return '<div class="ep-vurd-kort">'
-            +'<div class="ep-vurd-hd">'
-            +(v.km_kode&&v.km_kode!=='GENERELL'?'<span class="ep-vurd-km">'+v.km_kode+'</span>':'')
-            +'<span class="ep-vurd-niv '+v.nivaa+'">'+(_niv[v.nivaa]||v.nivaa)+'</span>'
-            +'</div>'
-            +(v.merknad?'<div class="ep-vurd-tekst">'+v.merknad+'</div>':'')
-            +'<div class="ep-vurd-dato">'+_d+'</div>'
-            +'</div>';
-        }).join('');
-      } else {
-        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem">Ingen tilbakemeldinger ennå.</div>';
-      }
-    }
-  } catch(_e) { console.warn('Vurdering:', _e); }
-
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
 }
@@ -1084,6 +1038,7 @@ function visFane(fane, el) {
   // Spesialhåndtering
   if (fane === 'vurder') setTimeout(function(){ if(typeof byggEgenvurdering==='function') byggEgenvurdering(); }, 50);
   if (fane === 'adaptiv') setTimeout(function(){ if(typeof initAdaptivTrener==='function') initAdaptivTrener(); }, 50);
+  if (fane === 'tilbakemelding') setTimeout(function(){ visVurderinger(); }, 50);
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
@@ -1217,6 +1172,25 @@ async function init() {
   byggAlleGrids();
   byggEgenvurdering();
   byggAktivitet();
+
+  // P7: XP og streak
+  try {
+    var _xpData = await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
+      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+    if (Array.isArray(_xpData) && _xpData.length) {
+      var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
+      var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
+      var _xpEl = document.getElementById('stat-xp');
+      var _stEl = document.getElementById('stat-streak');
+      if (_xpEl) _xpEl.textContent = _totXP;
+      if (_stEl) _stEl.textContent = _maxStreak;
+      epVisBadges(_totXP, _maxStreak);
+    }
+  } catch(_e) { console.warn('XP:', _e); }
+
+  // P5: lastes når fanen åpnes (se visVurderinger)
 
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display  = 'block';
@@ -1550,6 +1524,41 @@ function visFane(fane, el) {
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
+async function visVurderinger() {
+  var elev = SkapLab.hentElev();
+  if (!elev) return;
+  var inn = document.getElementById('ep-vurd-innhold');
+  if (!inn) return;
+  inn.innerHTML = '<div style="color:var(--dim);font-size:.84rem">Laster…</div>';
+  try {
+    var resp = await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=20',
+      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
+    );
+    var data = resp.ok ? await resp.json() : [];
+    if (!Array.isArray(data)) data = [];
+    if (data.length) {
+      var niv = {hoy:'Høy', middels:'Middels', lav:'Lav'};
+      inn.innerHTML = data.map(function(v) {
+        var d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
+        return '<div class="ep-vurd-kort">'
+          +'<div class="ep-vurd-hd">'
+          +(v.km_kode&&v.km_kode!=='GENERELL'?'<span class="ep-vurd-km">'+v.km_kode+'</span>':'')
+          +'<span class="ep-vurd-niv '+v.nivaa+'">'+(niv[v.nivaa]||v.nivaa)+'</span>'
+          +'</div>'
+          +(v.merknad?'<div class="ep-vurd-tekst">'+v.merknad+'</div>':'')
+          +'<div class="ep-vurd-dato">'+d+'</div>'
+          +'</div>';
+      }).join('');
+    } else {
+      inn.innerHTML = '<div style="color:var(--dim);font-size:.84rem">Ingen tilbakemeldinger fra lærer ennå.</div>';
+    }
+  } catch(e) {
+    inn.innerHTML = '<div style="color:var(--dim);font-size:.84rem">Ingen tilbakemeldinger fra lærer ennå.</div>';
+    console.warn('visVurderinger:', e);
+  }
+}
+
 function epVisBadges(totXP, maxStreak) {
   try {
     var inn = document.getElementById('ep-badge-innhold');
