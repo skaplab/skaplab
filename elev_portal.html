@@ -364,9 +364,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .fk-sum-lab { font-size:.7rem; color:var(--dim); }
 
 
-/* ── P5: Vurdering-feed i elevportal ── */
+/* ── P5: Vurdering-kort ── */
 .ep-vurd-kort{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:8px}
-.ep-vurd-kort .ep-vurd-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ep-vurd-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .ep-vurd-niv{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px}
 .ep-vurd-niv.hoy{background:rgba(52,211,153,.15);color:#34d399}
 .ep-vurd-niv.middels{background:rgba(251,191,36,.12);color:#fbbf24}
@@ -374,12 +374,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ep-vurd-km{font-size:.7rem;font-weight:600;color:#60a5fa;background:rgba(96,165,250,.1);padding:2px 7px;border-radius:4px}
 .ep-vurd-tekst{font-size:.84rem;color:var(--text);line-height:1.55}
 .ep-vurd-dato{font-size:.68rem;color:var(--dim);margin-top:4px}
-/* ── P7: Badges i elevportal ── */
+/* ── P7: Badges ── */
 .gamif-badge-kort{display:flex;flex-direction:column;align-items:center;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;min-width:80px;gap:4px}
 .gamif-badge-ikon{font-size:1.6rem}
 .gamif-badge-navn{font-size:.68rem;font-weight:600;color:var(--text);text-align:center}
-.gamif-badge-ny{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.06)}
-
 </style>
 </head>
 <body>
@@ -411,8 +409,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <div class="velk-stats">
         <div class="velk-stat"><div class="velk-stat-tall" id="stat-okter">0</div><div class="velk-stat-lab">Aktiviteter</div></div>
         <div class="velk-stat"><div class="velk-stat-tall" id="stat-snitt">–</div><div class="velk-stat-lab">Snitt score</div></div>
-        <div class="velk-stat"><div class="velk-stat-tall" id="stat-xp" style="color:#fbbf24">0</div><div class="velk-stat-lab">XP</div></div>
-        <div class="velk-stat"><div class="velk-stat-tall" id="stat-streak" style="color:#f97316">0</div><div class="velk-stat-lab">Dagers streak</div></div>
 
       </div>
     </div>
@@ -449,7 +445,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     <div id="fane-alle" style="display:none;">
       <div class="res-gruppe"><div class="res-gruppe-tittel">Alle spill</div><div class="res-grid" id="alle-spill"></div></div>
     </div>
-
     <div id="fane-adaptiv" style="display:none;">
       <div id="adaptiv-app"></div>
     </div>
@@ -457,19 +452,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <div class="egenv-seksjon" id="egenv-innhold"><div class="tom">Laster egenvurdering...</div></div>
     </div>
 
-    <!-- ══ TILBAKEMELDINGER FRA LÆRER + BADGES ══ -->
+    <!-- ══ TILBAKEMELDINGER FRA LÆRER ══ -->
     <div id="fane-tilbakemelding" style="display:none;">
       <div id="ep-vurd-sek">
         <div class="karusell-tittel">💬 Tilbakemeldinger fra lærer</div>
-        <div id="ep-vurd-innhold"><div class="tom" style="font-size:.84rem;color:var(--dim)">Ingen tilbakemeldinger ennå.</div></div>
+        <div id="ep-vurd-innhold"><div style="color:var(--dim);font-size:.84rem">Ingen tilbakemeldinger fra lærer ennå.</div></div>
       </div>
       <div id="ep-badge-sek" style="margin-top:24px">
         <div class="karusell-tittel">🎖️ Badges</div>
-        <div id="ep-badge-innhold" style="display:flex;gap:8px;flex-wrap:wrap"><div class="tom" style="font-size:.84rem;color:var(--dim)">Fullfør oppgaver for å låse opp badges.</div></div>
+        <div id="ep-badge-innhold" style="display:flex;gap:8px;flex-wrap:wrap"><div style="color:var(--dim);font-size:.84rem">Fullfør oppgaver for å låse opp badges.</div></div>
       </div>
     </div>
-
-    
 
     <div style="margin-top:28px;">
       <div class="karusell-tittel">📊 Siste aktivitet</div>
@@ -970,8 +963,7 @@ async function init() {
   // Vis siste aktivitet
   byggAktivitet();
 
-
-  // P7: Oppdater XP og streak fra adaptiv_progresjon
+  // P7: XP og streak
   try {
     var _xpData = await fetch(
       SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
@@ -980,45 +972,42 @@ async function init() {
     if (Array.isArray(_xpData) && _xpData.length) {
       var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
       var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
-      window._skaplabXP = _totXP;
       var _xpEl = document.getElementById('stat-xp');
       var _stEl = document.getElementById('stat-streak');
       if (_xpEl) _xpEl.textContent = _totXP;
       if (_stEl) _stEl.textContent = _maxStreak;
       epVisBadges(_totXP, _maxStreak);
     }
-  } catch(_e) { console.warn('XP-henting:', _e); }
+  } catch(_e) { console.warn('XP:', _e); }
 
-  // P5: Hent vurderinger fra laerer
+  // P5: Tilbakemeldinger fra lærer
   try {
-    var _vurdResp = await fetch(
-      SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
+    var _vResp = await fetch(
+      SkapLab.SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=20',
       {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
     );
-    var _vurdData = _vurdResp.ok ? await _vurdResp.json() : [];
-    if (!Array.isArray(_vurdData)) _vurdData = [];
+    var _vData = _vResp.ok ? await _vResp.json() : [];
+    if (!Array.isArray(_vData)) _vData = [];
     var _vInn = document.getElementById('ep-vurd-innhold');
     if (_vInn) {
-      if (_vurdData.length) {
-        var _nivNavn = {hoy:'Høy', middels:'Middels', lav:'Lav'};
-        _vInn.innerHTML = _vurdData.map(function(v) {
+      if (_vData.length) {
+        var _niv = {hoy:'Høy',middels:'Middels',lav:'Lav'};
+        _vInn.innerHTML = _vData.map(function(v){
           var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
           return '<div class="ep-vurd-kort">'
-            + '<div class="ep-vurd-hd">'
-            + (v.km_kode && v.km_kode !== 'GENERELL' ? '<span class="ep-vurd-km">' + v.km_kode + '</span>' : '')
-            + '<span class="ep-vurd-niv ' + v.nivaa + '">' + (_nivNavn[v.nivaa] || v.nivaa) + '</span>'
-            + '</div>'
-            + (v.merknad ? '<div class="ep-vurd-tekst">' + v.merknad + '</div>' : '')
-            + '<div class="ep-vurd-dato">' + _d + '</div>'
-            + '</div>';
+            +'<div class="ep-vurd-hd">'
+            +(v.km_kode&&v.km_kode!=='GENERELL'?'<span class="ep-vurd-km">'+v.km_kode+'</span>':'')
+            +'<span class="ep-vurd-niv '+v.nivaa+'">'+(_niv[v.nivaa]||v.nivaa)+'</span>'
+            +'</div>'
+            +(v.merknad?'<div class="ep-vurd-tekst">'+v.merknad+'</div>':'')
+            +'<div class="ep-vurd-dato">'+_d+'</div>'
+            +'</div>';
         }).join('');
       } else {
-        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:8px 0">Ingen tilbakemeldinger fra lærer ennå.</div>';
+        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem">Ingen tilbakemeldinger ennå.</div>';
       }
     }
-  } catch(_e) {
-    console.warn('Vurdering-henting:', _e);
-  }
+  } catch(_e) { console.warn('Vurdering:', _e); }
 
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
@@ -1118,7 +1107,140 @@ function oppdaterLyspareFloater() {
 
 
 
+'use strict';
+if (!SkapLab.erElevInnlogget()) { location.href = 'elev_login.html'; throw new Error(); }
+var elev = SkapLab.hentElev();
+var SUPABASE_URL = SkapLab.SUPABASE_URL;
+var SUPABASE_KEY = SkapLab.SUPABASE_KEY;
 
+document.getElementById('elev-chip').textContent = elev.fullt_navn || 'Elev';
+document.getElementById('hei').textContent = 'Hei, ' + ((elev.fullt_navn||'').split(' ')[0] || 'der') + '!';
+document.getElementById('velk-sub').textContent = elev.klasser ?
+  'Klasse ' + elev.klasser.navn + (elev.klasser.skoler ? ' · ' + elev.klasser.skoler.navn : '') :
+  'Klar for å lære noe nytt i dag?';
+
+var KM_DATA = {
+  Matematikk: [
+    {kode:'MAT-ALG',  ikon:'🔤', tittel:'Algebra',        desc:'Variabler, likninger og uttrykk'},
+    {kode:'MAT-FUNK', ikon:'📈', tittel:'Funksjoner',      desc:'Lineære og kvadratiske funksjoner'},
+    {kode:'MAT-GEO',  ikon:'📐', tittel:'Geometri',        desc:'Areal, volum og trigonometri'},
+    {kode:'MAT-STAT', ikon:'📊', tittel:'Statistikk',      desc:'Diagrammer og sentralmål'},
+    {kode:'MAT-SANN', ikon:'🎲', tittel:'Sannsynlighet',   desc:'Kombinatorikk og beregning'},
+    {kode:'MAT-OKO',  ikon:'💰', tittel:'Økonomi',         desc:'Prosent, renter og budsjett'},
+  ],
+  Naturfag: [
+    {kode:'NAT-BIO', ikon:'🧬', tittel:'Biologi',         desc:'Kropp, celler og evolusjon'},
+    {kode:'NAT-KJE', ikon:'⚗️', tittel:'Kjemi',           desc:'Atomer, reaksjoner og periodesystem'},
+    {kode:'NAT-FYS', ikon:'🚀', tittel:'Fysikk',          desc:'Kraft, bevegelse og energi'},
+    {kode:'NAT-ELE', ikon:'⚡', tittel:'Elektrisitet',    desc:'Kretser og Ohms lov'},
+    {kode:'NAT-GEN', ikon:'🧫', tittel:'Genetikk',        desc:'Arv og arvemønstre'},
+    {kode:'NAT-OKO', ikon:'🌿', tittel:'Okologi',         desc:'Okosystemer og miljø'},
+  ],
+  Programmering: [
+    {kode:'PRG-ALG',   ikon:'🔍', tittel:'Algoritmer',    desc:'Pseudokode og algoritmisk tenkning'},
+    {kode:'PRG-DEBUG', ikon:'🐛', tittel:'Debugging',     desc:'Lese og feilsoke kode'},
+  ],
+};
+
+var RESSURSER = {
+  'matte-spill':    [{t:'Mattequiz',u:'mattequiz.html',i:'🎮',r:'mattequiz'},{t:'Kanonkule',u:'kanon.html',i:'🎮',r:'kanon'},{t:'Romferge',u:'romferge.html',i:'🎮',r:'romferge'},{t:'Battleships',u:'battleships.html',i:'🎮',r:'battleships'},{t:'Labyrinten',u:'matte_labyrint.html',i:'🎮',r:'matte_labyrint'},{t:'Tidsmaskinen',u:'tidsmaskinen.html',i:'🎮',r:'tidsmaskinen'}],
+  'matte-teorikort':[{t:'Algebra',u:'matte_flash_algebra.html',i:'🃏',r:'flash_algebra'},{t:'Funksjoner',u:'matte_flash_funksjoner.html',i:'🃏',r:'flash_funksjoner'},{t:'Geometri',u:'matte_flash_geometri.html',i:'🃏',r:'flash_geometri'},{t:'Sannsynlighet',u:'matte_flash_sannsynlighet.html',i:'🃏',r:'flash_sannsynlighet'},{t:'Økonomi',u:'matte_flash_økonomi.html',i:'🃏',r:'flash_okonomi'},{t:'Matematikere',u:'matte_flash_matematikere.html',i:'🃏',r:'flash_matematikere'}],
+  'matte-leksjon':  [{t:'Algebra – uttrykk',u:'matte_algebra_uttrykk.html',i:'📖',r:'leksjon_alg_uttrykk'},{t:'Algebra – parenteser',u:'matte_algebra_parenteser.html',i:'📖',r:'leksjon_alg_paren'},{t:'Lineære funksjoner',u:'matte_lineare_funksjoner.html',i:'📖',r:'leksjon_lin_funk'},{t:'Geometri',u:'geometri.html',i:'📖',r:'leksjon_geometri'},{t:'Statistikk',u:'statistikk.html',i:'📖',r:'leksjon_statistikk'},{t:'Eksamenstrener',u:'eksamenstrener.html',i:'📝',r:'eksamenstrener'}],
+  'matte-mengde':   [{t:'Algebraiske uttrykk',u:'matte_mengde_algebra_uttrykk.html',i:'✏️',r:'matte_mengde_algebra_uttrykk'},{t:'Parenteser',u:'matte_mengde_algebra_parenteser.html',i:'✏️',r:'matte_mengde_algebra_parenteser'},{t:'Lineære funksjoner',u:'matte_mengde_funk_lineær.html',i:'✏️',r:'matte_mengde_funk_lineær'},{t:'Kvadratiske funksjoner',u:'matte_mengde_funk_kvadratisk.html',i:'✏️',r:'matte_mengde_funk_kvadratisk'},{t:'Areal',u:'matte_mengde_geo_areal.html',i:'✏️',r:'matte_mengde_geo_areal'},{t:'Pythagoras',u:'matte_mengde_geo_pythagoras.html',i:'✏️',r:'matte_mengde_geo_pythagoras'},{t:'Trigonometri',u:'matte_mengde_geo_trigonometri.html',i:'✏️',r:'matte_mengde_geo_trigonometri'},{t:'Sannsynlighet',u:'matte_mengde_sann_grunnleggende.html',i:'✏️',r:'matte_mengde_sann_grunnleggende'},{t:'Statistikk',u:'matte_mengde_stat_diagrammer.html',i:'✏️',r:'matte_mengde_stat_diagrammer'},{t:'Renter',u:'matte_mengde_øk_renter.html',i:'✏️',r:'matte_mengde_øk_renter'},{t:'Lineære likninger',u:'matte_mengde_likninger_linja.html',i:'✏️',r:'matte_mengde_likninger_linja'},{t:'Brøk',u:'matte_mengde_brøk_regning.html',i:'✏️',r:'matte_mengde_brøk_regning'}],
+  'natur-spill':    [{t:'Naturfagquiz',u:'naturfagquiz.html',i:'🎮',r:'naturfagquiz'},{t:'Kjemilaben',u:'kjemi.html',i:'🧪',r:'kjemi'},{t:'Strømlaben',u:'krets_spill.html',i:'⚡',r:'krets_spill'},{t:'Mikroskoplaben',u:'mikroskop.html',i:'🔬',r:'mikroskop'},{t:'Genetikklaben',u:'genetikk_spill.html',i:'🧬',r:'genetikk_spill'},{t:'Kraft og bevegelse',u:'fysikk.html',i:'🚀',r:'fysikk'},{t:'Kjemiske bindinger',u:'kjemiske_bindinger.html',i:'🔗',r:'kjemiske_bindinger'},{t:'Kjemiske reaksjoner',u:'kjemiske_reaksjoner.html',i:'⚗️',r:'kjemiske_reaksjoner'}],
+  'natur-teorikort':[{t:'Biologi',u:'bio_flipcards.html',i:'🃏',r:'flipcard_bio'},{t:'Fysikk',u:'fys_flipcards.html',i:'🃏',r:'flipcard_fys'},{t:'Kjemi',u:'kje_flipcards.html',i:'🃏',r:'flipcard_kje'},{t:'Elektrisitet',u:'ele_flipcards.html',i:'🃏',r:'flipcard_ele'},{t:'Okologi',u:'oko_flipcards.html',i:'🃏',r:'flipcard_oko'},{t:'Vitenskapspersoner',u:'vitenskapspersoner.html',i:'🃏',r:'vitenskapspersoner'}],
+  'natur-leksjon':  [{t:'Cellen',u:'celle.html',i:'📖',r:'celle'},{t:'Hjertet',u:'hjertet.html',i:'📖',r:'hjertet'},{t:'Nervesystemet',u:'nervesystemet.html',i:'📖',r:'nervesystemet'},{t:'Evolusjon',u:'evolusjon.html',i:'📖',r:'evolusjon'},{t:'Atom',u:'atom.html',i:'📖',r:'atom'},{t:'Periodesystemet',u:'periodesystem.html',i:'📖',r:'periodesystem'},{t:'Astronomi',u:'astronomi.html',i:'📖',r:'astronomi'},{t:'Kontinentaldrift',u:'kontinentaldrift.html',i:'📖',r:'kontinentaldrift'}],
+  'natur-quiz':     [{t:'Quiz – Atom',u:'natur_quiz_atom.html',i:'🧪',r:'nq_atom'},{t:'Quiz – Astronomi',u:'natur_quiz_astronomi.html',i:'🌌',r:'nq_astronomi'},{t:'Quiz – Genetikk',u:'natur_quiz_genetikk.html',i:'🧬',r:'nq_genetikk'},{t:'Quiz – Syre/base',u:'natur_quiz_syr_base_ph.html',i:'🧪',r:'nq_syre_base'},{t:'Quiz – Elektrisitet',u:'natur_quiz_elektrisitetsteori.html',i:'⚡',r:'nq_elektrisitet'},{t:'Quiz – Krefter',u:'natur_quiz_krefter_bevegelse.html',i:'🚀',r:'nq_krefter'}],
+  'prog-spill':     [{t:'Debug-rommet',u:'debugrommet.html',i:'🐛',r:'debugrommet'},{t:'Pseudokode-byggeren',u:'pseudokode.html',i:'📝',r:'pseudokode'},{t:'Algoritmedetektiven',u:'algoritmedetektiven.html',i:'🔍',r:'algoritmedetektiven'},{t:'Labyrintkoden',u:'labyrint_kode.html',i:'🗺️',r:'labyrint_kode'}],
+  'prog-leksjon':   [{t:'Programmering – intro',u:'programmering.html',i:'📖',r:'programmering_intro'}],
+  'alle-spill':     [{t:'Mattequiz',u:'mattequiz.html',i:'📐',r:'mattequiz'},{t:'Naturfagquiz',u:'naturfagquiz.html',i:'🔬',r:'naturfagquiz'},{t:'Kjemilaben',u:'kjemi.html',i:'🧪',r:'kjemi'},{t:'Strømlaben',u:'krets_spill.html',i:'⚡',r:'krets_spill'},{t:'Mikroskoplaben',u:'mikroskop.html',i:'🔬',r:'mikroskop'},{t:'Genetikklaben',u:'genetikk_spill.html',i:'🧬',r:'genetikk_spill'},{t:'Kraft og bevegelse',u:'fysikk.html',i:'🚀',r:'fysikk'},{t:'Debug-rommet',u:'debugrommet.html',i:'🐛',r:'debugrommet'},{t:'Pseudokode-byggeren',u:'pseudokode.html',i:'📝',r:'pseudokode'},{t:'Algoritmedetektiven',u:'algoritmedetektiven.html',i:'🔍',r:'algoritmedetektiven'},{t:'Labyrintkoden',u:'labyrint_kode.html',i:'🗺️',r:'labyrint_kode'},{t:'Kanonkule',u:'kanon.html',i:'💥',r:'kanon'},{t:'Battleships',u:'battleships.html',i:'🚢',r:'battleships'},{t:'Tidsmaskinen',u:'tidsmaskinen.html',i:'⏰',r:'tidsmaskinen'},{t:'Verden Rundt',u:'verden_rundt.html',i:'🌍',r:'verden_rundt'},{t:'Labyrinten',u:'matte_labyrint.html',i:'🗺️',r:'matte_labyrint'}],
+};
+
+var aktivitet = [];
+var tildelte  = [];
+var egenvurdering = {};
+var lyspareAktiv  = false;
+
+async function init() {
+  var aktResp = await fetch(SUPABASE_URL+'/rest/v1/aktivitet?elev_id=eq.'+elev.id+'&order=tidspunkt.desc&limit=200',
+    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
+  aktivitet = Array.isArray(aktResp) ? aktResp : [];
+
+  var tildelResp = await fetch(
+    SUPABASE_URL+'/rest/v1/tildeling?or=(elev_id.eq.'+elev.id+',klasse_id.eq.'+(elev.klasse_id||'00000000-0000-0000-0000-000000000000')+')&select=id,frist,oppgaver(tittel,type,ressurs,url,fag)',
+    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
+  tildelte = Array.isArray(tildelResp) ? tildelResp : [];
+
+  var egResp = await fetch(SUPABASE_URL+'/rest/v1/elev_egenvurdering?elev_id=eq.'+elev.id,
+    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
+  if (Array.isArray(egResp)) egResp.forEach(function(e){ egenvurdering[e.km_kode] = e.nivaa; });
+
+  // Hent fersk elev-data for å få trenger_hjelp (localStorage kan være gammelt)
+  try {
+    var elevResp = await fetch(
+      SUPABASE_URL+'/rest/v1/elever?id=eq.'+elev.id+'&select=trenger_hjelp,hjelp_emne',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    ).then(function(r){return r.json();});
+    if (Array.isArray(elevResp) && elevResp[0]) {
+      elev.trenger_hjelp = elevResp[0].trenger_hjelp;
+      elev.hjelp_emne    = elevResp[0].hjelp_emne;
+      // Oppdater localStorage
+      var stored = JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
+      stored.trenger_hjelp = elev.trenger_hjelp;
+      stored.hjelp_emne    = elev.hjelp_emne;
+      localStorage.setItem('skaplab_elev', JSON.stringify(stored));
+    }
+  } catch(e) {}
+  lyspareAktiv = !!(elev.trenger_hjelp);
+  if (lyspareAktiv) document.getElementById('global-lyspare').classList.add('aktiv');
+
+  window._aktMap = {};
+  aktivitet.forEach(function(a) {
+    if (!_aktMap[a.ressurs]) _aktMap[a.ressurs] = {scorer:[], fullfort:a.fullfort_antall, totalt:a.totalt_antall};
+    else {
+      if (!_aktMap[a.ressurs].fullfort && a.fullfort_antall) _aktMap[a.ressurs].fullfort = a.fullfort_antall;
+      if (!_aktMap[a.ressurs].totalt  && a.totalt_antall)   _aktMap[a.ressurs].totalt   = a.totalt_antall;
+    }
+    if (a.score_pst !== null) _aktMap[a.ressurs].scorer.push(a.score_pst);
+  });
+  Object.keys(_aktMap).forEach(function(r) {
+    var s = _aktMap[r].scorer;
+    _aktMap[r].snitt = s.length ? Math.round(s.reduce(function(a,b){return a+b;},0)/s.length) : null;
+    _aktMap[r].okter = s.length;
+  });
+
+  var allScorer = aktivitet.filter(function(a){return a.score_pst!==null;}).map(function(a){return a.score_pst;});
+  document.getElementById('stat-okter').textContent = aktivitet.length;
+  document.getElementById('stat-snitt').textContent = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length)+'%' : '–';
+
+  byggKarusell();
+  byggAlleGrids();
+  byggEgenvurdering();
+  byggAktivitet();
+
+  document.getElementById('laster').style.display = 'none';
+  document.getElementById('portal').style.display  = 'block';
+
+  // ── PERSONALISERT VELKOMSTTEKST ──────────────────────────────────
+  (function() {
+    var sub = document.getElementById('velk-sub');
+    if (!sub) return;
+    var n = aktivitet.length;
+    if (n === 0) {
+      sub.textContent = 'Velkommen! Velg et fag og start din første økt. 🚀';
+    } else if (n < 5) {
+      sub.textContent = 'Bra start! Du har fullført '+n+' aktiviteter. Fortsett!';
+    } else {
+      var allScorer = aktivitet.filter(function(a){return a.score_pst!==null;}).map(function(a){return a.score_pst;});
+      var snitt = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length) : 0;
+      sub.textContent = snitt>=80 ? 'Imponerende! Snitt '+snitt+'% 🏆' :
+                        snitt>=60 ? 'Bra jobbet! Snitt '+snitt+'% — fortsett å øve 💪' :
+                        'Du er på vei! Snitt '+snitt+'% — øv mer for å nå målet 📈';
+    }
+  })();
+}
+
+/* ── KARUSELL ────────────────────────────────────────────────── */
 function byggKarusell() {
   var kar = document.getElementById('karusell');
   kar.innerHTML = '';
@@ -1428,6 +1550,24 @@ function visFane(fane, el) {
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
+function epVisBadges(totXP, maxStreak) {
+  try {
+    var inn = document.getElementById('ep-badge-innhold');
+    if (!inn) return;
+    var badges = [];
+    if (totXP>=10)    badges.push({i:'⭐',n:'10 XP'});
+    if (totXP>=100)   badges.push({i:'💫',n:'100 XP'});
+    if (totXP>=500)   badges.push({i:'🌟',n:'500 XP'});
+    if (totXP>=1000)  badges.push({i:'🏆',n:'1 000 XP'});
+    if (maxStreak>=3) badges.push({i:'🔥',n:'3 dager streak'});
+    if (maxStreak>=7) badges.push({i:'💥',n:'7 dager streak'});
+    if (!badges.length) return;
+    inn.innerHTML = badges.map(function(b){
+      return '<div class="gamif-badge-kort"><span class="gamif-badge-ikon">'+b.i+'</span><span class="gamif-badge-navn">'+b.n+'</span></div>';
+    }).join('');
+  } catch(_e) {}
+}
+
 init();
 
 
@@ -1663,32 +1803,6 @@ async function hentOgVisFK() {
     innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;color:#f87171;">Nettverksfeil – kunne ikke laste ferdighetskart.</div>';
     console.error('hentOgVisFK:', e);
   }
-}
-
-
-/* ── P7: epVisBadges – badges basert på XP og streak ── */
-function epVisBadges(totXP, maxStreak) {
-  try {
-    var sek = document.getElementById('ep-badge-sek');
-    var inn = document.getElementById('ep-badge-innhold');
-    if (!sek || !inn) return;
-    var badges = [];
-    if (totXP >= 10)   badges.push({ikon:'⭐', navn:'Første 10 XP'});
-    if (totXP >= 100)  badges.push({ikon:'💫', navn:'100 XP'});
-    if (totXP >= 500)  badges.push({ikon:'🌟', navn:'500 XP'});
-    if (totXP >= 1000) badges.push({ikon:'🏆', navn:'1 000 XP'});
-    if (maxStreak >= 3) badges.push({ikon:'🔥', navn:'3 dagers streak'});
-    if (maxStreak >= 7) badges.push({ikon:'💥', navn:'7 dagers streak'});
-    if (maxStreak >= 30) badges.push({ikon:'🚀', navn:'30 dagers streak'});
-    if (!badges.length) return;
-    sek.style.display = '';
-    inn.innerHTML = badges.map(function(b){
-      return '<div class="gamif-badge-kort gamif-badge-ny">'
-        +'<span class="gamif-badge-ikon">'+b.ikon+'</span>'
-        +'<span class="gamif-badge-navn">'+b.navn+'</span>'
-        +'</div>';
-    }).join('');
-  } catch(e) { console.warn('epVisBadges:', e); }
 }
 
 </script>
