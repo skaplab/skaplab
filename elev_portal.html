@@ -1118,62 +1118,7 @@ function oppdaterLyspareFloater() {
 
 
 
-'use strict';
-if (!SkapLab.erElevInnlogget()) { location.href = 'elev_login.html'; throw new Error(); }
-var elev = SkapLab.hentElev();
-var SUPABASE_URL = SkapLab.SUPABASE_URL;
-var SUPABASE_KEY = SkapLab.SUPABASE_KEY;
 
-document.getElementById('elev-chip').textContent = elev.fullt_navn || 'Elev';
-document.getElementById('hei').textContent = 'Hei, ' + ((elev.fullt_navn||'').split(' ')[0] || 'der') + '!';
-document.getElementById('velk-sub').textContent = elev.klasser ?
-  'Klasse ' + elev.klasser.navn + (elev.klasser.skoler ? ' · ' + elev.klasser.skoler.navn : '') :
-  'Klar for å lære noe nytt i dag?';
-
-var KM_DATA = {
-  Matematikk: [
-    {kode:'MAT-ALG',  ikon:'🔤', tittel:'Algebra',        desc:'Variabler, likninger og uttrykk'},
-    {kode:'MAT-FUNK', ikon:'📈', tittel:'Funksjoner',      desc:'Lineære og kvadratiske funksjoner'},
-    {kode:'MAT-GEO',  ikon:'📐', tittel:'Geometri',        desc:'Areal, volum og trigonometri'},
-    {kode:'MAT-STAT', ikon:'📊', tittel:'Statistikk',      desc:'Diagrammer og sentralmål'},
-    {kode:'MAT-SANN', ikon:'🎲', tittel:'Sannsynlighet',   desc:'Kombinatorikk og beregning'},
-    {kode:'MAT-OKO',  ikon:'💰', tittel:'Økonomi',         desc:'Prosent, renter og budsjett'},
-  ],
-  Naturfag: [
-    {kode:'NAT-BIO', ikon:'🧬', tittel:'Biologi',         desc:'Kropp, celler og evolusjon'},
-    {kode:'NAT-KJE', ikon:'⚗️', tittel:'Kjemi',           desc:'Atomer, reaksjoner og periodesystem'},
-    {kode:'NAT-FYS', ikon:'🚀', tittel:'Fysikk',          desc:'Kraft, bevegelse og energi'},
-    {kode:'NAT-ELE', ikon:'⚡', tittel:'Elektrisitet',    desc:'Kretser og Ohms lov'},
-    {kode:'NAT-GEN', ikon:'🧫', tittel:'Genetikk',        desc:'Arv og arvemønstre'},
-    {kode:'NAT-OKO', ikon:'🌿', tittel:'Okologi',         desc:'Okosystemer og miljø'},
-  ],
-  Programmering: [
-    {kode:'PRG-ALG',   ikon:'🔍', tittel:'Algoritmer',    desc:'Pseudokode og algoritmisk tenkning'},
-    {kode:'PRG-DEBUG', ikon:'🐛', tittel:'Debugging',     desc:'Lese og feilsoke kode'},
-  ],
-};
-
-var RESSURSER = {
-  'matte-spill':    [{t:'Mattequiz',u:'mattequiz.html',i:'🎮',r:'mattequiz'},{t:'Kanonkule',u:'kanon.html',i:'🎮',r:'kanon'},{t:'Romferge',u:'romferge.html',i:'🎮',r:'romferge'},{t:'Battleships',u:'battleships.html',i:'🎮',r:'battleships'},{t:'Labyrinten',u:'matte_labyrint.html',i:'🎮',r:'matte_labyrint'},{t:'Tidsmaskinen',u:'tidsmaskinen.html',i:'🎮',r:'tidsmaskinen'}],
-  'matte-teorikort':[{t:'Algebra',u:'matte_flash_algebra.html',i:'🃏',r:'flash_algebra'},{t:'Funksjoner',u:'matte_flash_funksjoner.html',i:'🃏',r:'flash_funksjoner'},{t:'Geometri',u:'matte_flash_geometri.html',i:'🃏',r:'flash_geometri'},{t:'Sannsynlighet',u:'matte_flash_sannsynlighet.html',i:'🃏',r:'flash_sannsynlighet'},{t:'Økonomi',u:'matte_flash_økonomi.html',i:'🃏',r:'flash_okonomi'},{t:'Matematikere',u:'matte_flash_matematikere.html',i:'🃏',r:'flash_matematikere'}],
-  'matte-leksjon':  [{t:'Algebra – uttrykk',u:'matte_algebra_uttrykk.html',i:'📖',r:'leksjon_alg_uttrykk'},{t:'Algebra – parenteser',u:'matte_algebra_parenteser.html',i:'📖',r:'leksjon_alg_paren'},{t:'Lineære funksjoner',u:'matte_lineare_funksjoner.html',i:'📖',r:'leksjon_lin_funk'},{t:'Geometri',u:'geometri.html',i:'📖',r:'leksjon_geometri'},{t:'Statistikk',u:'statistikk.html',i:'📖',r:'leksjon_statistikk'},{t:'Eksamenstrener',u:'eksamenstrener.html',i:'📝',r:'eksamenstrener'}],
-  'matte-mengde':   [{t:'Algebraiske uttrykk',u:'matte_mengde_algebra_uttrykk.html',i:'✏️',r:'matte_mengde_algebra_uttrykk'},{t:'Parenteser',u:'matte_mengde_algebra_parenteser.html',i:'✏️',r:'matte_mengde_algebra_parenteser'},{t:'Lineære funksjoner',u:'matte_mengde_funk_lineær.html',i:'✏️',r:'matte_mengde_funk_lineær'},{t:'Kvadratiske funksjoner',u:'matte_mengde_funk_kvadratisk.html',i:'✏️',r:'matte_mengde_funk_kvadratisk'},{t:'Areal',u:'matte_mengde_geo_areal.html',i:'✏️',r:'matte_mengde_geo_areal'},{t:'Pythagoras',u:'matte_mengde_geo_pythagoras.html',i:'✏️',r:'matte_mengde_geo_pythagoras'},{t:'Trigonometri',u:'matte_mengde_geo_trigonometri.html',i:'✏️',r:'matte_mengde_geo_trigonometri'},{t:'Sannsynlighet',u:'matte_mengde_sann_grunnleggende.html',i:'✏️',r:'matte_mengde_sann_grunnleggende'},{t:'Statistikk',u:'matte_mengde_stat_diagrammer.html',i:'✏️',r:'matte_mengde_stat_diagrammer'},{t:'Renter',u:'matte_mengde_øk_renter.html',i:'✏️',r:'matte_mengde_øk_renter'},{t:'Lineære likninger',u:'matte_mengde_likninger_linja.html',i:'✏️',r:'matte_mengde_likninger_linja'},{t:'Brøk',u:'matte_mengde_brøk_regning.html',i:'✏️',r:'matte_mengde_brøk_regning'}],
-  'natur-spill':    [{t:'Naturfagquiz',u:'naturfagquiz.html',i:'🎮',r:'naturfagquiz'},{t:'Kjemilaben',u:'kjemi.html',i:'🧪',r:'kjemi'},{t:'Strømlaben',u:'krets_spill.html',i:'⚡',r:'krets_spill'},{t:'Mikroskoplaben',u:'mikroskop.html',i:'🔬',r:'mikroskop'},{t:'Genetikklaben',u:'genetikk_spill.html',i:'🧬',r:'genetikk_spill'},{t:'Kraft og bevegelse',u:'fysikk.html',i:'🚀',r:'fysikk'},{t:'Kjemiske bindinger',u:'kjemiske_bindinger.html',i:'🔗',r:'kjemiske_bindinger'},{t:'Kjemiske reaksjoner',u:'kjemiske_reaksjoner.html',i:'⚗️',r:'kjemiske_reaksjoner'}],
-  'natur-teorikort':[{t:'Biologi',u:'bio_flipcards.html',i:'🃏',r:'flipcard_bio'},{t:'Fysikk',u:'fys_flipcards.html',i:'🃏',r:'flipcard_fys'},{t:'Kjemi',u:'kje_flipcards.html',i:'🃏',r:'flipcard_kje'},{t:'Elektrisitet',u:'ele_flipcards.html',i:'🃏',r:'flipcard_ele'},{t:'Okologi',u:'oko_flipcards.html',i:'🃏',r:'flipcard_oko'},{t:'Vitenskapspersoner',u:'vitenskapspersoner.html',i:'🃏',r:'vitenskapspersoner'}],
-  'natur-leksjon':  [{t:'Cellen',u:'celle.html',i:'📖',r:'celle'},{t:'Hjertet',u:'hjertet.html',i:'📖',r:'hjertet'},{t:'Nervesystemet',u:'nervesystemet.html',i:'📖',r:'nervesystemet'},{t:'Evolusjon',u:'evolusjon.html',i:'📖',r:'evolusjon'},{t:'Atom',u:'atom.html',i:'📖',r:'atom'},{t:'Periodesystemet',u:'periodesystem.html',i:'📖',r:'periodesystem'},{t:'Astronomi',u:'astronomi.html',i:'📖',r:'astronomi'},{t:'Kontinentaldrift',u:'kontinentaldrift.html',i:'📖',r:'kontinentaldrift'}],
-  'natur-quiz':     [{t:'Quiz – Atom',u:'natur_quiz_atom.html',i:'🧪',r:'nq_atom'},{t:'Quiz – Astronomi',u:'natur_quiz_astronomi.html',i:'🌌',r:'nq_astronomi'},{t:'Quiz – Genetikk',u:'natur_quiz_genetikk.html',i:'🧬',r:'nq_genetikk'},{t:'Quiz – Syre/base',u:'natur_quiz_syr_base_ph.html',i:'🧪',r:'nq_syre_base'},{t:'Quiz – Elektrisitet',u:'natur_quiz_elektrisitetsteori.html',i:'⚡',r:'nq_elektrisitet'},{t:'Quiz – Krefter',u:'natur_quiz_krefter_bevegelse.html',i:'🚀',r:'nq_krefter'}],
-  'prog-spill':     [{t:'Debug-rommet',u:'debugrommet.html',i:'🐛',r:'debugrommet'},{t:'Pseudokode-byggeren',u:'pseudokode.html',i:'📝',r:'pseudokode'},{t:'Algoritmedetektiven',u:'algoritmedetektiven.html',i:'🔍',r:'algoritmedetektiven'},{t:'Labyrintkoden',u:'labyrint_kode.html',i:'🗺️',r:'labyrint_kode'}],
-  'prog-leksjon':   [{t:'Programmering – intro',u:'programmering.html',i:'📖',r:'programmering_intro'}],
-  'alle-spill':     [{t:'Mattequiz',u:'mattequiz.html',i:'📐',r:'mattequiz'},{t:'Naturfagquiz',u:'naturfagquiz.html',i:'🔬',r:'naturfagquiz'},{t:'Kjemilaben',u:'kjemi.html',i:'🧪',r:'kjemi'},{t:'Strømlaben',u:'krets_spill.html',i:'⚡',r:'krets_spill'},{t:'Mikroskoplaben',u:'mikroskop.html',i:'🔬',r:'mikroskop'},{t:'Genetikklaben',u:'genetikk_spill.html',i:'🧬',r:'genetikk_spill'},{t:'Kraft og bevegelse',u:'fysikk.html',i:'🚀',r:'fysikk'},{t:'Debug-rommet',u:'debugrommet.html',i:'🐛',r:'debugrommet'},{t:'Pseudokode-byggeren',u:'pseudokode.html',i:'📝',r:'pseudokode'},{t:'Algoritmedetektiven',u:'algoritmedetektiven.html',i:'🔍',r:'algoritmedetektiven'},{t:'Labyrintkoden',u:'labyrint_kode.html',i:'🗺️',r:'labyrint_kode'},{t:'Kanonkule',u:'kanon.html',i:'💥',r:'kanon'},{t:'Battleships',u:'battleships.html',i:'🚢',r:'battleships'},{t:'Tidsmaskinen',u:'tidsmaskinen.html',i:'⏰',r:'tidsmaskinen'},{t:'Verden Rundt',u:'verden_rundt.html',i:'🌍',r:'verden_rundt'},{t:'Labyrinten',u:'matte_labyrint.html',i:'🗺️',r:'matte_labyrint'}],
-};
-
-var aktivitet = [];
-var tildelte  = [];
-var egenvurdering = {};
-var lyspareAktiv  = false;
-
-
-/* ── KARUSELL ────────────────────────────────────────────────── */
 function byggKarusell() {
   var kar = document.getElementById('karusell');
   kar.innerHTML = '';
