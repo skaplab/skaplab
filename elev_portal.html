@@ -62,12 +62,13 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 .oppg-frist{font-size:.7rem;color:var(--gul);}
 
 /* Fanelinje */
-.faner{display:flex;gap:4px;margin-bottom:20px;
+.faner{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:20px;
   background:var(--bg2);border:1px solid var(--border);
   border-radius:12px;padding:4px;}
-.fane{flex:1;padding:9px 12px;border-radius:9px;cursor:pointer;
-  font-size:.83rem;font-family:var(--font-h);font-weight:700;
-  color:var(--dim);text-align:center;transition:all .15s;border:none;background:transparent;}
+.fane{flex:1 1 auto;min-width:fit-content;padding:7px 10px;border-radius:9px;cursor:pointer;
+  font-size:.72rem;font-family:var(--font-h);font-weight:700;
+  color:var(--dim);text-align:center;transition:all .15s;border:none;background:transparent;
+  white-space:nowrap;}
 .fane:hover{color:var(--text);}
 .fane.ak.matte{background:rgba(139,92,246,.2);color:#c4b5fd;}
 .fane.ak.natur{background:rgba(52,211,153,.15);color:var(--gron);}
@@ -423,13 +424,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     <div class="karusell-wrap" id="karusell"></div>
 
     <div class="faner">
-      <button class="fane matte ak" onclick="visFane('matte',this)">📐 Matematikk</button>
+      <button class="fane matte ak" onclick="visFane('matte',this)">📐 Matte</button>
       <button class="fane natur" onclick="visFane('natur',this)">🔬 Naturfag</button>
-      <button class="fane prog" onclick="visFane('prog',this)">💻 Programmering</button>
-      <button class="fane alle" onclick="visFane('alle',this)">🎮 Alle spill</button>
-      <button class="fane adaptiv" onclick="visFane('adaptiv',this)">🧠 Adaptiv trener</button>
-      <button class="fane vurder" onclick="visFane('vurder',this)">📋 Egenvurdering</button>
-      <button class="fane tilbakemelding" onclick="visFane('tilbakemelding',this)">💬 Tilbakemeldinger</button>
+      <button class="fane prog" onclick="visFane('prog',this)">💻 Kode</button>
+      <button class="fane alle" onclick="visFane('alle',this)">🎮 Alle</button>
+      <button class="fane adaptiv" onclick="visFane('adaptiv',this)">🧠 Adaptiv</button>
+      <button class="fane vurder" onclick="visFane('vurder',this)">📋 Egenvurd.</button>
+      <button class="fane tilbakemelding" onclick="visFane('tilbakemelding',this)">💬 Meldinger</button>
     </div>
 
     <div id="fane-matte">
@@ -977,16 +978,16 @@ async function init() {
 
   // P7: XP og streak
   try {
-    var _xr = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
+    var _xr = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streak_riktig',
       {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}});
     var _xd = _xr.ok ? await _xr.json() : [];
-    if (Array.isArray(_xd)&&_xd.length) {
-      var _tx=_xd.reduce(function(s,r){return s+(r.xp||0);},0);
-      var _ms=Math.max.apply(null,_xd.map(function(r){return r.streakR||0;}));
-      var _xe=document.getElementById('stat-xp'); var _se=document.getElementById('stat-streak');
-      if(_xe)_xe.textContent=_tx; if(_se)_se.textContent=_ms;
-      epVisBadges(_tx,_ms);
-    }
+    if (!Array.isArray(_xd)) _xd = [];
+    var _tx = _xd.reduce(function(s,r){return s+(r.xp||0);},0);
+    var _ms = _xd.length ? Math.max.apply(null,_xd.map(function(r){return r.streak_riktig||0;})) : 0;
+    var _xe=document.getElementById('stat-xp'); var _se=document.getElementById('stat-streak');
+    if(_xe) _xe.textContent = _tx;
+    if(_se) _se.textContent = _ms;
+    if(_tx>0||_ms>0) epVisBadges(_tx,_ms);
   } catch(e){console.warn('XP:',e);}
 
   document.getElementById('laster').style.display = 'none';
