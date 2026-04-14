@@ -323,6 +323,8 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
   <div class="sb-ft">
     <button class="btn bgr lg" id="btn-d" onclick="lastNed()" disabled>📄 Last ned Word (.docx)</button>
     <button class="btn bg sm" id="btn-s" onclick="lagreSB()">💾 Lagre prøven</button>
+    <button class="btn bg sm" onclick="apneDelModal()" style="margin-top:6px">🌐 Del med kolleger</button>
+    <button class="btn bg sm" onclick="apneBibliotek()" style="margin-top:6px">📚 Prøvebibliotek</button>
   </div>
 </div>
 </div><!-- /layout -->
@@ -354,6 +356,69 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
         <span class="tc-i">✨</span><span class="tc-n">Forslag fra AI</span>
         <span class="tc-d">Automatisk generert fra valgte kompetansemål</span>
       </button>
+      <button class="tcard" onclick="vType('adaptivbank')">
+        <span class="tc-i">🧠</span><span class="tc-n">Fra adaptiv bank</span>
+        <span class="tc-d">Hent direkte fra 24 900 oppgaver sortert på emne og nivå</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ED: ADAPTIV BANK -->
+  <div class="ed" id="ed-adaptivbank">
+    <div class="ai-wrap" style="background:linear-gradient(135deg,rgba(52,211,153,.07),rgba(96,165,250,.07));border-color:rgba(52,211,153,.25)">
+      <div style="font-size:.88rem;font-weight:500;margin-bottom:3px">🧠 Adaptiv oppgavebank</div>
+      <div style="font-size:.78rem;color:var(--dim);margin-bottom:14px">Velg emne og nivå – henter fra 24 900 oppgaver.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <select id="ab-emne" onchange="fetchAdaptivBank()" style="flex:1;min-width:140px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.83rem">
+          <option value="">— Velg emne —</option>
+          <option value="heltall">Heltall og regning</option>
+          <option value="brok">Brøk</option>
+          <option value="desimal">Desimaltall</option>
+          <option value="prosent">Prosent og promille</option>
+          <option value="potenser">Potenser og røtter</option>
+          <option value="standardform">Standardform</option>
+          <option value="uttrykk">Algebraiske uttrykk</option>
+          <option value="likn1">Likninger (1. grad)</option>
+          <option value="ulikheter">Ulikheter</option>
+          <option value="liknsyst">Likningssystemer</option>
+          <option value="funksjoner">Funksjoner og grafer</option>
+          <option value="polynomer">Polynomer</option>
+          <option value="areal">Areal og omkrets</option>
+          <option value="volum">Volum og overflate</option>
+          <option value="pythagoras">Pytagoras</option>
+          <option value="trig">Trigonometri</option>
+          <option value="koordinater">Koordinatsystem</option>
+          <option value="snitt">Gjennomsnitt og median</option>
+          <option value="diagrammer">Diagrammer og tabeller</option>
+          <option value="sannsynl">Sannsynlighet</option>
+          <option value="kombinat">Kombinatorikk</option>
+        </select>
+        <select id="ab-nivaa" onchange="fetchAdaptivBank()" style="max-width:130px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.83rem">
+          <option value="">Alle nivåer</option>
+          <option value="1">Nivå 1</option><option value="2">Nivå 2</option>
+          <option value="3">Nivå 3</option><option value="4">Nivå 4</option>
+          <option value="5">Nivå 5</option><option value="6">Nivå 6</option>
+          <option value="7">Nivå 7</option><option value="8">Nivå 8</option>
+          <option value="9">Nivå 9</option><option value="10">Nivå 10</option>
+        </select>
+      </div>
+      <div class="spin-row" id="ab-load" style="display:none"><div class="spin"></div><span>Henter oppgaver…</span></div>
+      <div class="ai-list" id="ab-list"><div style="color:var(--dim);font-size:.82rem;padding:8px">Velg emne for å hente oppgaver.</div></div>
+      <button class="btn bg sm" id="btn-nab" onclick="fetchAdaptivBank()" style="margin-top:10px">🔄 Hent nye</button>
+    </div>
+    <div id="ab-eb" style="display:none;margin-top:16px">
+      <div class="el">Tilpass oppgaveteksten (valgfritt)</div>
+      <textarea id="ab-la" rows="4"></textarea>
+      <div class="fr c2" style="margin-top:10px">
+        <div><div class="el">Svarlinjer</div>
+          <select id="ab-l"><option value="5" selected>5 linjer</option><option value="8">8 linjer</option></select>
+        </div>
+        <div><div class="el">Poeng</div><input type="number" id="ab-p" min="0" max="99" placeholder="f.eks. 3"></div>
+      </div>
+    </div>
+    <div class="eacts">
+      <button class="btn bp" id="btn-sab" onclick="sav('adaptivbank')" disabled>Legg til valgt oppgave</button>
+      <button class="btn bg" onclick="back()">← Endre type</button>
     </div>
   </div>
 
@@ -479,6 +544,57 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
 
 <div class="snack" id="snack"></div>
 
+<!-- DEL-MODAL -->
+<div id="del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surf);border:1px solid var(--border2);border-radius:14px;padding:28px;max-width:420px;width:90%;max-height:90vh;overflow-y:auto">
+    <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;margin-bottom:6px">🌐 Del prøven med kolleger</div>
+    <div style="font-size:.8rem;color:var(--dim);margin-bottom:18px">Delte prøver er synlige for alle SkapLab-lærere i prøvebiblioteket.</div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Ditt navn (vises i biblioteket)</label>
+      <input type="text" id="del-navn" placeholder="f.eks. Kari Nordmann" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem">
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Skole (valgfritt)</label>
+      <input type="text" id="del-skole" placeholder="f.eks. Berglia ungdomsskole" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem">
+    </div>
+    <div style="margin-bottom:18px">
+      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Kort beskrivelse (valgfritt)</label>
+      <textarea id="del-besk" rows="3" placeholder="f.eks. Kapitelprøve i likninger for 9. trinn – middels vanskelighetsgrad" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn bp" onclick="delProve()" id="btn-del-send">🌐 Del prøven</button>
+      <button class="btn bg" onclick="lukkDelModal()">Avbryt</button>
+    </div>
+  </div>
+</div>
+
+<!-- BIBLIOTEK-MODAL -->
+<div id="bib-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surf);border:1px solid var(--border2);border-radius:14px;padding:24px;max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;flex:1">📚 Prøvebibliotek</div>
+      <button class="btn bg" onclick="lukkBibliotek()" style="padding:6px 12px;flex-shrink:0">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input type="text" id="bib-sok" placeholder="Søk i tittel, KM eller lærer…" oninput="lastBibliotek()" style="flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem">
+      <select id="bib-fag" onchange="bibOppdaterKm()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem">
+        <option value="">Alle fag</option>
+        <option value="mat8">Matte 8.</option>
+        <option value="mat9">Matte 9.</option>
+        <option value="mat10">Matte 10.</option>
+        <option value="nat">Naturfag</option>
+        <option value="prg">Programmering</option>
+      </select>
+      <select id="bib-km" onchange="lastBibliotek()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem;max-width:220px">
+        <option value="">Alle KM</option>
+      </select>
+    </div>
+    <div style="flex:1;overflow-y:auto" id="bib-liste">
+      <div style="color:var(--dim);font-size:.84rem;padding:16px">Laster biblioteket…</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════
 // CONFIG
@@ -541,6 +657,36 @@ const KM={
 // STATE
 // ════════════════════════════════════════════════
 const S={fag:'',km:[],tittel:'',klasse:'',tid:'',info:'',oppgaver:[],editIdx:null,imgData:null};
+
+// Last prøve fra URL-parameter ?prove=<id> (delelenke)
+(async function(){
+  var params=new URLSearchParams(location.search);
+  var proveId=params.get('prove');
+  if(!proveId) return;
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/prover?id=eq.'+proveId+'&delt=eq.true&select=tittel,fag,klasse,tid,info,km_koder,oppgaver,laerer_navn',{
+      headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    var data=r.ok?await r.json():[];
+    if(!data.length){snack('Fant ikke prøven – lenken kan være utløpt','err');return;}
+    var p=data[0];
+    S.tittel=p.tittel+' (kopi)';
+    S.fag=p.fag||'';S.klasse=p.klasse||'';S.tid=p.tid||'';S.info=p.info||'';
+    S.km=p.km_koder?p.km_koder.split(',').map(function(k){return{k:k.trim()};}).filter(function(k){return k.k;}):[];
+    S.oppgaver=Array.isArray(p.oppgaver)?p.oppgaver:(typeof p.oppgaver==='string'?JSON.parse(p.oppgaver):[]);
+    S.editIdx=null;
+    document.addEventListener('DOMContentLoaded',function(){
+      var tittelEl=document.getElementById('p-tittel');
+      if(tittelEl) tittelEl.value=S.tittel;
+      if(typeof renderSB==='function') renderSB();
+      if(typeof renderKm==='function') renderKm();
+      snack('Prøven "'+esc(p.tittel)+'" er importert fra delelenke – gjør den til din egen!','ok');
+    });
+    var url=new URL(location.href);
+    url.searchParams.delete('prove');
+    history.replaceState({},'',url);
+  }catch(e){console.warn('URL-import feilet:',e);}
+})();
 
 // ════════════════════════════════════════════════
 // STEPPER
@@ -716,6 +862,11 @@ function sav(type){
     if(!tx){snack('Velg en oppgave fra listen','err');return;}
     o.tittel=tx.slice(0,70);o.tekst=tx;
     o.linjer=+document.getElementById('ai-l').value;o.poeng=document.getElementById('ai-p').value;
+  }else if(type==='adaptivbank'){
+    const tx=document.getElementById('ab-la').value.trim();
+    if(!tx){snack('Velg en oppgave fra listen','err');return;}
+    o.tittel=tx.slice(0,70);o.tekst=tx;
+    o.linjer=+document.getElementById('ab-l').value;o.poeng=document.getElementById('ab-p').value;
   }
   if(S.editIdx!==null){o.id=S.oppgaver[S.editIdx].id;S.oppgaver[S.editIdx]=o;snack('Oppgave oppdatert ✓','ok');}
   else{S.oppgaver.push(o);snack('Oppgave lagt til ✓','ok');}
@@ -876,6 +1027,177 @@ function renderAI(liste){
 // SIDEBAR
 // ════════════════════════════════════════════════
 const TLBL={regneoppgave:'🔢 Regneoppgave',fritekst:'📝 Fritekst',flersvar:'☑️ Flersvar',ai:'✨ AI-generert'};
+
+function apneDelModal(){
+  if(!S.oppgaver.length){snack('Legg til oppgaver i prøven først','err');return;}
+  var modal=document.getElementById('del-modal');
+  modal.style.display='flex';
+}
+function lukkDelModal(){
+  document.getElementById('del-modal').style.display='none';
+}
+async function delProve(){
+  var navn=document.getElementById('del-navn').value.trim();
+  if(!navn){snack('Skriv inn navnet ditt','err');return;}
+  var btn=document.getElementById('btn-del-send');
+  btn.textContent='Deler…';btn.disabled=true;
+  try{
+    var elev=JSON.parse(localStorage.getItem('skaplab_laerer')||localStorage.getItem('skaplab_elev')||'{}');
+    var oUB=S.oppgaver.map(function(o){return o.bilde?Object.assign({},o,{bilde:'[bilde]'}):o;});
+    var payload={
+      laerer_id:elev.id||null,
+      tittel:S.tittel||'Uten tittel',
+      fag:S.fag,klasse:S.klasse,tid:S.tid,info:S.info,
+      km_koder:S.km.map(function(k){return k.k;}).join(','),
+      oppgaver:JSON.stringify(oUB),antall:S.oppgaver.length,
+      opprettet:new Date().toISOString(),
+      delt:true,
+      laerer_navn:navn,
+      skole:document.getElementById('del-skole').value.trim()||null,
+      beskrivelse:document.getElementById('del-besk').value.trim()||null,
+      delt_dato:new Date().toISOString()
+    };
+    var res=await fetch(SB_URL+'/rest/v1/prover',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+      body:JSON.stringify(payload)
+    });
+    if(res.status===201||res.ok){
+      snack('Prøven er delt i biblioteket ✓','ok');
+      lukkDelModal();
+    } else {
+      snack('Delingsfeil: '+res.status,'err');
+    }
+  }catch(e){snack('Feil: '+e.message,'err');}
+  finally{btn.textContent='🌐 Del prøven';btn.disabled=false;}
+}
+
+function apneBibliotek(){
+  document.getElementById('bib-modal').style.display='flex';
+  bibOppdaterKm();
+}
+function lukkBibliotek(){
+  document.getElementById('bib-modal').style.display='none';
+}
+var _bibCache=[];
+function bibOppdaterKm(){
+  var fag=document.getElementById('bib-fag').value;
+  var kmSel=document.getElementById('bib-km');
+  kmSel.innerHTML='<option value="">Alle KM</option>';
+  var liste=fag==='nat'?KM_NAT:KM_MAT;
+  if(!fag){liste=[...KM_MAT,...KM_NAT];}
+  liste.forEach(function(k){
+    var o=document.createElement('option');
+    o.value=k.k; o.textContent=k.k+': '+k.t.slice(0,45)+(k.t.length>45?'…':'');
+    kmSel.appendChild(o);
+  });
+  lastBibliotek();
+}
+async function lastBibliotek(){
+  var fag=document.getElementById('bib-fag').value;
+  var km=document.getElementById('bib-km').value;
+  var sok=(document.getElementById('bib-sok').value||'').toLowerCase().trim();
+  var el=document.getElementById('bib-liste');
+  el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">Laster…</div>';
+  try{
+    // Hent alle delte prøver (maks 100) – filtrer client-side for søk/KM
+    var url=SB_URL+'/rest/v1/prover?delt=eq.true&order=delt_dato.desc&limit=100&select=id,tittel,fag,klasse,antall,laerer_navn,skole,beskrivelse,delt_dato,km_koder';
+    if(fag) url+='&fag=eq.'+fag;
+    var r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    var data=r.ok?await r.json():[];
+    _bibCache=Array.isArray(data)?data:[];
+
+    // Client-side filter: KM og søk
+    var filtrert=_bibCache.filter(function(p){
+      if(km && !(p.km_koder||'').split(',').map(function(x){return x.trim();}).includes(km)) return false;
+      if(sok){
+        var haystack=((p.tittel||'')+' '+(p.km_koder||'')+' '+(p.laerer_navn||'')+' '+(p.beskrivelse||'')).toLowerCase();
+        if(!haystack.includes(sok)) return false;
+      }
+      return true;
+    });
+
+    if(!filtrert.length){
+      el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">'+(sok||km||fag?'Ingen treff – prøv et annet filter.':'Ingen delte prøver ennå – del din første!')+'</div>';
+      return;
+    }
+    var fagNavn={'mat8':'Matte 8.','mat9':'Matte 9.','mat10':'Matte 10.','nat':'Naturfag','prg':'Programmering'};
+    el.innerHTML='';
+    el.appendChild(Object.assign(document.createElement('div'),{
+      style:'font-size:.72rem;color:var(--dim);margin-bottom:8px',
+      textContent:filtrert.length+' prøver'+(filtrert.length<_bibCache.length?' ('+_bibCache.length+' totalt)':'')
+    }));
+    filtrert.forEach(function(p){
+      var dato=p.delt_dato?new Date(p.delt_dato).toLocaleDateString('nb-NO'):'';
+      var fagnavn=fagNavn[p.fag]||p.fag||'';
+      var kmListe=(p.km_koder||'').split(',').map(function(k){return k.trim();}).filter(Boolean);
+      var div=document.createElement('div');
+      div.style.cssText='background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:8px';
+      var kmHtml=kmListe.map(function(k){
+        return '<span style="background:rgba(167,139,250,.12);color:var(--lilla);padding:1px 6px;border-radius:4px;margin-right:3px;font-size:.7rem">'+k+'</span>';
+      }).join('');
+      var meta=[
+        fagnavn?'<span style="background:rgba(96,165,250,.15);color:var(--bla);padding:1px 7px;border-radius:4px;margin-right:6px">'+fagnavn+'</span>':'',
+        p.klasse?'<span style="margin-right:4px">'+esc(p.klasse)+'</span>':'',
+        '<span style="margin-right:4px">'+p.antall+' oppg</span>',
+        esc(p.laerer_navn||''),
+        p.skole?' · '+esc(p.skole):'',
+        dato?' · '+dato:''
+      ].join('');
+      div.innerHTML='<div style="display:flex;align-items:flex-start;gap:10px">'
+        +'<div style="flex:1">'
+        +'<div style="font-family:var(--fh);font-size:.92rem;font-weight:700;margin-bottom:4px">'+esc(p.tittel)+'</div>'
+        +'<div style="font-size:.75rem;color:var(--dim);margin-bottom:5px">'+meta+'</div>'
+        +(kmHtml?'<div style="margin-bottom:6px">'+kmHtml+'</div>':'')
+        +(p.beskrivelse?'<div style="font-size:.78rem;color:var(--text);opacity:.7;margin-bottom:6px">'+esc(p.beskrivelse)+'</div>':'')
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
+        +'<button class="btn bp sm imp-btn" data-id="'+p.id+'" data-tittel="'+esc(p.tittel)+'" style="white-space:nowrap">📥 Importer</button>'
+        +'<button class="btn bg sm del-btn" data-id="'+p.id+'" style="white-space:nowrap">🔗 Kopier lenke</button>'
+        +'</div>'
+        +'</div>';
+      div.querySelector('.imp-btn').addEventListener('click',function(){
+        importerProve(this.dataset.id,this.dataset.tittel);
+      });
+      div.querySelector('.del-btn').addEventListener('click',function(){
+        var url=location.origin+location.pathname+'?prove='+this.dataset.id;
+        navigator.clipboard.writeText(url).then(function(){
+          snack('Lenke kopiert til utklippstavlen ✓','ok');
+        }).catch(function(){
+          prompt('Kopier denne lenken:',url);
+        });
+      });
+      el.appendChild(div);
+    });
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ Feil: '+esc(e.message)+'</div>';
+  }
+}
+async function importerProve(proveId, tittel){
+  try{
+    var r=await fetch(SB_URL+'/rest/v1/prover?id=eq.'+proveId+'&select=tittel,fag,klasse,tid,info,km_koder,oppgaver',{
+      headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    var data=r.ok?await r.json():[];
+    if(!data.length){snack('Kunne ikke hente prøven','err');return;}
+    var p=data[0];
+    S.tittel=p.tittel+' (kopi)';
+    S.fag=p.fag||'';
+    S.klasse=p.klasse||'';
+    S.tid=p.tid||'';
+    S.info=p.info||'';
+    S.km=p.km_koder?p.km_koder.split(',').map(function(k){return{k:k.trim()};}).filter(function(k){return k.k;}):[]; 
+    S.oppgaver=Array.isArray(p.oppgaver)?p.oppgaver:(typeof p.oppgaver==='string'?JSON.parse(p.oppgaver):[]);
+    S.editIdx=null;
+    renderSB();
+    // Oppdater tittel-felt
+    var tittelEl=document.getElementById('p-tittel');
+    if(tittelEl) tittelEl.value=S.tittel;
+    renderKm();
+    lukkBibliotek();
+    snack('Prøven "'+tittel+'" er importert – gjør den til din egen!','ok');
+  }catch(e){snack('Feil ved import: '+e.message,'err');}
+}
 
 function renderSB(){
   const list=document.getElementById('sb-list'),empty=document.getElementById('sb-empty');

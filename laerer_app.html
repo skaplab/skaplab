@@ -419,7 +419,10 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- ELEVDETALJER -->
 <div class="side" id="side-elev">
-  <button class="btn btn-sek btn-sm" onclick="visside('klasser')" style="margin-bottom:16px;">← Tilbake</button>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-sek btn-sm" onclick="visside('klasser')">← Tilbake</button>
+    <button class="btn btn-sek btn-sm" onclick="skrivUtElevrapport()" style="margin-left:auto">🖨️ Skriv ut rapport</button>
+  </div>
   <div class="side-tittel" id="elev-navn">Elev</div>
   <div class="side-sub" id="elev-sub"></div>
   <div class="sek">
@@ -457,6 +460,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       </select>
     </div>
     <div id="at-innhold"><div style="color:var(--dim);font-size:.84rem;padding:16px 0">Velg en klasse for å se fremgang.</div></div>
+    <div id="at-klassestat" style="display:none;margin-top:12px"></div>
     <div class="at-leg" id="at-leg" style="display:none">
       <span>Nivå:</span>
       <span style="display:flex;gap:3px;align-items:center"><span class="at-leg-b" style="background:rgba(255,255,255,.08)"></span>–</span>
@@ -1430,7 +1434,7 @@ async function atLastKlasse() {
     }
     var ids = atElever.map(function(e){ return e.id; });
     var prog = await apiGet('/adaptiv_progresjon?elev_id=in.('+ids.join(',')+')'
-      +'&select=elev_id,emne,nivaa,beste_nivaa,xp,totalt_riktige,totalt_feil');
+      +'&select=elev_id,emne,nivaa,beste_nivaa,xp,totalt_riktige,totalt_feil,sist_aktiv');
     if (!Array.isArray(prog)) prog = [];
 
     atData = {};
@@ -1470,7 +1474,8 @@ function atVis() {
         var p = prog.find(function(r){ return r.emne === em.id; });
         var niv = p ? (p.beste_nivaa || 0) : 0;
         xp += p ? (p.xp || 0) : 0;
-        var tittel = p ? 'Nivå '+p.nivaa+' (beste: '+p.beste_nivaa+') · '+p.totalt_riktige+' riktige' : 'Ikke startet';
+        var sistAktiv = p && p.sist_aktiv ? ' · ' + new Date(p.sist_aktiv).toLocaleDateString('nb-NO') : '';
+        var tittel = p ? 'Nivå '+p.nivaa+' (beste: '+p.beste_nivaa+') · '+p.totalt_riktige+' riktige'+sistAktiv : 'Ikke startet';
         h += '<td><div class="at-c n'+niv+'" title="'+tittel+'">'+(niv||'–')+'</div></td>';
       });
       h += '<td style="font-size:.72rem;color:var(--gul);font-weight:700;text-align:center">'+(xp||'–')+'</td></tr>';
@@ -1489,6 +1494,43 @@ function atVis() {
     });
     h += '</div>';
     inn.innerHTML = h;
+
+    // Klassestatistikk: vis emner sortert etter laveste snitt
+    var statEl = document.getElementById('at-klassestat');
+    if (statEl) {
+      var emneSnitt = emner.map(function(em) {
+        var vals = atElever.map(function(e){
+          var p=(atData[e.id]||[]).find(function(r){return r.emne===em.id;});
+          return p?(p.beste_nivaa||0):0;
+        });
+        var aktive = vals.filter(function(n){return n>0;});
+        var snitt = aktive.length ? (aktive.reduce(function(a,b){return a+b;},0)/aktive.length) : 0;
+        var ikkeStartet = vals.filter(function(n){return n===0;}).length;
+        return {emne:em, snitt:snitt, aktive:aktive.length, ikkeStartet:ikkeStartet, total:vals.length};
+      }).filter(function(e){return e.aktive>0;})
+        .sort(function(a,b){return a.snitt-b.snitt;});
+
+      if (emneSnitt.length) {
+        var sh = '<div style="margin-top:4px">';
+        sh += '<div style="font-size:.7rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Klassestatistikk – sortert etter snittsnivå</div>';
+        sh += '<div style="display:grid;gap:4px">';
+        emneSnitt.forEach(function(e) {
+          var pst = Math.round(e.snitt/10*100);
+          var farge = e.snitt<3?'var(--rod)':e.snitt<5?'var(--gul)':e.snitt<7?'var(--bla)':'var(--gron)';
+          sh += '<div style="display:grid;grid-template-columns:120px 1fr 60px 50px;align-items:center;gap:8px;font-size:.76rem">';
+          sh += '<span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+e.emne.n+'</span>';
+          sh += '<div style="background:rgba(255,255,255,.06);border-radius:3px;height:6px;overflow:hidden"><div style="width:'+pst+'%;height:100%;background:'+farge+';border-radius:3px"></div></div>';
+          sh += '<span style="color:'+farge+';font-weight:700;text-align:right">'+e.snitt.toFixed(1)+'</span>';
+          sh += '<span style="color:var(--dim);text-align:right">'+e.ikkeStartet+' ×</span>';
+          sh += '</div>';
+        });
+        sh += '</div>';
+        sh += '<div style="font-size:.7rem;color:var(--dim);margin-top:6px">× = ikke startet emnet</div>';
+        sh += '</div>';
+        statEl.innerHTML = sh;
+        statEl.style.display = '';
+      }
+    }
   } catch(e) {
     console.warn('atVis:', e);
   }
@@ -1563,6 +1605,19 @@ function atStat(lbl, val, farge) {
   return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;min-width:80px">'
     +'<div style="font-size:.67rem;color:var(--dim);margin-bottom:2px">'+lbl+'</div>'
     +'<div style="font-family:var(--font-h);font-size:1.15rem;font-weight:900;color:'+farge+'">'+val+'</div></div>';
+}
+
+function skrivUtElevrapport() {
+  var navn = document.getElementById('elev-navn') ? document.getElementById('elev-navn').textContent : 'Elev';
+  var sub  = document.getElementById('elev-sub')  ? document.getElementById('elev-sub').textContent  : '';
+  var atInn = document.getElementById('elev-at-innhold') ? document.getElementById('elev-at-innhold').innerHTML : '';
+  var loggInn = document.getElementById('elev-logg-tbody') ? document.getElementById('elev-logg-tbody').innerHTML : '';
+  var vurdInn = document.getElementById('elev-vurd-innhold') ? document.getElementById('elev-vurd-innhold').innerHTML : '';
+  var dato = new Date().toLocaleDateString('nb-NO',{day:'2-digit',month:'long',year:'numeric'});
+
+  var win = window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html lang="no"><head><meta charset="UTF-8">'    +'<title>Elevrapport – '+navn+'</title>'    +'<style>'    +'body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;color:#111;line-height:1.5}'    +'h1{font-size:1.4rem;margin-bottom:2px}'    +'h2{font-size:1rem;margin-top:24px;margin-bottom:8px;color:#444;border-bottom:1px solid #e0e0e0;padding-bottom:4px}'    +'.sub{color:#666;font-size:.9rem;margin-bottom:24px}'    +'.dato{color:#888;font-size:.8rem}'    +'table{border-collapse:collapse;width:100%;font-size:.85rem}'    +'th,td{border:1px solid #ddd;padding:6px 10px;text-align:left}'    +'th{background:#f5f5f5}'    +'.at-pk{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:8px 12px;margin-bottom:6px}'    +'.at-pk-emne{font-weight:600;font-size:.85rem}'    +'.at-pk-niv{font-size:.8rem;color:#555}'    +'.at-pk-meta{font-size:.75rem;color:#888}'    +'@media print{body{margin:20px}button{display:none}}'    +'</style></head><body>'    +'<div class="dato">SkapLab – Elevrapport · '+dato+'</div>'    +'<h1>'+navn+'</h1>'    +'<div class="sub">'+sub+'</div>'    +'<h2>🧠 Adaptiv trener</h2>'+atInn    +'<h2>📊 Aktivitetslogg (siste 100)</h2><table><thead><tr><th>Ressurs</th><th>KM</th><th>Score</th><th>Dato</th></tr></thead><tbody>'+loggInn+'</tbody></table>'    +'<h2>📋 Vurderinger</h2>'+vurdInn    +'<br><button onclick="window.print()" style="padding:10px 20px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:.9rem">Skriv ut / Lagre som PDF</button>'    +'</body></html>');
+  win.document.close();
 }
 
 
