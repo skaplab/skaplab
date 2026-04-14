@@ -2222,6 +2222,7 @@ function injiserCSS() {
     }
     .at-emne-kort:hover:not(.låst){transform:translateY(-2px);border-color:rgba(255,255,255,.22);}
     .at-emne-kort.låst{opacity:.42;cursor:not-allowed;filter:grayscale(.6);}
+    .at-emne-kort{position:relative;}
     .at-emne-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
     .at-emne-ikon{font-size:1.35rem;}
     .at-emne-niv{
@@ -2399,7 +2400,7 @@ function renderOversikt() {
   html += '<p>Velg et emne og jobb deg oppover nivåene. Du rykker opp etter 3 riktige på rad, og ned etter 2 feil. Ubegrenset med unike oppgaver.</p>';
   if (totalXP > 0) html += '<p style="margin-top:6px;color:var(--gul)">⭐ ' + totalXP + ' XP   ·   🏆 ' + fullforte + ' emner fullført</p>';
   html += '</div>';
-  html += '<button class="at-hero-btn" onclick="AT.startAlle()">🎲 Start blankt!</button>';
+  html += '<button class="at-hero-btn" onclick="AT.startAlle()">🎲 Tilfeldig emne</button>';
   html += '</div>';
 
   Object.keys(kater).forEach(function(kat) {
@@ -2422,7 +2423,7 @@ function renderOversikt() {
       if (!last) html += '<span class="at-lås">🔒</span>';
       html += '<div class="at-emne-top">';
       html += '<span class="at-emne-ikon">' + emne.i + '</span>';
-      html += '<span class="at-emne-niv" style="color:' + emne.farge + '">Niv. ' + p.nivaa + '</span>';
+      html += '<span class="at-emne-niv" style="color:' + emne.farge + ';cursor:pointer" '+ 'title="Klikk for å endre nivå" '+ 'onclick="event.stopPropagation();AT.visNivaaVelger(\'' + emne.id + '\',this)">'+ '✏️ Niv. ' + p.nivaa + '</span>';
       html += '</div>';
       html += '<div class="at-emne-navn">' + emne.n + '</div>';
       html += '<div class="at-stjerner">' + stjerner + '</div>';
@@ -2449,6 +2450,61 @@ function startAlle() {
   if (!apne.length) { startEmne(EMNER[0].id); return; }
   var valgt = apne[Math.floor(Math.random() * apne.length)];
   startEmne(valgt.id);
+}
+
+function visNivaaVelger(emneId, badgeEl) {
+  // Fjern evt. eksisterende velger
+  var gammel = document.getElementById('at-niv-velger');
+  if (gammel) {
+    gammel.remove();
+    if (gammel.dataset.emne === emneId) return; // toggle: lukk om samme badge
+  }
+
+  var wrapper = document.createElement('div');
+  wrapper.id = 'at-niv-velger';
+  wrapper.dataset.emne = emneId;
+  wrapper.style.cssText = 'position:absolute;z-index:99;background:var(--bg2);border:1.5px solid var(--border2);' +
+    'border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;' +
+    'box-shadow:0 4px 16px rgba(0,0,0,.3);min-width:200px;';
+
+  var p = getProg(emneId);
+  for (var n = 1; n <= 10; n++) {
+    (function(nivaa) {
+      var btn = document.createElement('button');
+      btn.textContent = 'Niv. ' + nivaa;
+      btn.style.cssText = 'padding:5px 10px;border-radius:7px;border:1.5px solid var(--border2);' +
+        'background:' + (p.nivaa === nivaa ? 'rgba(96,165,250,.25)' : 'transparent') + ';' +
+        'color:' + (p.nivaa === nivaa ? 'var(--bla)' : 'var(--dim)') + ';' +
+        'font-family:var(--font-h);font-size:.72rem;font-weight:700;cursor:pointer;';
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        // Sett nivå i prog og DB
+        p.nivaa = nivaa;
+        lagreProgresjon(emneId);
+        wrapper.remove();
+        renderOversikt(); // oppdater kortet
+      };
+      wrapper.appendChild(btn);
+    })(n);
+  }
+
+  // Plasser velgeren relativt til badge
+  var kort = badgeEl.closest('.at-emne-kort');
+  if (kort) {
+    kort.style.position = 'relative';
+    kort.appendChild(wrapper);
+    wrapper.style.top = badgeEl.offsetTop + badgeEl.offsetHeight + 4 + 'px';
+    wrapper.style.right = '8px';
+  } else {
+    badgeEl.parentNode.appendChild(wrapper);
+  }
+
+  // Lukk ved klikk utenfor
+  setTimeout(function() {
+    document.addEventListener('click', function fjern(ev) {
+      if (!wrapper.contains(ev.target)) { wrapper.remove(); document.removeEventListener('click', fjern); }
+    });
+  }, 10);
 }
 
 function visLåst(emneId) {
@@ -2559,16 +2615,27 @@ function hentOppgave() {
   // Prøv å hente fra Supabase
   if (innhold) innhold.innerHTML = '<div class="at-loader"><div class="at-spin"></div> Henter oppgaver...</div>';
 
-  fetch(SB + '/rest/v1/oppgavebank?emne=eq.' + aktivEmne.id + '&nivaa=eq.' + p.nivaa + '&select=*&limit=20&order=random()', {
+  var _url = SB + '/rest/v1/oppgavebank?emne=eq.' + aktivEmne.id + '&nivaa=eq.' + p.nivaa + '&select=*&limit=50';
+  console.log('[Adaptiv] Henter fra:', _url);
+  fetch(_url, {
     headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK }
   })
-  .then(function(r) { return r.ok ? r.json() : []; })
+  .then(function(r) {
+    console.log('[Adaptiv] Respons status:', r.status, 'ok:', r.ok);
+    return r.ok ? r.json() : [];
+  })
   .then(function(data) {
+    console.log('[Adaptiv] Mottok', Array.isArray(data) ? data.length : 'ikke-array', 'oppgaver');
     if (data && data.length > 0) {
+      // Shuffle lokalt siden PostgREST ikke støtter order=random()
+      for (var i = data.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = data[i]; data[i] = data[j]; data[j] = tmp;
+      }
       bankCache[cacheKey] = data;
       visTilfeldigFraCache(cacheKey);
     } else {
-      // Fallback til lokal bank
+      console.warn('[Adaptiv] Tom respons – bruker lokalbank');
       var lokalNivaa = (LOKAL_BANK[aktivEmne.id] || {})[String(p.nivaa)] || [];
       if (lokalNivaa.length > 0) {
         bankCache[cacheKey] = lokalNivaa;
@@ -2578,8 +2645,8 @@ function hentOppgave() {
       }
     }
   })
-  .catch(function() {
-    // Offline-fallback
+  .catch(function(err) {
+    console.error('[Adaptiv] Fetch feilet:', err);
     var lokalNivaa = (LOKAL_BANK[aktivEmne.id] || {})[String(p.nivaa)] || [];
     if (lokalNivaa.length > 0) {
       bankCache[cacheKey] = lokalNivaa;
@@ -2590,8 +2657,15 @@ function hentOppgave() {
 
 function visTilfeldigFraCache(cacheKey) {
   var liste = bankCache[cacheKey];
-  if (!liste || !liste.length) return;
-  var raa = liste[Math.floor(Math.random() * liste.length)];
+  if (!liste || !liste.length) {
+    // Tøm cache og hent nye oppgaver fra DB
+    delete bankCache[cacheKey];
+    hentOppgave();
+    return;
+  }
+  // Trekk ut en tilfeldig oppgave og fjern den fra listen (unngår gjenbruk)
+  var idx = Math.floor(Math.random() * liste.length);
+  var raa = liste.splice(idx, 1)[0];
 
   // Normaliser Supabase-format og lokal-format til samme struktur
   var opp = {
