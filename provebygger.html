@@ -1066,7 +1066,12 @@ async function delProve(){
       snack('Prøven er delt i biblioteket ✓','ok');
       lukkDelModal();
     } else {
-      snack('Delingsfeil: '+res.status,'err');
+      var feilTekst=await res.text().catch(function(){return '';});
+      if(res.status===400&&(feilTekst.includes('delt')||feilTekst.includes('column')||feilTekst.includes('laerer_navn'))){
+        snack('Kjør deling_migrasjon.sql i Supabase først (manglende kolonner)','err');
+      } else {
+        snack('Delingsfeil '+res.status+': '+feilTekst.slice(0,80),'err');
+      }
     }
   }catch(e){snack('Feil: '+e.message,'err');}
   finally{btn.textContent='🌐 Del prøven';btn.disabled=false;}
@@ -1197,6 +1202,49 @@ async function importerProve(proveId, tittel){
     lukkBibliotek();
     snack('Prøven "'+tittel+'" er importert – gjør den til din egen!','ok');
   }catch(e){snack('Feil ved import: '+e.message,'err');}
+}
+
+async function fetchAdaptivBank(){
+  var emne=document.getElementById('ab-emne').value;
+  var nivaa=document.getElementById('ab-nivaa').value;
+  if(!emne) return;
+  document.getElementById('ab-load').style.display='flex';
+  document.getElementById('ab-list').innerHTML='';
+  document.getElementById('btn-nab').disabled=true;
+  document.getElementById('btn-sab').disabled=true;
+  document.getElementById('ab-eb').style.display='none';
+  try{
+    var url=SB_URL+'/rest/v1/oppgavebank?kilde=eq.adaptiv&emne=eq.'+emne+'&select=oppgave,type,fork,nivaa,alts,riktig,svar&limit=50';
+    if(nivaa) url+='&nivaa=eq.'+nivaa;
+    const r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const data=r.ok?await r.json():[];
+    const liste=Array.isArray(data)?data.sort(function(){return Math.random()-.5;}).slice(0,6):[];
+    var listEl=document.getElementById('ab-list');
+    if(!liste.length){
+      listEl.innerHTML='<div style="color:var(--dim);font-size:.82rem;padding:8px">Ingen oppgaver for dette utvalget.</div>';
+      return;
+    }
+    listEl.innerHTML='';
+    liste.forEach(function(item){
+      var div=document.createElement('div');div.className='ai-item';
+      var typeTxt=item.type==='mc'?'Flervalg':'Inntasting';
+      var nivTxt=item.nivaa?' · Nivå '+item.nivaa:'';
+      div.innerHTML='<div class="ai-type">'+typeTxt+nivTxt+'</div>'+esc(item.oppgave||'');
+      div.onclick=function(){
+        document.querySelectorAll('#ab-list .ai-item').forEach(function(x){x.classList.remove('sel');});
+        div.classList.add('sel');
+        document.getElementById('ab-la').value=item.oppgave||'';
+        document.getElementById('ab-eb').style.display='';
+        document.getElementById('btn-sab').disabled=false;
+      };
+      listEl.appendChild(div);
+    });
+  }catch(e){
+    document.getElementById('ab-list').innerHTML='<div style="color:var(--red);font-size:.82rem;padding:8px">⚠️ Feil: '+esc(e.message)+'</div>';
+  }finally{
+    document.getElementById('ab-load').style.display='none';
+    document.getElementById('btn-nab').disabled=false;
+  }
 }
 
 function renderSB(){
