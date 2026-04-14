@@ -2615,17 +2615,11 @@ function hentOppgave() {
   // Prøv å hente fra Supabase
   if (innhold) innhold.innerHTML = '<div class="at-loader"><div class="at-spin"></div> Henter oppgaver...</div>';
 
-  var _url = SB + '/rest/v1/oppgavebank?emne=eq.' + aktivEmne.id + '&nivaa=eq.' + p.nivaa + '&select=*&limit=50';
-  console.log('[Adaptiv] Henter fra:', _url);
-  fetch(_url, {
+  fetch(SB + '/rest/v1/oppgavebank?emne=eq.' + aktivEmne.id + '&nivaa=eq.' + p.nivaa + '&select=*&limit=50', {
     headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK }
   })
-  .then(function(r) {
-    console.log('[Adaptiv] Respons status:', r.status, 'ok:', r.ok);
-    return r.ok ? r.json() : [];
-  })
+  .then(function(r) { return r.ok ? r.json() : []; })
   .then(function(data) {
-    console.log('[Adaptiv] Mottok', Array.isArray(data) ? data.length : 'ikke-array', 'oppgaver');
     if (data && data.length > 0) {
       // Shuffle lokalt siden PostgREST ikke støtter order=random()
       for (var i = data.length - 1; i > 0; i--) {
@@ -2635,7 +2629,6 @@ function hentOppgave() {
       bankCache[cacheKey] = data;
       visTilfeldigFraCache(cacheKey);
     } else {
-      console.warn('[Adaptiv] Tom respons – bruker lokalbank');
       var lokalNivaa = (LOKAL_BANK[aktivEmne.id] || {})[String(p.nivaa)] || [];
       if (lokalNivaa.length > 0) {
         bankCache[cacheKey] = lokalNivaa;
@@ -2645,8 +2638,7 @@ function hentOppgave() {
       }
     }
   })
-  .catch(function(err) {
-    console.error('[Adaptiv] Fetch feilet:', err);
+  .catch(function() {
     var lokalNivaa = (LOKAL_BANK[aktivEmne.id] || {})[String(p.nivaa)] || [];
     if (lokalNivaa.length > 0) {
       bankCache[cacheKey] = lokalNivaa;
@@ -2889,6 +2881,8 @@ function escHtml(s) {
 async function initAdaptivTrener() {
   // Alltid hent fersk progresjon fra DB - nivåer/XP kan ha endret seg
   injiserCSS();
+  // Tøm oppgave-cache så vi alltid henter ferske oppgaver fra Supabase
+  bankCache = {};
   var el = document.getElementById('adaptiv-app');
   if (!erInitiert && el) el.innerHTML = '<div class="at-loader"><div class="at-spin"></div> Laster progresjon...</div>';
   await hentProgresjon();
