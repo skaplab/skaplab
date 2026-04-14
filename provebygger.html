@@ -1093,7 +1093,7 @@ function bibOppdaterKm(){
   var kmSel=document.getElementById('bib-km');
   kmSel.innerHTML='<option value="">Alle KM</option>';
   var liste=fag==='nat'?KM_NAT:KM_MAT;
-  if(!fag){liste=[...KM_MAT,...KM_NAT];}
+  if(!fag){liste=KM_MAT.concat(KM_NAT);}
   liste.forEach(function(k){
     var o=document.createElement('option');
     o.value=k.k; o.textContent=k.k+': '+k.t.slice(0,45)+(k.t.length>45?'…':'');
@@ -1104,13 +1104,13 @@ function bibOppdaterKm(){
 async function lastBibliotek(){
   var fag=document.getElementById('bib-fag').value;
   var km=document.getElementById('bib-km').value;
-  var sok=(document.getElementById('bib-sok').value||'').toLowerCase().trim();
+  var sokEl=document.getElementById('bib-sok');
+  var sok=sokEl?(sokEl.value||'').toLowerCase().trim():'';
   var el=document.getElementById('bib-liste');
   el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">Laster…</div>';
   try{
-    // Hent alle delte prøver (maks 100) – filtrer client-side for søk/KM
+    // Hent alle delte prøver (maks 100) – alt filtreres client-side
     var url=SB_URL+'/rest/v1/prover?delt=eq.true&order=delt_dato.desc&limit=100&select=*';
-    if(fag) url+='&fag=eq.'+fag;
     var r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
     if(!r.ok){
       var feilTekst=await r.text().catch(function(){return '';});
@@ -1121,7 +1121,20 @@ async function lastBibliotek(){
     _bibCache=Array.isArray(data)?data:[];
 
     // Client-side filter: KM og søk
+    // fag-felt kan være 'mat8','mat9','mat10','matematikk','nat','naturfag','prg'
+    var fagAliases={
+      'mat8':['mat8','matematikk','matte'],
+      'mat9':['mat9','matematikk','matte'],
+      'mat10':['mat10','matematikk','matte'],
+      'nat':['nat','naturfag'],
+      'prg':['prg','programmering']
+    };
     var filtrert=_bibCache.filter(function(p){
+      if(fag){
+        var pFag=(p.fag||'').toLowerCase();
+        var aliaser=fagAliases[fag]||[fag];
+        if(!aliaser.some(function(a){return pFag===a||pFag.startsWith(a);})) return false;
+      }
       if(km && !(p.km_koder||'').split(',').map(function(x){return x.trim();}).includes(km)) return false;
       if(sok){
         var haystack=((p.tittel||'')+' '+(p.km_koder||'')+' '+(p.laerer_navn||'')+' '+(p.beskrivelse||'')).toLowerCase();
@@ -1183,7 +1196,9 @@ async function lastBibliotek(){
       el.appendChild(div);
     });
   }catch(e){
-    el.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ Feil: '+esc(e.message)+'</div>';
+    console.error('lastBibliotek feil:', e);
+    var elC=document.getElementById('bib-liste');
+    if(elC) elC.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ Feil: '+esc(e.message)+'</div>';
   }
 }
 async function importerProve(proveId, tittel){
