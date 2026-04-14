@@ -970,6 +970,56 @@ async function init() {
   // Vis siste aktivitet
   byggAktivitet();
 
+
+  // P7: Oppdater XP og streak fra adaptiv_progresjon
+  try {
+    var _xpData = await fetch(
+      SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    ).then(function(r){return r.json();}).catch(function(){return [];});
+    if (Array.isArray(_xpData) && _xpData.length) {
+      var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
+      var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
+      window._skaplabXP = _totXP;
+      var _xpEl = document.getElementById('stat-xp');
+      var _stEl = document.getElementById('stat-streak');
+      if (_xpEl) _xpEl.textContent = _totXP;
+      if (_stEl) _stEl.textContent = _maxStreak;
+      epVisBadges(_totXP, _maxStreak);
+    }
+  } catch(_e) { console.warn('XP-henting:', _e); }
+
+  // P5: Hent vurderinger fra laerer
+  try {
+    var _vurdResp = await fetch(
+      SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    var _vurdData = _vurdResp.ok ? await _vurdResp.json() : [];
+    if (!Array.isArray(_vurdData)) _vurdData = [];
+    var _vInn = document.getElementById('ep-vurd-innhold');
+    if (_vInn) {
+      if (_vurdData.length) {
+        var _nivNavn = {hoy:'Høy', middels:'Middels', lav:'Lav'};
+        _vInn.innerHTML = _vurdData.map(function(v) {
+          var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
+          return '<div class="ep-vurd-kort">'
+            + '<div class="ep-vurd-hd">'
+            + (v.km_kode && v.km_kode !== 'GENERELL' ? '<span class="ep-vurd-km">' + v.km_kode + '</span>' : '')
+            + '<span class="ep-vurd-niv ' + v.nivaa + '">' + (_nivNavn[v.nivaa] || v.nivaa) + '</span>'
+            + '</div>'
+            + (v.merknad ? '<div class="ep-vurd-tekst">' + v.merknad + '</div>' : '')
+            + '<div class="ep-vurd-dato">' + _d + '</div>'
+            + '</div>';
+        }).join('');
+      } else {
+        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:8px 0">Ingen tilbakemeldinger fra lærer ennå.</div>';
+      }
+    }
+  } catch(_e) {
+    console.warn('Vurdering-henting:', _e);
+  }
+
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
 }
@@ -1122,108 +1172,6 @@ var tildelte  = [];
 var egenvurdering = {};
 var lyspareAktiv  = false;
 
-async function init() {
-  var aktResp = await fetch(SUPABASE_URL+'/rest/v1/aktivitet?elev_id=eq.'+elev.id+'&order=tidspunkt.desc&limit=200',
-    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
-  aktivitet = Array.isArray(aktResp) ? aktResp : [];
-
-  var tildelResp = await fetch(
-    SUPABASE_URL+'/rest/v1/tildeling?or=(elev_id.eq.'+elev.id+',klasse_id.eq.'+(elev.klasse_id||'00000000-0000-0000-0000-000000000000')+')&select=id,frist,oppgaver(tittel,type,ressurs,url,fag)',
-    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
-  tildelte = Array.isArray(tildelResp) ? tildelResp : [];
-
-  var egResp = await fetch(SUPABASE_URL+'/rest/v1/elev_egenvurdering?elev_id=eq.'+elev.id,
-    {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}).then(function(r){return r.json();}).catch(function(){return [];});
-  if (Array.isArray(egResp)) egResp.forEach(function(e){ egenvurdering[e.km_kode] = e.nivaa; });
-
-  // Hent fersk elev-data for å få trenger_hjelp (localStorage kan være gammelt)
-  try {
-    var elevResp = await fetch(
-      SUPABASE_URL+'/rest/v1/elever?id=eq.'+elev.id+'&select=trenger_hjelp,hjelp_emne',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    ).then(function(r){return r.json();});
-    if (Array.isArray(elevResp) && elevResp[0]) {
-      elev.trenger_hjelp = elevResp[0].trenger_hjelp;
-      elev.hjelp_emne    = elevResp[0].hjelp_emne;
-      // Oppdater localStorage
-      var stored = JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
-      stored.trenger_hjelp = elev.trenger_hjelp;
-      stored.hjelp_emne    = elev.hjelp_emne;
-      localStorage.setItem('skaplab_elev', JSON.stringify(stored));
-    }
-  } catch(e) {}
-  lyspareAktiv = !!(elev.trenger_hjelp);
-  if (lyspareAktiv) document.getElementById('global-lyspare').classList.add('aktiv');
-
-  window._aktMap = {};
-  aktivitet.forEach(function(a) {
-    if (!_aktMap[a.ressurs]) _aktMap[a.ressurs] = {scorer:[], fullfort:a.fullfort_antall, totalt:a.totalt_antall};
-    else {
-      if (!_aktMap[a.ressurs].fullfort && a.fullfort_antall) _aktMap[a.ressurs].fullfort = a.fullfort_antall;
-      if (!_aktMap[a.ressurs].totalt  && a.totalt_antall)   _aktMap[a.ressurs].totalt   = a.totalt_antall;
-    }
-    if (a.score_pst !== null) _aktMap[a.ressurs].scorer.push(a.score_pst);
-  });
-  Object.keys(_aktMap).forEach(function(r) {
-    var s = _aktMap[r].scorer;
-    _aktMap[r].snitt = s.length ? Math.round(s.reduce(function(a,b){return a+b;},0)/s.length) : null;
-    _aktMap[r].okter = s.length;
-  });
-
-  var allScorer = aktivitet.filter(function(a){return a.score_pst!==null;}).map(function(a){return a.score_pst;});
-  document.getElementById('stat-okter').textContent = aktivitet.length;
-  document.getElementById('stat-snitt').textContent = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length)+'%' : '–';
-
-
-  // P7: Oppdater XP og streak fra adaptiv_progresjon
-  try {
-    var _xpData = await fetch(
-      SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    ).then(function(r){return r.json();}).catch(function(){return [];});
-    if (Array.isArray(_xpData) && _xpData.length) {
-      var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
-      var _maxStreak = Math.max.apply(null,_xpData.map(function(r){return r.streakR||0;}));
-      window._skaplabXP = _totXP;
-      var _xpEl = document.getElementById('stat-xp');
-      var _stEl = document.getElementById('stat-streak');
-      if (_xpEl) _xpEl.textContent = _totXP;
-      if (_stEl) _stEl.textContent = _maxStreak;
-      epVisBadges(_totXP, _maxStreak);
-    }
-  } catch(_e) { console.warn('XP-henting:', _e); }
-
-  // P5: Hent vurderinger fra laerer
-  try {
-    var _vurdResp = await fetch(
-      SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
-    );
-    var _vurdData = _vurdResp.ok ? await _vurdResp.json() : [];
-    if (!Array.isArray(_vurdData)) _vurdData = [];
-    var _vInn = document.getElementById('ep-vurd-innhold');
-    if (_vInn) {
-      if (_vurdData.length) {
-        var _nivNavn = {hoy:'Høy', middels:'Middels', lav:'Lav'};
-        _vInn.innerHTML = _vurdData.map(function(v) {
-          var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
-          return '<div class="ep-vurd-kort">'
-            + '<div class="ep-vurd-hd">'
-            + (v.km_kode && v.km_kode !== 'GENERELL' ? '<span class="ep-vurd-km">' + v.km_kode + '</span>' : '')
-            + '<span class="ep-vurd-niv ' + v.nivaa + '">' + (_nivNavn[v.nivaa] || v.nivaa) + '</span>'
-            + '</div>'
-            + (v.merknad ? '<div class="ep-vurd-tekst">' + v.merknad + '</div>' : '')
-            + '<div class="ep-vurd-dato">' + _d + '</div>'
-            + '</div>';
-        }).join('');
-      } else {
-        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:8px 0">Ingen tilbakemeldinger fra lærer ennå.</div>';
-      }
-    }
-  } catch(_e) {
-    console.warn('Vurdering-henting:', _e);
-  }
-}
 
 /* ── KARUSELL ────────────────────────────────────────────────── */
 function byggKarusell() {
