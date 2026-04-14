@@ -1178,8 +1178,8 @@ async function init() {
   // P7: Oppdater XP og streak fra adaptiv_progresjon
   try {
     var _xpData = await fetch(
-      SkapLab.SUPABASE_BASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
-      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
+      SUPABASE_URL+'/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&select=xp,streakR',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
     ).then(function(r){return r.json();}).catch(function(){return [];});
     if (Array.isArray(_xpData) && _xpData.length) {
       var _totXP = _xpData.reduce(function(s,r){return s+(r.xp||0);},0);
@@ -1195,54 +1195,34 @@ async function init() {
 
   // P5: Hent vurderinger fra laerer
   try {
-    var _vurdData = await fetch(
-      SkapLab.SUPABASE_BASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
-      {headers:{'apikey':SkapLab.SUPABASE_KEY,'Authorization':'Bearer '+SkapLab.SUPABASE_KEY}}
-    ).then(function(r){return r.json();}).catch(function(){return [];});
+    var _vurdResp = await fetch(
+      SUPABASE_URL+'/rest/v1/vurderinger?elev_id=eq.'+elev.id+'&order=oppdatert.desc&limit=10',
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+    );
+    var _vurdData = _vurdResp.ok ? await _vurdResp.json() : [];
+    if (!Array.isArray(_vurdData)) _vurdData = [];
     var _vInn = document.getElementById('ep-vurd-innhold');
-    if (Array.isArray(_vurdData) && _vurdData.length && _vInn) {
-      if (true) {
-        var _nivNavn = {hoy:'Hoy',middels:'Middels',lav:'Lav'};
-        _vInn.innerHTML = _vurdData.map(function(v){
+    if (_vInn) {
+      if (_vurdData.length) {
+        var _nivNavn = {hoy:'Høy', middels:'Middels', lav:'Lav'};
+        _vInn.innerHTML = _vurdData.map(function(v) {
           var _d = v.oppdatert ? new Date(v.oppdatert).toLocaleDateString('nb-NO') : '';
           return '<div class="ep-vurd-kort">'
-            +'<div class="ep-vurd-hd">'
-            +(v.km_kode&&v.km_kode!=='GENERELL'?'<span class="ep-vurd-km">'+v.km_kode+'</span>':'')
-            +'<span class="ep-vurd-niv '+v.nivaa+'">'+(_nivNavn[v.nivaa]||v.nivaa)+'</span>'
-            +'</div>'
-            +(v.merknad?'<div class="ep-vurd-tekst">'+v.merknad+'</div>':'')
-            +'<div class="ep-vurd-dato">'+_d+'</div>'
-            +'</div>';
+            + '<div class="ep-vurd-hd">'
+            + (v.km_kode && v.km_kode !== 'GENERELL' ? '<span class="ep-vurd-km">' + v.km_kode + '</span>' : '')
+            + '<span class="ep-vurd-niv ' + v.nivaa + '">' + (_nivNavn[v.nivaa] || v.nivaa) + '</span>'
+            + '</div>'
+            + (v.merknad ? '<div class="ep-vurd-tekst">' + v.merknad + '</div>' : '')
+            + '<div class="ep-vurd-dato">' + _d + '</div>'
+            + '</div>';
         }).join('');
+      } else {
+        _vInn.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:8px 0">Ingen tilbakemeldinger fra lærer ennå.</div>';
       }
     }
-  } catch(_e) { console.warn('Vurdering-henting:', _e); }
-
-  byggKarusell();
-  byggAlleGrids();
-  byggEgenvurdering();
-  byggAktivitet();
-
-  document.getElementById('laster').style.display = 'none';
-  document.getElementById('portal').style.display  = 'block';
-
-  // ── PERSONALISERT VELKOMSTTEKST ──────────────────────────────────
-  (function() {
-    var sub = document.getElementById('velk-sub');
-    if (!sub) return;
-    var n = aktivitet.length;
-    if (n === 0) {
-      sub.textContent = 'Velkommen! Velg et fag og start din første økt. 🚀';
-    } else if (n < 5) {
-      sub.textContent = 'Bra start! Du har fullført '+n+' aktiviteter. Fortsett!';
-    } else {
-      var allScorer = aktivitet.filter(function(a){return a.score_pst!==null;}).map(function(a){return a.score_pst;});
-      var snitt = allScorer.length ? Math.round(allScorer.reduce(function(a,b){return a+b;},0)/allScorer.length) : 0;
-      sub.textContent = snitt>=80 ? 'Imponerende! Snitt '+snitt+'% 🏆' :
-                        snitt>=60 ? 'Bra jobbet! Snitt '+snitt+'% — fortsett å øve 💪' :
-                        'Du er på vei! Snitt '+snitt+'% — øv mer for å nå målet 📈';
-    }
-  })();
+  } catch(_e) {
+    console.warn('Vurdering-henting:', _e);
+  }
 }
 
 /* ── KARUSELL ────────────────────────────────────────────────── */
