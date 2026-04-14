@@ -477,7 +477,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <div class="sek">
     <div class="rad">
       <div class="felt"><label class="felt-lbl">Klasse</label>
-        <select id="vrd-klasse" onchange="vrdLastElever()"></select></div>
+        <select id="vrd-klasse" onchange="fyllElevDropdown('vrd-klasse','vrd-elev')"></select></div>
       <div class="felt"><label class="felt-lbl">Elev</label>
         <select id="vrd-elev" onchange="vrdLastHistorikk()"><option value="">— Velg elev —</option></select></div>
     </div>
@@ -687,6 +687,7 @@ async function init() {
   }
 
   byggSidebar();
+  vrdLastElever();
   fyllDropdowns();
   byggVeiledning();
 
@@ -1572,6 +1573,16 @@ var vrdAktivNiv = '';
 
 function vrdLastElever() {
   try {
+    // Fyll klassedropdown fra global klasser-array
+    var kSel = $('vrd-klasse');
+    if (kSel && klasser && klasser.length) {
+      var gjeldende = kSel.value;
+      kSel.innerHTML = '<option value="">— Velg klasse —</option>'
+        + klasser.map(function(k){
+            return '<option value="'+k.id+'"'+(k.id===gjeldende?' selected':'')+'>'+k.navn+'</option>';
+          }).join('');
+    }
+    // Fyll elevdropdown basert på valgt klasse
     fyllElevDropdown('vrd-klasse', 'vrd-elev');
     var s = $('vrd-skjema');
     var h = $('vrd-historikk-sek');
@@ -1673,12 +1684,14 @@ async function visLeaderboard() {
   try {
     var inn = $('gamif-leaderboard-innhold');
     if (!inn) return;
+    // Sjekk aktivKlasse FØR vi viser "Laster"
+    if (!aktivKlasse) {
+      inn.innerHTML = '<div style="color:var(--dim);font-size:.82rem;padding:12px 0">Velg en klasse i sidemenyen til venstre for å se leaderboard.</div>';
+      return;
+    }
     inn.innerHTML = '<div style="color:var(--dim);font-size:.82rem">Laster…</div>';
 
-    // Hent top-10 i klassen sortert på XP
-    if (!valgtKlasse) { inn.innerHTML='<div style="color:var(--dim);font-size:.82rem">Velg en klasse for å se leaderboard.</div>'; return; }
-
-    var ids = elever.filter(function(e){return e.klasse_id===valgtKlasse;}).map(function(e){return e.id;});
+    var ids = elever.filter(function(e){return e.klasse_id===aktivKlasse;}).map(function(e){return e.id;});
     if (!ids.length) { inn.innerHTML='<div style="color:var(--dim);font-size:.82rem">Ingen elever i klassen.</div>'; return; }
 
     // Hent sum-XP per elev fra adaptiv_progresjon
