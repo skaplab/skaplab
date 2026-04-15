@@ -1819,17 +1819,27 @@ async function visLeaderboard() {
     var rangert = ids
       .map(function(id){
         var elev = elever.find(function(e){return e.id===id;});
-        return { navn: elev ? elev.fullt_navn : '?', xp: xpMap[id]||0 };
+        return { id: id, navn: elev ? elev.fullt_navn : '?', xp: xpMap[id]||0 };
       })
       .sort(function(a,b){return b.xp-a.xp;})
       .slice(0,10);
 
+    // Hent streak per elev
+    var streakData = await apiGet('/adaptiv_progresjon?elev_id=in.('+ids.join(',')+')&select=elev_id,streak_riktig');
+    var streakMap = {};
+    if (Array.isArray(streakData)) {
+      streakData.forEach(function(r){
+        streakMap[r.elev_id] = Math.max(streakMap[r.elev_id]||0, r.streak_riktig||0);
+      });
+    }
     var medaljer = ['🥇','🥈','🥉'];
     inn.innerHTML = '<div class="gamif-lb-liste">'
       + rangert.map(function(r,i){
+          var streak = streakMap[r.id]||0;
           return '<div class="gamif-lb-rad">'
             + '<span class="gamif-lb-nr">'+(medaljer[i]||(i+1)+'.')+'</span>'
             + '<span class="gamif-lb-navn">'+r.navn+'</span>'
+            + (streak>=3?'<span style="font-size:.75rem;color:#f97316;margin-right:4px">🔥'+streak+'</span>':'')
             + '<span class="gamif-lb-xp">⭐ '+r.xp+' XP</span>'
             + '</div>';
         }).join('')

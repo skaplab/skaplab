@@ -2588,7 +2588,98 @@ function renderOversikt() {
     html += '</div></div>';
   });
 
+  html += '<div id="at-leaderboard" style="margin-top:20px"></div>';
   el.innerHTML = html;
+
+  // Last leaderboard asynkront etter at oversikten er rendret
+  hentLeaderboard();
+}
+
+async function hentLeaderboard() {
+  var elev = JSON.parse(localStorage.getItem('skaplab_elev') || '{}');
+  if (!elev.id || !elev.klasse_id) return;
+
+  var lbEl = document.getElementById('at-leaderboard');
+  if (!lbEl) return;
+  lbEl.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:8px 0">Laster klassens leaderboard…</div>';
+
+  try {
+    // Hent alle elever i samme klasse
+    var elevData = await sbFetch('/rest/v1/elever?klasse_id=eq.' + elev.klasse_id + '&select=id,fullt_navn,kallenavn');
+    if (!Array.isArray(elevData) || !elevData.length) {
+      lbEl.innerHTML = '';
+      return;
+    }
+
+    var ids = elevData.map(function(e){ return e.id; });
+    var prog = await sbFetch('/rest/v1/adaptiv_progresjon?elev_id=in.(' + ids.join(',') + ')&select=elev_id,xp,streak_riktig');
+    if (!Array.isArray(prog)) prog = [];
+
+    // Aggreger XP og maks streak per elev
+    var xpMap = {}, streakMap = {};
+    prog.forEach(function(r) {
+      xpMap[r.elev_id] = (xpMap[r.elev_id] || 0) + (r.xp || 0);
+      streakMap[r.elev_id] = Math.max(streakMap[r.elev_id] || 0, r.streak_riktig || 0);
+    });
+
+    var rangert = elevData
+      .map(function(e) {
+        return {
+          id: e.id,
+          navn: e.kallenavn || e.fullt_navn || '?',
+          xp: xpMap[e.id] || 0,
+          streak: streakMap[e.id] || 0,
+          erMeg: e.id === elev.id
+        };
+      })
+      .sort(function(a,b){ return b.xp - a.xp; });
+
+    if (rangert.every(function(r){ return r.xp === 0; })) {
+      lbEl.innerHTML = '<div style="color:var(--dim);font-size:.78rem;padding:8px 0">Ingen XP i klassen ennå – start den adaptive treneren!</div>';
+      return;
+    }
+
+    var minPlassering = rangert.findIndex(function(r){ return r.erMeg; }) + 1;
+    var medaljer = ['🥇','🥈','🥉'];
+    var topp = rangert.slice(0, 10);
+
+    var h = '<div style="margin-top:6px">';
+    h += '<div style="font-size:.7rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">';
+    h += '🏆 Klassens leaderboard';
+    if (minPlassering > 0) h += '<span style="float:right;font-weight:400">Din plass: <strong style="color:var(--gul)">' + minPlassering + '/' + rangert.length + '</strong></span>';
+    h += '</div>';
+    h += '<div style="display:flex;flex-direction:column;gap:4px">';
+
+    topp.forEach(function(r, i) {
+      var erMeg = r.erMeg;
+      var farge = erMeg ? 'rgba(96,165,250,.15)' : 'rgba(255,255,255,.03)';
+      var border = erMeg ? '1.5px solid rgba(96,165,250,.4)' : '1px solid rgba(255,255,255,.06)';
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:' + farge + ';border:' + border + '">';
+      h += '<span style="width:22px;text-align:center;font-size:.8rem;flex-shrink:0">' + (medaljer[i] || (i+1)+'.') + '</span>';
+      h += '<span style="flex:1;font-size:.82rem;font-weight:' + (erMeg?'700':'400') + ';color:var(--text)">' + r.navn + (erMeg?' 👈':'') + '</span>';
+      if (r.streak >= 3) h += '<span style="font-size:.7rem;color:#f97316">🔥' + r.streak + '</span>';
+      h += '<span style="font-size:.78rem;font-weight:700;color:var(--gul)">⭐ ' + r.xp + '</span>';
+      h += '</div>';
+    });
+
+    // Vis min rad hvis jeg er utenfor topp 10
+    if (minPlassering > 10) {
+      h += '<div style="text-align:center;font-size:.7rem;color:var(--dim);padding:4px 0">···</div>';
+      var meg = rangert[minPlassering-1];
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:rgba(96,165,250,.15);border:1.5px solid rgba(96,165,250,.4)">';
+      h += '<span style="width:22px;text-align:center;font-size:.8rem;flex-shrink:0">' + minPlassering + '.</span>';
+      h += '<span style="flex:1;font-size:.82rem;font-weight:700;color:var(--text)">' + meg.navn + ' 👈</span>';
+      if (meg.streak >= 3) h += '<span style="font-size:.7rem;color:#f97316">🔥' + meg.streak + '</span>';
+      h += '<span style="font-size:.78rem;font-weight:700;color:var(--gul)">⭐ ' + meg.xp + '</span>';
+      h += '</div>';
+    }
+
+    h += '</div></div>';
+    lbEl.innerHTML = h;
+  } catch(e) {
+    lbEl.innerHTML = '';
+    console.warn('hentLeaderboard:', e);
+  }
 }
 
 // ─── START EMNE ──────────────────────────────────────────────────────
