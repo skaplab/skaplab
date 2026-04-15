@@ -254,6 +254,13 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 .gamif-lb-navn{flex:1;font-size:.85rem;color:var(--text)}
 .gamif-lb-xp{font-size:.78rem;font-weight:700;color:#fbbf24}
 
+.onb-prikk{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);transition:all .2s;flex-shrink:0;}
+.onb-prikk.ak{width:24px;border-radius:4px;background:linear-gradient(90deg,#60a5fa,#a78bfa);}
+.onb-ikon{font-size:2.4rem;margin-bottom:10px;}
+.onb-tittel{font-family:var(--font-h);font-size:1.05rem;font-weight:700;margin-bottom:6px;}
+.onb-tekst{font-size:.84rem;line-height:1.6;color:var(--dim);}
+.onb-tips{margin-top:10px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:8px;padding:9px 11px;font-size:.78rem;color:#93c5fd;}
+.onb-steg-handling{margin-top:10px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:9px 11px;font-size:.78rem;color:#6ee7b7;}
 </style>
 </head>
 <body>
@@ -284,10 +291,30 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
   <a class="nav-link" href="provebygger.html" style="text-decoration:none;color:inherit;font-family:inherit;font-size:.83rem;"><span>🛠️</span> Prøvebygger</a>
 
+  <button class="nav-link" onclick="localStorage.removeItem('skaplab_onb_laerer');onbVis()" style="font-size:.75rem;opacity:.6"><span>❓</span> Vis guide</button>
   <button class="nav-link" id="logg-ut-knapp" onclick="loggUt()"><span>🚪</span> Logg ut</button>
 </aside>
 
 <!-- MAIN -->
+<!-- ONBOARDING OVERLAY -->
+<div id="onb-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:12px">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:18px;max-width:440px;width:100%;max-height:92vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <div id="onb-steg-ind" style="display:flex;gap:5px;margin-bottom:20px">
+      <div class="onb-prikk ak" data-s="0"></div>
+      <div class="onb-prikk" data-s="1"></div>
+      <div class="onb-prikk" data-s="2"></div>
+      <div class="onb-prikk" data-s="3"></div>
+      <div class="onb-prikk" data-s="4"></div>
+    </div>
+    <div id="onb-innhold"></div>
+    <div style="display:flex;gap:10px;margin-top:22px">
+      <button id="onb-forrige" onclick="onbNaviger(-1)" style="flex:1;padding:11px;border-radius:9px;border:1px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-size:.85rem">← Forrige</button>
+      <button id="onb-neste" onclick="onbNaviger(1)" style="flex:2;padding:11px;border-radius:9px;border:none;background:linear-gradient(135deg,#60a5fa,#a78bfa);color:#fff;cursor:pointer;font-size:.88rem;font-weight:600">Neste →</button>
+    </div>
+    <button onclick="onbHopp()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:.78rem;padding:4px 8px">Hopp over</button>
+  </div>
+</div>
+
 <main id="main">
 
 <!-- KLASSER/DASHBOARD -->
@@ -696,7 +723,37 @@ async function init() {
   byggVeiledning();
 
   if (klasser.length > 0) byttKlasse(klasser[0].id);
+
+  // Onboarding: vis kun første gang
+  if (!localStorage.getItem('skaplab_onb_laerer')) {
+    onbVis();
+  }
 }
+
+// ── LÆRER ONBOARDING ─────────────────────────────────────────
+var ONB_STEG = [
+  {ikon:'👋',tittel:'Velkommen til Lærerappen!',tekst:'Her administrerer du klasser og elever, tildeler oppgaver, følger med på adaptiv progresjon og sender tilbakemeldinger. Alt lagres i skyen.',handling:'👉 Start med å opprette din første klasse.',tips:'💡 Elevene logger inn med en enkel kode – ingen e-post nødvendig.'},
+  {ikon:'🏫',tittel:'Opprett klasse og elever',tekst:'Klikk «+ Ny klasse» i venstremenyen og gi klassen et navn. Legg deretter til elever – hvert navn genererer en unik innloggingskode.',handling:'👉 Klikk «+ Ny klasse» i menyen til venstre.',tips:'💡 Del innloggingskodene med elevene – de er klare til å logge inn med én gang.'},
+  {ikon:'📤',tittel:'Tildel oppgaver',tekst:'Under «Tildel oppgave» velger du klasse, fag og hvilke ressurser elevene skal jobbe med. Sett gjerne en frist – elevene ser oppgaven i sin portal.',handling:'👉 Gå til «Tildel oppgave» i menyen.',tips:'💡 Bruk prøvebyggeren til egne prøver – hent oppgaver fra 24 000 i oppgavebanken.'},
+  {ikon:'🧠',tittel:'Adaptiv progresjon og rapporter',tekst:'Under «Adaptiv trener» ser du et heatmap over klassens nivå per emne. Klikk på en elev for dybderapport med XP, treffsikkerhet, styrker og svakheter.',handling:'👉 Velg «Adaptiv trener» og velg en klasse.',tips:'💡 Skriv ut elevrapport som PDF direkte fra elevprofilen.'},
+  {ikon:'🛠️',tittel:'Prøvebygger og deling',tekst:'Bygg egne prøver med LaTeX-støtte og hent oppgaver fra adaptiv bank eller KM-kobling. Del prøver med kolleger i det åpne prøvebiblioteket – eller via en privat lenke.',handling:'👉 Åpne prøvebyggeren fra menyen.',tips:'💡 Importer kollegers prøver og gjør dem til dine egne.'}
+];
+var onbSteg=0;
+function onbVis(){var o=document.getElementById('onb-overlay');if(!o)return;o.style.display='flex';onbOppdater();}
+function onbOppdater(){
+  var s=ONB_STEG[onbSteg];
+  var inn=document.getElementById('onb-innhold');if(!inn)return;
+  inn.innerHTML='<div class="onb-ikon">'+s.ikon+'</div><div class="onb-tittel">'+s.tittel+'</div><div class="onb-tekst">'+s.tekst+'</div>'
+    +(s.handling?'<div class="onb-steg-handling">'+s.handling+'</div>':'')
+    +(s.tips?'<div class="onb-tips">'+s.tips+'</div>':'');
+  document.querySelectorAll('.onb-prikk').forEach(function(p,i){p.classList.toggle('ak',i===onbSteg);});
+  var f=document.getElementById('onb-forrige');var n=document.getElementById('onb-neste');
+  if(f)f.style.display=onbSteg===0?'none':'';
+  if(n)n.textContent=onbSteg===ONB_STEG.length-1?'🚀 Kom i gang!':'Neste →';
+}
+function onbNaviger(r){onbSteg+=r;if(onbSteg>=ONB_STEG.length)onbFerdig();else if(onbSteg<0)onbSteg=0;else onbOppdater();}
+function onbFerdig(){localStorage.setItem('skaplab_onb_laerer','1');var o=document.getElementById('onb-overlay');if(o)o.style.display='none';}
+function onbHopp(){onbFerdig();}
 
 /* ══════════════════════════════════════════════════════════════════
    SIDEBAR + KLASSER
