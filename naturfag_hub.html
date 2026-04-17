@@ -1950,6 +1950,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     };
   } catch(e) {}
 })();
+
+// Hub-besøk sporing ved scroll (som mattehub)
+(function() {
+  var _sporet = false;
+  function sjekkScroll() {
+    if (_sporet) return;
+    if (window.scrollY > 200) {
+      _sporet = true;
+      try { if(window._skaplab_logg) window._skaplab_logg('naturfag_hub', 'hub_besok', 100, 1, 1, 1, 1); } catch(e) {}
+      window.removeEventListener('scroll', sjekkScroll);
+    }
+  }
+  window.addEventListener('scroll', sjekkScroll);
+  // Logg etter 5 sek uansett
+  setTimeout(function() {
+    if (!_sporet) {
+      _sporet = true;
+      try { if(window._skaplab_logg) window._skaplab_logg('naturfag_hub', 'hub_besok', 80, 1, 1, 1, 1); } catch(e) {}
+    }
+  }, 5000);
+})();
+
 // ─────────────────────────────────────────────────────────────────
 
   // Hent antall eksamenstrener-ganger fra localStorage
@@ -1962,12 +1984,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   })();
 function navigerTil(href, event) {
   event.preventDefault(); event.stopPropagation();
+  // Finn KM-kode fra nærmeste fagkort
+  try {
+    var kort = event.target.closest('.fagkort, [data-km]');
+    var km = kort ? (kort.dataset.km || '') : '';
+    var ressurs = href.replace('.html','').replace(/.*\//, '');
+    if (window._skaplab_logg) window._skaplab_logg(ressurs, km, 100, 1, 1, 1, 1);
+  } catch(e) {}
   window.open(href, '_self');
 }
 
 // ── FREMDRIFT ────────────────────────────────────────────────────────────────
 function oppdaterFremdrift() {
-  var besokt = JSON.parse(localStorage.getItem('matte_besokt') || '[]');
+  var besokt = JSON.parse(localStorage.getItem('naturfag_besokt') || '[]');
   var alle = document.querySelectorAll('.fagkort').length;
   var _sa = document.getElementById('stat-antall'); if(_sa) _sa.textContent = besokt.length;
   var _sf=document.getElementById('stat-fill');if(_sf)_sf.style.width = (besokt.length / alle * 100) + '%';

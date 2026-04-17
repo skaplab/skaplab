@@ -499,6 +499,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <div class="karusell-tittel">📊 Siste aktivitet</div>
       <div id="akt-grid"><div class="akt-tom">Logg inn for å se din aktivitetshistorikk.</div></div>
     </div>
+    <div id="oev-mer-seksjon" style="display:none;margin-top:20px;background:rgba(251,191,36,.05);border:1px solid rgba(251,191,36,.15);border-radius:12px;padding:16px 18px;"></div>
   </div>
 </div></div>
 
@@ -997,6 +998,7 @@ async function init() {
 
   // Vis siste aktivitet
   byggAktivitet();
+  byggOvMer();
 
   // P7: XP/streak-oppdatering - sett opp global funksjon som adaptiv trener kan kalle
   window._oppdaterVelkomstXP = function(xp, streak) {
@@ -1145,6 +1147,111 @@ function byggAlleGrids() {
     el.innerHTML = '';
     RESSURSER[id].forEach(function(res) { el.appendChild(lagResKort(res)); });
   });
+}
+
+// KM-koder → adaptiv emner
+var KM_TIL_EMNER = {
+  'MAT8-1': ['areal','koordinater'],
+  'MAT8-2': ['likn1','ulikheter','uttrykk'],
+  'MAT8-3': ['potenser','standardform'],
+  'MAT8-4': ['prosent'],
+  'MAT8-5': ['brok','desimal','heltall'],
+  'MAT8-6': ['koordinater','funksjoner'],
+  'MAT8-7': ['diagrammer','snitt'],
+  'MAT8-8': ['diagrammer','sannsynl'],
+  'MAT9-1': ['areal','pythagoras'],
+  'MAT9-2': ['pythagoras'],
+  'MAT9-3': ['potenser'],
+  'MAT9-4': ['likn1','liknsyst'],
+  'MAT9-5': ['funksjoner'],
+  'MAT9-6': ['diagrammer','snitt'],
+  'MAT9-7': ['uttrykk','likn1','funksjoner'],
+  'MAT9-8': ['sannsynl','kombinat'],
+  'MAT10-1': ['areal','volum','pythagoras'],
+  'MAT10-2': ['trig'],
+  'MAT10-3': ['snitt','diagrammer'],
+  'MAT10-4': ['likn1','liknsyst','polynomer'],
+  'MAT10-5': ['funksjoner','koordinater'],
+  'MAT10-6': ['heltall','desimal','brok','prosent'],
+  'MAT10-7': ['prosent'],
+  'MAT10-8': ['sannsynl','kombinat'],
+};
+
+var AT_EMNE_NAVN = {
+  'heltall':'Heltall','brok':'Brøk','desimal':'Desimaltall','prosent':'Prosent',
+  'potenser':'Potenser','standardform':'Standardform','uttrykk':'Algebraiske uttrykk',
+  'likn1':'Likninger','ulikheter':'Ulikheter','liknsyst':'Likningssystemer',
+  'funksjoner':'Funksjoner','polynomer':'Polynomer','areal':'Areal',
+  'volum':'Volum','pythagoras':'Pythagoras','trig':'Trigonometri',
+  'koordinater':'Koordinater','snitt':'Gjennomsnitt','diagrammer':'Diagrammer',
+  'sannsynl':'Sannsynlighet','kombinat':'Kombinatorikk'
+};
+
+function byggOvMer() {
+  // Finn ressurser med lav score og tilhørende KM-koder
+  var lavScore = aktivitet.filter(function(a) {
+    return a.score_pst !== null && a.score_pst < 50 && a.km_kode;
+  });
+  if (!lavScore.length) return;
+
+  // Finn unike emner å anbefale
+  var anbefalte = {};
+  lavScore.forEach(function(a) {
+    var koder = a.km_kode.split(',').map(function(k){return k.trim();});
+    koder.forEach(function(km) {
+      var emner = KM_TIL_EMNER[km] || [];
+      emner.forEach(function(emne) {
+        if (!anbefalte[emne]) {
+          anbefalte[emne] = { emne: emne, score: a.score_pst, ressurs: a.ressurs };
+        }
+      });
+    });
+  });
+
+  var emneList = Object.values(anbefalte).slice(0, 4);
+  if (!emneList.length) return;
+
+  var container = document.getElementById('oev-mer-seksjon');
+  if (!container) return;
+
+  var html = '<div class="karusell-tittel" style="margin-bottom:10px">💡 Anbefalt øving basert på dine resultater</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+  emneList.forEach(function(e) {
+    var navn = AT_EMNE_NAVN[e.emne] || e.emne;
+    var scoreTekst = Math.round(e.score)+'% på '+e.ressurs.replace(/_/g,' ');
+    html += '<button class="oev-knapp" data-emne="'+e.emne+'" '
+      + 'style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);'
+      + 'color:var(--gul,#fbbf24);border-radius:8px;padding:8px 14px;cursor:pointer;'
+      + 'font-size:.8rem;text-align:left;transition:all .15s">'
+      + '<div style="font-weight:700">🧠 '+navn+'</div>'
+      + '<div style="font-size:.72rem;opacity:.7;margin-top:2px">'+scoreTekst+'</div>'
+      + '</button>';
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = '';
+  container.querySelectorAll('.oev-knapp').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      gaaTilAdaptivEmne(this.dataset.emne);
+    });
+  });
+}
+
+function gaaTilAdaptivEmne(emneId) {
+  // Bytt til adaptiv-fanen og start emnet
+  var faneBtns = document.querySelectorAll('.fane');
+  faneBtns.forEach(function(f) {
+    if (f.textContent.trim().toLowerCase().includes('adaptiv') ||
+        f.getAttribute('onclick') && f.getAttribute('onclick').includes('adaptiv')) {
+      f.click();
+    }
+  });
+  // Vent til adaptiv er lastet, start emnet
+  setTimeout(function() {
+    if (typeof AT !== 'undefined' && AT.startEmne) {
+      AT.startEmne(emneId);
+    }
+  }, 600);
 }
 
 function byggAktivitet() {

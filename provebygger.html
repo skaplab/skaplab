@@ -689,6 +689,43 @@ const S={fag:'',km:[],tittel:'',klasse:'',tid:'',info:'',oppgaver:[],editIdx:nul
   }catch(e){console.warn('URL-import feilet:',e);}
 })();
 
+// Last prøveplan-parametere ?plan=xxx&emne=yyy&klasse=zzz
+(function(){
+  var params=new URLSearchParams(location.search);
+  var emne=params.get('emne');
+  var klasse=params.get('klasse');
+  var planId=params.get('plan');
+  if(!emne&&!klasse) return;
+  document.addEventListener('DOMContentLoaded',function(){
+    if(emne){
+      var tittelEl=document.getElementById('p-tittel');
+      if(tittelEl) tittelEl.value=decodeURIComponent(emne);
+      S.tittel=decodeURIComponent(emne);
+    }
+    if(klasse){
+      var kl=decodeURIComponent(klasse);
+      S.klasse=kl;
+      var klSel=document.getElementById('p-klasse');
+      if(klSel){
+        // Sett riktig option om den finnes, ellers legg til
+        var found=false;
+        for(var i=0;i<klSel.options.length;i++){
+          if(klSel.options[i].value===kl||klSel.options[i].text===kl){
+            klSel.value=klSel.options[i].value; found=true; break;
+          }
+        }
+      }
+    }
+    if(planId) snack('Fyll ut prøven og lagre – den knyttes automatisk til prøveplanen','ok');
+    // Fjern parametere fra URL
+    var url=new URL(location.href);
+    url.searchParams.delete('plan');
+    url.searchParams.delete('emne');
+    url.searchParams.delete('klasse');
+    history.replaceState({},'',url);
+  });
+})();
+
 // ════════════════════════════════════════════════
 // STEPPER
 // ════════════════════════════════════════════════

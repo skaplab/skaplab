@@ -414,6 +414,15 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <div class="felt"><label class="felt-lbl">Emne</label>
         <input type="text" id="pp-emne" placeholder="f.eks. Algebra kap. 3"></div>
     </div>
+    <div class="felt"><label class="felt-lbl">Koble til prøve fra prøvebygger (valgfritt)</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="pp-prove-sel" style="flex:1">
+          <option value="">— Ingen (bare varsel) —</option>
+        </select>
+        <button class="btn btn-sek btn-sm" onclick="lastMineProver()" style="flex-shrink:0">🔄 Last</button>
+      </div>
+      <div id="pp-prove-info" style="font-size:.75rem;color:var(--dim);margin-top:4px"></div>
+    </div>
     <div class="felt"><label class="felt-lbl">Notat til elever (valgfritt)</label>
       <textarea id="pp-notat" placeholder="Hva bør de fokusere på?"></textarea></div>
     <button class="btn btn-prim" onclick="sendProvevarsel()">Send prøvevarsel</button>
@@ -1283,24 +1292,60 @@ async function maLagreKM(km) {
 /* ══════════════════════════════════════════════════════════════════
    PRØVEPLAN
 ══════════════════════════════════════════════════════════════════ */
+async function byggProveForPlan(knapp) {
+  var planId = knapp.dataset.id;
+  var emne   = knapp.dataset.emne || '';
+  var url = 'provebygger.html?plan=' + planId + '&emne=' + emne;
+  window.open(url, '_blank');
+}
+
+async function lastMineProver() {
+  var sel = $('pp-prove-sel');
+  var info = $('pp-prove-info');
+  if (!sel) return;
+  info.textContent = 'Laster…';
+  try {
+    var data = await apiGet('/prover?laerer_id=eq.'+LID+'&select=id,tittel,antall,fag&order=opprettet.desc&limit=20');
+    sel.innerHTML = '<option value="">— Ingen (bare varsel) —</option>';
+    if (Array.isArray(data) && data.length) {
+      data.forEach(function(p) {
+        var o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.tittel + ' (' + (p.antall||0) + ' oppg)';
+        sel.appendChild(o);
+      });
+      info.textContent = data.length + ' prøver funnet';
+    } else {
+      info.textContent = 'Ingen lagrede prøver – bygg en i prøvebyggeren først';
+    }
+  } catch(e) {
+    info.textContent = 'Feil: ' + e.message;
+  }
+}
+
 async function sendProvevarsel() {
   var klasseId = $('pp-klasse').value;
   var dato     = $('pp-dato').value;
   var emne     = $('pp-emne').value.trim();
   var notat    = $('pp-notat').value.trim();
+  var proveId  = $('pp-prove-sel') ? $('pp-prove-sel').value : '';
   var meld     = $('pp-melding');
   if (!klasseId||!dato||!emne) { meld.style.color='var(--rod)'; meld.textContent='Fyll inn klasse, dato og emne.'; return; }
   meld.textContent='Sender…';
   try {
+    var ressursTekst = notat || emne;
+    if (proveId) ressursTekst += ' [prøve-id:' + proveId + ']';
     var oRes = await apiPost('/oppgaver', {
       tittel:'Prøve: '+emne, type:'provevarsel',
-      ressurs: notat||emne, url:'#', fag:'proveplan'
+      ressurs: ressursTekst, url: proveId ? 'provebygger.html?prove='+proveId : '#',
+      fag:'proveplan'
     });
     if (!oRes.ok) throw new Error('Oppgave feilet');
     var oppgave = Array.isArray(oRes.data)?oRes.data[0]:oRes.data;
     await apiPost('/tildeling', {klasse_id:klasseId, oppgave_id:oppgave.id, frist:dato, laerer_id:LID});
     meld.style.color='var(--gron)'; meld.textContent='✅ Prøvevarsel sendt!';
     $('pp-dato').value=''; $('pp-emne').value=''; $('pp-notat').value='';
+    if ($('pp-prove-sel')) $('pp-prove-sel').value='';
     lastProveplan();
   } catch(e) { meld.style.color='var(--rod)'; meld.textContent='Feil: '+e.message; }
 }
@@ -1320,7 +1365,7 @@ async function lastProveplan() {
           +'<td style="font-family:var(--font-m);font-size:.8rem;">'+datoVis(p.frist)+'</td>'
           +'<td style="font-size:.83rem;">'+(p.oppgaver?p.oppgaver.tittel.replace('Prøve: ',''):'')+'</td>'
           +'<td style="font-size:.8rem;color:var(--dim);">'+(k?k.navn:'')+'</td>'
-          +'<td><button class="btn btn-rod btn-sm" onclick="slettProve(\''+p.id+'\')">Slett</button></td>'
+          +'<td style="display:flex;gap:4px">'          +'<button class="btn btn-sek btn-sm" onclick="byggProveForPlan(this)" data-id="'+p.id+'" data-emne="'+(p.oppgaver?encodeURIComponent(p.oppgaver.tittel.replace('Prøve: ','')):'')+'">🛠️ Bygg</button>'          +'<button class="btn btn-rod btn-sm" onclick="slettProve(\''+p.id+'\')">Slett</button>'          +'</td>'
           +'</tr>';
       }).join('')
       + '</tbody></table>';
