@@ -458,6 +458,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn btn-sek btn-sm" onclick="visside('klasser')">← Tilbake</button>
     <button class="btn btn-sek btn-sm" onclick="skrivUtElevrapport()" style="margin-left:auto">🖨️ Skriv ut rapport</button>
+    <button class="btn btn-sek btn-sm" id="btn-foresatt" onclick="genererForesattlenke()">🔗 Foresattlenke</button>
   </div>
   <div class="side-tittel" id="elev-navn">Elev</div>
   <div class="side-sub" id="elev-sub"></div>
@@ -1837,6 +1838,45 @@ async function vrdSend() {
    P7 – SPILLIFISERING (leaderboard + XP i header)
    Bruker window._skaplabXP og .gamif-badge (ikke totalXP/.badge)
 ════════════════════════════════════════════════════ */
+async function genererForesattlenke() {
+  var navnEl = $('elev-navn');
+  if (!navnEl) return;
+  var elevNavn = navnEl.textContent.trim();
+  var elev = elever.find(function(e){ return e.fullt_navn === elevNavn || (e.kallenavn && e.kallenavn === elevNavn); });
+  if (!elev) { snack('Finner ikke elev – last inn siden på nytt', 'err'); return; }
+
+  var btn = $('btn-foresatt');
+  if (btn) { btn.textContent = 'Genererer…'; btn.disabled = true; }
+
+  try {
+    var token = elev.foresatt_token;
+    if (!token) {
+      token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+             + Math.random().toString(36).slice(2);
+      var res = await apiFetch('/elever?id=eq.' + elev.id, {
+        method: 'PATCH',
+        body: JSON.stringify({ foresatt_token: token })
+      });
+      if (res.ok) {
+        elev.foresatt_token = token;
+      } else {
+        throw new Error('Kunne ikke lagre token: ' + res.status);
+      }
+    }
+    var base = location.origin + location.pathname.replace('laerer_app.html', '');
+    var lenke = base + 'foresatt_portal.html?token=' + token;
+    navigator.clipboard.writeText(lenke).then(function() {
+      snack('Foresattlenke kopiert for ' + elevNavn + ' – send den til foresatte!', 'ok');
+    }).catch(function() {
+      prompt('Kopier lenken:', lenke);
+    });
+  } catch(e) {
+    snack('Feil: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.textContent = '🔗 Foresattlenke'; btn.disabled = false; }
+  }
+}
+
 async function visLeaderboard() {
   try {
     var inn = $('gamif-leaderboard-innhold');

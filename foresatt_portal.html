@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Foresattportal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0b0d18;--bg3:#0e1120;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e0e8ff;--dim:rgba(255,255,255,.45);
+  --bla:#60a5fa;--gron:#34d399;--gul:#fbbf24;--rod:#f87171;--lilla:#a78bfa;
+  --font-h:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font-b);}
+
+/* TOPBAR */
+#topbar{height:52px;display:flex;align-items:center;padding:0 20px;gap:14px;
+  background:rgba(7,9,15,.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.logo{font-family:var(--font-h);font-weight:800;font-size:1.1rem;color:var(--text);}
+.logo span{color:var(--bla);}
+.topbar-sub{font-size:.75rem;color:var(--dim);}
+
+/* LAYOUT */
+#innhold{max-width:780px;margin:0 auto;padding:28px 20px 60px;}
+
+/* LASTER / FEIL */
+#laster{text-align:center;padding:80px 20px;color:var(--dim);}
+#feil-side{display:none;text-align:center;padding:80px 20px;}
+.feil-ikon{font-size:3rem;margin-bottom:16px;}
+.feil-tittel{font-family:var(--font-h);font-size:1.4rem;font-weight:700;margin-bottom:8px;}
+.feil-tekst{color:var(--dim);font-size:.9rem;}
+
+/* ELEV-HEADER */
+.elev-header{background:linear-gradient(135deg,rgba(96,165,250,.1),rgba(167,139,250,.07));
+  border:1px solid rgba(96,165,250,.2);border-radius:16px;padding:22px 24px;
+  margin-bottom:24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.elev-avatar{width:56px;height:56px;border-radius:14px;background:rgba(96,165,250,.15);
+  display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;}
+.elev-info h2{font-family:var(--font-h);font-size:1.3rem;font-weight:800;margin-bottom:3px;}
+.elev-info p{font-size:.82rem;color:var(--dim);}
+.elev-stats{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;}
+.e-stat{text-align:center;}
+.e-stat-tall{font-family:var(--font-h);font-size:1.4rem;font-weight:900;}
+.e-stat-lbl{font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;}
+
+/* SEKSJON */
+.sek{background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:18px 20px;margin-bottom:16px;}
+.sek-tittel{font-family:var(--font-h);font-size:.85rem;font-weight:800;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+
+/* ADAPTIV EMNER */
+.emne-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;}
+.emne-rad{background:var(--bg3);border:1px solid var(--border);border-radius:9px;
+  padding:10px 13px;display:flex;flex-direction:column;gap:4px;}
+.emne-navn{font-size:.82rem;font-weight:600;}
+.emne-nivaa{font-size:.72rem;color:var(--dim);}
+.emne-bar-bg{background:rgba(255,255,255,.06);border-radius:3px;height:5px;margin-top:4px;}
+.emne-bar{height:100%;border-radius:3px;transition:width .4s;}
+
+/* PRØVER */
+.prove-rad{display:flex;align-items:center;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--border);}
+.prove-rad:last-child{border-bottom:none;}
+.prove-dato{font-family:var(--font-m);font-size:.72rem;color:var(--dim);min-width:70px;}
+.prove-tittel{flex:1;font-size:.85rem;}
+.prove-frist{font-size:.72rem;padding:2px 8px;border-radius:20px;}
+.frist-ok{background:rgba(52,211,153,.1);color:var(--gron);}
+.frist-snart{background:rgba(251,191,36,.1);color:var(--gul);}
+.frist-passert{background:rgba(248,113,113,.1);color:var(--rod);}
+
+/* AKTIVITET */
+.akt-rad{display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--border);}
+.akt-rad:last-child{border-bottom:none;}
+.akt-ressurs{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.akt-score{font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:12px;}
+.score-god{background:rgba(52,211,153,.1);color:var(--gron);}
+.score-mid{background:rgba(251,191,36,.1);color:var(--gul);}
+.score-lav{background:rgba(248,113,113,.1);color:var(--rod);}
+.akt-dato{font-size:.7rem;color:var(--dim);min-width:60px;text-align:right;}
+
+/* VURDERINGER */
+.vurd-rad{padding:12px 0;border-bottom:1px solid var(--border);}
+.vurd-rad:last-child{border-bottom:none;}
+.vurd-km{font-family:var(--font-m);font-size:.68rem;color:var(--bla);margin-bottom:4px;}
+.vurd-chip{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:5px;
+  font-family:var(--font-h);font-weight:700;margin-bottom:5px;}
+.chip-h{background:rgba(52,211,153,.12);color:var(--gron);}
+.chip-m{background:rgba(251,191,36,.12);color:var(--gul);}
+.chip-l{background:rgba(248,113,113,.12);color:var(--rod);}
+.vurd-merknad{font-size:.82rem;color:var(--dim);}
+.vurd-dato{font-size:.7rem;color:var(--dim);margin-top:3px;}
+
+/* TOM-MELDING */
+.tom{color:var(--dim);font-size:.82rem;padding:8px 0;}
+
+/* RESPONSIV */
+@media(max-width:600px){
+  #innhold{padding:16px 12px 60px;}
+  .elev-header{padding:16px;}
+  .elev-stats{margin-left:0;width:100%;justify-content:space-around;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo">Skap<span>Lab</span></div>
+  <div class="topbar-sub">Foresattportal</div>
+</div>
+
+<div id="innhold">
+  <div id="laster">Laster elevdata…</div>
+
+  <div id="feil-side">
+    <div class="feil-ikon">🔒</div>
+    <div class="feil-tittel">Ugyldig lenke</div>
+    <div class="feil-tekst">Denne lenken er ikke gyldig eller har utløpt.<br>Be læreren om å sende en ny lenke.</div>
+  </div>
+
+  <div id="portal" style="display:none">
+
+    <!-- ELEV-HEADER -->
+    <div class="elev-header">
+      <div class="elev-avatar">🎓</div>
+      <div class="elev-info">
+        <h2 id="elev-navn">—</h2>
+        <p id="elev-klasse">—</p>
+      </div>
+      <div class="elev-stats">
+        <div class="e-stat">
+          <div class="e-stat-tall" id="stat-xp" style="color:var(--gul)">—</div>
+          <div class="e-stat-lbl">XP totalt</div>
+        </div>
+        <div class="e-stat">
+          <div class="e-stat-tall" id="stat-emner" style="color:var(--bla)">—</div>
+          <div class="e-stat-lbl">Emner aktive</div>
+        </div>
+        <div class="e-stat">
+          <div class="e-stat-tall" id="stat-streak" style="color:var(--gron)">—</div>
+          <div class="e-stat-lbl">Beste streak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADAPTIV TRENER -->
+    <div class="sek">
+      <div class="sek-tittel">🧠 Adaptiv matematikktrener</div>
+      <div id="adaptiv-innhold"><div class="tom">Henter progresjon…</div></div>
+    </div>
+
+    <!-- KOMMENDE PRØVER -->
+    <div class="sek">
+      <div class="sek-tittel">📝 Kommende prøver og oppgaver</div>
+      <div id="prover-innhold"><div class="tom">Henter prøveplan…</div></div>
+    </div>
+
+    <!-- SISTE AKTIVITET -->
+    <div class="sek">
+      <div class="sek-tittel">📊 Siste aktivitet</div>
+      <div id="aktivitet-innhold"><div class="tom">Henter aktivitet…</div></div>
+    </div>
+
+    <!-- VURDERINGER FRA LÆRER -->
+    <div class="sek">
+      <div class="sek-tittel">💬 Tilbakemeldinger fra lærer</div>
+      <div id="vurdering-innhold"><div class="tom">Henter tilbakemeldinger…</div></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px;font-size:.72rem;color:var(--dim)">
+      SkapLab – Foresattportal · Kun lesetilgang · Oppdateres ved ny innlasting
+    </div>
+  </div>
+</div>
+
+<script>
+var SB_URL = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+var SB_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+
+var AT_EMNER = {
+  heltall:'Heltall og regning', brok:'Brøk', desimal:'Desimaltall',
+  prosent:'Prosent', potenser:'Potenser', standardform:'Standardform',
+  uttrykk:'Algebraiske uttrykk', likn1:'Likninger', ulikheter:'Ulikheter',
+  liknsyst:'Likningssystemer', funksjoner:'Funksjoner', polynomer:'Polynomer',
+  areal:'Areal og omkrets', volum:'Volum', pythagoras:'Pythagoras',
+  trig:'Trigonometri', koordinater:'Koordinater', snitt:'Gjennomsnitt',
+  diagrammer:'Diagrammer', sannsynl:'Sannsynlighet', kombinat:'Kombinatorikk'
+};
+
+function sb(sti) {
+  return fetch(SB_URL + '/rest/v1' + sti, {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+  }).then(function(r) { return r.ok ? r.json() : []; });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function datoStr(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('nb-NO', {day:'2-digit',month:'short',year:'numeric'});
+}
+
+async function init() {
+  var params = new URLSearchParams(location.search);
+  var token = params.get('token');
+
+  if (!token) {
+    document.getElementById('laster').style.display = 'none';
+    document.getElementById('feil-side').style.display = '';
+    return;
+  }
+
+  try {
+    // Hent elev via foresatt_token
+    var elevData = await sb('/elever?foresatt_token=eq.' + encodeURIComponent(token)
+      + '&select=id,fullt_navn,kallenavn,klasse_id,klasser(navn,trinn)');
+
+    if (!Array.isArray(elevData) || !elevData.length) {
+      document.getElementById('laster').style.display = 'none';
+      document.getElementById('feil-side').style.display = '';
+      return;
+    }
+
+    var elev = elevData[0];
+    var klasse = elev.klasser;
+
+    // Hent all data parallelt
+    var [progData, tildelingData, aktData, vurdData] = await Promise.all([
+      sb('/adaptiv_progresjon?elev_id=eq.' + elev.id + '&select=*&order=beste_nivaa.desc'),
+      sb('/tildeling?or=(elev_id.eq.' + elev.id + ',klasse_id.eq.' + (elev.klasse_id||'00000000-0000-0000-0000-000000000000')
+        + ')&select=id,frist,oppgaver(tittel,type)&order=frist.asc&limit=10'),
+      sb('/aktivitet?elev_id=eq.' + elev.id + '&order=tidspunkt.desc&limit=15'),
+      sb('/vurderinger?elev_id=eq.' + elev.id + '&order=oppdatert.desc&limit=10'),
+    ]);
+
+    // Fyll elev-header
+    document.getElementById('elev-navn').textContent =
+      elev.fullt_navn + (elev.kallenavn ? ' (' + elev.kallenavn + ')' : '');
+    document.getElementById('elev-klasse').textContent =
+      (klasse ? klasse.navn + ' · ' + klasse.trinn + '. trinn' : '');
+
+    var prog = Array.isArray(progData) ? progData : [];
+    var totXP = prog.reduce(function(s,p){return s+(p.xp||0);},0);
+    var aktiveEmner = prog.filter(function(p){return (p.beste_nivaa||0)>0;}).length;
+    var besteStreak = prog.reduce(function(m,p){return Math.max(m,p.streak_riktig||0);},0);
+
+    document.getElementById('stat-xp').textContent = totXP || '0';
+    document.getElementById('stat-emner').textContent = aktiveEmner + '/21';
+    document.getElementById('stat-streak').textContent = besteStreak || '0';
+
+    // Adaptiv progresjon
+    var adaptivEl = document.getElementById('adaptiv-innhold');
+    if (!prog.length) {
+      adaptivEl.innerHTML = '<div class="tom">Har ikke startet adaptiv trener ennå.</div>';
+    } else {
+      var html = '<div class="emne-grid">';
+      prog.slice(0,12).forEach(function(p) {
+        var navn = AT_EMNER[p.emne] || p.emne;
+        var niv = p.beste_nivaa || 0;
+        var pst = Math.min(100, niv * 10);
+        var farge = niv >= 7 ? 'var(--gron)' : niv >= 4 ? 'var(--bla)' : 'var(--gul)';
+        var riktig = p.totalt_riktige || 0;
+        var feil = p.totalt_feil || 0;
+        var treffsikkerhet = (riktig + feil) > 0
+          ? Math.round(riktig / (riktig + feil) * 100) + '% riktig'
+          : 'Ikke startet';
+        html += '<div class="emne-rad">'
+          + '<div class="emne-navn">' + esc(navn) + '</div>'
+          + '<div class="emne-nivaa">Nivå ' + niv + '/10 · ' + treffsikkerhet + '</div>'
+          + '<div class="emne-bar-bg"><div class="emne-bar" style="width:' + pst + '%;background:' + farge + '"></div></div>'
+          + '</div>';
+      });
+      html += '</div>';
+      if (prog.length > 12) {
+        html += '<div class="tom" style="margin-top:8px">+ ' + (prog.length-12) + ' emner til</div>';
+      }
+      adaptivEl.innerHTML = html;
+    }
+
+    // Prøver og oppgaver
+    var proverEl = document.getElementById('prover-innhold');
+    var tildeling = Array.isArray(tildelingData) ? tildelingData.filter(function(t) {
+      return t.oppgaver && t.oppgaver.type === 'provevarsel';
+    }) : [];
+    if (!tildeling.length) {
+      proverEl.innerHTML = '<div class="tom">Ingen kommende prøver registrert.</div>';
+    } else {
+      var html = '';
+      var nå = new Date();
+      tildeling.forEach(function(t) {
+        var frist = t.frist ? new Date(t.frist) : null;
+        var dager = frist ? Math.ceil((frist - nå) / 86400000) : null;
+        var fristKls = dager === null ? '' : dager < 0 ? 'frist-passert' : dager <= 3 ? 'frist-snart' : 'frist-ok';
+        var fristTxt = dager === null ? '' : dager < 0 ? 'Passert' : dager === 0 ? 'I dag' : dager === 1 ? 'I morgen' : 'Om ' + dager + ' dager';
+        html += '<div class="prove-rad">'
+          + '<div class="prove-dato">' + (frist ? datoStr(t.frist) : '—') + '</div>'
+          + '<div class="prove-tittel">' + esc(t.oppgaver ? t.oppgaver.tittel.replace('Prøve: ','') : '—') + '</div>'
+          + (fristTxt ? '<div class="prove-frist ' + fristKls + '">' + fristTxt + '</div>' : '')
+          + '</div>';
+      });
+      proverEl.innerHTML = html;
+    }
+
+    // Aktivitet
+    var aktEl = document.getElementById('aktivitet-innhold');
+    var akt = Array.isArray(aktData) ? aktData : [];
+    if (!akt.length) {
+      aktEl.innerHTML = '<div class="tom">Ingen aktivitet registrert ennå.</div>';
+    } else {
+      var html = '';
+      akt.forEach(function(a) {
+        var pst = a.score_pst || 0;
+        var scoreCls = pst >= 70 ? 'score-god' : pst >= 45 ? 'score-mid' : 'score-lav';
+        var scoreTxt = a.score_pst !== null ? pst + '%' : '—';
+        html += '<div class="akt-rad">'
+          + '<div class="akt-ressurs">' + esc((a.ressurs||'').replace(/_/g,' ')) + '</div>'
+          + '<div class="akt-score ' + scoreCls + '">' + scoreTxt + '</div>'
+          + '<div class="akt-dato">' + datoStr(a.tidspunkt) + '</div>'
+          + '</div>';
+      });
+      aktEl.innerHTML = html;
+    }
+
+    // Vurderinger
+    var vurdEl = document.getElementById('vurdering-innhold');
+    var vurd = Array.isArray(vurdData) ? vurdData : [];
+    if (!vurd.length) {
+      vurdEl.innerHTML = '<div class="tom">Ingen tilbakemeldinger ennå.</div>';
+    } else {
+      var html = '';
+      vurd.forEach(function(v) {
+        var nivTxt = v.nivaa === 'h' ? 'Høy' : v.nivaa === 'm' ? 'Middels' : 'Lav';
+        var chipCls = v.nivaa === 'h' ? 'chip-h' : v.nivaa === 'm' ? 'chip-m' : 'chip-l';
+        html += '<div class="vurd-rad">'
+          + (v.km_kode ? '<div class="vurd-km">' + esc(v.km_kode) + '</div>' : '')
+          + '<span class="vurd-chip ' + chipCls + '">' + nivTxt + '</span>'
+          + (v.merknad ? '<div class="vurd-merknad">' + esc(v.merknad) + '</div>' : '')
+          + '<div class="vurd-dato">' + datoStr(v.oppdatert||v.opprettet) + '</div>'
+          + '</div>';
+      });
+      vurdEl.innerHTML = html;
+    }
+
+    // Vis portal
+    document.getElementById('laster').style.display = 'none';
+    document.getElementById('portal').style.display = '';
+
+  } catch(e) {
+    document.getElementById('laster').style.display = 'none';
+    document.getElementById('feil-side').style.display = '';
+    console.error('Foresattportal feil:', e);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
