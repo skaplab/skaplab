@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#00e5ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkapLab">
+<link rel="manifest" href="manifest.json">
 <title>SkapLab – Utforsk. Skap. Forstå.</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -1409,6 +1415,34 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline-offset: 3px;
 }
 
+
+.gl-sok-wrap{position:relative;max-width:520px;margin:20px auto 0;}
+.gl-sok-input{width:100%;padding:13px 20px 13px 44px;border-radius:50px;
+  border:2px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);
+  color:#fff;font-size:1rem;font-family:inherit;outline:none;
+  backdrop-filter:blur(8px);transition:border-color .2s;}
+.gl-sok-input::placeholder{color:rgba(255,255,255,.5);}
+.gl-sok-input:focus{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.15);}
+.gl-sok-ikon{position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  font-size:1rem;opacity:.6;pointer-events:none;}
+.gl-sok-res{position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.18);
+  max-height:360px;overflow-y:auto;z-index:200;display:none;}
+.gl-sok-res.open{display:block;}
+.gl-sok-item{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  cursor:pointer;border-bottom:1px solid #f0f0f0;text-decoration:none;transition:background .1s;}
+.gl-sok-item:last-child{border-bottom:none;}
+.gl-sok-item:hover{background:#f8f9ff;}
+.gl-sok-tittel{font-size:.9rem;font-weight:600;color:#1a1a2e;flex:1;}
+.gl-sok-fag{font-size:.72rem;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.gl-sok-km{font-size:.68rem;color:#888;margin-top:1px;}
+.gl-sok-tom{padding:14px 16px;color:#888;font-size:.85rem;text-align:center;}
+.gl-sok-fag.Matematikk{background:#dbeafe;color:#1e40af;}
+.gl-sok-fag.Naturfag{background:#dcfce7;color:#166534;}
+.gl-sok-fag.Spill{background:#fce7f3;color:#9d174d;}
+.gl-sok-fag.Hub{background:#ede9fe;color:#6b21a8;}
+.gl-sok-fag.Verktøy{background:#fef3c7;color:#92400e;}
+
 </style>
 </head>
 <body>
@@ -1450,6 +1484,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <a href="#fag" style="color:var(--textdim);font-size:.85rem;text-decoration:none;">Utforsk fagene ↓</a>
       <a href="spill_hub.html" style="color:var(--textdim);font-size:.85rem;text-decoration:none;">🎮 Gå til spillhubben</a>
     </div>
+
+
+<div class="gl-sok-wrap" id="gl-sok-wrap">
+  <span class="gl-sok-ikon">🔍</span>
+  <input class="gl-sok-input" id="gl-sok-input" type="text"
+    placeholder="Søk blant 170+ ressurser... (f.eks. &quot;algebra&quot;, &quot;NAT-6&quot;, &quot;spill&quot;)"
+    autocomplete="off" spellcheck="false">
+  <div class="gl-sok-res" id="gl-sok-res"></div>
+</div>
+
   </section>
   <!-- INNLOGGING - synlig og høyt oppe -->
   
@@ -1548,6 +1592,17 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <div class="stat-boks"><div class="stat-tall">12</div><div class="stat-label">Lab-simuleringer</div></div>
       <div class="stat-boks"><div class="stat-tall">47</div><div class="stat-label">Øvingssett</div></div>
       
+    </div>
+  </section>
+
+  <!-- SKOLELEADERBOARD -->
+  <section style="padding:0 0 60px;">
+    <div style="max-width:960px;margin:0 auto;padding:0 24px;">
+      <h2 style="font-family:var(--font-head);font-size:1.6rem;text-align:center;margin-bottom:6px;color:var(--accent3)">🏆 Ukens topp 5 skoler</h2>
+      <p style="text-align:center;color:var(--textdim);font-size:.85rem;margin-bottom:24px">Rangert etter total XP i adaptiv trener denne uken</p>
+      <div id="skole-lb" style="max-width:500px;margin:0 auto;">
+        <div style="color:var(--textdim);font-size:.85rem;text-align:center;padding:20px">Laster…</div>
+      </div>
     </div>
   </section>
 
@@ -5233,5 +5288,164 @@ function toggleDetalj(btn) {
     <span style="margin:0 12px;opacity:.3;">·</span>
     <span>SkapLab følger GDPR og norsk personopplysningslov</span>
   </div>
+<script>
+(function(){
+  var INDEKS = [{"t": "Potenser og potensregler", "h": "matte_tall_potenser.html", "f": "Matematikk", "k": "KM1", "s": "potenser og potensregler km1 tall"}, {"t": "Primtall og faktorisering", "h": "matte_tall_primtall.html", "f": "Matematikk", "k": "KM1", "s": "primtall og faktorisering km1 tall"}, {"t": "Brøkregning", "h": "matte_brøk_regning.html", "f": "Matematikk", "k": "KM2", "s": "brøkregning km2 tall"}, {"t": "Prosent og prosentregning", "h": "matte_prosent_beregning.html", "f": "Matematikk", "k": "KM2", "s": "prosent og prosentregning km2 tall"}, {"t": "Promille og desimaltall", "h": "matte_promille_desimal.html", "f": "Matematikk", "k": "KM2", "s": "promille og desimaltall km2 tall"}, {"t": "Kvadratrøtter og irrasjonale tall", "h": "matte_tall_kvadratrøtter.html", "f": "Matematikk", "k": "KM1", "s": "kvadratrøtter og irrasjonale tall km1 tall"}, {"t": "Standardform", "h": "matte_tall_standardform.html", "f": "Matematikk", "k": "KM1", "s": "standardform km1 tall"}, {"t": "Prosentvekst og -nedgang", "h": "matte_prosent_vekst.html", "f": "Matematikk", "k": "KM2", "s": "prosentvekst og -nedgang km2 tall"}, {"t": "Hoderegning", "h": "matte_mengde_hoderegning.html", "f": "Matematikk", "k": "MAT8-2", "s": "hoderegning mat8-2 tall"}, {"t": "Algebraiske uttrykk", "h": "matte_algebra_uttrykk.html", "f": "Matematikk", "k": "KM3", "s": "algebraiske uttrykk km3 algebra"}, {"t": "Parenteser og faktorisering", "h": "matte_algebra_parenteser.html", "f": "Matematikk", "k": "KM3", "s": "parenteser og faktorisering km3 algebra"}, {"t": "Polynomer og konjugatsetningen", "h": "matte_algebra_polynomer.html", "f": "Matematikk", "k": "KM3", "s": "polynomer og konjugatsetningen km3 algebra"}, {"t": "Mønstre", "h": "matte_mengde_monstre.html", "f": "Matematikk", "k": "MAT8-5", "s": "mønstre mat8-5 algebra"}, {"t": "Regneuttrykk", "h": "matte_mengde_regneuttrykk.html", "f": "Matematikk", "k": "MAT8-7", "s": "regneuttrykk mat8-7 algebra"}, {"t": "Lineære likninger", "h": "matte_likninger_linja.html", "f": "Matematikk", "k": "KM4", "s": "lineære likninger km4 likninger"}, {"t": "Ulikheter", "h": "matte_likninger_ulikheter.html", "f": "Matematikk", "k": "KM4", "s": "ulikheter km4 likninger"}, {"t": "Innsettingsmetoden", "h": "matte_liknsystem_innsetting.html", "f": "Matematikk", "k": "KM5", "s": "innsettingsmetoden km5 likninger"}, {"t": "Addisjonsmetoden", "h": "matte_liknsystem_addisjon.html", "f": "Matematikk", "k": "KM5", "s": "addisjonsmetoden km5 likninger"}, {"t": "Andregradslikninger", "h": "matte_likninger_andregr.html", "f": "Matematikk", "k": "KM4", "s": "andregradslikninger km4 likninger"}, {"t": "Lineære funksjoner", "h": "matte_funk_lineær.html", "f": "Matematikk", "k": "KM6", "s": "lineære funksjoner km6 funksjoner"}, {"t": "Tegne og lese grafer", "h": "matte_funk_lineær_graf.html", "f": "Matematikk", "k": "KM6", "s": "tegne og lese grafer km6 funksjoner"}, {"t": "Kvadratiske funksjoner", "h": "matte_funk_kvadratisk.html", "f": "Matematikk", "k": "KM7", "s": "kvadratiske funksjoner km7 funksjoner"}, {"t": "Topp-/bunnpunkt og nullpunkter", "h": "matte_funk_kvadratisk_topp.html", "f": "Matematikk", "k": "KM7", "s": "topp-/bunnpunkt og nullpunkter km7 funksjoner"}, {"t": "GeoGebra – Funksjoner", "h": "geogebra_funksjoner.html", "f": "Matematikk", "k": "KM9", "s": "geogebra funksjoner lineær parabel nullpunkt interaktiv grafisk km9 funksjoner"}, {"t": "Areal av plane figurer", "h": "matte_geo_areal.html", "f": "Matematikk", "k": "KM8", "s": "areal av plane figurer km8 geometri"}, {"t": "Pythagoras' setning", "h": "matte_geo_pythagoras.html", "f": "Matematikk", "k": "KM9", "s": "pythagoras' setning km9 geometri"}, {"t": "Koordinatsystem og vektorer", "h": "matte_geo_koordinater.html", "f": "Matematikk", "k": "KM10", "s": "koordinatsystem og vektorer km10 geometri"}, {"t": "Volum og overflate", "h": "matte_geo_volum.html", "f": "Matematikk", "k": "KM8", "s": "volum og overflate km8 geometri"}, {"t": "Sammensatte figurer", "h": "matte_geo_sammensatt.html", "f": "Matematikk", "k": "KM8", "s": "sammensatte figurer km8 geometri"}, {"t": "Formlikhet og kongruens", "h": "matte_geo_formlikskap.html", "f": "Matematikk", "k": "KM9", "s": "formlikhet og kongruens km9 geometri"}, {"t": "Transformasjoner", "h": "matte_geo_transformasjon.html", "f": "Matematikk", "k": "KM10", "s": "transformasjoner km10 geometri"}, {"t": "Trigonometri (sin, cos, tan)", "h": "matte_geo_trigonometri.html", "f": "Matematikk", "k": "KM9", "s": "trigonometri (sin, cos, tan) km9 geometri"}, {"t": "Geometriske mønstre", "h": "matte_mengde_geometriske_monstre.html", "f": "Matematikk", "k": "MAT9-1", "s": "geometriske mønstre mat9-1 geometri"}, {"t": "Gjennomsnitt, median og typetall", "h": "matte_stat_sentralmål.html", "f": "Matematikk", "k": "KM11", "s": "gjennomsnitt, median og typetall km11 statistikk"}, {"t": "Statistiske diagrammer", "h": "matte_stat_diagrammer.html", "f": "Matematikk", "k": "KM11", "s": "statistiske diagrammer km11 statistikk"}, {"t": "Tolke og kritisere statistikk", "h": "matte_stat_tolkning.html", "f": "Matematikk", "k": "KM12", "s": "tolke og kritisere statistikk km12 statistikk"}, {"t": "Boksplott og spredningsmål", "h": "matte_stat_boksplott.html", "f": "Matematikk", "k": "KM11", "s": "boksplott og spredningsmål km11 statistikk"}, {"t": "Statistikk som argument", "h": "matte_mengde_statistikk_argument.html", "f": "Matematikk", "k": "MAT9-8", "s": "statistikk som argument mat9-8 statistikk"}, {"t": "Grunnleggende sannsynlighet", "h": "matte_sann_grunnleggende.html", "f": "Matematikk", "k": "KM13", "s": "grunnleggende sannsynlighet km13 sannsynlighet"}, {"t": "Kombinatorikk", "h": "matte_sann_kombinatorikk.html", "f": "Matematikk", "k": "KM13", "s": "kombinatorikk km13 sannsynlighet"}, {"t": "Simulering og frekvenstolkning", "h": "matte_sann_simulering.html", "f": "Matematikk", "k": "KM14", "s": "simulering og frekvenstolkning km14 sannsynlighet"}, {"t": "Betinget sannsynlighet", "h": "matte_sann_betinget.html", "f": "Matematikk", "k": "KM13", "s": "betinget sannsynlighet km13 sannsynlighet"}, {"t": "Budsjett og hverdagsøkonomi", "h": "matte_øk_budsjett.html", "f": "Matematikk", "k": "KM16", "s": "budsjett og hverdagsøkonomi km16 økonomi"}, {"t": "Valuta og omregning", "h": "matte_øk_valuta.html", "f": "Matematikk", "k": "KM16", "s": "valuta og omregning km16 økonomi"}, {"t": "Skatt og inntekt", "h": "matte_øk_skatt.html", "f": "Matematikk", "k": "KM15", "s": "skatt og inntekt km15 økonomi"}, {"t": "Renter og lån", "h": "matte_øk_renter.html", "f": "Matematikk", "k": "KM15", "s": "renter og lån km15 økonomi"}, {"t": "Måleenheter og omregning", "h": "matte_mål_enheter.html", "f": "Matematikk", "k": "KM17", "s": "måleenheter og omregning km17 måling"}, {"t": "Nøyaktighet og målefeil", "h": "matte_mål_målefeil.html", "f": "Matematikk", "k": "KM17", "s": "nøyaktighet og målefeil km17 måling"}, {"t": "Løkker og betingelser i matte", "h": "matte_prog_løkker.html", "f": "Matematikk", "k": "KM18", "s": "løkker og betingelser i matte km18 programmering"}, {"t": "Programmert simulering", "h": "matte_prog_simulering.html", "f": "Matematikk", "k": "KM18", "s": "programmert simulering km18 programmering"}, {"t": "Programmering i matte", "h": "matte_mengde_programmering_matte.html", "f": "Matematikk", "k": "MAT10-10", "s": "programmering i matte mat10-10 programmering"}, {"t": "Datamaskiner og kode", "h": "prg_mengde_datamaskiner.html", "f": "Matematikk", "k": "PRG-1", "s": "datamaskiner og kode prg-1 programmering"}, {"t": "Tekstbasert kode", "h": "prg_mengde_tekstbasert.html", "f": "Matematikk", "k": "PRG-2", "s": "tekstbasert kode prg-2 programmering"}, {"t": "Dekomponere problemer", "h": "prg_mengde_dekomponering.html", "f": "Matematikk", "k": "PRG-4", "s": "dekomponere problemer prg-4 programmering"}, {"t": "Problemløsningsstrategier", "h": "matte_prob_strategier.html", "f": "Matematikk", "k": "KM19", "s": "problemløsningsstrategier km19 problemløsning"}, {"t": "Matematisk argumentasjon", "h": "matte_res_bevis.html", "f": "Matematikk", "k": "KM20", "s": "matematisk argumentasjon km20 resonnering"}, {"t": "Excel-trener", "h": "excel_trener.html", "f": "Matematikk", "k": "DV1", "s": "excel regneark statistikk økonomi gjennomsnitt median sum formler digitale verktøy"}, {"t": "GeoGebra – Funksjoner", "h": "geogebra_funksjoner.html", "f": "Matematikk", "k": "KM9", "s": "geogebra funksjoner lineær parabel nullpunkt interaktiv grafisk km9 digitale verktøy"}, {"t": "Diagramtrener", "h": "diagram_trener.html", "f": "Matematikk", "k": "DV2", "s": "diagram koordinatsystem grafer lineær eksponentiell avlesning skjæringspunkt digitale verktøy"}, {"t": "GeoGebra – Linjediagram", "h": "geogebra_linjediagram.html", "f": "Matematikk", "k": "KM9", "s": "geogebra linjediagram datapunkter koordinatsystem plot digitale verktøy"}, {"t": "GeoGebra – Geometri", "h": "geogebra_geometri.html", "f": "Matematikk", "k": "KM10", "s": "geogebra geometri trekant rektangel sirkel digitale verktøy"}, {"t": "Programmering – Løkker", "h": "matte_prog_løkker.html", "f": "Matematikk", "k": "KM18", "s": "løkker betingelser programmering python digitale verktøy km18"}, {"t": "Programmering – Simulering", "h": "matte_prog_simulering.html", "f": "Matematikk", "k": "KM18", "s": "simulering programmering python tilfeldige tall digitale verktøy km18"}, {"t": "Naturfagquiz", "h": "naturfagquiz.html", "f": "Naturfag", "k": "NAT-1", "s": "nat-1 stille spørsmål og lage hypoteser om nat naturfagquiz"}, {"t": "Forsøk", "h": "forsok.html", "f": "Naturfag", "k": "NAT-1", "s": "nat-1 stille spørsmål og lage hypoteser om nat forsøk"}, {"t": "Naturfagbegreper", "h": "naturfag.html", "f": "Naturfag", "k": "NAT-1", "s": "nat-1 stille spørsmål og lage hypoteser om nat naturfagbegreper"}, {"t": "Molekylmodeller", "h": "molekylmodeller.html", "f": "Naturfag", "k": "NAT-3", "s": "nat-3 bruke og lage modeller for å forutsi ell molekylmodeller"}, {"t": "Labsikkerhet og forsøksdesign", "h": "labsikkerhet.html", "f": "Naturfag", "k": "NAT-4", "s": "nat-4 delta i risikovurderinger knyttet til fo labsikkerhet og forsøksdesign"}, {"t": "Dagsaktuell forskning", "h": "dagsaktuell_forskning.html", "f": "Naturfag", "k": "NAT-5", "s": "nat-5 gi eksempler på dagsaktuell forskning og dagsaktuell forskning"}, {"t": "Genetikklaben 🧬", "h": "genetikk.html", "f": "Naturfag", "k": "NAT-5", "s": "nat-5 gi eksempler på dagsaktuell forskning og genetikklaben 🧬"}, {"t": "Vitenskapspersoner Flashcards", "h": "vitenskapspersoner.html", "f": "Naturfag", "k": "NAT-5", "s": "nat-5 gi eksempler på dagsaktuell forskning og vitenskapspersoner flashcards"}, {"t": "Elektrisitetsteori", "h": "elektrisitetsteori.html", "f": "Naturfag", "k": "NAT-6", "s": "nat-6 utforske, forstå og lage teknologiske sy elektrisitetsteori"}, {"t": "Elektriske kretser", "h": "elektriske_kretser.html", "f": "Naturfag", "k": "NAT-6", "s": "nat-6 utforske, forstå og lage teknologiske sy elektriske kretser"}, {"t": "Kommunikasjonsteknologi", "h": "kommunikasjonsteknologi.html", "f": "Naturfag", "k": "NAT-6", "s": "nat-6 utforske, forstå og lage teknologiske sy kommunikasjonsteknologi"}, {"t": "Strømlaben ⚡", "h": "krets_spill.html", "f": "Naturfag", "k": "NAT-6", "s": "nat-6 utforske, forstå og lage teknologiske sy strømlaben ⚡"}, {"t": "Programmering i naturfag", "h": "programmering_naturfag.html", "f": "Naturfag", "k": "NAT-7", "s": "nat-7 bruke programmering til å utforske natur programmering i naturfag"}, {"t": "NASA og romutforskning", "h": "nasa.html", "f": "Naturfag", "k": "NAT-3", "s": "nat-3 nasa og romutforskning"}, {"t": "Elektrokjemi", "h": "elektrokjemi.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m elektrokjemi"}, {"t": "Kjemilaben – SkapLab", "h": "kjemi.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m kjemilaben – skaplab"}, {"t": "Kjemiske bindinger", "h": "kjemiske_bindinger.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m kjemiske bindinger"}, {"t": "Kjemiske reaksjoner", "h": "kjemiske_reaksjoner.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m kjemiske reaksjoner"}, {"t": "Organisk kjemi: Molekylbyggesett", "h": "organisk_kjemi.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m organisk kjemi: molekylbyggese"}, {"t": "Organisk kjemi", "h": "organisk_kjemi_karusell.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m organisk kjemi"}, {"t": "Syre, base og pH", "h": "syr_base_ph.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 utforske kjemiske reaksjoner, forklare m syre, base og ph"}, {"t": "Atomets oppbygning", "h": "atom.html", "f": "Naturfag", "k": "NAT-9", "s": "nat-9 bruke atommodeller og periodesystemet ti atomets oppbygning"}, {"t": "Atomteori", "h": "atomteori.html", "f": "Naturfag", "k": "NAT-9", "s": "nat-9 bruke atommodeller og periodesystemet ti atomteori"}, {"t": "Periodesystemet", "h": "periodesystem.html", "f": "Naturfag", "k": "NAT-9", "s": "nat-9 bruke atommodeller og periodesystemet ti periodesystemet"}, {"t": "Kraft og bevegelse 🚀", "h": "fysikk.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 beskrive drivhuseffekten og gjøre rede f kraft og bevegelse 🚀"}, {"t": "Krefter og bevegelse", "h": "krefter_bevegelse.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 beskrive drivhuseffekten og gjøre rede f krefter og bevegelse"}, {"t": "Bølger og lyd", "h": "bolger_lyd.html", "f": "Naturfag", "k": "NAT-11", "s": "nat-11 gjøre rede for energibevaring og energik bølger og lyd"}, {"t": "Energi og varme", "h": "energi_varme.html", "f": "Naturfag", "k": "NAT-11", "s": "nat-11 gjøre rede for energibevaring og energik energi og varme"}, {"t": "Optikk: Lys og syn", "h": "optikk.html", "f": "Naturfag", "k": "NAT-11", "s": "nat-11 gjøre rede for energibevaring og energik optikk: lys og syn"}, {"t": "Varme og termodynamikk", "h": "varme_termodynamikk_teori.html", "f": "Naturfag", "k": "NAT-11", "s": "nat-11 gjøre rede for energibevaring og energik varme og termodynamikk"}, {"t": "Oppdrift", "h": "oppdrift.html", "f": "Naturfag", "k": "NAT-3", "s": "nat-3 oppdrift"}, {"t": "Massetetthet", "h": "massetetthet.html", "f": "Naturfag", "k": "NAT-5", "s": "nat-5 massetetthet"}, {"t": "Aerodynamikk", "h": "aerodynamikk.html", "f": "Naturfag", "k": "NAT-3", "s": "nat-3 aerodynamikk"}, {"t": "Klima og drivhuseffekten", "h": "klima.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 beskrive drivhuseffekten og gjøre rede f klima og drivhuseffekten"}, {"t": "Vær og atmosfære", "h": "vaer_atmosfaere.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 beskrive drivhuseffekten og gjøre rede f vær og atmosfære"}, {"t": "Energi og miljøpåvirkning", "h": "energi_miljo.html", "f": "Naturfag", "k": "NAT-12", "s": "nat-12 drøfte hvordan energiproduksjon og energ energi og miljøpåvirkning"}, {"t": "Insekter", "h": "insekter.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 mangfold dyr insekter leddyr metamorfose pollinering insekter"}, {"t": "Araknider", "h": "araknider.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 mangfold dyr edderkoppdyr araknider silke skorpioner midd flått araknider"}, {"t": "Sirkulasjonssystemet", "h": "sirkulasjonssystemet.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 kropp helse hjerte blod sirkulasjonssystem sirkulasjonssystemet"}, {"t": "Kjønnsorganene", "h": "kjonnsorganene.html", "f": "Naturfag", "k": "NAT-10", "s": "nat-10 kropp helse reproduksjon hormoner pubertets kjønnsorganer"}, {"t": "Store oppdagelser", "h": "store_oppdagelser.html", "f": "Naturfag", "k": "NAT-5", "s": "nat-5 forskning oppdagelser vitenskap Darwin DNA Kopernikus store oppdagelser"}, {"t": "Kjernekraft", "h": "kjernekraft.html", "f": "Naturfag", "k": "NAT-12", "s": "nat-12 energi klima atomkraft fisjon stråling radioaktivitet kjernekraft"}, {"t": "Smarte løsninger", "h": "smarte_losninger.html", "f": "Naturfag", "k": "NAT-6", "s": "nat-6 teknologi smarttelefon AI IoT smarte løsninger CRISPR smarte_losninger"}, {"t": "Plast", "h": "plast.html", "f": "Naturfag", "k": "NAT-11", "s": "nat-11 bærekraft miljø plast polymer mikroplast havforurensning plast"}, {"t": "Energiproduksjon", "h": "energiproduksjon.html", "f": "Naturfag", "k": "NAT-12", "s": "nat-12 drøfte hvordan energiproduksjon og energ energiproduksjon"}, {"t": "Naturkatastrofer", "h": "naturkatastrofer.html", "f": "Naturfag", "k": "NAT-16", "s": "nat-16 gi eksempler på og drøfte aktuelle dilem naturkatastrofer"}, {"t": "Samisk naturkunnskap", "h": "samisk_natur.html", "f": "Naturfag", "k": "NAT-17", "s": "nat-17 gi eksempler på samers tradisjonelle kun samisk naturkunnskap"}, {"t": "Dinosaurer", "h": "dinosaurer.html", "f": "Naturfag", "k": "NAT-13", "s": "nat-13 beskrive hvordan forskere har kommet fra dinosaurer"}, {"t": "Evolusjon", "h": "evolusjon.html", "f": "Naturfag", "k": "NAT-13", "s": "nat-13 beskrive hvordan forskere har kommet fra evolusjon"}, {"t": "Naturfag-animasjoner", "h": "animasjoner.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  naturfag-animasjoner"}, {"t": "Cellens anatomi (organeller)", "h": "celle.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  cellens anatomi (organeller)"}, {"t": "Cellebiologi (prokaryot, mitose, DNA)", "h": "cellebiologi.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  cellebiologi (prokaryot, mitos"}, {"t": "Fordøyelsessystemet", "h": "fordoyelsen.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  fordøyelsessystemet"}, {"t": "Kroppen i bevegelse", "h": "kropp_animasjoner.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  kroppen i bevegelse"}, {"t": "Kroppens organer", "h": "kroppens_organer.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  kroppens organer"}, {"t": "Lungene og åndedrett", "h": "lungene.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  lungene og åndedrett"}, {"t": "Mikrobiologi", "h": "mikrobiologi.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  mikrobiologi"}, {"t": "Mikroskoplaben 🔬", "h": "mikroskop.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  mikroskoplaben 🔬"}, {"t": "Nyrene", "h": "nyrene.html", "f": "Naturfag", "k": "NAT-14", "s": "nat-14 sammenligne celler hos ulike organismer  nyrene"}, {"t": "Havet", "h": "havet.html", "f": "Naturfag", "k": "NAT-15", "s": "nat-15 utforske sammenhenger mellom abiotiske o havet"}, {"t": "Økologi", "h": "okologi.html", "f": "Naturfag", "k": "NAT-15", "s": "nat-15 utforske sammenhenger mellom abiotiske o økologi"}, {"t": "Fotosyntese og celleånding", "h": "fotosyntese.html", "f": "Naturfag", "k": "NAT-18", "s": "nat-18 gjøre rede for hvordan fotosyntese og ce fotosyntese og celleånding"}, {"t": "Fugler", "h": "fugler.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 fugler"}, {"t": "Virveldyr", "h": "virveldyr.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 virveldyr"}, {"t": "Ormer og slanger", "h": "ormer_slanger.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 ormer og slanger"}, {"t": "Haier", "h": "haier.html", "f": "Naturfag", "k": "NAT-8", "s": "nat-8 haier"}, {"t": "Fossiler", "h": "fossiler.html", "f": "Naturfag", "k": "NAT-9", "s": "nat-9 fossiler"}, {"t": "Astronomi", "h": "astronomi.html", "f": "Naturfag", "k": "NAT-19", "s": "nat-19 bruke platetektonikkteorien til å forkla astronomi"}, {"t": "Kontinentaldrift og platetektonikk", "h": "kontinentaldrift.html", "f": "Naturfag", "k": "NAT-19", "s": "nat-19 bruke platetektonikkteorien til å forkla kontinentaldrift og platetekto"}, {"t": "Pangea-puslespill", "h": "pangea.html", "f": "Naturfag", "k": "NAT-19", "s": "nat-19 bruke platetektonikkteorien til å forkla pangea-puslespill"}, {"t": "Seksualundervisning", "h": "seksualundervisning.html", "f": "Naturfag", "k": "NAT-20", "s": "nat-20 drøfte spørsmål knyttet til seksuell og  seksualundervisning"}, {"t": "Hjernen", "h": "hjernen.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste hjernen"}, {"t": "Hjertet", "h": "hjertet.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste hjertet"}, {"t": "Hormonsystemet", "h": "hormonsystemet.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste hormonsystemet"}, {"t": "Nervesystemet", "h": "nervesystemet.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste nervesystemet"}, {"t": "Øyet", "h": "oyet.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste øyet"}, {"t": "Rusmidler og signalsystemene", "h": "rusmidler.html", "f": "Naturfag", "k": "NAT-21", "s": "nat-21 sammenligne nervesystemet og hormonsyste rusmidler og signalsystemene"}, {"t": "Immunforsvar og vaksiner", "h": "immunforsvar.html", "f": "Naturfag", "k": "NAT-22", "s": "nat-22 beskrive kroppens immunforsvar og hvorda immunforsvar og vaksiner"}, {"t": "Biologi del 1", "h": "bio_flipcards.html", "f": "Naturfag", "k": "", "s": "biologi del 1 flashcards naturfag"}, {"t": "Biologi del 2", "h": "bio_flipcards2.html", "f": "Naturfag", "k": "", "s": "biologi del 2 flashcards naturfag"}, {"t": "Elektronikk del 1", "h": "ele_flipcards.html", "f": "Naturfag", "k": "", "s": "elektronikk del 1 flashcards naturfag"}, {"t": "Elektronikk del 2", "h": "ele_flipcards2.html", "f": "Naturfag", "k": "", "s": "elektronikk del 2 flashcards naturfag"}, {"t": "Fysikk del 1", "h": "fys_flipcards.html", "f": "Naturfag", "k": "", "s": "fysikk del 1 flashcards naturfag"}, {"t": "Fysikk del 2", "h": "fys_flipcards2.html", "f": "Naturfag", "k": "", "s": "fysikk del 2 flashcards naturfag"}, {"t": "Kjemi del 1", "h": "kje_flipcards.html", "f": "Naturfag", "k": "", "s": "kjemi del 1 flashcards naturfag"}, {"t": "Kjemi del 2", "h": "kje_flipcards2.html", "f": "Naturfag", "k": "", "s": "kjemi del 2 flashcards naturfag"}, {"t": "Teknologi del 1", "h": "tek_flipcards.html", "f": "Naturfag", "k": "", "s": "teknologi del 1 flashcards naturfag"}, {"t": "Teknologi del 2", "h": "tek_flipcards2.html", "f": "Naturfag", "k": "", "s": "teknologi del 2 flashcards naturfag"}, {"t": "Økologi del 1", "h": "oko_flipcards.html", "f": "Naturfag", "k": "", "s": "økologi del 1 flashcards naturfag"}, {"t": "Økologi del 2", "h": "oko_flipcards2.html", "f": "Naturfag", "k": "", "s": "økologi del 2 flashcards naturfag"}, {"t": "Matematikkhub", "h": "matte_hub.html", "f": "Hub", "k": "", "s": "matematikk algebra geometri statistikk all matte"}, {"t": "Naturfaghub", "h": "naturfag_hub.html", "f": "Hub", "k": "", "s": "naturfag biologi kjemi fysikk all natur"}, {"t": "Spillhub", "h": "spill_hub.html", "f": "Spill", "k": "", "s": "spill matte naturfag programmering alle spill"}, {"t": "Programmeringshub", "h": "programmering.html", "f": "Hub", "k": "", "s": "programmering python scratch arduino micro:bit 3d"}, {"t": "Skaperverksted", "h": "skaperverksted.html", "f": "Hub", "k": "", "s": "skaperverksted design elektronikk bygging lage"}, {"t": "Tenk og Diskuter", "h": "diskusjonsoppgaver.html", "f": "Verktøy", "k": "", "s": "diskusjon grubletegning tenkende klasserom rike oppgaver"}, {"t": "Eksamenstrener", "h": "eksamenstrener.html", "f": "Verktøy", "k": "", "s": "eksamen prøve matte 10 trinn forberedelse"}, {"t": "Prøvebygger", "h": "provebygger.html", "f": "Verktøy", "k": "", "s": "prøve prøvebygger lag prøve lærer"}, {"t": "Tidsmaskinen", "h": "tidsmaskinen.html", "f": "Spill", "k": "", "s": "rpg spill tidsmaskinen eventyr dinosaurer"}, {"t": "Verden Rundt", "h": "verden_rundt.html", "f": "Spill", "k": "", "s": "spill geografi verden rundt kart"}, {"t": "Battleships", "h": "battleships.html", "f": "Spill", "k": "", "s": "spill battleships koordinater koordinatsystem"}, {"t": "Kanonkule", "h": "kanon.html", "f": "Spill", "k": "", "s": "spill kanon funksjoner andregradsfunksjon"}, {"t": "Matematikklabyrint", "h": "matte_labyrint.html", "f": "Spill", "k": "", "s": "spill labyrint matte gange"}, {"t": "Mattequiz", "h": "mattequiz.html", "f": "Spill", "k": "", "s": "quiz matte kahoot"}, {"t": "Kjemilaben", "h": "kjemi.html", "f": "Spill", "k": "", "s": "kjemi lab syre base pH naturfag"}, {"t": "Strømlaben", "h": "krets_spill.html", "f": "Spill", "k": "", "s": "strøm krets elektrisitet spill"}, {"t": "Mikroskoplaben", "h": "mikroskop.html", "f": "Spill", "k": "", "s": "mikroskop biologi celler bakterier"}, {"t": "Genetikklaben", "h": "genetikk_spill.html", "f": "Spill", "k": "", "s": "genetikk arv DNA biologi"}, {"t": "Naturfagquiz", "h": "naturfagquiz.html", "f": "Spill", "k": "", "s": "quiz naturfag kahoot"}, {"t": "Algoritmedetektiven", "h": "algoritmedetektiven.html", "f": "Spill", "k": "", "s": "algoritme programmering spill logikk"}, {"t": "Debug-rommet", "h": "debugrommet.html", "f": "Spill", "k": "", "s": "debug programmering feil kode"}];
+  var inp = document.getElementById('gl-sok-input');
+  var res = document.getElementById('gl-sok-res');
+  if (!inp || !res) return;
+
+  function sok(q) {
+    q = q.toLowerCase().trim();
+    res.innerHTML = '';
+    if (q.length < 2) { res.classList.remove('open'); return; }
+
+    var treff = INDEKS.filter(function(r) {
+      return (r.t+' '+r.s+' '+r.k+' '+r.f).toLowerCase().includes(q);
+    }).slice(0, 8);
+
+    if (!treff.length) {
+      res.innerHTML = '<div class="gl-sok-tom">Ingen treff for «' + q + '»</div>';
+    } else {
+      treff.forEach(function(r) {
+        var a = document.createElement('a');
+        a.className = 'gl-sok-item';
+        a.href = r.h;
+        a.innerHTML = '<div style="flex:1">'
+          + '<div class="gl-sok-tittel">' + r.t + '</div>'
+          + (r.k ? '<div class="gl-sok-km">' + r.k + '</div>' : '')
+          + '</div>'
+          + '<span class="gl-sok-fag ' + r.f + '">' + r.f + '</span>';
+        res.appendChild(a);
+      });
+    }
+    res.classList.add('open');
+  }
+
+  inp.addEventListener('input', function() { sok(this.value); });
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { res.classList.remove('open'); inp.value = ''; }
+    if (e.key === 'Enter') {
+      var first = res.querySelector('.gl-sok-item');
+      if (first) first.click();
+    }
+  });
+  document.addEventListener('click', function(e) {
+    if (!document.getElementById('gl-sok-wrap').contains(e.target)) {
+      res.classList.remove('open');
+    }
+  });
+})();
+</script>
+
+<script>
+(async function() {
+  var el = document.getElementById('skole-lb');
+  if (!el) return;
+  var SB  = 'https://cqzmzsqhuawpsvnjjzse.supabase.co';
+  var KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+  var hdr = { apikey: KEY, Authorization: 'Bearer ' + KEY };
+
+  function sbGet(sti) {
+    return fetch(SB + '/rest/v1' + sti, { headers: hdr })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .catch(function(){ return []; });
+  }
+
+  try {
+    // Steg 1: XP per elev
+    var prog = await sbGet('/adaptiv_progresjon?select=elev_id,xp');
+    if (!Array.isArray(prog) || !prog.length) {
+      el.innerHTML = '<div style="color:var(--textdim);text-align:center;font-size:.85rem">Ingen data ennå – kom tilbake!</div>';
+      return;
+    }
+    var xpPerElev = {};
+    prog.forEach(function(p){ xpPerElev[p.elev_id] = (xpPerElev[p.elev_id]||0) + (p.xp||0); });
+    var elevIds = Object.keys(xpPerElev).filter(Boolean);
+
+    // Steg 2: elev → klasse
+    var elevListe = await sbGet('/elever?id=in.(' + elevIds.join(',') + ')&select=id,klasse_id');
+    var elevKlasse = {};
+    if (Array.isArray(elevListe)) elevListe.forEach(function(e){ elevKlasse[e.id] = e.klasse_id; });
+
+    // Steg 3: klasse → laerer
+    var klasseIds = Object.values(elevKlasse).filter(Boolean);
+    klasseIds = klasseIds.filter(function(v,i,a){ return a.indexOf(v)===i; });
+    var klasseListe = klasseIds.length ? await sbGet('/klasser?id=in.(' + klasseIds.join(',') + ')&select=id,laerer_id') : [];
+    var klasseLaerer = {};
+    if (Array.isArray(klasseListe)) klasseListe.forEach(function(k){ klasseLaerer[k.id] = k.laerer_id; });
+
+    // Steg 4: laerer → skole
+    var laererIds = Object.values(klasseLaerer).filter(Boolean);
+    laererIds = laererIds.filter(function(v,i,a){ return a.indexOf(v)===i; });
+    var laererListe = laererIds.length ? await sbGet('/laerere?id=in.(' + laererIds.join(',') + ')&select=id,skole_id') : [];
+    var laererSkole = {};
+    if (Array.isArray(laererListe)) laererListe.forEach(function(l){ laererSkole[l.id] = l.skole_id; });
+
+    // Steg 5: skolenavn
+    var skoleIds = Object.values(laererSkole).filter(Boolean);
+    skoleIds = skoleIds.filter(function(v,i,a){ return a.indexOf(v)===i; });
+    var skoleNavn = {};
+    if (skoleIds.length) {
+      var skoleListe = await sbGet('/skoler?id=in.(' + skoleIds.join(',') + ')&select=id,navn');
+      if (Array.isArray(skoleListe)) skoleListe.forEach(function(s){ skoleNavn[s.id] = s.navn; });
+    }
+
+    // Aggreger XP per skole
+    var skoleXP = {};
+    elevIds.forEach(function(eid) {
+      var kid = elevKlasse[eid];
+      var lid = kid ? klasseLaerer[kid] : null;
+      var sid = lid ? laererSkole[lid] : null;
+      var snavn = sid ? (skoleNavn[sid] || null) : null;
+      if (!snavn) return;
+      skoleXP[snavn] = (skoleXP[snavn]||0) + (xpPerElev[eid]||0);
+    });
+
+    var rangert = Object.entries(skoleXP)
+      .map(function(e){ return { navn: e[0], xp: e[1] }; })
+      .sort(function(a,b){ return b.xp - a.xp; })
+      .slice(0, 5);
+
+    if (!rangert.length) {
+      el.innerHTML = '<div style="color:var(--textdim);text-align:center;font-size:.85rem">Ingen data ennå – vær den første!</div>';
+      return;
+    }
+
+    var medaljer = ['🥇','🥈','🥉','4.','5.'];
+    var maxXP = rangert[0].xp || 1;
+    var html = '<div style="display:flex;flex-direction:column;gap:10px">';
+    rangert.forEach(function(s, i) {
+      var pst = Math.round(s.xp / maxXP * 100);
+      html += '<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 16px">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+      html += '<span style="font-size:1.2rem;min-width:28px">' + medaljer[i] + '</span>';
+      html += '<span style="flex:1;font-size:.9rem;font-weight:700;color:var(--text)">' + s.navn + '</span>';
+      html += '<span style="font-size:.8rem;font-weight:700;color:var(--accent3)">⭐ ' + s.xp.toLocaleString('nb-NO') + ' XP</span>';
+      html += '</div>';
+      html += '<div style="background:rgba(255,255,255,.08);border-radius:4px;height:6px;overflow:hidden">';
+      html += '<div style="width:' + pst + '%;height:100%;background:var(--accent3);border-radius:4px"></div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--textdim);text-align:center;font-size:.85rem">Leaderboard lastes…</div>';
+    console.warn('Skoleleaderboard:', e);
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var h = location.hostname;
+  if ('serviceWorker' in navigator && (h === 'skaplab.no' || h === 'www.skaplab.no')) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
 </body>
 </html>
