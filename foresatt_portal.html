@@ -171,6 +171,17 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
       <div id="vurdering-innhold"><div class="tom">Henter tilbakemeldinger…</div></div>
     </div>
 
+    <!-- UKENTLIG OPPSUMMERING -->
+    <div class="sek" id="sek-rapport">
+      <div class="sek-tittel">📬 Ukentlig oppsummering</div>
+      <div style="font-size:.82rem;color:var(--dim);margin-bottom:12px">
+        Få en ukentlig oppsummering av fremgangen sendt til deg. Kopier lenken under og lagre den — besøk den en gang i uken for å se siste status.
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:var(--font-m);font-size:.72rem;word-break:break-all;margin-bottom:10px" id="portal-lenke">—</div>
+      <button onclick="kopierPortalLenke()" style="background:var(--bla);border:none;color:#fff;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.82rem;font-family:var(--font-b)">📋 Kopier lenke</button>
+      <div id="rapport-innhold" style="margin-top:16px"></div>
+    </div>
+
     <div style="text-align:center;margin-top:24px;font-size:.72rem;color:var(--dim)">
       SkapLab – Foresattportal · Kun lesetilgang · Oppdateres ved ny innlasting
     </div>
@@ -350,6 +361,8 @@ async function init() {
     // Vis portal
     document.getElementById('laster').style.display = 'none';
     document.getElementById('portal').style.display = '';
+    visPortalLenke();
+    byggUkerapport(progData, aktData, tildelingData);
 
   } catch(e) {
     document.getElementById('laster').style.display = 'none';
@@ -357,6 +370,56 @@ async function init() {
     console.error('Foresattportal feil:', e);
   }
 }
+
+
+  function kopierPortalLenke() {
+    var lenke = window.location.href;
+    navigator.clipboard.writeText(lenke).then(function() {
+      var btn = document.querySelector('[onclick="kopierPortalLenke()"]');
+      if (btn) { btn.textContent = '✅ Kopiert!'; setTimeout(function(){ btn.textContent = '📋 Kopier lenke'; }, 2000); }
+    }).catch(function(){ prompt('Kopier denne lenken:', lenke); });
+  }
+
+  function visPortalLenke() {
+    var el = document.getElementById('portal-lenke');
+    if (el) el.textContent = window.location.href;
+  }
+
+  function byggUkerapport(prog, akt, tildeling) {
+    var el = document.getElementById('rapport-innhold');
+    if (!el) return;
+    var nå = new Date();
+    var mandag = new Date(nå);
+    mandag.setDate(nå.getDate() - ((nå.getDay()+6)%7));
+    mandag.setHours(0,0,0,0);
+    var ukeAkt = Array.isArray(akt) ? akt.filter(function(a){return new Date(a.tidspunkt)>=mandag;}) : [];
+    var ukeXP = Array.isArray(prog) ? prog.reduce(function(s,p){return s+(p.xp||0);},0) : 0;
+    var aktiveDager = new Set(ukeAkt.map(function(a){return new Date(a.tidspunkt).toDateString();})).size;
+    var kommende = Array.isArray(tildeling) ? tildeling.filter(function(t){
+      return t.frist && t.oppgaver && t.oppgaver.type==='provevarsel' && new Date(t.frist)>=nå;
+    }).length : 0;
+    var h = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px">';
+    h += uStat('📅 Aktive dager', aktiveDager+' denne uken','#60a5fa');
+    h += uStat('📝 Øvingsøkter', ukeAkt.length+' denne uken','#34d399');
+    h += uStat('⭐ Total XP', ukeXP.toLocaleString('nb-NO'),'#fbbf24');
+    h += uStat('📝 Prøver', kommende+' kommende','#a78bfa');
+    h += '</div>';
+    if (ukeAkt.length===0) {
+      h += '<div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--rod)">Ingen aktivitet registrert denne uken.</div>';
+    } else if (aktiveDager>=3) {
+      h += '<div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--gron)">Flott innsats! '+aktiveDager+' aktive dager denne uken.</div>';
+    } else {
+      h += '<div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--gul)">Litt aktivitet denne uken. Oppfordre til minst 3 aktive dager.</div>';
+    }
+    el.innerHTML = h;
+  }
+
+  function uStat(lbl,verdi,farge){
+    return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;text-align:center">'
+      +'<div style="font-size:1.05rem;font-weight:800;color:'+farge+'">'+verdi+'</div>'
+      +'<div style="font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px">'+lbl+'</div>'
+      +'</div>';
+  }
 
 init();
 </script>
