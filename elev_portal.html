@@ -401,6 +401,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   <div class="spacer"></div>
   <span id="elev-chip"></span>
   <button style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:.78rem;padding:4px 8px" onclick="localStorage.removeItem('skaplab_onb_elev');onbVis()" title="Vis guide igjen">❓</button>
+  <button id="btn-foresatt-ep" onclick="visForesattlenke()" style="background:none;border:1px solid var(--border2);color:var(--dim);cursor:pointer;font-size:.72rem;padding:4px 10px;border-radius:7px" title="Del fremgang med foresatte">👨‍👩‍👦 Foresatte</button>
   <button class="tbtn" onclick="loggUt()">Logg ut</button>
 </div>
 
@@ -519,7 +520,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   var SUPABASE_KEY = 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
   var API = SUPABASE_URL + '/rest/v1';
   var SESSION_NØKKEL = 'skaplab_elev';
-  var LAERER_NØKKEL  = 'skaplab_laerer';
+  var LAERER_NØKKEL  = 'skaplab_laerer_v2'; // Ny nøkkel fra ombygging apr 2026
 
   // ── HJELPEFUNKSJONER ───────────────────────────────────────────
   function hdr(token) {
@@ -567,7 +568,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     try {
       var resp = await fetch(
         API + '/elever?innloggingskode=eq.' + kode + '&aktiv=eq.true' +
-        '&select=id,fullt_navn,kallenavn,klasse_id,trenger_hjelp,hjelp_emne,klasser(navn,trinn,skoler(navn))',
+        '&select=id,fullt_navn,klasse_id,trenger_hjelp,hjelp_emne,klasser(navn,trinn,skoler(navn))',
         { headers: hdr() }
       );
       var data = await resp.json();
@@ -633,7 +634,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
   function hentLaerer() {
     try {
-      var data = sessionStorage.getItem(LAERER_NØKKEL);
+      var data = localStorage.getItem(LAERER_NØKKEL);
       if (!data) return null;
       var parsed = JSON.parse(data);
       // Returner null KUN om det er en tydelig feilrespons uten token
@@ -744,11 +745,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   };
 
 })();
-
-
 </script>
-<script>
 
+<script>
 'use strict';
 if (!SkapLab.erElevInnlogget()) { location.href = 'elev_login.html'; throw new Error(); }
 var elev = SkapLab.hentElev();
@@ -1300,6 +1299,71 @@ function visFane(fane, el) {
   if (fane === 'adaptiv') setTimeout(function(){ if(typeof initAdaptivTrener==='function') initAdaptivTrener(); }, 50);
 }
 
+async function visForesattlenke() {
+  var btn = $('btn-foresatt-ep');
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+  try {
+    var elev = SkapLab.hentElev();
+    if (!elev || !elev.id) throw new Error('Ikke innlogget');
+
+    // Hent eller lag foresatt_token
+    var r = await fetch(SkapLab.SUPABASE_URL+'/rest/v1/elever?id=eq.'+elev.id+'&select=foresatt_token', {
+      headers: { apikey: SkapLab.SUPABASE_KEY, Authorization: 'Bearer '+SkapLab.SUPABASE_KEY }
+    });
+    var data = r.ok ? await r.json() : [];
+    var token = data.length ? data[0].foresatt_token : null;
+
+    if (!token) {
+      // Generer nytt token
+      token = Math.random().toString(36).slice(2)
+             + Math.random().toString(36).slice(2)
+             + Math.random().toString(36).slice(2);
+      await fetch(SkapLab.SUPABASE_URL+'/rest/v1/elever?id=eq.'+elev.id, {
+        method: 'PATCH',
+        headers: {
+          apikey: SkapLab.SUPABASE_KEY,
+          Authorization: 'Bearer '+SkapLab.SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({ foresatt_token: token })
+      });
+    }
+
+    var base = location.origin + location.pathname.replace('elev_portal.html', '');
+    var lenke = base + 'foresatt_portal.html?token=' + token;
+
+    // Vis modal med lenken
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px;max-width:420px;width:100%">'
+      + '<div style="font-family:var(--font-h);font-size:1rem;font-weight:800;margin-bottom:8px">👨‍👩‍👦 Del med foresatte</div>'
+      + '<div style="font-size:.82rem;color:var(--dim);margin-bottom:14px">Send denne lenken til en foresatt. De kan se din fremgang uten å logge inn.</div>'
+      + '<div style="background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-m);font-size:.72rem;word-break:break-all;margin-bottom:14px">'
+      + lenke + '</div>'
+      + '<div style="display:flex;gap:8px">'
+      + '<button id="kopi-btn" style="flex:1;background:var(--bla);border:none;color:#fff;padding:9px;border-radius:8px;cursor:pointer;font-size:.85rem">📋 Kopier lenke</button>'
+      + '<button id="lukk-foresatt-modal" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:9px 16px;border-radius:8px;cursor:pointer;font-size:.85rem">Lukk</button>'
+      + '</div></div>';
+
+    modal.querySelector('#kopi-btn').addEventListener('click', function() {
+      navigator.clipboard.writeText(lenke).then(function() {
+        modal.querySelector('#kopi-btn').textContent = '✅ Kopiert!';
+        setTimeout(function(){ modal.querySelector('#kopi-btn').textContent = '📋 Kopier lenke'; }, 2000);
+      }).catch(function(){ prompt('Kopier lenken:', lenke); });
+    });
+
+    modal.querySelector('#lukk-foresatt-modal').addEventListener('click', function(){ modal.remove(); });
+    modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+    document.body.appendChild(modal);
+
+  } catch(e) {
+    alert('Feil: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '👨‍👩‍👦 Foresatte'; btn.disabled = false; }
+  }
+}
+
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 init();
 
@@ -1339,6 +1403,7 @@ async function visVurderinger(){
     console.warn('visVurderinger:',e);
   }
 }
+
 
 </script>
 <!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
