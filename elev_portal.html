@@ -450,7 +450,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <button class="fane natur" onclick="visFane('natur',this)">🔬 Naturfag</button>
       <button class="fane prog" onclick="visFane('prog',this)">💻 Kode</button>
       <button class="fane alle" onclick="visFane('alle',this)">🎮 Alle</button>
-      <button class="fane adaptiv" onclick="visFane('adaptiv',this)">🧠 Adaptiv</button>
+      <button class="fane adaptiv" onclick="visFane('adaptiv',this)">🧠 Matte</button>
+      <button class="fane nat-adaptiv" onclick="visFane('nat-adaptiv',this)">🔬 Nat. adaptiv</button>
       <button class="fane vurder" onclick="visFane('vurder',this)">📋 Egenvurd.</button>
       <button class="fane tilbakemelding" onclick="visFane('tilbakemelding',this)">💬 Meldinger</button>
     </div>
@@ -476,6 +477,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     </div>
     <div id="fane-adaptiv" style="display:none;">
       <div id="adaptiv-app"></div>
+    </div>
+    <div id="fane-nat-adaptiv" style="display:none;">
+      <div id="nat-adaptiv-app"></div>
     </div>
     <div id="fane-vurder" style="display:none;">
       <div class="egenv-seksjon" id="egenv-innhold"><div class="tom">Laster egenvurdering...</div></div>
@@ -1789,12 +1793,13 @@ function renderAktivitetListe(antall) {
 function visFane(fane, el) {
   document.querySelectorAll('.fane').forEach(function(f){f.classList.remove('ak');});
   el.classList.add('ak');
-  ['matte','natur','prog','alle','adaptiv','vurder','tilbakemelding'].forEach(function(f) {
+  ['matte','natur','prog','alle','adaptiv','nat-adaptiv','vurder','tilbakemelding'].forEach(function(f) {
     var p = document.getElementById('fane-'+f);
     if (p) p.style.display = f===fane ? 'block' : 'none';
   });
   if (fane === 'vurder') setTimeout(function(){ if(typeof byggEgenvurdering==='function') byggEgenvurdering(); }, 50);
   if (fane === 'adaptiv') setTimeout(function(){ if(typeof initAdaptivTrener==='function') initAdaptivTrener(); }, 50);
+  if (fane === 'nat-adaptiv') setTimeout(function(){ if(typeof initNatAdaptiv==='function') initNatAdaptiv(); }, 50);
   if (fane === 'tilbakemelding') setTimeout(visVurderinger, 50);
 }
 
@@ -3278,6 +3283,319 @@ function initAdaptivTrener() { AT.initAdaptivTrener(); }
 
 -attributter
 function initAdaptivTrener() { AT.initAdaptivTrener(); }
+
+// ═══════════════════════════════════════════════════════════════
+// NATURFAG ADAPTIV TRENER
+// ═══════════════════════════════════════════════════════════════
+var NAT_EMNER = [
+  {id:'nat_celler',   n:'Celler og arv',            i:'🧬', kat:'Biologi',      farge:'#34d399'},
+  {id:'nat_kroppen',  n:'Menneskekroppen',           i:'🫀', kat:'Biologi',      farge:'#34d399'},
+  {id:'nat_evolusjon',n:'Evolusjon og økologi',      i:'🌿', kat:'Biologi',      farge:'#34d399'},
+  {id:'nat_mikroorg', n:'Mikroorganismer og helse',  i:'🦠', kat:'Biologi',      farge:'#34d399'},
+  {id:'nat_kjemi',    n:'Kjemi og stoffer',          i:'⚗️', kat:'Kjemi/Fysikk', farge:'#60a5fa'},
+  {id:'nat_atom',     n:'Atomer og periodesystemet', i:'⚛️', kat:'Kjemi/Fysikk', farge:'#60a5fa'},
+  {id:'nat_energi',   n:'Energi og varme',           i:'🔥', kat:'Kjemi/Fysikk', farge:'#60a5fa'},
+  {id:'nat_elektro',  n:'Elektrisitet og magnetisme',i:'⚡', kat:'Kjemi/Fysikk', farge:'#60a5fa'},
+  {id:'nat_univers',  n:'Universet og astronomi',    i:'🌌', kat:'Jord/Univers', farge:'#a78bfa'},
+  {id:'nat_jord',     n:'Jord og geologi',           i:'🌍', kat:'Jord/Univers', farge:'#a78bfa'},
+  {id:'nat_klima',    n:'Klima og miljø',            i:'🌡️', kat:'Jord/Univers', farge:'#a78bfa'},
+  {id:'nat_bølger',   n:'Bølger, lys og lyd',        i:'🌊', kat:'Jord/Univers', farge:'#a78bfa'},
+];
+
+var NAT_NIVAA_NAVN = ['','Grunnleggende','Under utvikling','Sikker','Avansert','Ekspert'];
+var natProg = {};
+var natCache = {};
+var natAktivtEmne = null;
+var natAktivtNivaa = 1;
+var natInitiert = false;
+
+async function initNatAdaptiv() {
+  var el = document.getElementById('nat-adaptiv-app');
+  if (!el) return;
+  if (!natInitiert) el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--dim)">Laster naturfag-trener…</div>';
+  await hentNatProgresjon();
+  renderNatOversikt();
+  natInitiert = true;
+}
+
+async function hentNatProgresjon() {
+  var elev = JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
+  if (!elev.id) return;
+  var data = await sbFetch('/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id
+    +'&emne=in.('+NAT_EMNER.map(function(e){return e.id;}).join(',')+')'
+    +'&select=*');
+  if (!Array.isArray(data)) return;
+  data.forEach(function(row) {
+    natProg[row.emne] = {
+      nivaa:    row.nivaa||1,
+      besteNivaa: row.beste_nivaa||1,
+      xp:       row.xp||0,
+      streakR:  row.streak_riktig||0,
+      streakF:  row.streak_feil||0,
+      totR:     row.totalt_riktige||0,
+      totF:     row.totalt_feil||0,
+    };
+  });
+}
+
+function renderNatOversikt() {
+  var el = document.getElementById('nat-adaptiv-app');
+  if (!el) return;
+
+  var grupper = {};
+  NAT_EMNER.forEach(function(e) {
+    if (!grupper[e.kat]) grupper[e.kat] = [];
+    grupper[e.kat].push(e);
+  });
+
+  var totXP = Object.values(natProg).reduce(function(s,p){return s+(p.xp||0);},0);
+  var besteStreak = Object.values(natProg).reduce(function(s,p){return Math.max(s,p.streakR||0);},0);
+
+  var h = '<style>';
+  h += '.nat-hero{background:linear-gradient(135deg,rgba(52,211,153,.1),rgba(96,165,250,.08));border:1px solid rgba(52,211,153,.18);border-radius:16px;padding:20px 24px;margin-bottom:22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}';
+  h += '.nat-hero-info h2{font-family:var(--font-h);font-size:1.2rem;font-weight:800;margin-bottom:4px;}';
+  h += '.nat-hero-stats{display:flex;gap:16px;margin-left:auto;flex-wrap:wrap;}';
+  h += '.nat-stat{text-align:center;}';
+  h += '.nat-stat-tall{font-family:var(--font-h);font-size:1.3rem;font-weight:900;}';
+  h += '.nat-stat-lbl{font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;}';
+  h += '.nat-kat{margin-bottom:20px;}';
+  h += '.nat-kat-tittel{font-size:.72rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}';
+  h += '.nat-emne-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}';
+  h += '.nat-emne-kort{background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;transition:all .18s;}';
+  h += '.nat-emne-kort:hover{border-color:rgba(255,255,255,.25);transform:translateY(-1px);}';
+  h += '.nat-emne-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}';
+  h += '.nat-emne-ikon{font-size:1.3rem;}';
+  h += '.nat-emne-niv{font-size:.7rem;color:var(--dim);}';
+  h += '.nat-emne-navn{font-size:.84rem;font-weight:600;margin-bottom:5px;}';
+  h += '.nat-xp-bar{background:rgba(255,255,255,.06);border-radius:3px;height:4px;}';
+  h += '.nat-xp-fill{height:100%;border-radius:3px;transition:width .4s;}';
+  h += '</style>';
+
+  h += '<div class="nat-hero">';
+  h += '<div style="font-size:2rem">🔬</div>';
+  h += '<div class="nat-hero-info"><h2>Naturfag adaptiv trener</h2>';
+  h += '<div style="font-size:.8rem;color:var(--dim)">12 emner · 5 nivåer · Tilpasset LK20</div></div>';
+  h += '<div class="nat-hero-stats">';
+  h += '<div class="nat-stat"><div class="nat-stat-tall" style="color:var(--gul)">'+totXP+'</div><div class="nat-stat-lbl">XP totalt</div></div>';
+  h += '<div class="nat-stat"><div class="nat-stat-tall" style="color:var(--gron)">'+besteStreak+'</div><div class="nat-stat-lbl">Beste streak</div></div>';
+  h += '</div></div>';
+
+  Object.keys(grupper).forEach(function(kat) {
+    h += '<div class="nat-kat">';
+    h += '<div class="nat-kat-tittel">'+kat+'</div>';
+    h += '<div class="nat-emne-grid">';
+    grupper[kat].forEach(function(emne) {
+      var p = natProg[emne.id] || {nivaa:1,besteNivaa:1,xp:0,streakR:0,totR:0,totF:0};
+      var niv = p.besteNivaa || 1;
+      var xpPst = Math.min(100, Math.round(p.xp / 5));
+      var nivNavn = NAT_NIVAA_NAVN[niv] || 'Nivå '+niv;
+      h += '<div class="nat-emne-kort" data-emne="'+emne.id+'" data-nivaa="'+p.nivaa+'" onclick="startNatEmne(this)">';
+      h += '<div class="nat-emne-top">';
+      h += '<span class="nat-emne-ikon">'+emne.i+'</span>';
+      h += '<span class="nat-emne-niv" style="color:'+emne.farge+'">'+nivNavn+'</span>';
+      h += '</div>';
+      h += '<div class="nat-emne-navn">'+emne.n+'</div>';
+      h += '<div class="nat-xp-bar"><div class="nat-xp-fill" style="width:'+xpPst+'%;background:'+emne.farge+'"></div></div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+  });
+
+  el.innerHTML = h;
+}
+
+async function startNatEmne(knapp) {
+  var emneId = knapp.dataset.emne;
+  var emne = NAT_EMNER.find(function(e){return e.id===emneId;});
+  if (!emne) return;
+  var p = natProg[emneId] || {nivaa:1};
+  natAktivtEmne = emne;
+  natAktivtNivaa = p.nivaa || 1;
+  await hentOgVisNatOppgave();
+}
+
+async function hentOgVisNatOppgave() {
+  var el = document.getElementById('nat-adaptiv-app');
+  if (!el || !natAktivtEmne) return;
+  var cacheKey = natAktivtEmne.id + '_' + natAktivtNivaa;
+
+  if (!natCache[cacheKey] || !natCache[cacheKey].length) {
+    el.innerHTML = '<div style="padding:30px;text-align:center;color:var(--dim)">Henter oppgaver…</div>';
+    var data = await sbFetch('/rest/v1/oppgavebank?kilde=eq.adaptiv_nat'
+      +'&emne=eq.'+natAktivtEmne.id+'&nivaa=eq.'+natAktivtNivaa+'&select=*&limit=30');
+    if (!Array.isArray(data) || !data.length) {
+      el.innerHTML = '<div style="padding:30px;text-align:center">'
+        +'<div style="font-size:2rem;margin-bottom:12px">🚧</div>'
+        +'<div style="color:var(--dim);font-size:.85rem">Ingen oppgaver for dette nivået ennå.<br>Kjør generer_naturfag_bank.py for å fylle oppgavebanken.</div>'
+        +'<button onclick="renderNatOversikt()" style="margin-top:16px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:8px 18px;border-radius:8px;cursor:pointer">← Tilbake</button>'
+        +'</div>';
+      return;
+    }
+    natCache[cacheKey] = data.sort(function(){return Math.random()-.5;});
+  }
+
+  var oppg = natCache[cacheKey].splice(0,1)[0];
+  visNatOppgave(oppg);
+}
+
+function visNatOppgave(oppg) {
+  var el = document.getElementById('nat-adaptiv-app');
+  if (!el) return;
+  var emne = natAktivtEmne;
+  var p = natProg[emne.id] || {nivaa:1,xp:0,streakR:0,streakF:0};
+
+  var h = '<style>';
+  h += '.nat-hud{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border-radius:10px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap;}';
+  h += '.nat-oppg-kort{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px 24px;margin-bottom:16px;}';
+  h += '.nat-oppg-tekst{font-size:.95rem;line-height:1.65;margin-bottom:18px;}';
+  h += '.nat-mc{display:grid;grid-template-columns:1fr 1fr;gap:8px;}';
+  h += '.nat-mc-btn{background:var(--bg3);border:1.5px solid var(--border2);color:var(--text);border-radius:10px;padding:12px 14px;cursor:pointer;font-size:.88rem;text-align:left;transition:all .18s;}';
+  h += '.nat-mc-btn:hover:not(:disabled){border-color:rgba(255,255,255,.3);}';
+  h += '.nat-mc-btn.riktig{border-color:#34d399;background:rgba(52,211,153,.1);color:#34d399;}';
+  h += '.nat-mc-btn.feil{border-color:#f87171;background:rgba(248,113,113,.08);color:#f87171;}';
+  h += '.nat-fork{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:12px 14px;font-size:.82rem;color:var(--dim);margin-top:12px;display:none;}';
+  h += '.nat-input{width:100%;background:var(--bg3);border:1.5px solid var(--border2);color:var(--text);border-radius:8px;padding:10px 14px;font-size:.9rem;margin-bottom:10px;}';
+  h += '@media(max-width:500px){.nat-mc{grid-template-columns:1fr;}}';
+  h += '</style>';
+
+  h += '<div class="nat-hud">';
+  h += '<button onclick="renderNatOversikt()" style="background:none;border:1px solid var(--border2);color:var(--dim);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.78rem">← Oversikt</button>';
+  h += '<span style="font-size:.85rem;font-weight:600">'+emne.i+' '+emne.n+'</span>';
+  h += '<span style="font-size:.75rem;color:var(--dim)">Nivå '+natAktivtNivaa+'/5 · '+NAT_NIVAA_NAVN[natAktivtNivaa]+'</span>';
+  h += '<span style="margin-left:auto;font-size:.78rem;color:var(--gul)">⭐ '+p.xp+' XP</span>';
+  if (p.streakR >= 2) h += '<span style="font-size:.78rem;color:#f97316">🔥 '+p.streakR+'</span>';
+  h += '</div>';
+
+  h += '<div class="nat-oppg-kort">';
+  h += '<div style="font-size:.7rem;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Naturfag · Nivå '+natAktivtNivaa+'</div>';
+  h += '<div class="nat-oppg-tekst">'+oppg.oppgave+'</div>';
+
+  if (oppg.type === 'mc' && Array.isArray(oppg.alts)) {
+    h += '<div class="nat-mc" id="nat-alts">';
+    oppg.alts.forEach(function(alt) {
+      var bokstav = alt.charAt(0);
+      h += '<button class="nat-mc-btn" data-svar="'+bokstav+'" data-riktig="'+oppg.riktig+'" data-fork="'+esc(oppg.fork||'')+'" onclick="svarNatMC(this)">'+alt+'</button>';
+    });
+    h += '</div>';
+  } else {
+    h += '<input class="nat-input" id="nat-input-felt" type="text" placeholder="Skriv svaret ditt…" autocomplete="off">';
+    h += '<button onclick="svarNatInput(this)" data-riktig="'+esc(oppg.svar||'')+'" data-fork="'+esc(oppg.fork||'')+'" style="background:var(--bla);border:none;color:#fff;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:.87rem">Svar ✓</button>';
+  }
+
+  h += '<div class="nat-fork" id="nat-fork">'+esc(oppg.fork||'')+'</div>';
+  h += '</div>';
+  h += '<button id="nat-neste" onclick="hentOgVisNatOppgave()" style="width:100%;padding:12px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:10px;cursor:pointer;font-family:var(--font-h);font-size:.9rem;display:none">Neste oppgave →</button>';
+
+  el.innerHTML = h;
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function svarNatMC(knapp) {
+  var svar = knapp.dataset.svar;
+  var riktig = knapp.dataset.riktig;
+  var fork = knapp.dataset.fork;
+  var riktigSvar = svar === riktig;
+
+  document.querySelectorAll('.nat-mc-btn').forEach(function(b){
+    b.disabled = true;
+    if (b.dataset.svar === riktig) b.classList.add('riktig');
+    else if (b === knapp && !riktigSvar) b.classList.add('feil');
+  });
+
+  var forkEl = document.getElementById('nat-fork');
+  if (forkEl && fork) { forkEl.style.display=''; forkEl.textContent = fork; }
+
+  var nesteEl = document.getElementById('nat-neste');
+  if (nesteEl) nesteEl.style.display = '';
+
+  await lagreNatProgresjon(riktigSvar);
+}
+
+async function svarNatInput(knapp) {
+  var felt = document.getElementById('nat-input-felt');
+  if (!felt) return;
+  var svar = felt.value.trim().toLowerCase();
+  var riktigSvar = (knapp.dataset.riktig||'').toLowerCase();
+  var fork = knapp.dataset.fork;
+  var riktig = svar === riktigSvar || svar.includes(riktigSvar) || riktigSvar.includes(svar);
+
+  felt.disabled = true;
+  knapp.disabled = true;
+  felt.style.borderColor = riktig ? '#34d399' : '#f87171';
+
+  var forkEl = document.getElementById('nat-fork');
+  if (forkEl) {
+    forkEl.style.display = '';
+    forkEl.textContent = (riktig ? '✓ Riktig! ' : '✗ Feil. Riktig svar: '+knapp.dataset.riktig+'. ') + (fork||'');
+    forkEl.style.borderColor = riktig ? 'rgba(52,211,153,.2)' : 'rgba(248,113,113,.2)';
+  }
+
+  var nesteEl = document.getElementById('nat-neste');
+  if (nesteEl) nesteEl.style.display = '';
+
+  await lagreNatProgresjon(riktig);
+}
+
+async function lagreNatProgresjon(riktig) {
+  var elev = JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
+  if (!elev.id || !natAktivtEmne) return;
+  var emneId = natAktivtEmne.id;
+  var p = natProg[emneId] || {nivaa:1,besteNivaa:1,xp:0,streakR:0,streakF:0,totR:0,totF:0};
+
+  if (riktig) {
+    p.streakR = (p.streakR||0) + 1;
+    p.streakF = 0;
+    p.xp = (p.xp||0) + 10;
+    p.totR = (p.totR||0) + 1;
+    if (p.streakR >= 3 && p.nivaa < 5) {
+      p.nivaa++;
+      natAktivtNivaa = p.nivaa;
+      natCache[emneId+'_'+p.nivaa] = [];
+    }
+  } else {
+    p.streakF = (p.streakF||0) + 1;
+    p.streakR = 0;
+    p.totF = (p.totF||0) + 1;
+    if (p.streakF >= 2 && p.nivaa > 1) {
+      p.nivaa--;
+      natAktivtNivaa = p.nivaa;
+    }
+  }
+  p.besteNivaa = Math.max(p.besteNivaa||1, p.nivaa);
+  natProg[emneId] = p;
+
+  await sbFetch('/rest/v1/adaptiv_progresjon', {
+    method: 'POST',
+    headers: {'Prefer':'return=minimal','Content-Type':'application/json'},
+    body: JSON.stringify({
+      elev_id: elev.id,
+      emne: emneId,
+      nivaa: p.nivaa,
+      beste_nivaa: p.besteNivaa,
+      xp: p.xp,
+      streak_riktig: p.streakR,
+      streak_feil: p.streakF,
+      totalt_riktige: p.totR,
+      totalt_feil: p.totF
+    })
+  });
+  // Upsert via PATCH om POST feiler
+  sbFetch('/rest/v1/adaptiv_progresjon?elev_id=eq.'+elev.id+'&emne=eq.'+emneId, {
+    method: 'PATCH',
+    headers: {'Prefer':'return=minimal','Content-Type':'application/json'},
+    body: JSON.stringify({
+      nivaa: p.nivaa,
+      beste_nivaa: p.besteNivaa,
+      xp: p.xp,
+      streak_riktig: p.streakR,
+      streak_feil: p.streakF,
+      totalt_riktige: p.totR,
+      totalt_feil: p.totF
+    })
+  });
+}
+
 
 
 </script>
