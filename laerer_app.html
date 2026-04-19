@@ -578,6 +578,38 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 </main>
 </div>
 
+<!-- MODAL: PRØVERESULTATER -->
+<div class="modal-bg" id="modal-resultater" style="display:none;align-items:flex-start;padding-top:40px">
+  <div class="modal" style="max-width:680px;width:95%;max-height:85vh;overflow-y:auto">
+    <div class="modal-tittel">📊 Registrer prøveresultater</div>
+    <button class="modal-lukk" onclick="lukkResultatModal()">×</button>
+    <div id="res-emne-info" style="font-size:.8rem;color:var(--dim);margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="res-type" onchange="oppdaterResKolonner()" style="flex:1;min-width:150px">
+        <option value="karakter">Karakter (1–6)</option>
+        <option value="bestatt">Bestått / Ikke bestått</option>
+        <option value="poeng">Poeng</option>
+      </select>
+      <input type="number" id="res-maks" placeholder="Maks poeng" style="width:120px;display:none">
+    </div>
+    <table id="res-tabell" style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr>
+          <th style="text-align:left;padding:6px 8px;font-size:.78rem;border-bottom:1px solid var(--border2)">Elev</th>
+          <th id="res-kol-hd" style="text-align:center;padding:6px 8px;font-size:.78rem;border-bottom:1px solid var(--border2);width:120px">Karakter</th>
+          <th style="text-align:left;padding:6px 8px;font-size:.78rem;border-bottom:1px solid var(--border2)">Kommentar</th>
+        </tr>
+      </thead>
+      <tbody id="res-tbody"></tbody>
+    </table>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-prim" onclick="lagreAlleResultater()" style="flex:1">💾 Lagre alle resultater</button>
+      <button class="btn btn-sek" onclick="lukkResultatModal()">Avbryt</button>
+    </div>
+    <div id="res-melding" style="font-size:.8rem;margin-top:8px;min-height:18px"></div>
+  </div>
+</div>
+
 <!-- MODALER -->
 <div class="modal-bg" id="modal-ny-klasse">
   <div class="modal">
@@ -1379,11 +1411,133 @@ async function lastProveplan() {
           +'<td style="font-family:var(--font-m);font-size:.8rem;">'+datoVis(p.frist)+'</td>'
           +'<td style="font-size:.83rem;">'+(p.oppgaver?p.oppgaver.tittel.replace('Prøve: ',''):'')+'</td>'
           +'<td style="font-size:.8rem;color:var(--dim);">'+(k?k.navn:'')+'</td>'
-          +'<td style="display:flex;gap:4px">'          +'<button class="btn btn-sek btn-sm" onclick="byggProveForPlan(this)" data-id="'+p.id+'" data-emne="'+(p.oppgaver?encodeURIComponent(p.oppgaver.tittel.replace('Prøve: ','')):'')+'">🛠️ Bygg</button>'          +'<button class="btn btn-rod btn-sm" onclick="slettProve(\''+p.id+'\')">Slett</button>'          +'</td>'
+          +'<td style="display:flex;gap:4px">'
+          +'<button class="btn btn-sek btn-sm" onclick="byggProveForPlan(this)" data-id="'+p.id+'" data-emne="'+(p.oppgaver?encodeURIComponent(p.oppgaver.tittel.replace('Prøve: ','')):'')+'" style="white-space:nowrap">🛠️ Bygg</button>'
+          +'<button class="btn btn-prim btn-sm res-btn" data-tid="'+p.id+'" data-klasse="'+p.klasse_id+'" data-emne="'+(p.oppgaver?encodeURIComponent(p.oppgaver.tittel.replace('Prøve: ','')):'')+'" onclick="apneResultatPanel(this)" style="white-space:nowrap">📊 Resultater</button>'
+          +'<button class="btn btn-rod btn-sm" onclick="slettProve(\''+p.id+'\')" style="white-space:nowrap">Slett</button>'
+          +'</td>'
           +'</tr>';
       }).join('')
       + '</tbody></table>';
   } catch(e) { el.innerHTML='<div style="color:var(--rod);font-size:.83rem;">Feil ved lasting.</div>'; }
+}
+
+var aktivTildelingId = null;
+var aktivKlasseId = null;
+
+async function apneResultatPanel(knapp) {
+  aktivTildelingId = knapp.dataset.tid;
+  aktivKlasseId = knapp.dataset.klasse;
+  var emne = decodeURIComponent(knapp.dataset.emne || '');
+
+  var modal = $('modal-resultater');
+  var info = $('res-emne-info');
+  var tbody = $('res-tbody');
+  if (!modal || !tbody) return;
+
+  if (info) info.textContent = 'Prøve: ' + emne;
+  tbody.innerHTML = '<tr><td colspan="3" style="color:var(--dim);font-size:.82rem;padding:12px">Henter elever…</td></tr>';
+  modal.style.display = 'flex';
+
+  try {
+    var klasseElever = elever.filter(function(e){ return e.klasse_id === aktivKlasseId; });
+    if (!klasseElever.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--dim);padding:12px">Ingen elever i klassen.</td></tr>';
+      return;
+    }
+
+    // Hent eksisterende resultater
+    var ids = klasseElever.map(function(e){ return e.id; });
+    var ekst = await apiGet('/proveresultater?tildeling_id=eq.'+aktivTildelingId
+      +'&elev_id=in.('+ids.join(',')+')'
+      +'&select=elev_id,karakter,poeng,maks_poeng,kommentar');
+    var ekstMap = {};
+    if (Array.isArray(ekst)) ekst.forEach(function(r){ ekstMap[r.elev_id] = r; });
+
+    tbody.innerHTML = '';
+    klasseElever.sort(function(a,b){ return (a.fullt_navn||'').localeCompare(b.fullt_navn||''); });
+    klasseElever.forEach(function(elev) {
+      var e = ekstMap[elev.id] || {};
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border)';
+      tr.innerHTML = '<td style="padding:6px 8px;font-size:.83rem">' + (elev.fullt_navn||elev.kallenavn||'?') + '</td>'
+        + '<td style="padding:6px 8px;text-align:center">'
+        +   '<input class="res-verdi-input" data-elev="'+elev.id+'" type="text" placeholder="–"'
+        +   ' value="'+(e.karakter||e.poeng||'')+'"'
+        +   ' style="width:80px;text-align:center;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:.85rem">'
+        + '</td>'
+        + '<td style="padding:6px 8px">'
+        +   '<input type="text" placeholder="Kommentar (valgfritt)"'
+        +   ' data-komm="'+elev.id+'" value="'+(e.kommentar||'')+'"'
+        +   ' style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:.82rem">'
+        + '</td>';
+      tbody.appendChild(tr);
+    });
+  } catch(err) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--rod);padding:12px">Feil: '+err.message+'</td></tr>';
+  }
+}
+
+function oppdaterResKolonner() {
+  var type = $('res-type').value;
+  var maks = $('res-maks');
+  var hd = $('res-kol-hd');
+  if (maks) maks.style.display = type === 'poeng' ? '' : 'none';
+  if (hd) hd.textContent = type === 'karakter' ? 'Karakter' : type === 'bestatt' ? 'Bestått?' : 'Poeng';
+}
+
+async function lagreAlleResultater() {
+  var meld = $('res-melding');
+  var type = $('res-type').value;
+  var maks = parseInt(($('res-maks')||{}).value||'0') || null;
+  if (meld) { meld.style.color = 'var(--dim)'; meld.textContent = 'Lagrer…'; }
+
+  var inputs = document.querySelectorAll('.res-verdi-input');
+  var rader = [];
+  inputs.forEach(function(inp) {
+    var verdi = inp.value.trim();
+    if (!verdi || verdi === '–') return;
+    var elevId = inp.dataset.elev;
+    var kommInp = document.querySelector('[data-komm="'+elevId+'"]');
+    var komm = kommInp ? kommInp.value.trim() : '';
+    var rad = {
+      tildeling_id: aktivTildelingId,
+      elev_id: elevId,
+      laerer_id: LID || null,
+      kommentar: komm || null,
+    };
+    if (type === 'poeng') {
+      rad.poeng = parseInt(verdi) || null;
+      rad.maks_poeng = maks;
+    } else {
+      rad.karakter = verdi;
+    }
+    rader.push(rad);
+  });
+
+  if (!rader.length) { if(meld) meld.textContent = 'Ingen resultater å lagre.'; return; }
+
+  try {
+    var res = await apiFetch('/proveresultater', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rader)
+    });
+    if (res.ok) {
+      if (meld) { meld.style.color = 'var(--gron)'; meld.textContent = '✅ ' + rader.length + ' resultater lagret!'; }
+      setTimeout(lukkResultatModal, 1500);
+    } else {
+      throw new Error('Status ' + res.status);
+    }
+  } catch(e) {
+    if (meld) { meld.style.color = 'var(--rod)'; meld.textContent = 'Feil: ' + e.message; }
+  }
+}
+
+function lukkResultatModal() {
+  var m = $('modal-resultater');
+  if (m) m.style.display = 'none';
+  aktivTildelingId = null;
 }
 
 async function slettProve(id) {
