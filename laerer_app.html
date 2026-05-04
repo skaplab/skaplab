@@ -336,9 +336,9 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <button class="nav-link" onclick="visside('tildel')"><span>📤</span> Tildel oppgave</button>
   <button class="nav-link" id="nav-adaptiv" onclick="visside('adaptiv');atFyllKlasse()"><span>🧠</span> Adaptiv trener</button>
   <button class="nav-link" onclick="visside('leaderboard');visLeaderboard()"><span>🏆</span> Leaderboard</button>
-  <button class="nav-link" onclick="visside('ferdighetskart')"><span>🗺️</span> Ferdighetskart</button>
-  <button class="nav-link" onclick="visside('malark')"><span>📋</span> Målark</button>
-  <button class="nav-link" onclick="visside('vurder')"><span>💬</span> Vurderinger</button>
+  <button class="nav-link" onclick="visside('ferdighetskart');fyllDropdowns()"><span>🗺️</span> Ferdighetskart</button>
+  <button class="nav-link" onclick="visside('malark');fyllDropdowns()"><span>📋</span> Målark</button>
+  <button class="nav-link" onclick="visside('vurder');vrdLastElever()"><span>💬</span> Vurderinger</button>
   <button class="nav-link" onclick="visside('proveplan')"><span>📝</span> Prøveplan</button>
   <button class="nav-link" onclick="visside('veiledning')"><span>📚</span> Lærerveiledning</button>
   <button class="nav-link" onclick="visside('aarsplan');initAarsplan()"><span>📅</span> Årsplan</button>
@@ -702,7 +702,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
     <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-bla" onclick="apEksporter()">📤 Vis for elever</button>
-      <button class="btn btn-gron" onclick="apLastNedDocx()">📄 Last ned PDF</button>
+      <button class="btn btn-gron" onclick="apLastNedDocx()">🖨️ Skriv ut / PDF</button>
       <button class="btn" onclick="apExpandAll()" style="background:rgba(255,255,255,.07)">↕ Utvid alle</button>
       <button class="btn" onclick="apLeggTilUke()" style="background:rgba(52,211,153,.12);color:var(--gron);border:1px solid rgba(52,211,153,.2)">＋ Legg til uke</button>
       <button class="btn" onclick="apDelMedKlasse()" style="background:rgba(96,165,250,.1);color:var(--bla);border:1px solid rgba(96,165,250,.2)">📤 Del med klasse</button>
@@ -876,6 +876,28 @@ function visside(id) {
   document.querySelectorAll('.nav-link').forEach(function(b){ b.classList.remove('ak'); });
   var el = $('side-'+id);
   if (el) el.classList.add('ak');
+}
+
+function snack(tekst, type) {
+  var eks = document.getElementById('snack-boks');
+  if (eks) eks.remove();
+  var div = document.createElement('div');
+  div.id = 'snack-boks';
+  var farge = type === 'err' ? '#dc2626' : type === 'warn' ? '#d97706' : '#16a34a';
+  div.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);'
+    + 'background:' + farge + ';color:#fff;padding:11px 22px;border-radius:10px;'
+    + 'font-size:.9rem;font-weight:500;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);'
+    + 'max-width:90vw;text-align:center;pointer-events:none;'
+    + 'animation:snackIn .2s ease;';
+  div.textContent = tekst;
+  if (!document.getElementById('snack-style')) {
+    var st = document.createElement('style');
+    st.id = 'snack-style';
+    st.textContent = '@keyframes snackIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(div);
+  setTimeout(function(){ if(div.parentNode){ div.style.opacity='0'; div.style.transition='opacity .3s'; setTimeout(function(){div.remove();},320); } }, 3200);
 }
 
 function apneModal(id) { $('modal-'+id).classList.add('vis'); }
@@ -1385,7 +1407,7 @@ function fkSettScore(btn, ferdighet, score) {
 
 async function fkLagreAlle(stille) {
   var elevId = $('fk-elev').value;
-  if (!elevId) { if(!stille) alert('Velg elev først.'); return; }
+  if (!elevId) { if(!stille) snack('Velg elev først.', 'warn'); return; }
   if (!Object.keys(FKDATA).length) return;
   try {
     await apiDelete('/ferdighetsvurdering?elev_id=eq.'+elevId+'&laerer_id=eq.'+LID);
@@ -1397,8 +1419,8 @@ async function fkLagreAlle(stille) {
       headers:{'apikey':SKEY,'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json','Prefer':'return=minimal'},
       body: JSON.stringify(poster)
     });
-    if (!stille) alert(res.ok ? '✅ '+poster.length+' scores lagret.' : 'Feil ved lagring.');
-  } catch(e) { if(!stille) alert('Feil: '+e.message); }
+    if (!stille) snack(res.ok ? '✅ '+poster.length+' scores lagret.' : 'Feil ved lagring.', res.ok ? 'ok' : 'err');
+  } catch(e) { if(!stille) snack('Feil: '+e.message, 'err'); }
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1467,7 +1489,7 @@ async function maLagreKM(km) {
   var elevId = $('ma-elev').value;
   if (!elevId) return;
   var v = maVurderinger[km] || {nivaa:'',merknad:''};
-  if (!v.nivaa) { alert('Velg nivå (Høy/Mid/Lav) før du lagrer.'); return; }
+  if (!v.nivaa) { if (meld) { meld.style.color='var(--rod)'; meld.textContent='Velg nivå (Høy/Mid/Lav) før du lagrer.'; } else snack('Velg nivå (Høy/Mid/Lav) før du lagrer.', 'warn'); return; }
   try {
     if (v.id) {
       await apiPatch('/vurderinger?id=eq.'+v.id, {nivaa:v.nivaa, merknad:v.merknad});
@@ -1478,13 +1500,12 @@ async function maLagreKM(km) {
         if (ny&&ny.id) maVurderinger[km].id = ny.id;
       }
     }
-  } catch(e) { alert('Feil: '+e.message); }
+  } catch(e) { snack('Feil: '+e.message, 'err'); }
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════════
    PRØVEPLAN
-══════════════════════════════════════════════════════════════════ */
-async function byggProveForPlan(knapp) {
+═══════════
   var planId = knapp.dataset.id;
   var emne   = knapp.dataset.emne || '';
   var url = 'provebygger.html?plan=' + planId + '&emne=' + emne;
@@ -2235,7 +2256,14 @@ async function genererForesattlenke() {
     navigator.clipboard.writeText(lenke).then(function() {
       snack('Foresattlenke kopiert for ' + elevNavn + ' – send den til foresatte!', 'ok');
     }).catch(function() {
-      prompt('Kopier lenken:', lenke);
+      var div = document.createElement('div');
+      div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+      div.innerHTML = '<div style="background:var(--bg,#0f172a);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:24px;width:100%;max-width:480px;">'
+        + '<div style="font-weight:500;margin-bottom:12px;color:var(--color-text-primary,#f1f5f9)">Kopier foresattlenken manuelt:</div>'
+        + '<textarea readonly onclick="this.select()" style="width:100%;height:72px;font-size:.82rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--color-text-primary,#f1f5f9);resize:none;box-sizing:border-box;">' + lenke + '</textarea>'
+        + '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;padding:8px 18px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.88rem;">Lukk</button>'
+        + '</div>';
+      document.body.appendChild(div);
     });
   } catch(e) {
     snack('Feil: ' + e.message, 'err');
@@ -2299,7 +2327,7 @@ async function visLeaderboard() {
   } catch(e) { console.warn('visLeaderboard:', e); }
 }
 
-init();
+(async function(){ await init(); })();
 
 
 // ══════════════════════════════════════════════════════════════
@@ -2413,6 +2441,7 @@ function apRender() {
   var ukeMed = {};
   plan.forEach(function(r) {
     if (r.trinn !== trinn || r.uke > maxUke) return;
+    if (r.tema === 'Friuke' || r.tema === 'Buffer' || r.tema === 'Avslutning') return;
     if (!ukeMed[r.uke]) ukeMed[r.uke] = [];
     ukeMed[r.uke].push(r);
   });
@@ -2590,7 +2619,7 @@ function apLeggTilUke() {
   var plan  = fag === 'matte' ? AP_MATTE : AP_NAT;
   var maxUke = Math.max.apply(null, plan.filter(function(r){return r.trinn===trinn;}).map(function(r){return r.uke;})) || 0;
   // Ingen ny uke trengs - alle 1-38 vises. Åpne bare nestemann tom.
-  alert('Alle uker 1–' + (trinn===10?30:38) + ' vises allerede. Klikk «+ Teori» i en tom uke for å legge til innhold.');
+  snack('Alle uker 1–' + (trinn===10?30:38) + ' vises allerede. Klikk «+ Teori» i en tom uke for å legge til innhold.', 'warn');
 }
 
 function apLeggTilOkt(fag, trinn, planUke, type) {
@@ -2721,34 +2750,49 @@ function apLeggTilOktBtn(btn) {
   var tema  = i_uke.length > 0 ? i_uke[0].tema : 'Annet';
   var lbl   = {T:'Teoriøkt', O:'Mengdetrening', P:'Praktisk aktivitet', V:'Prøve'};
 
-  // Spør om tittel med prompt
-  var nyTittel = prompt('Tittel for ny ' + lbl[type] + ' (uke ' + pu + '):', lbl[type]);
-  if (nyTittel === null) return; // avbrutt
-  if (!nyTittel.trim()) nyTittel = lbl[type] + ' – uke ' + pu;
+  // Vis inline input-modal for tittel og ressurs
+  var modalDiv = document.createElement('div');
+  modalDiv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modalDiv.innerHTML = '<div style="background:var(--bg,#0f172a);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:24px;width:100%;max-width:420px;">'
+    + '<div style="font-weight:500;font-size:1rem;margin-bottom:16px;color:var(--color-text-primary,#f1f5f9)">Legg til ' + lbl[type] + ' – uke ' + pu + '</div>'
+    + '<label style="display:block;font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:4px;">Tittel</label>'
+    + '<input id="ap-modal-tittel" type="text" value="' + lbl[type] + '" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--color-text-primary,#f1f5f9);font-size:.88rem;box-sizing:border-box;margin-bottom:12px;">'
+    + '<label style="display:block;font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:4px;">Ressurs-fil (valgfritt, f.eks. matte_tall_potenser.html)</label>'
+    + '<input id="ap-modal-ressurs" type="text" placeholder="la stå tomt om ingen" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--color-text-primary,#f1f5f9);font-size:.88rem;box-sizing:border-box;margin-bottom:16px;">'
+    + '<div style="display:flex;gap:10px;">'
+    + '<button id="ap-modal-ok" style="flex:1;padding:9px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.88rem;font-weight:500;">Legg til</button>'
+    + '<button id="ap-modal-avbr" style="padding:9px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.7);cursor:pointer;font-size:.88rem;">Avbryt</button>'
+    + '</div></div>';
+  document.body.appendChild(modalDiv);
+  document.getElementById('ap-modal-tittel').focus();
+  document.getElementById('ap-modal-avbr').onclick = function(){ modalDiv.remove(); };
+  document.getElementById('ap-modal-ok').onclick = function(){
+    var nyTittel = document.getElementById('ap-modal-tittel').value.trim() || lbl[type] + ' – uke ' + pu;
+    var nyRessurs = document.getElementById('ap-modal-ressurs').value.trim();
+    modalDiv.remove();
 
-  var nyRessurs = prompt('Ressurs-fil (valgfritt, f.eks. matte_tall_potenser.html):', '') || '';
+    plan.push({
+      trinn:   trinn,
+      uke:     pu,
+      nr:      nr,
+      tema:    tema,
+      type:    type,
+      tittel:  nyTittel.trim(),
+      ressurs: nyRessurs.trim(),
+      km:      ''
+    });
 
-  plan.push({
-    trinn:   trinn,
-    uke:     pu,
-    nr:      nr,
-    tema:    tema,
-    type:    type,
-    tittel:  nyTittel.trim(),
-    ressurs: nyRessurs.trim(),
-    km:      ''
-  });
-
-  apRender();
-  // Åpne uka
-  setTimeout(function() {
-    var el = document.querySelector('[data-pu="' + pu + '"] .ap-uke-body');
-    if (el) {
-      el.style.display = '';
-      var tb = el.closest('.ap-uke').querySelector('.ap-uke-toggle');
-      if (tb) tb.textContent = '▴';
-    }
-  }, 60);
+    apRender();
+    // Åpne uka
+    setTimeout(function() {
+      var el = document.querySelector('[data-pu="' + pu + '"] .ap-uke-body');
+      if (el) {
+        el.style.display = '';
+        var tb = el.closest('.ap-uke').querySelector('.ap-uke-toggle');
+        if (tb) tb.textContent = '▴';
+      }
+    }, 60);
+  }; // lukk ap-modal-ok.onclick
 }
 
 function apRedigerEl(el) {
@@ -2913,7 +2957,7 @@ function apFyllKlasser() {
 
 function apDelMedKlasse() {
   var klasseId = document.getElementById('ap-klasse') ? document.getElementById('ap-klasse').value : null;
-  if (!klasseId) { alert('Velg en klasse først.'); return; }
+  if (!klasseId) { snack('Velg en klasse først.', 'warn'); return; }
 
   var fag   = document.getElementById('ap-fag').value;
   var trinn = parseInt(document.getElementById('ap-trinn').value);

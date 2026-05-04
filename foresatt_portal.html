@@ -124,6 +124,22 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 
   <div id="portal" style="display:none">
 
+    <!-- ONBOARDING OVERLAY -->
+    <div id="fp-onb" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center;padding:12px">
+      <div style="background:#0b0f1a;border:1px solid rgba(255,255,255,.12);border-radius:18px;max-width:400px;width:100%;padding:28px 24px;position:relative">
+        <div id="fp-onb-steg" style="display:flex;gap:6px;margin-bottom:22px">
+          <div class="fp-prikk ak" data-s="0" style="height:4px;flex:1;border-radius:2px;background:#3b82f6;transition:background .3s"></div>
+          <div class="fp-prikk" data-s="1" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+          <div class="fp-prikk" data-s="2" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+        </div>
+        <div id="fp-onb-innhold"></div>
+        <div style="display:flex;gap:10px;margin-top:22px">
+          <button id="fp-onb-forrige" onclick="fpOnbNav(-1)" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.7);cursor:pointer;font-size:.88rem">← Forrige</button>
+          <button id="fp-onb-neste" onclick="fpOnbNav(1)" style="flex:2;padding:10px;border-radius:10px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.88rem;font-weight:500">Neste →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ELEV-HEADER -->
     <div class="elev-header">
       <div class="elev-avatar">🎓</div>
@@ -368,6 +384,12 @@ async function init() {
     document.getElementById('laster').style.display = 'none';
     document.getElementById('feil-side').style.display = '';
     console.error('Foresattportal feil:', e);
+    // Vis snack-melding med feildetalj
+    var snkD = document.createElement('div');
+    snkD.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:11px 22px;border-radius:10px;font-size:.85rem;font-weight:500;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);max-width:90vw;text-align:center';
+    snkD.textContent = 'Feil ved lasting: ' + (e.message || 'ukjent feil');
+    document.body.appendChild(snkD);
+    setTimeout(function(){ snkD.remove(); }, 5000);
   }
 }
 
@@ -377,7 +399,16 @@ async function init() {
     navigator.clipboard.writeText(lenke).then(function() {
       var btn = document.querySelector('[onclick="kopierPortalLenke()"]');
       if (btn) { btn.textContent = '✅ Kopiert!'; setTimeout(function(){ btn.textContent = '📋 Kopier lenke'; }, 2000); }
-    }).catch(function(){ prompt('Kopier denne lenken:', lenke); });
+    }).catch(function(){
+      var md = document.createElement('div');
+      md.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+      md.innerHTML = '<div style="background:#0f172a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:22px;width:100%;max-width:420px">'
+        + '<div style="font-size:.88rem;font-weight:500;margin-bottom:10px;color:#f1f5f9">Kopier lenken manuelt:</div>'
+        + '<textarea readonly onclick="this.select()" style="width:100%;height:64px;font-size:.78rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f1f5f9;resize:none;box-sizing:border-box">' + lenke + '</textarea>'
+        + '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
+        + '</div>';
+      document.body.appendChild(md);
+    });
   }
 
   function visPortalLenke() {
@@ -421,7 +452,65 @@ async function init() {
       +'</div>';
   }
 
-init();
+(async function(){ await init(); })();
+  var FP_ONB_STEG = 0;
+  var FP_ONB_INNHOLD = [
+    {
+      ikon: '🏆',
+      tittel: 'Velkommen til foresattportalen',
+      tekst: 'Her ser du barnets fremgang i SkapLab. Portalen oppdateres automatisk når barnet jobber. Du trenger ingen konto – denne lenken er din personlige tilgang.'
+    },
+    {
+      ikon: '⚡',
+      tittel: 'XP og streak forklart',
+      tekst: 'XP (erfaringspoeng) samles opp når barnet løser oppgaver. Streak viser hvor mange dager på rad barnet har vært aktiv. Jo høyere streak, jo bedre vaner!'
+    },
+    {
+      ikon: '🧠',
+      tittel: 'Adaptiv trener og prøver',
+      tekst: 'Den adaptive treneren tilpasser oppgaver til barnets nivå. Du ser hvilke emner som er aktive og hva læreren har tilbakemeldt. Kommende prøver vises i planen nedenfor.'
+    }
+  ];
+
+  function fpOnbVis() {
+    if (localStorage.getItem('skaplab_fp_onb_vist')) return;
+    var el = document.getElementById('fp-onb');
+    if (!el) return;
+    el.style.display = 'flex';
+    fpOnbOppdater();
+  }
+
+  function fpOnbOppdater() {
+    var s = FP_ONB_STEG;
+    var steg = FP_ONB_INNHOLD[s];
+    var innholdEl = document.getElementById('fp-onb-innhold');
+    if (!innholdEl) return;
+    innholdEl.innerHTML = '<div style="font-size:2.2rem;text-align:center;margin-bottom:14px">' + steg.ikon + '</div>'
+      + '<div style="font-size:1.05rem;font-weight:500;color:#f1f5f9;margin-bottom:10px;text-align:center">' + steg.tittel + '</div>'
+      + '<div style="font-size:.88rem;color:rgba(255,255,255,.65);line-height:1.65;text-align:center">' + steg.tekst + '</div>';
+    document.querySelectorAll('.fp-prikk').forEach(function(p) {
+      p.style.background = parseInt(p.dataset.s) === s ? '#3b82f6' : 'rgba(255,255,255,.2)';
+    });
+    var forrige = document.getElementById('fp-onb-forrige');
+    var neste = document.getElementById('fp-onb-neste');
+    if (forrige) forrige.style.visibility = s === 0 ? 'hidden' : 'visible';
+    if (neste) neste.textContent = s === FP_ONB_INNHOLD.length - 1 ? '✅ Kom i gang' : 'Neste →';
+  }
+
+  function fpOnbNav(retning) {
+    FP_ONB_STEG += retning;
+    if (FP_ONB_STEG >= FP_ONB_INNHOLD.length) {
+      localStorage.setItem('skaplab_fp_onb_vist', '1');
+      var el = document.getElementById('fp-onb');
+      if (el) el.style.display = 'none';
+      return;
+    }
+    FP_ONB_STEG = Math.max(0, FP_ONB_STEG);
+    fpOnbOppdater();
+  }
+
+  // Vis onboarding 800ms etter at portalen lastes (gir data tid til å vises)
+  setTimeout(fpOnbVis, 800);
 </script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 <title>SkapLab – Prøvebygger</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-<script src="docx.umd.cjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
 <style>
 :root{
   --bg:#0d1117;--surf:#161c2a;--card:#1c2336;--card2:#222a40;
@@ -903,7 +903,15 @@ function sav(type){
   }else if(type==='adaptivbank'){
     const tx=document.getElementById('ab-la').value.trim();
     if(!tx){snack('Velg en oppgave fra listen','err');return;}
-    o.tittel=tx.slice(0,70);o.tekst=tx;
+    const eb=document.getElementById('ab-eb');
+    const rawAlts=eb?eb.dataset.alts:'[]';
+    const parsedAlts=JSON.parse(rawAlts||'[]');
+    const riktig=eb?eb.dataset.riktig||'':'';
+    const oppgtype=eb?eb.dataset.oppgtype||'open':'open';
+    o.tittel=tx.slice(0,70);o.tekst=tx;o.sporsmal=tx;
+    if(oppgtype==='mc'&&parsedAlts.length>=2){
+      o.alts=parsedAlts;o.riktig=riktig;
+    }
     o.linjer=+document.getElementById('ab-l').value;o.poeng=document.getElementById('ab-p').value;
   }
   if(S.editIdx!==null){o.id=S.oppgaver[S.editIdx].id;S.oppgaver[S.editIdx]=o;snack('Oppgave oppdatert ✓','ok');}
@@ -1016,8 +1024,10 @@ async function fetchAi(){
     } else {
       document.getElementById('ai-list').innerHTML=
         '<div style="color:var(--dim);font-size:.82rem;padding:12px;line-height:1.6">'
-        +'📭 Ingen oppgaver i databasen for KM: '+kmKoder.join(', ')+'.<br>'
-        +'Kjør <code>generer_oppgavebank.py</code> for å fylle opp databasen.'
+        +'<strong style="color:var(--text)">📭 Ingen oppgaver funnet</strong><br>'
+        +'Databasen har ingen oppgaver for KM: '+kmKoder.join(', ')+'.<br>'
+        +'<span style="opacity:.7">AI-generering er ikke konfigurert (WORKER_URL mangler). '
+        +'Legg til oppgaver manuelt i steg 3, eller sett opp en Cloudflare Worker og oppdater WORKER_URL i provebygger.html.</span>'
         +'</div>';
     }
   }catch(e){
@@ -1080,7 +1090,7 @@ async function delProve(){
   var btn=document.getElementById('btn-del-send');
   btn.textContent='Deler…';btn.disabled=true;
   try{
-    var elev=JSON.parse(localStorage.getItem('skaplab_laerer')||localStorage.getItem('skaplab_elev')||'{}');
+    var elev=JSON.parse(localStorage.getItem('skaplab_laerer_v2')||localStorage.getItem('skaplab_laerer')||localStorage.getItem('skaplab_elev')||'{}');
     var oUB=S.oppgaver.map(function(o){return o.bilde?Object.assign({},o,{bilde:'[bilde]'}):o;});
     var payload={
       laerer_id:elev.id||null,
@@ -1236,7 +1246,14 @@ async function lastBibliotek(){
         navigator.clipboard.writeText(url).then(function(){
           snack('Lenke kopiert til utklippstavlen ✓','ok');
         }).catch(function(){
-          prompt('Kopier denne lenken:',url);
+          var md=document.createElement('div');
+          md.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+          md.innerHTML='<div style="background:var(--bg2,#161b22);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px;width:100%;max-width:460px">'
+            +'<div style="font-size:.88rem;font-weight:500;margin-bottom:10px;color:var(--text,#e6edf3)">Kopier delelenken manuelt:</div>'
+            +'<textarea readonly onclick="this.select()" style="width:100%;height:68px;font-size:.78rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--text,#e6edf3);resize:none;box-sizing:border-box">'+url+'</textarea>'
+            +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
+            +'</div>';
+          document.body.appendChild(md);
         });
       });
       el.appendChild(div);
@@ -1305,6 +1322,11 @@ async function fetchAdaptivBank(){
         document.getElementById('ab-la').value=item.oppgave||'';
         document.getElementById('ab-eb').style.display='';
         document.getElementById('btn-sab').disabled=false;
+        // Lagre alts/riktig/type for bruk ved lagring
+        var eb=document.getElementById('ab-eb');
+        eb.dataset.alts=JSON.stringify(item.alts||[]);
+        eb.dataset.riktig=item.riktig||item.svar||'';
+        eb.dataset.oppgtype=item.type||'open';
       };
       listEl.appendChild(div);
     });
@@ -1489,7 +1511,7 @@ function byggParagrafMedLatex(tekst, opts) {
 
 async function lastNed(){
   if(!S.oppgaver.length){snack('Ingen oppgaver','err');return;}
-  if(!window.docx){snack('docx.umd.cjs ikke lastet – sjekk at filen ligger i samme mappe','err');return;}
+  if(!window.docx){snack('Word-biblioteket laster... vent litt og prøv igjen','err');return;}
   const btn=document.getElementById('btn-d');
   btn.textContent='⏳ Bygger dokument...';btn.disabled=true;
 
@@ -1575,10 +1597,24 @@ async function lastNed(){
             ]
           }));
         });
-      }else if(o.type==='ai'){
+      }else if(o.type==='ai'||o.type==='adaptivbank'){
         mkHd();
         if(o.tekst)ch.push(new Paragraph({spacing:{after:100},children:[new TextRun({text:o.tekst,size:24,font:'Arial'})]}));
-        mkLinjer(o.linjer);
+        if(o.alts&&o.alts.length>=2){
+          (o.alts).forEach((alt,ai)=>{
+            const bk=String.fromCharCode(65+ai);
+            ch.push(new Paragraph({
+              spacing:{after:70},indent:{left:360},
+              children:[
+                new TextRun({text:'☐  ',size:24,font:'Arial'}),
+                new TextRun({text:bk+')  ',bold:true,size:24,font:'Arial'}),
+                new TextRun({text:alt,size:24,font:'Arial'}),
+              ]
+            }));
+          });
+        }else{
+          mkLinjer(o.linjer);
+        }
       }
       ch.push(new Paragraph({spacing:{after:140},children:[]}));
     }
@@ -1630,10 +1666,13 @@ async function lagreSB(){
   const btn=document.getElementById('btn-s'),orig=btn.textContent;
   btn.textContent='💾 Lagrer...';btn.disabled=true;
   try{
-    const elev=JSON.parse(localStorage.getItem('skaplab_elev')||'{}');
+    // Hent laerer-ID fra session (prøv ny nøkkel, deretter gammel som fallback)
+    const _lRaw=JSON.parse(localStorage.getItem('skaplab_laerer_v2')||localStorage.getItem('skaplab_laerer')||'{}');
+    const _lId=(_lRaw.user&&_lRaw.user.id)||_lRaw.id||null;
+    const _lTok=_lRaw.access_token||SB_KEY;
     const oUB=S.oppgaver.map(o=>o.bilde?{...o,bilde:'[bilde]'}:o);
     const payload={
-      laerer_id:elev.id||null,tittel:S.tittel||'Uten tittel',
+      laerer_id:_lId,tittel:S.tittel||'Uten tittel',
       fag:S.fag,klasse:S.klasse,tid:S.tid,info:S.info,
       km_koder:S.km.map(k=>k.k).join(','),
       oppgaver:JSON.stringify(oUB),antall:S.oppgaver.length,
@@ -1641,7 +1680,7 @@ async function lagreSB(){
     };
     const res=await fetch(`${SB_URL}/rest/v1/prover`,{
       method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+_lTok,'Prefer':'return=minimal'},
       body:JSON.stringify(payload)
     });
     if(res.status===201||res.ok){snack('Prøven er lagret ✓','ok');}

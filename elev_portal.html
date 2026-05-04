@@ -384,6 +384,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .onb-tittel{font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--text,#e2e8f0);}
 .onb-tekst{font-size:.88rem;line-height:1.6;color:rgba(255,255,255,.65);}
 .onb-tips{margin-top:12px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);border-radius:8px;padding:10px 12px;font-size:.8rem;color:rgba(96,165,250,.9);}
+
+/* ── ELEVPORTAL ÅRSPLAN ─── */
+.ep-uke-blokk { background:var(--bg2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+.ep-kommende { opacity:.55; }
+.ep-uke-blokk summary::-webkit-details-marker { display:none; }
+
+/* ── ELEVPORTAL ÅRSPLAN ─── */
+.ep-uke-blokk { background:var(--bg2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; overflow:hidden; }
+.ep-kommende { opacity:.55; }
+.ep-uke-blokk summary::-webkit-details-marker { display:none; }
 </style>
 </head>
 <body>
@@ -454,6 +464,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <button class="fane adaptiv" onclick="visFane('adaptiv',this)">🧠 Matte</button>
       <button class="fane nat-adaptiv" onclick="visFane('nat-adaptiv',this)">🔬 Nat. adaptiv</button>
       <button class="fane vurder" onclick="visFane('vurder',this)">📋 Egenvurd.</button>
+      <button class="fane aarsplan" onclick="visFane('aarsplan',this);epLastAarsplan()">📅 Årsplan</button>
       <button class="fane tilbakemelding" onclick="visFane('tilbakemelding',this)">💬 Meldinger</button>
     </div>
 
@@ -492,6 +503,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
         <div class="karusell-tittel" style="margin-bottom:12px">💬 Tilbakemeldinger fra lærer</div>
         <div id="ep-vurd-innhold"><div style="color:var(--dim);font-size:.84rem">Laster…</div></div>
       </div>
+
+<!-- ÅRSPLAN-FANE -->
+<div id="fane-aarsplan" style="display:none;padding:16px 0">
+  <div style="font-family:var(--font-h);font-size:1.1rem;font-weight:800;margin-bottom:6px;color:var(--text)">📅 Årsplan</div>
+  <div style="font-size:.82rem;color:var(--dim);margin-bottom:14px" id="ep-ap-info">Læreren din har ikke delt årsplan ennå.</div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <select id="ep-ap-fag" onchange="epLastAarsplan()" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:7px;font-size:.82rem">
+      <option value="matte">📐 Matematikk</option>
+      <option value="nat">🔬 Naturfag</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--dim)">
+      <input type="checkbox" id="ep-ap-kun-denne-uka" onchange="epVisAarsplan()"> Vis kun denne uka
+    </label>
+  </div>
+  <div id="ep-aarsplan-innhold"></div>
+</div>
       <div style="margin-top:28px">
         <div class="karusell-tittel" style="margin-bottom:12px">🎖️ Badges</div>
         <div id="ep-badge-innhold" style="display:flex;gap:8px;flex-wrap:wrap"><div style="color:var(--dim);font-size:.84rem">Ingen badges ennå.</div></div>
@@ -1020,7 +1047,11 @@ async function init() {
     var _tx = _xd.reduce(function(s,r){return s+(r.xp||0);},0);
     var _ms = _xd.length ? Math.max.apply(null,_xd.map(function(r){return r.streak_riktig||0;})) : 0;
     window._oppdaterVelkomstXP(_tx, _ms);
-  } catch(e){console.warn('XP-henting feilet:',e);}
+  } catch(e){
+    console.warn('XP-henting feilet:',e);
+    // Graceful: vis 0-verdier i stedet for å krasje
+    if (typeof window._oppdaterVelkomstXP === 'function') window._oppdaterVelkomstXP(0, 0);
+  }
 
   document.getElementById('laster').style.display = 'none';
   document.getElementById('portal').style.display = 'block';
@@ -1289,7 +1320,7 @@ function visFane(fane, el) {
   document.querySelectorAll('.fane').forEach(function(f){f.classList.remove('ak');});
   if (el) el.classList.add('ak');
   // Vis riktig panel
-  ['matte','natur','prog','alle','adaptiv','vurder','fk'].forEach(function(f){
+  ['matte','natur','prog','alle','adaptiv','nat-adaptiv','vurder','tilbakemelding','aarsplan','fk'].forEach(function(f){
     var p = document.getElementById('fane-'+f);
     if (p) p.style.display = f===fane ? 'block' : 'none';
   });
@@ -1350,7 +1381,16 @@ async function visForesattlenke() {
       navigator.clipboard.writeText(lenke).then(function() {
         modal.querySelector('#kopi-btn').textContent = '✅ Kopiert!';
         setTimeout(function(){ modal.querySelector('#kopi-btn').textContent = '📋 Kopier lenke'; }, 2000);
-      }).catch(function(){ prompt('Kopier lenken:', lenke); });
+      }).catch(function(){
+        var md = document.createElement('div');
+        md.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+        md.innerHTML = '<div style="background:var(--bg2,#0b0f1a);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:22px;width:100%;max-width:440px">'
+          + '<div style="font-size:.88rem;font-weight:500;margin-bottom:10px;color:var(--text,#f1f5f9)">Kopier foresattlenken manuelt:</div>'
+          + '<textarea readonly onclick="this.select()" style="width:100%;height:64px;font-size:.78rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:var(--text,#f1f5f9);resize:none;box-sizing:border-box">' + lenke + '</textarea>'
+          + '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
+          + '</div>';
+        document.body.appendChild(md);
+      });
     });
 
     modal.querySelector('#lukk-foresatt-modal').addEventListener('click', function(){ modal.remove(); });
@@ -1358,14 +1398,18 @@ async function visForesattlenke() {
     document.body.appendChild(modal);
 
   } catch(e) {
-    alert('Feil: ' + e.message);
+    var errDiv = document.createElement('div');
+    errDiv.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:11px 22px;border-radius:10px;font-size:.9rem;font-weight:500;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.25);max-width:90vw;text-align:center';
+    errDiv.textContent = 'Feil: ' + e.message;
+    document.body.appendChild(errDiv);
+    setTimeout(function(){ errDiv.remove(); }, 3500);
   } finally {
     if (btn) { btn.textContent = '👨‍👩‍👦 Foresatte'; btn.disabled = false; }
   }
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
-init();
+(async function(){ await init(); })();
 
 function epVisBadges(xp,st){
   try{
@@ -1406,6 +1450,9 @@ async function visVurderinger(){
 
 
 </script>
+<!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
+
+
 <!-- (c) 2025 SkapLab - Tommy Lykke Nordahl - Alle rettigheter forbeholdt -->
 <script>
 
@@ -1857,19 +1904,22 @@ function renderAktivitetListe(antall) {
 /* ── FANER ───────────────────────────────────────────────────── */
 function visFane(fane, el) {
   document.querySelectorAll('.fane').forEach(function(f){f.classList.remove('ak');});
-  el.classList.add('ak');
-  ['matte','natur','prog','alle','adaptiv','nat-adaptiv','vurder','tilbakemelding'].forEach(function(f) {
+  if (el) el.classList.add('ak');
+  aktiveFane = fane;
+  ['matte','natur','prog','alle','adaptiv','nat-adaptiv','vurder','tilbakemelding','aarsplan','fk'].forEach(function(f) {
     var p = document.getElementById('fane-'+f);
     if (p) p.style.display = f===fane ? 'block' : 'none';
   });
   if (fane === 'vurder') setTimeout(function(){ if(typeof byggEgenvurdering==='function') byggEgenvurdering(); }, 50);
   if (fane === 'adaptiv') setTimeout(function(){ if(typeof initAdaptivTrener==='function') initAdaptivTrener(); }, 50);
   if (fane === 'nat-adaptiv') setTimeout(function(){ if(typeof initNatAdaptiv==='function') initNatAdaptiv(); }, 50);
-  if (fane === 'tilbakemelding') setTimeout(visVurderinger, 50);
+  if (fane === 'tilbakemelding') setTimeout(function(){ if(typeof visVurderinger==='function') visVurderinger(); }, 50);
+  if (fane === 'aarsplan') setTimeout(function(){ if(typeof epLastAarsplan==='function') epLastAarsplan(); }, 50);
+  if (fane === 'fk') setTimeout(function(){ if(typeof hentOgVisFK==='function') hentOgVisFK(); }, 50);
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
-init();
+(async function(){ await init(); })();
 
 
 
@@ -2935,7 +2985,11 @@ function visLåst(emneId) {
   if (!emne) return;
   var krevEmne = EMNER.find(function(e){return e.id===emne.krev;});
   var krevNiv = emne.krevNivaa || 3;
-  alert('🔒 ' + emne.n + ' er låst.\n\nKrav: Nå nivå ' + krevNiv + ' i «' + (krevEmne ? krevEmne.n : emne.krev) + '» for å låse opp dette emnet.');
+  var lastetMeld = document.createElement('div');
+  lastetMeld.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#93c5fd;padding:12px 22px;border-radius:10px;font-size:.88rem;font-weight:500;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.3);max-width:90vw;text-align:center;line-height:1.5';
+  lastetMeld.textContent = '🔒 ' + emne.n + ' er låst. Krav: Nå nivå ' + krevNiv + ' i «' + (krevEmne ? krevEmne.n : emne.krev) + '»';
+  document.body.appendChild(lastetMeld);
+  setTimeout(function(){ lastetMeld.remove(); }, 4000);
 }
 
 // ─── RENDER OPPGAVEPANEL ─────────────────────────────────────────────
@@ -3662,6 +3716,158 @@ async function lagreNatProgresjon(riktig) {
 }
 
 
+
+
+
+// ── ELEVPORTAL: ÅRSPLAN ─────────────────────────────────────────
+function epLastAarsplan() {
+  var elev = hentElevLokal();
+  if (!elev || !elev.klasse_id) {
+    var el = document.getElementById('ep-ap-info');
+    if (el) el.textContent = 'Du er ikke koblet til en klasse.';
+    return;
+  }
+
+  var fag   = document.getElementById('ep-ap-fag') ? document.getElementById('ep-ap-fag').value : 'matte';
+  var trinn = elev.trinn || '8';
+  var klasseId = elev.klasse_id;
+  var info = document.getElementById('ep-ap-info');
+  var innhold = document.getElementById('ep-aarsplan-innhold');
+  if (info) info.textContent = '⏳ Henter årsplan...';
+
+  // Prøv Supabase først
+  fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/klasser?id=eq.' + klasseId + '&select=id,navn,aarsplan_' + fag + '_' + trinn + ',aarsplan_oppgaver_cached', { headers: { 'apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j', 'Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j' } }).then(function(r){return r.json().then(function(d){return {ok:r.ok, data:d};});})
+    .then(function(res) {
+      var klasse = Array.isArray(res.data) ? res.data[0] : null;
+      var planFelt = klasse ? klasse['aarsplan_' + fag + '_' + trinn] : null;
+      var oppgFelt = klasse ? klasse['aarsplan_oppgaver_cached'] : null;
+
+      if (planFelt) {
+        var plan = typeof planFelt === 'string' ? JSON.parse(planFelt) : planFelt;
+        // Lagre lokalt for offline
+        localStorage.setItem('skaplab_aarsplan_' + klasseId + '_' + fag + '_' + trinn, JSON.stringify(plan));
+        var fagNavn = fag === 'matte' ? 'Matematikk' : 'Naturfag';
+        if (info) info.textContent = fagNavn + ' · ' + trinn + '. trinn · Startuke ' + plan.startuke;
+        // Hent ukesoppgaver
+        if (oppgFelt) {
+          var oppgData = typeof oppgFelt === 'string' ? JSON.parse(oppgFelt) : oppgFelt;
+          var oppgaver = oppgData.oppgaver || [];
+          localStorage.setItem('skaplab_ukesoppgaver_' + klasseId + '_' + fag + '_' + trinn, JSON.stringify(oppgaver));
+        }
+        epVisAarsplan(plan, fag, trinn);
+      } else {
+        // Fallback til localStorage
+        epLastAarsplanLokal(fag, trinn, klasseId, info);
+      }
+    })
+    .catch(function() {
+      epLastAarsplanLokal(fag, trinn, klasseId, info);
+    });
+}
+
+function epLastAarsplanLokal(fag, trinn, klasseId, info) {
+  var nøkkel = 'skaplab_aarsplan_' + klasseId + '_' + fag + '_' + trinn;
+  var planData = null;
+  try { planData = JSON.parse(localStorage.getItem(nøkkel)); } catch(e) {}
+
+  if (!planData) {
+    if (info) info.textContent = 'Læreren har ikke delt årsplan for denne klassen ennå.';
+    var innhold = document.getElementById('ep-aarsplan-innhold');
+    if (innhold) innhold.innerHTML = '';
+    return;
+  }
+  var fagNavn = fag === 'matte' ? 'Matematikk' : 'Naturfag';
+  if (info) info.textContent = fagNavn + ' · ' + trinn + '. trinn · Startuke ' + planData.startuke;
+  epVisAarsplan(planData, fag, trinn);
+}
+
+function epVisAarsplan(planData, fag, trinn) {
+  if (!planData) {
+    epLastAarsplan();
+    return;
+  }
+  var elev = hentElevLokal();
+  var kunDenneUka = document.getElementById('ep-ap-kun-denne-uka') &&
+                   document.getElementById('ep-ap-kun-denne-uka').checked;
+
+  // Hent ukesoppgaver for denne klassen
+  var nøkkelOppg = 'skaplab_ukesoppgaver_' + (elev ? elev.klasse_id : '') + '_' + fag + '_' + trinn;
+  var oppgaver = [];
+  try { oppgaver = JSON.parse(localStorage.getItem(nøkkelOppg) || '[]'); } catch(e) {}
+
+  // Dagens dato og ukenummer
+  var iDag = new Date();
+  var iDagStr = iDag.toISOString().split('T')[0];
+
+  // Grupper etter uke
+  var ukeGrupper = {};
+  oppgaver.forEach(function(o) {
+    if (!ukeGrupper[o.uke]) ukeGrupper[o.uke] = [];
+    ukeGrupper[o.uke].push(o);
+  });
+
+  var typeFarge = {T:'#60a5fa',O:'#34d399',P:'#fbbf24',V:'#f87171'};
+  var typeLbl   = {T:'Teori',O:'Øvingsoppgaver',P:'Praktisk/lab',V:'Prøve'};
+
+  var html = '';
+  var ukenummer = Object.keys(ukeGrupper).sort(function(a,b){return a-b;});
+
+  ukenummer.forEach(function(uke) {
+    var okter = ukeGrupper[uke];
+    // Sjekk om noen er synlige (synligFra <= i dag)
+    var synlige = okter.filter(function(o){ return o.synligFra <= iDagStr; });
+    if (kunDenneUka) {
+      // Vis kun uken der vi er nå
+      var denneUkasSynlige = synlige.filter(function(o){
+        var mandag = new Date(o.synligFra);
+        var fredag = new Date(mandag.getTime() + 13*24*60*60*1000); // 2 uker frem
+        return iDag >= mandag && iDag <= fredag;
+      });
+      if (!denneUkasSynlige.length) return;
+      synlige = denneUkasSynlige;
+    }
+    if (!synlige.length && kunDenneUka) return;
+
+    var erKommende = synlige.length === 0;
+    html += '<details class="ep-uke-blokk' + (erKommende?' ep-kommende':'') + '">';
+    html += '<summary style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 12px;list-style:none">';
+    html += '<span style="font-weight:800;color:var(--bla);min-width:52px">Uke ' + uke + '</span>';
+    if (erKommende) {
+      html += '<span style="font-size:.72rem;color:var(--dim)">Synlig fra ' + (okter[0] ? okter[0].synligFra : '') + '</span>';
+    } else {
+      var temaer = [...new Set(synlige.map(function(o){return o.tema;}))].join(' · ');
+      html += '<span style="font-size:.82rem;flex:1">' + temaer + '</span>';
+    }
+    html += '</summary>';
+    html += '<div style="padding:8px 12px 12px">';
+    synlige.forEach(function(o) {
+      html += '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--border)">';
+      html += '<div style="font-size:.7rem;font-weight:700;color:' + (typeFarge[o.type]||'#fff') + ';margin-bottom:4px">';
+      html += typeLbl[o.type] || o.type;
+      html += '</div>';
+      html += '<div style="font-size:.85rem;font-weight:600;margin-bottom:4px">' + o.tittel + '</div>';
+      if (o.km) html += '<div style="font-size:.7rem;color:var(--dim);margin-bottom:6px">' + o.km + '</div>';
+      if (o.ressurs && o.type !== 'V') {
+        html += '<a href="' + o.ressurs + '" style="display:inline-block;background:var(--bla);color:#fff;padding:5px 12px;border-radius:7px;text-decoration:none;font-size:.78rem;font-weight:700">Åpne oppgave →</a>';
+      }
+      html += '</div>';
+    });
+    if (erKommende) {
+      html += '<div style="font-size:.78rem;color:var(--dim);font-style:italic">Oppgavene blir synlige mandag uken før.</div>';
+    }
+    html += '</div></details>';
+  });
+
+  if (!html) {
+    html = '<div style="color:var(--dim);font-size:.82rem;padding:20px 0">Ingen oppgaver tilgjengelig ennå.</div>';
+  }
+  var el = document.getElementById('ep-aarsplan-innhold');
+  if (el) el.innerHTML = html;
+}
+
+function hentElevLokal() {
+  try { return JSON.parse(localStorage.getItem('skaplab_elev') || 'null'); } catch(e) { return null; }
+}
 
 </script>
 </body>
