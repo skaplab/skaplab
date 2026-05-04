@@ -104,6 +104,52 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
   .elev-header{padding:16px;}
   .elev-stats{margin-left:0;width:100%;justify-content:space-around;}
 }
+
+/* ── KONTEKSTHJELP MODAL ──────────────────────────────────────────── */
+.hjelp-knapp {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.35);
+  color: #60a5fa; font-size: .8rem; font-weight: 700; cursor: pointer;
+  transition: background .2s, transform .15s; flex-shrink: 0;
+  vertical-align: middle; margin-left: 8px; line-height: 1;
+}
+.hjelp-knapp:hover { background: rgba(59,130,246,.28); transform: scale(1.1); }
+.hjelp-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 800;
+  align-items: center; justify-content: center; padding: 12px;
+}
+.hjelp-overlay.vis { display: flex; }
+.hjelp-panel {
+  background: var(--bg2, #0b0f1a);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px; max-width: 520px; width: 100%;
+  max-height: 88vh; overflow-y: auto;
+  padding: 28px 24px; position: relative;
+}
+.hjelp-lukk {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: none; color: rgba(255,255,255,.4);
+  cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+  border-radius: 6px; transition: color .2s;
+}
+.hjelp-lukk:hover { color: rgba(255,255,255,.8); }
+.hjelp-ikon { font-size: 2rem; margin-bottom: 10px; }
+.hjelp-tittel { font-size: 1.1rem; font-weight: 600; color: var(--text, #f1f5f9); margin-bottom: 8px; }
+.hjelp-intro { font-size: .88rem; color: rgba(255,255,255,.65); line-height: 1.65; margin-bottom: 20px; }
+.hjelp-steg { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.hjelp-steg-rad { display: flex; gap: 12px; align-items: flex-start; }
+.hjelp-steg-nr {
+  background: rgba(59,130,246,.2); color: #93c5fd;
+  border-radius: 8px; padding: 4px 10px; font-size: .78rem; font-weight: 600;
+  flex-shrink: 0; margin-top: 1px; white-space: nowrap;
+}
+.hjelp-steg-tekst { font-size: .86rem; color: rgba(255,255,255,.72); line-height: 1.55; }
+.hjelp-tips-seksjon { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.hjelp-tips-tittel { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.35); margin-bottom: 8px; }
+.hjelp-tips-rad { font-size: .83rem; color: rgba(255,255,255,.55); margin-bottom: 6px; line-height: 1.5; }
+
 </style>
 </head>
 <body>
@@ -128,7 +174,12 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
     <div id="fp-onb" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center;padding:12px">
       <div style="background:#0b0f1a;border:1px solid rgba(255,255,255,.12);border-radius:18px;max-width:400px;width:100%;padding:28px 24px;position:relative">
         <div id="fp-onb-steg" style="display:flex;gap:6px;margin-bottom:22px">
-          <div class="fp-prikk ak" data-s="0" style="height:4px;flex:1;border-radius:2px;background:#3b82f6;transition:background .3s"></div>
+          <div class="fp-prikk" data-s="0" style="height:4px;flex:1;border-radius:2px;background:#3b82f6;transition:background .3s"></div>
+          <div class="fp-prikk" data-s="1" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+          <div class="fp-prikk" data-s="2" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+          <div class="fp-prikk" data-s="3" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+          <div class="fp-prikk" data-s="4" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
+        </div>
           <div class="fp-prikk" data-s="1" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
           <div class="fp-prikk" data-s="2" style="height:4px;flex:1;border-radius:2px;background:rgba(255,255,255,.2);transition:background .3s"></div>
         </div>
@@ -140,9 +191,20 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
       </div>
     </div>
 
+<!-- FORESATT HJELP MODAL -->
+<div id="fp-hjelp-overlay" class="hjelp-overlay" onclick="if(event.target===this)lukkForesattHjelp()">
+  <div class="hjelp-panel">
+    <button class="hjelp-lukk" onclick="lukkForesattHjelp()">✕</button>
+    <div id="fp-hjelp-innhold"></div>
+  </div>
+</div>
+
+
     <!-- ELEV-HEADER -->
     <div class="elev-header">
-      <div class="elev-avatar">🎓</div>
+      <div class="elev-avatar">🎓
+    <button class="hjelp-knapp" onclick="visForesattHjelp()" title="Forstå portalen" style="margin-left:auto;flex-shrink:0">?</button>
+</div>
       <div class="elev-info">
         <h2 id="elev-navn">—</h2>
         <p id="elev-klasse">—</p>
@@ -469,7 +531,18 @@ async function init() {
       ikon: '🧠',
       tittel: 'Adaptiv trener og prøver',
       tekst: 'Den adaptive treneren tilpasser oppgaver til barnets nivå. Du ser hvilke emner som er aktive og hva læreren har tilbakemeldt. Kommende prøver vises i planen nedenfor.'
+    },
+    {
+      ikon: '📋',
+      tittel: 'Lærervurderinger og prøver',
+      tekst: 'Du ser lærers skriftlige tilbakemeldinger og karakternivå (Høy/Middels/Lav) per kompetansemål. Kommende prøver vises med dato – planlegg gjerne hjemmelekse i god tid.'
+    },
+    {
+      ikon: '📈',
+      tittel: 'Ukerapport og utvikling',
+      tekst: 'Ukerapport-seksjonen oppsummerer siste 7 dager: antall XP, oppgaver løst og fremgang per fag. Bruk den i samtale med barnet for å sette konkrete mål for neste uke.'
     }
+  
   ];
 
   function fpOnbVis() {
@@ -512,5 +585,38 @@ async function init() {
   // Vis onboarding 800ms etter at portalen lastes (gir data tid til å vises)
   setTimeout(fpOnbVis, 800);
 </script>
+<script>
+
+// ── FORESATT HJELP ──────────────────────────────────────────────────
+function visForesattHjelp() {
+  var d = {
+    tittel: '📊 Foresattportalen – full oversikt',
+    intro: 'Foresattportalen gir deg et øyeblikksbilde av barnets faglige aktivitet og progresjon. Portalen oppdateres automatisk – du trenger ikke gjøre noe.',
+    seksjoner: [['⚡ XP og streak', 'XP (erfaringspoeng) samles opp for hvert riktig svar i den adaptive treneren. Streak viser antall dager på rad barnet har vært aktivt. Begge er mål på jevnlig innsats.'], ['🧠 Aktive emner', 'Viser hvilke emner barnet jobber med akkurat nå og på hvilket nivå. Nivå 1 = nybegynner, nivå 10 = ekspert.'], ['📅 Kommende prøver', 'Prøver læreren har planlagt vises her med dato og emne. God hjelp for å planlegge hjemmelekse i god tid.'], ['🕐 Siste aktivitet', 'De siste 5 øktene vises med dato, fag og antall oppgaver. Gir deg et bilde av arbeidsinnsats og hyppighet.'], ['💬 Lærervurderinger', 'Skriftlige tilbakemeldinger fra læreren vises her. Les dem gjerne sammen med barnet.'], ['📈 Ukerapport', 'Oppsummering av siste 7 dager: totalt XP, antall oppgaver og fremgang per fag.']],
+    tips: ['💡 Lenken til denne portalen er personlig – del den ikke offentlig.', '💡 Portalen oppdateres automatisk, men du kan laste siden på nytt for å se siste aktivitet.', '💡 Ser du ingen data? Barnet har kanskje ikke logget inn ennå – be dem prøve fra elev_login.html.']
+  };
+  var panel = document.getElementById('fp-hjelp-innhold');
+  if (!panel) return;
+  var sekHtml = d.seksjoner.map(function(s) {
+    return '<div class="hjelp-steg-rad">'
+      + '<span class="hjelp-steg-nr">' + s[0] + '</span>'
+      + '<span class="hjelp-steg-tekst">' + s[1] + '</span>'
+      + '</div>';
+  }).join('');
+  var tipsHtml = d.tips.map(function(t) {
+    return '<div class="hjelp-tips-rad">' + t + '</div>';
+  }).join('');
+  panel.innerHTML = '<div class="hjelp-tittel">' + d.tittel + '</div>'
+    + '<div class="hjelp-intro">' + d.intro + '</div>'
+    + '<div class="hjelp-steg">' + sekHtml + '</div>'
+    + '<div class="hjelp-tips-seksjon"><div class="hjelp-tips-tittel">Tips</div>' + tipsHtml + '</div>';
+  document.getElementById('fp-hjelp-overlay').classList.add('vis');
+}
+function lukkForesattHjelp() {
+  document.getElementById('fp-hjelp-overlay').classList.remove('vis');
+}
+
+</script>
+
 </body>
 </html>

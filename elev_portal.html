@@ -394,6 +394,52 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ep-uke-blokk { background:var(--bg2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; overflow:hidden; }
 .ep-kommende { opacity:.55; }
 .ep-uke-blokk summary::-webkit-details-marker { display:none; }
+
+/* ── KONTEKSTHJELP MODAL ──────────────────────────────────────────── */
+.hjelp-knapp {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.35);
+  color: #60a5fa; font-size: .8rem; font-weight: 700; cursor: pointer;
+  transition: background .2s, transform .15s; flex-shrink: 0;
+  vertical-align: middle; margin-left: 8px; line-height: 1;
+}
+.hjelp-knapp:hover { background: rgba(59,130,246,.28); transform: scale(1.1); }
+.hjelp-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 800;
+  align-items: center; justify-content: center; padding: 12px;
+}
+.hjelp-overlay.vis { display: flex; }
+.hjelp-panel {
+  background: var(--bg2, #0b0f1a);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px; max-width: 520px; width: 100%;
+  max-height: 88vh; overflow-y: auto;
+  padding: 28px 24px; position: relative;
+}
+.hjelp-lukk {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: none; color: rgba(255,255,255,.4);
+  cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+  border-radius: 6px; transition: color .2s;
+}
+.hjelp-lukk:hover { color: rgba(255,255,255,.8); }
+.hjelp-ikon { font-size: 2rem; margin-bottom: 10px; }
+.hjelp-tittel { font-size: 1.1rem; font-weight: 600; color: var(--text, #f1f5f9); margin-bottom: 8px; }
+.hjelp-intro { font-size: .88rem; color: rgba(255,255,255,.65); line-height: 1.65; margin-bottom: 20px; }
+.hjelp-steg { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.hjelp-steg-rad { display: flex; gap: 12px; align-items: flex-start; }
+.hjelp-steg-nr {
+  background: rgba(59,130,246,.2); color: #93c5fd;
+  border-radius: 8px; padding: 4px 10px; font-size: .78rem; font-weight: 600;
+  flex-shrink: 0; margin-top: 1px; white-space: nowrap;
+}
+.hjelp-steg-tekst { font-size: .86rem; color: rgba(255,255,255,.72); line-height: 1.55; }
+.hjelp-tips-seksjon { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.hjelp-tips-tittel { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.35); margin-bottom: 8px; }
+.hjelp-tips-rad { font-size: .83rem; color: rgba(255,255,255,.55); margin-bottom: 6px; line-height: 1.5; }
+
 </style>
 </head>
 <body>
@@ -409,6 +455,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 <div id="topbar">
   <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
   <div class="spacer"></div>
+
+<!-- KONTEKSTHJELP FANE-MODAL -->
+<div id="ep-hjelp-overlay" class="hjelp-overlay" onclick="if(event.target===this)lukkHjelpFane()">
+  <div class="hjelp-panel">
+    <button class="hjelp-lukk" onclick="lukkHjelpFane()">✕</button>
+    <div id="ep-hjelp-innhold"></div>
+  </div>
+</div>
+
   <span id="elev-chip"></span>
   <button style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:.78rem;padding:4px 8px" onclick="localStorage.removeItem('skaplab_onb_elev');onbVis()" title="Vis guide igjen">❓</button>
   <button id="btn-foresatt-ep" onclick="visForesattlenke()" style="background:none;border:1px solid var(--border2);color:var(--dim);cursor:pointer;font-size:.72rem;padding:4px 10px;border-radius:7px" title="Del fremgang med foresatte">👨‍👩‍👦 Foresatte</button>
@@ -424,6 +479,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   <div style="background:var(--bg2,#0b0f1a);border:1px solid rgba(255,255,255,.12);border-radius:18px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:24px 20pxpx;position:relative">
     <div id="onb-steg-ind" style="display:flex;gap:5px;margin-bottom:20px">
       <div class="onb-prikk ak" data-s="0"></div>
+      <div class="onb-prikk" data-s="1"></div>
+      <div class="onb-prikk" data-s="2"></div>
+      <div class="onb-prikk" data-s="3"></div>
+      <div class="onb-prikk" data-s="4"></div>
+      <div class="onb-prikk" data-s="5"></div>
+      <div class="onb-prikk" data-s="6"></div>
+      <div class="onb-prikk" data-s="7"></div>
+    </div>
       <div class="onb-prikk" data-s="1"></div>
       <div class="onb-prikk" data-s="2"></div>
       <div class="onb-prikk" data-s="3"></div>
@@ -469,36 +532,44 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     </div>
 
     <div id="fane-matte">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Matematikk</span><button class="hjelp-knapp" onclick="visHjelpFane('matte')" title="Hjelp – hva er dette?">?</button></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🎮 Spill</div><div class="res-grid" id="matte-spill"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🃏 Teorikort</div><div class="res-grid" id="matte-teorikort"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">📖 Leksjoner</div><div class="res-grid" id="matte-leksjon"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">✏️ Mengdetrening</div><div class="res-grid" id="matte-mengde"></div></div>
     </div>
     <div id="fane-natur" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Naturfag</span><button class="hjelp-knapp" onclick="visHjelpFane('natur')" title="Hjelp – hva er dette?">?</button></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🎮 Spill og lab</div><div class="res-grid" id="natur-spill"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🃏 Teorikort</div><div class="res-grid" id="natur-teorikort"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">📖 Leksjoner</div><div class="res-grid" id="natur-leksjon"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🧪 Quiz</div><div class="res-grid" id="natur-quiz"></div></div>
     </div>
     <div id="fane-prog" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Programmering</span><button class="hjelp-knapp" onclick="visHjelpFane('prog')" title="Hjelp – hva er dette?">?</button></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">🎮 Spill</div><div class="res-grid" id="prog-spill"></div></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">📖 Leksjoner</div><div class="res-grid" id="prog-leksjon"></div></div>
     </div>
     <div id="fane-alle" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Alle ressurser</span><button class="hjelp-knapp" onclick="visHjelpFane('alle')" title="Hjelp – hva er dette?">?</button></div>
       <div class="res-gruppe"><div class="res-gruppe-tittel">Alle spill</div><div class="res-grid" id="alle-spill"></div></div>
     </div>
     <div id="fane-adaptiv" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Adaptiv matematikktrener</span><button class="hjelp-knapp" onclick="visHjelpFane('adaptiv')" title="Hjelp – hva er dette?">?</button></div>
       <div id="adaptiv-app"></div>
     </div>
     <div id="fane-nat-adaptiv" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Naturfag adaptiv trener</span><button class="hjelp-knapp" onclick="visHjelpFane('nat-adaptiv')" title="Hjelp – hva er dette?">?</button></div>
       <div id="nat-adaptiv-app"></div>
     </div>
     <div id="fane-vurder" style="display:none;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Egenvurdering</span><button class="hjelp-knapp" onclick="visHjelpFane('vurder')" title="Hjelp – hva er dette?">?</button></div>
       <div class="egenv-seksjon" id="egenv-innhold"><div class="tom">Laster egenvurdering...</div></div>
     </div>
 
     <!-- Tilbakemeldinger fra lærer + badges -->
     <div id="fane-tilbakemelding" style="display:none;padding-top:8px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Tilbakemeldinger</span><button class="hjelp-knapp" onclick="visHjelpFane('tilbakemelding')" title="Hjelp – hva er dette?">?</button></div>
       <div id="ep-vurd-sek">
         <div class="karusell-tittel" style="margin-bottom:12px">💬 Tilbakemeldinger fra lærer</div>
         <div id="ep-vurd-innhold"><div style="color:var(--dim);font-size:.84rem">Laster…</div></div>
@@ -506,6 +577,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 <!-- ÅRSPLAN-FANE -->
 <div id="fane-aarsplan" style="display:none;padding:16px 0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:1rem;font-weight:600;color:var(--text,#f1f5f9)">Årsplan</span><button class="hjelp-knapp" onclick="visHjelpFane('aarsplan')" title="Hjelp – hva er dette?">?</button></div>
   <div style="font-family:var(--font-h);font-size:1.1rem;font-weight:800;margin-bottom:6px;color:var(--text)">📅 Årsplan</div>
   <div style="font-size:.82rem;color:var(--dim);margin-bottom:14px" id="ep-ap-info">Læreren din har ikke delt årsplan ennå.</div>
   <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
@@ -1099,6 +1171,29 @@ var ONB_STEG = [
     handling: '👉 Du er klar! Trykk «Start» og begynn å lære.',
     tips: '💡 Ærlig egenvurdering hjelper læreren din å hjelpe deg bedre.'
   }
+,
+  {
+    ikon: '🔭',
+    tittel: 'Naturfag adaptiv trener',
+    tekst: 'Under «Natur-adaptiv» finner du en adaptiv trener for naturfag med spørsmål fra alle åtte emneområder – biologi, kjemi, fysikk, geofag og mer.',
+    handling: '👉 Gå til «Natur-adaptiv»-fanen og velg et emne.',
+    tips: '💡 Treneren har både flervalgsoppgaver og kortsvarsoppgaver.'
+  },
+  {
+    ikon: '📅',
+    tittel: 'Årsplan og prøver',
+    tekst: 'Under «Årsplan» ser du ukeplanen læreren har lagt opp – med ressurslenker og kommende prøver. Bruk den til å forberede deg.',
+    handling: '👉 Sjekk «Årsplan»-fanen for å se hva som skjer neste uke.',
+    tips: '💡 Klikk «Vis kun denne uka» for å fokusere på aktuelt innhold.'
+  },
+  {
+    ikon: '❓',
+    tittel: 'Hjelp på alle faner',
+    tekst: 'Alle faner har en blå «?»-knapp i overskriften. Klikk den for en fullstendig forklaring av hva du kan gjøre i den fanen.',
+    handling: '👉 Du er klar! Trykk «Start» og begynn å lære.',
+    tips: '💡 Finner du feil eller noe som ikke stemmer? Si fra til læreren din.'
+  }
+
 ];
 var onbSteg = 0;
 
@@ -3575,8 +3670,7 @@ function visNatOppgave(oppg) {
   h += '.nat-fork{background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:12px 14px;font-size:.82rem;color:var(--dim);margin-top:12px;display:none;}';
   h += '.nat-input{width:100%;background:var(--bg3);border:1.5px solid var(--border2);color:var(--text);border-radius:8px;padding:10px 14px;font-size:.9rem;margin-bottom:10px;}';
   h += '@media(max-width:500px){.nat-mc{grid-template-columns:1fr;}}';
-  h += '</style>';
-
+  
   h += '<div class="nat-hud">';
   h += '<button onclick="renderNatOversikt()" style="background:none;border:1px solid var(--border2);color:var(--dim);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:.78rem">← Oversikt</button>';
   h += '<span style="font-size:.85rem;font-weight:600">'+emne.i+' '+emne.n+'</span>';
@@ -3870,5 +3964,98 @@ function hentElevLokal() {
 }
 
 </script>
+<script>
+var HJELP_FANE = {
+  'matte': {
+    ikon: '➗',
+    tittel: 'Matte – ressurser og spill',
+    intro: 'Her finner du alle matematikk-ressurser sortert etter type: spill, teorikort, interaktive øvelser og prøvetrenere.',
+    hva: [{tittel:'🎮 Spill', tekst:'Matematikkspill der du løser oppgaver for å komme videre. Poengene teller mot leaderboard.'}, {tittel:'🃏 Teorikort', tekst:'Kortfattede teorisider med eksempler, formler og forklaringer. Bra til repetisjon og lekser.'}, {tittel:'⚡ Øvelser', tekst:'Interaktive øvelser med umiddelbar tilbakemelding. Prøv, feil, lær – ingen strekkarakterer.'}, {tittel:'📝 Prøvetrenere', tekst:'Øv til prøve med tidligere eksamensoppgaver og lærerlaget innhold.'}],
+    tips: ['💡 Bruk teorikortene som oppslagsverk når du sitter med lekser.', '💡 Spillene teller XP – konkurrer med klassen på leaderboard!']
+  },
+  'natur': {
+    ikon: '🔬',
+    tittel: 'Naturfag – ressurser og animasjoner',
+    intro: 'Naturfag-ressurser: animasjoner, fagkort, interaktive simuleringer og teorisider for alle 8 emneområder.',
+    hva: [{tittel:'🧬 Biologikort', tekst:'Teorisider om celler, genetikk, evolusjon, kropp og naturen rundt oss.'}, {tittel:'⚗️ Kjemikort', tekst:'Periodesystemet, kjemiske reaksjoner, syre/base og organisk kjemi.'}, {tittel:'🌍 Geofag og klima', tekst:'Platetektonikk, naturkatastrofer, klimaendringer og bærekraft.'}, {tittel:'🔋 Fysikk og teknologi', tekst:'Krefter, energi, elektrisitet og optikk med interaktive simulatorer.'}],
+    tips: ['💡 Animasjonene (⚡-ikonene) forklarer prosesser som er vanskelig å forstå av tekst alene.', '💡 Last ned PDF-kompendier for å lese offline eller skrive ut.']
+  },
+  'prog': {
+    ikon: '💻',
+    tittel: 'Programmering',
+    intro: 'Lær å kode med interaktive øvelser, teori og prosjekter tilpasset ungdomsskolen.',
+    hva: [{tittel:'🐍 Python-øvelser', tekst:'Skriv og kjør Python-kode direkte i nettleseren. Steg-for-steg oppgaver fra variabler til funksjoner.'}, {tittel:'🟡 JavaScript', tekst:'Lag interaktive nettsider og animasjoner med JavaScript.'}, {tittel:'🎨 Kreative prosjekter', tekst:'Lag spill, kalkulatorer og kunst med kode. Vis frem det du har laget!'}, {tittel:'📖 Teori', tekst:'Teorigjennomgang av begreper: variabler, løkker, betingelser, funksjoner og mer.'}],
+    tips: ['💡 Tast Ctrl+Enter (eller Cmd+Enter) for å kjøre koden din raskt.', '💡 Du trenger ikke installere noe – alt kjører i nettleseren.']
+  },
+  'alle': {
+    ikon: '🔍',
+    tittel: 'Alle ressurser',
+    intro: 'Her ser du alle ressurser fra matte, naturfag og programmering samlet på ett sted. Bruk søk og filter for å finne det du trenger.',
+    hva: [{tittel:'🔍 Søk', tekst:'Skriv et nøkkelord for å søke på tvers av alle fag og ressurstyper.'}, {tittel:'🏷️ Filter', tekst:'Filtrer på fag, ressurstype (spill, teori, øvelse) eller KM-kode.'}, {tittel:'⭐ Favoritter', tekst:'Klikk hjertet på en ressurs for å lagre den som favoritt – den dukker opp øverst neste gang.'}],
+    tips: ['💡 Søk på KM-kode (f.eks. «MAT8-1») for å finne ressurser til en spesifikk kompetanse.']
+  },
+  'adaptiv': {
+    ikon: '🧠',
+    tittel: 'Adaptiv matematikktrener',
+    intro: 'En personlig matematikktrener med 24 000+ oppgaver over 21 emner og 10 nivåer. Systemet justerer vanskelighetsnivå automatisk basert på svarene dine.',
+    hva: [{tittel:'📈 Nivåjustering', tekst:'5 riktige på rad = nivåoppgang. 3 feil på rad = nivånedgang. Du starter alltid på riktig sted.'}, {tittel:'⭐ XP og streak', tekst:'Du får 10 XP per riktig svar, 20 XP ved streak ≥ 8. Streak telles per dag.'}, {tittel:'📊 Fremgang', tekst:'Klikk «Fremgang» i et emne for å se din nivåkurve over tid.'}, {tittel:'✏️ Velg nivå selv', tekst:'Klikk ✏️-ikonet i emnekortet for å sette startsnivå manuelt – nyttig om du vil repetere noe.'}],
+    tips: ['💡 Fokuser på ett emne om gangen – det er mer effektivt enn å hoppe mellom emner.', '💡 Feil er bra! Systemet bruker feilene dine til å finne ditt nøyaktige nivå.']
+  },
+  'nat-adaptiv': {
+    ikon: '🔭',
+    tittel: 'Naturfag adaptiv trener',
+    intro: 'Adaptiv trener for naturfag med spørsmål fra alle åtte emneområder. Fungerer likt som mattetrener – riktige svar gir nivåoppgang.',
+    hva: [{tittel:'🌱 8 emneområder', tekst:'Biologi, kjemi, fysikk, geofag, teknologi, klima, kropp og utforsking.'}, {tittel:'🎯 Både MC og fritekst', tekst:'Noen spørsmål er flervalg, andre er kortsvarsoppgaver der du skriver svaret.'}, {tittel:'📈 Samme nivåsystem', tekst:'Nivå 1-10 per emne. 5 riktige = oppgang, 3 feil = nedgang.'}],
+    tips: ['💡 Naturfag-treneren er nyere enn matte-treneren – rapporter gjerne feil eller uklare spørsmål til læreren.']
+  },
+  'vurder': {
+    ikon: '✅',
+    tittel: 'Egenvurdering',
+    intro: 'Her vurderer du din egen kompetanse per kompetansemål. Læreren din ser egenvurderingen og kan sammenlikne med sin vurdering.',
+    hva: [{tittel:'🎯 Kompetansemål', tekst:'Hvert kort representerer ett KM fra LK20. Velg fag øverst for å se riktige mål.'}, {tittel:'🟢 🟡 🔴 Velg nivå', tekst:'Klikk grønn (Høy), gul (Middels) eller rød (Lav) basert på hvordan du opplever din egen kompetanse.'}, {tittel:'💬 Legg til merknad', tekst:'Du kan skrive en kort kommentar – f.eks. «Forstår regning, men sliter med ordoppgaver».'}, {tittel:'💾 Lagre', tekst:'Klikk «Lagre egenvurdering». Læreren din ser den med én gang.'}],
+    tips: ['💡 Vær ærlig – du hjelper læreren å hjelpe deg bedre.', '💡 Du kan oppdatere egenvurderingen når som helst.']
+  },
+  'tilbakemelding': {
+    ikon: '💬',
+    tittel: 'Tilbakemeldinger fra lærer',
+    intro: 'Her ser du skriftlige tilbakemeldinger fra læreren din, sortert fra nyeste til eldste.',
+    hva: [{tittel:'📩 Meldingskort', tekst:'Hvert kort viser dato, fag, nivå (Høy/Mid/Lav) og lærermeldingen.'}, {tittel:'📊 Nivåhistorikk', tekst:'Se om karakternivået har utviklet seg over tid. Grønn trend = fremgang!'}],
+    tips: ['💡 Les tilbakemeldingene nøye og bruk dem som konkrete mål for neste økt.', '💡 Lurer du på noe? Si det til læreren i timen – tilbakemeldinger er et utgangspunkt for dialog.']
+  },
+  'aarsplan': {
+    ikon: '📅',
+    tittel: 'Årsplan',
+    intro: 'Her ser du læreplanen for klassen din – hva dere skal jobbe med uke for uke. Kobling til ressurser gjør det enkelt å forberede seg.',
+    hva: [{tittel:'📆 Ukevisning', tekst:'Planen er delt inn i uker. Klikk en uke for å se innholdet.'}, {tittel:'📚 Ressurslenker', tekst:'Ressurser merket med lenke kan du klikke direkte for å komme til relevant innhold.'}, {tittel:'✅ Kun denne uka', tekst:'Slå på «Vis kun denne uka» for å fokusere på hva som er aktuelt nå.'}],
+    tips: ['💡 Sjekk årsplanen jevnlig for å forberede deg til kommende temaer.', '💡 Ser du en prøve i planen? Bruk prøvetrenerne under Matte/Natur for å øve.']
+  },
+};
+function visHjelpFane(fane) {
+  var d = HJELP_FANE[fane];
+  if (!d) return;
+  var panel = document.getElementById('ep-hjelp-innhold');
+  if (!panel) return;
+  var hvaHtml = d.hva.map(function(h) {
+    return '<div class="hjelp-steg-rad">'
+      + '<span class="hjelp-steg-nr">' + h.tittel + '</span>'
+      + '<span class="hjelp-steg-tekst">' + h.tekst + '</span>'
+      + '</div>';
+  }).join('');
+  var tipsHtml = d.tips.map(function(t) {
+    return '<div class="hjelp-tips-rad">' + t + '</div>';
+  }).join('');
+  panel.innerHTML = '<div class="hjelp-ikon">' + d.ikon + '</div>'
+    + '<div class="hjelp-tittel">' + d.tittel + '</div>'
+    + '<div class="hjelp-intro">' + d.intro + '</div>'
+    + '<div class="hjelp-steg">' + hvaHtml + '</div>'
+    + (d.tips.length ? '<div class="hjelp-tips-seksjon"><div class="hjelp-tips-tittel">Tips</div>' + tipsHtml + '</div>' : '');
+  document.getElementById('ep-hjelp-overlay').classList.add('vis');
+}
+function lukkHjelpFane() {
+  document.getElementById('ep-hjelp-overlay').classList.remove('vis');
+}
+
+</script>
+
 </body>
 </html>

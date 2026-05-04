@@ -313,6 +313,52 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 .ap-uke-inst summary::-webkit-details-marker { display:none; }
 .ap-km-rad { display:flex; flex-wrap:wrap; gap:3px; margin-top:3px; }
 
+
+/* ── KONTEKSTHJELP MODAL ──────────────────────────────────────────── */
+.hjelp-knapp {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.35);
+  color: #60a5fa; font-size: .8rem; font-weight: 700; cursor: pointer;
+  transition: background .2s, transform .15s; flex-shrink: 0;
+  vertical-align: middle; margin-left: 8px; line-height: 1;
+}
+.hjelp-knapp:hover { background: rgba(59,130,246,.28); transform: scale(1.1); }
+.hjelp-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.7); z-index: 800;
+  align-items: center; justify-content: center; padding: 12px;
+}
+.hjelp-overlay.vis { display: flex; }
+.hjelp-panel {
+  background: var(--bg2, #0b0f1a);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px; max-width: 520px; width: 100%;
+  max-height: 88vh; overflow-y: auto;
+  padding: 28px 24px; position: relative;
+}
+.hjelp-lukk {
+  position: absolute; top: 14px; right: 14px;
+  background: none; border: none; color: rgba(255,255,255,.4);
+  cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+  border-radius: 6px; transition: color .2s;
+}
+.hjelp-lukk:hover { color: rgba(255,255,255,.8); }
+.hjelp-ikon { font-size: 2rem; margin-bottom: 10px; }
+.hjelp-tittel { font-size: 1.1rem; font-weight: 600; color: var(--text, #f1f5f9); margin-bottom: 8px; }
+.hjelp-intro { font-size: .88rem; color: rgba(255,255,255,.65); line-height: 1.65; margin-bottom: 20px; }
+.hjelp-steg { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.hjelp-steg-rad { display: flex; gap: 12px; align-items: flex-start; }
+.hjelp-steg-nr {
+  background: rgba(59,130,246,.2); color: #93c5fd;
+  border-radius: 8px; padding: 4px 10px; font-size: .78rem; font-weight: 600;
+  flex-shrink: 0; margin-top: 1px; white-space: nowrap;
+}
+.hjelp-steg-tekst { font-size: .86rem; color: rgba(255,255,255,.72); line-height: 1.55; }
+.hjelp-tips-seksjon { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.hjelp-tips-tittel { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.35); margin-bottom: 8px; }
+.hjelp-tips-rad { font-size: .83rem; color: rgba(255,255,255,.55); margin-bottom: 6px; line-height: 1.5; }
+
 </style>
 <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 </head>
@@ -359,6 +405,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
       <div class="onb-prikk" data-s="2"></div>
       <div class="onb-prikk" data-s="3"></div>
       <div class="onb-prikk" data-s="4"></div>
+      <div class="onb-prikk" data-s="5"></div>
     </div>
     <div id="onb-innhold"></div>
     <div style="display:flex;gap:10px;margin-top:22px">
@@ -369,6 +416,14 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   </div>
 </div>
 
+
+<!-- KONTEKSTHJELP MODAL -->
+<div id="hjelp-overlay" class="hjelp-overlay" onclick="if(event.target===this)lukkHjelp()">
+  <div class="hjelp-panel">
+    <button class="hjelp-lukk" onclick="lukkHjelp()">✕</button>
+    <div id="hjelp-panel-innhold"></div>
+  </div>
+</div>
 <main id="main">
 
 <!-- KLASSER/DASHBOARD -->
@@ -380,7 +435,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- TILDEL OPPGAVE -->
 <div class="side" id="side-tildel">
-  <div class="side-tittel">📤 Tildel oppgave</div>
+  <div class="side-tittel">📤 Tildel oppgave<button class="hjelp-knapp" onclick="visHjelp('tildel')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Velg klasse, fag og ressurser – sett frist og tildel.</div>
   <div class="sek">
     <div class="rad">
@@ -408,7 +463,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- FERDIGHETSKART -->
 <div class="side" id="side-ferdighetskart">
-  <div class="side-tittel">🗺️ Ferdighetskart</div>
+  <div class="side-tittel">🗺️ Ferdighetskart<button class="hjelp-knapp" onclick="visHjelp('ferdighetskart')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Registrer ferdighetsnivå per delferdighet for hver elev.</div>
   <div class="sek">
     <div class="rad">
@@ -433,7 +488,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- MÅLARK -->
 <div class="side" id="side-malark">
-  <div class="side-tittel">📋 Målark</div>
+  <div class="side-tittel">📋 Målark<button class="hjelp-knapp" onclick="visHjelp('malark')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Vurder kompetansemål – høy, middels eller lav.</div>
   <div class="sek">
     <div class="rad">
@@ -457,7 +512,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- PRØVEPLAN -->
 <div class="side" id="side-proveplan">
-  <div class="side-tittel">📝 Prøveplan</div>
+  <div class="side-tittel">📝 Prøveplan<button class="hjelp-knapp" onclick="visHjelp('proveplan')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Planlegg prøver og send varsler til elevene.</div>
   <div class="sek">
     <div class="rad">
@@ -489,7 +544,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- LÆRERVEILEDNING -->
 <div class="side" id="side-veiledning">
-  <div class="side-tittel">📚 Lærerveiledning</div>
+  <div class="side-tittel">📚 Lærerveiledning<button class="hjelp-knapp" onclick="visHjelp('veiledning')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Steg-for-steg guide til alle fagene på SkapLab.</div>
   <div class="veil-fane-rad">
     <button class="veil-fane-btn ak" onclick="veilFane('matte')">🔢 Matte</button>
@@ -535,7 +590,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- ══ ADAPTIV TRENER ══ -->
 <div class="side" id="side-adaptiv">
-  <div class="side-tittel">🧠 Adaptiv trener – fremgang</div>
+  <div class="side-tittel">🧠 Adaptiv trener – fremgang<button class="hjelp-knapp" onclick="visHjelp('adaptiv')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Oversikt over elevenes nivå per emne i adaptiv trener.</div>
   <div class="sek">
     <div class="at-frad" style="flex-wrap:wrap;gap:8px">
@@ -580,7 +635,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- ══ P5: FRITEKST-VURDERING ══ -->
 <div class="side" id="side-vurder">
-  <div class="side-tittel">💬 Vurderinger</div>
+  <div class="side-tittel">💬 Vurderinger<button class="hjelp-knapp" onclick="visHjelp('vurder')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Send skriftlig tilbakemelding til en elev. Eleven ser meldingen i sin portal.</div>
   <div class="sek">
     <div class="rad">
@@ -620,7 +675,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 <!-- ══ P7: LEADERBOARD ══ -->
 <div class="side" id="side-leaderboard">
-  <div class="side-tittel">🏆 Klasseleaderboard</div>
+  <div class="side-tittel">🏆 Klasseleaderboard<button class="hjelp-knapp" onclick="visHjelp('leaderboard')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">Ukens topp-10 i klassen — basert på total XP i adaptiv trener.</div>
   <div class="sek">
     <div id="gamif-leaderboard-innhold">
@@ -631,7 +686,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 
 
 <div class="side" id="side-aarsplan">
-  <div class="side-tittel">📅 Årsplan</div>
+  <div class="side-tittel">📅 Årsplan<button class="hjelp-knapp" onclick="visHjelp('aarsplan')" title="Hjelp – hva gjør denne siden?">?</button></div>
   <div class="side-sub">1 teoriøkt + 1 mengdetrening + 1 praktisk per uke. Tomme uker vises. Dra for å omorganisere.</div>
 
   <div class="sek" style="margin-bottom:12px">
@@ -959,8 +1014,9 @@ var ONB_STEG = [
   {ikon:'🏫',tittel:'Opprett klasse og elever',tekst:'Klikk «+ Ny klasse» i venstremenyen og gi klassen et navn. Legg deretter til elever – hvert navn genererer en unik innloggingskode.',handling:'👉 Klikk «+ Ny klasse» i menyen til venstre.',tips:'💡 Del innloggingskodene med elevene – de er klare til å logge inn med én gang.'},
   {ikon:'📤',tittel:'Tildel oppgaver',tekst:'Under «Tildel oppgave» velger du klasse, fag og hvilke ressurser elevene skal jobbe med. Sett gjerne en frist – elevene ser oppgaven i sin portal.',handling:'👉 Gå til «Tildel oppgave» i menyen.',tips:'💡 Bruk prøvebyggeren til egne prøver – hent oppgaver fra 24 000 i oppgavebanken.'},
   {ikon:'🧠',tittel:'Adaptiv progresjon og rapporter',tekst:'Under «Adaptiv trener» ser du et heatmap over klassens nivå per emne. Klikk på en elev for dybderapport med XP, treffsikkerhet, styrker og svakheter.',handling:'👉 Velg «Adaptiv trener» og velg en klasse.',tips:'💡 Skriv ut elevrapport som PDF direkte fra elevprofilen.'},
-  {ikon:'🛠️',tittel:'Prøvebygger og deling',tekst:'Bygg egne prøver med LaTeX-støtte og hent oppgaver fra adaptiv bank eller KM-kobling. Del prøver med kolleger i det åpne prøvebiblioteket – eller via en privat lenke.',handling:'👉 Åpne prøvebyggeren fra menyen.',tips:'💡 Importer kollegers prøver og gjør dem til dine egne.'}
-];
+  {ikon:'🛠️',tittel:'Prøvebygger og deling',tekst:'Bygg egne prøver med LaTeX-støtte og hent oppgaver fra adaptiv bank eller KM-kobling. Del prøver med kolleger i det åpne prøvebiblioteket – eller via en privat lenke.',handling:'👉 Åpne prøvebyggeren fra menyen.',tips:'💡 Importer kollegers prøver og gjør dem til dine egne.'},
+  {ikon:'❓',tittel:'Konteksthjelp på hver side',tekst:'Alle sider i appen har nå en blå «?»-knapp ved sidetittelen. Klikk den for en detaljert forklaring av siden, steg-for-steg-guide og tips.',handling:'👉 Prøv å klikke «?» på en side for å se forklaringen.',tips:'💡 Hjelpen oppdateres automatisk – den vil alltid reflektere ny funksjonalitet.'}
+]
 var onbSteg=0;
 function onbVis(){var o=document.getElementById('onb-overlay');if(!o)return;o.style.display='flex';onbOppdater();}
 function onbOppdater(){
@@ -2896,7 +2952,7 @@ function apLastNedDocx() {
   html += '.prove{background:#fef2f2;border:2px solid #fca5a5;border-radius:4px;padding:5px 10px;margin:4px 0;font-size:10pt}';
   html += '.komm{background:#fef9c3;padding:4px 8px;border-radius:3px;font-style:italic;font-size:9.5pt;margin:3px 0}';
   html += '@media print{button{display:none}h2{page-break-before:auto}}';
-  html += '</style></head><body>';
+  
   html += '<button onclick="window.print()" style="background:#1e3a8a;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:11pt;margin-bottom:16px">🖨️ Skriv ut / Lagre som PDF</button>';
   html += '<h1>📅 Årsplan – '+fagNavn+' '+trinn+'. trinn</h1>';
   html += '<div class="meta">T=Teori · O=Mengdetrening · P=Praktisk/Lab · 📝=Prøve'+(trinn===10?' · 10. trinn maks 30 uker':'')+'</div>';
@@ -3073,5 +3129,89 @@ function apMandag(kalUke) {
 
 
 </script>
+<script>
+var HJELP_DATA = {
+  'tildel': {
+    tittel: '📤 Tildel oppgave',
+    intro: 'Her sender du ressurser og oppgaver direkte til en klasse eller enkeltelevers portal. Elevene ser oppgaven med frist på forsiden sin.',
+    steg: [{tittel:'1. Velg klasse', tekst:'Velg hvilken klasse oppdraget gjelder. Dropdown fylles automatisk fra dine registrerte klasser.'}, {tittel:'2. Velg fag og ressurser', tekst:'Filtrer på fag og kryss av ressursene du vil tildele – teoriside, quiz, spill eller prøve fra prøvebygger.'}, {tittel:'3. Sett frist', tekst:'Fristen er valgfri, men anbefales. Eleven ser «Frist: dato» i sin portal og i klassens årsplan.'}, {tittel:'4. Klikk «Tildel»', tekst:'Oppdraget sendes til alle elevene i klassen. Du kan se det under «Prøveplan» og slette det om nødvendig.'}],
+    tips: ['💡 Du kan tildele samme ressurs til flere klasser ved å gjøre stegene én gang per klasse.', '💡 Elevene trenger ikke laste siden på nytt – tildelingen dukker opp ved neste innlogging.', '💡 Bruk «Prøvebygger» for å lage egne prøver og tildele dem herfra.']
+  },
+  'ferdighetskart': {
+    tittel: '🗺️ Ferdighetskart',
+    intro: 'Et visuelt kart over hvilke delferdighetsnivåer en elev har nådd. Brukes til underveisvurdering og for å gi eleven en tydelig oversikt over egen kompetanse.',
+    steg: [{tittel:'1. Velg klasse og elev', tekst:'Velg klasse i dropdown, deretter elev. Kartet lastes automatisk fra elevens historikk i adaptiv trener.'}, {tittel:'2. Les kartet', tekst:'Grønne felt = oppnådd nivå. Gule = delvis. Grå = ikke startet. Hvert felt representerer ett KM-delmål.'}, {tittel:'3. Registrer manuell vurdering', tekst:'Klikk på et felt for å registrere en manuell observasjon – f.eks. fra en prøve eller muntlig fremlegg.'}, {tittel:'4. Send til elev', tekst:'Klikk «Send til elev» for å gjøre ferdighetskart synlig i elevens portal under «Vurder»-fanen.'}],
+    tips: ['💡 Ferdighetskart er ikke det samme som målark. Ferdighetskart viser delferdighetsnivå (1-10), målark viser kompetansemål (Høy/Mid/Lav).', '💡 Bruk ferdighetskart til foreldresamtaler – det gir et konkret og visuelt grunnlag.', '💡 Eksporter som PDF med «Skriv ut»-knappen for å ha med på møter.']
+  },
+  'malark': {
+    tittel: '📋 Målark',
+    intro: 'Målark lar deg vurdere en elev på kompetansemål (KM) med nivåene Høy, Middels eller Lav. Vurderingen kan lagres og sendes til eleven.',
+    steg: [{tittel:'1. Velg klasse, elev og fag', tekst:'Filtrer for å finne riktig elev. Fag-valget bestemmer hvilke kompetansemål som vises.'}, {tittel:'2. Sett nivå per KM', tekst:'Klikk Høy / Mid / Lav per kompetansemål. Du kan skrive en kort merknad i tekstfeltet.'}, {tittel:'3. Lagre', tekst:'Klikk «Lagre vurdering». Historikk bevares – du kan se utvikling over tid ved å velge en eldre dato.'}, {tittel:'4. Send til elev og foresatt', tekst:'Klikk «Send» for å gjøre vurderingen synlig for eleven. Foresatte ser den via foresattportalen.'}],
+    tips: ['💡 Målark er knyttet til LK20-koder. Du kan filtrere på spesifikke KM-koder i søkefeltet.', '💡 Du trenger ikke fylle ut alle KM for å lagre – delvis utfylt målark er gyldig.', '💡 Elevens egenvurdering (fra elevportalen) vises ved siden av din vurdering for sammenligning.']
+  },
+  'proveplan': {
+    tittel: '📝 Prøveplan',
+    intro: 'Prøveplanen gir deg og klassen en oversikt over kommende og gjennomførte prøver. Koble prøver fra prøvebygger for at elevene skal se oppgavene.',
+    steg: [{tittel:'1. Legg til prøve', tekst:'Klikk «+ Ny prøveoppføring». Fyll inn tittel, dato, emne og valgfri merknad.'}, {tittel:'2. Koble prøvebygger-prøve', tekst:'Klikk «Koble prøve» for å velge en prøve du har laget i prøvebygger. Elevene får tilgang til oppgavene.'}, {tittel:'3. Send varsel til klassen', tekst:'Klikk «Send varsel» for å gi elevene en påminnelse i sin portal. Varselet inneholder dato og emne.'}, {tittel:'4. Marker som gjennomført', tekst:'Etter prøven: klikk «Gjennomført» for å arkivere oppføringen.'}],
+    tips: ['💡 Bruk «Prøvebygger» (åpnes i eget vindu) for å lage prøver med LaTeX og oppgavebank.', '💡 Elevene ser kommende prøver øverst i sin portal og i årsplanen.', '💡 Koble prøver til årsplanen for at de dukker opp i riktig uke.']
+  },
+  'veiledning': {
+    tittel: '📚 Lærerveiledning',
+    intro: 'En samlet guide til alle fagene, verktøyene og funksjonene på SkapLab. Les her for å forstå hva elevene møter og hvordan du best legger til rette.',
+    steg: [{tittel:'Fagguider', tekst:'Velg fag i menyen: Matematikk, Naturfag eller Programmering. Hver guide forklarer ressurstyper, KM-kobling og tips til arbeidsformer.'}, {tittel:'Verktøyguider', tekst:'Les om prøvebygger, adaptiv trener, ferdighetskart og leaderboard – hva de gjør og hvordan de brukes i undervisningen.'}, {tittel:'Kom i gang', tekst:'Nytt på SkapLab? Bruk «Kom i gang»-seksjonen for steg-for-steg-oppsett: klasse → elever → første tildeling.'}],
+    tips: ['💡 Lærerveiledningen er alltid tilgjengelig her – du trenger ikke laste ned noe.', '💡 Del gjerne lenken med kolleger: de kan lese veiledningen uten å logge inn.']
+  },
+  'adaptiv': {
+    tittel: '🧠 Adaptiv trener – fremgang',
+    intro: 'Her ser du et heatmap over klassens fremgang i den adaptive treneren. Rødere = lavere nivå, grønnere = høyere. Klikk en elev for dybderapport.',
+    steg: [{tittel:'1. Velg klasse', tekst:'Velg klasse fra dropdown. Heatmapet viser alle elever × alle emner med fargekodet nivå.'}, {tittel:'2. Les heatmapet', tekst:'Grønt = høyt nivå (7-10), gult = middels (4-6), rødt = lavt (1-3), grått = ikke startet. Rader = elever, kolonner = emner.'}, {tittel:'3. Klikk en elev', tekst:'Åpner dybderapport: XP-historikk, treffsikkerhet per emne, nivåkurve over tid og antall oppgaver løst.'}, {tittel:'4. Eksporter rapport', tekst:'Klikk «PDF»-knappen i elevprofilen for å skrive ut en rapport egnet for foreldresamtale eller IOP-vedlegg.'}],
+    tips: ['💡 Heatmapet oppdateres i sanntid. Elever som er aktive nå vises med en puls-animasjon.', '💡 Emner med mange røde elever kan være et signal om behov for repetisjon i klassen.', '💡 Legg merke til «streak»-kolonnen – elever med lang streak har god studiehygiene.']
+  },
+  'vurder': {
+    tittel: '💬 Vurderinger',
+    intro: 'Send skriftlig tilbakemelding til en elev. Meldingen vises i elevens portal under «Tilbakemelding». Du kan også se elevens egenvurdering for sammenligning.',
+    steg: [{tittel:'1. Velg klasse og elev', tekst:'Dropdown-menyen fylles med dine klasser og tilhørende elever.'}, {tittel:'2. Velg nivå', tekst:'Sett Høy / Middels / Lav som et raskt signal om kompetansenivå nå.'}, {tittel:'3. Skriv tilbakemelding', tekst:'Skriv en fremovermeldende tilbakemelding. Vis gjerne til konkrete KM-koder. Anbefalt lengde: 3-6 setninger.'}, {tittel:'4. Klikk «Lagre og send»', tekst:'Meldingen lagres og elevene ser den med det samme i sin portal. Historikk bevares.'}],
+    tips: ['💡 Fremovermeldende tilbakemeldinger fungerer best: «Du mestrer X – prøv nå å...» fremfor «Du er flink».', '💡 Elevens egenvurdering vises i grått ved siden av ditt felt – bruk det som utgangspunkt.', '💡 Tilbakemeldinger lagres med dato. Du kan se historikk ved å klikke «Vis historikk».']
+  },
+  'leaderboard': {
+    tittel: '🏆 Klasseleaderboard',
+    intro: 'Viser ukens XP-topp-10 for klassen. Motiverer elever til jevnlig innsats og skaper en leken konkurransekultur rundt faglig arbeid.',
+    steg: [{tittel:'Lesing', tekst:'Tabellen vises automatisk for aktiv klasse. Topp 3 får medalje-ikoner. Klikk et navn for elevprofil.'}, {tittel:'Uke vs. totalt', tekst:'Bytt mellom «Denne uka» og «Totalt» for å se ukentlig innsats vs. samlet XP siden skolestart.'}, {tittel:'Ditt bilde som lærer', tekst:'Din klasse kan konkurrere mot andre klasser på skolen om du aktiverer klassekonkurranse i innstillinger.'}],
+    tips: ['💡 XP gis kun for riktige svar i adaptiv trener – det er ikke mulig å «jukse» ved å klikke raskt.', '💡 Elever med lav score er ikke nødvendigvis faglig svake – de kan ha vært fraværende eller ikke brukt adaptiv.', '💡 Du kan velge å skjule leaderboard for spesifikke elever i elevinnstillingene.']
+  },
+  'aarsplan': {
+    tittel: '📅 Årsplan',
+    intro: 'Lag en strukturert årsplan etter LK20 med én teoriøkt, én mengdetrening og én praktisk aktivitet per uke. Planen deles med elevene og foresatte.',
+    steg: [{tittel:'1. Velg fag og trinn', tekst:'Øverst velger du fag (Matte/Naturfag/Prog) og trinn (8/9/10). Skjelettplanen fylles automatisk basert på LK20-progresjon.'}, {tittel:'2. Legg til innhold', tekst:'Klikk «+ Teori», «+ Trening» eller «+ Praktisk» i en uke for å legge til en aktivitet. Du velger tittel og kobler til en ressursfil.'}, {tittel:'3. Dra for å omorganisere', tekst:'Klikk og dra aktiviteter mellom uker. Planen lagres automatisk i skyen.'}, {tittel:'4. Del med klassen', tekst:'Klikk «Del med klasse» – elevene ser planen i sin «Årsplan»-fane. Foresatte ser den via foresattportalen.'}, {tittel:'5. Eksporter til PDF/Word', tekst:'Klikk «Skriv ut / PDF» for å eksportere planen som trykkferdig dokument.'}],
+    tips: ['💡 Planen synkroniseres mellom lærer og elev – du trenger ikke sende den manuelt.', '💡 Bruk «Søk»-feltet for å finne aktiviteter på tvers av uker.', '💡 Friuker (røde) markeres automatisk basert på skoleruta – du kan justere dem i innstillinger.']
+  },
+};
+function visHjelp(side) {
+  var d = HJELP_DATA[side];
+  if (!d) return;
+  var panel = document.getElementById('hjelp-panel-innhold');
+  if (!panel) return;
+  var stegHtml = d.steg.map(function(s) {
+    return '<div class="hjelp-steg-rad">'
+      + '<span class="hjelp-steg-nr">' + s.tittel + '</span>'
+      + '<span class="hjelp-steg-tekst">' + s.tekst + '</span>'
+      + '</div>';
+  }).join('');
+  var tipsHtml = d.tips.map(function(t) {
+    return '<div class="hjelp-tips-rad">' + t + '</div>';
+  }).join('');
+  panel.innerHTML = ''
+    + '<div class="hjelp-tittel">' + d.tittel + '</div>'
+    + '<div class="hjelp-intro">' + d.intro + '</div>'
+    + '<div class="hjelp-steg">' + stegHtml + '</div>'
+    + (d.tips.length ? '<div class="hjelp-tips-seksjon"><div class="hjelp-tips-tittel">Tips</div>' + tipsHtml + '</div>' : '');
+  document.getElementById('hjelp-overlay').classList.add('vis');
+}
+function lukkHjelp() {
+  document.getElementById('hjelp-overlay').classList.remove('vis');
+}
+
+</script>
+
 </body>
 </html>
