@@ -829,11 +829,19 @@ function ovClick(e){if(e.target.id==='ov')closeM();}
 
 function back(){
   document.getElementById('tp').style.display='';
-  ['regneoppgave','fritekst','flersvar','ai'].forEach(t=>document.getElementById('ed-'+t).classList.remove('on'));
+  ['regneoppgave','fritekst','flersvar','ai','adaptivbank'].forEach(t=>{
+    var el=document.getElementById('ed-'+t);
+    if(el) el.classList.remove('on');
+  });
   aType=null;
 }
 
 function vType(t,skip){
+  // Rydd alle paneler først (inkl. adaptivbank)
+  ['regneoppgave','fritekst','flersvar','ai','adaptivbank'].forEach(function(pt){
+    var el=document.getElementById('ed-'+pt);
+    if(el) el.classList.remove('on');
+  });
   aType=t;
   document.getElementById('tp').style.display='none';
   document.getElementById('ed-'+t).classList.add('on');
@@ -1483,6 +1491,7 @@ function latexTilMathRun(latexStr) {
 
 function byggParagrafMedLatex(tekst, opts) {
   // Bygger en Paragraph med blanding av tekst og Math-objekter
+  // Fallback til ren tekst hvis Math-klasser ikke er tilgjengelig
   var {Paragraph, TextRun, Math: DocxMath} = window.docx;
   opts = opts || {};
   var seg = latexTilDocxSegmenter(tekst);
@@ -1490,17 +1499,40 @@ function byggParagrafMedLatex(tekst, opts) {
 
   seg.forEach(function(s) {
     if (s.type === 'tekst' && s.val) {
-      children.push(new TextRun(Object.assign({text: s.val}, opts)));
+      children.push(new TextRun(Object.assign({}, opts, {text: s.val})));
     } else if (s.type === 'math') {
-      var mathNode = latexTilMathRun(s.val);
+      var mathNode = null;
+      try {
+        mathNode = latexTilMathRun(s.val);
+      } catch(mathErr) {
+        mathNode = null;
+      }
       if (mathNode) {
         children.push(mathNode);
       } else {
-        // Fallback: tekst uten $-tegn
-        children.push(new TextRun(Object.assign({text: s.val}, opts)));
+        // Fallback: vis LaTeX som ren tekst med unicode-symboler
+        var fallbackTekst = s.val
+          .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+          .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+          .replace(/\\cdot/g,'·').replace(/\\times/g,'×')
+          .replace(/\\div/g,'÷').replace(/\\pm/g,'±')
+          .replace(/\\leq/g,'≤').replace(/\\geq/g,'≥')
+          .replace(/\\neq/g,'≠').replace(/\\approx/g,'≈')
+          .replace(/\\pi/g,'π').replace(/\\infty/g,'∞')
+          .replace(/\\alpha/g,'α').replace(/\\beta/g,'β')
+          .replace(/\\Delta/g,'Δ').replace(/\\theta/g,'θ')
+          .replace(/\^(\{[^}]+\}|\S)/g, function(m,p1){
+            return p1.replace(/[{}]/g,'');
+          })
+          .replace(/[{}\\]/g,'');
+        children.push(new TextRun(Object.assign({}, opts, {text: fallbackTekst})));
       }
     }
   });
+
+  if (children.length === 0) {
+    children.push(new TextRun(Object.assign({}, opts, {text: tekst})));
+  }
 
   return new Paragraph({
     spacing: opts.spacing || {after: 100},
@@ -1549,6 +1581,7 @@ async function lastNed(){
     // Oppgaver
     for(let i=0;i<S.oppgaver.length;i++){
       const o=S.oppgaver[i],nr=i+1,ptxt=o.poeng?` (${o.poeng} p)`:'';
+      try{
       const mkHd=()=>ch.push(new Paragraph({
         spacing:{before:260,after:90},
         children:[
@@ -1617,6 +1650,14 @@ async function lastNed(){
         }
       }
       ch.push(new Paragraph({spacing:{after:140},children:[]}));
+      }catch(oppgErr){
+        // Feil i én oppgave skal ikke stoppe resten
+        console.warn('Oppgave '+(i+1)+' feilet:',oppgErr);
+        ch.push(new Paragraph({spacing:{after:90},children:[
+          new TextRun({text:'[Oppgave '+(i+1)+' kunne ikke rendres: '+oppgErr.message+']',
+            size:22,font:'Arial',color:'EF4444',italics:true})
+        ]}));
+      }
     }
 
     // Poengsum
