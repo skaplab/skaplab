@@ -231,6 +231,37 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
       <div id="adaptiv-innhold"><div class="tom">Henter progresjon…</div></div>
     </div>
 
+
+    <!-- XP-HISTORIKK GRAF -->
+    <div class="sek" id="sek-xp-historikk">
+      <div class="sek-tittel">📈 XP de siste 4 ukene</div>
+      <canvas id="xp-graf" height="120" style="width:100%;display:block;border-radius:8px"></canvas>
+      <div id="xp-graf-tom" style="display:none;font-size:.82rem;color:var(--dim);text-align:center;padding:20px">
+        Ikke nok data ennå – data samles fortløpende
+      </div>
+    </div>
+
+    <!-- STERK / SVAK I EMNER -->
+    <div class="sek" id="sek-emner-profil">
+      <div class="sek-tittel">🎯 Faglig profil</div>
+      <div id="emner-profil-innhold"><div class="tom">Henter…</div></div>
+    </div>
+
+    <!-- KONTAKT LÆRER -->
+    <div class="sek" id="sek-kontakt">
+      <div class="sek-tittel">✉️ Kontakt læreren</div>
+      <p style="font-size:.82rem;color:var(--dim);margin-bottom:12px;line-height:1.6">
+        Har du spørsmål om barnets fremgang? Bruk e-postmalen nedenfor.
+      </p>
+      <div id="kontakt-mal" style="background:var(--bg3);border:1px solid var(--border2);
+        border-radius:10px;padding:14px;font-size:.8rem;line-height:1.7;color:var(--text);
+        white-space:pre-wrap;margin-bottom:10px">Laster…</div>
+      <button onclick="kopierKontaktMal()" style="background:var(--bla);border:none;color:#fff;
+        padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.82rem;font-family:var(--font-b)">
+        📋 Kopier e-postmal
+      </button>
+    </div>
+
     <!-- KOMMENDE PRØVER -->
     <div class="sek">
       <div class="sek-tittel">📝 Kommende prøver og oppgaver</div>
@@ -441,6 +472,9 @@ async function init() {
     document.getElementById('portal').style.display = '';
     visPortalLenke();
     byggUkerapport(progData, aktData, tildelingData);
+    byggXPGraf(aktData);
+    byggEmnerProfil(progData);
+    byggKontaktMal(elev.fullt_navn, klasse ? klasse.navn : '');
 
   } catch(e) {
     document.getElementById('laster').style.display = 'none';
@@ -464,10 +498,12 @@ async function init() {
     }).catch(function(){
       var md = document.createElement('div');
       md.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+      var mdId = 'fp-kopi-modal-' + Date.now();
+      md.id = mdId;
       md.innerHTML = '<div style="background:#0f172a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:22px;width:100%;max-width:420px">'
         + '<div style="font-size:.88rem;font-weight:500;margin-bottom:10px;color:#f1f5f9">Kopier lenken manuelt:</div>'
         + '<textarea readonly onclick="this.select()" style="width:100%;height:64px;font-size:.78rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f1f5f9;resize:none;box-sizing:border-box">' + lenke + '</textarea>'
-        + '<button onclick="this.closest(\'[style*=fixed]\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
+        + '<button onclick="document.getElementById(\''+mdId+'\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
         + '</div>';
       document.body.appendChild(md);
     });
@@ -586,6 +622,220 @@ async function init() {
   setTimeout(fpOnbVis, 800);
 </script>
 <script>
+
+// ── XP-HISTORIKKGRAF ──────────────────────────────────────────────────────
+function byggXPGraf(aktivData) {
+  var canvas = document.getElementById('xp-graf');
+  var tomEl = document.getElementById('xp-graf-tom');
+  if (!canvas || !Array.isArray(aktivData) || aktivData.length === 0) {
+    if (canvas) canvas.style.display = 'none';
+    if (tomEl) tomEl.style.display = '';
+    return;
+  }
+
+  // Bygg ukedatoer for siste 28 dager
+  var nå = new Date();
+  var datoer = [];
+  for (var d = 27; d >= 0; d--) {
+    var dato = new Date(nå);
+    dato.setDate(nå.getDate() - d);
+    dato.setHours(0,0,0,0);
+    datoer.push(dato);
+  }
+
+  // Akkumuler XP per dag fra aktivitetsloggen
+  // Aktivitet har: tidspunkt, xp_gevinst
+  var xpPerDag = {};
+  datoer.forEach(function(d) { xpPerDag[d.toDateString()] = 0; });
+  aktivData.forEach(function(a) {
+    if (!a.tidspunkt) return;
+    var d = new Date(a.tidspunkt);
+    d.setHours(0,0,0,0);
+    var key = d.toDateString();
+    if (key in xpPerDag) xpPerDag[key] += (a.xp_gevinst || 10);
+  });
+
+  var verdier = datoer.map(function(d) { return xpPerDag[d.toDateString()] || 0; });
+  var harData = verdier.some(function(v) { return v > 0; });
+
+  if (!harData) {
+    canvas.style.display = 'none';
+    if (tomEl) tomEl.style.display = '';
+    return;
+  }
+
+  // Tegn på canvas
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth || 320;
+  var h = 120;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  var maks = Math.max.apply(null, verdier) || 1;
+  var pad = { t: 8, r: 8, b: 28, l: 8 };
+  var bredde = w - pad.l - pad.r;
+  var høyde = h - pad.t - pad.b;
+
+  // Bakgrunn
+  ctx.fillStyle = 'rgba(15,23,42,0.6)';
+  ctx.roundRect(0, 0, w, h, 8);
+  ctx.fill();
+
+  // Tegn ukemarkering
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth = 1;
+  [7, 14, 21].forEach(function(dag) {
+    var x = pad.l + (dag / 27) * bredde;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, h - pad.b); ctx.stroke();
+  });
+
+  // Tegn gradient-kurve
+  var gradient = ctx.createLinearGradient(0, pad.t, 0, pad.t + høyde);
+  gradient.addColorStop(0, 'rgba(96,200,255,0.5)');
+  gradient.addColorStop(1, 'rgba(96,200,255,0.02)');
+
+  ctx.beginPath();
+  verdier.forEach(function(v, i) {
+    var x = pad.l + (i / (verdier.length - 1)) * bredde;
+    var y = pad.t + høyde - (v / maks) * høyde;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  // Fyll under kurven
+  var siste_x = pad.l + bredde;
+  ctx.lineTo(siste_x, h - pad.b);
+  ctx.lineTo(pad.l, h - pad.b);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Tegn linje over
+  ctx.beginPath();
+  verdier.forEach(function(v, i) {
+    var x = pad.l + (i / (verdier.length - 1)) * bredde;
+    var y = pad.t + høyde - (v / maks) * høyde;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#60c8ff';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Ukemerker
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  ctx.font = '9px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  [0, 7, 14, 21, 27].forEach(function(dag) {
+    var x = pad.l + (dag / 27) * bredde;
+    var dato = datoer[dag];
+    var lbl = dag === 27 ? 'I dag' : (dato.getDate() + '/' + (dato.getMonth()+1));
+    ctx.fillText(lbl, x, h - 6);
+  });
+}
+
+// ── FAGLIG PROFIL (STERK / SVAK) ─────────────────────────────────────────
+function byggEmnerProfil(progData) {
+  var el = document.getElementById('emner-profil-innhold');
+  if (!el) return;
+  if (!Array.isArray(progData) || progData.length === 0) {
+    el.innerHTML = '<div class="tom">Ingen progresjon registrert ennå.</div>';
+    return;
+  }
+
+  var med_data = progData.filter(function(p) { return p.beste_nivaa > 0; });
+  if (med_data.length === 0) {
+    el.innerHTML = '<div class="tom">Eleven har ikke startet adaptiv trening ennå.</div>';
+    return;
+  }
+
+  var sortert = med_data.slice().sort(function(a,b) { return b.beste_nivaa - a.beste_nivaa; });
+  var sterke = sortert.slice(0, 3);
+  var svake = sortert.slice(-3).reverse().filter(function(p) { return p.beste_nivaa < 5; });
+
+  function emneNavn(id) { return (typeof AT_EMNER !== 'undefined' && AT_EMNER[id]) || id; }
+
+  function nivåFarge(n) {
+    if (n >= 8) return '#34d399';
+    if (n >= 5) return '#fbbf24';
+    return '#f87171';
+  }
+
+  function emneRad(p) {
+    var pst = Math.round((p.beste_nivaa / 10) * 100);
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      + '<div style="flex:1;font-size:.82rem;color:var(--text)">' + emneNavn(p.emne_id) + '</div>'
+      + '<div style="width:90px;background:rgba(255,255,255,.08);border-radius:4px;height:6px;overflow:hidden">'
+      + '<div style="height:100%;width:'+pst+'%;background:'+nivåFarge(p.beste_nivaa)+';border-radius:4px;transition:width .4s"></div>'
+      + '</div>'
+      + '<div style="font-size:.78rem;font-weight:700;color:'+nivåFarge(p.beste_nivaa)+';width:28px;text-align:right">'+p.beste_nivaa+'/10</div>'
+      + '</div>';
+  }
+
+  var h = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">';
+
+  h += '<div><div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:#34d399;margin-bottom:8px;font-weight:600">💪 Sterkest på</div>';
+  sterke.forEach(function(p) { h += emneRad(p); });
+  h += '</div>';
+
+  if (svake.length > 0) {
+    h += '<div><div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:#f87171;margin-bottom:8px;font-weight:600">📌 Kan øve mer på</div>';
+    svake.forEach(function(p) { h += emneRad(p); });
+    h += '</div>';
+  }
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ── KONTAKT-LÆRER E-POSTMAL ───────────────────────────────────────────────
+var _kontaktMalTekst = '';
+
+function byggKontaktMal(elevNavn, klasse) {
+  var mal = document.getElementById('kontakt-mal');
+  if (!mal) return;
+  _kontaktMalTekst = 'Emne: Spørsmål om ' + elevNavn + ' sin fremgang i SkapLab\n\n'
+    + 'Hei,\n\n'
+    + 'Jeg er foresatt til ' + elevNavn + ' i ' + (klasse || 'klassen') + '.'
+    + ' Jeg følger med på fremgangen via foresattportalen og hadde et par spørsmål:\n\n'
+    + '[Skriv spørsmålet ditt her]\n\n'
+    + 'Med vennlig hilsen,\n[Ditt navn]';
+  mal.textContent = _kontaktMalTekst;
+}
+
+function _fpLukkKM() { var m = document.getElementById('fp-km-modal'); if(m) m.remove(); }
+function kopierKontaktMal() {
+  if (!_kontaktMalTekst) return;
+  navigator.clipboard.writeText(_kontaktMalTekst).then(function() {
+    var btn = event.target;
+    var orig = btn.textContent;
+    btn.textContent = '✅ Kopiert!';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  }).catch(function() {
+    var md = document.createElement('div');
+    md.id = 'fp-km-modal';
+    md.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    var inner = document.createElement('div');
+    inner.style.cssText = 'background:#0f172a;border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:22px;width:100%;max-width:420px';
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:.88rem;font-weight:500;margin-bottom:10px;color:#f1f5f9';
+    lbl.textContent = 'Kopier e-postmalen manuelt:';
+    var ta = document.createElement('textarea');
+    ta.readOnly = true;
+    ta.value = _kontaktMalTekst;
+    ta.onclick = function(){ this.select(); };
+    ta.style.cssText = 'width:100%;height:120px;font-size:.75rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f1f5f9;resize:none;box-sizing:border-box';
+    var lukk = document.createElement('button');
+    lukk.textContent = 'Lukk';
+    lukk.onclick = _fpLukkKM;
+    lukk.style.cssText = 'margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem';
+    inner.appendChild(lbl); inner.appendChild(ta); inner.appendChild(lukk);
+    md.appendChild(inner);
+    document.body.appendChild(md);
+  });
+}
 
 // ── FORESATT HJELP ──────────────────────────────────────────────────
 function visForesattHjelp() {

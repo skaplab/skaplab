@@ -304,6 +304,29 @@ nav {
 .quiz-kort-sub{font-size:.76rem;color:var(--dim)}
 .quiz-kort-pil{font-size:.85rem;color:var(--gul);margin-top:auto}
 
+
+/* Søk-resultater */
+.sok-treff{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border);
+  text-decoration:none;color:var(--text);
+}
+.sok-treff:last-child{border-bottom:none}
+.sok-treff:hover{background:rgba(255,255,255,.04)}
+.sok-treff-emne{
+  font-size:.68rem;color:var(--dim);background:var(--bg3);
+  border:1px solid var(--border);padding:2px 7px;border-radius:5px;white-space:nowrap;
+}
+/* Sist-besøkt chip */
+.sist-chip{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;
+  background:var(--card);border:1px solid var(--border2);border-radius:20px;
+  font-size:.78rem;text-decoration:none;color:var(--text);
+  transition:border-color .15s,background .15s;white-space:nowrap;
+}
+.sist-chip:hover{border-color:rgba(96,165,250,.4);background:var(--card2)}
+#nat-sok:focus{border-color:var(--bla)}
+
 </style>
 </head>
 <body>
@@ -892,6 +915,27 @@ nav {
         <div class="stat-l">PDF-kompendier</div>
       </div>
     </div>
+
+
+  <!-- SØKEFELT PÅ TVERS AV ALLE EMNER -->
+  <div style="margin-bottom:12px;position:relative">
+    <input id="nat-sok" type="text" placeholder="🔍 Søk på tvers av alle naturfag-emner…"
+      oninput="natSok(this.value)"
+      style="width:100%;background:var(--card);border:1px solid var(--border2);
+        color:var(--text);border-radius:10px;padding:10px 16px;font-size:.88rem;
+        font-family:var(--font-b);outline:none;box-sizing:border-box;transition:border-color .15s">
+    <div id="nat-sok-resultater" style="display:none;position:absolute;left:0;right:0;top:100%;
+      margin-top:4px;background:var(--card);border:1px solid var(--border2);border-radius:10px;
+      max-height:360px;overflow-y:auto;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+    </div>
+  </div>
+
+  <!-- SIST BESØKT -->
+  <div id="sist-besøkt-sek" style="display:none;margin-bottom:14px">
+    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
+      color:var(--dim);margin-bottom:8px;font-weight:600">🕐 Sist besøkt</div>
+    <div id="sist-besøkt-liste" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  </div>
 
     <!-- Fane-nav -->
     <div class="fane-rad" role="tablist">
@@ -2423,6 +2467,7 @@ function apnePDF(htmlUrl, event) {
 function merkBesokt(nokkel, event) {
   var besokt = JSON.parse(localStorage.getItem('naturfag_besokt') || '[]');
   if (!besokt.includes(nokkel)) { besokt.push(nokkel); localStorage.setItem('naturfag_besokt', JSON.stringify(besokt)); }
+  oppdaterSistBesokt();
 }
 function oppdaterFremdrift() {
   var besokt = JSON.parse(localStorage.getItem('naturfag_besokt') || '[]');
@@ -2576,9 +2621,63 @@ function visToast(tekst) {
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────
+
+// ── SØKEFUNKSJON ─────────────────────────────────────────────────────
+var NAT_FAGKORT = [{"href": "bioteknologi.html", "emoji": "🧪", "tittel": "Bioteknologi og genteknologi", "emne": "Biologi"}, {"href": "cellebiologi.html", "emoji": "📐", "tittel": "Cellebiologi (prokaryot, mitose, DNA)", "emne": "Biologi"}, {"href": "celle.html", "emoji": "📐", "tittel": "Cellens anatomi (organeller)", "emne": "Biologi"}, {"href": "dinosaurer.html", "emoji": "📐", "tittel": "Dinosaurer", "emne": "Biologi"}, {"href": "evolusjon.html", "emoji": "📐", "tittel": "Evolusjon", "emne": "Biologi"}, {"href": "fauna.html", "emoji": "🦎", "tittel": "Fauna – dyrelivet", "emne": "Biologi"}, {"href": "flora.html", "emoji": "🌿", "tittel": "Flora – plantelivet", "emne": "Biologi"}, {"href": "fordoyelsen.html", "emoji": "📐", "tittel": "Fordøyelsessystemet", "emne": "Biologi"}, {"href": "fossiler.html", "emoji": "🪨", "tittel": "Fossiler", "emne": "Biologi"}, {"href": "fotosyntese.html", "emoji": "📐", "tittel": "Fotosyntese og celleånding", "emne": "Biologi"}, {"href": "fugler.html", "emoji": "🦅", "tittel": "Fugler", "emne": "Biologi"}, {"href": "genetisk_variasjon_evolusjon.html", "emoji": "🦋", "tittel": "Genetisk variasjon og evolusjon", "emne": "Biologi"}, {"href": "haier.html", "emoji": "🦈", "tittel": "Haier", "emne": "Biologi"}, {"href": "havet.html", "emoji": "📐", "tittel": "Havet", "emne": "Biologi"}, {"href": "kropp_animasjoner.html", "emoji": "📐", "tittel": "Kroppen i bevegelse", "emne": "Biologi"}, {"href": "kroppens_organer.html", "emoji": "📐", "tittel": "Kroppens organer", "emne": "Biologi"}, {"href": "lungene.html", "emoji": "📐", "tittel": "Lungene og åndedrett", "emne": "Biologi"}, {"href": "meiose.html", "emoji": "🔬", "tittel": "Meiose og kjønnsformering", "emne": "Biologi"}, {"href": "punnett_rute.html", "emoji": "🧬", "tittel": "Mendels arvelære og Punnett-ruter", "emne": "Biologi"}, {"href": "mikrobiologi.html", "emoji": "📐", "tittel": "Mikrobiologi", "emne": "Biologi"}, {"href": "mikroskop.html", "emoji": "📐", "tittel": "Mikroskoplaben 🔬", "emne": "Biologi"}, {"href": "animasjoner.html", "emoji": "📐", "tittel": "Naturfag-animasjoner", "emne": "Biologi"}, {"href": "nedbrytere.html", "emoji": "🍂", "tittel": "Nedbrytere og næringskjeder", "emne": "Biologi"}, {"href": "nyrene.html", "emoji": "📐", "tittel": "Nyrene", "emne": "Biologi"}, {"href": "ormer_slanger.html", "emoji": "🐍", "tittel": "Ormer og slanger", "emne": "Biologi"}, {"href": "populasjoner_baereevne.html", "emoji": "🐺", "tittel": "Populasjoner og bæreevne", "emne": "Biologi"}, {"href": "virveldyr.html", "emoji": "🐸", "tittel": "Virveldyr", "emne": "Biologi"}, {"href": "okologi.html", "emoji": "📐", "tittel": "Økologi", "emne": "Biologi"}, {"href": "aerodynamikk.html", "emoji": "✈️", "tittel": "Aerodynamikk", "emne": "Fysikk"}, {"href": "arbeid_effekt.html", "emoji": "⚡", "tittel": "Arbeid, effekt og energi", "emne": "Fysikk"}, {"href": "bolger_lyd.html", "emoji": "📐", "tittel": "Bølger og lyd", "emne": "Fysikk"}, {"href": "energi_varme.html", "emoji": "📐", "tittel": "Energi og varme", "emne": "Fysikk"}, {"href": "fysikk.html", "emoji": "📐", "tittel": "Kraft og bevegelse 🚀", "emne": "Fysikk"}, {"href": "krefter_bevegelse.html", "emoji": "📐", "tittel": "Krefter og bevegelse", "emne": "Fysikk"}, {"href": "massetetthet.html", "emoji": "⚖️", "tittel": "Massetetthet", "emne": "Fysikk"}, {"href": "newtons_lover.html", "emoji": "🍎", "tittel": "Newtons tre bevegelseslover", "emne": "Fysikk"}, {"href": "oppdrift.html", "emoji": "💧", "tittel": "Oppdrift", "emne": "Fysikk"}, {"href": "optikk.html", "emoji": "📐", "tittel": "Optikk: Lys og syn", "emne": "Fysikk"}, {"href": "varme_termodynamikk_teori.html", "emoji": "📐", "tittel": "Varme og termodynamikk", "emne": "Fysikk"}, {"href": "astronomi.html", "emoji": "📐", "tittel": "Astronomi", "emne": "Geofag"}, {"href": "bergarter.html", "emoji": "🪨", "tittel": "Bergarter og bergartssyklusen", "emne": "Geofag"}, {"href": "jordas_indre.html", "emoji": "🌍", "tittel": "Jordas indre", "emne": "Geofag"}, {"href": "jordskorpen.html", "emoji": "🌍", "tittel": "Jordskorpen og platetektonikk", "emne": "Geofag"}, {"href": "kontinentaldrift.html", "emoji": "📐", "tittel": "Kontinentaldrift og platetektonikk", "emne": "Geofag"}, {"href": "lysfarten_astronomi.html", "emoji": "✨", "tittel": "Lysfarten og astronomiske avstander", "emne": "Geofag"}, {"href": "naturressurser.html", "emoji": "⚡", "tittel": "Naturressurser", "emne": "Geofag"}, {"href": "pangea.html", "emoji": "📐", "tittel": "Pangea-puslespill", "emne": "Geofag"}, {"href": "solsystemet_interaktivt.html", "emoji": "🪐", "tittel": "Solsystemet – planeter og baner", "emne": "Geofag"}, {"href": "vannets_kretsloop.html", "emoji": "💧", "tittel": "Vannets kretsløp", "emne": "Geofag"}, {"href": "atom.html", "emoji": "📐", "tittel": "Atomets oppbygning", "emne": "Kjemi"}, {"href": "atomteori.html", "emoji": "📐", "tittel": "Atomteori", "emne": "Kjemi"}, {"href": "elektrokjemi.html", "emoji": "📐", "tittel": "Elektrokjemi", "emne": "Kjemi"}, {"href": "faseoverganger.html", "emoji": "⚗️", "tittel": "Faseoverganger", "emne": "Kjemi"}, {"href": "kjemi.html", "emoji": "📐", "tittel": "Kjemilaben – SkapLab", "emne": "Kjemi"}, {"href": "kjemiske_bindinger.html", "emoji": "📐", "tittel": "Kjemiske bindinger", "emne": "Kjemi"}, {"href": "kjemiske_formler.html", "emoji": "⚗️", "tittel": "Kjemiske formler og navnsetting", "emne": "Kjemi"}, {"href": "kjemiske_reaksjoner.html", "emoji": "📐", "tittel": "Kjemiske reaksjoner", "emne": "Kjemi"}, {"href": "organisk_kjemi_karusell.html", "emoji": "📐", "tittel": "Organisk kjemi", "emne": "Kjemi"}, {"href": "organisk_kjemi.html", "emoji": "📐", "tittel": "Organisk kjemi: Molekylbyggesett", "emne": "Kjemi"}, {"href": "periodesystem.html", "emoji": "📐", "tittel": "Periodesystemet", "emne": "Kjemi"}, {"href": "radioaktivitet.html", "emoji": "☢️", "tittel": "Radioaktivitet og halveringstid", "emne": "Kjemi"}, {"href": "syr_base_ph.html", "emoji": "📐", "tittel": "Syre, base og pH", "emne": "Kjemi"}, {"href": "araknider.html", "emoji": "🕷️", "tittel": "Araknider", "emne": "Klima"}, {"href": "de_fem_rikene.html", "emoji": "🌿", "tittel": "De fem rikene", "emne": "Klima"}, {"href": "energi_miljo.html", "emoji": "📐", "tittel": "Energi og miljøpåvirkning", "emne": "Klima"}, {"href": "energiproduksjon.html", "emoji": "📐", "tittel": "Energiproduksjon", "emne": "Klima"}, {"href": "barekraftsmal.html", "emoji": "🌍", "tittel": "FNs bærekraftsmål", "emne": "Klima"}, {"href": "forsoksrapport.html", "emoji": "🔬", "tittel": "Forsøksrapport – digital mal", "emne": "Klima"}, {"href": "insekter.html", "emoji": "🪲", "tittel": "Insekter", "emne": "Klima"}, {"href": "kjernekraft.html", "emoji": "⚛️", "tittel": "Kjernekraft", "emne": "Klima"}, {"href": "kjonnsorganene.html", "emoji": "🧬", "tittel": "Kjønnsorganene", "emne": "Klima"}, {"href": "klima.html", "emoji": "📐", "tittel": "Klima og drivhuseffekten", "emne": "Klima"}, {"href": "klimakalkulator.html", "emoji": "🌍", "tittel": "Klimakalkulator", "emne": "Klima"}, {"href": "naturkatastrofer.html", "emoji": "📐", "tittel": "Naturkatastrofer", "emne": "Klima"}, {"href": "norsk_natur_naturtyper.html", "emoji": "🏔️", "tittel": "Norsk natur og naturtyper", "emne": "Klima"}, {"href": "taalegrenser.html", "emoji": "🌍", "tittel": "Planetens 9 tålegrenser", "emne": "Klima"}, {"href": "plast.html", "emoji": "♻️", "tittel": "Plast", "emne": "Klima"}, {"href": "samisk_natur.html", "emoji": "📐", "tittel": "Samisk naturkunnskap", "emne": "Klima"}, {"href": "sirkulasjonssystemet.html", "emoji": "❤️", "tittel": "Sirkulasjonssystemet", "emne": "Klima"}, {"href": "smarte_losninger.html", "emoji": "📱", "tittel": "Smarte løsninger", "emne": "Klima"}, {"href": "store_oppdagelser.html", "emoji": "🔭", "tittel": "Store oppdagelser", "emne": "Klima"}, {"href": "vaer_atmosfaere.html", "emoji": "📐", "tittel": "Vær og atmosfære", "emne": "Klima"}, {"href": "hvite_blodceller.html", "emoji": "🔬", "tittel": "De hvite blodcellene", "emne": "Kropp"}, {"href": "ernaering.html", "emoji": "🥗", "tittel": "Ernæring og næringsstoffer", "emne": "Kropp"}, {"href": "hjernen.html", "emoji": "📐", "tittel": "Hjernen", "emne": "Kropp"}, {"href": "hjertet.html", "emoji": "📐", "tittel": "Hjertet", "emne": "Kropp"}, {"href": "hormonsystemet.html", "emoji": "📐", "tittel": "Hormonsystemet", "emne": "Kropp"}, {"href": "immunforsvar.html", "emoji": "📐", "tittel": "Immunforsvar og vaksiner", "emne": "Kropp"}, {"href": "lymfesystemet.html", "emoji": "🫧", "tittel": "Lymfesystemet", "emne": "Kropp"}, {"href": "nervesystemet.html", "emoji": "📐", "tittel": "Nervesystemet", "emne": "Kropp"}, {"href": "rusmidler.html", "emoji": "📐", "tittel": "Rusmidler og signalsystemene", "emne": "Kropp"}, {"href": "seksualundervisning.html", "emoji": "📐", "tittel": "Seksualundervisning", "emne": "Kropp"}, {"href": "oyet.html", "emoji": "📐", "tittel": "Øyet", "emne": "Kropp"}, {"href": "elektrisitetsteori.html", "emoji": "📐", "tittel": "Elektrisitetsteori", "emne": "Teknologi"}, {"href": "elektriske_kretser.html", "emoji": "📐", "tittel": "Elektriske kretser", "emne": "Teknologi"}, {"href": "ki.html", "emoji": "🤖", "tittel": "KI – Kunstig intelligens", "emne": "Teknologi"}, {"href": "kommunikasjonsteknologi.html", "emoji": "📐", "tittel": "Kommunikasjonsteknologi", "emne": "Teknologi"}, {"href": "nasa.html", "emoji": "🚀", "tittel": "NASA og romutforskning", "emne": "Teknologi"}, {"href": "programmering_naturfag.html", "emoji": "📐", "tittel": "Programmering i naturfag", "emne": "Teknologi"}, {"href": "krets_spill.html", "emoji": "📐", "tittel": "Strømlaben ⚡", "emne": "Teknologi"}, {"href": "dagsaktuell_forskning.html", "emoji": "📐", "tittel": "Dagsaktuell forskning", "emne": "Utforsking"}, {"href": "forsok.html", "emoji": "📐", "tittel": "Forsøk", "emne": "Utforsking"}, {"href": "genetikk.html", "emoji": "📐", "tittel": "Genetikklaben 🧬", "emne": "Utforsking"}, {"href": "labsikkerhet.html", "emoji": "📐", "tittel": "Labsikkerhet og forsøksdesign", "emne": "Utforsking"}, {"href": "molekylmodeller.html", "emoji": "📐", "tittel": "Molekylmodeller", "emne": "Utforsking"}, {"href": "naturfag.html", "emoji": "📐", "tittel": "Naturfagbegreper", "emne": "Utforsking"}, {"href": "naturfagquiz.html", "emoji": "🧪", "tittel": "Naturfagquiz", "emne": "Utforsking"}, {"href": "patogener.html", "emoji": "🦠", "tittel": "Patogener", "emne": "Utforsking"}, {"href": "tilbakekobling.html", "emoji": "🔄", "tittel": "Tilbakekoblingsmekanismer", "emne": "Utforsking"}, {"href": "vitenskapspersoner.html", "emoji": "📐", "tittel": "Vitenskapspersoner Flashcards", "emne": "Utforsking"}];
+
+function natSok(q) {
+  var res = document.getElementById('nat-sok-resultater');
+  if (!q || q.trim().length < 2) { res.style.display = 'none'; return; }
+  var ql = q.toLowerCase();
+  var treff = NAT_FAGKORT.filter(function(k) {
+    return k.tittel.toLowerCase().includes(ql) || k.emne.toLowerCase().includes(ql);
+  }).slice(0, 12);
+  if (!treff.length) {
+    res.innerHTML = '<div style="padding:14px 16px;font-size:.84rem;color:var(--dim)">Ingen treff for «' + q + '»</div>';
+  } else {
+    res.innerHTML = treff.map(function(k) {
+      return '<a href="' + k.href + '" class="sok-treff" onclick="merkBesokt(\'' + k.href.replace('.html','') + '\',event)">'
+        + '<span style="font-size:1.1rem">' + k.emoji + '</span>'
+        + '<span style="flex:1;font-size:.84rem">' + k.tittel + '</span>'
+        + '<span class="sok-treff-emne">' + k.emne + '</span>'
+        + '</a>';
+    }).join('');
+  }
+  res.style.display = '';
+}
+
+// Lukk søk ved klikk utenfor
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#nat-sok') && !e.target.closest('#nat-sok-resultater')) {
+    var r = document.getElementById('nat-sok-resultater');
+    if (r) r.style.display = 'none';
+  }
+});
+
+// ── SIST BESØKT ──────────────────────────────────────────────────────
+function oppdaterSistBesokt() {
+  var besokt = JSON.parse(localStorage.getItem('naturfag_besokt') || '[]');
+  var sek = document.getElementById('sist-besøkt-sek');
+  var liste = document.getElementById('sist-besøkt-liste');
+  if (!sek || !liste || besokt.length === 0) return;
+  
+  // Vis de 4 siste
+  var siste4 = besokt.slice(-4).reverse();
+  liste.innerHTML = siste4.map(function(nokkel) {
+    var fk = NAT_FAGKORT.find(function(k) { return k.href.replace('.html','') === nokkel; });
+    if (!fk) return '';
+    return '<a href="' + fk.href + '" class="sist-chip" onclick="merkBesokt(\'' + nokkel + '\',event)">'
+      + fk.emoji + ' ' + fk.tittel
+      + '</a>';
+  }).filter(Boolean).join('');
+  
+  if (liste.innerHTML) sek.style.display = '';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   oppdaterFremdrift();
   oppdaterBok();
+  oppdaterSistBesokt();
 });
 </script>
 </body>

@@ -1101,6 +1101,7 @@ async function init() {
   // Vis siste aktivitet
   byggAktivitet();
   byggOvMer();
+  byggSisteAktivitetForside(aktivitet);
 
   // P7: XP/streak-oppdatering - sett opp global funksjon som adaptiv trener kan kalle
   window._oppdaterVelkomstXP = function(xp, streak) {
@@ -1501,6 +1502,37 @@ async function visForesattlenke() {
   } finally {
     if (btn) { btn.textContent = '👨‍👩‍👦 Foresatte'; btn.disabled = false; }
   }
+}
+
+// Siste aktivitet på forsiden
+function byggSisteAktivitetForside(akt) {
+  var sek = document.getElementById('siste-akt-sek');
+  var liste = document.getElementById('siste-akt-liste');
+  if (!sek || !liste || !Array.isArray(akt) || akt.length === 0) return;
+
+  var siste5 = akt.slice(0, 5);
+  sek.style.display = '';
+
+  liste.innerHTML = siste5.map(function(a) {
+    var dato = a.tidspunkt ? new Date(a.tidspunkt) : null;
+    var datoStr = dato ? dato.toLocaleDateString('nb-NO', {day:'numeric',month:'short'})
+      + ' ' + dato.toLocaleTimeString('nb-NO', {hour:'2-digit',minute:'2-digit'}) : '';
+    var ressurs = a.ressurs || 'Ukjent';
+    var tittel = ressurs.replace(/_/g,' ').replace(/matte |nat |prg /g,'').replace(/^./, function(c){return c.toUpperCase();});
+    var farge = a.score_pst >= 70 ? '#34d399' : a.score_pst >= 45 ? '#fbbf24' : '#f87171';
+    var score = a.score_pst !== null && a.score_pst !== undefined
+      ? '<span style="font-size:.72rem;font-weight:700;color:' + farge + ';margin-left:auto">' + a.score_pst + '%</span>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);'
+      + 'border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 12px">'
+      + '<span style="font-size:.9rem">📘</span>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + tittel + '</div>'
+      + '<div style="font-size:.7rem;color:rgba(255,255,255,.35)">' + datoStr + '</div>'
+      + '</div>'
+      + score
+      + '</div>';
+  }).join('');
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
@@ -2013,6 +2045,37 @@ function visFane(fane, el) {
   if (fane === 'fk') setTimeout(function(){ if(typeof hentOgVisFK==='function') hentOgVisFK(); }, 50);
 }
 
+// Siste aktivitet på forsiden
+function byggSisteAktivitetForside(akt) {
+  var sek = document.getElementById('siste-akt-sek');
+  var liste = document.getElementById('siste-akt-liste');
+  if (!sek || !liste || !Array.isArray(akt) || akt.length === 0) return;
+
+  var siste5 = akt.slice(0, 5);
+  sek.style.display = '';
+
+  liste.innerHTML = siste5.map(function(a) {
+    var dato = a.tidspunkt ? new Date(a.tidspunkt) : null;
+    var datoStr = dato ? dato.toLocaleDateString('nb-NO', {day:'numeric',month:'short'})
+      + ' ' + dato.toLocaleTimeString('nb-NO', {hour:'2-digit',minute:'2-digit'}) : '';
+    var ressurs = a.ressurs || 'Ukjent';
+    var tittel = ressurs.replace(/_/g,' ').replace(/matte |nat |prg /g,'').replace(/^./, function(c){return c.toUpperCase();});
+    var farge = a.score_pst >= 70 ? '#34d399' : a.score_pst >= 45 ? '#fbbf24' : '#f87171';
+    var score = a.score_pst !== null && a.score_pst !== undefined
+      ? '<span style="font-size:.72rem;font-weight:700;color:' + farge + ';margin-left:auto">' + a.score_pst + '%</span>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);'
+      + 'border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px 12px">'
+      + '<span style="font-size:.9rem">📘</span>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + tittel + '</div>'
+      + '<div style="font-size:.7rem;color:rgba(255,255,255,.35)">' + datoStr + '</div>'
+      + '</div>'
+      + score
+      + '</div>';
+  }).join('');
+}
+
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 (async function(){ await init(); })();
 
@@ -2179,6 +2242,11 @@ async function hentOgVisFK() {
         : 'Kunne ikke laste ferdighetskart (feil ' + resp.status + ').';
       innhold.innerHTML = '<div class="tom" style="padding:20px;text-align:center;color:#f87171;">⚠️ ' + feilTekst + '</div>';
       console.error('hentOgVisFK HTTP', resp.status, resp.statusText);
+      var _fkErr = document.createElement('div');
+      _fkErr.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:#93c5fd;padding:11px 22px;border-radius:10px;font-size:.85rem;font-weight:500;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,.3);max-width:90vw;text-align:center';
+      _fkErr.textContent = 'Ferdighetskart kunne ikke lastes (' + resp.status + '). Prøv igjen.';
+      document.body.appendChild(_fkErr);
+      setTimeout(function(){ _fkErr.remove(); }, 4000);
       return;
     }
 
