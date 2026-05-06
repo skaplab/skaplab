@@ -89,7 +89,25 @@ nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-fil
 .mengde-banner .mb-pil{font-size:1.3rem;color:var(--accent2);flex-shrink:0}
 code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;}
 @media(max-width:560px){.flervalg{grid-template-columns:1fr}}
-.ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}</style>
+.ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
+</style>
 </head>
 <body>
 <nav>
@@ -272,5 +290,68 @@ var vanskel=2,dynOppgave=null,dynValgt=null;function lagDynFlervalg(oppg){
 
 </script>
 <script>init(3); nyDynOppgave();</script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Grafisk fremstilling – lineær funksjon</span>
+  </div>
+  <p class="sim-sub">Endre stigningstall og konstantledd. Se grafen tegnes i sanntid.</p>
+  <div class="sim-ramme">
+    <canvas id="clf" height="320" style="width:100%;height:320px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Stigningstall a</span>
+  <input type="range" class="sim-slider" id="lf-a" min="-5" max="5" value="1" step=".5">
+  <span class="sim-k-verdi" id="lf-av">1</span></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Konstantledd b</span>
+  <input type="range" class="sim-slider" id="lf-b" min="-8" max="8" value="0" step=".5">
+  <span class="sim-k-verdi" id="lf-bv">0</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('clf');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=320;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var scale=28,ox=W/2,oy=H/2;
+  function toCanv(x,y){return[ox+x*scale,oy-y*scale];}
+  function lfDraw(){
+    var a=+document.getElementById('lf-a').value,b=+document.getElementById('lf-b').value;
+    document.getElementById('lf-av').textContent=a;document.getElementById('lf-bv').textContent=b;
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+    for(var x=-10;x<=10;x++){var px=toCanv(x,0)[0];ctx.beginPath();ctx.moveTo(px,0);ctx.lineTo(px,H);ctx.stroke();}
+    for(var y=-8;y<=8;y++){var py=toCanv(0,y)[1];ctx.beginPath();ctx.moveTo(0,py);ctx.lineTo(W,py);ctx.stroke();}
+    // Akser
+    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(0,oy);ctx.lineTo(W,oy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(ox,0);ctx.lineTo(ox,H);ctx.stroke();
+    // Tall på akser
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px monospace';ctx.textAlign='center';
+    for(var xn=-8;xn<=8;xn+=2){if(xn===0)continue;var p2=toCanv(xn,0);ctx.fillText(xn,p2[0],oy+14);}
+    ctx.textAlign='right';
+    for(var yn=-6;yn<=6;yn+=2){if(yn===0)continue;var p3=toCanv(0,yn);ctx.fillText(yn,ox-5,p3[1]+4);}
+    // Graf
+    ctx.strokeStyle='#60c8ff';ctx.lineWidth=2.5;ctx.beginPath();
+    var first=true;
+    for(var px2=-10;px2<=10;px2+=.1){var fy=a*px2+b;var cp=toCanv(px2,fy);if(first){ctx.moveTo(cp[0],cp[1]);first=false;}else ctx.lineTo(cp[0],cp[1]);}
+    ctx.stroke();
+    // Nullpunkt og skjæring
+    if(a!==0){var xNull=-b/a;var np=toCanv(xNull,0);ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(np[0],np[1],5,0,Math.PI*2);ctx.fill();}
+    var yNull=toCanv(0,b);ctx.fillStyle='#f97316';ctx.beginPath();ctx.arc(yNull[0],yNull[1],5,0,Math.PI*2);ctx.fill();
+    // Formel
+    ctx.fillStyle='#fff';ctx.font='bold 16px monospace';ctx.textAlign='center';
+    var str='y = '+(a===0?'':a===1?'':(a===-1?'-':a))+'x'+(b>0?' + '+b:b<0?' − '+Math.abs(b):'');
+    ctx.fillText(str,W/2,20);
+  }
+  document.getElementById('lf-a').oninput=lfDraw;document.getElementById('lf-b').oninput=lfDraw;
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;ox=W/2;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);lfDraw();});
+  lfDraw();
+  
+});
+</script>
+</section>
 </body>
 </html>

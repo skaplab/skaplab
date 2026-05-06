@@ -89,7 +89,25 @@ nav{position:sticky;top:0;z-index:500;background:rgba(13,15,26,.92);backdrop-fil
 .mengde-banner .mb-pil{font-size:1.3rem;color:var(--accent2);flex-shrink:0}
 code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padding:1px 5px;border-radius:3px;}
 @media(max-width:560px){.flervalg{grid-template-columns:1fr}}
-.ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}</style>
+.ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
+</style>
 </head>
 <body>
 <nav>
@@ -281,5 +299,69 @@ var vanskel=2,dynOppgave=null,dynValgt=null;function lagDynFlervalg(oppg){
 
 </script>
 <script>init(3); nyDynOppgave();</script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Sannsynlighetseksperiment – terningkast</span>
+  </div>
+  <p class="sim-sub">Kast terninger mange ganger – se om frekvensen nærmer seg teorien.</p>
+  <div class="sim-ramme">
+    <canvas id="csp" height="280" style="width:100%;height:280px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Antall kast</span>
+  <select id="sp-n" style="background:#0e1520;color:#e8f0ff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 10px;font-size:.82rem">
+    <option value="10">10 kast</option>
+    <option value="100">100 kast</option>
+    <option value="1000" selected>1 000 kast</option>
+    <option value="10000">10 000 kast</option>
+  </select></div>
+  <button class="sim-btn" onclick="spKast()">🎲 Kast!</button>
+  <button class="sim-btn" onclick="spReset()">↺ Reset</button>
+  <span id="sp-info" style="font-size:.8rem;color:rgba(255,255,255,.45);padding:4px 8px"></span></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('csp');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=280,frekvens=[0,0,0,0,0,0],total=0;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  function spReset(){frekvens=[0,0,0,0,0,0];total=0;document.getElementById('sp-info').textContent='';draw();}
+  function spKast(){
+    var n=+document.getElementById('sp-n').value;
+    for(var i=0;i<n;i++)frekvens[Math.floor(Math.random()*6)]++;
+    total+=n;document.getElementById('sp-info').textContent='Totalt '+total.toLocaleString()+' kast';draw();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    var bw=Math.floor((W-40)/6),maxH=H-80,teori=1/6;
+    ctx.strokeStyle='rgba(251,191,36,.3)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    var teoriPx=maxH*(teori/(1/6+.05));
+    ctx.beginPath();ctx.moveTo(20,H-50-teoriPx);ctx.lineTo(W-20,H-50-teoriPx);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle='rgba(251,191,36,.45)';ctx.font='10px monospace';ctx.textAlign='left';
+    ctx.fillText('Teoretisk: 1/6 ≈ 16.7%',22,H-50-teoriPx-5);
+    for(var i=0;i<6;i++){
+      var freq=total>0?frekvens[i]/total:0;
+      var bh=Math.round(maxH*(freq/(1/6+.05)));
+      var bx=20+i*(bw+4),by=H-50-bh;
+      var diff=Math.abs(freq-teori);
+      var col=diff<0.02?'#34d399':diff<0.05?'#60c8ff':'#a78bfa';
+      ctx.fillStyle=col+'88';ctx.fillRect(bx,by,bw,bh);
+      ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(bx,by,bw,bh);
+      ctx.fillStyle='rgba(255,255,255,.7)';ctx.font='bold 14px monospace';ctx.textAlign='center';
+      ctx.fillText(i+1,bx+bw/2,H-32);
+      if(total>0){ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='10px monospace';ctx.fillText((freq*100).toFixed(1)+'%',bx+bw/2,by-5);}
+    }
+  }
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);draw();});
+  draw();
+  
+  // Eksponér knappefunksjoner globalt
+  window.spKast = spKast;
+  window.spReset = spReset;
+});
+</script>
+</section>
 </body>
 </html>

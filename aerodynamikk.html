@@ -47,6 +47,24 @@ nav{display:flex;align-items:center;gap:8px;padding:14px 24px;border-bottom:1px 
 .k-pil{background:transparent;border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:1rem;transition:all .18s;display:flex;align-items:center;justify-content:center}
 .k-pil:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
 .k-pil:disabled{opacity:.25;cursor:not-allowed}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -310,6 +328,177 @@ goTo(0);
     }
   }, 60000);
 })();
+</script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Kraft og akselerasjon – F = m·a</span>
+  </div>
+  <p class="sim-sub">Endre massen og kraften – se akselerasjon og fart endres.</p>
+  <div class="sim-ramme">
+    <canvas id="cn" height="360" style="width:100%;height:360px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Kraft F (N)</span>
+  <input type="range" class="sim-slider" id="sn-f" min="0" max="100" value="30">
+  <span class="sim-k-verdi" id="sn-fv">30 N</span></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Masse m (kg)</span>
+  <input type="range" class="sim-slider" id="sn-m" min="1" max="50" value="10">
+  <span class="sim-k-verdi" id="sn-mv">10 kg</span></div>
+  <button class="sim-btn" id="sn-btn" onclick="snToggle()">▶ Start</button>
+  <button class="sim-btn" onclick="snReset()">↺ Reset</button></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cn');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=360,run=false,x=40,vx=0,aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var BY=H-90;
+  function gF(){return+document.getElementById('sn-f').value;}
+  function gM(){return+document.getElementById('sn-m').value;}
+  document.getElementById('sn-f').oninput=function(){document.getElementById('sn-fv').textContent=this.value+' N';if(!run)draw();};
+  document.getElementById('sn-m').oninput=function(){document.getElementById('sn-mv').textContent=this.value+' kg';if(!run)draw();};
+  function draw(){
+    var F=gF(),M=gM(),a=(F/M).toFixed(2);
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,.05)';ctx.fillRect(0,BY+60,W,H-BY-60);
+    ctx.strokeStyle='rgba(96,200,255,.15)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,BY+60);ctx.lineTo(W,BY+60);ctx.stroke();
+    var bw=Math.max(44,90-M*1.2);
+    var g=ctx.createLinearGradient(x,BY,x,BY+60);g.addColorStop(0,'#1e3a5f');g.addColorStop(1,'#0d1f35');
+    ctx.fillStyle=g;ctx.fillRect(x,BY,bw,60);
+    ctx.strokeStyle='rgba(96,165,250,.5)';ctx.lineWidth=2;ctx.strokeRect(x,BY,bw,60);
+    ctx.fillStyle='#93c5fd';ctx.font='bold 13px monospace';ctx.textAlign='center';ctx.fillText(M+'kg',x+bw/2,BY+34);
+    if(F>0&&x+bw<W-20){
+      var pl=Math.min(F*1.2,W-x-bw-10),px=x+bw,py=BY+30;
+      ctx.strokeStyle='#fbbf24';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+pl,py);ctx.stroke();
+      ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.moveTo(px+pl+8,py);ctx.lineTo(px+pl,py-6);ctx.lineTo(px+pl,py+6);ctx.fill();
+    }
+    ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='13px monospace';ctx.textAlign='left';
+    ctx.fillText('a = '+F+'/'+M+' = '+a+' m/s²',14,22);
+    ctx.fillText('v = '+vx.toFixed(1)+' m/s',14,40);
+  }
+  function snToggle(){run=!run;document.getElementById('sn-btn').textContent=run?'⏸ Pause':'▶ Start';if(run)loop();else cancelAnimationFrame(aid);}
+  function snReset(){run=false;x=40;vx=0;document.getElementById('sn-btn').textContent='▶ Start';cancelAnimationFrame(aid);draw();}
+  function loop(){if(!run)return;var F=gF(),M=gM(),bw=Math.max(44,90-M*1.2);vx+=F/M*0.016;x+=vx;if(x+bw>W-10){x=W-bw-10;vx=0;}draw();aid=requestAnimationFrame(loop);}
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);draw();});
+  draw();
+  
+  // Eksponér knappefunksjoner globalt
+  window.snToggle = snToggle;
+  window.snReset = snReset;
+});
+</script>
+</section>
+<div class="quiz-sek" id="quiz-sek" style="margin:32px 0">
+  <div style="font-size:1rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+    <span>🧠</span> Test deg selv
+  </div>
+  <div id="quiz-liste">
+    <div class="quiz-item" id="qi-0" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+      <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">1. Hva er Bernoullis prinsipp?</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <button onclick="svarQuiz(0,0,1,'Bernoullis prinsipp: der hastigheten er høy, er trykket lavt. Over en vingeprofil er hastigheten høyere → lavere trykk → løft.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q0a0">
+          A. Høy lufthastighet gir høyere trykk
+        </button>
+        <button onclick="svarQuiz(0,1,1,'Bernoullis prinsipp: der hastigheten er høy, er trykket lavt. Over en vingeprofil er hastigheten høyere → lavere trykk → løft.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q0a1">
+          B. Høy lufthastighet gir lavere trykk
+        </button>
+        <button onclick="svarQuiz(0,2,1,'Bernoullis prinsipp: der hastigheten er høy, er trykket lavt. Over en vingeprofil er hastigheten høyere → lavere trykk → løft.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q0a2">
+          C. Lufthastighet påvirker ikke trykk
+        </button>
+      </div>
+      <div id="fork-0" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+        font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+    </div>
+    <div class="quiz-item" id="qi-1" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+      <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">2. Hva er luftmotstand avhengig av?</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <button onclick="svarQuiz(1,0,1,'Luftmotstand (drag) øker med høyere fart (kvadratisk), større tverrsnittareal og dårlig aerodynamisk form.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q1a0">
+          A. Kun massen til objektet
+        </button>
+        <button onclick="svarQuiz(1,1,1,'Luftmotstand (drag) øker med høyere fart (kvadratisk), større tverrsnittareal og dårlig aerodynamisk form.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q1a1">
+          B. Fart, form og tverrsnittareal
+        </button>
+        <button onclick="svarQuiz(1,2,1,'Luftmotstand (drag) øker med høyere fart (kvadratisk), større tverrsnittareal og dårlig aerodynamisk form.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q1a2">
+          C. Bare fart
+        </button>
+      </div>
+      <div id="fork-1" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+        font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+    </div>
+    <div class="quiz-item" id="qi-2" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+      <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">3. Hva gjør en spoiler på en racerbil?</p>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <button onclick="svarQuiz(2,0,1,'En spoiler lager nedtrykk (negativ løft) som presser hjulene mot underlaget → bedre veigre i svinger.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q2a0">
+          A. Øker løft for å gå fortere
+        </button>
+        <button onclick="svarQuiz(2,1,1,'En spoiler lager nedtrykk (negativ løft) som presser hjulene mot underlaget → bedre veigre i svinger.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q2a1">
+          B. Skaper nedtrykk for bedre veigre
+        </button>
+        <button onclick="svarQuiz(2,2,1,'En spoiler lager nedtrykk (negativ løft) som presser hjulene mot underlaget → bedre veigre i svinger.')" 
+          style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);
+            background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;
+            font-size:.85rem;transition:all .15s"
+          id="q2a2">
+          C. Reduserer motortemperatur
+        </button>
+      </div>
+      <div id="fork-2" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;
+        font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+    </div>
+  </div>
+</div>
+<script>
+function svarQuiz(qi, ai, ri, fork) {
+  var item = document.getElementById('qi-'+qi);
+  if (!item || item.dataset.svart) return;
+  item.dataset.svart = '1';
+  item.querySelectorAll('button').forEach(function(btn,i) {
+    btn.disabled = true;
+    if (i === ri) btn.style.background = 'rgba(52,211,153,.15)';
+    else if (i === ai && ai !== ri) btn.style.background = 'rgba(248,113,113,.15)';
+  });
+  var forkEl = document.getElementById('fork-'+qi);
+  if (forkEl) {
+    forkEl.style.display = '';
+    forkEl.innerHTML = (ai===ri ? '✅ <strong>Riktig!</strong> ' : '❌ <strong>Feil.</strong> ') + fork;
+    forkEl.style.borderLeft = '3px solid ' + (ai===ri ? '#34d399' : '#f87171');
+  }
+}
 </script>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_massetetthet.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>

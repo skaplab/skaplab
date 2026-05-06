@@ -186,6 +186,24 @@ nav{
   0%,100%{filter:drop-shadow(0 0 8px #facc15) drop-shadow(0 0 20px #facc15)}
   50%{filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 30px #facc15)}
 }
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -1009,6 +1027,69 @@ resizeCanvas();
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Elektrisk krets – Ohms lov</span>
+  </div>
+  <p class="sim-sub">Endre spenning og motstand – se strøm, effekt og elektroner i bevegelse.</p>
+  <div class="sim-ramme">
+    <canvas id="cek" height="300" style="width:100%;height:300px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Spenning U (V)</span>
+  <input type="range" class="sim-slider" id="ek-u" min="1" max="24" value="9">
+  <span class="sim-k-verdi" id="ek-uv">9 V</span></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Motstand R (Ω)</span>
+  <input type="range" class="sim-slider" id="ek-r" min="1" max="100" value="10">
+  <span class="sim-k-verdi" id="ek-rv">10 Ω</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cek');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=300,t=0,aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var els=[];for(var i=0;i<12;i++)els.push({pos:i/12});
+  var pts=[[50,50],[W-50,50],[W-50,250],[50,250]];
+  function resPts(){pts=[[50,50],[W-50,50],[W-50,250],[50,250]];}
+  function posToXY(pos){
+    var s=((pos%1)+1)%1,seg=Math.floor(s*4),t2=(s-seg/4)*4;
+    var A=pts[seg],B=pts[(seg+1)%4];return[A[0]+(B[0]-A[0])*t2,A[1]+(B[1]-A[1])*t2];
+  }
+  document.getElementById('ek-u').oninput=function(){document.getElementById('ek-uv').textContent=this.value+' V';};
+  document.getElementById('ek-r').oninput=function(){document.getElementById('ek-rv').textContent=this.value+' Ω';};
+  function loop(){
+    var U=+document.getElementById('ek-u').value,R=+document.getElementById('ek-r').value,I=U/R,spd=I/100*0.004;
+    resPts();
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=4;ctx.lineJoin='round';
+    ctx.beginPath();ctx.moveTo(50,50);ctx.lineTo(W-50,50);ctx.lineTo(W-50,250);ctx.lineTo(50,250);ctx.closePath();ctx.stroke();
+    // Batteri
+    var bcy=150;
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(50,bcy-14);ctx.lineTo(50,bcy+14);ctx.stroke();
+    ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(42,bcy-7);ctx.lineTo(58,bcy-7);ctx.stroke();
+    ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(45,bcy+7);ctx.lineTo(55,bcy+7);ctx.stroke();
+    ctx.fillStyle='#fbbf24';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText(U+'V',50,bcy+30);
+    // Motstand sikksakk
+    var rcy=150,rh=50;
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(W-50,rcy-rh/2);
+    for(var i=0;i<8;i++)ctx.lineTo(W-50+(i%2===0?16:-16),rcy-rh/2+i*rh/8);
+    ctx.lineTo(W-50,rcy+rh/2);ctx.stroke();
+    ctx.fillStyle='#a78bfa';ctx.fillText(R+'Ω',W-22,rcy);
+    // Elektroner
+    els.forEach(function(el){el.pos=(el.pos+spd)%1;var p=posToXY(el.pos);ctx.fillStyle='#60c8ff';ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(96,200,255,.3)';ctx.beginPath();ctx.arc(p[0],p[1],9,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='13px monospace';ctx.textAlign='left';
+    ctx.fillText('I = '+I.toFixed(2)+' A   P = '+(U*I).toFixed(2)+' W',12,20);
+    aid=requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);});
+  loop();
+  
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_elektrisitet.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

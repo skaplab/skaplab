@@ -440,6 +440,54 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hjelp-tips-tittel { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.35); margin-bottom: 8px; }
 .hjelp-tips-rad { font-size: .83rem; color: rgba(255,255,255,.55); margin-bottom: 6px; line-height: 1.5; }
 
+
+/* Forklaring-modal ved 2 feil på rad */
+.fork-modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.72);z-index:800;
+  align-items:center;justify-content:center;padding:16px;
+}
+.fork-modal-overlay.vis{display:flex;}
+.fork-modal{
+  background:#0d1420;border:1px solid rgba(96,165,250,.2);
+  border-radius:16px;max-width:480px;width:100%;padding:26px 22px;
+  position:relative;
+}
+.fork-modal-top{
+  display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.fork-modal-ikon{font-size:1.6rem}
+.fork-modal-tittel{font-size:1rem;font-weight:600;color:#f1f5f9}
+.fork-modal-sub{font-size:.84rem;color:rgba(255,255,255,.55);line-height:1.65;margin-bottom:18px}
+.fork-steg-liste{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.fork-steg{
+  display:flex;gap:10px;align-items:flex-start;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:10px 12px;
+}
+.fork-steg-nr{
+  background:rgba(96,165,250,.2);color:#93c5fd;
+  border-radius:6px;padding:2px 8px;font-size:.76rem;
+  font-weight:700;flex-shrink:0;min-width:28px;text-align:center;
+}
+.fork-steg-tekst{font-size:.83rem;color:rgba(255,255,255,.7);line-height:1.5}
+.fork-modal-btner{display:flex;gap:8px}
+.fork-prøv-btn{
+  flex:2;padding:10px;border-radius:9px;border:none;
+  background:rgba(96,165,250,.15);color:#93c5fd;
+  cursor:pointer;font-size:.85rem;font-weight:500;
+  font-family:inherit;transition:background .15s;
+}
+.fork-prøv-btn:hover{background:rgba(96,165,250,.25)}
+.fork-les-btn{
+  flex:1;padding:10px;border-radius:9px;border:none;
+  background:#3b82f6;color:#fff;
+  cursor:pointer;font-size:.85rem;font-weight:600;
+  font-family:inherit;transition:opacity .15s;text-decoration:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.fork-les-btn:hover{opacity:.85}
+
 </style>
 </head>
 <body>
@@ -455,6 +503,25 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 <div id="topbar">
   <a href="index.html" class="logo" style="text-decoration:none;">Skap<span>Lab</span></a>
   <div class="spacer"></div>
+
+
+<!-- FORKLARING-MODAL ved 2 feil på rad -->
+<div id="nat-fork-modal" class="fork-modal-overlay" onclick="if(event.target===this)lukkForkModal()">
+  <div class="fork-modal">
+    <div class="fork-modal-top">
+      <span class="fork-modal-ikon">💡</span>
+      <span class="fork-modal-tittel" id="fork-modal-tittel">Tips: La oss gå gjennom dette</span>
+    </div>
+    <p class="fork-modal-sub" id="fork-modal-sub">
+      Du har svart feil to ganger på rad. Her er en kortfattet forklaring som kan hjelpe.
+    </p>
+    <div class="fork-steg-liste" id="fork-steg-liste"></div>
+    <div class="fork-modal-btner">
+      <button class="fork-prøv-btn" onclick="lukkForkModal()">↩ Prøv igjen</button>
+      <a class="fork-les-btn" id="fork-les-lenke" href="#" target="_blank">📖 Les leksjonen</a>
+    </div>
+  </div>
+</div>
 
 <!-- KONTEKSTHJELP FANE-MODAL -->
 <div id="ep-hjelp-overlay" class="hjelp-overlay" onclick="if(event.target===this)lukkHjelpFane()">
@@ -1535,6 +1602,53 @@ function byggSisteAktivitetForside(akt) {
   }).join('');
 }
 
+// ── FORKLARING-MODAL VED 2 FEIL PÅ RAD ─────────────────────────────────────
+var NAT_FORK_DATA = {
+  'nat_celler':     {tittel:'Celler', steg:['En celle er den minste levende enheten.','Prokaryote celler mangler cellekjerne (bakterier). Eukaryote celler har cellekjerne (plante- og dyreceller).','Mitokondrier produserer energi (ATP). Ribosomer bygger proteiner.'], url:'celle.html'},
+  'nat_kjemi_atom': {tittel:'Atom og periodesystemet', steg:['Et atom består av en kjerne (protoner+nøytroner) og elektroner i skall rundt.','Atomnummeret = antall protoner = antall elektroner (nøytralt atom).','Periodesystemet er ordnet etter atomnummer. Periode = antall elektronskall. Gruppe = antall valenselektroner.'], url:'atom.html'},
+  'nat_kjemi_reaks':{tittel:'Kjemiske reaksjoner', steg:['Reaktanter → produkter. Massen er bevart (Lavoisiers lov).','Forbrenning: brensel + O₂ → CO₂ + H₂O + varme.','Exoterme reaksjoner avgir varme. Endoterme krever varme.'], url:'kjemiske_reaksjoner.html'},
+  'nat_newton':     {tittel:'Newtons lover', steg:['1. lov: Et objekt i ro/bevegelse fortsetter slik uten en ytre kraft.','2. lov: F = m × a. Stor masse → liten akselerasjon for samme kraft.','3. lov: For hver kraft finnes en like stor motkraft i motsatt retning.'], url:'newtons_lover.html'},
+  'nat_evolusjon':  {tittel:'Evolusjon og naturlig utvalg', steg:['Naturlig utvalg: individer med fordelaktige egenskaper overlever og formerer seg mer.','Variasjon oppstår gjennom mutasjoner og kjønnet formering.','Over mange generasjoner akkumuleres endringer → nye arter.'], url:'evolusjon.html'},
+  'nat_gen':        {tittel:'Genetikk og arv', steg:['DNA er arvematerialet. Gener er avsnitt av DNA som koder for proteiner.','Kromosom: 46 i menneskecellen (23 par). Kjønnskromosomer: XX (jente), XY (gutt).','Dominant allel overstyrer recessivt. Punnett-rute viser sannsynligheten for utfall.'], url:'genetikk.html'},
+  'nat_foto':       {tittel:'Fotosyntese og celleånding', steg:['Fotosyntese: 6CO₂ + 6H₂O + lys → C₆H₁₂O₆ + 6O₂ (skjer i kloroplaster).','Celleånding: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP (skjer i mitokondrier).','Fotosyntese lagrer energi. Celleånding frigjør energi.'], url:'fotosyntese.html'},
+  'nat_periodesys': {tittel:'Periodesystemet', steg:['Grunnstoffene er ordnet etter stigende atomnummer.','Periode (rad) = antall elektronskall. Gruppe (kolonne) = valenselektroner.','Metaller til venstre, ikke-metaller til høyre, halvmetaller i midten.'], url:'periodesystem.html'},
+  'nat_syre_base':  {tittel:'Syre, base og pH', steg:['pH < 7 = sur løsning. pH 7 = nøytral. pH > 7 = basisk.','Syrer avgir H⁺-ioner. Baser tar opp H⁺-ioner (Brønsted-Lowry).','Nøytralisering: syre + base → salt + vann. pH nærmer seg 7.'], url:'syr_base_ph.html'},
+  'nat_optikk':     {tittel:'Optikk og lys', steg:['Lys brytes (endrer retning) når det går fra ett medium til et annet.','Snells lov: n₁sinθ₁ = n₂sinθ₂. Høyere n = tettere medium = mer bryting.','Konkave linser sprer lys (kortsynthet). Konvekse linser samler lys (langsynthet).'], url:'optikk.html'},
+  'nat_platetektonikk':{tittel:'Platetektonikk', steg:['Jordskorpen er delt i tektoniske plater som beveger seg på astenosfæren.','Konvergens: platene møtes → fjellkjeder eller subduksjon. Divergens: platene skilles → ny havbunn.','Vulkaner og jordskjelv skjer oftest ved plategrenser.'], url:'kontinentaldrift.html'},
+};
+
+function visForkModal(emneId, fork) {
+  var data = NAT_FORK_DATA[emneId];
+  var modal = document.getElementById('nat-fork-modal');
+  if (!modal) return;
+  
+  var stegHtml = '';
+  if (data && data.steg) {
+    stegHtml = data.steg.map(function(s, i) {
+      return '<div class="fork-steg"><span class="fork-steg-nr">'+(i+1)+'</span><span class="fork-steg-tekst">'+s+'</span></div>';
+    }).join('');
+  } else if (fork) {
+    stegHtml = '<div class="fork-steg"><span class="fork-steg-nr">💡</span><span class="fork-steg-tekst">'+fork+'</span></div>';
+  }
+  
+  var tittelEl = document.getElementById('fork-modal-tittel');
+  var subEl = document.getElementById('fork-modal-sub');
+  var stegEl = document.getElementById('fork-steg-liste');
+  var lenkEl = document.getElementById('fork-les-lenke');
+  
+  if (tittelEl) tittelEl.textContent = 'Tips: ' + (data ? data.tittel : 'Konseptgjennomgang');
+  if (subEl) subEl.textContent = 'Du har svart feil to ganger på rad. Her er en kortfattet gjennomgang som kan hjelpe deg videre.';
+  if (stegEl) stegEl.innerHTML = stegHtml || '<div class="fork-steg"><span class="fork-steg-nr">💡</span><span class="fork-steg-tekst">Se gjennom leksjonen for en full gjennomgang av temaet.</span></div>';
+  if (lenkEl && data) lenkEl.href = data.url;
+  
+  modal.classList.add('vis');
+}
+
+function lukkForkModal() {
+  var modal = document.getElementById('nat-fork-modal');
+  if (modal) modal.classList.remove('vis');
+}
+
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 (async function(){ await init(); })();
 
@@ -2074,6 +2188,53 @@ function byggSisteAktivitetForside(akt) {
       + score
       + '</div>';
   }).join('');
+}
+
+// ── FORKLARING-MODAL VED 2 FEIL PÅ RAD ─────────────────────────────────────
+var NAT_FORK_DATA = {
+  'nat_celler':     {tittel:'Celler', steg:['En celle er den minste levende enheten.','Prokaryote celler mangler cellekjerne (bakterier). Eukaryote celler har cellekjerne (plante- og dyreceller).','Mitokondrier produserer energi (ATP). Ribosomer bygger proteiner.'], url:'celle.html'},
+  'nat_kjemi_atom': {tittel:'Atom og periodesystemet', steg:['Et atom består av en kjerne (protoner+nøytroner) og elektroner i skall rundt.','Atomnummeret = antall protoner = antall elektroner (nøytralt atom).','Periodesystemet er ordnet etter atomnummer. Periode = antall elektronskall. Gruppe = antall valenselektroner.'], url:'atom.html'},
+  'nat_kjemi_reaks':{tittel:'Kjemiske reaksjoner', steg:['Reaktanter → produkter. Massen er bevart (Lavoisiers lov).','Forbrenning: brensel + O₂ → CO₂ + H₂O + varme.','Exoterme reaksjoner avgir varme. Endoterme krever varme.'], url:'kjemiske_reaksjoner.html'},
+  'nat_newton':     {tittel:'Newtons lover', steg:['1. lov: Et objekt i ro/bevegelse fortsetter slik uten en ytre kraft.','2. lov: F = m × a. Stor masse → liten akselerasjon for samme kraft.','3. lov: For hver kraft finnes en like stor motkraft i motsatt retning.'], url:'newtons_lover.html'},
+  'nat_evolusjon':  {tittel:'Evolusjon og naturlig utvalg', steg:['Naturlig utvalg: individer med fordelaktige egenskaper overlever og formerer seg mer.','Variasjon oppstår gjennom mutasjoner og kjønnet formering.','Over mange generasjoner akkumuleres endringer → nye arter.'], url:'evolusjon.html'},
+  'nat_gen':        {tittel:'Genetikk og arv', steg:['DNA er arvematerialet. Gener er avsnitt av DNA som koder for proteiner.','Kromosom: 46 i menneskecellen (23 par). Kjønnskromosomer: XX (jente), XY (gutt).','Dominant allel overstyrer recessivt. Punnett-rute viser sannsynligheten for utfall.'], url:'genetikk.html'},
+  'nat_foto':       {tittel:'Fotosyntese og celleånding', steg:['Fotosyntese: 6CO₂ + 6H₂O + lys → C₆H₁₂O₆ + 6O₂ (skjer i kloroplaster).','Celleånding: C₆H₁₂O₆ + 6O₂ → 6CO₂ + 6H₂O + ATP (skjer i mitokondrier).','Fotosyntese lagrer energi. Celleånding frigjør energi.'], url:'fotosyntese.html'},
+  'nat_periodesys': {tittel:'Periodesystemet', steg:['Grunnstoffene er ordnet etter stigende atomnummer.','Periode (rad) = antall elektronskall. Gruppe (kolonne) = valenselektroner.','Metaller til venstre, ikke-metaller til høyre, halvmetaller i midten.'], url:'periodesystem.html'},
+  'nat_syre_base':  {tittel:'Syre, base og pH', steg:['pH < 7 = sur løsning. pH 7 = nøytral. pH > 7 = basisk.','Syrer avgir H⁺-ioner. Baser tar opp H⁺-ioner (Brønsted-Lowry).','Nøytralisering: syre + base → salt + vann. pH nærmer seg 7.'], url:'syr_base_ph.html'},
+  'nat_optikk':     {tittel:'Optikk og lys', steg:['Lys brytes (endrer retning) når det går fra ett medium til et annet.','Snells lov: n₁sinθ₁ = n₂sinθ₂. Høyere n = tettere medium = mer bryting.','Konkave linser sprer lys (kortsynthet). Konvekse linser samler lys (langsynthet).'], url:'optikk.html'},
+  'nat_platetektonikk':{tittel:'Platetektonikk', steg:['Jordskorpen er delt i tektoniske plater som beveger seg på astenosfæren.','Konvergens: platene møtes → fjellkjeder eller subduksjon. Divergens: platene skilles → ny havbunn.','Vulkaner og jordskjelv skjer oftest ved plategrenser.'], url:'kontinentaldrift.html'},
+};
+
+function visForkModal(emneId, fork) {
+  var data = NAT_FORK_DATA[emneId];
+  var modal = document.getElementById('nat-fork-modal');
+  if (!modal) return;
+  
+  var stegHtml = '';
+  if (data && data.steg) {
+    stegHtml = data.steg.map(function(s, i) {
+      return '<div class="fork-steg"><span class="fork-steg-nr">'+(i+1)+'</span><span class="fork-steg-tekst">'+s+'</span></div>';
+    }).join('');
+  } else if (fork) {
+    stegHtml = '<div class="fork-steg"><span class="fork-steg-nr">💡</span><span class="fork-steg-tekst">'+fork+'</span></div>';
+  }
+  
+  var tittelEl = document.getElementById('fork-modal-tittel');
+  var subEl = document.getElementById('fork-modal-sub');
+  var stegEl = document.getElementById('fork-steg-liste');
+  var lenkEl = document.getElementById('fork-les-lenke');
+  
+  if (tittelEl) tittelEl.textContent = 'Tips: ' + (data ? data.tittel : 'Konseptgjennomgang');
+  if (subEl) subEl.textContent = 'Du har svart feil to ganger på rad. Her er en kortfattet gjennomgang som kan hjelpe deg videre.';
+  if (stegEl) stegEl.innerHTML = stegHtml || '<div class="fork-steg"><span class="fork-steg-nr">💡</span><span class="fork-steg-tekst">Se gjennom leksjonen for en full gjennomgang av temaet.</span></div>';
+  if (lenkEl && data) lenkEl.href = data.url;
+  
+  modal.classList.add('vis');
+}
+
+function lukkForkModal() {
+  var modal = document.getElementById('nat-fork-modal');
+  if (modal) modal.classList.remove('vis');
 }
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
@@ -3838,9 +3999,14 @@ async function lagreNatProgresjon(riktig) {
     p.streakF = (p.streakF||0) + 1;
     p.streakR = 0;
     p.totF = (p.totF||0) + 1;
-    if (p.streakF >= 2 && p.nivaa > 1) {
-      p.nivaa--;
-      natAktivtNivaa = p.nivaa;
+    if (p.streakF >= 2) {
+      if (p.nivaa > 1) {
+        p.nivaa--;
+        natAktivtNivaa = p.nivaa;
+      }
+      // Vis forklaring-modal etter 2 feil på rad
+      var _fork = document.getElementById('nat-fork') ? document.getElementById('nat-fork').textContent : '';
+      setTimeout(function(){ visForkModal(emneId, _fork); }, 400);
     }
   }
   p.besteNivaa = Math.max(p.besteNivaa||1, p.nivaa);

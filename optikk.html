@@ -69,6 +69,24 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,8,16,.97);backdrop-filte
 .sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 .sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
 @media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.sd-grid{grid-template-columns:1fr}}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -975,6 +993,74 @@ function tegnPil(ctx, x1, y1, x2, y2, farge) {
   </div>
 
 
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Lysbryting – Snells lov</span>
+  </div>
+  <p class="sim-sub">Endre innfallsvinkel og medium – se refraksjonsindeks og bøyingen av lyset.</p>
+  <div class="sim-ramme">
+    <canvas id="cop" height="320" style="width:100%;height:320px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Medium</span>
+  <select id="op-m" style="background:#0e1520;color:#e8f0ff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 10px;font-size:.82rem" onchange="opDraw()">
+    <option value="1.33">Vann (n=1.33)</option>
+    <option value="1.5">Glass (n=1.50)</option>
+    <option value="2.42">Diamant (n=2.42)</option>
+    <option value="1.0">Luft (n=1.00)</option>
+  </select></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Innfallsvinkel</span>
+  <input type="range" class="sim-slider" id="op-v" min="5" max="85" value="45">
+  <span class="sim-k-verdi" id="op-vv">45°</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cop');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=320;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  function opDraw(){
+    document.getElementById('op-vv').textContent=document.getElementById('op-v').value+'°';
+    var n2=+document.getElementById('op-m').value,t1=+document.getElementById('op-v').value*Math.PI/180;
+    var s2=Math.sin(t1)/n2,tot=s2>1,t2=tot?null:Math.asin(s2);
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    var my=H/2;
+    ctx.fillStyle='rgba(96,165,250,.04)';ctx.fillRect(0,0,W,my);
+    ctx.fillStyle=n2>1.5?'rgba(167,139,250,.07)':'rgba(96,165,250,.05)';ctx.fillRect(0,my,W,H-my);
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(0,my);ctx.lineTo(W,my);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.1)';
+    ctx.beginPath();ctx.moveTo(W/2,10);ctx.lineTo(W/2,H-10);ctx.stroke();
+    ctx.setLineDash([]);
+    var cx=W/2,cy=my,L=120;
+    var ix=cx-L*Math.sin(t1),iy=cy-L*Math.cos(t1);
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(ix,iy);ctx.lineTo(cx,cy);ctx.stroke();
+    ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(ix,iy,4,0,Math.PI*2);ctx.fill();
+    if(!tot){
+      var rx=cx+L*Math.sin(t2),ry=cy+L*Math.cos(t2);
+      ctx.strokeStyle='#60c8ff';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(rx,ry);ctx.stroke();
+      ctx.fillStyle='#60c8ff';ctx.beginPath();ctx.arc(rx,ry,4,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#60c8ff';ctx.font='bold 12px monospace';ctx.textAlign='right';
+      ctx.fillText('θ₂ = '+(t2*180/Math.PI).toFixed(1)+'°',W-8,my+22);
+    } else {
+      var rx2=cx+L*Math.sin(t1),ry2=cy-L*Math.cos(t1);
+      ctx.strokeStyle='#f87171';ctx.lineWidth=2;ctx.setLineDash([5,3]);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(rx2,ry2);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle='#f87171';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText('Total refleksjon',cx,my+34);
+    }
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='12px monospace';ctx.textAlign='left';
+    ctx.fillText('n₁=1.00 luft',8,18);ctx.fillText('n₂='+n2,8,my+20);
+    ctx.fillStyle='#fbbf24';ctx.textAlign='right';ctx.fillText('θ₁='+document.getElementById('op-v').value+'°',W-8,my-18);
+  }
+  document.getElementById('op-v').oninput=opDraw;
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);opDraw();});
+  opDraw();
+  
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_optikk.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

@@ -117,6 +117,24 @@ nav{position:sticky;top:0;z-index:300;background:rgba(253,250,245,.97);backdrop-
   .k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}
   .k-anim{min-height:180px}
 }
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -759,6 +777,82 @@ goTo(0);
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Drivhuseffekten – CO₂ og temperatur</span>
+  </div>
+  <p class="sim-sub">Endre CO₂-nivå og se hvordan temperaturen på jorda endres.</p>
+  <div class="sim-ramme">
+    <canvas id="cdh" height="320" style="width:100%;height:320px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">CO₂ (ppm)</span>
+  <input type="range" class="sim-slider" id="dh-co2" min="180" max="1000" value="420">
+  <span class="sim-k-verdi" id="dh-co2v">420 ppm</span></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Skydekke</span>
+  <input type="range" class="sim-slider" id="dh-sky" min="0" max="100" value="30">
+  <span class="sim-k-verdi" id="dh-skyv">30%</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cdh');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=320;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  function dhDraw(){
+    document.getElementById('dh-co2v').textContent=document.getElementById('dh-co2').value+' ppm';
+    document.getElementById('dh-skyv').textContent=document.getElementById('dh-sky').value+'%';
+    var co2=+document.getElementById('dh-co2').value,sky=+document.getElementById('dh-sky').value/100;
+    var baseTemp=14,co2Effect=(co2-280)/280*3.5,skyEffect=sky*-3;
+    var temp=Math.round((baseTemp+co2Effect+skyEffect)*10)/10;
+    var tempFarge=temp<10?'#60c8ff':temp<15?'#84cc16':temp<18?'#fbbf24':temp<22?'#f97316':'#ef4444';
+    ctx.clearRect(0,0,W,H);
+    // Himmel
+    var skyG=ctx.createLinearGradient(0,0,0,H*.6);
+    var mix=Math.min(co2/1000,1);
+    skyG.addColorStop(0,'rgba('+(parseInt(7+mix*40))+','+(parseInt(9+mix*20))+','+parseInt(15+mix*10)+',1)');
+    skyG.addColorStop(1,'#132540');ctx.fillStyle=skyG;ctx.fillRect(0,0,W,H*.6);
+    // Jord
+    var ground=ctx.createLinearGradient(0,H*.6,0,H);
+    ground.addColorStop(0,'#1a3a1a');ground.addColorStop(1,'#0a1a0a');
+    ctx.fillStyle=ground;ctx.fillRect(0,H*.6,W,H*.4);
+    // Sol
+    var sg=ctx.createRadialGradient(W-60,50,5,W-60,50,40);
+    sg.addColorStop(0,'#fff7c0');sg.addColorStop(.6,'#fbbf24');sg.addColorStop(1,'rgba(251,191,36,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(W-60,50,40,0,Math.PI*2);ctx.fill();
+    // CO₂-molekyler
+    var nMol=Math.round(co2/100),cols=['#fbbf24','#f97316','#ef4444'];
+    for(var i=0;i<nMol;i++){
+      var mx=(i*137)%W,my=30+(i*73)%(H*.4);
+      ctx.fillStyle=cols[i%3]+'88';ctx.font='12px monospace';ctx.textAlign='center';
+      ctx.fillText('CO₂',mx,my);
+    }
+    // Varmepiler oppover
+    var nPiler=Math.floor(co2/200);
+    ctx.strokeStyle='rgba(239,68,68,.4)';ctx.lineWidth=2;
+    for(var j=0;j<nPiler;j++){
+      var px2=(j+.5)/(nPiler)*W;
+      ctx.beginPath();ctx.moveTo(px2,H*.6);ctx.lineTo(px2,H*.6-80);ctx.stroke();
+      ctx.fillStyle='rgba(239,68,68,.4)';ctx.beginPath();ctx.moveTo(px2,H*.6-90);ctx.lineTo(px2-6,H*.6-74);ctx.lineTo(px2+6,H*.6-74);ctx.fill();
+    }
+    // Temperaturvisning
+    ctx.fillStyle=tempFarge;ctx.font='bold 28px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(temp.toFixed(1)+'°C',W/2,H*.75);
+    ctx.font='12px sans-serif';ctx.fillStyle='rgba(255,255,255,.5)';ctx.textBaseline='alphabetic';
+    ctx.fillText('Global gjennomsnittstemperatur',W/2,H*.75+24);
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px monospace';ctx.textAlign='left';
+    ctx.fillText('CO₂: '+co2+' ppm  Skydekke: '+(sky*100).toFixed(0)+'%',10,18);
+  }
+  document.getElementById('dh-co2').oninput=dhDraw;
+  document.getElementById('dh-sky').oninput=dhDraw;
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);dhDraw();});
+  dhDraw();
+  
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_klima.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

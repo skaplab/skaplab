@@ -77,6 +77,39 @@ nav{position:sticky;top:0;z-index:200;background:rgba(10,6,8,.97);backdrop-filte
 .sep-r{flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 .sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
 @media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}.vk-grid{grid-template-columns:1fr}}
+
+.phet-seksjon{margin:32px 0;padding:0;}
+.phet-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.phet-badge{background:linear-gradient(135deg,rgba(96,165,250,.15),rgba(167,139,250,.1));border:1px solid rgba(96,165,250,.25);border-radius:8px;padding:5px 12px;font-size:.75rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.phet-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.phet-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.5;margin-bottom:12px}
+.phet-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:#000;position:relative;}
+.phet-ramme iframe{width:100%;height:500px;border:none;display:block;}
+.phet-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px;}
+.phet-kilde{font-size:.72rem;color:rgba(255,255,255,.3)}
+.phet-kilde a{color:rgba(96,165,250,.6);text-decoration:none}
+.phet-fullscreen-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:7px;padding:5px 12px;font-size:.78rem;cursor:pointer;transition:all .15s;}
+.lk20-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:6px 12px;font-size:.79rem;color:#6ee7b7;margin:4px 0 12px;cursor:help;text-decoration:none;transition:background .15s;}
+.lk20-kode{font-weight:700;font-family:'DM Mono','Courier New',monospace;font-size:.82rem}
+
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -739,6 +772,62 @@ function nullstillL() {
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Aggregattilstander – fast, flytende og gass</span>
+  </div>
+  <p class="sim-sub">Endre temperaturen og se hvordan partiklene beveger seg i de tre tilstandene.</p>
+  <div class="sim-ramme">
+    <canvas id="cag" height="300" style="width:100%;height:300px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Temperatur</span>
+  <input type="range" class="sim-slider" id="ag-t" min="0" max="100" value="30">
+  <span class="sim-k-verdi" id="ag-tv">30°C</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cag');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=300,partikler=[],aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var N=40;
+  for(var i=0;i<N;i++)partikler.push({x:Math.random()*W,y:Math.random()*(H-50)+20,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2});
+  document.getElementById('ag-t').oninput=function(){document.getElementById('ag-tv').textContent=this.value+'°C';};
+  function loop(){
+    var temp=+document.getElementById('ag-t').value;
+    var tilstand=temp<5?'Fast':temp<40?'Flytende':'Gass';
+    var spdfak=tilstand==='Fast'?0.05:tilstand==='Flytende'?0.4:1.5;
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    // Farge etter tilstand
+    var pFarge=tilstand==='Fast'?'#60c8ff':tilstand==='Flytende'?'#3b82f6':'#f97316';
+    partikler.forEach(function(p){
+      if(tilstand==='Fast'){
+        // Gitter-bevegelse
+        var gi=partikler.indexOf(p);var gx=(gi%8)*(W/8)+W/16,gy=Math.floor(gi/8)*(H-60)/5+30;
+        p.x+=(gx-p.x)*.15+(Math.random()-.5)*temp*.3;
+        p.y+=(gy-p.y)*.15+(Math.random()-.5)*temp*.3;
+      } else {
+        p.x+=p.vx*spdfak*(1+temp/60);p.y+=p.vy*spdfak*(1+temp/60);
+        if(p.x<5||p.x>W-5)p.vx*=-1;if(p.y<5||p.y>H-55)p.vy*=-1;
+      }
+      ctx.fillStyle=pFarge+'cc';ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();
+    });
+    // Info
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='bold 14px monospace';ctx.textAlign='center';
+    ctx.fillText(tilstand,W/2,H-30);
+    ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='11px monospace';
+    ctx.fillText(temp+'°C',W/2,H-12);
+    aid=requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);});
+  loop();
+  
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_arbeid_effekt.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

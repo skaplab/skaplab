@@ -282,6 +282,24 @@ nav{
   cursor:pointer;transition:all .2s;display:none;
 }
 .neste-btn:hover{background:rgba(84,160,255,.18);border-color:rgba(84,160,255,.6)}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -870,6 +888,74 @@ byggGrid();
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Atombygger – protoner, nøytroner og elektroner</span>
+  </div>
+  <p class="sim-sub">Klikk for å bygge et atom. Se element, ladning og elektronskall.</p>
+  <div class="sim-ramme">
+    <canvas id="ca" height="360" style="width:100%;height:360px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Legg til</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="sim-btn" onclick="abLegg('p')">+ Proton</button>
+    <button class="sim-btn" onclick="abLegg('n')">+ Nøytron</button>
+    <button class="sim-btn" onclick="abLegg('e')">+ Elektron</button>
+    <button class="sim-btn" onclick="abReset()">↺ Reset</button>
+  </div></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('ca');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=360,p=1,n=0,e=1,ang=0,aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var EL=['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca'];
+  function draw(){
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    var cx=W/2,cy=H/2-10;
+    [55,90,125].forEach(function(r,i){ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();});
+    var kR=Math.max(14,8+p*2.5+n*1.8);
+    var g=ctx.createRadialGradient(cx-kR*.3,cy-kR*.3,kR*.1,cx,cy,kR);
+    g.addColorStop(0,'#f97316');g.addColorStop(1,'#7c2d12');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,kR,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold '+(kR>18?13:10)+'px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    if(p+n>0)ctx.fillText(p+'p'+(n?' '+n+'n':''),cx,cy);
+    ctx.textBaseline='alphabetic';
+    var perS=[2,8,18],eLeft=e,sI=0;
+    while(eLeft>0&&sI<3){
+      var inS=Math.min(eLeft,perS[sI]),r=[55,90,125][sI];
+      for(var i=0;i<inS;i++){
+        var a=ang*(1+sI*.7)+i*(Math.PI*2/inS);
+        var ex=cx+r*Math.cos(a),ey=cy+r*Math.sin(a);
+        ctx.fillStyle='#60c8ff';ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fill();
+      }
+      eLeft-=inS;sI++;
+    }
+    var Z=Math.min(p,20),lad=p-e;
+    ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='bold 24px monospace';ctx.textAlign='center';
+    ctx.fillText(Z>0?(EL[Z-1]||'?'):'?',cx,H-52);
+    ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='12px monospace';
+    ctx.fillText('Z='+p+' A='+(p+n)+' lad='+(lad>0?'+':'')+lad,cx,H-28);
+    var sf=lad===0?'#34d399':lad>0?'#f97316':'#60c8ff';
+    ctx.fillStyle=sf;ctx.font='bold 11px sans-serif';
+    ctx.fillText(lad===0?'Nøytralt atom':lad>0?'Kation (+)':'Anion (-)',cx,H-8);
+  }
+  function abLegg(t){if(t==='p')p=Math.min(p+1,20);if(t==='n')n=Math.min(n+1,30);if(t==='e')e=Math.min(e+1,28);}
+  function abReset(){p=1;n=0;e=1;}
+  function loop(){ang+=0.012;draw();aid=requestAnimationFrame(loop);}
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);});
+  loop();
+  
+  // Eksponér knappefunksjoner globalt
+  window.abLegg = abLegg;
+  window.abReset = abReset;
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_periodesystemet.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

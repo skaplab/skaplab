@@ -98,6 +98,24 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,10,.97);backdrop-filt
 .sep-t{font-family:var(--font-d);font-size:1rem;font-style:italic;color:var(--dim);white-space:nowrap}
 
 @media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -899,6 +917,72 @@ lastRxn(0);
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">pH-simulator – syre og base</span>
+  </div>
+  <p class="sim-sub">Velg stoff og konsentrasjon – se pH og fargeindikator.</p>
+  <div class="sim-ramme">
+    <canvas id="cph" height="300" style="width:100%;height:300px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Stoff</span>
+  <select id="sb-s" style="background:#0e1520;color:#e8f0ff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 10px;font-size:.82rem" onchange="sbDraw()">
+    <option value="1,t">Saltsyre (HCl)</option>
+    <option value="13,t">Natriumhydroksid (NaOH)</option>
+    <option value="3,f">Eddiksyre (svak)</option>
+    <option value="7,t">Rent vann</option>
+    <option value="11,f">Ammoniakk (svak)</option>
+  </select></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Konsentrasjon</span>
+  <input type="range" class="sim-slider" id="sb-k" min="0" max="100" value="50">
+  <span class="sim-k-verdi" id="sb-kv">50%</span></div></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cph');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=300;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  function phFarge(ph){if(ph<3)return'#ef4444';if(ph<5)return'#f97316';if(ph<6.5)return'#eab308';if(ph<7.5)return'#84cc16';if(ph<9)return'#22c55e';if(ph<11)return'#06b6d4';return'#8b5cf6';}
+  function getPH(){
+    var v=document.getElementById('sb-s').value.split(',');
+    var base=+v[0],sterk=(v[1]==='t'),k=+document.getElementById('sb-k').value/100;
+    var diff=(base-7)*k*(sterk?1:.6);return Math.max(0,Math.min(14,7+diff));
+  }
+  function sbDraw(){
+    document.getElementById('sb-kv').textContent=document.getElementById('sb-k').value+'%';
+    var ph=getPH();
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    var sx=24,sw=W-48,sy=44,sh=24;
+    var sg=ctx.createLinearGradient(sx,0,sx+sw,0);
+    ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#06b6d4','#8b5cf6'].forEach(function(col,i){sg.addColorStop(i/6,col);});
+    ctx.fillStyle=sg;ctx.beginPath();ctx.roundRect(sx,sy,sw,sh,5);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='10px monospace';ctx.textAlign='center';
+    for(var i=0;i<=14;i+=2)ctx.fillText(i,sx+i/14*sw,sy+sh+14);
+    var mx=sx+ph/14*sw;
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(mx,sy-2);ctx.lineTo(mx-7,sy-16);ctx.lineTo(mx+7,sy-16);ctx.fill();
+    ctx.fillStyle=phFarge(ph);ctx.font='bold 14px monospace';ctx.textAlign='center';ctx.fillText('pH '+ph.toFixed(1),mx,sy-19);
+    var bx=W/2-55,by=88,bw=110,bh=130;
+    var bg=ctx.createLinearGradient(bx,by,bx,by+bh);var fc=phFarge(ph);
+    bg.addColorStop(0,fc+'55');bg.addColorStop(1,fc+'22');
+    ctx.fillStyle=bg;ctx.strokeStyle=fc+'77';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(bx,by,bw,bh,8);ctx.fill();ctx.stroke();
+    var nH=ph<7?+(8-ph).toFixed(1):0.1,nOH=ph>7?+(ph-6).toFixed(1):0.1;
+    ctx.font='bold 15px monospace';ctx.textAlign='center';
+    ctx.fillStyle='#ef4444';ctx.fillText('H⁺ × '+nH,W/2,by+46);
+    ctx.fillStyle='#8b5cf6';ctx.fillText('OH⁻ × '+nOH,W/2,by+74);
+    ctx.fillStyle=phFarge(ph);ctx.font='bold 13px sans-serif';
+    ctx.fillText(ph<6.5?'Surt':ph>7.5?'Basisk':'Nøytralt',W/2,by+bh-12);
+  }
+  document.getElementById('sb-k').oninput=sbDraw;
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);sbDraw();});
+  sbDraw();
+  
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_kjemiske_reaksjoner.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

@@ -62,6 +62,24 @@ nav{position:sticky;top:0;z-index:200;background:rgba(6,10,4,.97);backdrop-filte
 .evo-tid{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
 .evo-tekst{font-size:.76rem;line-height:1.6;color:rgba(232,240,216,.55)}
 @media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -847,6 +865,90 @@ goTo(0);
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Naturlig utvalg – overlevelse og tilpasning</span>
+  </div>
+  <p class="sim-sub">Se hvordan populasjonen endres over generasjoner basert på miljø og tilfeldige mutasjoner.</p>
+  <div class="sim-ramme">
+    <canvas id="cnu" height="320" style="width:100%;height:320px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Miljø</span>
+  <select id="nu-env" style="background:#0e1520;color:#e8f0ff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 10px;font-size:.82rem" onchange="nuReset()">
+    <option value="snø">Snødekt (lyst)</option>
+    <option value="skog">Mørk skog</option>
+    <option value="ørken">Ørken (sandfarge)</option>
+  </select></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Mutasjonsrate</span>
+  <input type="range" class="sim-slider" id="nu-mut" min="1" max="30" value="10">
+  <span class="sim-k-verdi" id="nu-mutv">10%</span></div>
+  <button class="sim-btn" id="nu-btn" onclick="nuToggle()">▶ Start</button>
+  <button class="sim-btn" onclick="nuReset()">↺ Reset</button></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cnu');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=320,run=false,gen=0,aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  var ENVS={snø:{bg:'#d1d5db',ideal:[220,220,240]},skog:{bg:'#1a2e1a',ideal:[40,70,40]},ørken:{bg:'#c8a96e',ideal:[200,170,100]}};
+  var pop=[];
+  function rndOrg(){return{x:Math.random()*W,y:Math.random()*(H-60)+20,r:Math.floor(Math.random()*200),g:Math.floor(Math.random()*200),b:Math.floor(Math.random()*200),age:0};}
+  function nuReset(){run=false;gen=0;pop=[];for(var i=0;i<30;i++)pop.push(rndOrg());document.getElementById('nu-btn').textContent='▶ Start';cancelAnimationFrame(aid);draw();}
+  function nuToggle(){run=!run;document.getElementById('nu-btn').textContent=run?'⏸ Pause':'▶ Start';if(run)loop();}
+  function fitness(o,ideal){var d=Math.abs(o.r-ideal[0])+Math.abs(o.g-ideal[1])+Math.abs(o.b-ideal[2]);return Math.max(0,1-d/600);}
+  function draw(){
+    document.getElementById('nu-mutv').textContent=document.getElementById('nu-mut').value+'%';
+    var env=ENVS[document.getElementById('nu-env').value];
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=env.bg;ctx.fillRect(0,0,W,H-50);
+    ctx.fillStyle='#07090f';ctx.fillRect(0,H-50,W,50);
+    pop.forEach(function(o){
+      var f=fitness(o,env.ideal);var r=5+f*6;
+      ctx.globalAlpha=0.4+f*0.6;
+      ctx.fillStyle='rgb('+o.r+','+o.g+','+o.b+')';
+      ctx.beginPath();ctx.arc(o.x,o.y,r,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+    });
+    ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='12px monospace';ctx.textAlign='left';
+    ctx.fillText('Gen '+gen+'   Pop: '+pop.length,10,H-32);
+    var avgF=pop.reduce(function(s,o){return s+fitness(o,env.ideal);},0)/pop.length;
+    ctx.fillStyle='#34d399';ctx.fillText('Gj.sn. fitness: '+(avgF*100).toFixed(0)+'%',10,H-12);
+  }
+  function step(){
+    var env=ENVS[document.getElementById('nu-env').value];
+    var mut=+document.getElementById('nu-mut').value/100;
+    var fits=pop.map(function(o){return fitness(o,env.ideal);});
+    var total=fits.reduce(function(a,b){return a+b;},0);
+    // Seleksjon – fjern svakeste
+    var sorted=pop.map(function(o,i){return{o,f:fits[i]};}).sort(function(a,b){return b.f-a.f;});
+    pop=sorted.slice(0,20).map(function(x){return x.o;});
+    // Reproduksjon
+    while(pop.length<30){
+      var p1=pop[Math.floor(Math.random()*10)];
+      var child={x:Math.random()*W,y:Math.random()*(H-60)+20,
+        r:Math.round(p1.r+(Math.random()-.5)*255*mut),
+        g:Math.round(p1.g+(Math.random()-.5)*255*mut),
+        b:Math.round(p1.b+(Math.random()-.5)*255*mut)};
+      child.r=Math.max(0,Math.min(255,child.r));
+      child.g=Math.max(0,Math.min(255,child.g));
+      child.b=Math.max(0,Math.min(255,child.b));
+      pop.push(child);
+    }
+    gen++;
+  }
+  function loop(){if(!run)return;step();draw();aid=setTimeout(function(){requestAnimationFrame(loop);},200);}
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);draw();});
+  nuReset();
+  
+  // Eksponér knappefunksjoner globalt
+  window.nuToggle = nuToggle;
+  window.nuReset = nuReset;
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_evolusjon.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>

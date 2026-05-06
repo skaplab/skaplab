@@ -40,6 +40,24 @@ nav{position:sticky;top:0;z-index:200;background:rgba(5,4,8,.97);backdrop-filter
 .k-dot{width:6px;height:6px;border-radius:50%;background:var(--border);border:none;cursor:pointer;padding:0;transition:all .2s}
 .k-dot.on{background:var(--accent);transform:scale(1.4)}
 @media(max-width:700px){.k-slide{grid-template-columns:1fr}.k-info{border-right:none;border-bottom:1px solid var(--border);padding:22px}}
+
+/* ── Egne interaktive simuleringer ─────────────────────── */
+.sim-seksjon{margin:32px 0}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text,#e8f0ff)}
+.sim-sub{font-size:.83rem;color:var(--dim,rgba(232,240,255,.5));line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important;cursor:default}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono','Courier New',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+.sim-btn.aktiv{background:rgba(96,165,250,.32)}
+
 </style>
 </head>
 <body>
@@ -489,6 +507,58 @@ goTo(0);
 })();
 
 </script>
+
+<section class="sim-seksjon" id="sim-seksjon">
+  <div class="sim-header">
+    <span class="sim-badge">🔬 Interaktiv simulator</span>
+    <span class="sim-tittel">Bølgegenerator – frekvens og amplitude</span>
+  </div>
+  <p class="sim-sub">Endre frekvens og amplitude og se bølgemønsteret.</p>
+  <div class="sim-ramme">
+    <canvas id="cb" height="260" style="width:100%;height:260px"></canvas>
+    <div class="sim-kontroller"><div class="sim-k-gruppe"><span class="sim-k-lbl">Frekvens (Hz)</span>
+  <input type="range" class="sim-slider" id="bf-f" min="1" max="10" value="3" step=".5">
+  <span class="sim-k-verdi" id="bf-fv">3 Hz</span></div>
+  <div class="sim-k-gruppe"><span class="sim-k-lbl">Amplitude</span>
+  <input type="range" class="sim-slider" id="bf-a" min="10" max="80" value="40">
+  <span class="sim-k-verdi" id="bf-av">40</span></div>
+  <button class="sim-btn aktiv" id="bf-btn" onclick="bfToggle()">⏸ Pause</button></div>
+  </div>
+  <script>
+document.addEventListener("DOMContentLoaded",function(){
+
+    var c=document.getElementById('cb');
+    if(!c)return;
+    
+  var ctx=c.getContext('2d'),W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320,H=260,t=0,run=true,aid;
+  c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);
+  document.getElementById('bf-f').oninput=function(){document.getElementById('bf-fv').textContent=this.value+' Hz';};
+  document.getElementById('bf-a').oninput=function(){document.getElementById('bf-av').textContent=this.value;};
+  function bfToggle(){run=!run;document.getElementById('bf-btn').textContent=run?'⏸ Pause':'▶ Start';if(run)loop();}
+  function draw(){
+    var f=+document.getElementById('bf-f').value,a=+document.getElementById('bf-a').value;
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#07090f';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+    var g=ctx.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'#3b82f6');g.addColorStop(.5,'#a78bfa');g.addColorStop(1,'#60c8ff');
+    ctx.strokeStyle=g;ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.beginPath();
+    for(var px=0;px<W;px++){var y=H/2+a*Math.sin(2*Math.PI*f*(px/W)-t);px===0?ctx.moveTo(px,y):ctx.lineTo(px,y);}
+    ctx.stroke();
+    var lam=W/f;ctx.strokeStyle='rgba(251,191,36,.25)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    for(var i=0;i<=f;i++){var px2=i*lam;ctx.beginPath();ctx.moveTo(px2,H/2-a-10);ctx.lineTo(px2,H/2+a+10);ctx.stroke();}
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='12px monospace';ctx.textAlign='left';
+    ctx.fillText('λ = '+(lam).toFixed(0)+'px   f = '+f+'Hz   A = '+a+'px',12,20);
+  }
+  function loop(){if(!run)return;t+=0.06;draw();aid=requestAnimationFrame(loop);}
+  window.addEventListener('resize',function(){W=(function(){var r=c.parentElement;while(r&&r.offsetWidth===0)r=r.parentElement;return r?r.offsetWidth:320;})()||320;c.width=W*devicePixelRatio;c.height=H*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);});
+  loop();
+  
+  // Eksponér knappefunksjoner globalt
+  window.bfToggle = bfToggle;
+});
+</script>
+</section>
 <div style="text-align:center;margin:16px 0;padding:14px;border-top:1px solid rgba(255,255,255,.1)"><a href="nat_mengde_bolger_lyd.html" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:11px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:.85rem">💪 Gå til mengdetrening</a></div>
 </body>
 </html>
