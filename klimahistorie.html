@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Klimahistorie – istider og breer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030810;--surface:#030810dd;--card:#0e1520;--border:rgba(255,255,255,.07);
+  --text:#e8f0ff;--dim:rgba(232,240,255,.45);
+  --accent:#60c8ff;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;}
+/* Hero */
+.hero{padding:48px 24px 32px;max-width:760px;margin:0 auto;text-align:center;}
+.hero-over{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600;margin-bottom:12px;}
+h1{font-family:var(--font-d);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;line-height:1.15;margin-bottom:14px;}
+h1 em{color:var(--accent);font-style:italic;}
+.hero-sub{font-size:.95rem;color:var(--dim);line-height:1.7;max-width:560px;margin:0 auto 18px;}
+.lk20-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:6px 12px;font-size:.79rem;color:#6ee7b7;margin:4px 0 12px;text-decoration:none;transition:background .15s;flex-wrap:wrap;}
+.lk20-badge:hover{background:rgba(52,211,153,.14)}
+.lk20-kode{font-weight:700;font-family:'DM Mono','Courier New',monospace;font-size:.82rem}
+/* Karusell */
+.karusell{max-width:860px;margin:0 auto;padding:0 16px 32px;}
+.k-slides{position:relative;}
+.k-slide{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 26px;}
+.k-info{}
+.k-nr{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:10px;font-weight:600;}
+.k-kat{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:4px 11px;font-size:.77rem;font-weight:600;margin-bottom:14px;}
+.k-tittel{font-family:var(--font-d);font-size:1.35rem;font-weight:600;margin-bottom:12px;line-height:1.25;}
+.k-ingress{font-size:.9rem;color:var(--dim);line-height:1.7;margin-bottom:18px;}
+.k-faktaliste{display:flex;flex-direction:column;gap:12px;}
+.k-fakt{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;font-size:.87rem;line-height:1.65;color:var(--dim);}
+.k-fakt-ikon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.k-fakt strong{color:var(--text);}
+/* Kontroller */
+.k-kontroll{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:20px;}
+.k-pil{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 18px;cursor:pointer;font-size:.9rem;font-family:var(--font-b);transition:background .15s;}
+.k-pil:hover{background:rgba(255,255,255,.12)}
+.k-dots{display:flex;gap:7px;}
+.k-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;transition:background .15s;}
+.k-dot.aktiv{background:var(--accent);}
+/* Simulator */
+.sim-seksjon{max-width:860px;margin:0 auto 32px;padding:0 16px;}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text)}
+.sim-sub{font-size:.83rem;color:var(--dim);line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-over">Geofag · Klima og klimahistorie</div>
+  <h1>Klimahistorie –<br><em>istider, breer og CO₂</em></h1>
+  <p class="hero-sub">Jorda har gjennomgått dramatiske klimaendringer gjennom millioner av år. Hva driver disse endringene, og hva skjer nå?</p>
+  <a href="https://data.udir.no/kl06/v201906/laereplaner-lk20" target="_blank" rel="noopener" class="lk20-badge" title="LK20: Gjøre rede for klimaendringer i et historisk og globalt perspektiv">
+    <span>📋</span><span class="lk20-kode">NAT1039</span>
+    <span style="color:rgba(255,255,255,.4);font-size:.74rem">– Gjøre rede for klimaendringer i et historisk og globalt perspektiv</span>
+  </a>
+</div>
+
+<div class="karusell" id="karusell">
+  <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">❄️ Istider</div>
+          <h3 class="k-tittel">Jordas klimahistorie og istider</h3>
+          <p class="k-ingress">Jorda har hatt mange istider gjennom sin 4,5 milliarder år lange historie. Vi lever i dag i en varm mellomistid innenfor en pågående istid.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>Kvartertiden:</strong> De siste 2,6 millioner år har vært preget av vekslende istider og mellomistider (interglasial). Omlag 100 000-årige sykluser dominerer. Siste maksimale istid: ca. 20 000 år siden.</div></div><div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Milankovitch-syklusene:</strong> Tre astronomiske sykluser driver istider: (1) Jordbaneens elliptisitet (100 000 år), (2) Aksetilt (41 000 år), (3) Presesjon – retning på aksen (26 000 år). Disse endrer innstrålingen.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔬</span><div><strong>Iskjerner som tidsmaskin:</strong> Iskjerner fra Antarktis (ned til 3,7 km) inneholder luftbobler fra over 800 000 år siden. Vi kan direkte måle CO₂-konsentrasjoner og temperaturer tilbake i tid.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">🏔️ Breer</div>
+          <h3 class="k-tittel">Isbrevekst og tilbaketrekning</h3>
+          <p class="k-ingress">Breer er dynamiske – de vokser og smelter avhengig av snøfall og temperatur. I dag trekker de aller fleste breer seg tilbake i et accelererende tempo.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">⚖️</span><div><strong>Massebalanse:</strong> Breer vokser om tilførsel (snøfall) > tap (smelting og kalving). Negativ massebalanse = breen smelter bort. Over 95% av jordens breer har negativ massebalanse siden 1990-tallet.</div></div><div class="k-fakt"><span class="k-fakt-ikon">💧</span><div><strong>Breene som vannreservoar:</strong> Ca. 69% av jordas ferskvann er bundet i is (Antarktis og Grønland). Havnivået vil stige ca. 7 m om Grønlandsisen smelter fullstendig, og ca. 57 m om all is smelter.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🇳🇴</span><div><strong>Norske breer:</strong> Jostedalsbreen er Europas største fastlandsbre (487 km²). Den var mye større under «den lille istid» (1600–1850). Siden 1850 har norske breer mistet omlag halvparten av volumet.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">🌊 Havnivå</div>
+          <h3 class="k-tittel">Havnivåstigning og konsekvenser</h3>
+          <p class="k-ingress">Havet stiger av to grunner: varmere hav utvider seg (termisk ekspansjon) og is fra land smelter. Begge akselererer.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Havnivå i dag:</strong> Havet stiger i gjennomsnitt ca. 3,7 mm/år (2010-tallet) – mer enn dobbelt av 1990-tallet. Siden 1900 er havet ca. 20 cm høyere. IPCC anslår 0,3–1 m stigning til 2100 (kanskje mer).</div></div><div class="k-fakt"><span class="k-fakt-ikon">🏝️</span><div><strong>Sårbare områder:</strong> Bangladesh, Maldivene, Kiribati og kystbyer som Ho Chi Minh, Miami og Amsterdam er truet. Ca. 10% av verdens befolkning bor i lavtliggende kystområder.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔄</span><div><strong>Albedo-tilbakekobling:</strong> Is og snø reflekterer 80–90% av sollyset. Hav absorberer 94%. Når is smelter → mørkere hav → mer varmeabsorpsjon → mer smelting. Positivt tilbakekoblingssystem.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">📈 CO₂</div>
+          <h3 class="k-tittel">CO₂-konsentrasjon gjennom tidene</h3>
+          <p class="k-ingress">Iskjerner viser at CO₂-konsentrasjonen aldri oversteg 300 ppm de siste 800 000 år – inntil industrialiseringen.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📊</span><div><strong>Historiske CO₂-nivåer:</strong> Under istider: ~180 ppm. Under mellomistider: ~280 ppm. I dag (2024): ca. 423 ppm – høyere enn på minst 3–5 millioner år. Økningen er nesten utelukkende fra menneskelig aktivitet.</div></div><div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Hastigheten er uten historisk sidestykke:</strong> Tidligere CO₂-endringer tok tusenvis av år. Dagens økning skjer på tiår. Jordsystemet klarer ikke å tilpasse seg raskt nok.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌡️</span><div><strong>CO₂ og temperatur følger hverandre:</strong> Iskjerne-data viser at CO₂ og global temperatur har fulgt hverandre gjennom 800 000 år. Nåværende CO₂-nivå tilsvarer historisk sett en temperatur 3–4°C høyere enn i dag – forsinkelse i systemet.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">🌍 Konsekvenser</div>
+          <h3 class="k-tittel">Kons ekvenser av klimaendringer</h3>
+          <p class="k-ingress">Klimaendringene påvirker alle deler av jorda – naturen, havet, menneskenes livsvilkår og artsmangfoldet.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🐻‍❄️</span><div><strong>Arktis og Antarktis:</strong> Arktis varmes opp 3–4× raskere enn resten av jorda. Sommershavisen har mistet ca. 40% av tykkelse siden 1980. Isbjørn, hvalross og ringsel er truet. Permafrost tiner → CO₂ og metan slippes ut.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌊</span><div><strong>Korallrev:</strong> Varmere og surere hav (ocean acidification: CO₂ løses som karbonsyre) bleker koraller. Store Barrièrekorallrev (Australia) har mistet halvparten av korallene siden 1995.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌾</span><div><strong>Matsikkerhet:</strong> Endret nedbørsmønstre, ekstremvær og varmere klima endrer landbrukssonene. Noen regioner vinner (f.eks. Sibir, Grønland), men mange taper – særlig i Sahel og Sørøst-Asia.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#60c8ff;border:1px solid #60c8ff44">🌱 Løsninger</div>
+          <h3 class="k-tittel">Klimatilpasning og utslippsreduksjon</h3>
+          <p class="k-ingress">To parallelle strategier: bremse utslipp (mitigasjon) og tilpasse oss endringene som allerede er låst inn (adaptasjon).</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">⚡</span><div><strong>Fornybar energi:</strong> Sol og vind er nå billigste elektrisitetskilde globalt. Kostnadene har falt >90% på 10 år. Elektrisk transport, varmepumper og hydrogen kan erstatte fossile brensler.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🌳</span><div><strong>Karbonfangst:</strong> Skog og hav absorberer ca. 55% av menneskelige utslipp. Gjenplanting, jordvern og BECCS (biogass + CCS) kan øke karbonopptaket. Direkte luftfangst (DAC) er under utvikling men dyrt.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🏙️</span><div><strong>Klimatilpasning:</strong> Høyere diker, varmekorridorer i byer, tørkeresistente vekster, evakueringsplaner. Adaptasjon kan ikke erstatte mitigasjon – bare redusere skadene fra det som allerede er låst inn.</div></div></div>
+        </div>
+      </div>
+  </div>
+  <div class="k-kontroll">
+    <button class="k-pil" onclick="prevSlide()">← Forrige</button>
+    <div class="k-dots"><button class="k-dot" onclick="goSlide(0)"></button><button class="k-dot" onclick="goSlide(1)"></button><button class="k-dot" onclick="goSlide(2)"></button><button class="k-dot" onclick="goSlide(3)"></button><button class="k-dot" onclick="goSlide(4)"></button><button class="k-dot" onclick="goSlide(5)"></button></div>
+    <button class="k-pil" onclick="nextSlide()">Neste →</button>
+  </div>
+</div>
+
+
+
+<div class="quiz-sek" id="quiz-sek" style="margin:32px 0">
+  <div style="font-size:1rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span>🧠</span> Test deg selv</div>
+  <div class="quiz-item" id="qi-0" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">1. Hva er Milankovitch-sykluser?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(0,0,1,'Milankovitch-syklusene (100 000, 41 000 og 26 000 år) endrer hvor mye sollys jorda mottar og driver de naturlige istids-mellomistids-syklusene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a0">A. Sykluser i havstrømmene</button>
+      <button onclick="svarQuiz(0,1,1,'Milankovitch-syklusene (100 000, 41 000 og 26 000 år) endrer hvor mye sollys jorda mottar og driver de naturlige istids-mellomistids-syklusene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a1">B. Astronomiske sykluser i jordbanen, aksetilt og presesjon som driver istider</button>
+      <button onclick="svarQuiz(0,2,1,'Milankovitch-syklusene (100 000, 41 000 og 26 000 år) endrer hvor mye sollys jorda mottar og driver de naturlige istids-mellomistids-syklusene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a2">C. Sykluser i CO₂-konsentrasjon</button>
+    </div>
+    <div id="fork-0" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+  <div class="quiz-item" id="qi-1" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">2. Hva forteller iskjerner oss?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(1,0,1,'Iskjerner fra Grønland og Antarktis inneholder luftbobler og isotoper som gir direkte informasjon om klima gjennom 800 000 år.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a0">A. Ingenting om fortiden</button>
+      <button onclick="svarQuiz(1,1,1,'Iskjerner fra Grønland og Antarktis inneholder luftbobler og isotoper som gir direkte informasjon om klima gjennom 800 000 år.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a1">B. Direkte målinger av CO₂, temperatur og atmosfæresammensetning opptil 800 000 år tilbake</button>
+      <button onclick="svarQuiz(1,2,1,'Iskjerner fra Grønland og Antarktis inneholder luftbobler og isotoper som gir direkte informasjon om klima gjennom 800 000 år.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a2">C. Bare om havnivå</button>
+    </div>
+    <div id="fork-1" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+  <div class="quiz-item" id="qi-2" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">3. Hva er albedo-tilbakekoblingen?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(2,0,1,'Albedo-tilbakekoblingen: is reflekterer 80–90% av sollys. Hav absorberer 94%. Mer smelting → mer mørkt hav → mer oppvarming. Et positivt tilbakekoblingssystem.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a0">A. Hav reflekterer mer sollys enn is</button>
+      <button onclick="svarQuiz(2,1,1,'Albedo-tilbakekoblingen: is reflekterer 80–90% av sollys. Hav absorberer 94%. Mer smelting → mer mørkt hav → mer oppvarming. Et positivt tilbakekoblingssystem.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a1">B. Når is smelter, eksponeres mørkt hav som absorberer mer varme, som smelter mer is – selvforsterkende prosess</button>
+      <button onclick="svarQuiz(2,2,1,'Albedo-tilbakekoblingen: is reflekterer 80–90% av sollys. Hav absorberer 94%. Mer smelting → mer mørkt hav → mer oppvarming. Et positivt tilbakekoblingssystem.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a2">C. Is og snø absorberer all solenergi</button>
+    </div>
+    <div id="fork-2" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+</div>
+
+
+
+
+<script>
+
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json','apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j','Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body: JSON.stringify({elev_id:_elev.id,ressurs:ressurs,km_kode:km_kode,score_pst:score_pst,antall:antall,riktige:riktige,fullfort_ant:fullfort_ant,totalt_ant:totalt_ant,tidspunkt:new Date().toISOString()})
+      }).catch(function(){});
+    };
+  } catch(e) {}
+})();
+
+(function() {
+  var startet = Date.now();
+  var _sporet = false;
+  window.addEventListener('beforeunload', function() {
+    if (!_sporet) {
+      _sporet = true;
+      window._skaplab_logg('klimahistorie', 'NAT-39', 80, 1, 1, 1, 1);
+    }
+  }, 60000);
+})();
+
+
+(function(){
+  var slides = document.querySelectorAll('.k-slide');
+  var nrEls = document.querySelectorAll('.k-nr');
+  var dots = document.querySelectorAll('.k-dot');
+  var idx = 0;
+  function vis(n){
+    slides.forEach(function(s,i){s.style.display=i===n?'':('none');});
+    dots.forEach(function(d,i){d.classList.toggle('aktiv',i===n);});
+    idx=n;
+  }
+  window.nextSlide=function(){vis((idx+1)%slides.length);}
+  window.prevSlide=function(){vis((idx-1+slides.length)%slides.length);}
+  window.goSlide=function(n){vis(n);}
+  vis(0);
+})();
+
+
+function svarQuiz(qi,ai,ri,fork){
+  var item=document.getElementById('qi-'+qi);
+  if(!item||item.dataset.svart)return;
+  item.dataset.svart='1';
+  item.querySelectorAll('button').forEach(function(btn,i){
+    btn.disabled=true;
+    if(i===ri)btn.style.background='rgba(52,211,153,.15)';
+    else if(i===ai&&ai!==ri)btn.style.background='rgba(248,113,113,.15)';
+  });
+  var fEl=document.getElementById('fork-'+qi);
+  if(fEl){fEl.style.display='';fEl.innerHTML=(ai===ri?'✅ <strong>Riktig!</strong> ':'❌ <strong>Feil.</strong> ')+fork;fEl.style.borderLeft='3px solid '+(ai===ri?'#34d399':'#f87171');}
+}
+
+</script>
+</body>
+</html>

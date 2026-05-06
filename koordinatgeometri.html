@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SkapLab – Koordinatgeometri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06040e;--surface:#06040edd;--card:#0e1520;--border:rgba(255,255,255,.07);
+  --text:#e8f0ff;--dim:rgba(232,240,255,.45);
+  --accent:#a78bfa;
+  --font-d:'Fraunces',serif;--font-b:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;}
+/* Hero */
+.hero{padding:48px 24px 32px;max-width:760px;margin:0 auto;text-align:center;}
+.hero-over{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);font-weight:600;margin-bottom:12px;}
+h1{font-family:var(--font-d);font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;line-height:1.15;margin-bottom:14px;}
+h1 em{color:var(--accent);font-style:italic;}
+.hero-sub{font-size:.95rem;color:var(--dim);line-height:1.7;max-width:560px;margin:0 auto 18px;}
+.lk20-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:6px 12px;font-size:.79rem;color:#6ee7b7;margin:4px 0 12px;text-decoration:none;transition:background .15s;flex-wrap:wrap;}
+.lk20-badge:hover{background:rgba(52,211,153,.14)}
+.lk20-kode{font-weight:700;font-family:'DM Mono','Courier New',monospace;font-size:.82rem}
+/* Karusell */
+.karusell{max-width:860px;margin:0 auto;padding:0 16px 32px;}
+.k-slides{position:relative;}
+.k-slide{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px 26px;}
+.k-info{}
+.k-nr{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:10px;font-weight:600;}
+.k-kat{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:4px 11px;font-size:.77rem;font-weight:600;margin-bottom:14px;}
+.k-tittel{font-family:var(--font-d);font-size:1.35rem;font-weight:600;margin-bottom:12px;line-height:1.25;}
+.k-ingress{font-size:.9rem;color:var(--dim);line-height:1.7;margin-bottom:18px;}
+.k-faktaliste{display:flex;flex-direction:column;gap:12px;}
+.k-fakt{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;font-size:.87rem;line-height:1.65;color:var(--dim);}
+.k-fakt-ikon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.k-fakt strong{color:var(--text);}
+/* Kontroller */
+.k-kontroll{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:20px;}
+.k-pil{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 18px;cursor:pointer;font-size:.9rem;font-family:var(--font-b);transition:background .15s;}
+.k-pil:hover{background:rgba(255,255,255,.12)}
+.k-dots{display:flex;gap:7px;}
+.k-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;transition:background .15s;}
+.k-dot.aktiv{background:var(--accent);}
+/* Simulator */
+.sim-seksjon{max-width:860px;margin:0 auto 32px;padding:0 16px;}
+.sim-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.sim-badge{background:linear-gradient(135deg,rgba(96,165,250,.18),rgba(167,139,250,.12));border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:5px 12px;font-size:.74rem;font-weight:600;color:#93c5fd;white-space:nowrap;}
+.sim-tittel{font-size:1.05rem;font-weight:600;color:var(--text)}
+.sim-sub{font-size:.83rem;color:var(--dim);line-height:1.55;margin-bottom:14px}
+.sim-ramme{width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.09);background:#060a12}
+canvas{display:block;width:100%!important}
+.sim-kontroller{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);}
+.sim-k-gruppe{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.sim-k-lbl{font-size:.72rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em}
+.sim-slider{width:100%;accent-color:#60c8ff;cursor:pointer}
+.sim-k-verdi{font-size:.8rem;color:#93c5fd;font-family:'DM Mono',monospace;font-weight:600}
+.sim-btn{padding:7px 16px;border-radius:8px;border:none;background:rgba(96,165,250,.15);color:#93c5fd;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;transition:background .15s;}
+.sim-btn:hover{background:rgba(96,165,250,.28)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-over">Matematikk · Geometri og koordinater</div>
+  <h1>Koordinatgeometri –<br><em>geometri med algebra</em></h1>
+  <p class="hero-sub">Avstand, midtpunkt, linjer og sirkler i koordinatsystemet. Matematikkens kraftigste verktøy for å kombinere geometri og algebra.</p>
+  <a href="https://data.udir.no/kl06/v201906/laereplaner-lk20" target="_blank" rel="noopener" class="lk20-badge" title="LK20: Bruke koordinatgeometri til å løse geometriske problemer">
+    <span>📋</span><span class="lk20-kode">MAT1005</span>
+    <span style="color:rgba(255,255,255,.4);font-size:.74rem">– Bruke koordinatgeometri til å løse geometriske problemer</span>
+  </a>
+</div>
+
+<div class="karusell" id="karusell">
+  <div class="k-slides" id="k-slides">
+
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">01 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">📍 Grunnleggende</div>
+          <h3 class="k-tittel">Koordinatsystemet</h3>
+          <p class="k-ingress">Koordinatsystemet lar oss beskrive posisjoner, avstander og former matematisk ved hjelp av tall.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Kartesisk koordinatsystem:</strong> To akser: x (horisontal) og y (vertikal) som møtes i origo (0,0). Et punkt beskrives som (x, y). Oppkalt etter René Descartes (1637).</div></div><div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Avstand mellom to punkter:</strong> d = √((x₂−x₁)² + (y₂−y₁)²). Dette er Pythagoras' setning i koordinatform – hypotenusens lengde er avstanden.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Midtpunkt:</strong> Midtpunktet mellom (x₁,y₁) og (x₂,y₂) er M = ((x₁+x₂)/2, (y₁+y₂)/2). Gjennomsnitt av koordinatene.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">02 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">📈 Linjer</div>
+          <h3 class="k-tittel">Rette linjer og stigningstall</h3>
+          <p class="k-ingress">En rett linje kan beskrives på ulike måter. Det viktigste er stigningstallet – hvor bratt linjen er.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Stigningstall:</strong> k = (y₂−y₁)/(x₂−x₁) = Δy/Δx. Positiv k: stiger til høyre. Negativ k: synker til høyre. k = 0: horisontal. Udefinert: vertikal.</div></div><div class="k-fakt"><span class="k-fakt-ikon">✏️</span><div><strong>Linjens likning:</strong> y = kx + b. k = stigningstall, b = konstantledd (skjærer y-aksen). Alternativt: y − y₁ = k(x − x₁) når ett punkt og k er kjent.</div></div><div class="k-fakt"><span class="k-fakt-ikon">⊥</span><div><strong>Parallelle og vinkelrette linjer:</strong> Parallelle linjer har lik k. Vinkelrette linjer har k₁ × k₂ = −1 (den ene er negativ invers av den andre).</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">03 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">⭕ Sirkler</div>
+          <h3 class="k-tittel">Sirkelens likning</h3>
+          <p class="k-ingress">En sirkel i koordinatsystemet kan beskrives med en enkel likning basert på Pythagoras.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">⭕</span><div><strong>Sirkellikningen:</strong> Alle punkter (x,y) på en sirkel med sentrum (a,b) og radius r oppfyller: (x−a)² + (y−b)² = r². For sentrum i origo: x² + y² = r².</div></div><div class="k-fakt"><span class="k-fakt-ikon">📏</span><div><strong>Avledet fra Pythagoras:</strong> Et punkt P(x,y) er på sirkelen om avstanden fra sentrum (a,b) til P er lik r. d = √((x−a)² + (y−b)²) = r. Kvadrerer begge sider gir sirkellikningen.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🎯</span><div><strong>Kjennetegn:</strong> Sentrum og radius leses direkte av. (x−3)² + (y+2)² = 25 → sentrum (3,−2), radius √25 = 5. Pass på fortegnet: (y+2) → b = −2.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">04 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">📐 Analytisk</div>
+          <h3 class="k-tittel">Analytisk geometri – bevise med koordinater</h3>
+          <p class="k-ingress">Koordinater lar oss bevise geometriske setninger algebraisk – uten å stole på tegning.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">▲</span><div><strong>Trekantens areal:</strong> Med hjørner (x₁,y₁), (x₂,y₂), (x₃,y₃): A = ½|x₁(y₂−y₃) + x₂(y₃−y₁) + x₃(y₁−y₂)|. Kan bevise om tre punkter er på samme linje (A = 0).</div></div><div class="k-fakt"><span class="k-fakt-ikon">🔷</span><div><strong>Bevise at et kvadrilateral er et rektangel:</strong> Vis at nabodiagonalene er vinkelrette (k₁×k₂ = −1), og at sidene er like lange (avstandsformelen). Alt beviselig med koordinater.</div></div><div class="k-fakt"><span class="k-fakt-ikon">✅</span><div><strong>Normallinjen:</strong> Linjen vinkelrett på en kurve i ett punkt. Til en sirkel: normallinjen fra ett punkt på sirkelen går gjennom sentrum.</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">05 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">📊 Vektorer</div>
+          <h3 class="k-tittel">Vektorer i koordinatform</h3>
+          <p class="k-ingress">Vektorer beskriver bevegelse og retning – og er svært nyttige i koordinatsystemet.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">➡️</span><div><strong>Vektor i koordinatform:</strong> En vektor fra A(x₁,y₁) til B(x₂,y₂) skrives AB = (x₂−x₁, y₂−y₁). Lengden (beløp): |AB| = √((x₂−x₁)² + (y₂−y₁)²).</div></div><div class="k-fakt"><span class="k-fakt-ikon">➕</span><div><strong>Addisjon og skalering:</strong> (a,b) + (c,d) = (a+c, b+d). k×(a,b) = (ka, kb). Addisjon «stappler» vektorer. Skalering endrer lengden.</div></div><div class="k-fakt"><span class="k-fakt-ikon">📐</span><div><strong>Skalarproduktet:</strong> (a,b)·(c,d) = ac + bd. Hvis skalarproduktet = 0 er vektorene vinkelrette. Vinkelen θ mellom vektorer: cos θ = (a·b) / (|a|×|b|).</div></div></div>
+        </div>
+      </div>
+      <div class="k-slide">
+        <div class="k-info">
+          <div class="k-nr">06 / 06</div>
+          <div class="k-kat" style="background:rgba(255,255,255,.06);color:#a78bfa;border:1px solid #a78bfa44">💻 Anvendelse</div>
+          <h3 class="k-tittel">Koordinatgeometri i praksis</h3>
+          <p class="k-ingress">Koordinatgeometri er grunnlaget for datagrafikk, GPS, arkitektur og all digital tegning.</p>
+          <div class="k-faktaliste"><div class="k-fakt"><span class="k-fakt-ikon">🗺️</span><div><strong>GPS og kartografi:</strong> GPS-koordinater (breddegrad, lengdegrad) er et koordinatsystem på jordas overflate. Avstandsformelen brukes (med kurvatur-korreksjon) til å beregne korteste rute.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🎮</span><div><strong>Datagrafikk og spill:</strong> Alle objekter i 3D-spill er definert ved koordinater. Fysikkmotoren beregner kollisjoner, bevegelse og lys ved hjelp av koordinatgeometri og lineær algebra.</div></div><div class="k-fakt"><span class="k-fakt-ikon">🏗️</span><div><strong>Arkitektur og design:</strong> CAD-programmer (AutoCAD, SketchUp) bruker koordinater til å definere alle geometriske former. BIM (Building Information Modeling) er koordinatgeometri i 3D.</div></div></div>
+        </div>
+      </div>
+  </div>
+  <div class="k-kontroll">
+    <button class="k-pil" onclick="prevSlide()">← Forrige</button>
+    <div class="k-dots"><button class="k-dot" onclick="goSlide(0)"></button><button class="k-dot" onclick="goSlide(1)"></button><button class="k-dot" onclick="goSlide(2)"></button><button class="k-dot" onclick="goSlide(3)"></button><button class="k-dot" onclick="goSlide(4)"></button><button class="k-dot" onclick="goSlide(5)"></button></div>
+    <button class="k-pil" onclick="nextSlide()">Neste →</button>
+  </div>
+</div>
+
+
+
+<div class="quiz-sek" id="quiz-sek" style="margin:32px 0">
+  <div style="font-size:1rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span>🧠</span> Test deg selv</div>
+  <div class="quiz-item" id="qi-0" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">1. Hva er midtpunktet mellom (2, 4) og (8, 10)?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(0,0,0,'Midtpunkt M = ((2+8)/2, (4+10)/2) = (10/2, 14/2) = (5, 7). Gjennomsnitt av x-koordinatene og y-koordinatene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a0">A. (5, 7)</button>
+      <button onclick="svarQuiz(0,1,0,'Midtpunkt M = ((2+8)/2, (4+10)/2) = (10/2, 14/2) = (5, 7). Gjennomsnitt av x-koordinatene og y-koordinatene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a1">B. (3, 5)</button>
+      <button onclick="svarQuiz(0,2,0,'Midtpunkt M = ((2+8)/2, (4+10)/2) = (10/2, 14/2) = (5, 7). Gjennomsnitt av x-koordinatene og y-koordinatene.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q0a2">C. (10, 14)</button>
+    </div>
+    <div id="fork-0" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+  <div class="quiz-item" id="qi-1" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">2. Hva er stigningstallet til linjen gjennom (1,2) og (3,8)?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(1,0,1,'k = (8−2)/(3−1) = 6/2 = 3. Stigningstall k = Δy/Δx.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a0">A. 2</button>
+      <button onclick="svarQuiz(1,1,1,'k = (8−2)/(3−1) = 6/2 = 3. Stigningstall k = Δy/Δx.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a1">B. 3</button>
+      <button onclick="svarQuiz(1,2,1,'k = (8−2)/(3−1) = 6/2 = 3. Stigningstall k = Δy/Δx.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q1a2">C. 4</button>
+    </div>
+    <div id="fork-1" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+  <div class="quiz-item" id="qi-2" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px;margin-bottom:10px">
+    <p style="font-size:.9rem;font-weight:500;margin-bottom:12px">3. Hva er sentrum og radius for sirkelen (x−2)² + (y+3)² = 16?</p>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button onclick="svarQuiz(2,0,1,'Fra formen (x−a)² + (y−b)² = r²: a=2, b=−3 (obs: y+3 = y−(−3)), r=√16=4. Sentrum (2,−3), radius 4.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a0">A. Sentrum (−2,3), r=4</button>
+      <button onclick="svarQuiz(2,1,1,'Fra formen (x−a)² + (y−b)² = r²: a=2, b=−3 (obs: y+3 = y−(−3)), r=√16=4. Sentrum (2,−3), radius 4.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a1">B. Sentrum (2,−3), r=4</button>
+      <button onclick="svarQuiz(2,2,1,'Fra formen (x−a)² + (y−b)² = r²: a=2, b=−3 (obs: y+3 = y−(−3)), r=√16=4. Sentrum (2,−3), radius 4.')" style="text-align:left;padding:9px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text,#e8f0ff);cursor:pointer;font-size:.85rem" id="q2a2">C. Sentrum (2,3), r=16</button>
+    </div>
+    <div id="fork-2" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:.83rem;line-height:1.6;color:rgba(255,255,255,.7)"></div>
+  </div>
+</div>
+
+
+
+
+<script>
+
+(function() {
+  try {
+    var _elev = null;
+    try { _elev = JSON.parse(localStorage.getItem('skaplab_elev')); } catch(e) {}
+    window._skaplab_logg = function(ressurs, km_kode, score_pst, antall, riktige, fullfort_ant, totalt_ant) {
+      if (!_elev || !_elev.id) return;
+      fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/aktivitet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json','apikey': 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j','Authorization': 'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+        body: JSON.stringify({elev_id:_elev.id,ressurs:ressurs,km_kode:km_kode,score_pst:score_pst,antall:antall,riktige:riktige,fullfort_ant:fullfort_ant,totalt_ant:totalt_ant,tidspunkt:new Date().toISOString()})
+      }).catch(function(){});
+    };
+  } catch(e) {}
+})();
+
+(function() {
+  var startet = Date.now();
+  var _sporet = false;
+  window.addEventListener('beforeunload', function() {
+    if (!_sporet) {
+      _sporet = true;
+      window._skaplab_logg('koordinatgeometri', 'MAT-05', 80, 1, 1, 1, 1);
+    }
+  }, 60000);
+})();
+
+
+(function(){
+  var slides = document.querySelectorAll('.k-slide');
+  var nrEls = document.querySelectorAll('.k-nr');
+  var dots = document.querySelectorAll('.k-dot');
+  var idx = 0;
+  function vis(n){
+    slides.forEach(function(s,i){s.style.display=i===n?'':('none');});
+    dots.forEach(function(d,i){d.classList.toggle('aktiv',i===n);});
+    idx=n;
+  }
+  window.nextSlide=function(){vis((idx+1)%slides.length);}
+  window.prevSlide=function(){vis((idx-1+slides.length)%slides.length);}
+  window.goSlide=function(n){vis(n);}
+  vis(0);
+})();
+
+
+function svarQuiz(qi,ai,ri,fork){
+  var item=document.getElementById('qi-'+qi);
+  if(!item||item.dataset.svart)return;
+  item.dataset.svart='1';
+  item.querySelectorAll('button').forEach(function(btn,i){
+    btn.disabled=true;
+    if(i===ri)btn.style.background='rgba(52,211,153,.15)';
+    else if(i===ai&&ai!==ri)btn.style.background='rgba(248,113,113,.15)';
+  });
+  var fEl=document.getElementById('fork-'+qi);
+  if(fEl){fEl.style.display='';fEl.innerHTML=(ai===ri?'✅ <strong>Riktig!</strong> ':'❌ <strong>Feil.</strong> ')+fork;fEl.style.borderLeft='3px solid '+(ai===ri?'#34d399':'#f87171');}
+}
+
+</script>
+</body>
+</html>
