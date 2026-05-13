@@ -359,6 +359,19 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
 .hjelp-tips-tittel { font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.35); margin-bottom: 8px; }
 .hjelp-tips-rad { font-size: .83rem; color: rgba(255,255,255,.55); margin-bottom: 6px; line-height: 1.5; }
 
+
+/* Klasseprofil */
+.kp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+@media(max-width:600px){.kp-grid{grid-template-columns:1fr;}}
+.kp-kort{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.kp-tittel{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:10px;color:var(--dim);}
+.kp-bar-rad{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.kp-bar-lbl{font-size:.78rem;width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+.kp-bar-track{flex:1;background:rgba(255,255,255,.07);border-radius:4px;height:8px;overflow:hidden;}
+.kp-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+.kp-bar-val{font-size:.74rem;color:var(--dim);width:32px;text-align:right;flex-shrink:0;}
+.kp-ingress{font-size:.82rem;color:var(--dim);margin-bottom:14px;line-height:1.5;}
+
 </style>
 <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 </head>
@@ -390,6 +403,8 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <button class="nav-link" onclick="visside('aarsplan');initAarsplan()"><span>📅</span> Årsplan</button>
 
   <a class="nav-link" href="provebygger.html" style="text-decoration:none;color:inherit;font-family:inherit;font-size:.83rem;"><span>🛠️</span> Prøvebygger</a>
+
+  <a class="nav-link" href="om_skaplab.html" target="_blank" style="text-decoration:none;color:inherit;font-family:inherit;font-size:.83rem;opacity:.7;"><span>ℹ️</span> Om SkapLab</a>
 
   <button class="nav-link" onclick="localStorage.removeItem('skaplab_onb_laerer');onbVis()" style="font-size:.75rem;opacity:.6"><span>❓</span> Vis guide</button>
   <button class="nav-link" id="logg-ut-knapp" onclick="loggUt()"><span>🚪</span> Logg ut</button>
@@ -431,6 +446,17 @@ tbody tr:hover td{background:rgba(255,255,255,.02);}
   <div class="side-tittel" id="klasse-tittel">Velg klasse</div>
   <div class="side-sub" id="klasse-sub">Velg en klasse i menyen til venstre.</div>
   <div id="dashboard-innhold"></div>
+    <!-- KLASSEPROFIL -->
+    <div class="sek" id="sek-klasseprofil" style="display:none">
+      <div class="sek-tittel">📊 Klasseprofil
+        <button class="btn btn-sek btn-sm" onclick="byggKlasseprofil()" style="margin-left:10px">
+          Oppdater
+        </button>
+      </div>
+      <div id="kp-innhold"><p style="color:var(--dim);font-size:.83rem">
+        Klikk «Oppdater» for å se klassens adaptive profil.
+      </p></div>
+    </div>
 </div>
 
 <!-- TILDEL OPPGAVE -->
@@ -933,6 +959,100 @@ function visside(id) {
   if (el) el.classList.add('ak');
 }
 
+// ── KLASSEPROFIL ─────────────────────────────────────────────────────────
+function byggKlasseprofil() {
+  var el = $('kp-innhold');
+  if (!el) return;
+  if (!atElever.length || !Object.keys(atData).length) {
+    el.innerHTML = '<p class="kp-ingress">Last adaptiv-data for klassen først (velg klasse i Adaptiv-fanen).</p>';
+    return;
+  }
+
+  var kildeEmner = atFag === 'nat' ? NAT_EMNER : AT_EMNER;
+  var nElever = atElever.length;
+
+  // Beregn snitt-nivå, snitt-XP og andel strever per emne
+  var emneStats = kildeEmner.map(function(em) {
+    var nivaaer = [], xpTot = 0, antFeil = 0, antR = 0, antMedData = 0;
+    atElever.forEach(function(elev) {
+      var prog = (atData[elev.id] || []).find(function(p){ return p.emne === em.id; });
+      if (prog) {
+        antMedData++;
+        nivaaer.push(prog.nivaa || 1);
+        xpTot += prog.xp || 0;
+        antFeil += prog.totalt_feil || 0;
+        antR += prog.totalt_riktige || 0;
+      }
+    });
+    var snittNivaa = antMedData ? nivaaer.reduce(function(a,b){return a+b;},0) / antMedData : 0;
+    var feilRate = (antFeil + antR) > 0 ? antFeil / (antFeil + antR) : 0;
+    return {
+      id: em.id, n: em.n, i: em.i, kat: em.kat, farge: em.farge,
+      snittNivaa: snittNivaa, snittXP: antMedData ? xpTot/antMedData : 0,
+      feilRate: feilRate, antMedData: antMedData
+    };
+  }).filter(function(e){ return e.antMedData > 0; });
+
+  if (!emneStats.length) {
+    el.innerHTML = '<p class="kp-ingress">Ingen elever har startet adaptiv trening ennå.</p>';
+    return;
+  }
+
+  // Sorter: svakest = lavest snittNivaa
+  var sortert = emneStats.slice().sort(function(a,b){return a.snittNivaa - b.snittNivaa;});
+  var svakeste = sortert.slice(0, 5);
+  var sterkeste = sortert.slice(-5).reverse();
+  var maksNivaa = 10;
+
+  function lagBarRader(liste, farge) {
+    return liste.map(function(e) {
+      var pst = Math.round((e.snittNivaa / maksNivaa) * 100);
+      var antStr = e.antMedData + '/' + nElever + ' elever';
+      return '<div class="kp-bar-rad">'
+        + '<span class="kp-bar-lbl" title="'+e.n+'">'+e.i+' '+e.n+'</span>'
+        + '<div class="kp-bar-track"><div class="kp-bar-fill" style="width:'+pst+'%;background:'+farge+'"></div></div>'
+        + '<span class="kp-bar-val">'+e.snittNivaa.toFixed(1)+'</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  // Høyest feilrate
+  var høyFeil = emneStats.slice().sort(function(a,b){return b.feilRate - a.feilRate;}).slice(0,5);
+
+  var h = '<p class="kp-ingress">Aggregert oversikt for '+nElever+' elever – '+emneStats.length+' emner med data. Klikk et emne for å se individuelle resultater.</p>';
+  h += '<div class="kp-grid">';
+  h += '<div class="kp-kort"><div class="kp-tittel">📌 Svakeste emner (lavest snitt)</div>'
+    + lagBarRader(svakeste, '#f87171') + '</div>';
+  h += '<div class="kp-kort"><div class="kp-tittel">💪 Sterkeste emner (høyest snitt)</div>'
+    + lagBarRader(sterkeste, '#34d399') + '</div>';
+  h += '<div class="kp-kort"><div class="kp-tittel">⚠️ Høyest feilrate (trenger fokus)</div>'
+    + høyFeil.map(function(e) {
+        var pst = Math.round(e.feilRate * 100);
+        return '<div class="kp-bar-rad">'
+          + '<span class="kp-bar-lbl" title="'+e.n+'">'+e.i+' '+e.n+'</span>'
+          + '<div class="kp-bar-track"><div class="kp-bar-fill" style="width:'+pst+'%;background:#f97316"></div></div>'
+          + '<span class="kp-bar-val">'+pst+'%</span>'
+          + '</div>';
+      }).join('') + '</div>';
+  h += '<div class="kp-kort"><div class="kp-tittel">📊 Klassegjennomsnitt per kategori</div>';
+  var kats = {};
+  emneStats.forEach(function(e){
+    if (!kats[e.kat]) kats[e.kat] = [];
+    kats[e.kat].push(e.snittNivaa);
+  });
+  Object.keys(kats).forEach(function(kat) {
+    var snitt = kats[kat].reduce(function(a,b){return a+b;},0) / kats[kat].length;
+    var pst = Math.round((snitt/maksNivaa)*100);
+    h += '<div class="kp-bar-rad">'
+      + '<span class="kp-bar-lbl">'+kat+'</span>'
+      + '<div class="kp-bar-track"><div class="kp-bar-fill" style="width:'+pst+'%;background:#a78bfa"></div></div>'
+      + '<span class="kp-bar-val">'+snitt.toFixed(1)+'</span></div>';
+  });
+  h += '</div>';
+  h += '</div>';
+  el.innerHTML = h;
+}
+
 function snack(tekst, type) {
   var eks = document.getElementById('snack-boks');
   if (eks) eks.remove();
@@ -1068,6 +1188,7 @@ function byttKlasse(id) {
     : 'Velg en klasse i menyen til venstre.';
   byggSidebar();
   byggDashboard();
+  var kpSek = $('sek-klasseprofil'); if (kpSek) kpSek.style.display = '';
   visside('klasser');
 }
 
