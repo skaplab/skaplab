@@ -92,6 +92,17 @@ code{font-family:monospace;font-size:.85em;background:rgba(255,255,255,.07);padd
 .ny-oppgave-btn{margin-top:10px;padding:7px 18px;background:rgba(100,120,200,0.12);border:1px solid rgba(100,120,200,0.3);border-radius:8px;color:#aac;cursor:pointer;font-size:0.88rem;font-family:inherit;}.ny-oppgave-btn:hover{background:rgba(100,120,200,0.25);}.lk20-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:6px 12px;font-size:.79rem;color:#6ee7b7;margin:4px 0 12px;text-decoration:none;transition:background .15s;flex-wrap:wrap;}
 .lk20-badge:hover{background:rgba(52,211,153,.14)}
 .lk20-kode{font-weight:700;font-family:'DM Mono','Courier New',monospace;font-size:.82rem}
+.feilrapport-knapp{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 11px;font-size:.75rem;color:rgba(255,255,255,.35);cursor:pointer;transition:all .15s;margin-top:8px;font-family:inherit;}
+.feilrapport-knapp:hover{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);color:#fca5a5;}
+.feil-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;align-items:center;justify-content:center;padding:16px;}
+.feil-modal-overlay.vis{display:flex;}
+.feil-modal{background:#0d1520;border:1px solid rgba(255,255,255,.1);border-radius:14px;max-width:400px;width:100%;padding:24px 22px;position:relative;}
+.feil-modal h3{font-size:.95rem;font-weight:600;margin-bottom:8px;}
+.feil-modal p{font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:14px;line-height:1.6;}
+.feil-modal textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#e8f0ff;padding:9px 12px;font-size:.85rem;font-family:inherit;resize:vertical;min-height:80px;box-sizing:border-box;outline:none;}
+.feil-modal-btner{display:flex;gap:8px;margin-top:12px;}
+.feil-send-btn{flex:2;padding:9px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;font-family:inherit;}
+.feil-avbryt-btn{flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);cursor:pointer;font-size:.85rem;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -283,5 +294,52 @@ var vanskel=2,dynOppgave=null,dynValgt=null;function lagDynFlervalg(oppg){
 
 </script>
 <script>init(3); nyDynOppgave();</script>
+<div id="feil-modal-overlay" class="feil-modal-overlay" onclick="if(event.target===this)lukkFeilModal()">
+  <div class="feil-modal">
+    <h3>🐛 Rapporter feil i leksjonen</h3>
+    <p>Hva er feil eller upresist? Beskriv gjerne så spesifikt som mulig. Takk for hjelpen!</p>
+    <textarea id="feil-tekst" placeholder="F.eks.: Formelen på side 2 er feil. Riktig skal være..."></textarea>
+    <div class="feil-modal-btner">
+      <button class="feil-send-btn" onclick="sendFeilrapport()">Send inn</button>
+      <button class="feil-avbryt-btn" onclick="lukkFeilModal()">Avbryt</button>
+    </div>
+    <div id="feil-status" style="font-size:.82rem;margin-top:8px;min-height:18px;text-align:center"></div>
+  </div>
+</div>
+<script>
+var _feilRessurs = '';
+function apneFeilModal(ressurs) {
+  _feilRessurs = ressurs;
+  var ov = document.getElementById('feil-modal-overlay');
+  if (ov) { ov.classList.add('vis'); document.getElementById('feil-tekst').value = ''; document.getElementById('feil-status').textContent = ''; }
+}
+function lukkFeilModal() {
+  var ov = document.getElementById('feil-modal-overlay');
+  if (ov) ov.classList.remove('vis');
+}
+async function sendFeilrapport() {
+  var tekst = (document.getElementById('feil-tekst').value || '').trim();
+  var status = document.getElementById('feil-status');
+  if (!tekst) { status.style.color = '#f87171'; status.textContent = 'Skriv inn en beskrivelse.'; return; }
+  var btn = document.querySelector('.feil-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sender…'; }
+  try {
+    await fetch('https://cqzmzsqhuawpsvnjjzse.supabase.co/rest/v1/feilrapporter', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j','Authorization':'Bearer sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j'},
+      body: JSON.stringify({ressurs:_feilRessurs,tekst:tekst,tidspunkt:new Date().toISOString()})
+    });
+    status.style.color = '#34d399';
+    status.textContent = '✅ Takk! Rapporten er sendt.';
+    setTimeout(lukkFeilModal, 1800);
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = '❌ Kunne ikke sende. Prøv igjen.';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Send inn'; }
+}
+</script>
+
+<button class="feilrapport-knapp" onclick="apneFeilModal('matte_prog_løkker')">🐛 Rapporter feil</button>
 </body>
 </html>
