@@ -1691,6 +1691,123 @@ function lukkForkModal() {
   if (modal) modal.classList.remove('vis');
 }
 
+// ── MELDINGSSYSTEM ────────────────────────────────────────────────────
+var ulesteMeldinger = 0;
+
+async function lastMeldinger() {
+  try {
+    var data = await sbFetch('/rest/v1/meldinger?mottaker_id=eq.' + elev.id + '&order=tidspunkt.desc&limit=50');
+    if (!Array.isArray(data)) data = [];
+    ulesteMeldinger = data.filter(function(m){ return !m.lest; }).length;
+    oppdaterMeldingsBadge(ulesteMeldinger);
+    return data;
+  } catch(e) { return []; }
+}
+
+function oppdaterMeldingsBadge(antall) {
+  var badge = document.getElementById('melding-badge');
+  if (badge) {
+    badge.textContent = antall > 0 ? String(antall) : '';
+    badge.style.display = antall > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+async function visVurderinger() {
+  var el = document.getElementById('ep-vurd-innhold');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:8px">Laster...</div>';
+  var meldinger = await lastMeldinger();
+  if (!meldinger.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:16px 0;text-align:center;">Ingen meldinger fra laerer enna.</div>';
+    return;
+  }
+  // Merk uleste som lest
+  meldinger.filter(function(m){ return !m.lest; }).forEach(function(m) {
+    sbFetch('/rest/v1/meldinger?id=eq.' + m.id, { method:'PATCH', body: JSON.stringify({lest:true}) }).catch(function(){});
+  });
+  ulesteMeldinger = 0;
+  oppdaterMeldingsBadge(0);
+
+  var TYPER  = {ros:'Ros', tips:'Tips', oppgave:'Oppgave', info:'Info'};
+  var IKONER = {ros:'applause', tips:'bulb', oppgave:'clipboard', info:'info'};
+  var FARGER = {ros:'#34d399', tips:'#60c8ff', oppgave:'#a78bfa', info:'#fbbf24'};
+
+  var h = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  meldinger.forEach(function(m, idx) {
+    var dato = m.tidspunkt
+      ? new Date(m.tidspunkt).toLocaleString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '';
+    var farge = FARGER[m.type] || '#e8f0ff';
+    var typeLbl = (TYPER[m.type] || 'Melding');
+    var nyBadge = !m.lest ? '<span style="background:#ef4444;color:#fff;border-radius:4px;font-size:.68rem;font-weight:700;padding:1px 6px;margin-left:6px;">NY</span>' : '';
+    var rowId = 'msg-' + idx;
+    var tekst = (m.tekst || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    h += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h += '<span style="font-size:.76rem;font-weight:600;color:' + farge + ';">' + typeLbl + nyBadge + '</span>';
+    h += '<span style="font-size:.74rem;color:var(--dim);">' + dato + '</span>';
+    h += '</div>';
+    h += '<p style="font-size:.88rem;line-height:1.65;color:var(--text);margin:0 0 10px;">' + tekst + '</p>';
+    h += '<details style="margin-top:4px;">';
+    h += '<summary style="font-size:.78rem;color:var(--dim);cursor:pointer;user-select:none;">Svar pa denne</summary>';
+    h += '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">';
+    h += '<textarea id="svar-' + rowId + '" rows="2" placeholder="Skriv svar..." style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--text);padding:8px 10px;font-size:.84rem;font-family:inherit;resize:none;outline:none;box-sizing:border-box;width:100%;"></textarea>';
+    h += '<button data-avs="' + (m.avsender_id||'') + '" data-svid="' + (m.id||'') + '" data-rowid="' + rowId + '" onclick="sendMeldingSvar(this)" style="align-self:flex-end;padding:6px 14px;border-radius:7px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;">Send svar</button>';
+    h += '<div id="svar-status-' + rowId + '" style="font-size:.78rem;min-height:16px;text-align:right;"></div>';
+    h += '</div></details></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+async function sendMeldingSvar(btn) {
+  var mottakerId = btn.getAttribute('data-avs');
+  var svarsId    = btn.getAttribute('data-svid');
+  var rowId      = btn.getAttribute('data-rowid');
+  var textarea   = document.getElementById('svar-' + rowId);
+  var status     = document.getElementById('svar-status-' + rowId);
+  if (!textarea || !status) return;
+  var tekst = textarea.value.trim();
+  if (!tekst) { status.style.color='#f87171'; status.textContent='Skriv noe forst.'; return; }
+  btn.disabled = true;
+  try {
+    await sbFetch('/rest/v1/meldinger', {
+      method: 'POST',
+      body: JSON.stringify({
+        avsender_id: elev.id, mottaker_id: mottakerId,
+        avsender_rolle: 'elev', tekst: tekst,
+        svar_pa_id: svarsId || null, lest: false
+      })
+    });
+    status.style.color = '#34d399';
+    status.textContent = 'Sendt!';
+    textarea.value = '';
+    setTimeout(function(){ status.textContent=''; }, 2500);
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = 'Feil ved sending.';
+  }
+  btn.disabled = false;
+}
+
+// Sesjon-friskhet: logg ut etter 7 dager
+(function() {
+  try {
+    var d = localStorage.getItem('skaplab_elev');
+    if (!d) return;
+    var p = JSON.parse(d);
+    if (!p || !p._lagret) return;
+    if (Date.now() - p._lagret > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('skaplab_elev');
+      location.href = 'elev_login.html';
+    }
+  } catch(e) {}
+})();
+
+// Last meldingsvarsel ved oppstart
+setTimeout(function(){ lastMeldinger().catch(function(){}); }, 1500);
+
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 (async function(){ await init(); })();
 
@@ -2320,6 +2437,123 @@ function lukkForkModal() {
   var modal = document.getElementById('nat-fork-modal');
   if (modal) modal.classList.remove('vis');
 }
+
+// ── MELDINGSSYSTEM ────────────────────────────────────────────────────
+var ulesteMeldinger = 0;
+
+async function lastMeldinger() {
+  try {
+    var data = await sbFetch('/rest/v1/meldinger?mottaker_id=eq.' + elev.id + '&order=tidspunkt.desc&limit=50');
+    if (!Array.isArray(data)) data = [];
+    ulesteMeldinger = data.filter(function(m){ return !m.lest; }).length;
+    oppdaterMeldingsBadge(ulesteMeldinger);
+    return data;
+  } catch(e) { return []; }
+}
+
+function oppdaterMeldingsBadge(antall) {
+  var badge = document.getElementById('melding-badge');
+  if (badge) {
+    badge.textContent = antall > 0 ? String(antall) : '';
+    badge.style.display = antall > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+async function visVurderinger() {
+  var el = document.getElementById('ep-vurd-innhold');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--dim);font-size:.83rem;padding:8px">Laster...</div>';
+  var meldinger = await lastMeldinger();
+  if (!meldinger.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:.84rem;padding:16px 0;text-align:center;">Ingen meldinger fra laerer enna.</div>';
+    return;
+  }
+  // Merk uleste som lest
+  meldinger.filter(function(m){ return !m.lest; }).forEach(function(m) {
+    sbFetch('/rest/v1/meldinger?id=eq.' + m.id, { method:'PATCH', body: JSON.stringify({lest:true}) }).catch(function(){});
+  });
+  ulesteMeldinger = 0;
+  oppdaterMeldingsBadge(0);
+
+  var TYPER  = {ros:'Ros', tips:'Tips', oppgave:'Oppgave', info:'Info'};
+  var IKONER = {ros:'applause', tips:'bulb', oppgave:'clipboard', info:'info'};
+  var FARGER = {ros:'#34d399', tips:'#60c8ff', oppgave:'#a78bfa', info:'#fbbf24'};
+
+  var h = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  meldinger.forEach(function(m, idx) {
+    var dato = m.tidspunkt
+      ? new Date(m.tidspunkt).toLocaleString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '';
+    var farge = FARGER[m.type] || '#e8f0ff';
+    var typeLbl = (TYPER[m.type] || 'Melding');
+    var nyBadge = !m.lest ? '<span style="background:#ef4444;color:#fff;border-radius:4px;font-size:.68rem;font-weight:700;padding:1px 6px;margin-left:6px;">NY</span>' : '';
+    var rowId = 'msg-' + idx;
+    var tekst = (m.tekst || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    h += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h += '<span style="font-size:.76rem;font-weight:600;color:' + farge + ';">' + typeLbl + nyBadge + '</span>';
+    h += '<span style="font-size:.74rem;color:var(--dim);">' + dato + '</span>';
+    h += '</div>';
+    h += '<p style="font-size:.88rem;line-height:1.65;color:var(--text);margin:0 0 10px;">' + tekst + '</p>';
+    h += '<details style="margin-top:4px;">';
+    h += '<summary style="font-size:.78rem;color:var(--dim);cursor:pointer;user-select:none;">Svar pa denne</summary>';
+    h += '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">';
+    h += '<textarea id="svar-' + rowId + '" rows="2" placeholder="Skriv svar..." style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:var(--text);padding:8px 10px;font-size:.84rem;font-family:inherit;resize:none;outline:none;box-sizing:border-box;width:100%;"></textarea>';
+    h += '<button data-avs="' + (m.avsender_id||'') + '" data-svid="' + (m.id||'') + '" data-rowid="' + rowId + '" onclick="sendMeldingSvar(this)" style="align-self:flex-end;padding:6px 14px;border-radius:7px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.8rem;font-weight:500;font-family:inherit;">Send svar</button>';
+    h += '<div id="svar-status-' + rowId + '" style="font-size:.78rem;min-height:16px;text-align:right;"></div>';
+    h += '</div></details></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+async function sendMeldingSvar(btn) {
+  var mottakerId = btn.getAttribute('data-avs');
+  var svarsId    = btn.getAttribute('data-svid');
+  var rowId      = btn.getAttribute('data-rowid');
+  var textarea   = document.getElementById('svar-' + rowId);
+  var status     = document.getElementById('svar-status-' + rowId);
+  if (!textarea || !status) return;
+  var tekst = textarea.value.trim();
+  if (!tekst) { status.style.color='#f87171'; status.textContent='Skriv noe forst.'; return; }
+  btn.disabled = true;
+  try {
+    await sbFetch('/rest/v1/meldinger', {
+      method: 'POST',
+      body: JSON.stringify({
+        avsender_id: elev.id, mottaker_id: mottakerId,
+        avsender_rolle: 'elev', tekst: tekst,
+        svar_pa_id: svarsId || null, lest: false
+      })
+    });
+    status.style.color = '#34d399';
+    status.textContent = 'Sendt!';
+    textarea.value = '';
+    setTimeout(function(){ status.textContent=''; }, 2500);
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = 'Feil ved sending.';
+  }
+  btn.disabled = false;
+}
+
+// Sesjon-friskhet: logg ut etter 7 dager
+(function() {
+  try {
+    var d = localStorage.getItem('skaplab_elev');
+    if (!d) return;
+    var p = JSON.parse(d);
+    if (!p || !p._lagret) return;
+    if (Date.now() - p._lagret > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('skaplab_elev');
+      location.href = 'elev_login.html';
+    }
+  } catch(e) {}
+})();
+
+// Last meldingsvarsel ved oppstart
+setTimeout(function(){ lastMeldinger().catch(function(){}); }, 1500);
 
 function loggUt() { SkapLab.elevLoggUt(); location.href = 'elev_login.html'; }
 (async function(){ await init(); })();

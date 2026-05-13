@@ -960,11 +960,13 @@ function visside(id) {
 }
 
 // ── KLASSEPROFIL ─────────────────────────────────────────────────────────
-function byggKlasseprofil() {
+async function byggKlasseprofil() {
   var el = $('kp-innhold');
   if (!el) return;
   if (!atElever.length || !Object.keys(atData).length) {
-    el.innerHTML = '<p class="kp-ingress">Last adaptiv-data for klassen først (velg klasse i Adaptiv-fanen).</p>';
+    if (aktivKlasse && typeof atLastKlasse === 'function') { var ts=document.getElementById('at-kl-sel');if(ts)ts.value=aktivKlasse;el.innerHTML='<p class="kp-ingress">Laster klassedata...</p>';try{await atLastKlasse();}catch(er){} }
+    if (!atElever.length) { el.innerHTML = '<p class="kp-ingress">Ingen adaptiv-data enda.</p>'; return; }
+    el.innerHTML = '<p class="kp-ingress-skip">Klassedata først (velg klasse i Adaptiv-fanen).</p>';
     return;
   }
 
@@ -1053,6 +1055,95 @@ function byggKlasseprofil() {
   el.innerHTML = h;
 }
 
+
+async function refreshTokenOmNodvendig() {
+  try {
+    var d = localStorage.getItem(LNOKKEL);
+    if (!d) return;
+    var p = JSON.parse(d);
+    if (!p || !p.access_token) return;
+    if ((p.expires_at || 0) - Math.floor(Date.now() / 1000) > 300) return;
+    if (!p.refresh_token) return;
+    var resp = await fetch(SURL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SKEY },
+      body: JSON.stringify({ refresh_token: p.refresh_token })
+    });
+    if (!resp.ok) { localStorage.removeItem(LNOKKEL); location.href = 'laerer_login.html'; return; }
+    var ny = await resp.json();
+    if (!ny.access_token) { localStorage.removeItem(LNOKKEL); location.href = 'laerer_login.html'; return; }
+    localStorage.setItem(LNOKKEL, JSON.stringify(ny));
+    TOKEN = ny.access_token;
+  } catch(e) {}
+}
+setInterval(function() { refreshTokenOmNodvendig(); }, 4 * 60 * 1000);
+
+async function sendTilbakemelding() {
+  var elevId = document.getElementById('tb-elev-id').value;
+  var tekst  = (document.getElementById('tb-tekst').value || '').trim();
+  var type   = document.getElementById('tb-type').value;
+  var status = document.getElementById('tb-status');
+  if (!tekst) { status.style.color = 'var(--rod)'; status.textContent = 'Skriv en melding.'; return; }
+  var btn = document.querySelector('#tb-modal .tb-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sender...'; }
+  try {
+    var res = await apiPost('/meldinger', {
+      avsender_id: LID, mottaker_id: elevId,
+      avsender_rolle: 'laerer', tekst: tekst, type: type, lest: false
+    });
+    status.style.color = res.ok ? 'var(--gron)' : 'var(--rod)';
+    status.textContent = res.ok ? 'Melding sendt!' : 'Feil (' + res.status + ').';
+    if (res.ok) setTimeout(lukkTilbakemeldingModal, 1600);
+  } catch(e) { status.style.color = 'var(--rod)'; status.textContent = 'Nettverksfeil.'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Send'; }
+}
+function apneTilbakemeldingModal(elevId, elevNavn) {
+  var m = document.getElementById('tb-modal'); if (!m) return;
+  document.getElementById('tb-elev-navn').textContent = elevNavn;
+  document.getElementById('tb-elev-id').value = elevId;
+  document.getElementById('tb-tekst').value = '';
+  document.getElementById('tb-type').value = 'ros';
+  document.getElementById('tb-status').textContent = '';
+  m.style.display = 'flex';
+}
+function lukkTilbakemeldingModal() {
+  var m = document.getElementById('tb-modal'); if (m) m.style.display = 'none';
+}
+
+async function lastFeilrapporter() {
+  var el = document.getElementById('feil-dashboard-innhold');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--dim);padding:12px;font-size:.83rem">Henter...</div>';
+  try {
+    var res = await apiFetch('/feilrapporter?order=tidspunkt.desc&limit=100');
+    var rader = res.ok && Array.isArray(res.data) ? res.data : [];
+    if (!rader.length) { el.innerHTML = '<p style="color:var(--dim);font-size:.83rem;padding:12px">Ingen feilrapporter.</p>'; return; }
+    var h = '<table style="width:100%;border-collapse:collapse;font-size:.82rem;">'
+          + '<thead><tr style="text-align:left;color:var(--dim);border-bottom:1px solid var(--border);">'
+          + '<th style="padding:6px 8px">Fagkort</th><th style="padding:6px 8px">Tekst</th>'
+          + '<th style="padding:6px 8px">Dato</th><th style="padding:6px 8px">Status</th></tr></thead><tbody>';
+    rader.forEach(function(r) {
+      var dato = r.tidspunkt ? new Date(r.tidspunkt).toLocaleString('nb-NO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '-';
+      h += '<tr style="border-bottom:1px solid rgba(255,255,255,.05)">'
+         + '<td style="padding:6px 8px"><code style="font-size:.78rem;background:rgba(255,255,255,.06);padding:2px 5px;border-radius:4px">'+(r.ressurs||'?')+'</code></td>'
+         + '<td style="padding:6px 8px;color:var(--dim);max-width:260px">'+(r.tekst||'').slice(0,90)+'</td>'
+         + '<td style="padding:6px 8px;white-space:nowrap;color:var(--dim)">'+dato+'</td>'
+         + '<td style="padding:6px 8px"><select data-id="'+r.id+'" onchange="oppdaterFeilStatus(this)"'
+         + ' style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;color:var(--text);padding:3px 6px;font-size:.75rem;font-family:inherit;">'
+         + '<option value="ny"'+((!r.status||r.status==="ny")?" selected":"")+'>Ny</option>'
+         + '<option value="lost"'+(r.status==="lost"?" selected":"")+'>Lest</option>'
+         + '<option value="ignorert"'+(r.status==="ignorert"?" selected":"")+'>Ignorer</option>'
+         + '</select></td></tr>';
+    });
+    h += '</tbody></table><p style="font-size:.78rem;color:var(--dim);margin-top:8px">'+rader.length+' rapporter</p>';
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = '<p style="color:var(--rod);font-size:.83rem;padding:12px">Feil: '+e.message+'</p>'; }
+}
+async function oppdaterFeilStatus(sel) {
+  var id = sel.getAttribute('data-id');
+  try { await apiFetch('/feilrapporter?id=eq.'+id,{method:'PATCH',headers:{'Prefer':'return=minimal'},body:JSON.stringify({status:sel.value})}); } catch(e) {}
+}
+
 function snack(tekst, type) {
   var eks = document.getElementById('snack-boks');
   if (eks) eks.remove();
@@ -1094,6 +1185,7 @@ function loggUt() {
    INIT
 ══════════════════════════════════════════════════════════════════ */
 async function init() {
+  await refreshTokenOmNodvendig();
   // Hent lærernavn
   try {
     var lR = await apiGet('/laerere?id=eq.'+LID+'&select=fullt_navn');
@@ -1427,6 +1519,16 @@ var RES = {
            {t:'Prøvetrener biologi',fil:'provetrener_biologi.html',type:'Prøvetrener'}],
   'NAT5':[{t:'Hjertet',fil:'hjertet.html',type:'Animasjon'},
            {t:'Prøvetrener kropp',fil:'provetrener_kropp.html',type:'Prøvetrener'}],
+  'NAT-FOSTERUTV':[{t:'Unnfangelse og fosterutvikling',fil:'unnfangelse_fosterutvikling.html',type:'Leksjon'},{t:'Kompendium (PDF)',fil:'unnfangelse_fosterutvikling_kompendium.pdf',type:'PDF'}],
+  'NAT-RELATIV':[{t:'Relativitetsteori',fil:'relativitetsteori.html',type:'Leksjon'}],
+  'NAT-ELEKTROMAG':[{t:'Elektromagnetisme',fil:'elektromagnetisme.html',type:'Leksjon'}],
+  'NAT-KVANTEFYS':[{t:'Kvantefysikk',fil:'kvantefysikk.html',type:'Leksjon'}],
+  'NAT-KLIMAHIST':[{t:'Klimahistorie - istider og breer',fil:'klimahistorie.html',type:'Leksjon'}],
+  'NAT-HAVSTROM':[{t:'Havstrommer og oseanografi',fil:'havstrommer_oseanografi.html',type:'Leksjon'}],
+  'MAT-KOORDGEO':[{t:'Koordinatgeometri',fil:'koordinatgeometri.html',type:'Leksjon'}],
+  'MAT-LOGARIT':[{t:'Logaritmer',fil:'logaritmer.html',type:'Leksjon'}],
+  'NAT-SIMS':[{t:'Sim: Kraft',fil:'newtons_lover.html',type:'Simulator'},{t:'Sim: Atom',fil:'atom.html',type:'Simulator'},{t:'Sim: pH',fil:'syr_base_ph.html',type:'Simulator'},{t:'Sim: Krets',fil:'elektrisitetsteori.html',type:'Simulator'},{t:'Sim: Drivhus',fil:'klima.html',type:'Simulator'}],
+  'MAT-SIMS':[{t:'Sim: Lineaer funksjon',fil:'matte_funk_lineaer.html',type:'Simulator'},{t:'Sim: Andregradsfunksjon',fil:'matte_funk_kvadratisk.html',type:'Simulator'},{t:'Sim: Sannsynlighet',fil:'matte_sann_simulering.html',type:'Simulator'}],
   'NAT6':[{t:'Klima og miljø',fil:'klima.html',type:'Leksjon'},
            {t:'Prøvetrener klima',fil:'provetrener_klima.html',type:'Prøvetrener'}]
 };
