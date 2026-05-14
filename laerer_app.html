@@ -1078,6 +1078,118 @@ async function refreshTokenOmNodvendig() {
 }
 setInterval(function() { refreshTokenOmNodvendig(); }, 4 * 60 * 1000);
 
+// ── SUPABASE REALTIME – trenger_hjelp varsling ────────────────────────────
+var _rtSocket = null;
+var _rtReconnectTimer = null;
+var _rtKanalId = 'elever-lyspare';
+
+function startRealtime() {
+  if (_rtSocket && _rtSocket.readyState === WebSocket.OPEN) return;
+  try {
+    var url = 'wss://cqzmzsqhuawpsvnjjzse.supabase.co/realtime/v1/websocket?apikey=sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j&vsn=1.0.0';
+    _rtSocket = new WebSocket(url);
+
+    _rtSocket.onopen = function() {
+      // Abonner på INSERT/UPDATE i elever-tabellen
+      var join = JSON.stringify({
+        topic: 'realtime:public:elever',
+        event: 'phx_join',
+        payload: {
+          config: {
+            broadcast: { self: false },
+            presence: { key: '' },
+            postgres_changes: [{
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'elever',
+              filter: 'trenger_hjelp=eq.true'
+            }]
+          }
+        },
+        ref: '1'
+      });
+      _rtSocket.send(join);
+    };
+
+    _rtSocket.onmessage = function(evt) {
+      try {
+        var msg = JSON.parse(evt.data);
+        // Heartbeat svar
+        if (msg.event === 'heartbeat') {
+          _rtSocket.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));
+          return;
+        }
+        // postgres_changes – en elev trykket lyspæren
+        if (msg.event === 'postgres_changes' || 
+            (msg.payload && msg.payload.type === 'broadcast' && msg.payload.event === 'postgres_changes') ||
+            (msg.payload && msg.payload.data && msg.payload.data.type === 'UPDATE')) {
+          var rec = (msg.payload && msg.payload.data && msg.payload.data.record) 
+                    || (msg.payload && msg.payload.record);
+          if (rec && rec.trenger_hjelp === true) {
+            visLyspareVarsel(rec);
+            // Oppdater lokal elevliste
+            var idx = elever.findIndex ? elever.findIndex(function(e){return e.id===rec.id;}) : -1;
+            if (idx >= 0) elever[idx].trenger_hjelp = true;
+            else elever.push(rec);
+            byggDashboard();
+          } else if (rec && rec.trenger_hjelp === false) {
+            var idx2 = elever.findIndex ? elever.findIndex(function(e){return e.id===rec.id;}) : -1;
+            if (idx2 >= 0) elever[idx2].trenger_hjelp = false;
+            byggDashboard();
+          }
+        }
+      } catch(e) {}
+    };
+
+    _rtSocket.onerror = function() {};
+
+    _rtSocket.onclose = function() {
+      // Reconnect etter 5 sekunder
+      clearTimeout(_rtReconnectTimer);
+      _rtReconnectTimer = setTimeout(startRealtime, 5000);
+    };
+
+    // Send heartbeat hvert 30. sekund
+    setInterval(function() {
+      if (_rtSocket && _rtSocket.readyState === WebSocket.OPEN) {
+        _rtSocket.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));
+      }
+    }, 30000);
+
+  } catch(e) {}
+}
+
+function visLyspareVarsel(elev) {
+  var navn = elev.fullt_navn || elev.kallenavn || 'En elev';
+  snack('💡 ' + navn + ' trenger hjelp!', 'ok');
+  // Lyd-varsel (diskret)
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+  // Vis varsel-badge i dashboardet
+  var badge = document.getElementById('rt-varsel-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'rt-varsel-badge';
+    badge.style.cssText = 'position:fixed;top:16px;right:16px;z-index:900;background:var(--gul,#fbbf24);color:#1a1200;border-radius:10px;padding:10px 18px;font-weight:700;font-size:.9rem;box-shadow:0 4px 18px rgba(0,0,0,.3);cursor:pointer;';
+    badge.onclick = function() { badge.remove(); visside('klasser'); };
+    document.body.appendChild(badge);
+  }
+  badge.textContent = '💡 ' + navn + ' trenger hjelp – klikk for å gå til klassen';
+  setTimeout(function() { if (badge.parentNode) badge.remove(); }, 8000);
+}
+
+// Start Realtime etter innlogging
+
 async function sendTilbakemelding() {
   var elevId = document.getElementById('tb-elev-id').value;
   var tekst  = (document.getElementById('tb-tekst').value || '').trim();
@@ -1186,6 +1298,7 @@ function loggUt() {
 ══════════════════════════════════════════════════════════════════ */
 async function init() {
   await refreshTokenOmNodvendig();
+  setTimeout(startRealtime, 2000); // Start Realtime etter innlogging
   // Hent lærernavn
   try {
     var lR = await apiGet('/laerere?id=eq.'+LID+'&select=fullt_navn');
