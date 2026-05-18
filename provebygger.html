@@ -4,229 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SkapLab – Prøvebygger</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="core/design.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
 <style>
-:root{
-  --bg:#0d1117;--surf:#161c2a;--card:#1c2336;--card2:#222a40;
-  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
-  --text:#e6eaf4;--dim:rgba(230,234,244,.46);
-  --accent:#4f8ef7;--aglow:rgba(79,142,247,.16);--accent2:#7c5cfc;
-  --green:#34d399;--red:#f87171;--yellow:#fbbf24;
-  --fh:'Fraunces',serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
-  --r:12px;--rs:8px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fb)}
-body{display:flex;flex-direction:column}
+/* Stepper */
+.stepper { display:flex; align-items:center; gap:0; margin-bottom:24px; }
+.st-dot  { width:32px; height:32px; border-radius:50%; background:var(--bg3); border:2px solid var(--border2); color:var(--dim); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; flex-shrink:0; transition:all .2s; cursor:default; }
+.st-dot.active { background:var(--bla); border-color:var(--bla); color:#fff; box-shadow:0 0 0 4px rgba(96,165,250,.15); }
+.st-dot.done   { background:var(--gron); border-color:var(--gron); color:#fff; }
+.st-line { flex:1; height:2px; background:var(--border2); transition:background .2s; }
+.st-line.done { background:var(--gron); }
+.st-lbl  { font-size:.7rem; color:var(--dim); margin-top:4px; text-align:center; width:32px; flex-shrink:0; }
+.st-col  { display:flex; flex-direction:column; align-items:center; }
 
-/* TOPBAR */
-.topbar{
-  background:var(--surf);border-bottom:1px solid var(--border);
-  padding:0 28px;height:54px;display:flex;align-items:center;gap:14px;
-  position:sticky;top:0;z-index:300;flex-shrink:0;
-}
-.tb-back{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:.82rem;text-decoration:none;transition:color .15s}
-.tb-back:hover{color:var(--text)}
-.tb-sep{color:var(--border2)}
-.tb-title{font-family:var(--fh);font-size:1rem;font-weight:600}
-.tb-badge{
-  margin-left:auto;background:var(--aglow);border:1px solid rgba(79,142,247,.35);
-  color:var(--accent);border-radius:20px;padding:3px 11px;
-  font-size:.72rem;font-weight:600;letter-spacing:.05em;
-}
+/* Steg-kort */
+.scard   { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin-bottom:14px; display:none; }
+.scard.active { display:block; }
+.scard.locked { opacity:.45; pointer-events:none; display:none; }
 
-/* LAYOUT */
-.layout{display:grid;grid-template-columns:1fr 316px;flex:1;min-height:0;overflow:hidden}
-.main{padding:32px 40px 80px;overflow-y:auto;display:flex;flex-direction:column;gap:24px}
-.sidebar{border-left:1px solid var(--border);background:var(--surf);display:flex;flex-direction:column;overflow:hidden}
+/* KM-tags */
+.km-area { display:flex; flex-wrap:wrap; gap:6px; min-height:36px; padding:6px; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius-sm); }
+.km-tag  { display:flex; align-items:center; gap:5px; padding:3px 10px; background:var(--bla-dim); border:1px solid rgba(96,165,250,.25); border-radius:100px; font-size:.78rem; color:var(--bla); font-weight:600; }
+.km-tag button { background:none; border:none; color:var(--bla); cursor:pointer; padding:0; line-height:1; font-size:.9rem; opacity:.6; }
+.km-tag button:hover { opacity:1; }
+.km-empty { color:var(--dim); font-size:.8rem; }
 
-/* STEPPER */
-.stepper{display:flex;align-items:center;margin-bottom:32px}
-.st-col{display:flex;flex-direction:column;align-items:center}
-.st-dot{
-  width:30px;height:30px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:.76rem;font-weight:700;font-family:var(--fb);
-  background:var(--card);border:2px solid var(--border2);
-  color:var(--dim);transition:all .3s;flex-shrink:0;
-}
-.st-dot.done{background:var(--green);border-color:var(--green);color:#fff}
-.st-dot.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 18px var(--aglow)}
-.st-lbl{font-size:.68rem;color:var(--dim);margin-top:4px;white-space:nowrap}
-.st-line{flex:1;height:2px;background:var(--border);transition:background .3s;margin-bottom:18px}
-.st-line.done{background:var(--green)}
+/* Oppgaveliste */
+.sb-list  { display:flex; flex-direction:column; gap:8px; }
+.sb-kort  { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+.sb-kort-hdr { display:flex; align-items:flex-start; gap:10px; }
+.sb-nr    { font-family:var(--font-h); font-size:1.1rem; font-weight:900; color:var(--dim); min-width:24px; }
+.sb-type-badge { font-size:.66rem; font-weight:700; padding:2px 7px; border-radius:100px; background:rgba(96,165,250,.12); color:var(--bla); flex-shrink:0; }
+.sb-tekst { flex:1; font-size:.85rem; line-height:1.6; }
+.sb-meta  { font-size:.72rem; color:var(--dim); margin-top:4px; }
+.sb-knapper { display:flex; gap:6px; margin-top:8px; }
 
-/* CARDS */
-.scard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:26px 28px;transition:opacity .25s,transform .25s}
-.scard.locked{opacity:.35;pointer-events:none;transform:translateY(4px)}
-.sc-step{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
-.sc-title{font-family:var(--fh);font-size:1.15rem;font-weight:600;margin-bottom:18px}
+/* Forhåndsvisning */
+.pp   { background:var(--bg3); border:1px solid var(--border2); border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:12px; display:none; }
+.pp.vis { display:block; }
+.pp-t { font-family:var(--font-h); font-size:1.1rem; font-weight:900; }
+.pp-s { font-size:.78rem; color:var(--dim); margin-top:3px; }
 
-/* FORM */
-label{font-size:.8rem;color:var(--dim);display:block;margin-bottom:5px}
-select,input[type=text],input[type=number],textarea{
-  width:100%;background:var(--card2);border:1px solid var(--border2);border-radius:var(--rs);
-  color:var(--text);font-family:var(--fb);font-size:.9rem;padding:10px 14px;outline:none;
-  transition:border-color .18s,box-shadow .18s;
-}
-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px;cursor:pointer}
-select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--aglow)}
-textarea{resize:vertical;min-height:80px;line-height:1.65}
-.fr{display:grid;gap:14px}
-.fr.c2{grid-template-columns:1fr 1fr}
+/* Editor-panel */
+.ed   { display:none; }
+.ed.vis { display:block; }
+.ed-type-rad { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.ed-type-btn { padding:6px 14px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:100px; font-size:.8rem; color:var(--dim); cursor:pointer; transition:all .15s; font-family:var(--font-b); }
+.ed-type-btn.ak { background:var(--bla-dim); border-color:var(--bla); color:var(--bla); font-weight:700; }
+.alt-rad { display:flex; gap:6px; align-items:center; margin-bottom:5px; }
+.alt-rad input { flex:1; }
+.alt-rad button { flex-shrink:0; }
 
-/* KM TAGS */
-.km-area{
-  background:var(--card2);border:1px solid var(--border2);border-radius:var(--rs);
-  min-height:44px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;
-}
-.km-tag{
-  display:flex;align-items:center;gap:5px;
-  background:var(--aglow);border:1px solid rgba(79,142,247,.3);
-  color:var(--accent);border-radius:20px;padding:4px 10px;
-  font-size:.73rem;font-weight:600;
-}
-.km-tag button{background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:.88rem;opacity:.65}
-.km-tag button:hover{opacity:1}
-.km-empty{color:var(--dim);font-size:.8rem;padding:4px;align-self:center}
+/* AI-liste */
+.ai-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:320px; overflow-y:auto; }
+.ai-item { padding:10px 12px; background:var(--bg3); border:1.5px solid var(--border2); border-radius:var(--radius-sm); font-size:.83rem; cursor:pointer; transition:all .15s; line-height:1.55; }
+.ai-item:hover { border-color:var(--bla); }
+.ai-item.sel  { border-color:var(--bla); background:var(--bla-dim); }
+.ai-item .ai-type { font-size:.68rem; color:var(--bla); font-weight:700; margin-bottom:3px; }
 
-/* BUTTONS */
-.btn{
-  display:inline-flex;align-items:center;gap:7px;padding:10px 20px;
-  border-radius:var(--rs);font-family:var(--fb);font-size:.87rem;font-weight:600;
-  border:none;cursor:pointer;transition:all .18s;text-decoration:none;white-space:nowrap;
-}
-.bp{background:var(--accent);color:#fff}
-.bp:hover{background:#3a7ee8;box-shadow:0 4px 14px var(--aglow)}
-.bg{background:transparent;color:var(--dim);border:1px solid var(--border2)}
-.bg:hover{color:var(--text);background:var(--card2)}
-.bgr{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.22)}
-.bgr:hover{background:rgba(52,211,153,.2)}
-.sm{padding:7px 14px;font-size:.8rem}
-.lg{padding:14px 28px;font-size:.95rem}
-.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+/* Bibliotek */
+.bib-kort { padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:8px; cursor:pointer; transition:all .15s; }
+.bib-kort:hover { border-color:var(--bla); }
 
-/* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:500;opacity:0;pointer-events:none;transition:opacity .22s;backdrop-filter:blur(8px)}
-.overlay.on{opacity:1;pointer-events:all}
-.modal{
-  background:var(--card);border:1px solid var(--border2);border-radius:16px;
-  padding:28px 30px;width:min(660px,95vw);max-height:92vh;overflow-y:auto;
-  transform:translateY(14px) scale(.98);transition:transform .22s;
-  box-shadow:0 32px 80px rgba(0,0,0,.65);
-}
-.overlay.on .modal{transform:none}
-.modal-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
-.modal-ttl{font-family:var(--fh);font-size:1.12rem;font-weight:600}
-
-/* TYPE GRID */
-.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tcard{background:var(--card2);border:2px solid var(--border);border-radius:10px;padding:18px;cursor:pointer;transition:all .18s;text-align:left}
-.tcard:hover,.tcard.sel{border-color:var(--accent);background:var(--aglow)}
-.tc-i{font-size:1.7rem;display:block;margin-bottom:8px}
-.tc-n{font-weight:700;font-size:.88rem;display:block;margin-bottom:3px}
-.tc-d{font-size:.74rem;color:var(--dim);line-height:1.4}
-
-/* EDITORS */
-.ed{display:none}.ed.on{display:block}
-.es{margin-bottom:18px}.es:last-child{margin-bottom:0}
-.el{font-size:.8rem;color:var(--dim);margin-bottom:5px}
-.eacts{display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
-
-/* LATEX */
-.lw{display:grid;grid-template-columns:1fr 210px;gap:12px}
-.la{
-  background:var(--card2);border:1px solid var(--border2);border-radius:var(--rs);
-  color:var(--text);font-family:var(--fm);font-size:.85rem;
-  padding:12px 14px;outline:none;resize:vertical;min-height:130px;line-height:1.7;
-  transition:border-color .18s;
-}
-.la:focus{border-color:var(--accent)}
-.tbox{background:rgba(79,142,247,.05);border:1px solid rgba(79,142,247,.15);border-radius:var(--rs);padding:12px;overflow-y:auto;max-height:260px}
-.tbox-ttl{font-size:.68rem;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
-.tc{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:.75rem;transition:color .12s;gap:6px}
-.tc:last-child{border:none}.tc:hover{color:var(--accent)}
-.tc .cd{font-family:var(--fm);color:var(--accent);font-size:.73rem;flex-shrink:0}
-
-/* FLERSVAR */
-.alt-list{display:flex;flex-direction:column;gap:8px}
-.alt-row{display:flex;align-items:center;gap:8px}
-.alt-ltr{width:22px;font-weight:700;color:var(--accent);font-size:.88rem;flex-shrink:0}
-.alt-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:4px;transition:all .15s;flex-shrink:0}
-.alt-del:hover{color:var(--red);background:rgba(248,113,113,.12)}
-
-/* AI */
-.ai-wrap{background:linear-gradient(135deg,rgba(124,92,252,.07),rgba(79,142,247,.07));border:1px solid rgba(124,92,252,.18);border-radius:10px;padding:18px}
-.ai-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.ai-item{background:var(--card2);border:1.5px solid var(--border2);border-radius:8px;padding:13px 14px;cursor:pointer;transition:all .18s;font-size:.85rem;line-height:1.55}
-.ai-item:hover{border-color:rgba(79,142,247,.5);background:rgba(79,142,247,.07)}
-.ai-item.sel{border-color:var(--accent);background:var(--aglow)}
-.ai-type{font-size:.67rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
-.spin-row{display:flex;align-items:center;gap:10px;padding:14px;color:var(--dim);font-size:.85rem}
-.spin{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* BILDE */
-.iz{border:2px dashed var(--border2);border-radius:10px;padding:22px;text-align:center;cursor:pointer;transition:all .18s;color:var(--dim);background:var(--card2)}
-.iz:hover,.iz.drag{border-color:var(--accent);color:var(--accent);background:var(--aglow)}
-.iz img{max-width:100%;border-radius:8px;margin-top:10px;display:none}
-
-/* SIDEBAR */
-.sb-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.sb-ttl{font-family:var(--fh);font-size:.92rem;font-weight:600}
-.sb-cnt{background:var(--aglow);color:var(--accent);border-radius:20px;padding:2px 10px;font-size:.73rem;font-weight:700}
-.sb-list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px}
-.ok{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:11px 12px;display:flex;align-items:flex-start;gap:9px;cursor:grab;user-select:none;transition:all .18s;animation:fup .22s ease}
-.ok:active{cursor:grabbing}
-.ok:hover{border-color:var(--border2);background:var(--card2)}
-.ok.sortable-chosen{box-shadow:0 8px 28px rgba(0,0,0,.5);border-color:var(--accent);opacity:.95}
-.ok.sortable-ghost{opacity:.25}
-.dh{color:var(--dim);font-size:.85rem;padding-top:1px;flex-shrink:0;cursor:grab}
-.onr{width:22px;height:22px;border-radius:5px;background:var(--aglow);color:var(--accent);font-size:.7rem;font-weight:700;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.ob{flex:1;min-width:0}
-.obadge{font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
-.oprev{font-size:.8rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.oacts{display:flex;gap:2px;opacity:0;transition:opacity .15s;flex-shrink:0}
-.ok:hover .oacts{opacity:1}
-.oa{background:none;border:none;cursor:pointer;color:var(--dim);font-size:.82rem;padding:4px 5px;border-radius:4px;transition:all .12s}
-.oa.e:hover{color:var(--accent);background:var(--aglow)}
-.oa.d:hover{color:var(--red);background:rgba(248,113,113,.1)}
-.sb-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--dim)}
-.sb-empty-i{font-size:2rem;opacity:.4;margin-bottom:8px}
-.sb-empty-t{font-size:.8rem;line-height:1.65}
-.sb-ft{padding:14px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:9px;flex-shrink:0}
-
-/* PRØVE-PILL */
-.pp{display:none;background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.14);border-radius:9px;padding:13px 16px;margin-bottom:4px}
-.pp.on{display:block}
-.pp-t{font-family:var(--fh);font-size:1rem;font-weight:600;margin-bottom:3px}
-.pp-s{font-size:.76rem;color:var(--dim)}
-
-/* SNACK */
-.snack{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:11px 18px;font-size:.84rem;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:999;opacity:0;pointer-events:none;transition:all .22s;display:flex;align-items:center;gap:8px}
-.snack.on{opacity:1;transform:translateX(-50%) translateY(0)}
-.snack.ok{border-color:rgba(52,211,153,.35);color:var(--green)}
-.snack.err{border-color:rgba(248,113,113,.35);color:var(--red)}
-@keyframes fup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-code{font-family:var(--fm);color:var(--accent);font-size:.85em}
+@media(max-width:600px){ .stepper{gap:0;} .st-dot{width:26px;height:26px;font-size:.76rem;} }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <a href="laerer_app.html" class="tb-back">← Tilbake</a>
-  <span class="tb-sep">／</span>
-  <span class="tb-title">Prøvebygger</span>
-  <span class="tb-badge">✦ Beta</span>
-</div>
+<nav class="topnav">
+  <a class="topnav-logo" href="laerer_app.html">Skap<span>Lab</span></a>
+  <span class="topnav-badge" id="topnav-tittel">Prøvebygger</span>
+  <div class="topnav-right">
+    <button class="btn btn-ghost btn-sm" id="btn-bibliotek">📚 Bibliotek</button>
+  </div>
+</nav>
 
-<div class="layout">
-<div class="main">
+<div style="max-width:820px;margin:0 auto;padding:20px;margin-top:var(--topnav-h)">
 
-  <!-- STEPPER -->
+  <!-- Stepper -->
   <div class="stepper">
     <div class="st-col"><div class="st-dot active" id="sd1">1</div><div class="st-lbl">Fag</div></div>
     <div class="st-line" id="sl1"></div>
@@ -237,1564 +93,1056 @@ code{font-family:var(--fm);color:var(--accent);font-size:.85em}
     <div class="st-col"><div class="st-dot" id="sd4">4</div><div class="st-lbl">Oppgaver</div></div>
   </div>
 
-  <!-- STEG 1 -->
-  <div class="scard" id="c1">
-    <div class="sc-step">Steg 1</div>
-    <div class="sc-title">Velg fag</div>
-    <div class="fr">
-      <div>
-        <label>Fag</label>
-        <select id="sel-fag" onchange="onFag()">
-          <option value="">– Velg fag –</option>
-          <option value="matematikk">📐 Matematikk</option>
-          <option value="naturfag">🔬 Naturfag</option>
-        </select>
-      </div>
+  <!-- Steg 1: Fag -->
+  <div class="scard active" id="c1">
+    <div class="kort-tittel" style="margin-bottom:12px">Velg fag</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sek" data-fag="matte"   onclick="onFag('matte')">📐 Matematikk</button>
+      <button class="btn btn-sek" data-fag="naturfag" onclick="onFag('naturfag')">🔬 Naturfag</button>
+      <button class="btn btn-sek" data-fag="norsk"    onclick="onFag('norsk')">📖 Norsk</button>
+      <button class="btn btn-sek" data-fag="engelsk"  onclick="onFag('engelsk')">🇬🇧 Engelsk</button>
+      <button class="btn btn-sek" data-fag="samfunn"  onclick="onFag('samfunn')">🌍 Samfunnsfag</button>
+      <button class="btn btn-sek" data-fag="gym"      onclick="onFag('gym')">⚽ kroppsøving</button>
     </div>
   </div>
 
-  <!-- STEG 2 -->
-  <div class="scard locked" id="c2">
-    <div class="sc-step">Steg 2</div>
-    <div class="sc-title">Velg kompetansemål</div>
-    <div class="es">
-      <label>Legg til kompetansemål (velg ett eller flere)</label>
-      <select id="sel-km" onchange="addKm()" style="margin-bottom:10px"></select>
-      <div class="km-area" id="km-area"><span class="km-empty" id="km-empty">Ingen valgt ennå</span></div>
+  <!-- Steg 2: Kompetansemål -->
+  <div class="scard" id="c2">
+    <div class="kort-tittel" style="margin-bottom:10px">Velg kompetansemål</div>
+    <select id="sel-km" style="margin-bottom:10px">
+      <option value="">Velg kompetansemål…</option>
+    </select>
+    <div class="km-area" id="km-area"><span class="km-empty" id="km-empty">Ingen valgt ennå</span></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-sek btn-sm" onclick="setStep(1)">← Tilbake</button>
+      <button class="btn btn-prim" onclick="gotoS3()">Neste →</button>
     </div>
-    <button class="btn bp sm" onclick="gotoS3()">Neste: Prøveinfo →</button>
   </div>
 
-  <!-- STEG 3 -->
-  <div class="scard locked" id="c3">
-    <div class="sc-step">Steg 3</div>
-    <div class="sc-title">Prøveinformasjon</div>
-    <div class="es fr">
-      <div>
-        <label>Tittel på prøven</label>
-        <input type="text" id="inp-t" placeholder="f.eks. Kapittelprøve – Algebra" oninput="onInfo()">
-      </div>
+  <!-- Steg 3: Prøveinfo -->
+  <div class="scard" id="c3">
+    <div class="kort-tittel" style="margin-bottom:12px">Prøveinformasjon</div>
+    <div class="rad" style="flex-wrap:wrap">
+      <div class="felt"><label class="felt-lbl">Tittel</label><input type="text" id="inp-t" placeholder="f.eks. Kapittelprøve – Algebra" oninput="onInfo()"></div>
+      <div class="felt"><label class="felt-lbl">Klasse</label><input type="text" id="inp-k" placeholder="f.eks. 9A" oninput="onInfo()"></div>
     </div>
-    <div class="es fr c2">
-      <div>
-        <label>Klasse / fag</label>
-        <input type="text" id="inp-k" placeholder="f.eks. 9A – Matematikk" oninput="onInfo()">
-      </div>
-      <div>
-        <label>Tid</label>
-        <input type="text" id="inp-tid" placeholder="f.eks. 60 min" oninput="onInfo()">
-      </div>
+    <div class="rad" style="flex-wrap:wrap">
+      <div class="felt"><label class="felt-lbl">Tid</label><input type="text" id="inp-tid" placeholder="f.eks. 60 min" oninput="onInfo()"></div>
+      <div class="felt"><label class="felt-lbl">Dato</label><input type="date" id="inp-dato" oninput="onInfo()"></div>
     </div>
-    <div class="es fr">
-      <div>
-        <label>Info til elevene (hjelpemidler, tips, regler)</label>
-        <textarea id="inp-i" rows="3" placeholder="f.eks. Ingen hjelpemidler tillatt. Vis alle utregninger. Lykke til!" oninput="onInfo()"></textarea>
-      </div>
+    <div class="felt"><label class="felt-lbl">Instruksjoner</label>
+      <textarea id="inp-i" rows="3" placeholder="f.eks. Ingen hjelpemidler tillatt. Vis alle utregninger. Lykke til!" oninput="onInfo()"></textarea>
     </div>
-    <button class="btn bp sm" onclick="gotoS4()">Neste: Legg til oppgaver →</button>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-sek btn-sm" onclick="setStep(2)">← Tilbake</button>
+      <button class="btn btn-prim" id="btn-s3-neste" onclick="gotoS4()">Neste →</button>
+    </div>
   </div>
 
-  <!-- STEG 4 -->
-  <div class="scard locked" id="c4">
-    <div class="sc-step">Steg 4</div>
-    <div class="sc-title">Legg til oppgaver</div>
-    <div class="pp" id="pp"><div class="pp-t" id="pp-t"></div><div class="pp-s" id="pp-s"></div></div>
-    <button class="btn bp" onclick="openM()">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      Legg til oppgave
-    </button>
-    <p style="margin-top:9px;font-size:.78rem;color:var(--dim)">Dra oppgavene i høyremenyen for å endre rekkefølgen.</p>
-  </div>
+  <!-- Steg 4: Oppgaver -->
+  <div class="scard" id="c4">
+    <div class="pp vis" id="pp">
+      <div class="pp-t" id="pp-t">—</div>
+      <div class="pp-s" id="pp-s"></div>
+    </div>
 
-</div><!-- /main -->
+    <div class="kort-tittel" style="margin-bottom:12px">
+      Oppgaver <span class="chip chip-bla" id="sb-cnt">0</span>
+      <button class="btn btn-ghost btn-sm" onclick="openM()" style="margin-left:auto">+ Legg til oppgave</button>
+    </div>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="sb-hd">
-    <span class="sb-ttl">Oppgaveliste</span>
-    <span class="sb-cnt" id="sb-cnt">0</span>
-  </div>
-  <div class="sb-list" id="sb-list">
-    <div class="sb-empty" id="sb-empty">
-      <div class="sb-empty-i">📋</div>
-      <div class="sb-empty-t">Ingen oppgaver ennå.<br>Klikk «Legg til oppgave».</div>
+    <div class="sb-list" id="sb-list">
+      <div class="sb-empty" id="sb-empty" style="color:var(--dim);font-size:.84rem;padding:12px 0">Ingen oppgaver ennå. Trykk «Legg til oppgave».</div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="setStep(3)">← Tilbake</button>
+      <button class="btn bg" id="btn-d" onclick="lastNed()" disabled>📄 Last ned Word (.docx)</button>
+      <button class="btn btn-sek" id="btn-s" onclick="lagreSB()">💾 Lagre prøven</button>
+      <button class="btn btn-prim" id="btn-tildel" onclick="apneTildelModal()" disabled>📤 Tildel til klasse</button>
     </div>
   </div>
-  <div class="sb-ft">
-    <button class="btn bgr lg" id="btn-d" onclick="lastNed()" disabled>📄 Last ned Word (.docx)</button>
-    <button class="btn bg sm" id="btn-s" onclick="lagreSB()">💾 Lagre prøven</button>
-    <button class="btn bg sm" onclick="apneDelModal()" style="margin-top:6px">🌐 Del med kolleger</button>
-    <button class="btn bg sm" id="btn-tildel" onclick="apneTildelModal()" style="margin-top:6px" disabled>📤 Tildel til klasse</button>
-    <button class="btn bg sm" onclick="apneBibliotek()" style="margin-top:6px">📚 Prøvebibliotek</button>
+
+</div><!-- /main wrap -->
+
+<!-- OPPGAVE-EDITOR MODAL -->
+<div class="overlay" id="ov" onclick="ovClick(event)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;padding:16px;overflow-y:auto">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);max-width:680px;margin:0 auto;padding:24px 22px;position:relative">
+    <div class="modal-tittel" id="m-ttl">Ny oppgave</div>
+    <button onclick="closeM()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1.1rem">✕</button>
+
+    <!-- Type-velger -->
+    <div class="ed-type-rad">
+      <button class="ed-type-btn" onclick="vType('regneoppgave')">✏️ Regneoppgave</button>
+      <button class="ed-type-btn" onclick="vType('fritekst')">📝 Fritekst + bilde</button>
+      <button class="ed-type-btn" onclick="vType('flersvar')">🔘 Flersvar (MC)</button>
+      <button class="ed-type-btn" onclick="vType('adaptivbank')">🧠 Adaptiv bank</button>
+      <button class="ed-type-btn" onclick="vType('ai')">✨ AI-forslag</button>
+    </div>
+
+    <!-- Regneoppgave -->
+    <div class="ed" id="ed-regneoppgave">
+      <div class="felt"><label class="felt-lbl">Oppgavetittel (valgfri)</label><input type="text" id="rn-t" placeholder="f.eks. Oppgave 1"></div>
+      <div class="felt">
+        <label class="felt-lbl">Oppgavetekst</label>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px">
+          <button class="btn btn-ghost btn-sm" onclick="ins('$','$')">x</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('\\frac{','}{}')" title="Brøk">a/b</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('\\sqrt{','}')" title="Rot">√</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('^{','}')" title="Hevet">x²</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('×','')">×</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('÷','')">÷</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('≤','')">≤</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('≥','')">≥</button>
+          <button class="btn btn-ghost btn-sm" onclick="ins('°','')">°</button>
+        </div>
+        <textarea class="la" id="rn-la" rows="6" placeholder="Eks:&#10;Løs ligningen&#10;$2x + 3 = 11$&#10;&#10;Vis utregning og svar."></textarea>
+      </div>
+      <div class="rad">
+        <div class="felt"><label class="felt-lbl">Svarlinjer</label><select id="rn-l"><option value="3">3</option><option value="5" selected>5</option><option value="8">8</option><option value="12">12</option></select></div>
+        <div class="felt"><label class="felt-lbl">Poeng (valgfri)</label><input type="number" id="rn-p" min="0" max="99" placeholder="f.eks. 3"></div>
+      </div>
+      <button class="btn btn-prim" onclick="sav('regneoppgave')">Legg til</button>
+    </div>
+
+    <!-- Fritekst + bilde -->
+    <div class="ed" id="ed-fritekst">
+      <div class="felt"><label class="felt-lbl">Tittel (valgfri)</label><input type="text" id="ft-t" placeholder="f.eks. Les grafen og svar"></div>
+      <div class="felt">
+        <label class="felt-lbl">Bilde (valgfri)</label>
+        <div class="iz" id="iz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropB(event)" style="border:2px dashed var(--border2);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;font-size:.82rem;color:var(--dim)">
+          Klikk eller dra bilde hit
+          <img id="iprv" style="max-width:100%;max-height:180px;margin-top:8px;display:none;border-radius:6px">
+        </div>
+        <input type="file" id="fi" accept="image/*" style="display:none" onchange="velgB(event)">
+        <button class="btn btn-ghost btn-sm" id="btn-fb" style="margin-top:6px;display:none" onclick="fjernB()">✕ Fjern bilde</button>
+      </div>
+      <div class="felt"><label class="felt-lbl">Oppgavetekst</label><textarea id="ft-la" rows="5" placeholder="Skriv oppgaveteksten her…"></textarea></div>
+      <div class="rad">
+        <div class="felt"><label class="felt-lbl">Svarlinjer</label><select id="ft-l"><option value="5">5</option><option value="8" selected>8</option><option value="12">12</option></select></div>
+        <div class="felt"><label class="felt-lbl">Poeng</label><input type="number" id="ft-p" min="0" max="99" placeholder="f.eks. 4"></div>
+      </div>
+      <button class="btn btn-prim" onclick="sav('fritekst')">Legg til</button>
+    </div>
+
+    <!-- Flersvar / MC -->
+    <div class="ed" id="ed-flersvar">
+      <div class="felt"><label class="felt-lbl">Spørsmål</label><textarea id="fs-spm" rows="3" placeholder="Skriv spørsmålet her…"></textarea></div>
+      <div class="felt">
+        <label class="felt-lbl">Alternativer</label>
+        <div id="alt-list"></div>
+        <button class="btn btn-sek btn-sm" onclick="addAlt()" style="margin-top:6px">+ Alternativ</button>
+      </div>
+      <div class="rad">
+        <div class="felt"><label class="felt-lbl">Riktig svar (fasit)</label><select id="fs-r"></select></div>
+        <div class="felt"><label class="felt-lbl">Poeng</label><input type="number" id="fs-p" min="0" max="99" placeholder="f.eks. 2"></div>
+      </div>
+      <button class="btn btn-prim" onclick="sav('flersvar')">Legg til</button>
+    </div>
+
+    <!-- Adaptiv bank -->
+    <div class="ed" id="ed-adaptivbank">
+      <div class="rad" style="flex-wrap:wrap">
+        <div class="felt"><label class="felt-lbl">Emne</label>
+          <select id="ab-emne" onchange="fetchAdaptivBank()">
+            <option value="">Velg emne…</option>
+            <option value="heltall">Heltall</option><option value="brok">Brøk</option>
+            <option value="desimal">Desimaltall</option><option value="prosent">Prosent</option>
+            <option value="potenser">Potenser</option><option value="uttrykk">Algebraiske uttrykk</option>
+            <option value="likn1">Likninger</option><option value="funksjoner">Funksjoner</option>
+            <option value="areal">Areal</option><option value="volum">Volum</option>
+            <option value="pythagoras">Pythagoras</option><option value="trig">Trigonometri</option>
+          </select>
+        </div>
+        <div class="felt"><label class="felt-lbl">Nivå</label>
+          <select id="ab-nivaa" onchange="fetchAdaptivBank()">
+            <option value="">Alle</option>
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+      </div>
+      <div id="ab-load" style="display:none;padding:10px 0"><div class="spinner"></div></div>
+      <div class="ai-list" id="ab-list"><div style="color:var(--dim);font-size:.82rem;padding:8px">Velg emne for å hente oppgaver.</div></div>
+      <div id="ab-eb" style="display:none;margin-top:14px">
+        <div class="felt"><label class="felt-lbl">Oppgavetekst (rediger)</label><textarea id="ab-la" rows="4"></textarea></div>
+        <div class="rad">
+          <div class="felt"><label class="felt-lbl">Svarlinjer</label><select id="ab-l"><option value="5" selected>5</option><option value="8">8</option></select></div>
+          <div class="felt"><label class="felt-lbl">Poeng</label><input type="number" id="ab-p" min="0" max="99" placeholder="f.eks. 3"></div>
+        </div>
+        <button class="btn btn-prim" id="btn-sab" onclick="sav('adaptivbank')" disabled>Legg til valgt oppgave</button>
+      </div>
+      <button class="btn btn-sek btn-sm" onclick="fetchAdaptivBank()" style="margin-top:8px">🔄 Hent nye</button>
+    </div>
+
+    <!-- AI -->
+    <div class="ed" id="ed-ai">
+      <p style="font-size:.82rem;color:var(--dim);margin-bottom:10px">AI-genererte oppgaver basert på fag og kompetansemål.</p>
+      <div id="ai-load" style="display:none;padding:10px 0"><div class="spinner"></div></div>
+      <div class="ai-list" id="ai-list"></div>
+      <button class="btn btn-sek btn-sm" onclick="fetchAi()" style="margin-top:8px">🔄 Generer nye forslag</button>
+      <div id="ai-eb" style="display:none;margin-top:14px">
+        <div class="felt"><label class="felt-lbl">Oppgavetekst (rediger)</label><textarea id="ai-la" rows="4"></textarea></div>
+        <div class="rad">
+          <div class="felt"><label class="felt-lbl">Svarlinjer</label><select id="ai-l"><option value="5" selected>5</option><option value="8">8</option></select></div>
+          <div class="felt"><label class="felt-lbl">Poeng</label><input type="number" id="ai-p" min="0" max="99" placeholder="f.eks. 3"></div>
+        </div>
+        <button class="btn btn-prim" id="btn-sai" onclick="sav('ai')" disabled>Legg til valgt oppgave</button>
+      </div>
+    </div>
+
   </div>
 </div>
-</div><!-- /layout -->
 
-<!-- MODAL -->
-<div class="overlay" id="ov" onclick="ovClick(event)">
-<div class="modal">
-  <div class="modal-hd">
-    <div class="modal-ttl" id="m-ttl">Ny oppgave</div>
-    <button class="btn bg sm" onclick="closeM()">✕ Lukk</button>
-  </div>
-
-  <!-- Typevalg -->
-  <div id="tp">
-    <div class="type-grid">
-      <button class="tcard" onclick="vType('regneoppgave')">
-        <span class="tc-i">🔢</span><span class="tc-n">Regneoppgave</span>
-        <span class="tc-d">Skriv i LaTeX med hurtigkommandoer ved siden av</span>
-      </button>
-      <button class="tcard" onclick="vType('fritekst')">
-        <span class="tc-i">📝</span><span class="tc-n">Fritekst + bilde</span>
-        <span class="tc-d">Fritekst med valgfri bildeopplasting over teksten</span>
-      </button>
-      <button class="tcard" onclick="vType('flersvar')">
-        <span class="tc-i">☑️</span><span class="tc-n">Flersvarsoppgave</span>
-        <span class="tc-d">Spørsmål med A–D svaralternativer</span>
-      </button>
-      <button class="tcard" onclick="vType('ai')">
-        <span class="tc-i">✨</span><span class="tc-n">Forslag fra AI</span>
-        <span class="tc-d">Automatisk generert fra valgte kompetansemål</span>
-      </button>
-      <button class="tcard" onclick="vType('adaptivbank')">
-        <span class="tc-i">🧠</span><span class="tc-n">Fra adaptiv bank</span>
-        <span class="tc-d">Hent direkte fra 24 900 oppgaver sortert på emne og nivå</span>
-      </button>
+<!-- TILDEL-MODAL -->
+<div class="modal-bg" id="tildel-modal">
+  <div class="modal">
+    <div class="modal-tittel">📤 Tildel prøve til klasse</div>
+    <button class="modal-lukk" onclick="lukkTildelModal()">✕</button>
+    <p style="font-size:.83rem;color:var(--dim);margin-bottom:16px">Velg klasse og sett en valgfri frist. Prøven dukker opp i elevenes portal.</p>
+    <div class="felt">
+      <label class="felt-lbl">Klasse</label>
+      <select id="tildel-klasse-sel"><option value="">Laster klasser…</option></select>
     </div>
-  </div>
-
-  <!-- ED: ADAPTIV BANK -->
-  <div class="ed" id="ed-adaptivbank">
-    <div class="ai-wrap" style="background:linear-gradient(135deg,rgba(52,211,153,.07),rgba(96,165,250,.07));border-color:rgba(52,211,153,.25)">
-      <div style="font-size:.88rem;font-weight:500;margin-bottom:3px">🧠 Adaptiv oppgavebank</div>
-      <div style="font-size:.78rem;color:var(--dim);margin-bottom:14px">Velg emne og nivå – henter fra 24 900 oppgaver.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-        <select id="ab-emne" onchange="fetchAdaptivBank()" style="flex:1;min-width:140px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.83rem">
-          <option value="">— Velg emne —</option>
-          <option value="heltall">Heltall og regning</option>
-          <option value="brok">Brøk</option>
-          <option value="desimal">Desimaltall</option>
-          <option value="prosent">Prosent og promille</option>
-          <option value="potenser">Potenser og røtter</option>
-          <option value="standardform">Standardform</option>
-          <option value="uttrykk">Algebraiske uttrykk</option>
-          <option value="likn1">Likninger (1. grad)</option>
-          <option value="ulikheter">Ulikheter</option>
-          <option value="liknsyst">Likningssystemer</option>
-          <option value="funksjoner">Funksjoner og grafer</option>
-          <option value="polynomer">Polynomer</option>
-          <option value="areal">Areal og omkrets</option>
-          <option value="volum">Volum og overflate</option>
-          <option value="pythagoras">Pytagoras</option>
-          <option value="trig">Trigonometri</option>
-          <option value="koordinater">Koordinatsystem</option>
-          <option value="snitt">Gjennomsnitt og median</option>
-          <option value="diagrammer">Diagrammer og tabeller</option>
-          <option value="sannsynl">Sannsynlighet</option>
-          <option value="kombinat">Kombinatorikk</option>
-        </select>
-        <select id="ab-nivaa" onchange="fetchAdaptivBank()" style="max-width:130px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.83rem">
-          <option value="">Alle nivåer</option>
-          <option value="1">Nivå 1</option><option value="2">Nivå 2</option>
-          <option value="3">Nivå 3</option><option value="4">Nivå 4</option>
-          <option value="5">Nivå 5</option><option value="6">Nivå 6</option>
-          <option value="7">Nivå 7</option><option value="8">Nivå 8</option>
-          <option value="9">Nivå 9</option><option value="10">Nivå 10</option>
-        </select>
-      </div>
-      <div class="spin-row" id="ab-load" style="display:none"><div class="spin"></div><span>Henter oppgaver…</span></div>
-      <div class="ai-list" id="ab-list"><div style="color:var(--dim);font-size:.82rem;padding:8px">Velg emne for å hente oppgaver.</div></div>
-      <button class="btn bg sm" id="btn-nab" onclick="fetchAdaptivBank()" style="margin-top:10px">🔄 Hent nye</button>
+    <div class="felt">
+      <label class="felt-lbl">Frist (valgfri)</label>
+      <input type="date" id="tildel-frist">
     </div>
-    <div id="ab-eb" style="display:none;margin-top:16px">
-      <div class="el">Tilpass oppgaveteksten (valgfritt)</div>
-      <textarea id="ab-la" rows="4"></textarea>
-      <div class="fr c2" style="margin-top:10px">
-        <div><div class="el">Svarlinjer</div>
-          <select id="ab-l"><option value="5" selected>5 linjer</option><option value="8">8 linjer</option></select>
-        </div>
-        <div><div class="el">Poeng</div><input type="number" id="ab-p" min="0" max="99" placeholder="f.eks. 3"></div>
-      </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-sek" onclick="lukkTildelModal()">Avbryt</button>
+      <button class="btn btn-prim" onclick="sendTildeling()">📤 Send til klasse</button>
     </div>
-    <div class="eacts">
-      <button class="btn bp" id="btn-sab" onclick="sav('adaptivbank')" disabled>Legg til valgt oppgave</button>
-      <button class="btn bg" onclick="back()">← Endre type</button>
-    </div>
-  </div>
-
-  <!-- ED: Regneoppgave -->
-  <div class="ed" id="ed-regneoppgave">
-    <div class="es">
-      <div class="el">Tittel / overskrift på oppgaven</div>
-      <input type="text" id="rn-t" placeholder="f.eks. Oppgave: Løs ligningen for x">
-    </div>
-    <div class="es">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-        <div class="el" style="margin-bottom:0">Oppgavetekst – LaTeX støttes med <code>$ ... $</code></div>
-        <a href="latex_editor.html" target="_blank" class="btn bg sm" style="text-decoration:none;font-size:.75rem;padding:5px 11px">⎘ Åpne LaTeX-editor</a>
-      </div>
-      <div class="lw">
-        <textarea class="la" id="rn-la" rows="6" placeholder="Eksempel:&#10;Løs ligningen&#10;$2x + 3 = 11$&#10;&#10;Vis utregning og svar."></textarea>
-        <div class="tbox">
-          <div class="tbox-ttl">LaTeX-tips</div>
-          <div class="tc" onclick="ins('$ $')"><span>Matte-innramming</span><span class="cd">$ ... $</span></div>
-          <div class="tc" onclick="ins('\\cdot')"><span>Gange ·</span><span class="cd">\cdot</span></div>
-          <div class="tc" onclick="ins('\\frac{a}{b}')"><span>Brøk</span><span class="cd">\frac{a}{b}</span></div>
-          <div class="tc" onclick="ins('^{2}')"><span>Potens ²</span><span class="cd">^{2}</span></div>
-          <div class="tc" onclick="ins('_{n}')"><span>Nedsrift</span><span class="cd">_{n}</span></div>
-          <div class="tc" onclick="ins('\\sqrt{}')"><span>Kvadratrot √</span><span class="cd">\sqrt{}</span></div>
-          <div class="tc" onclick="ins('\\pm')"><span>± pluss/minus</span><span class="cd">\pm</span></div>
-          <div class="tc" onclick="ins('\\leq')"><span>≤ maks</span><span class="cd">\leq</span></div>
-          <div class="tc" onclick="ins('\\geq')"><span>≥ minst</span><span class="cd">\geq</span></div>
-          <div class="tc" onclick="ins('\\neq')"><span>≠ ikke lik</span><span class="cd">\neq</span></div>
-          <div class="tc" onclick="ins('\\approx')"><span>≈ tilnærmet</span><span class="cd">\approx</span></div>
-          <div class="tc" onclick="ins('\\pi')"><span>π pi</span><span class="cd">\pi</span></div>
-          <div class="tc" onclick="ins('\\alpha')"><span>α alfa</span><span class="cd">\alpha</span></div>
-          <div class="tc" onclick="ins('\\beta')"><span>β beta</span><span class="cd">\beta</span></div>
-          <div class="tc" onclick="ins('\\Delta')"><span>Δ delta</span><span class="cd">\Delta</span></div>
-          <div class="tc" onclick="ins('\\infty')"><span>∞ uendelig</span><span class="cd">\infty</span></div>
-          <div class="tc" onclick="ins('\\sum_{i=1}^{n}')"><span>Σ sum</span><span class="cd">\sum</span></div>
-          <div class="tc" onclick="ins('\\int_{a}^{b}')"><span>∫ integral</span><span class="cd">\int</span></div>
-          <div class="tc" onclick="ins('\\vec{v}')"><span>vektor</span><span class="cd">\vec{v}</span></div>
-          <div class="tc" onclick="ins('\\triangle')"><span>△ trekant</span><span class="cd">\triangle</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="es fr c2">
-      <div><div class="el">Antall svarlinjer</div>
-        <select id="rn-l"><option value="3">3 linjer</option><option value="5" selected>5 linjer</option><option value="8">8 linjer</option><option value="12">12 linjer</option></select>
-      </div>
-      <div><div class="el">Poeng (valgfritt)</div><input type="number" id="rn-p" min="0" max="99" placeholder="f.eks. 3"></div>
-    </div>
-    <div class="eacts">
-      <button class="btn bp" onclick="sav('regneoppgave')">Lagre oppgave</button>
-      <button class="btn bg" onclick="back()">← Endre type</button>
-    </div>
-  </div>
-
-  <!-- ED: Fritekst -->
-  <div class="ed" id="ed-fritekst">
-    <div class="es"><div class="el">Tittel</div><input type="text" id="ft-t" placeholder="f.eks. Les grafen og svar på spørsmålene"></div>
-    <div class="es">
-      <div class="el">Bilde (vises over oppgaveteksten – valgfritt)</div>
-      <div class="iz" id="iz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="dropB(event)">
-        <div>📎 Klikk eller dra et bilde hit (JPG / PNG – maks 4 MB)</div>
-        <img id="iprv">
-      </div>
-      <input type="file" id="fi" accept="image/*" style="display:none" onchange="velgB(event)">
-      <button class="btn bg sm" id="btn-fb" style="margin-top:7px;display:none" onclick="fjernB()">✕ Fjern bilde</button>
-    </div>
-    <div class="es"><div class="el">Oppgavetekst</div><textarea id="ft-la" rows="5" placeholder="Skriv oppgaveteksten her..."></textarea></div>
-    <div class="es fr c2">
-      <div><div class="el">Antall svarlinjer</div>
-        <select id="ft-l"><option value="5">5 linjer</option><option value="8" selected>8 linjer</option><option value="12">12 linjer</option></select>
-      </div>
-      <div><div class="el">Poeng (valgfritt)</div><input type="number" id="ft-p" min="0" max="99" placeholder="f.eks. 4"></div>
-    </div>
-    <div class="eacts">
-      <button class="btn bp" onclick="sav('fritekst')">Lagre oppgave</button>
-      <button class="btn bg" onclick="back()">← Endre type</button>
-    </div>
-  </div>
-
-  <!-- ED: Flersvar -->
-  <div class="ed" id="ed-flersvar">
-    <div class="es"><div class="el">Spørsmål</div><textarea id="fs-spm" rows="3" placeholder="Skriv spørsmålet her..."></textarea></div>
-    <div class="es">
-      <div class="el" style="margin-bottom:8px">Svaralternativer</div>
-      <div class="alt-list" id="alt-list"></div>
-      <button class="btn bg sm" onclick="addAlt()" style="margin-top:9px">＋ Legg til alternativ</button>
-    </div>
-    <div class="es fr c2">
-      <div><div class="el">Riktig svar (fasit – valgfritt)</div><select id="fs-r"></select></div>
-      <div><div class="el">Poeng (valgfritt)</div><input type="number" id="fs-p" min="0" max="99" placeholder="f.eks. 2"></div>
-    </div>
-    <div class="eacts">
-      <button class="btn bp" onclick="sav('flersvar')">Lagre oppgave</button>
-      <button class="btn bg" onclick="back()">← Endre type</button>
-    </div>
-  </div>
-
-  <!-- ED: AI -->
-  <div class="ed" id="ed-ai">
-    <div class="ai-wrap">
-      <div style="font-size:.88rem;font-weight:500;margin-bottom:3px">✨ AI-genererte oppgaver</div>
-      <div style="font-size:.78rem;color:var(--dim);margin-bottom:12px">Basert på dine valgte kompetansemål. Klikk et forslag for å velge og tilpasse.</div>
-      <div class="spin-row" id="ai-load" style="display:none"><div class="spin"></div><span>Genererer forslag...</span></div>
-      <div class="ai-list" id="ai-list"></div>
-      <button class="btn bg sm" id="btn-nai" onclick="fetchAi()" style="margin-top:10px">🔄 Generer nye forslag</button>
-    </div>
-    <div id="ai-eb" style="display:none;margin-top:16px">
-      <div class="el">Tilpass oppgaveteksten (valgfritt)</div>
-      <textarea id="ai-la" rows="4"></textarea>
-      <div class="fr c2" style="margin-top:10px">
-        <div><div class="el">Svarlinjer</div>
-          <select id="ai-l"><option value="5" selected>5 linjer</option><option value="8">8 linjer</option></select>
-        </div>
-        <div><div class="el">Poeng</div><input type="number" id="ai-p" min="0" max="99" placeholder="f.eks. 3"></div>
-      </div>
-    </div>
-    <div class="eacts">
-      <button class="btn bp" id="btn-sai" onclick="sav('ai')" disabled>Legg til valgt oppgave</button>
-      <button class="btn bg" onclick="back()">← Endre type</button>
-    </div>
-  </div>
-
-</div></div><!-- /modal /overlay -->
-
-<div class="snack" id="snack"></div>
-
-<!-- DEL-MODAL -->
-<div id="del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
-  <div style="background:var(--surf);border:1px solid var(--border2);border-radius:14px;padding:28px;max-width:420px;width:90%;max-height:90vh;overflow-y:auto">
-    <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;margin-bottom:6px">🌐 Del prøven med kolleger</div>
-    <div style="font-size:.8rem;color:var(--dim);margin-bottom:18px">Delte prøver er synlige for alle SkapLab-lærere i prøvebiblioteket.</div>
-    <div style="margin-bottom:12px">
-      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Ditt navn (vises i biblioteket)</label>
-      <input type="text" id="del-navn" placeholder="f.eks. Kari Nordmann" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem">
-    </div>
-    <div style="margin-bottom:12px">
-      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Skole (valgfritt)</label>
-      <input type="text" id="del-skole" placeholder="f.eks. Berglia ungdomsskole" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem">
-    </div>
-    <div style="margin-bottom:18px">
-      <label style="font-size:.78rem;color:var(--dim);display:block;margin-bottom:4px">Kort beskrivelse (valgfritt)</label>
-      <textarea id="del-besk" rows="3" placeholder="f.eks. Kapitelprøve i likninger for 9. trinn – middels vanskelighetsgrad" style="width:100%;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:8px 11px;font-size:.83rem;resize:vertical"></textarea>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn bp" onclick="delProve()" id="btn-del-send">🌐 Del prøven</button>
-      <button class="btn bg" onclick="lukkDelModal()">Avbryt</button>
-    </div>
+    <div id="tildel-status" style="margin-top:10px;font-size:.82rem;min-height:20px"></div>
   </div>
 </div>
 
 <!-- BIBLIOTEK-MODAL -->
-<div id="bib-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center">
-  <div style="background:var(--surf);border:1px solid var(--border2);border-radius:14px;padding:24px;max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-      <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;flex:1">📚 Prøvebibliotek</div>
-      <button class="btn bg" onclick="lukkBibliotek()" style="padding:6px 12px;flex-shrink:0">✕</button>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <input type="text" id="bib-sok" placeholder="Søk i tittel, KM eller lærer…" oninput="lastBibliotek()" style="flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem">
-      <select id="bib-fag" onchange="bibOppdaterKm()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem">
+<div class="modal-bg" id="bib-modal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-tittel">📚 Prøvebibliotek</div>
+    <button class="modal-lukk" onclick="lukkBibliotek()">✕</button>
+    <div class="rad" style="flex-wrap:wrap;margin-bottom:12px;gap:8px">
+      <input type="search" id="bib-sok" placeholder="Søk tittel, KM eller lærer…" oninput="lastBibliotek()" style="flex:1;min-width:180px">
+      <select id="bib-fag" onchange="bibOppdaterKm()" style="min-width:140px">
         <option value="">Alle fag</option>
-        <option value="mat8">Matte 8.</option>
-        <option value="mat9">Matte 9.</option>
-        <option value="mat10">Matte 10.</option>
-        <option value="matematikk">Matematikk (alle trinn)</option>
-        <option value="nat">Naturfag</option>
-        <option value="prg">Programmering</option>
+        <option value="matte">Matematikk</option><option value="naturfag">Naturfag</option>
+        <option value="norsk">Norsk</option><option value="engelsk">Engelsk</option>
       </select>
-      <select id="bib-km" onchange="lastBibliotek()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 10px;font-size:.8rem;max-width:220px">
-        <option value="">Alle KM</option>
-      </select>
+      <select id="bib-km" onchange="lastBibliotek()" style="min-width:160px"><option value="">Alle KM</option></select>
     </div>
-    <div style="flex:1;overflow-y:auto" id="bib-liste">
-      <div style="color:var(--dim);font-size:.84rem;padding:16px">Laster biblioteket…</div>
+    <div id="bib-liste" style="max-height:480px;overflow-y:auto">
+      <div class="laster-tekst"><div class="spinner"></div></div>
     </div>
   </div>
 </div>
 
-<script>
-// ════════════════════════════════════════════════
-// CONFIG
-// ════════════════════════════════════════════════
-// API-kall går via Cloudflare Worker – ingen nøkkel her
-const WORKER_URL = 'DIN_WORKER_URL_HER'; // f.eks. https://skaplab-proxy.dinbruker.workers.dev
-const SB_URL='https://cqzmzsqhuawpsvnjjzse.supabase.co';
-const SB_KEY='sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j';
+<!-- DEL-MODAL -->
+<div class="modal-bg" id="del-modal">
+  <div class="modal modal-smal">
+    <div class="modal-tittel">🌐 Del prøven offentlig</div>
+    <button class="modal-lukk" onclick="lukkDelModal()">✕</button>
+    <p style="font-size:.83rem;color:var(--dim);margin-bottom:14px">Del med andre lærere via prøvebiblioteket.</p>
+    <div class="felt"><label class="felt-lbl">Ditt navn (vises)</label><input type="text" id="del-navn" placeholder="f.eks. Kari Nordmann"></div>
+    <div class="felt"><label class="felt-lbl">Skole</label><input type="text" id="del-skole" placeholder="f.eks. Berglia ungdomsskole"></div>
+    <div class="felt"><label class="felt-lbl">Beskrivelse</label><textarea id="del-besk" rows="3" placeholder="f.eks. Prøve i algebra for 9. trinn"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-sek" onclick="lukkDelModal()">Avbryt</button>
+      <button class="btn btn-prim" onclick="delProve()">🌐 Del prøven</button>
+    </div>
+  </div>
+</div>
 
-// ════════════════════════════════════════════════
-// KOMPETANSEMÅL
-// ════════════════════════════════════════════════
-const KM={
-  matematikk:[
-    {k:'MAT8-1',t:'Utforske og beskrive eigenskapar ved og relasjonar mellom figurar',n:'8'},
-    {k:'MAT8-2',t:'Bruke variablar og rekne med formlar, likningar og ulikskapar',n:'8'},
-    {k:'MAT8-3',t:'Rekne med potenser med heile eksponentar og tal på standardform',n:'8'},
-    {k:'MAT8-4',t:'Rekne med prosent i reknestykke med vekst og tap',n:'8'},
-    {k:'MAT8-5',t:'Rekne med brøk, desimaltal og negative tal',n:'8'},
-    {k:'MAT8-6',t:'Utforske samanhengar ved hjelp av koordinatsystem',n:'8'},
-    {k:'MAT8-7',t:'Lese av, analysere og tolke statistiske framstillingar',n:'8'},
-    {k:'MAT8-8',t:'Planlegge og gjennomføre undersøkingar og presentere data',n:'8'},
-    {k:'MAT9-1',t:'Utforske og argumentere for samanhengar i geometri',n:'9'},
-    {k:'MAT9-2',t:'Bruke og grunngi Pytagoras\' setning',n:'9'},
-    {k:'MAT9-3',t:'Rekne med potenser og røter',n:'9'},
-    {k:'MAT9-4',t:'Løyse lineære likningar og likningssett med to ukjende',n:'9'},
-    {k:'MAT9-5',t:'Representere funksjonar på ulike måtar og tolke dei',n:'9'},
-    {k:'MAT9-6',t:'Utforske statistiske metodar og drøfte resultata',n:'9'},
-    {k:'MAT9-7',t:'Modellere situasjonar med algebra og tolke modellar',n:'9'},
-    {k:'MAT9-8',t:'Utforske sannsynlegheit i samanfatte og gjensidig utelukkande hendingar',n:'9'},
-    {k:'MAT10-1',t:'Undersøke og argumentere for geometriske eigenskapar og samanhengar',n:'10'},
-    {k:'MAT10-2',t:'Bruke trigonometri til å rekne med lengder og vinklar i rettvinkla trekantar',n:'10'},
-    {k:'MAT10-3',t:'Rekne med og tolke gjennomsnitt, median, typetal og variasjonsbreidd',n:'10'},
-    {k:'MAT10-4',t:'Løyse samansette problem med bruk av ulike strategiar',n:'10'},
-    {k:'MAT10-5',t:'Utforske og beskrive funksjonar med teknologiske hjelpemiddel',n:'10'},
-    {k:'MAT10-6',t:'Samanlikne og rekne om mellom ulike talrepresentasjonar',n:'10'},
-    {k:'MAT10-7',t:'Bruke rekneartar og strategiar til å rekne med prosent og promille',n:'10'},
-    {k:'MAT10-8',t:'Berekne og tolke sannsynlegheit frå statistiske data',n:'10'},
+<div class="snack" id="snack" style="display:none"></div>
+
+<script>
+window.SKAPLAB_CONFIG = {
+  url: 'https://cqzmzsqhuawpsvnjjzse.supabase.co',
+  key: 'sb_publishable_mmihFKY7S7bqdbOw9ZNORg_8jxMzZ9j',
+};
+</script>
+<script src="core/auth.js"></script>
+<script src="core/api.js"></script>
+<script>
+'use strict';
+
+const SB_URL = window.SKAPLAB_CONFIG.url;
+const SB_KEY = window.SKAPLAB_CONFIG.key;
+const WORKER_URL = ''; // Sett til din Cloudflare Worker URL om du har
+
+/* ══════════════════════════════════════════════════════════
+   KOMPETANSEMÅL per fag
+══════════════════════════════════════════════════════════ */
+const KM = {
+  matte:[
+    {k:'MAT1-01',l:'Utforske og beskrive strukturer og forandringer'},
+    {k:'MAT1-02',l:'Bruke tall og variabler i utforsking'},
+    {k:'MAT2-01',l:'Representere og utforske geometriske figurer'},
+    {k:'MAT3-01',l:'Bruk av tall, algebra og funksjoner'},
+    {k:'MAT3-02',l:'Løse likninger og ulikheter'},
+    {k:'MAT3-03',l:'Bruke statistikk og sannsynlighet'},
+    {k:'MAT3-04',l:'Geometri og måling'},
+    {k:'MAT3-05',l:'Representere funksjoner og tolke grafer'},
+    {k:'MATTE-ALGEBRA',l:'Algebraiske uttrykk og faktorisering'},
+    {k:'MATTE-FUNKSJON',l:'Funksjoner og grafer'},
+    {k:'MATTE-GEO',l:'Geometri og Pythagoras'},
+    {k:'MATTE-STAT',l:'Statistikk og sannsynlighet'},
+    {k:'MATTE-TALL',l:'Tall, potenser og standardform'},
   ],
   naturfag:[
-    {k:'NAT-1', t:'Gjøre rede for cellestrukturen i plante- og dyreceller og cellenes funksjon'},
-    {k:'NAT-2', t:'Forklare bioteknologiske metoder som krever kunnskap om DNA'},
-    {k:'NAT-3', t:'Forklare energiomvandlinger og energiflyt i naturen'},
-    {k:'NAT-4', t:'Beskrive og forklare kjemiske bindinger og reaksjoner'},
-    {k:'NAT-5', t:'Gjøre rede for atomers og molekylers oppbygning'},
-    {k:'NAT-6', t:'Undersøke og forklare buffermekanismer og pH i kjemiske prosesser'},
-    {k:'NAT-7', t:'Gjøre rede for elektrisitet, magnetisme og elektromagnetisme'},
-    {k:'NAT-8', t:'Beskrive biologisk mangfold og systematikk'},
-    {k:'NAT-9', t:'Forklare evolusjonsteorien og mekanismen naturlig seleksjon'},
-    {k:'NAT-10',t:'Drøfte konsekvenser av klimaendringer og bærekraftig utvikling'},
-    {k:'NAT-11',t:'Forklare reproduksjon og genetisk variasjon'},
-    {k:'NAT-12',t:'Drøfte hvordan energiproduksjon og energibruk kan påvirke miljøet'},
-    {k:'NAT-13',t:'Beskrive og forklare sirkulasjonssystemet og lungenes funksjon'},
-    {k:'NAT-14',t:'Gjøre rede for virus, bakterier og immunforsvar'},
-    {k:'NAT-15',t:'Undersøke og bruke den vitenskapelige metoden i utforskende arbeid'},
-  ]
+    {k:'NAT01-04',l:'Stoff og energi – kjemi og biologi'},
+    {k:'NAT01-05',l:'Kropp og helse'},
+    {k:'NAT01-06',l:'Jorda og livet på jorda'},
+    {k:'NAT-BIO',l:'Biologi – cellebiologi og genetikk'},
+    {k:'NAT-FYS',l:'Fysikk – kraft, energi og bølger'},
+    {k:'NAT-KJE',l:'Kjemi – atom og reaksjoner'},
+    {k:'NAT-KLIMA',l:'Klima og bærekraftig utvikling'},
+  ],
+  norsk:[
+    {k:'NOR0214',l:'Lese og tolke skjønnlitteratur'},
+    {k:'NOR0215',l:'Skrive funksjonelt og kreativt'},
+    {k:'NOR0216',l:'Muntlig bruk av norsk'},
+    {k:'NOR-GRAM',l:'Grammatikk og rettskriving'},
+    {k:'NOR-SAKT',l:'Sakprosa og kritisk lesing'},
+  ],
+  engelsk:[
+    {k:'ENG0201',l:'Kommunikasjon – skriftlig og muntlig'},
+    {k:'ENG0202',l:'Grammatikk og vokabular'},
+    {k:'ENG0203',l:'Kultur og litteratur'},
+    {k:'ENG-SKRIV',l:'Skriveprosess og teksttyper'},
+  ],
+  samfunn:[
+    {k:'SAME0003',l:'Demokrati og medborgerskap'},
+    {k:'SAME0004',l:'Bærekraftig utvikling og globalisering'},
+    {k:'SAME-GEO',l:'Geografi og stedsutvikling'},
+    {k:'SAME-HIST',l:'Historiske hendelser og forklaringer'},
+  ],
+  gym:[
+    {k:'KRO0202',l:'Aktivitet og livsstil'},
+    {k:'KRO0203',l:'Friluftsliv'},
+  ],
 };
 
-// ════════════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════════════
-const S={fag:'',km:[],tittel:'',klasse:'',tid:'',info:'',oppgaver:[],editIdx:null,imgData:null};
+/* ══════════════════════════════════════════════════════════
+   PRØVE-STATE  (S = state)
+══════════════════════════════════════════════════════════ */
+const S = {
+  fag:'', km:[], tittel:'', klasse:'', tid:'', dato:'', info:'',
+  oppgaver:[], editIdx:null, imgData:null, lagretId:null,
+};
 
-// Last prøve fra URL-parameter ?prove=<id> (delelenke)
-(async function(){
-  var params=new URLSearchParams(location.search);
-  var proveId=params.get('prove');
-  if(!proveId) return;
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/prover?id=eq.'+proveId+'&delt=eq.true&select=tittel,fag,klasse,tid,info,km_koder,oppgaver,laerer_navn',{
-      headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}
-    });
-    var data=r.ok?await r.json():[];
-    if(!data.length){snack('Fant ikke prøven – lenken kan være utløpt','err');return;}
-    var p=data[0];
-    S.tittel=p.tittel+' (kopi)';
-    S.fag=p.fag||'';S.klasse=p.klasse||'';S.tid=p.tid||'';S.info=p.info||'';
-    S.km=p.km_koder?p.km_koder.split(',').map(function(k){return{k:k.trim()};}).filter(function(k){return k.k;}):[];
-    S.oppgaver=Array.isArray(p.oppgaver)?p.oppgaver:(typeof p.oppgaver==='string'?JSON.parse(p.oppgaver):[]);
-    S.editIdx=null;
-    document.addEventListener('DOMContentLoaded',function(){
-      var tittelEl=document.getElementById('p-tittel');
-      if(tittelEl) tittelEl.value=S.tittel;
-      if(typeof renderSB==='function') renderSB();
-      if(typeof renderKm==='function') renderKm();
-      snack('Prøven "'+esc(p.tittel)+'" er importert fra delelenke – gjør den til din egen!','ok');
-    });
-    var url=new URL(location.href);
-    url.searchParams.delete('prove');
-    history.replaceState({},'',url);
-  }catch(e){console.warn('URL-import feilet:',e);}
-})();
+/* ══════════════════════════════════════════════════════════
+   SNACK
+══════════════════════════════════════════════════════════ */
+function snack(tekst, type='ok') {
+  const el = document.getElementById('snack');
+  el.textContent = tekst;
+  el.style.display='block';
+  el.style.background = type==='err'?'var(--rod)':type==='warn'?'var(--gul)':'var(--gron)';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{el.style.display='none';},3500);
+}
 
-// Last prøveplan-parametere ?plan=xxx&emne=yyy&klasse=zzz
-(function(){
-  var params=new URLSearchParams(location.search);
-  var emne=params.get('emne');
-  var klasse=params.get('klasse');
-  var planId=params.get('plan');
-  if(!emne&&!klasse) return;
-  document.addEventListener('DOMContentLoaded',function(){
-    if(emne){
-      var tittelEl=document.getElementById('p-tittel');
-      if(tittelEl) tittelEl.value=decodeURIComponent(emne);
-      S.tittel=decodeURIComponent(emne);
-    }
-    if(klasse){
-      var kl=decodeURIComponent(klasse);
-      S.klasse=kl;
-      var klSel=document.getElementById('p-klasse');
-      if(klSel){
-        // Sett riktig option om den finnes, ellers legg til
-        var found=false;
-        for(var i=0;i<klSel.options.length;i++){
-          if(klSel.options[i].value===kl||klSel.options[i].text===kl){
-            klSel.value=klSel.options[i].value; found=true; break;
-          }
-        }
-      }
-    }
-    if(planId) snack('Fyll ut prøven og lagre – den knyttes automatisk til prøveplanen','ok');
-    // Fjern parametere fra URL
-    var url=new URL(location.href);
-    url.searchParams.delete('plan');
-    url.searchParams.delete('emne');
-    url.searchParams.delete('klasse');
-    history.replaceState({},'',url);
-  });
-})();
-
-// ════════════════════════════════════════════════
-// STEPPER
-// ════════════════════════════════════════════════
-function setStep(n){
+/* ══════════════════════════════════════════════════════════
+   STEPPER
+══════════════════════════════════════════════════════════ */
+function setStep(n) {
   for(let i=1;i<=4;i++){
-    const d=document.getElementById('sd'+i),c=document.getElementById('c'+i);
-    if(i<n){d.className='st-dot done';d.textContent='✓';}
-    else if(i===n){d.className='st-dot active';d.textContent=i;}
-    else{d.className='st-dot';d.textContent=i;}
-    if(i<4)document.getElementById('sl'+i).className='st-line'+(i<n?' done':'');
-    if(i<=n)c.classList.remove('locked');else c.classList.add('locked');
+    const d=document.getElementById('sd'+i);
+    const c=document.getElementById('c'+i);
+    const l=document.getElementById('sl'+i);
+    d.className = 'st-dot' + (i<n?' done':i===n?' active':'');
+    c.className = 'scard' + (i===n?' active':i<n?'':' locked');
+    if(l) l.className = 'st-line' + (i<n?' done':'');
   }
 }
-setStep(1);
 
-// ════════════════════════════════════════════════
-// STEG 1 – FAG
-// ════════════════════════════════════════════════
-function onFag(){
-  const f=document.getElementById('sel-fag').value;
-  S.fag=f; S.km=[]; renderKm();
-  if(!f){setStep(1);return;}
+/* ══════════════════════════════════════════════════════════
+   STEG 1: FAG
+══════════════════════════════════════════════════════════ */
+function onFag(fag) {
+  S.fag=fag; S.km=[];
+  document.querySelectorAll('[data-fag]').forEach(b=>b.classList.toggle('ak',b.dataset.fag===fag));
   const sel=document.getElementById('sel-km');
-  sel.innerHTML='<option value="">– Velg fra listen –</option>';
-  if(f==='matematikk'){
-    ['8','9','10'].forEach(n=>{
-      const g=document.createElement('optgroup');g.label=n+'. trinn';
-      KM[f].filter(x=>x.n===n).forEach(({k,t})=>{
-        const o=document.createElement('option');o.value=k;o.textContent=k+': '+t;g.appendChild(o);
-      });sel.appendChild(g);
-    });
-  }else{
-    KM[f].forEach(({k,t})=>{
-      const o=document.createElement('option');o.value=k;o.textContent=k+': '+t;sel.appendChild(o);
-    });
-  }
+  sel.innerHTML='<option value="">Velg kompetansemål…</option>';
+  (KM[fag]||[]).forEach(km=>{const o=document.createElement('option');o.value=km.k;o.textContent=`${km.k} – ${km.l}`;sel.appendChild(o);});
+  document.getElementById('km-area').innerHTML='<span class="km-empty" id="km-empty">Ingen valgt ennå</span>';
   setStep(2);
 }
 
-function addKm(){
-  const sel=document.getElementById('sel-km'),k=sel.value;
-  if(!k)return;
-  if(S.km.find(x=>x.k===k)){snack('Allerede lagt til','err');sel.value='';return;}
-  const item=(KM[S.fag]||[]).find(x=>x.k===k);
-  if(item){S.km.push(item);renderKm();}
-  sel.value='';
+/* ══════════════════════════════════════════════════════════
+   STEG 2: KM
+══════════════════════════════════════════════════════════ */
+document.getElementById('sel-km').addEventListener('change', addKm);
+
+function addKm() {
+  const sel=document.getElementById('sel-km');
+  const k=sel.value; if(!k) return;
+  const km=(KM[S.fag]||[]).find(x=>x.k===k);
+  if(!km||S.km.find(x=>x.k===k)){snack('Allerede lagt til.','warn');sel.value='';return;}
+  S.km.push(km); renderKm(); sel.value='';
 }
 
 function removeKm(k){S.km=S.km.filter(x=>x.k!==k);renderKm();}
 
 function renderKm(){
-  const el=document.getElementById('km-area'),em=document.getElementById('km-empty');
-  el.querySelectorAll('.km-tag').forEach(x=>x.remove());
-  em.style.display=S.km.length?'none':'';
-  S.km.forEach(({k,t})=>{
-    const tag=document.createElement('div');tag.className='km-tag';tag.title=t;
-    tag.innerHTML=`<span>${k}</span><button onclick="removeKm('${k}')">✕</button>`;
-    el.appendChild(tag);
-  });
+  const area=document.getElementById('km-area');
+  if(!S.km.length){area.innerHTML='<span class="km-empty">Ingen valgt ennå</span>';return;}
+  area.innerHTML=S.km.map(km=>`<div class="km-tag">${km.k}<button onclick="removeKm('${km.k}')">×</button></div>`).join('');
 }
 
-// ════════════════════════════════════════════════
-// STEG 2 → 3 → 4
-// ════════════════════════════════════════════════
-function gotoS3(){
-  if(!S.km.length){snack('Velg minst ett kompetansemål','err');return;}
-  setStep(3);document.getElementById('c3').scrollIntoView({behavior:'smooth',block:'start'});
-}
+function gotoS3(){setStep(3);}
 
+/* ══════════════════════════════════════════════════════════
+   STEG 3: INFO
+══════════════════════════════════════════════════════════ */
 function onInfo(){
   S.tittel=document.getElementById('inp-t').value.trim();
   S.klasse=document.getElementById('inp-k').value.trim();
   S.tid=document.getElementById('inp-tid').value.trim();
+  S.dato=document.getElementById('inp-dato').value;
   S.info=document.getElementById('inp-i').value.trim();
-  const pp=document.getElementById('pp');
-  if(S.tittel){
-    pp.classList.add('on');
-    document.getElementById('pp-t').textContent=S.tittel;
-    document.getElementById('pp-s').textContent=[S.klasse,S.tid?'⏱ '+S.tid:''].filter(Boolean).join('  ·  ');
-  }else pp.classList.remove('on');
 }
 
 function gotoS4(){
-  if(!document.getElementById('inp-t').value.trim()){snack('Skriv inn tittel på prøven','err');return;}
-  onInfo();setStep(4);document.getElementById('c4').scrollIntoView({behavior:'smooth',block:'start'});
+  onInfo();
+  setStep(4); renderSB();
+  const pp=document.getElementById('pp');
+  if(S.tittel){
+    document.getElementById('pp-t').textContent=S.tittel;
+    document.getElementById('pp-s').textContent=[S.klasse,S.tid?'⏱ '+S.tid:''].filter(Boolean).join('  ·  ');
+    pp.classList.add('vis');
+    document.getElementById('topnav-tittel').textContent=S.tittel;
+  }
 }
 
-// ════════════════════════════════════════════════
-// MODAL
-// ════════════════════════════════════════════════
-let aType=null;
-function openM(idx=null){
-  S.editIdx=idx;
-  document.getElementById('m-ttl').textContent=idx!==null?'Rediger oppgave':'Ny oppgave';
-  back();
-  if(idx!==null){const o=S.oppgaver[idx];vType(o.type,true);fillEd(o);}
-  document.getElementById('ov').classList.add('on');
+/* ══════════════════════════════════════════════════════════
+   STEG 4: OPPGAVER LISTE
+══════════════════════════════════════════════════════════ */
+function renderSB(){
+  const list=document.getElementById('sb-list');
+  const cnt=document.getElementById('sb-cnt');
+  const empty=document.getElementById('sb-empty');
+  const btnD=document.getElementById('btn-d');
+  const btnT=document.getElementById('btn-tildel');
+  cnt.textContent=S.oppgaver.length;
+  btnD.disabled=!S.oppgaver.length;
+  btnT.disabled=!S.oppgaver.length;
+  if(!S.oppgaver.length){
+    list.innerHTML='';
+    if(empty)empty.style.display='block';
+    return;
+  }
+  if(empty)empty.style.display='none';
+  const TYPE={regneoppgave:'✏️ Regneopp.',fritekst:'📝 Fritekst',flersvar:'🔘 MC',adaptivbank:'🧠 Adaptiv',ai:'✨ AI'};
+  list.innerHTML=S.oppgaver.map((o,i)=>{
+    let tekst=o.tekst||'';
+    if(tekst.length>120)tekst=tekst.slice(0,120)+'…';
+    return`<div class="sb-kort">
+      <div class="sb-kort-hdr">
+        <div class="sb-nr">${i+1}</div>
+        <span class="sb-type-badge">${TYPE[o.type]||o.type}</span>
+        <div style="flex:1">
+          ${o.tittel?`<div style="font-weight:600;font-size:.85rem;margin-bottom:2px">${o.tittel}</div>`:''}
+          <div class="sb-tekst">${tekst}</div>
+          <div class="sb-meta">${o.poeng?`${o.poeng} poeng · `:''}${o.linjer||5} svarlinjer</div>
+        </div>
+      </div>
+      <div class="sb-knapper">
+        <button class="btn btn-sek btn-sm" onclick="openM(${i})">✏️ Rediger</button>
+        <button class="btn btn-rod btn-sm" onclick="delO(${i})">Slett</button>
+        ${i>0?`<button class="btn btn-ghost btn-sm" onclick="flyttOpp(${i})">↑</button>`:''}
+        ${i<S.oppgaver.length-1?`<button class="btn btn-ghost btn-sm" onclick="flyttNed(${i})">↓</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
 }
-function closeM(){document.getElementById('ov').classList.remove('on');}
+
+function delO(idx){if(!confirm(`Slette oppgave ${idx+1}?`))return;S.oppgaver.splice(idx,1);renderSB();snack('Oppgave slettet.');}
+function flyttOpp(i){if(i<=0)return;[S.oppgaver[i],S.oppgaver[i-1]]=[S.oppgaver[i-1],S.oppgaver[i]];renderSB();}
+function flyttNed(i){if(i>=S.oppgaver.length-1)return;[S.oppgaver[i],S.oppgaver[i+1]]=[S.oppgaver[i+1],S.oppgaver[i]];renderSB();}
+
+/* ══════════════════════════════════════════════════════════
+   OPPGAVE-EDITOR MODAL
+══════════════════════════════════════════════════════════ */
+function openM(idx=null){
+  S.editIdx=idx; S.imgData=null;
+  const ov=document.getElementById('ov');
+  ov.style.display='flex';
+  ov.style.alignItems='flex-start';
+  document.getElementById('m-ttl').textContent=idx===null?'Ny oppgave':`Rediger oppgave ${idx+1}`;
+  document.querySelectorAll('.ed').forEach(e=>e.classList.remove('vis'));
+  document.querySelectorAll('.ed-type-btn').forEach(b=>b.classList.remove('ak'));
+  clearEd();
+  if(idx!==null){
+    const o=S.oppgaver[idx];
+    vType(o.type, true);
+    fillEd(o);
+  } else {
+    vType('regneoppgave', true);
+  }
+  initFS();
+}
+
+function closeM(){document.getElementById('ov').style.display='none';}
 function ovClick(e){if(e.target.id==='ov')closeM();}
 
-function back(){
-  document.getElementById('tp').style.display='';
-  ['regneoppgave','fritekst','flersvar','ai','adaptivbank'].forEach(t=>{
-    var el=document.getElementById('ed-'+t);
-    if(el) el.classList.remove('on');
-  });
-  aType=null;
-}
-
-function vType(t,skip){
-  // Rydd alle paneler først (inkl. adaptivbank)
-  ['regneoppgave','fritekst','flersvar','ai','adaptivbank'].forEach(function(pt){
-    var el=document.getElementById('ed-'+pt);
-    if(el) el.classList.remove('on');
-  });
-  aType=t;
-  document.getElementById('tp').style.display='none';
-  document.getElementById('ed-'+t).classList.add('on');
-  if(t==='flersvar'&&!skip)initFS();
-  if(t==='ai'&&!skip)fetchAi();
+function vType(t, skip){
+  document.querySelectorAll('.ed').forEach(e=>e.classList.remove('vis'));
+  document.querySelectorAll('.ed-type-btn').forEach(b=>b.classList.remove('ak'));
+  document.getElementById('ed-'+t)?.classList.add('vis');
+  document.querySelector(`.ed-type-btn[onclick="vType('${t}')"]`)?.classList.add('ak');
+  if(t==='ai'&&!skip) fetchAi();
+  if(t==='flersvar') initFS();
 }
 
 function fillEd(o){
   if(o.type==='regneoppgave'){
     document.getElementById('rn-t').value=o.tittel||'';
     document.getElementById('rn-la').value=o.tekst||'';
-    document.getElementById('rn-l').value=o.linjer||'5';
+    document.getElementById('rn-l').value=o.linjer||5;
     document.getElementById('rn-p').value=o.poeng||'';
   }else if(o.type==='fritekst'){
     document.getElementById('ft-t').value=o.tittel||'';
     document.getElementById('ft-la').value=o.tekst||'';
-    document.getElementById('ft-l').value=o.linjer||'8';
+    document.getElementById('ft-l').value=o.linjer||8;
     document.getElementById('ft-p').value=o.poeng||'';
-    if(o.bilde){
-      S.imgData=o.bilde;
-      const p=document.getElementById('iprv');p.src=o.bilde;p.style.display='block';
-      document.getElementById('btn-fb').style.display='';
-    }
+    if(o.bilde){S.imgData=o.bilde;const img=document.getElementById('iprv');img.src=o.bilde;img.style.display='block';document.getElementById('btn-fb').style.display='inline-block';}
   }else if(o.type==='flersvar'){
-    document.getElementById('fs-spm').value=o.sporsmal||'';
+    document.getElementById('fs-spm').value=o.tekst||'';
     document.getElementById('fs-p').value=o.poeng||'';
-    document.getElementById('alt-list').innerHTML='';
     (o.alts||[]).forEach(a=>addAlt(a));
-    refreshR();
-    document.getElementById('fs-r').value=o.riktig||'';
-  }else if(o.type==='ai'){
-    document.getElementById('ai-la').value=o.tekst||'';
-    document.getElementById('ai-l').value=o.linjer||'5';
-    document.getElementById('ai-p').value=o.poeng||'';
-    if(o.tekst){document.getElementById('ai-eb').style.display='';document.getElementById('btn-sai').disabled=false;}
+    refreshR(); if(o.fasit) document.getElementById('fs-r').value=o.fasit;
   }
-}
-
-// ════════════════════════════════════════════════
-// LAGRE OPPGAVE
-// ════════════════════════════════════════════════
-function sav(type){
-  let o={type,id:Date.now()};
-  if(type==='regneoppgave'){
-    const tx=document.getElementById('rn-la').value.trim();
-    if(!tx){snack('Skriv inn oppgaveteksten','err');return;}
-    o.tittel=document.getElementById('rn-t').value.trim()||'Regneoppgave';
-    o.tekst=tx;o.linjer=+document.getElementById('rn-l').value;o.poeng=document.getElementById('rn-p').value;
-  }else if(type==='fritekst'){
-    const tx=document.getElementById('ft-la').value.trim();
-    if(!tx){snack('Skriv inn oppgaveteksten','err');return;}
-    o.tittel=document.getElementById('ft-t').value.trim()||'Fritekstoppgave';
-    o.tekst=tx;o.linjer=+document.getElementById('ft-l').value;o.poeng=document.getElementById('ft-p').value;
-    o.bilde=S.imgData||null;
-  }else if(type==='flersvar'){
-    const spm=document.getElementById('fs-spm').value.trim();
-    if(!spm){snack('Skriv inn spørsmålet','err');return;}
-    const alts=[...document.querySelectorAll('.ai')].map(i=>i.value.trim()).filter(Boolean);
-    if(alts.length<2){snack('Legg til minst 2 alternativer','err');return;}
-    o.tittel=spm.slice(0,70);o.sporsmal=spm;o.alts=alts;
-    o.riktig=document.getElementById('fs-r').value;o.poeng=document.getElementById('fs-p').value;
-  }else if(type==='ai'){
-    const tx=document.getElementById('ai-la').value.trim();
-    if(!tx){snack('Velg en oppgave fra listen','err');return;}
-    o.tittel=tx.slice(0,70);o.tekst=tx;
-    o.linjer=+document.getElementById('ai-l').value;o.poeng=document.getElementById('ai-p').value;
-  }else if(type==='adaptivbank'){
-    const tx=document.getElementById('ab-la').value.trim();
-    if(!tx){snack('Velg en oppgave fra listen','err');return;}
-    const eb=document.getElementById('ab-eb');
-    const rawAlts=eb?eb.dataset.alts:'[]';
-    const parsedAlts=JSON.parse(rawAlts||'[]');
-    const riktig=eb?eb.dataset.riktig||'':'';
-    const oppgtype=eb?eb.dataset.oppgtype||'open':'open';
-    o.tittel=tx.slice(0,70);o.tekst=tx;o.sporsmal=tx;
-    if(oppgtype==='mc'&&parsedAlts.length>=2){
-      o.alts=parsedAlts;o.riktig=riktig;
-    }
-    o.linjer=+document.getElementById('ab-l').value;o.poeng=document.getElementById('ab-p').value;
-  }
-  if(S.editIdx!==null){o.id=S.oppgaver[S.editIdx].id;S.oppgaver[S.editIdx]=o;snack('Oppgave oppdatert ✓','ok');}
-  else{S.oppgaver.push(o);snack('Oppgave lagt til ✓','ok');}
-  closeM();clearEd();renderSB();
 }
 
 function clearEd(){
-  ['rn-t','rn-la','ft-t','ft-la','fs-spm','ai-la'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  S.imgData=null;
-  const p=document.getElementById('iprv');p.src='';p.style.display='none';
-  document.getElementById('btn-fb').style.display='none';
+  ['rn-t','rn-la','ft-t','ft-la','fs-spm'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['rn-p','ft-p','fs-p','ab-p','ai-p'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['rn-l','ft-l'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=e.options[1]?.value||5;});
   document.getElementById('alt-list').innerHTML='';
-  document.getElementById('ai-list').innerHTML='';
+  document.getElementById('iprv').style.display='none';
+  document.getElementById('btn-fb').style.display='none';
   document.getElementById('ai-eb').style.display='none';
-  document.getElementById('btn-sai').disabled=true;
+  document.getElementById('ab-eb').style.display='none';
+  S.imgData=null;
 }
 
-// ════════════════════════════════════════════════
-// FLERSVAR
-// ════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   LAGRE OPPGAVE
+══════════════════════════════════════════════════════════ */
+function sav(type){
+  let obj = null;
+  if(type==='regneoppgave'){
+    const tekst=document.getElementById('rn-la').value.trim();
+    if(!tekst){snack('Fyll inn oppgavetekst.','warn');return;}
+    obj={type,tittel:document.getElementById('rn-t').value.trim()||null,tekst,linjer:parseInt(document.getElementById('rn-l').value)||5,poeng:parseInt(document.getElementById('rn-p').value)||null};
+  }else if(type==='fritekst'){
+    const tekst=document.getElementById('ft-la').value.trim();
+    obj={type,tittel:document.getElementById('ft-t').value.trim()||null,tekst,linjer:parseInt(document.getElementById('ft-l').value)||8,poeng:parseInt(document.getElementById('ft-p').value)||null,bilde:S.imgData||null};
+  }else if(type==='flersvar'){
+    const tekst=document.getElementById('fs-spm').value.trim();
+    if(!tekst){snack('Skriv spørsmålet.','warn');return;}
+    const alts=[...document.getElementById('alt-list').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
+    if(alts.length<2){snack('Legg til minst 2 alternativer.','warn');return;}
+    const fasit=document.getElementById('fs-r').value||null;
+    obj={type,tekst,alts,fasit,linjer:0,poeng:parseInt(document.getElementById('fs-p').value)||null};
+  }else if(type==='adaptivbank'){
+    const tekst=document.getElementById('ab-la').value.trim();
+    if(!tekst){snack('Velg en oppgave.','warn');return;}
+    obj={type,tekst,linjer:parseInt(document.getElementById('ab-l').value)||5,poeng:parseInt(document.getElementById('ab-p').value)||null};
+  }else if(type==='ai'){
+    const tekst=document.getElementById('ai-la').value.trim();
+    if(!tekst){snack('Velg en oppgave.','warn');return;}
+    obj={type,tekst,linjer:parseInt(document.getElementById('ai-l').value)||5,poeng:parseInt(document.getElementById('ai-p').value)||null};
+  }
+  if(!obj)return;
+  if(S.editIdx!==null) S.oppgaver[S.editIdx]=obj;
+  else S.oppgaver.push(obj);
+  S.editIdx=null; closeM(); renderSB();
+  snack(S.editIdx!==null?'Oppgave oppdatert.':'Oppgave lagt til.');
+}
+
+/* ══════════════════════════════════════════════════════════
+   FLERSVAR – alternativer
+══════════════════════════════════════════════════════════ */
 function initFS(){
-  const l=document.getElementById('alt-list');
-  if(!l.children.length)for(let i=0;i<4;i++)addAlt('');
+  if(!document.getElementById('alt-list').children.length){
+    addAlt('A: ');addAlt('B: ');addAlt('C: ');addAlt('D: ');
+  }
+  refreshR();
 }
+
 function addAlt(v=''){
-  const l=document.getElementById('alt-list'),i=l.children.length,b=String.fromCharCode(65+i);
-  const r=document.createElement('div');r.className='alt-row';
-  r.innerHTML=`<span class="alt-ltr">${b})</span><input type="text" class="ai" placeholder="Alternativ ${b}" value="${esc(v)}" oninput="refreshR()"><button class="alt-del" onclick="delAlt(this)">✕</button>`;
-  l.appendChild(r);refreshR();
+  const div=document.createElement('div'); div.className='alt-rad';
+  const inp=document.createElement('input'); inp.type='text'; inp.value=v; inp.placeholder='Alternativ…';
+  inp.oninput=refreshR;
+  const del=document.createElement('button'); del.className='btn btn-rod btn-sm'; del.textContent='✕'; del.onclick=function(){delAlt(del);};
+  div.appendChild(inp); div.appendChild(del);
+  document.getElementById('alt-list').appendChild(div);
+  refreshR();
 }
-function delAlt(btn){
-  btn.closest('.alt-row').remove();
-  document.querySelectorAll('.alt-row').forEach((r,i)=>{
-    r.querySelector('.alt-ltr').textContent=String.fromCharCode(65+i)+')';
-    r.querySelector('input').placeholder='Alternativ '+String.fromCharCode(65+i);
-  });refreshR();
-}
+
+function delAlt(btn){btn.parentElement.remove();refreshR();}
+
 function refreshR(){
-  const s=document.getElementById('fs-r'),prev=s.value,inps=document.querySelectorAll('.ai');
-  s.innerHTML='<option value="">– Ikke markert –</option>';
-  inps.forEach((inp,i)=>{const b=String.fromCharCode(65+i),o=document.createElement('option');o.value=b;o.textContent=b+')  '+(inp.value||'...');s.appendChild(o);});
-  if([...s.options].find(o=>o.value===prev))s.value=prev;
+  const sel=document.getElementById('fs-r');
+  const cur=sel.value;
+  const alts=[...document.getElementById('alt-list').querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean);
+  sel.innerHTML='<option value="">Ingen fasit</option>'+alts.map(a=>`<option value="${a}">${a}</option>`).join('');
+  if(alts.includes(cur))sel.value=cur;
 }
 
-// ════════════════════════════════════════════════
-// LATEX INSERT
-// ════════════════════════════════════════════════
-function ins(cmd){
-  const ta=document.getElementById('rn-la'),s=ta.selectionStart,e=ta.selectionEnd;
-  ta.value=ta.value.slice(0,s)+cmd+ta.value.slice(e);ta.focus();ta.setSelectionRange(s+cmd.length,s+cmd.length);
-}
-
-// ════════════════════════════════════════════════
-// BILDE
-// ════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   BILDE
+══════════════════════════════════════════════════════════ */
 function velgB(ev){pB(ev.target.files[0]);}
-function dropB(ev){ev.preventDefault();document.getElementById('iz').classList.remove('drag');pB(ev.dataTransfer.files[0]);}
+function dropB(e){e.preventDefault();document.getElementById('iz').classList.remove('drag');if(e.dataTransfer.files[0])pB(e.dataTransfer.files[0]);}
 function pB(f){
-  if(!f||!f.type.startsWith('image/')){return;}
-  if(f.size>4*1024*1024){snack('Bildet er for stort (maks 4 MB)','err');return;}
+  if(!f||!f.type.startsWith('image/'))return;
+  if(f.size>3*1024*1024){snack('Bildet er for stort (maks 3 MB).','warn');return;}
   const r=new FileReader();
-  r.onload=ev=>{S.imgData=ev.target.result;const p=document.getElementById('iprv');p.src=S.imgData;p.style.display='block';document.getElementById('btn-fb').style.display='';};
+  r.onload=e=>{
+    S.imgData=e.target.result;
+    const img=document.getElementById('iprv'); img.src=S.imgData; img.style.display='block';
+    document.getElementById('btn-fb').style.display='inline-block';
+  };
   r.readAsDataURL(f);
 }
-function fjernB(){S.imgData=null;const p=document.getElementById('iprv');p.src='';p.style.display='none';document.getElementById('fi').value='';document.getElementById('btn-fb').style.display='none';}
+function fjernB(){S.imgData=null;document.getElementById('iprv').style.display='none';document.getElementById('btn-fb').style.display='none';}
 
-// ════════════════════════════════════════════════
-// AI FORSLAG
-// ════════════════════════════════════════════════
-async function fetchAi(){
-  if(!S.km.length){
-    document.getElementById('ai-list').innerHTML='<div style="color:var(--red);font-size:.82rem;padding:8px">⚠️ Velg kompetansemål i steg 2 først.</div>';
-    return;
-  }
-  document.getElementById('ai-load').style.display='flex';
-  document.getElementById('ai-list').innerHTML='';
-  document.getElementById('btn-nai').disabled=true;
-  document.getElementById('btn-sai').disabled=true;
-  document.getElementById('ai-eb').style.display='none';
-
-  // Hent fra Supabase-databasen (gratis) for alle valgte KM
-  const kmKoder = S.km.map(x=>x.k);
-  try{
-    // Hent inntil 4 tilfeldige oppgaver per valgt KM
-    const alleOppgaver = [];
-    for(const kode of kmKoder){
-      const url = `${SB_URL}/rest/v1/oppgavebank?kilde=eq.${kode}&select=oppgave,type,fork&limit=50`;
-      const r = await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-      if(r.ok){
-        const data = await r.json();
-        if(Array.isArray(data)) alleOppgaver.push(...data);
-      }
-    }
-
-    if(alleOppgaver.length > 0){
-      // Bland og vis inntil 6 forslag
-      // Bland tilfeldig client-side og map til renderAI-format
-      const blandet = alleOppgaver
-        .sort(()=>Math.random()-.5)
-        .slice(0,6)
-        .map(o=>({tekst:o.oppgave, type:o.type||'oppgave', forklaring:o.fork||''}));
-      renderAI(blandet);
-      return;
-    }
-
-    // Fallback: ingen oppgaver i DB – prøv Worker om konfigurert
-    if(WORKER_URL && WORKER_URL !== 'DIN_WORKER_URL_HER'){
-      await fetchAiFraWorker();
-    } else {
-      document.getElementById('ai-list').innerHTML=
-        '<div style="color:var(--dim);font-size:.82rem;padding:12px;line-height:1.6">'
-        +'<strong style="color:var(--text)">📭 Ingen oppgaver funnet</strong><br>'
-        +'Databasen har ingen oppgaver for KM: '+kmKoder.join(', ')+'.<br>'
-        +'<span style="opacity:.7">AI-generering er ikke konfigurert (WORKER_URL mangler). '
-        +'Legg til oppgaver manuelt i steg 3, eller sett opp en Cloudflare Worker og oppdater WORKER_URL i provebygger.html.</span>'
-        +'</div>';
-    }
-  }catch(e){
-    document.getElementById('ai-list').innerHTML=`<div style="color:var(--red);font-size:.82rem;padding:8px">⚠️ Feil: ${esc(e.message)}</div>`;
-  }finally{
-    document.getElementById('ai-load').style.display='none';
-    document.getElementById('btn-nai').disabled=false;
-  }
+/* ══════════════════════════════════════════════════════════
+   VERKTØYLINJE for LaTeX
+══════════════════════════════════════════════════════════ */
+function ins(pre,post){
+  const ta=document.getElementById('rn-la');
+  const s=ta.selectionStart; const e=ta.selectionEnd;
+  const sel=ta.value.slice(s,e);
+  ta.value=ta.value.slice(0,s)+pre+sel+post+ta.value.slice(e);
+  ta.focus(); ta.setSelectionRange(s+pre.length,s+pre.length+sel.length);
 }
 
-// Fallback: hent fra Cloudflare Worker (koster penger per kall)
-async function fetchAiFraWorker(){
-  const kmTxt=S.km.map(x=>x.k+': '+x.t).join('\n');
-  const res=await fetch(WORKER_URL,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      model:'claude-haiku-4-5-20251001',max_tokens:1000,
-      system:'Du er en norsk ungdomsskolelærer. Svar KUN med JSON: {"oppgaver":[{"tekst":"...","type":"..."}]}. Fire oppgaver, norsk bokmål, ingen kodeblokker.',
-      messages:[{role:'user',content:`Fag: ${S.fag}\nKM: ${kmTxt}\nLag 4 prøveoppgaver.`}]
-    })
+/* ══════════════════════════════════════════════════════════
+   ADAPTIV BANK
+══════════════════════════════════════════════════════════ */
+async function fetchAdaptivBank(){
+  const emne=document.getElementById('ab-emne').value;
+  const nivaa=document.getElementById('ab-nivaa').value;
+  if(!emne)return;
+  const load=document.getElementById('ab-load');
+  const list=document.getElementById('ab-list');
+  load.style.display='block'; list.innerHTML='';
+  try{
+    let url=`${SB_URL}/rest/v1/oppgavebank?kilde=eq.adaptiv&emne=eq.${emne}&select=oppgave,type,fork,nivaa&limit=60`;
+    if(nivaa) url+=`&nivaa=eq.${nivaa}`;
+    const r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const data=r.ok?await r.json():[];
+    const liste=(Array.isArray(data)?data:[]).sort(()=>Math.random()-.5).slice(0,8);
+    load.style.display='none';
+    if(!liste.length){list.innerHTML='<div style="color:var(--dim);font-size:.82rem;padding:8px">Ingen oppgaver funnet.</div>';return;}
+    liste.forEach(item=>{
+      const div=document.createElement('div'); div.className='ai-item';
+      div.innerHTML=`<div class="ai-type">${item.type||'oppgave'} · Niv.${item.nivaa||'?'}</div>${item.oppgave||''}`;
+      div.addEventListener('click',()=>{
+        document.querySelectorAll('#ab-list .ai-item').forEach(d=>d.classList.remove('sel'));
+        div.classList.add('sel');
+        document.getElementById('ab-la').value=item.oppgave||'';
+        document.getElementById('ab-eb').style.display='block';
+        document.getElementById('btn-sab').disabled=false;
+      });
+      list.appendChild(div);
+    });
+  }catch(e){load.style.display='none';list.innerHTML=`<div style="color:var(--rod);font-size:.82rem;padding:8px">Feil: ${e.message}</div>`;}
+}
+
+/* ══════════════════════════════════════════════════════════
+   AI-forslag via Anthropic API  (eller Worker)
+══════════════════════════════════════════════════════════ */
+async function fetchAi(){
+  const load=document.getElementById('ai-load');
+  const list=document.getElementById('ai-list');
+  load.style.display='block'; list.innerHTML='';
+  const kmStr=S.km.map(k=>k.l).join(', ')||S.fag;
+  try{
+    if(WORKER_URL){
+      await fetchAiFraWorker(kmStr);
+    }else{
+      // Hent fra lokal oppgavebank basert på emne/fag
+      const emne=S.km[0]?.k||'';
+      const url=`${SB_URL}/rest/v1/oppgavebank?kilde=eq.${emne}&select=oppgave,type,fork&limit=40`;
+      const r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      const data=r.ok?await r.json():[];
+      load.style.display='none';
+      if(!data?.length){
+        list.innerHTML=`<div style="font-size:.82rem;color:var(--dim);padding:8px">Ingen oppgaver funnet i banken. ${WORKER_URL?'':'Sett opp Cloudflare Worker for AI-generering, eller legg til oppgaver manuelt.'}</div>`;
+        return;
+      }
+      renderAI(data.sort(()=>Math.random()-.5).slice(0,5).map(d=>({tekst:d.oppgave,type:d.type||'regneoppgave'})));
+    }
+  }catch(e){load.style.display='none';list.innerHTML=`<div style="color:var(--rod);font-size:.82rem;padding:8px">Feil: ${e.message}</div>`;}
+}
+
+async function fetchAiFraWorker(kmStr){
+  const load=document.getElementById('ai-load');
+  const list=document.getElementById('ai-list');
+  const r=await fetch(WORKER_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fag:S.fag,kompetansemaal:kmStr}),
   });
-  const data=await res.json();
-  const raw=(data.content?.[0]?.text||'').replace(/```[\w]*|```/g,'').trim();
-  let parsed;try{parsed=JSON.parse(raw);}catch{throw new Error('Ugyldig svar fra AI');}
-  renderAI(parsed.oppgaver||[]);
+  load.style.display='none';
+  if(!r.ok) throw new Error('Worker svarte '+r.status);
+  const data=await r.json();
+  renderAI(Array.isArray(data.oppgaver)?data.oppgaver:data);
 }
 
 function renderAI(liste){
-  const el=document.getElementById('ai-list');el.innerHTML='';
+  const list=document.getElementById('ai-list');
+  list.innerHTML='';
+  if(!liste.length){list.innerHTML='<div style="color:var(--dim);font-size:.82rem;padding:8px">Ingen forslag.</div>';return;}
   liste.forEach(item=>{
-    const div=document.createElement('div');div.className='ai-item';
-    div.innerHTML=`<div class="ai-type">${item.type||'Oppgave'}</div>${esc(item.tekst)}`;
-    div.onclick=()=>{
-      document.querySelectorAll('.ai-item').forEach(x=>x.classList.remove('sel'));
+    const div=document.createElement('div'); div.className='ai-item';
+    div.innerHTML=`<div class="ai-type">${item.type||'regneoppgave'}</div>${item.tekst||item.oppgave||''}`;
+    div.addEventListener('click',()=>{
+      document.querySelectorAll('#ai-list .ai-item').forEach(d=>d.classList.remove('sel'));
       div.classList.add('sel');
-      document.getElementById('ai-la').value=item.tekst;
-      document.getElementById('ai-eb').style.display='';
+      document.getElementById('ai-la').value=item.tekst||item.oppgave||'';
+      document.getElementById('ai-eb').style.display='block';
       document.getElementById('btn-sai').disabled=false;
-    };
-    el.appendChild(div);
-  });
-}
-
-// ════════════════════════════════════════════════
-// SIDEBAR
-// ════════════════════════════════════════════════
-const TLBL={regneoppgave:'🔢 Regneoppgave',fritekst:'📝 Fritekst',flersvar:'☑️ Flersvar',ai:'✨ AI-generert'};
-
-function apneDelModal(){
-  if(!S.oppgaver.length){snack('Legg til oppgaver i prøven først','err');return;}
-  var modal=document.getElementById('del-modal');
-  modal.style.display='flex';
-}
-function lukkDelModal(){
-  document.getElementById('del-modal').style.display='none';
-}
-async function delProve(){
-  var navn=document.getElementById('del-navn').value.trim();
-  if(!navn){snack('Skriv inn navnet ditt','err');return;}
-  var btn=document.getElementById('btn-del-send');
-  btn.textContent='Deler…';btn.disabled=true;
-  try{
-    var elev=JSON.parse(localStorage.getItem('skaplab_laerer_v2')||localStorage.getItem('skaplab_laerer')||localStorage.getItem('skaplab_elev')||'{}');
-    var oUB=S.oppgaver.map(function(o){return o.bilde?Object.assign({},o,{bilde:'[bilde]'}):o;});
-    var payload={
-      laerer_id:elev.id||null,
-      tittel:S.tittel||'Uten tittel',
-      fag:S.fag,klasse:S.klasse,tid:S.tid,info:S.info,
-      km_koder:S.km.map(function(k){return k.k;}).join(','),
-      oppgaver:JSON.stringify(oUB),antall:S.oppgaver.length,
-      opprettet:new Date().toISOString(),
-      delt:true,
-      laerer_navn:navn,
-      skole:document.getElementById('del-skole').value.trim()||null,
-      beskrivelse:document.getElementById('del-besk').value.trim()||null,
-      delt_dato:new Date().toISOString()
-    };
-    var res=await fetch(SB_URL+'/rest/v1/prover',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
-      body:JSON.stringify(payload)
     });
-    if(res.status===201||res.ok){
-      snack('Prøven er delt i biblioteket ✓','ok');
-      lukkDelModal();
-    } else {
-      var feilTekst=await res.text().catch(function(){return '';});
-      console.error('Deling feilet',res.status, feilTekst);
-      // Vis ekte feilmelding fra Supabase
-      var visMsg='Delingsfeil '+res.status;
-      try{
-        var feilJson=JSON.parse(feilTekst);
-        visMsg=feilJson.message||feilJson.hint||feilJson.details||feilTekst.slice(0,120);
-      }catch(e){ visMsg=feilTekst.slice(0,120)||visMsg; }
-      snack(visMsg,'err');
-    }
-  }catch(e){snack('Feil: '+e.message,'err');}
-  finally{btn.textContent='🌐 Del prøven';btn.disabled=false;}
+    list.appendChild(div);
+  });
 }
 
-function apneBibliotek(){
-  document.getElementById('bib-modal').style.display='flex';
-  document.getElementById('bib-fag').value='';
-  var sokEl=document.getElementById('bib-sok');
-  if(sokEl) sokEl.value='';
-  bibOppdaterKm();
+/* ══════════════════════════════════════════════════════════
+   LAGRE TIL SUPABASE
+══════════════════════════════════════════════════════════ */
+async function lagreSB(){
+  if(!S.tittel){snack('Fyll inn tittel i steg 3 først.','warn');return;}
+  try{
+    const lRaw=JSON.parse(localStorage.getItem('skaplab_laerer_v2')||localStorage.getItem('skaplab_laerer')||'{}');
+    const laererId=lRaw.id||(await Auth.laerer.uid());
+    const tok=lRaw.access_token||SB_KEY;
+    const navn=lRaw.fullt_navn||lRaw.user?.user_metadata?.full_name||'';
+    const oppgaverDB=S.oppgaver.map(o=>o.bilde?{...o,bilde:'[bilde]'}:o);
+    const body={
+      laerer_id:laererId, laerer_navn:navn,
+      fag:S.fag, klasse:S.klasse, tid:S.tid, info:S.info,
+      tittel:S.tittel, dato:S.dato||new Date().toISOString().slice(0,10),
+      km_koder:S.km.map(k=>k.k).join(','),
+      oppgaver:JSON.stringify(oppgaverDB),
+      delt:false,
+    };
+    const method=S.lagretId?'PATCH':'POST';
+    const sti=S.lagretId?`/prover?id=eq.${S.lagretId}`:'/prover';
+    const prefer=S.lagretId?'return=minimal':'return=representation';
+    const r=await fetch(`${SB_URL}/rest/v1${sti}`,{
+      method, body:JSON.stringify(body),
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+tok,'Prefer':prefer},
+    });
+    if(!r.ok) throw new Error(await r.text());
+    if(!S.lagretId){const d=await r.json();S.lagretId=Array.isArray(d)?d[0]?.id:d?.id;}
+    snack('Prøven er lagret! ✅');
+  }catch(e){snack('Feil ved lagring: '+e.message,'err');}
 }
-function lukkBibliotek(){
-  document.getElementById('bib-modal').style.display='none';
+
+/* ══════════════════════════════════════════════════════════
+   TILDELING – fullstendig implementert
+   apneTildelModal / lukkTildelModal / sendTildeling
+══════════════════════════════════════════════════════════ */
+let _tildelKlasser=[];
+
+async function apneTildelModal(){
+  if(!S.oppgaver.length){snack('Legg til oppgaver først.','warn');return;}
+  document.getElementById('tildel-modal').classList.add('vis');
+  document.getElementById('tildel-status').textContent='';
+
+  // Hent klasser for innlogget lærer
+  const sel=document.getElementById('tildel-klasse-sel');
+  sel.innerHTML='<option value="">Laster…</option>';
+  try{
+    const laererId=await Auth.laerer.uid();
+    const data=await Api.klasser.hentForLaerer(laererId);
+    _tildelKlasser=data||[];
+    sel.innerHTML='<option value="">Velg klasse…</option>';
+    _tildelKlasser.forEach(k=>{const o=document.createElement('option');o.value=k.id;o.textContent=k.navn;sel.appendChild(o);});
+    if(!_tildelKlasser.length) sel.innerHTML='<option value="">Ingen klasser funnet</option>';
+  }catch(e){sel.innerHTML='<option value="">Feil: '+e.message+'</option>';}
 }
-var _bibCache=[];
+
+function lukkTildelModal(){
+  document.getElementById('tildel-modal').classList.remove('vis');
+}
+
+async function sendTildeling(){
+  const klasseId=document.getElementById('tildel-klasse-sel').value;
+  const frist=document.getElementById('tildel-frist').value||null;
+  const status=$id('tildel-status');
+  if(!klasseId){snack('Velg en klasse.','warn');return;}
+
+  // Sørg for at prøven er lagret
+  if(!S.lagretId){
+    status.textContent='Lagrer prøven…';
+    await lagreSB();
+    if(!S.lagretId){snack('Kunne ikke lagre prøven.','err');status.textContent='';return;}
+  }
+
+  status.textContent='Henter elever…';
+  try{
+    const laererId=await Auth.laerer.uid();
+    // Hent elever i klassen
+    const elever=await Api.elever.hentForKlasser([klasseId]);
+    if(!elever?.length){snack('Ingen elever i klassen.','warn');status.textContent='';return;}
+
+    // Opprett en tildeling per elev
+    let ok=0;
+    for(const elev of elever){
+      try{
+        await Api.tildeling.opprett({
+          elev_id:elev.id, klasse_id:klasseId, laerer_id:laererId,
+          ressurs:`prover?id=${S.lagretId}`,
+          frist, opprettet:new Date().toISOString(),
+        });
+        ok++;
+      }catch{ /* fortsett */ }
+    }
+    status.textContent=`✅ Sendt til ${ok} av ${elever.length} elever.`;
+    snack(`Prøven er tildelt ${ok} elever.`);
+    setTimeout(lukkTildelModal,2500);
+  }catch(e){snack('Feil: '+e.message,'err');status.textContent='';}
+}
+
+function $id(id){return document.getElementById(id);}
+
+/* ══════════════════════════════════════════════════════════
+   DEL (offentlig bibliotek)
+══════════════════════════════════════════════════════════ */
+function apneDelModal(){document.getElementById('del-modal').classList.add('vis');}
+function lukkDelModal(){document.getElementById('del-modal').classList.remove('vis');}
+
+async function delProve(){
+  if(!S.lagretId){await lagreSB();}
+  const navn=document.getElementById('del-navn').value.trim();
+  const skole=document.getElementById('del-skole').value.trim();
+  const besk=document.getElementById('del-besk').value.trim();
+  if(!navn){snack('Fyll inn ditt navn.','warn');return;}
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/prover?id=eq.${S.lagretId}`,{
+      method:'PATCH', body:JSON.stringify({delt:true,laerer_navn:navn,skole:skole||null,beskrivelse:besk||null}),
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'},
+    });
+    if(!r.ok) throw new Error(await r.text());
+    snack('Prøven er delt i biblioteket! 🎉');
+    lukkDelModal();
+  }catch(e){snack('Feil: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════
+   BIBLIOTEK
+══════════════════════════════════════════════════════════ */
+let _bibCache=[];
+function apneBibliotek(){document.getElementById('bib-modal').classList.add('vis');lastBibliotek();}
+function lukkBibliotek(){document.getElementById('bib-modal').classList.remove('vis');}
+
+document.getElementById('btn-bibliotek').addEventListener('click',apneBibliotek);
+
 function bibOppdaterKm(){
-  var fag=document.getElementById('bib-fag').value;
-  var kmSel=document.getElementById('bib-km');
-  kmSel.innerHTML='<option value="">Alle KM</option>';
-  // KM er definert som {matematikk:[...], naturfag:[...]} i prøvebyggeren
-  var kmMat=KM&&KM.matematikk?KM.matematikk:[];
-  var kmNat=KM&&KM.naturfag?KM.naturfag:[];
-  var liste;
-  if(fag==='nat'||fag==='naturfag') liste=kmNat;
-  else if(!fag) liste=kmMat.concat(kmNat);
-  else liste=kmMat;
-  liste.forEach(function(k){
-    var o=document.createElement('option');
-    o.value=k.k; o.textContent=k.k+': '+k.t.slice(0,45)+(k.t.length>45?'…':'');
-    kmSel.appendChild(o);
-  });
+  const fag=document.getElementById('bib-fag').value;
+  const sel=document.getElementById('bib-km');
+  sel.innerHTML='<option value="">Alle KM</option>';
+  (KM[fag]||[]).forEach(k=>{const o=document.createElement('option');o.value=k.k;o.textContent=k.k+' – '+k.l;sel.appendChild(o);});
   lastBibliotek();
 }
+
 async function lastBibliotek(){
-  var fag=document.getElementById('bib-fag').value;
-  var km=document.getElementById('bib-km').value;
-  var sokEl=document.getElementById('bib-sok');
-  var sok=sokEl?(sokEl.value||'').toLowerCase().trim():'';
-  var el=document.getElementById('bib-liste');
-  el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">Laster…</div>';
-  try{
-    // Hent alle delte prøver (maks 100) – alt filtreres client-side
-    var url=SB_URL+'/rest/v1/prover?delt=eq.true&order=delt_dato.desc&limit=100&select=*';
-    var r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    if(!r.ok){
-      var feilTekst=await r.text().catch(function(){return '';});
-      el.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ '+esc(feilTekst.slice(0,150))+'</div>';
-      return;
-    }
-    var data=await r.json();
-    _bibCache=Array.isArray(data)?data:[];
-
-    // Client-side filter: KM og søk
-    // fag-felt kan være 'mat8','mat9','mat10','matematikk','nat','naturfag','prg'
-    var fagAliases={
-      'mat8':['mat8','matematikk','matte'],
-      'mat9':['mat9','matematikk','matte'],
-      'mat10':['mat10','matematikk','matte'],
-      'nat':['nat','naturfag'],
-      'prg':['prg','programmering']
-    };
-    var filtrert=_bibCache.filter(function(p){
-      if(fag){
-        var pFag=(p.fag||'').toLowerCase();
-        var aliaser=fagAliases[fag]||[fag];
-        if(!aliaser.some(function(a){return pFag===a||pFag.startsWith(a);})) return false;
-      }
-      if(km && !(p.km_koder||'').split(',').map(function(x){return x.trim();}).includes(km)) return false;
-      if(sok){
-        var haystack=((p.tittel||'')+' '+(p.km_koder||'')+' '+(p.laerer_navn||'')+' '+(p.beskrivelse||'')).toLowerCase();
-        if(!haystack.includes(sok)) return false;
-      }
-      return true;
-    });
-
-    if(!filtrert.length){
-      el.innerHTML='<div style="color:var(--dim);font-size:.84rem;padding:16px">'+(sok||km||fag?'Ingen treff – prøv et annet filter.':'Ingen delte prøver ennå – del din første!')+'</div>';
-      return;
-    }
-    var fagNavn={'mat8':'Matte 8.','mat9':'Matte 9.','mat10':'Matte 10.','nat':'Naturfag','prg':'Programmering'};
-    el.innerHTML='';
-    el.appendChild(Object.assign(document.createElement('div'),{
-      style:'font-size:.72rem;color:var(--dim);margin-bottom:8px',
-      textContent:filtrert.length+' prøver'+(filtrert.length<_bibCache.length?' ('+_bibCache.length+' totalt)':'')
-    }));
-    filtrert.forEach(function(p){
-      var dato=p.delt_dato?new Date(p.delt_dato).toLocaleDateString('nb-NO'):'';
-      var fagnavn=fagNavn[p.fag]||p.fag||'';
-      var kmListe=(p.km_koder||'').split(',').map(function(k){return k.trim();}).filter(Boolean);
-      var div=document.createElement('div');
-      div.style.cssText='background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:8px';
-      var kmHtml=kmListe.map(function(k){
-        return '<span style="background:rgba(167,139,250,.12);color:var(--lilla);padding:1px 6px;border-radius:4px;margin-right:3px;font-size:.7rem">'+k+'</span>';
-      }).join('');
-      var meta=[
-        fagnavn?'<span style="background:rgba(96,165,250,.15);color:var(--bla);padding:1px 7px;border-radius:4px;margin-right:6px">'+fagnavn+'</span>':'',
-        p.klasse?'<span style="margin-right:4px">'+esc(p.klasse)+'</span>':'',
-        '<span style="margin-right:4px">'+p.antall+' oppg</span>',
-        esc(p.laerer_navn||''),
-        p.skole?' · '+esc(p.skole):'',
-        dato?' · '+dato:''
-      ].join('');
-      div.innerHTML='<div style="display:flex;align-items:flex-start;gap:10px">'
-        +'<div style="flex:1">'
-        +'<div style="font-family:var(--fh);font-size:.92rem;font-weight:700;margin-bottom:4px">'+esc(p.tittel)+'</div>'
-        +'<div style="font-size:.75rem;color:var(--dim);margin-bottom:5px">'+meta+'</div>'
-        +(kmHtml?'<div style="margin-bottom:6px">'+kmHtml+'</div>':'')
-        +(p.beskrivelse?'<div style="font-size:.78rem;color:var(--text);opacity:.7;margin-bottom:6px">'+esc(p.beskrivelse)+'</div>':'')
-        +'</div>'
-        +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
-        +'<button class="btn bp sm imp-btn" data-id="'+p.id+'" data-tittel="'+esc(p.tittel)+'" style="white-space:nowrap">📥 Importer</button>'
-        +'<button class="btn bg sm del-btn" data-id="'+p.id+'" style="white-space:nowrap">🔗 Kopier lenke</button>'
-        +'</div>'
-        +'</div>';
-      div.querySelector('.imp-btn').addEventListener('click',function(){
-        importerProve(this.dataset.id,this.dataset.tittel);
-      });
-      div.querySelector('.del-btn').addEventListener('click',function(){
-        var url=location.origin+location.pathname+'?prove='+this.dataset.id;
-        navigator.clipboard.writeText(url).then(function(){
-          snack('Lenke kopiert til utklippstavlen ✓','ok');
-        }).catch(function(){
-          var md=document.createElement('div');
-          md.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
-          md.innerHTML='<div style="background:var(--bg2,#161b22);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px;width:100%;max-width:460px">'
-            +'<div style="font-size:.88rem;font-weight:500;margin-bottom:10px;color:var(--text,#e6edf3)">Kopier delelenken manuelt:</div>'
-            +'<textarea readonly onclick="this.select()" style="width:100%;height:68px;font-size:.78rem;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--text,#e6edf3);resize:none;box-sizing:border-box">'+url+'</textarea>'
-            +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="margin-top:10px;padding:7px 16px;border-radius:8px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:.84rem">Lukk</button>'
-            +'</div>';
-          document.body.appendChild(md);
-        });
-      });
-      el.appendChild(div);
-    });
-  }catch(e){
-    console.error('lastBibliotek feil:', e);
-    var elC=document.getElementById('bib-liste');
-    if(elC) elC.innerHTML='<div style="color:var(--red);font-size:.84rem;padding:16px">⚠️ Feil: '+esc(e.message)+'</div>';
+  const el=document.getElementById('bib-liste');
+  if(!_bibCache.length){
+    el.innerHTML='<div class="laster-tekst"><div class="spinner"></div></div>';
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/prover?delt=eq.true&order=dato.desc&limit=80&select=id,tittel,fag,klasse,km_koder,laerer_navn,skole,dato,beskrivelse`,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      _bibCache=r.ok?await r.json():[];
+    }catch(e){el.innerHTML=`<div class="tom-tilstand">Feil: ${e.message}</div>`;return;}
   }
-}
-async function importerProve(proveId, tittel){
-  try{
-    var r=await fetch(SB_URL+'/rest/v1/prover?id=eq.'+proveId+'&select=tittel,fag,klasse,tid,info,km_koder,oppgaver',{
-      headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}
-    });
-    var data=r.ok?await r.json():[];
-    if(!data.length){snack('Kunne ikke hente prøven','err');return;}
-    var p=data[0];
-    S.tittel=p.tittel+' (kopi)';
-    S.fag=p.fag||'';
-    S.klasse=p.klasse||'';
-    S.tid=p.tid||'';
-    S.info=p.info||'';
-    S.km=p.km_koder?p.km_koder.split(',').map(function(k){return{k:k.trim()};}).filter(function(k){return k.k;}):[]; 
-    S.oppgaver=Array.isArray(p.oppgaver)?p.oppgaver:(typeof p.oppgaver==='string'?JSON.parse(p.oppgaver):[]);
-    S.editIdx=null;
-    renderSB();
-    // Oppdater tittel-felt
-    var tittelEl=document.getElementById('p-tittel');
-    if(tittelEl) tittelEl.value=S.tittel;
-    renderKm();
-    lukkBibliotek();
-    snack('Prøven "'+tittel+'" er importert – gjør den til din egen!','ok');
-  }catch(e){snack('Feil ved import: '+e.message,'err');}
-}
-
-async function fetchAdaptivBank(){
-  var emne=document.getElementById('ab-emne').value;
-  var nivaa=document.getElementById('ab-nivaa').value;
-  if(!emne) return;
-  document.getElementById('ab-load').style.display='flex';
-  document.getElementById('ab-list').innerHTML='';
-  document.getElementById('btn-nab').disabled=true;
-  document.getElementById('btn-sab').disabled=true;
-  document.getElementById('ab-eb').style.display='none';
-  try{
-    var url=SB_URL+'/rest/v1/oppgavebank?kilde=eq.adaptiv&emne=eq.'+emne+'&select=oppgave,type,fork,nivaa,alts,riktig,svar&limit=50';
-    if(nivaa) url+='&nivaa=eq.'+nivaa;
-    const r=await fetch(url,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    const data=r.ok?await r.json():[];
-    const liste=Array.isArray(data)?data.sort(function(){return Math.random()-.5;}).slice(0,6):[];
-    var listEl=document.getElementById('ab-list');
-    if(!liste.length){
-      listEl.innerHTML='<div style="color:var(--dim);font-size:.82rem;padding:8px">Ingen oppgaver for dette utvalget.</div>';
-      return;
-    }
-    listEl.innerHTML='';
-    liste.forEach(function(item){
-      var div=document.createElement('div');div.className='ai-item';
-      var typeTxt=item.type==='mc'?'Flervalg':'Inntasting';
-      var nivTxt=item.nivaa?' · Nivå '+item.nivaa:'';
-      div.innerHTML='<div class="ai-type">'+typeTxt+nivTxt+'</div>'+esc(item.oppgave||'');
-      div.onclick=function(){
-        document.querySelectorAll('#ab-list .ai-item').forEach(function(x){x.classList.remove('sel');});
-        div.classList.add('sel');
-        document.getElementById('ab-la').value=item.oppgave||'';
-        document.getElementById('ab-eb').style.display='';
-        document.getElementById('btn-sab').disabled=false;
-        // Lagre alts/riktig/type for bruk ved lagring
-        var eb=document.getElementById('ab-eb');
-        eb.dataset.alts=JSON.stringify(item.alts||[]);
-        eb.dataset.riktig=item.riktig||item.svar||'';
-        eb.dataset.oppgtype=item.type||'open';
-      };
-      listEl.appendChild(div);
-    });
-  }catch(e){
-    document.getElementById('ab-list').innerHTML='<div style="color:var(--red);font-size:.82rem;padding:8px">⚠️ Feil: '+esc(e.message)+'</div>';
-  }finally{
-    document.getElementById('ab-load').style.display='none';
-    document.getElementById('btn-nab').disabled=false;
-  }
-}
-
-function renderSB(){
-  const list=document.getElementById('sb-list'),empty=document.getElementById('sb-empty');
-  document.getElementById('sb-cnt').textContent=S.oppgaver.length;
-  document.getElementById('btn-d').disabled=!S.oppgaver.length;
-  var bt=document.getElementById('btn-tildel');if(bt)bt.disabled=!S.oppgaver.length;;
-  list.innerHTML='';
-  if(!S.oppgaver.length){list.appendChild(empty);empty.style.display='flex';return;}
-  empty.style.display='none';
-  S.oppgaver.forEach((o,i)=>{
-    const k=document.createElement('div');k.className='ok';k.dataset.i=i;
-    const prev=o.sporsmal||o.tekst||o.tittel||'(uten tekst)';
-    k.innerHTML=`
-      <span class="dh" title="Dra for å sortere">⠿</span>
-      <span class="onr">${i+1}</span>
-      <div class="ob">
-        <div class="obadge">${TLBL[o.type]||o.type}</div>
-        <div class="oprev">${esc(prev)}</div>
+  const sok=document.getElementById('bib-sok').value.toLowerCase();
+  const fag=document.getElementById('bib-fag').value;
+  const km=document.getElementById('bib-km').value;
+  const filtrert=_bibCache.filter(p=>{
+    const hay=((p.tittel||'')+' '+(p.km_koder||'')+' '+(p.laerer_navn||'')+' '+(p.beskrivelse||'')).toLowerCase();
+    if(sok&&!hay.includes(sok))return false;
+    if(fag){const fv=p.fag?.toLowerCase()||'';const a={'matte':['matte','matematikk'],'naturfag':['nat','naturfag'],'norsk':['norsk'],'engelsk':['engelsk']};if(!(a[fag]||[fag]).some(x=>fv.startsWith(x)))return false;}
+    if(km&&!(p.km_koder||'').split(',').map(x=>x.trim()).includes(km))return false;
+    return true;
+  });
+  if(!filtrert.length){el.innerHTML='<div class="tom-tilstand">Ingen prøver funnet.</div>';return;}
+  el.innerHTML=filtrert.map(p=>`
+    <div class="bib-kort">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+        <div>
+          <div style="font-weight:600;font-size:.87rem">${p.tittel||'Uten tittel'}</div>
+          <div style="font-size:.75rem;color:var(--dim);margin-top:2px">${[p.laerer_navn,p.skole].filter(Boolean).join(' · ')}</div>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${p.fag?`<span class="chip chip-bla">${p.fag}</span>`:''}
+        </div>
       </div>
-      <div class="oacts">
-        <button class="oa e" title="Rediger" onclick="openM(${i})">✎</button>
-        <button class="oa d" title="Slett"   onclick="delO(${i})">✕</button>
-      </div>`;
-    list.appendChild(k);
-  });
-  if(window._sort)window._sort.destroy();
-  window._sort=Sortable.create(list,{
-    animation:180,handle:'.dh',ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',
-    onEnd(e){const m=S.oppgaver.splice(e.oldIndex,1)[0];S.oppgaver.splice(e.newIndex,0,m);renderSB();}
-  });
+      ${p.beskrivelse?`<div style="font-size:.78rem;color:var(--dim);margin-top:6px;line-height:1.5">${p.beskrivelse}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-prim btn-sm" onclick="importerProve('${p.id}','${encodeURIComponent(p.tittel||'')}')">↓ Importer</button>
+        <button class="btn btn-sek btn-sm" onclick="navigator.clipboard.writeText(location.origin+'/provebygger.html?prove=${p.id}').then(()=>snack('Lenke kopiert!'))">🔗 Kopier lenke</button>
+      </div>
+    </div>`).join('');
 }
 
-function delO(idx){if(!confirm('Slette oppgave '+(idx+1)+'?'))return;S.oppgaver.splice(idx,1);renderSB();snack('Oppgave slettet','ok');}
-
-// ════════════════════════════════════════════════
-// DOCX – klient-side med docx.umd.cjs
-// ════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════════
-//  LaTeX → Word Math-konverterer
-//  Konverterer $...$ og $$...$$ til docx Math-objekter
-// ════════════════════════════════════════════════════════════
-function latexTilDocxSegmenter(tekst) {
-  // Splitter tekst i segmenter: {type:'tekst'} og {type:'math', latex:'...', display:bool}
-  var seg = [];
-  var rest = tekst;
-  var re = /\$\$([\s\S]+?)\$\$|\$([^$]+?)\$/g;
-  var sist = 0;
-  var m;
-  while ((m = re.exec(tekst)) !== null) {
-    if (m.index > sist) seg.push({type:'tekst', val: tekst.slice(sist, m.index)});
-    var display = m[1] !== undefined;
-    var latexStr = (display ? m[1] : m[2]).trim();
-    seg.push({type:'math', val: latexStr, display: display});
-    sist = m.index + m[0].length;
-  }
-  if (sist < tekst.length) seg.push({type:'tekst', val: tekst.slice(sist)});
-  return seg;
-}
-
-function latexTilMathRun(latexStr) {
-  // Konverterer ett LaTeX-uttrykk til docx Math-noder
-  var {Math, MathRun, MathFraction, MathNumerator, MathDenominator,
-       MathSuperScript, MathSubScript, MathSubSuperScript,
-       MathRadical, MathRadicalProperties, MathRoundBrackets,
-       MathSquareBrackets} = window.docx;
-
-  function parse(s) {
-    s = s.trim();
-    // Håndter \frac{a}{b}
-    if (s.startsWith('\\frac{')) {
-      var inner = s.slice(7);
-      var num = trekkUtBlokk(inner, 0);
-      var den = trekkUtBlokk(inner, num.end + 1);
-      return new MathFraction({
-        numerator: new MathNumerator({children: [parseTilRun(num.val)]}),
-        denominator: new MathDenominator({children: [parseTilRun(den.val)]})
-      });
-    }
-    // Håndter \sqrt{a}
-    if (s.startsWith('\\sqrt{')) {
-      var inner2 = s.slice(7, s.indexOf('}', 7));
-      return new MathRadical({
-        radicalProperties: new MathRadicalProperties({hideIndex: true}),
-        children: [parseTilRun(inner2)]
-      });
-    }
-    return parseTilRun(s);
-  }
-
-  function parseTilRun(s) {
-    // Håndter a^{b} superskript
-    var supRe = /^([^_^{}]+)\^\{([^}]+)\}(.*)$/;
-    var subRe = /^([^_^{}]+)_\{([^}]+)\}(.*)$/;
-    var supM = supRe.exec(s);
-    var subM = subRe.exec(s);
-    if (supM) {
-      return new MathSuperScript({
-        children: [new MathRun(supM[1] + (supM[3]||''))],
-        superScript: [new MathRun(supM[2])]
-      });
-    }
-    if (subM) {
-      return new MathSubScript({
-        children: [new MathRun(subM[1] + (subM[3]||''))],
-        subScript: [new MathRun(subM[2])]
-      });
-    }
-    // Enkle symbolerstatninger
-    var rent = s
-      .replace(/\\cdot/g, '·').replace(/\\times/g, '×')
-      .replace(/\\div/g, '÷').replace(/\\pm/g, '±')
-      .replace(/\\leq/g, '≤').replace(/\\geq/g, '≥')
-      .replace(/\\neq/g, '≠').replace(/\\approx/g, '≈')
-      .replace(/\\pi/g, 'π').replace(/\\infty/g, '∞')
-      .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β')
-      .replace(/\\Delta/g, 'Δ').replace(/\\theta/g, 'θ')
-      .replace(/\\sqrt/g, '√').replace(/\\frac/g, '/')
-      .replace(/[{}]/g, '');
-    return new MathRun(rent);
-  }
-
-  function trekkUtBlokk(s, start) {
-    var dybde = 0, i = start;
-    if (s[i] === '{') {
-      dybde = 1; i++;
-      var fra = i;
-      while (i < s.length && dybde > 0) {
-        if (s[i] === '{') dybde++;
-        else if (s[i] === '}') dybde--;
-        i++;
-      }
-      return {val: s.slice(fra, i-1), end: i};
-    }
-    return {val: s[i]||'', end: i+1};
-  }
-
-  try {
-    return new Math({ children: [parse(latexStr)] });
-  } catch(e) {
-    // Fallback: vanlig tekstrun
-    return null;
-  }
-}
-
-function byggParagrafMedLatex(tekst, opts) {
-  // Bygger en Paragraph med blanding av tekst og Math-objekter
-  // Fallback til ren tekst hvis Math-klasser ikke er tilgjengelig
-  var {Paragraph, TextRun, Math: DocxMath} = window.docx;
-  opts = opts || {};
-  var seg = latexTilDocxSegmenter(tekst);
-  var children = [];
-
-  seg.forEach(function(s) {
-    if (s.type === 'tekst' && s.val) {
-      children.push(new TextRun(Object.assign({}, opts, {text: s.val})));
-    } else if (s.type === 'math') {
-      var mathNode = null;
-      try {
-        mathNode = latexTilMathRun(s.val);
-      } catch(mathErr) {
-        mathNode = null;
-      }
-      if (mathNode) {
-        children.push(mathNode);
-      } else {
-        // Fallback: vis LaTeX som ren tekst med unicode-symboler
-        var fallbackTekst = s.val
-          .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-          .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-          .replace(/\\cdot/g,'·').replace(/\\times/g,'×')
-          .replace(/\\div/g,'÷').replace(/\\pm/g,'±')
-          .replace(/\\leq/g,'≤').replace(/\\geq/g,'≥')
-          .replace(/\\neq/g,'≠').replace(/\\approx/g,'≈')
-          .replace(/\\pi/g,'π').replace(/\\infty/g,'∞')
-          .replace(/\\alpha/g,'α').replace(/\\beta/g,'β')
-          .replace(/\\Delta/g,'Δ').replace(/\\theta/g,'θ')
-          .replace(/\^(\{[^}]+\}|\S)/g, function(m,p1){
-            return p1.replace(/[{}]/g,'');
-          })
-          .replace(/[{}\\]/g,'');
-        children.push(new TextRun(Object.assign({}, opts, {text: fallbackTekst})));
-      }
-    }
-  });
-
-  if (children.length === 0) {
-    children.push(new TextRun(Object.assign({}, opts, {text: tekst})));
-  }
-
-  return new Paragraph({
-    spacing: opts.spacing || {after: 100},
-    alignment: opts.alignment,
-    children: children
-  });
-}
-
-async function lastNed(){
-  if(!S.oppgaver.length){snack('Ingen oppgaver','err');return;}
-  if(!window.docx){snack('Word-biblioteket laster... vent litt og prøv igjen','err');return;}
-  const btn=document.getElementById('btn-d');
-  btn.textContent='⏳ Bygger dokument...';btn.disabled=true;
-
+async function importerProve(proveId, tittelEnc){
+  const tittel=decodeURIComponent(tittelEnc);
+  if(!confirm(`Importer «${tittel}» til din prøvebygger?`))return;
   try{
-    const {Document,Packer,Paragraph,TextRun,ImageRun,
-           HeadingLevel,AlignmentType,BorderStyle}=window.docx;
-
-    const ch=[];
-
-    // Tittel
-    ch.push(new Paragraph({
-      heading:HeadingLevel.HEADING_1,alignment:AlignmentType.CENTER,
-      spacing:{before:0,after:140},
-      children:[new TextRun({text:S.tittel||'Prøve',bold:true,size:40,font:'Arial',color:'111827'})]
-    }));
-
-    // Metainfo
-    const meta=[S.klasse,S.tid?'Tid: '+S.tid:''].filter(Boolean).join('   ·   ');
-    if(meta)ch.push(new Paragraph({
-      alignment:AlignmentType.CENTER,spacing:{after:60},
-      children:[new TextRun({text:meta,size:22,font:'Arial',color:'6B7280',italics:true})]
-    }));
-    if(S.info)ch.push(new Paragraph({
-      spacing:{before:60,after:60},
-      children:[new TextRun({text:S.info,size:22,font:'Arial',color:'374151'})]
-    }));
-    // KM-koder
-    if(S.km.length)ch.push(new Paragraph({
-      spacing:{before:40,after:80},
-      children:[new TextRun({text:'Kompetansemål: '+S.km.map(k=>k.k).join(', '),size:20,font:'Arial',color:'9CA3AF',italics:true})]
-    }));
-    // Skillelinje
-    ch.push(new Paragraph({spacing:{before:60,after:260},border:{bottom:{style:BorderStyle.SINGLE,size:8,color:'E5E7EB',space:1}},children:[]}));
-
-    // Oppgaver
-    for(let i=0;i<S.oppgaver.length;i++){
-      const o=S.oppgaver[i],nr=i+1,ptxt=o.poeng?` (${o.poeng} p)`:'';
-      try{
-      const mkHd=()=>ch.push(new Paragraph({
-        spacing:{before:260,after:90},
-        children:[
-          new TextRun({text:`Oppgave ${nr}`,bold:true,size:28,font:'Arial',color:'111827'}),
-          new TextRun({text:ptxt,size:22,font:'Arial',color:'6B7280'}),
-        ]
-      }));
-      const mkLinjer=(n)=>{for(let j=0;j<(n||5);j++)ch.push(new Paragraph({
-        spacing:{before:0,after:0,line:414,lineRule:'exact'},
-        border:{bottom:{style:BorderStyle.SINGLE,size:2,color:'D1D5DB',space:1}},
-        children:[new TextRun({text:' ',size:24})]
-      }));};
-
-      if(o.type==='regneoppgave'){
-        mkHd();
-        if(o.tittel&&o.tittel!=='Regneoppgave')ch.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:o.tittel,size:24,font:'Arial',color:'374151',italics:true})]}));
-        if(o.tekst)ch.push(byggParagrafMedLatex(o.tekst,{size:24,font:'Arial',spacing:{after:100}}));
-        ch.push(new Paragraph({spacing:{before:90,after:50},children:[new TextRun({text:'Svar:',bold:true,size:22,font:'Arial',color:'6B7280'})]}));
-        mkLinjer(o.linjer);
-      }else if(o.type==='fritekst'){
-        mkHd();
-        if(o.tittel&&o.tittel!=='Fritekstoppgave')ch.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:o.tittel,size:24,font:'Arial',color:'374151',italics:true})]}));
-        if(o.bilde){
-          try{
-            const b64=o.bilde.split(',')[1];
-            const mime=o.bilde.split(';')[0].split(':')[1];
-            const imgType=mime.includes('png')?'png':'jpeg';
-            const bs=atob(b64);const arr=new Uint8Array(bs.length);
-            for(let b=0;b<bs.length;b++)arr[b]=bs.charCodeAt(b);
-            ch.push(new Paragraph({spacing:{after:100},children:[new ImageRun({data:arr,transformation:{width:400,height:240},type:imgType})]}));
-          }catch(imgErr){console.warn('Bilde feilet:',imgErr);}
-        }
-        if(o.tekst)ch.push(byggParagrafMedLatex(o.tekst,{size:24,font:'Arial',spacing:{after:100}}));
-        mkLinjer(o.linjer);
-      }else if(o.type==='flersvar'){
-        mkHd();
-        if(o.sporsmal)ch.push(new Paragraph({spacing:{after:110},children:[new TextRun({text:o.sporsmal,size:24,font:'Arial'})]}));
-        (o.alts||[]).forEach((alt,ai)=>{
-          const bk=String.fromCharCode(65+ai);
-          ch.push(new Paragraph({
-            spacing:{after:70},indent:{left:360},
-            children:[
-              new TextRun({text:'☐  ',size:24,font:'Arial'}),
-              new TextRun({text:bk+')  ',bold:true,size:24,font:'Arial'}),
-              new TextRun({text:alt,size:24,font:'Arial'}),
-            ]
-          }));
-        });
-      }else if(o.type==='ai'||o.type==='adaptivbank'){
-        mkHd();
-        if(o.tekst)ch.push(new Paragraph({spacing:{after:100},children:[new TextRun({text:o.tekst,size:24,font:'Arial'})]}));
-        if(o.alts&&o.alts.length>=2){
-          (o.alts).forEach((alt,ai)=>{
-            const bk=String.fromCharCode(65+ai);
-            ch.push(new Paragraph({
-              spacing:{after:70},indent:{left:360},
-              children:[
-                new TextRun({text:'☐  ',size:24,font:'Arial'}),
-                new TextRun({text:bk+')  ',bold:true,size:24,font:'Arial'}),
-                new TextRun({text:alt,size:24,font:'Arial'}),
-              ]
-            }));
-          });
-        }else{
-          mkLinjer(o.linjer);
-        }
-      }
-      ch.push(new Paragraph({spacing:{after:140},children:[]}));
-      }catch(oppgErr){
-        // Feil i én oppgave skal ikke stoppe resten
-        console.warn('Oppgave '+(i+1)+' feilet:',oppgErr);
-        ch.push(new Paragraph({spacing:{after:90},children:[
-          new TextRun({text:'[Oppgave '+(i+1)+' kunne ikke rendres: '+oppgErr.message+']',
-            size:22,font:'Arial',color:'EF4444',italics:true})
-        ]}));
-      }
-    }
-
-    // Poengsum
-    const mp=S.oppgaver.filter(o=>o.poeng);
-    if(mp.length){
-      const tot=mp.reduce((s,o)=>s+(+o.poeng||0),0);
-      ch.push(new Paragraph({
-        spacing:{before:260,after:60},
-        border:{top:{style:BorderStyle.SINGLE,size:4,color:'E5E7EB',space:1}},
-        children:[new TextRun({text:`Totalt: ${tot} poeng`,bold:true,size:22,font:'Arial',color:'6B7280'})]
-      }));
-    }
-
-    const doc=new Document({
-      styles:{
-        default:{document:{run:{font:'Arial',size:24}}},
-        paragraphStyles:[{
-          id:'Heading1',name:'Heading 1',basedOn:'Normal',next:'Normal',
-          run:{size:40,bold:true,font:'Arial',color:'111827'},
-          paragraph:{spacing:{before:0,after:140},outlineLevel:0}
-        }]
-      },
-      sections:[{
-        properties:{page:{size:{width:11906,height:16838},margin:{top:1134,right:1134,bottom:1134,left:1134}}},
-        children:ch
-      }]
-    });
-
-    const blob=await Packer.toBlob(doc);
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=(S.tittel||'prove').replace(/[^a-zA-Z0-9æøåÆØÅ \-_]/g,'')+'.docx';
-    a.click();URL.revokeObjectURL(url);
-    snack('Word-fil lastet ned ✓','ok');
-  }catch(e){
-    console.error(e);snack('Feil: '+e.message,'err');
-  }finally{
-    btn.textContent='📄 Last ned Word (.docx)';btn.disabled=!S.oppgaver.length;
-  }
-}
-
-// ════════════════════════════════════════════════
-// LAGRE SUPABASE
-// ════════════════════════════════════════════════
-async function lagreSB(){
-  const btn=document.getElementById('btn-s'),orig=btn.textContent;
-  btn.textContent='💾 Lagrer...';btn.disabled=true;
-  try{
-    // Hent laerer-ID fra session (prøv ny nøkkel, deretter gammel som fallback)
-    const _lRaw=JSON.parse(localStorage.getItem('skaplab_laerer_v2')||localStorage.getItem('skaplab_laerer')||'{}');
-    const _lId=(_lRaw.user&&_lRaw.user.id)||_lRaw.id||null;
-    const _lTok=_lRaw.access_token||SB_KEY;
-    const oUB=S.oppgaver.map(o=>o.bilde?{...o,bilde:'[bilde]'}:o);
-    const payload={
-      laerer_id:_lId,tittel:S.tittel||'Uten tittel',
-      fag:S.fag,klasse:S.klasse,tid:S.tid,info:S.info,
-      km_koder:S.km.map(k=>k.k).join(','),
-      oppgaver:JSON.stringify(oUB),antall:S.oppgaver.length,
-      opprettet:new Date().toISOString()
-    };
-    const res=await fetch(`${SB_URL}/rest/v1/prover`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+_lTok,'Prefer':'return=minimal'},
-      body:JSON.stringify(payload)
-    });
-    if(res.status===201||res.ok){snack('Prøven er lagret ✓','ok');}
-    else{
-      const txt=await res.text();
-      snack(txt.includes('does not exist')?'Tabellen "prover" mangler i Supabase':'Lagringsfeil: '+res.status,'err');
-    }
+    const r=await fetch(`${SB_URL}/rest/v1/prover?id=eq.${proveId}&select=tittel,fag,klasse,tid,info,km_koder,oppgaver`,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const data=r.ok?await r.json():[];
+    const p=data[0]; if(!p){snack('Fant ikke prøven.','err');return;}
+    S.fag=p.fag||'matte'; S.tittel=p.tittel||''; S.klasse=p.klasse||''; S.tid=p.tid||''; S.info=p.info||'';
+    S.km=(p.km_koder||'').split(',').map(k=>k.trim()).filter(Boolean).map(k=>({k,l:k}));
+    try{S.oppgaver=JSON.parse(p.oppgaver)||[];}catch{S.oppgaver=[];}
+    S.lagretId=null;
+    lukkBibliotek();
+    // Gå direkte til steg 4
+    onFag(S.fag); renderKm();
+    document.getElementById('inp-t').value=S.tittel;
+    document.getElementById('inp-k').value=S.klasse;
+    document.getElementById('inp-tid').value=S.tid;
+    document.getElementById('inp-i').value=S.info;
+    gotoS4();
+    snack(`Importerte «${tittel}».`);
   }catch(e){snack('Feil: '+e.message,'err');}
-  finally{btn.textContent=orig;btn.disabled=false;}
 }
 
-// ════════════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════════════
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-let snT;
-function snack(msg,type='ok'){
-  const el=document.getElementById('snack');
-  el.textContent=(type==='ok'?'✓  ':'⚠  ')+msg;el.className='snack on '+type;
-  clearTimeout(snT);snT=setTimeout(()=>el.classList.remove('on'),3200);
-}
+/* ══════════════════════════════════════════════════════════
+   LAST NED WORD (.docx)
+══════════════════════════════════════════════════════════ */
+async function lastNed(){
+  if(!S.oppgaver.length){snack('Ingen oppgaver.','warn');return;}
+  if(!window.docx){snack('docx ikke lastet.','err');return;}
+  const {Document,Packer,Paragraph,TextRun,HeadingLevel,AlignmentType,BorderStyle,Table,TableRow,TableCell,WidthType}=window.docx;
 
-renderSB();
+  const children=[];
 
-// Hent oppgave fra LaTeX-editor om vi kom tilbake derfra
-(function() {
-  var fra = new URLSearchParams(location.search).get('fra');
-  if (fra === 'latex') {
-    var tekst = sessionStorage.getItem('latex_oppgave');
-    if (tekst) {
-      sessionStorage.removeItem('latex_oppgave');
-      setTimeout(function() {
-        setStep(4);
-        openM();
-        vType('regneoppgave', true);
-        setTimeout(function() {
-          var ta = document.getElementById('rn-la');
-          if (ta) { ta.value = tekst; snack('LaTeX-oppgave hentet ✓', 'ok'); }
-        }, 80);
-      }, 200);
+  // Topptekst
+  children.push(new Paragraph({
+    children:[new TextRun({text:S.tittel||'Prøve',bold:true,size:36,font:'Calibri'})],
+    heading:HeadingLevel.HEADING_1,alignment:AlignmentType.CENTER,
+  }));
+
+  const meta=[S.klasse,S.tid?'Tid: '+S.tid:'',S.dato?'Dato: '+S.dato:''].filter(Boolean).join('   ·   ');
+  if(meta) children.push(new Paragraph({
+    children:[new TextRun({text:meta,color:'666666',size:22,font:'Calibri'})],
+    alignment:AlignmentType.CENTER,
+  }));
+
+  if(S.km.length) children.push(new Paragraph({
+    children:[new TextRun({text:'Kompetansemål: '+S.km.map(k=>k.k).join(', '),italics:true,color:'888888',size:20,font:'Calibri'})],
+  }));
+
+  if(S.info) children.push(new Paragraph({
+    children:[new TextRun({text:S.info,color:'444444',size:22,font:'Calibri'})],
+    border:{bottom:{style:BorderStyle.SINGLE,size:6,color:'cccccc'}},spacing:{after:240},
+  }));
+
+  children.push(new Paragraph({text:''}));
+
+  // Oppgaver
+  const TYPE_LBL={regneoppgave:'Regneoppgave',fritekst:'Oppgave',flersvar:'Flersvar',adaptivbank:'Oppgave',ai:'Oppgave'};
+
+  S.oppgaver.forEach((o,i)=>{
+    const nr=`Oppgave ${i+1}`;
+    const pTitle=new Paragraph({
+      children:[
+        new TextRun({text:nr+'. ',bold:true,size:26,font:'Calibri'}),
+        o.tittel?new TextRun({text:o.tittel,bold:true,size:26,font:'Calibri'}):new TextRun(''),
+        o.poeng?new TextRun({text:`  (${o.poeng} p)`,color:'888888',size:22,font:'Calibri'}):new TextRun(''),
+      ],
+      spacing:{before:200,after:100},
+    });
+    children.push(pTitle);
+
+    if(o.tekst){
+      const linjer=o.tekst.split('\n');
+      linjer.forEach(linje=>{
+        children.push(new Paragraph({
+          children:[new TextRun({text:linje,size:22,font:'Calibri'})],
+          spacing:{after:60},
+        }));
+      });
     }
+
+    if(o.type==='flersvar'&&o.alts?.length){
+      o.alts.forEach((a,ai)=>{
+        children.push(new Paragraph({
+          children:[new TextRun({text:`  ${String.fromCharCode(65+ai)}. ${a}`,size:22,font:'Calibri'})],
+          spacing:{after:40},
+        }));
+      });
+    }
+
+    // Svarlinjer
+    const linjer=o.linjer||5;
+    for(let l=0;l<linjer;l++){
+      children.push(new Paragraph({
+        children:[new TextRun({text:'',size:22})],
+        border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'cccccc'}},
+        spacing:{before:120},
+      }));
+    }
+    children.push(new Paragraph({text:''}));
+  });
+
+  try{
+    const doc=new Document({sections:[{children}]});
+    const blob=await Packer.toBlob(doc);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(S.tittel||'prove').replace(/[^a-zA-Z0-9æøåÆØÅ _-]/g,'')+'.docx';
+    a.click(); URL.revokeObjectURL(a.href);
+    snack('Word-fil lastet ned!');
+  }catch(e){snack('Feil ved Word-generering: '+e.message,'err');}
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT – last prøve fra URL om ?prove=ID
+══════════════════════════════════════════════════════════ */
+(async function(){
+  const params=new URLSearchParams(location.search);
+  const proveId=params.get('prove');
+  if(proveId){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/prover?id=eq.${proveId}&select=tittel,fag,klasse,tid,dato,info,km_koder,oppgaver`,{headers:{apikey:SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      const data=r.ok?await r.json():[];
+      const p=data[0]; if(!p)return;
+      S.fag=p.fag||'matte'; S.tittel=p.tittel||''; S.klasse=p.klasse||''; S.tid=p.tid||''; S.dato=p.dato||''; S.info=p.info||'';
+      S.km=(p.km_koder||'').split(',').map(k=>k.trim()).filter(Boolean).map(k=>({k,l:k}));
+      try{S.oppgaver=JSON.parse(p.oppgaver)||[];}catch{S.oppgaver=[];}
+      S.lagretId=proveId;
+      onFag(S.fag);
+      document.getElementById('inp-t').value=S.tittel;
+      document.getElementById('inp-k').value=S.klasse;
+      document.getElementById('inp-tid').value=S.tid;
+      document.getElementById('inp-dato').value=S.dato;
+      document.getElementById('inp-i').value=S.info;
+      renderKm(); gotoS4();
+    }catch{}
+  }
+  // Last klasse-parametere fra årsplan-link (?emne=&klasse=)
+  const emne=params.get('emne');
+  const klasse=params.get('klasse');
+  if(emne||klasse){
+    document.addEventListener('DOMContentLoaded',()=>{
+      if(klasse){ document.getElementById('inp-k').value=decodeURIComponent(klasse); S.klasse=decodeURIComponent(klasse); }
+      if(emne){ S.fag=emne; onFag(emne); }
+    });
   }
 })();
+
+document.getElementById('modal-ny-skole')?.addEventListener('click', e=>{ if(e.target.classList.contains('modal-bg')) e.target.classList.remove('vis'); });
 </script>
-
-<!-- TILDEL-MODAL -->
-<div id="tildel-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)lukkTildelModal()">
-  <div style="background:var(--bg2,#161b22);border:1px solid rgba(255,255,255,.12);border-radius:16px;max-width:420px;width:100%;padding:26px 22px;position:relative">
-    <button onclick="lukkTildelModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:1.1rem">✕</button>
-    <h3 style="font-size:1rem;font-weight:600;margin-bottom:6px">📤 Tildel prøve til klasse</h3>
-    <p style="font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:18px">
-      Velg klasse og sett en valgfri frist. Prøven dukker opp i elevenes portal.
-    </p>
-    <div style="margin-bottom:14px">
-      <label style="font-size:.8rem;color:rgba(255,255,255,.6);display:block;margin-bottom:5px">Klassenavn / klasse-ID</label>
-      <input id="tildel-klasse" type="text" placeholder="f.eks. 8A eller lim inn klasse-ID fra lærerapp"
-        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
-        color:#e6edf3;border-radius:8px;padding:8px 12px;font-size:.85rem;box-sizing:border-box;outline:none">
-    </div>
-    <div style="margin-bottom:18px">
-      <label style="font-size:.8rem;color:rgba(255,255,255,.6);display:block;margin-bottom:5px">Frist (valgfri)</label>
-      <input id="tildel-frist" type="date"
-        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
-        color:#e6edf3;border-radius:8px;padding:8px 12px;font-size:.85rem;box-sizing:border-box;outline:none">
-    </div>
-    <button onclick="sendTildeling()" style="width:100%;padding:10px;border-radius:10px;border:none;
-      background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;font-size:.9rem;font-weight:600;
-      cursor:pointer;font-family:inherit">📤 Send til klasse</button>
-    <div id="tildel-status" style="margin-top:10px;font-size:.82rem;text-align:center;min-height:20px"></div>
-  </div>
-</div>
-
 </body>
 </html>
