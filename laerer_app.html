@@ -219,9 +219,9 @@
         <div class="felt">
           <label class="felt-lbl">Nivå</label>
           <div style="display:flex;gap:8px;margin-top:4px">
-            <button class="vrd-btn" data-niv="hoy">Høy</button>
-            <button class="vrd-btn" data-niv="mid">Middels</button>
-            <button class="vrd-btn" data-niv="lav">Lav</button>
+            <button class="vrd-btn" data-niv="h">Høy</button>
+            <button class="vrd-btn" data-niv="m">Middels</button>
+            <button class="vrd-btn" data-niv="l">Lav</button>
           </div>
         </div>
         <div class="felt"><label class="felt-lbl">Kommentar</label><textarea id="vrd-kommentar" rows="3" placeholder="Formativ tilbakemelding…"></textarea></div>
@@ -747,16 +747,16 @@ function byggAdaptivHtml(prog, logg) {
 
 function byggVurderingHistHtml(data) {
   if (!data?.length) return '<div class="tom-tilstand">Ingen vurderinger ennå.</div>';
-  const NL={hoy:'Høy',mid:'Middels',lav:'Lav'};
-  const NF={hoy:'gron',mid:'gul',lav:'rod'};
+  const NL={h:'Høy',m:'Middels',l:'Lav',hoy:'Høy',mid:'Middels',lav:'Lav'};
+  const NF={h:'gron',m:'gul',l:'rod',hoy:'gron',mid:'gul',lav:'rod'};
   return data.map(v => `
     <div class="vrd-historikk">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         ${v.km_kode?`<span class="chip chip-bla">${v.km_kode}</span>`:''}
-        <span class="niv-chip ${v.nivaa}">${NL[v.nivaa]||v.nivaa||'—'}</span>
+        <span class="niv-chip ${v.nivaa==="h"?"hoy":v.nivaa==="m"?"mid":v.nivaa==="l"?"lav":v.nivaa}">${NL[v.nivaa]||v.nivaa||'—'}</span>
         <span style="font-size:.7rem;color:var(--dim)">${datoVis(v.oppdatert||v.dato)}</span>
       </div>
-      ${v.kommentar?`<div style="font-size:.83rem;margin-top:6px">${v.kommentar}</div>`:''}
+      ${v.merknad?`<div style="font-size:.83rem;margin-top:6px">${v.merknad}</div>`:''}
     </div>`).join('');
 }
 
@@ -852,7 +852,7 @@ $id('vrd-lagre-btn').addEventListener('click', async () => {
     const laererId = await Auth.laerer.uid();
     await Api.vurderinger.opprett({
       elev_id: elevId, laerer_id: laererId, klasse_id: _aktivKlasse,
-      km_kode, nivaa: _vrdNiv, kommentar: kommentar||null,
+      km_kode, nivaa: _vrdNiv, merknad: kommentar||null,
     });
     snack('Vurdering lagret.');
     $id('vrd-kommentar').value=''; $id('vrd-km').value='';
@@ -947,8 +947,8 @@ async function lastMålark() {
     const vrdData = await Api.vurderinger.hentForKlasse(klasseId);
     const nivMap = {};
     (vrdData||[]).forEach(v=>{ if(!nivMap[v.elev_id]) nivMap[v.elev_id]=v.nivaa; });
-    const NL={hoy:'Høy',mid:'Middels',lav:'Lav'};
-    const NF={hoy:'gron',mid:'gul',lav:'rod'};
+    const NL={h:'Høy',m:'Middels',l:'Lav',hoy:'Høy',mid:'Middels',lav:'Lav'};
+    const NF={h:'gron',m:'gul',l:'rod',hoy:'gron',mid:'gul',lav:'rod'};
     el.innerHTML=`<div class="kort"><div class="kort-tittel">Nivå per elev</div>
       <div class="tabell-wrap"><table>
         <thead><tr><th>Elev</th><th>Nåværende</th><th>Sett nytt</th></tr></thead>
@@ -956,7 +956,7 @@ async function lastMålark() {
           <td>${e.fullt_navn}</td>
           <td>${nivMap[e.id]?`<span class="chip chip-${NF[nivMap[e.id]]}">${NL[nivMap[e.id]]}</span>`:'<span class="chip chip-graa">Ikke satt</span>'}</td>
           <td><div style="display:flex;gap:4px">
-            ${['hoy','mid','lav'].map(n=>`<button class="btn btn-${n==='hoy'?'gron':n==='mid'?'gul':'rod'} btn-sm" onclick="settMålnivå('${e.id}','${e.fullt_navn}','${n}',this)">${NL[n]}</button>`).join('')}
+            ${[['h','gron','Høy'],['m','gul','Middels'],['l','rod','Lav']].map(([n,c,lbl])=>`<button class="btn btn-${c} btn-sm" onclick="settMålnivå('${e.id}','${e.fullt_navn}','${n}',this)">${lbl}</button>`).join('')}
           </div></td>
         </tr>`).join('')}</tbody>
       </table></div></div>`;
@@ -969,7 +969,7 @@ async function settMålnivå(elevId, navn, nivå, btn) {
     await Api.vurderinger.opprett({elev_id:elevId,laerer_id:laererId,klasse_id:_aktivKlasse,km_kode:'GENERELL',nivaa:nivå});
     snack(`Nivå satt for ${navn}.`);
     const td = btn.closest('td').previousElementSibling;
-    const NL={hoy:'Høy',mid:'Middels',lav:'Lav'}; const NF={hoy:'gron',mid:'gul',lav:'rod'};
+    const NL={h:'Høy',m:'Middels',l:'Lav',hoy:'Høy',mid:'Middels',lav:'Lav'}; const NF={h:'gron',m:'gul',l:'rod',hoy:'gron',mid:'gul',lav:'rod'};
     td.innerHTML=`<span class="chip chip-${NF[nivå]}">${NL[nivå]}</span>`;
   } catch (err) { snack(err.message||'Feil.','err'); }
 }
